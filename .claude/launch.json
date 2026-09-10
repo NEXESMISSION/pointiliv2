@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "//": "The dev server for Pointili Tampon. Port 3100 so it can run beside v1's 3000 without either stealing the other's cookies in a shared browser — same host, different origin.",
+      "name": "tampon-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3100
+    },
+    {
+      "//": "A PRODUCTION server (`next start`) for reading a built app. Remember the v1 lesson: the gate cannot run against it, because Secure cookies die over plain http — run the suites against tampon-dev in small batches instead. autoPort keeps it clear of 3100.",
+      "name": "tampon-prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "autoPort": true
+    }
+  ]
+}

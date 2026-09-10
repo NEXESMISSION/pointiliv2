@@ -1,0 +1,58 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+# A verification build cannot use /.next while `next dev` owns it — it corrupts
+# the running server's output and every route starts 500ing. next.config.ts
+# reads NEXT_DIST_DIR for exactly that, so the dirs it can point at are ignored
+# too; without this, one `git add -A` stages a whole build.
+/.next-*/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files. .env.local points at a real Supabase project and must never travel.
+.env*
+# ...but the template belongs in the repo
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+scratch/
+backups/
+
+# throwaway screenshot/debug scripts
+scripts/_*.mjs
+
+# Gate logs — one file per suite, written by the local test runs. Useful while a
+# gate is being read, meaningless the moment it is re-run.
+.gate/
+
+# design-pass captures and mockups, never shipped
+/.design
+
+# supabase CLI state (linked project ref lives in .env.local, not here)
+/supabase/.temp/
