@@ -221,6 +221,7 @@ begin
       'id', k.id, 'name', k.name, 'description', k.description,
       'stamps_required', public.reward_cost(true, k.stamps_required, c.card_target),
       'card_stamps_required', k.stamps_required,
+      'design', k.design,
       'color', k.color, 'icon', k.icon, 'cooldown_minutes', k.cooldown_minutes, 'active', k.active) end,
     'rewards', v_rewards,
     'next_reward', v_next,
@@ -438,7 +439,8 @@ begin
           'total_stamps', c.total_stamps, 'last_stamp_at', c.last_stamp_at,
           'business', jsonb_build_object('id', b.id, 'name', b.name, 'logo_url', b.logo_url, 'cover_url', b.cover_url, 'category', b.category),
           'card', jsonb_build_object('name', k.name, 'stamps_required', public.reward_cost(true, coalesce(k.stamps_required, 10), c.card_target),
-                                     'color', coalesce(k.color, 'indigo'), 'icon', coalesce(k.icon, 'coffee')),
+                                     'color', coalesce(k.color, 'indigo'), 'icon', coalesce(k.icon, 'coffee'),
+                                     'description', k.description, 'design', coalesce(k.design, '{}'::jsonb)),
           'next_reward', (select jsonb_build_object('name', r.name, 'stamps_required', x.cost, 'remaining', x.cost - c.stamps_balance)
                           from public.rewards r
                           cross join lateral (select public.reward_cost(r.is_primary, r.stamps_required, c.card_target) as cost) x
@@ -667,7 +669,7 @@ begin
                  from public.businesses b where b.id = v_biz),
     'card', (select jsonb_build_object('id', k.id, 'name', k.name, 'description', k.description,
                                        'stamps_required', k.stamps_required, 'color', k.color, 'icon', k.icon,
-                                       'cooldown_minutes', k.cooldown_minutes, 'active', k.active,
+                                       'cooldown_minutes', k.cooldown_minutes, 'active', k.active, 'design', k.design,
                                        'reward', (select jsonb_build_object('id', r.id, 'name', r.name, 'description', r.description)
                                                   from public.rewards r where r.loyalty_card_id = k.id and r.is_primary))
              from public.loyalty_cards k where k.business_id = v_biz),
@@ -1472,6 +1474,39 @@ end $$;
 -- ═══ card changes: who is affected ═════════════════════════════════════════
 -- Progress of every customer mid-card, grouped by (their goal, their stamps), so
 -- the loyalty page can say exactly what a change would do before it is saved.
+-- ═══ card design ═══════════════════════════════════════════════════════════
+-- Mirrors lib/card-design.ts: unknown keys dropped, bad values replaced, so the
+-- customer app can render any stored design without defensive code.
+create or replace function public.clean_card_design(p jsonb) returns jsonb
+language sql immutable set search_path = '' as $$
+  select jsonb_build_object(
+    'template', case when p ->> 'template' in ('bold', 'classic', 'pastel', 'midnight', 'photo', 'minimal') then p ->> 'template' else 'bold' end,
+    'bg', case when p ->> 'bg' ~ '^#[0-9A-Fa-f]{6}$' then upper(p ->> 'bg') else '#4536F0' end,
+    'bg2', case when p ->> 'bg2' ~ '^#[0-9A-Fa-f]{6}$' then upper(p ->> 'bg2') end,
+    'accent', case when p ->> 'accent' ~ '^#[0-9A-Fa-f]{6}$' then upper(p ->> 'accent') else '#FFFFFF' end,
+    'text', case when p ->> 'text' in ('light', 'dark') then p ->> 'text' else 'light' end,
+    'pattern', case when p ->> 'pattern' in ('none', 'dots', 'waves', 'grid', 'confetti') then p ->> 'pattern' else 'none' end,
+    'stamp', case when p ->> 'stamp' in ('icon', 'logo', 'check', 'heart', 'star') then p ->> 'stamp' else 'icon' end,
+    'icon', case when p ->> 'icon' in ('coffee', 'pizza', 'burger', 'cake', 'croissant', 'scissors', 'sparkles', 'ice-cream', 'shopping-bag', 'heart', 'star', 'utensils') then p ->> 'icon' else 'coffee' end,
+    'use_cover', coalesce(p ->> 'use_cover', 'false') = 'true'
+  )
+$$;
+
+create or replace function public.save_card_design(p_description text, p_design jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_biz uuid := public.require_business(true); v_design jsonb;
+begin
+  if not exists (select 1 from public.loyalty_cards where business_id = v_biz) then return public.err('no_card'); end if;
+  if not public.rate_limit_hit('design:' || v_biz, 60, 600) then return public.err('rate_limited'); end if;
+  v_design := public.clean_card_design(coalesce(p_design, '{}'::jsonb));
+  update public.loyalty_cards
+  set design = v_design, icon = v_design ->> 'icon', description = nullif(trim(left(coalesce(p_description, ''), 200)), '')
+  where business_id = v_biz;
+  insert into public.activity_logs (business_id, actor_id, type, data)
+  values (v_biz, auth.uid(), 'card_designed', jsonb_build_object('template', v_design ->> 'template'));
+  return jsonb_build_object('ok', true, 'design', v_design);
+end $$;
+
 create or replace function public.merchant_card_impact() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare v_biz uuid := public.require_business(false); v_req int;

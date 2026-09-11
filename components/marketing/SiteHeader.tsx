@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { LinkButton } from "@/components/ui/Button";
+import { MarketingBack } from "./MarketingBack";
 
 const NAV = [
   { href: "/how-it-works", label: "How it works" },
@@ -11,6 +12,7 @@ export function SiteHeader() {
   return (
     <header className="pt-safe sticky top-0 z-40 border-b border-white/[0.06] bg-[#0B0D1A]/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:px-6">
+        <MarketingBack />
         <Link href="/" aria-label="Pointidi home" className="-ml-1 shrink-0 rounded-xl p-1">
           <Logo size={26} light />
         </Link>

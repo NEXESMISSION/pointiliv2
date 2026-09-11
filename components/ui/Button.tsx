@@ -27,8 +27,9 @@ export function LinkButton({ variant, size, block, icon, className = "", childre
 }
 
 /** Submit button for server-action forms: disables itself and spins while pending. */
-export function SubmitButton({ variant, size, block = true, icon, className = "", children, pendingText, ...rest }: Common & ComponentProps<"button"> & { pendingText?: string }) {
-  const { pending } = useFormStatus();
+export function SubmitButton({ variant, size, block = true, icon, className = "", children, pendingText, pending: pendingProp, ...rest }: Common & ComponentProps<"button"> & { pendingText?: string; pending?: boolean }) {
+  const status = useFormStatus();
+  const pending = pendingProp ?? status.pending;
   return (
     <button type="submit" className={buttonClass(variant, size, block, className)} disabled={pending || rest.disabled} aria-busy={pending} {...rest}>
       {pending ? <Spinner className="size-5" /> : icon}

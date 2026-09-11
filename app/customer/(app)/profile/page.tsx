@@ -1,4 +1,4 @@
-import { CreditCard, Gift, CircleHelp, KeyRound, LogOut, Store } from "lucide-react";
+import { CreditCard, Gift, CircleHelp, KeyRound, LogOut } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Card, Divided, ListRow } from "@/components/ui/Card";
@@ -15,7 +15,7 @@ export default async function ProfilePage() {
   const u = ctx.user;
   return (
     <>
-      <TopBar title="Your profile" large />
+      <TopBar title="Your profile" large back="/customer" />
       <Card className="flex flex-col items-center p-6 text-center">
         <Avatar label={initials(u.full_name, "P")} size={72} />
         <p className="mt-3 text-lg font-bold text-ink">{u.full_name || "Pointidi member"}</p>
@@ -33,11 +33,6 @@ export default async function ProfilePage() {
 
       <Divided className="mt-5">
         <ListRow href="/how-it-works" icon={<CircleHelp className="size-5" />} title="How Pointidi works" />
-        {ctx.business ? (
-          <ListRow href="/dashboard" icon={<Store className="size-5" />} title="Business dashboard" subtitle={ctx.business.name} />
-        ) : (
-          <ListRow href="/register" icon={<Store className="size-5" />} title="Own a business?" subtitle="Create your loyalty card" />
-        )}
       </Divided>
 
       <form action={logout} className="mt-6">

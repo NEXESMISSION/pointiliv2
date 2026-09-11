@@ -4,7 +4,8 @@ import { TopBar } from "@/components/nav/TopBar";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Stat";
-import { StampGrid } from "@/components/LoyaltyCard";
+import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
+import { resolveDesign } from "@/lib/card-design";
 import { RedeemNowButton } from "@/components/merchant/RedeemNowButton";
 import { rpc } from "@/lib/session";
 import { cardColor } from "@/lib/constants";
@@ -38,8 +39,8 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
           #{customer.code} · {profile.phone_masked}
         </p>
         {card && (
-          <div className="mt-5 w-full max-w-sm rounded-3xl p-4" style={{ background: c.bg }}>
-            <StampGrid filled={customer.balance} total={required} color={card.color} icon={card.icon} />
+          <div className="mt-5 w-full max-w-sm text-left">
+            <LoyaltyCardVisual design={resolveDesign(card.design, { color: card.color, icon: card.icon })} business={d.business} subtitle={card.description} filled={customer.balance} total={required} rewardName={rewards.find((r) => r.is_primary)?.name} />
           </div>
         )}
       </Card>

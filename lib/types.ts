@@ -1,4 +1,5 @@
 /** Shapes returned by the database functions (snake_case, exactly as returned). */
+import type { CardDesign } from "./card-design";
 
 export type Role = "customer" | "merchant" | "admin";
 
@@ -36,6 +37,7 @@ export type SessionContext = {
     icon: string;
     cooldown_minutes: number;
     active: boolean;
+    design: Partial<CardDesign> | null;
     reward: { id: string; name: string; description: string | null } | null;
   } | null;
   subscription: SubscriptionState | null;
@@ -43,7 +45,7 @@ export type SessionContext = {
 
 export type BusinessMini = { id?: string; name: string; logo_url: string | null; cover_url?: string | null; category: string; address?: string | null; status?: string };
 /** stamps_required is THIS customer's goal (see reward_cost in SQL); card_stamps_required is today's setting. */
-export type CardStyle = { id?: string; name?: string; description?: string | null; stamps_required: number; card_stamps_required?: number; color: string; icon: string; cooldown_minutes?: number; active?: boolean };
+export type CardStyle = { id?: string; name?: string; description?: string | null; stamps_required: number; card_stamps_required?: number; color: string; icon: string; cooldown_minutes?: number; active?: boolean; design?: Partial<CardDesign> | null };
 
 /** merchant_card_impact(): customers mid-card grouped by (their goal, their stamps). */
 export type CardImpact = {

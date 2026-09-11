@@ -35,7 +35,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="mx-auto max-w-4xl">
-      <TopBar title="Customers" large subtitle={`${formatNumber(data.total)} total`} />
+      <TopBar title="Customers" large back="/dashboard" subtitle={`${formatNumber(data.total)} total`} />
 
       <form action="/customers" className="relative mb-3">
         <input type="hidden" name="sort" value={activeSort} />

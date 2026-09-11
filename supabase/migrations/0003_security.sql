@@ -103,6 +103,7 @@ grant execute on function
   public.save_loyalty_card(text, text, int, text, text, text, text, int),
   public.merchant_rewards(),
   public.merchant_card_impact(),
+  public.save_card_design(text, jsonb),
   public.save_reward(uuid, text, text, int, boolean),
   public.merchant_dashboard(),
   public.merchant_activity(text, date, date),

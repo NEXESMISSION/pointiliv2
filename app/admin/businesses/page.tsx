@@ -30,7 +30,7 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
 
   return (
     <div className="animate-fade space-y-4">
-      <TopBar title="Businesses" subtitle={`${formatNumber(items.length)} ${q || filter !== "all" ? "found" : "in total"}`} large />
+      <TopBar back="/admin" title="Businesses" subtitle={`${formatNumber(items.length)} ${q || filter !== "all" ? "found" : "in total"}`} large />
 
       <SearchForm action="/admin/businesses" q={q} placeholder="Search name, owner or phone" hidden={{ filter: filter === "all" ? undefined : filter }} />
       <Segmented

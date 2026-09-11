@@ -37,7 +37,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="mx-auto max-w-3xl">
-      <TopBar title="Activity" large />
+      <TopBar title="Activity" large back="/dashboard" />
       <div className="mb-4">
         <Segmented active={range} items={RANGES.map((r) => ({ ...r, href: `/activity?range=${r.key}` }))} />
       </div>

@@ -44,7 +44,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="animate-fade space-y-4">
-      <TopBar title="Activity" subtitle="Latest 200 events across the platform" large />
+      <TopBar back="/admin" title="Activity" subtitle="Latest 200 events across the platform" large />
       <Segmented active={type} items={TYPES.map((t) => ({ key: t.key, label: t.label, href: t.key === "all" ? "/admin/activity" : `/admin/activity?type=${t.key}` }))} />
 
       {groups.length === 0 ? (

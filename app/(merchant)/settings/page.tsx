@@ -1,4 +1,4 @@
-import { CreditCard, Gift, KeyRound, LogOut, Receipt, Smartphone } from "lucide-react";
+import { CreditCard, Gift, KeyRound, LogOut, Palette, Receipt } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Card, Divided, ListRow, SectionTitle } from "@/components/ui/Card";
@@ -19,7 +19,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-7">
-      <TopBar title="Settings" large />
+      <TopBar title="Settings" large back="/dashboard" />
 
       <section>
         <SectionTitle>Business</SectionTitle>
@@ -33,7 +33,8 @@ export default async function SettingsPage() {
       <section>
         <SectionTitle>Loyalty</SectionTitle>
         <Divided>
-          <ListRow href="/loyalty" icon={<CreditCard className="size-5" />} title="Loyalty card & branding" subtitle={ctx.card ? `${ctx.card.stamps_required} stamps · ${ctx.card.reward?.name ?? ""}` : "Not created yet"} />
+          <ListRow href="/loyalty" icon={<CreditCard className="size-5" />} title="Loyalty card" subtitle={ctx.card ? `${ctx.card.stamps_required} stamps · ${ctx.card.reward?.name ?? ""}` : "Not created yet"} />
+          {ctx.card && <ListRow href="/loyalty/design" icon={<Palette className="size-5" />} title="Design your card" subtitle="Style, colours, stamps" />}
           <ListRow href="/rewards" icon={<Gift className="size-5" />} title="Rewards" />
         </Divided>
       </section>
@@ -58,7 +59,6 @@ export default async function SettingsPage() {
         </Card>
         <Divided className="mt-3">
           <ListRow href="/settings/password" icon={<KeyRound className="size-5" />} title="Change password" />
-          <ListRow href="/customer" icon={<Smartphone className="size-5" />} title="My customer cards" subtitle="Collect stamps at other businesses" />
         </Divided>
       </section>
 

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { NavTracker } from "@/components/nav/BackButton";
 import { siteUrl } from "@/lib/url";
 import "./globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh font-sans">
         <ToastProvider>{children}</ToastProvider>
         <ServiceWorker />
+        <NavTracker />
       </body>
     </html>
   );

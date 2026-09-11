@@ -119,6 +119,10 @@ create index if not exists customers_user_idx on public.customers (user_id);
 -- reward is redeemed.
 alter table public.customers add column if not exists card_target int check (card_target between 1 and 100);
 alter table public.businesses add column if not exists cover_url text;
+
+-- The owner's own card design (template, colours, pattern, stamp look). Always
+-- stored through clean_card_design(), so every key is present and valid.
+alter table public.loyalty_cards add column if not exists design jsonb not null default '{}'::jsonb;
 create index if not exists customers_business_last_idx on public.customers (business_id, last_stamp_at desc);
 
 -- ── rotating QR tokens ──────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { requestResetCode, setNewPassword, verifyResetCode } from "@/app/actions/auth";
 import type { FormState } from "@/app/actions/types";
 import { Alert } from "@/components/ui/Alert";
@@ -9,12 +9,16 @@ import { Field } from "@/components/ui/Field";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { SubmitButton } from "@/components/ui/Button";
+import { useFormAction } from "@/lib/use-form-action";
 import { AuthHeading } from "./AuthShell";
 
 export function ForgotPasswordFlow() {
-  const [reqState, reqAction] = useActionState<FormState, FormData>(requestResetCode, null);
-  const [verState, verAction] = useActionState<FormState, FormData>(verifyResetCode, null);
-  const [pwState, pwAction] = useActionState<FormState, FormData>(setNewPassword, null);
+  const req = useFormAction<FormState>(requestResetCode, null);
+  const ver = useFormAction<FormState>(verifyResetCode, null);
+  const pw = useFormAction<FormState>(setNewPassword, null);
+  const reqState = req.state;
+  const verState = ver.state;
+  const pwState = pw.state;
 
   // The most recent result decides which step is on screen.
   const latest = [reqState, verState, pwState].filter(Boolean).sort((a, b) => (b!.at ?? 0) - (a!.at ?? 0))[0];
@@ -24,7 +28,7 @@ export function ForgotPasswordFlow() {
     return (
       <>
         <AuthHeading title="Choose a new password" subtitle="Use at least 8 characters." />
-        <form action={pwAction} className="space-y-5" noValidate>
+        <form onSubmit={pw.onSubmit} className="space-y-5" noValidate>
           {latest === pwState && pwState?.error && <Alert>{pwState.error}</Alert>}
           <Field label="New password" htmlFor="password" error={pwState?.fields?.password}>
             <PasswordInput autoComplete="new-password" invalid={!!pwState?.fields?.password} />
@@ -32,7 +36,9 @@ export function ForgotPasswordFlow() {
           <Field label="Confirm password" htmlFor="confirm" error={pwState?.fields?.confirm}>
             <PasswordInput name="confirm" autoComplete="new-password" invalid={!!pwState?.fields?.confirm} />
           </Field>
-          <SubmitButton pendingText="Saving…">Save password</SubmitButton>
+          <SubmitButton pending={pw.pending} pendingText="Saving…">
+            Save password
+          </SubmitButton>
         </form>
       </>
     );
@@ -42,19 +48,28 @@ export function ForgotPasswordFlow() {
     return (
       <>
         <CodeIllustration />
-        <AuthHeading title="Enter verification code" subtitle={<>We sent a 6-digit code to <span className="font-semibold text-ink tabular">+216 {reqState?.values?.phone}</span></>} />
+        <AuthHeading
+          title="Enter verification code"
+          subtitle={
+            <>
+              We sent a 6-digit code to <span className="font-semibold text-ink tabular">+216 {reqState?.values?.phone}</span>
+            </>
+          }
+        />
         {reqState?.devCode && latest === reqState && (
           <Alert tone="info" title="Development mode" className="mb-4">
             No SMS provider is configured, so here is the code: <span className="font-mono text-base font-bold tracking-widest">{reqState.devCode}</span>
           </Alert>
         )}
-        <form action={verAction} className="space-y-5" noValidate>
+        <form onSubmit={ver.onSubmit} className="space-y-5" noValidate>
           {latest?.error && latest !== pwState && <Alert>{latest.error}</Alert>}
           <OtpInput invalid={!!verState?.fields?.code} />
           {verState?.fields?.code && <p className="text-center text-sm text-danger-600">{verState.fields.code}</p>}
-          <SubmitButton pendingText="Checking…">Continue</SubmitButton>
+          <SubmitButton pending={ver.pending} pendingText="Checking…">
+            Continue
+          </SubmitButton>
         </form>
-        <form action={reqAction} className="mt-5 text-center">
+        <form onSubmit={req.onSubmit} className="mt-5 text-center">
           <input type="hidden" name="phone" value={reqState?.values?.phone ?? ""} />
           <ResendButton at={reqState?.at} />
         </form>
@@ -66,12 +81,14 @@ export function ForgotPasswordFlow() {
     <>
       <PhoneIllustration />
       <AuthHeading title="Reset your password" subtitle="Enter your phone number and we'll send you a code to reset your password." />
-      <form action={reqAction} className="space-y-5" noValidate>
+      <form onSubmit={req.onSubmit} className="space-y-5" noValidate>
         {latest?.error && <Alert>{latest.error}</Alert>}
         <Field label="Phone number" htmlFor="phone" error={reqState?.fields?.phone}>
-          <PhoneInput key={reqState?.at} defaultValue={reqState?.values?.phone ?? ""} invalid={!!reqState?.fields?.phone} autoFocus />
+          <PhoneInput defaultValue={reqState?.values?.phone ?? ""} invalid={!!reqState?.fields?.phone} autoFocus />
         </Field>
-        <SubmitButton pendingText="Sending…">Send code</SubmitButton>
+        <SubmitButton pending={req.pending} pendingText="Sending…">
+          Send code
+        </SubmitButton>
       </form>
       <p className="mt-6 text-center text-sm">
         <Link href="/customer/login" className="font-semibold text-brand-600 hover:underline">
@@ -128,9 +145,12 @@ function ResendButton({ at }: { at?: number }) {
   useEffect(() => {
     const start = at ?? Date.now();
     const tick = () => setLeft(Math.max(0, 60 - Math.floor((Date.now() - start) / 1000)));
-    tick();
+    const first = setTimeout(tick, 0);
     const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
+    return () => {
+      clearTimeout(first);
+      clearInterval(t);
+    };
   }, [at]);
   if (left > 0) return <p className="text-sm text-muted tabular">Resend code in 00:{String(left).padStart(2, "0")}</p>;
   return (

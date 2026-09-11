@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { useFormAction } from "@/lib/use-form-action";
 import { Check } from "lucide-react";
 import { cancelPlanRequest, requestPlan } from "@/app/actions/merchant";
 import type { FormState } from "@/app/actions/types";
@@ -11,10 +12,10 @@ import { ToastOnResult } from "@/components/ui/Toast";
 import { PAYMENT_METHODS, PLANS, type PaidPlan } from "@/lib/constants";
 
 export function PlanPicker() {
-  const [state, action] = useActionState<FormState, FormData>(requestPlan, null);
+  const { state, onSubmit, pending } = useFormAction<FormState>(requestPlan, null);
   const [plan, setPlan] = useState<PaidPlan>("yearly");
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-4">
       <ToastOnResult result={state} />
       <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Plan">
         {(Object.keys(PLANS) as PaidPlan[]).map((k) => {
@@ -45,7 +46,7 @@ export function PlanPicker() {
           ))}
         </Select>
       </Field>
-      <SubmitButton pendingText="Sending…">
+      <SubmitButton pending={pending} pendingText="Sending…">
         Request {PLANS[plan].name} · {PLANS[plan].price} TND
       </SubmitButton>
     </form>

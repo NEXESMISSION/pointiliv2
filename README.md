@@ -46,6 +46,10 @@ npm run dev                    # http://localhost:3100
 
 **Changing the card later is fair.** Each customer's card remembers the goal it started with (`customers.card_target`). Raising the stamps required never takes a reward away from someone mid-card — they finish at their old goal and the next card uses the new one. Lowering it helps everyone immediately (`reward_cost` = the lower of the two). Extra stamps past a full card carry over. The loyalty page shows who a change affects (`merchant_card_impact`) and asks for confirmation before saving.
 
+**Card design.** Owners design their own card at `/loyalty/design`: a style (Bold, Classic, Soft, Midnight, Photo, Minimal) built from their main colour, then background colour/gradient/pattern, stamp look (icon, their logo, check, heart, star) and colour, light/dark text, cover photo as background, and a short line under the name — with a live preview. Stored as `loyalty_cards.design`, validated by `clean_card_design()` (SQL) and `resolveDesign()` (`lib/card-design.ts`), rendered everywhere by `components/LoyaltyCardVisual.tsx`. New owners land in the designer right after creating their card.
+
+**Navigation & forms.** Every screen except the three home screens (`/customer`, `/dashboard`, `/admin`) has a back button that returns within the visit or to the parent page (`components/nav/BackButton.tsx`; sign-in screens and processed scans are skipped). Server-action forms submit through `lib/use-form-action.ts`, so a failed sign-up or login never clears what was typed.
+
 **Branding.** Owners upload a logo and a cover photo (loyalty page or settings). The browser crops and compresses them (logo 512², cover 1600×700, WebP/JPEG) before upload; they appear on customers' cards and behind the QR screen.
 
 **Billing.** New businesses get a 30-day trial. Plans: 6 Months 80 TND, Yearly 120 TND. The merchant requests a plan (pending payment with a `PTD-XXXXXX` reference); an admin confirms the payment, which adds the period after any time still covered. An expired subscription pauses the QR; customers keep their stamps.

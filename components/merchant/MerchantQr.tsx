@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ChevronLeft, Maximize, Minimize, WifiOff } from "lucide-react";
+import { Check, Maximize, Minimize, WifiOff } from "lucide-react";
+import { BackButton } from "@/components/nav/BackButton";
 import { BusinessAvatar } from "@/components/CardIcon";
 import { Spinner } from "@/components/ui/Spinner";
 import { cardColor, QR_POLL_MS, QR_ROTATE_BEFORE_MS } from "@/lib/constants";
@@ -147,9 +148,7 @@ export function MerchantQr({ businessName, logo, cover, icon, color }: { busines
       <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: `radial-gradient(60% 45% at 50% 42%, ${c.accent}55, transparent 70%)` }} aria-hidden />
 
       <header className="relative z-10 flex items-center gap-2 px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6">
-        <Link href="/dashboard" className="grid size-11 place-items-center rounded-full bg-white/10 backdrop-blur hover:bg-white/15" aria-label="Back to dashboard">
-          <ChevronLeft className="size-6" />
-        </Link>
+        <BackButton fallback="/dashboard" tone="dark" className="size-11" />
         <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
           <BusinessAvatar logo={logo} icon={icon} color={color} size={30} rounded="rounded-full" />
           <p className="truncate text-lg font-semibold">{businessName}</p>

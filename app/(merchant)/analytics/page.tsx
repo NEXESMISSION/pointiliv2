@@ -51,7 +51,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="mx-auto max-w-4xl">
-      <TopBar title="Analytics" large />
+      <TopBar title="Analytics" large back="/dashboard" />
       <div className="mb-5">
         <Segmented active={active} items={RANGES.map((r) => ({ ...r, href: `/analytics?days=${r.key}` }))} />
       </div>

@@ -26,7 +26,7 @@ export default async function BillingPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <TopBar title="Billing" large />
+      <TopBar title="Billing" large back="/dashboard" />
 
       <Card className="p-5">
         <p className="text-sm font-medium text-muted">Your Pointidi plan</p>

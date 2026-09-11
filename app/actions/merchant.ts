@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getContext } from "@/lib/session";
 import { message } from "@/lib/messages";
 import type { RedemptionView } from "@/lib/types";
+import type { CardDesign } from "@/lib/card-design";
 import type { FormState } from "./types";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
@@ -39,8 +40,15 @@ export async function saveLoyaltyCard(_: FormState, fd: FormData): Promise<FormS
   });
   if (!res.ok) return { ok: false, error: message(res.error), values, at: now() };
   revalidatePath("/", "layout");
-  if (res.created) redirect("/dashboard?ready=1");
+  if (res.created) redirect("/loyalty/design?welcome=1");
   return { ok: true, message: "Loyalty card saved", values, at: now() };
+}
+
+/** The owner's own card look. The database validates every field (clean_card_design). */
+export async function saveCardDesign(input: { design: CardDesign; description: string }): Promise<{ ok: boolean; message: string }> {
+  const res = await call("save_card_design", { p_description: input.description, p_design: input.design });
+  revalidatePath("/", "layout");
+  return { ok: res.ok, message: res.ok ? "Card design saved" : message(res.error) };
 }
 
 export async function saveReward(_: FormState, fd: FormData): Promise<FormState> {

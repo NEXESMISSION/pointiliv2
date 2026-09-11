@@ -26,7 +26,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="animate-fade space-y-4">
-      <TopBar title="Payments" subtitle={`${formatNumber(items.length)} ${status === "all" ? (items.length === 1 ? "payment" : "payments") : STATUSES.find((s) => s.key === status)!.label.toLowerCase()}`} large />
+      <TopBar back="/admin" title="Payments" subtitle={`${formatNumber(items.length)} ${status === "all" ? (items.length === 1 ? "payment" : "payments") : STATUSES.find((s) => s.key === status)!.label.toLowerCase()}`} large />
 
       <div className="flex items-center gap-3 rounded-3xl bg-success-50 p-4">
         <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white text-success-600">

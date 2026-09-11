@@ -1,14 +1,12 @@
 "use client";
 
 import { Check, Clock, QrCode, RefreshCw, ScanLine, Store, WifiOff, X } from "lucide-react";
-import { BusinessAvatar } from "@/components/CardIcon";
 import { Confetti } from "@/components/Confetti";
 import { Logo } from "@/components/Logo";
-import { StampGrid } from "@/components/LoyaltyCard";
+import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { Button, LinkButton } from "@/components/ui/Button";
-import { ProgressBar } from "@/components/ui/Stat";
 import { UseRewardButton } from "@/components/customer/UseRewardButton";
-import { cardColor } from "@/lib/constants";
+import { resolveDesign } from "@/lib/card-design";
 import { formatTime } from "@/lib/format";
 import { message } from "@/lib/messages";
 import type { StampResult } from "@/lib/types";
@@ -31,40 +29,26 @@ export function Checking() {
 }
 
 export function StampSuccess({ result }: { result: Extract<StampResult, { ok: true }> }) {
-  const { business, card, customer, next_reward, newly_unlocked } = result;
-  const style = card ?? { stamps_required: 10, color: "indigo", icon: "coffee" };
-  const c = cardColor(style.color);
-  const required = style.stamps_required;
+  const { business, card, customer, next_reward, newly_unlocked, rewards } = result;
+  const total = card?.stamps_required ?? 10;
+  const design = resolveDesign(card?.design, { color: card?.color, icon: card?.icon });
+  const primary = rewards.find((r) => r.is_primary) ?? rewards[0];
   const unlocked = newly_unlocked[0];
 
   return (
     <div className="relative flex flex-1 flex-col items-center overflow-hidden text-center">
       <Confetti count={unlocked ? 60 : 32} />
-      <div className="mt-6 grid size-24 animate-pop place-items-center rounded-full bg-success-500 text-white shadow-[0_12px_30px_-8px_rgb(34_197_94/0.6)]">
-        <Check className="size-12" strokeWidth={3.2} />
+      <div className="mt-2 grid size-20 animate-pop place-items-center rounded-full bg-success-500 text-white shadow-[0_12px_30px_-8px_rgb(34_197_94/0.6)]">
+        <Check className="size-10" strokeWidth={3.2} />
       </div>
-      <h1 className="mt-6 animate-rise text-3xl font-extrabold tracking-tight text-ink">Stamp collected!</h1>
+      <h1 className="mt-4 animate-rise text-3xl font-extrabold tracking-tight text-ink">Stamp collected!</h1>
 
-      <div className="mt-6 flex items-center gap-3">
-        <BusinessAvatar logo={business.logo_url} icon={style.icon} color={style.color} size={48} rounded="rounded-full" />
-        <div className="text-left">
-          <p className="text-lg font-bold text-ink">{business.name}</p>
-          <p className="text-sm font-medium text-body tabular">
-            <span className="font-bold" style={{ color: c.accent }}>
-              {Math.min(customer.balance, required)}
-            </span>{" "}
-            / {required} stamps
-            {customer.balance > required && <span className="text-muted"> · +{customer.balance - required} saved</span>}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-6 w-full rounded-3xl p-4" style={{ background: c.bg }}>
-        <StampGrid filled={customer.balance} total={required} color={style.color} icon={style.icon} animateIndex={Math.min(customer.balance, required) - 1} />
+      <div className="mt-6 w-full text-left">
+        <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} rewardName={primary?.name} animateIndex={Math.min(customer.balance, total) - 1} />
       </div>
 
       {unlocked ? (
-        <div className="mt-6 w-full animate-rise rounded-3xl border-2 border-dashed p-5" style={{ borderColor: c.accent }}>
+        <div className="mt-6 w-full animate-rise rounded-3xl border-2 border-dashed border-success-500 p-5">
           <p className="text-4xl" aria-hidden>
             🎉
           </p>
@@ -76,14 +60,12 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
           </div>
         </div>
       ) : next_reward ? (
-        <div className="mt-6 w-full">
-          <ProgressBar value={customer.balance} max={next_reward.stamps_required} color="var(--color-success-500)" />
-          <p className="mt-3 text-[15px] text-body">
-            <span className="font-bold text-ink">{next_reward.remaining} more stamp{next_reward.remaining > 1 ? "s" : ""}</span>
-            <br />
-            to unlock {next_reward.name}
-          </p>
-        </div>
+        <p className="mt-5 text-[15px] text-body">
+          <span className="font-bold text-ink">
+            {next_reward.remaining} more stamp{next_reward.remaining > 1 ? "s" : ""}
+          </span>{" "}
+          to unlock {next_reward.name}
+        </p>
       ) : null}
 
       <div className="mt-auto w-full space-y-2 pt-8">
@@ -108,7 +90,14 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
       </div>
       <h1 className="mt-6 text-2xl font-bold tracking-tight text-ink">Almost there!</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-body">
-        Create your Pointidi account to collect your stamp{businessName ? <> at <span className="font-semibold text-ink">{businessName}</span></> : null}.
+        Create your Pointidi account to collect your stamp
+        {businessName ? (
+          <>
+            {" "}
+            at <span className="font-semibold text-ink">{businessName}</span>
+          </>
+        ) : null}
+        .
       </p>
       <p className="mx-auto mt-4 flex items-center gap-1.5 rounded-full bg-success-50 px-3 py-1.5 text-sm font-medium text-success-600">
         <Clock className="size-4" /> Your stamp is saved for 20 minutes

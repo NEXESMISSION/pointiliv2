@@ -8,7 +8,7 @@ export const metadata = { title: "More" };
 export default function AdminMorePage() {
   return (
     <div className="animate-fade space-y-5">
-      <TopBar title="More" large />
+      <TopBar back="/admin" title="More" large />
       <Divided>
         <ListRow href="/admin/customers" icon={<Users className="size-5" />} title="Customers" subtitle="Search accounts, reset passwords" />
         <ListRow href="/admin/activity" icon={<Activity className="size-5" />} title="Activity" subtitle="Everything happening on the platform" />

@@ -19,7 +19,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="animate-fade space-y-4">
-      <TopBar title="Customers" subtitle={q ? `${formatNumber(items.length)} found · ${formatNumber(total)} customers in total` : `${formatNumber(total)} customers in total`} large />
+      <TopBar back="/admin" title="Customers" subtitle={q ? `${formatNumber(items.length)} found · ${formatNumber(total)} customers in total` : `${formatNumber(total)} customers in total`} large />
       <SearchForm action="/admin/customers" q={q} placeholder="Search phone or name" />
 
       {items.length === 0 ? (

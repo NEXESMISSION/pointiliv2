@@ -21,7 +21,7 @@ export default async function RewardsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <TopBar title="Rewards" large subtitle="What customers unlock with stamps" />
+      <TopBar title="Rewards" large back="/loyalty" subtitle="What customers unlock with stamps" />
       {!data.card ? (
         <EmptyState icon={<Gift className="size-8" />} title="Create your loyalty card first" action={<LinkButton href="/loyalty" block>Create loyalty card</LinkButton>}>
           Your main reward is set up together with the card.

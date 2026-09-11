@@ -28,7 +28,7 @@ export default async function SystemPage() {
 
   return (
     <div className="animate-fade space-y-6">
-      <TopBar title="System" subtitle="Database health and maintenance" large />
+      <TopBar back="/admin" title="System" subtitle="Database health and maintenance" large />
 
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Database size" value={s.database_size} icon={<Database className="size-5" />} tint="brand" />

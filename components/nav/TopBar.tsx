@@ -1,16 +1,15 @@
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
+import { BackButton } from "./BackButton";
 
-/** Page header: optional back link, title, trailing action. */
+/**
+ * Page header. The back button is always offered: it returns to the previous
+ * screen of this visit, or to `back` (the parent page) when opened directly.
+ */
 export function TopBar({ title, back, action, subtitle, large = false }: { title: ReactNode; back?: string; action?: ReactNode; subtitle?: ReactNode; large?: boolean }) {
   return (
-    <header className="mb-5 flex items-center gap-2 pt-2">
-      {back && (
-        <Link href={back} className="-ml-2 grid size-10 shrink-0 place-items-center rounded-xl text-ink hover:bg-white" aria-label="Back">
-          <ChevronLeft className="size-6" />
-        </Link>
-      )}
+    <header className="mb-5 flex items-center gap-3 pt-2">
+      <BackButton fallback={back} />
       <div className="min-w-0 flex-1">
         <h1 className={`truncate font-bold tracking-tight text-ink ${large ? "text-2xl" : "text-xl"}`}>{title}</h1>
         {subtitle && <p className="truncate text-sm text-muted">{subtitle}</p>}

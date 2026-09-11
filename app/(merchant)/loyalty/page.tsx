@@ -1,9 +1,9 @@
 import { TopBar } from "@/components/nav/TopBar";
 import { Alert } from "@/components/ui/Alert";
-import { BrandingEditor } from "@/components/merchant/BrandingEditor";
 import { LoyaltyCardForm } from "@/components/merchant/LoyaltyCardForm";
 import { requireMerchant, rpc } from "@/lib/session";
 import { CATEGORIES } from "@/lib/constants";
+import { resolveDesign } from "@/lib/card-design";
 import type { CardImpact } from "@/lib/types";
 
 export const metadata = { title: "Loyalty card" };
@@ -15,6 +15,8 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
   const category = ctx.business.category as keyof typeof CATEGORIES;
   const isOwner = ctx.member_role === "owner";
   const midCard = impact?.progress.reduce((a, r) => a + r.n, 0) ?? 0;
+  const icon = card?.icon ?? CATEGORIES[category]?.icon ?? "coffee";
+  const color = card?.color ?? "emerald";
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -22,7 +24,7 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
 
       {welcome && !card && (
         <Alert tone="success" title={`Welcome to Pointidi, ${ctx.business.name}! 🎉`} className="mb-5">
-          Let&apos;s create your loyalty card. The preview shows exactly what your customers will see.
+          First choose the reward and how many stamps it takes. Next you&apos;ll design how your card looks.
         </Alert>
       )}
 
@@ -44,19 +46,19 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
       )}
 
       <LoyaltyCardForm
-        business={{ name: ctx.business.name, logo_url: ctx.business.logo_url, cover_url: ctx.business.cover_url, category: ctx.business.category, address: ctx.business.address }}
+        business={{ name: ctx.business.name, logo_url: ctx.business.logo_url, cover_url: ctx.business.cover_url, category: ctx.business.category }}
+        design={resolveDesign(card?.design, { color, icon })}
         disabled={!isOwner}
         isNew={!card}
         impact={impact}
-        branding={<BrandingEditor logo={ctx.business.logo_url} cover={ctx.business.cover_url} icon={card?.icon ?? CATEGORIES[category]?.icon} color={card?.color ?? "emerald"} disabled={!isOwner} />}
         initial={{
           name: card?.name ?? `${ctx.business.name} Loyalty`,
           description: card?.description ?? "",
           stamps_required: card?.stamps_required ?? 10,
           reward_name: card?.reward?.name ?? "",
           reward_description: card?.reward?.description ?? "",
-          color: card?.color ?? "emerald",
-          icon: card?.icon ?? CATEGORIES[category]?.icon ?? "coffee",
+          color,
+          icon,
           cooldown_minutes: card?.cooldown_minutes ?? 60,
         }}
       />

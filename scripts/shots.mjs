@@ -23,15 +23,20 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUP
 const cleanup = [];
 const problems = [];
 
-async function shot(page, name, path, { wait = 800, full = true } = {}) {
+async function shot(page, name, path, { wait = 800, full = true, noBack = false } = {}) {
   if (path) await page.goto(BASE + path, { waitUntil: "networkidle", timeout: 90000 });
   await page.waitForTimeout(wait);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   const errorScreen = await page.getByText("Something went wrong").count();
+  // Every screen except the home screens offers a way back.
+  const isHome = ["/", "/customer", "/dashboard", "/admin"].includes(new URL(page.url()).pathname);
+  const missingBack = !noBack && !isHome && (await page.locator('button[aria-label="Go back"]').count()) === 0;
   if (overflow > 1) problems.push(`${name}: horizontal overflow ${overflow}px`);
   if (errorScreen) problems.push(`${name}: error screen`);
+  if (missingBack) problems.push(`${name}: no back button`);
   await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: full });
-  console.log(`  ${overflow > 1 || errorScreen ? "✗" : "✓"} ${name}${overflow > 1 ? ` (overflow ${overflow}px)` : ""}`);
+  const bad = overflow > 1 || errorScreen || missingBack;
+  console.log(`  ${bad ? "✗" : "✓"} ${name}${overflow > 1 ? ` (overflow ${overflow}px)` : ""}${missingBack ? " (no back button)" : ""}`);
 }
 
 async function loginUi(page, digits, password, portal = "/login") {
@@ -49,9 +54,32 @@ try {
   console.log("public");
   const pub = await browser.newContext(phone);
   const p = await pub.newPage();
-  for (const [n, path] of [["01-landing", "/"], ["02-how", "/how-it-works"], ["03-pricing", "/pricing"], ["04-customer-login", "/customer/login"], ["05-customer-register", "/customer/register"], ["06-forgot", "/customer/forgot-password"], ["07-business-login", "/login"], ["08-business-register", "/register"]]) {
+  await shot(p, "01-landing", "/", { noBack: true });
+  for (const [n, path] of [["02-how", "/how-it-works"], ["03-pricing", "/pricing"], ["04-customer-login", "/customer/login"], ["05-customer-register", "/customer/register"], ["06-forgot", "/customer/forgot-password"], ["07-business-login", "/login"], ["08-business-register", "/register"]]) {
     await shot(p, n, path);
   }
+
+  // A failed sign-up or login must keep what was typed.
+  await p.goto(BASE + "/customer/register", { waitUntil: "networkidle" });
+  await p.getByLabel("Phone number").fill("20000001");
+  await p.locator('input[name="password"]').fill("keepme-12345");
+  await p.locator('input[name="confirm"]').fill("keepme-12345");
+  await p.getByRole("button", { name: "Create account" }).click();
+  await p.getByText(/already exists/i).waitFor({ timeout: 60000 });
+  const keptPw = await p.locator('input[name="password"]').inputValue();
+  const keptConfirm = await p.locator('input[name="confirm"]').inputValue();
+  const keptPhone = await p.getByLabel("Phone number").inputValue();
+  if (keptPw !== "keepme-12345" || keptConfirm !== "keepme-12345" || !keptPhone.replace(/\D/g, "").includes("20000001")) problems.push("register: typed values were cleared after an error");
+  else console.log("  ✓ sign-up error keeps phone and both passwords");
+  await p.screenshot({ path: join(OUT, "09-register-error.png") });
+
+  await p.goto(BASE + "/customer/login", { waitUntil: "networkidle" });
+  await p.getByLabel("Phone number").fill("20000001");
+  await p.locator('input[name="password"]').fill("definitely-wrong-1");
+  await p.getByRole("button", { name: "Log in" }).click();
+  await p.getByText(/wrong phone number or password/i).waitFor({ timeout: 60000 });
+  if ((await p.locator('input[name="password"]').inputValue()) !== "definitely-wrong-1") problems.push("login: password was cleared after an error");
+  else console.log("  ✓ wrong password keeps what was typed");
 
   // ── merchant ─────────────────────────────────────────────────────────────
   console.log("merchant");
@@ -73,14 +101,20 @@ try {
       `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" rx="96" fill="#1f2937"/><text x="256" y="335" font-size="230" text-anchor="middle" fill="#fbbf24" font-family="Arial" font-weight="700">CB</text></svg>`,
     ),
   ).png().toFile(logoPath);
-  await mp.goto(BASE + "/loyalty", { waitUntil: "networkidle" });
+  await mp.goto(BASE + "/loyalty/design", { waitUntil: "networkidle" });
   await mp.locator('input[type="file"]').nth(0).setInputFiles(coverPath);
   await mp.getByText("Cover photo updated").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(2000);
   await mp.locator('input[type="file"]').nth(1).setInputFiles(logoPath);
   await mp.getByText("Logo updated").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(2500);
-  console.log("  ✓ cover + logo uploaded through the loyalty page");
+  console.log("  ✓ cover + logo uploaded in the card designer");
+  await mp.getByRole("button", { name: /^Photo/ }).click();
+  await mp.getByRole("button", { name: "Save design" }).click();
+  await mp.getByText("Card design saved").waitFor({ timeout: 60000 });
+  await mp.waitForTimeout(1500);
+  console.log("  ✓ card design saved (Photo style)");
+  await shot(mp, "11b-design", null);
 
   for (const [n, path] of [["10-dashboard", "/dashboard"], ["11-loyalty", "/loyalty"], ["12-rewards", "/rewards"], ["13-reward-new", "/rewards/new"], ["14-customers", "/customers"], ["15-activity", "/activity?range=month"], ["16-analytics", "/analytics"], ["17-billing", "/billing"], ["18-settings", "/settings"], ["19-more", "/more"], ["20-redeem", "/redeem"]]) {
     await shot(mp, n, path);

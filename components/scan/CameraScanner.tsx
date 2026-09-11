@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CameraOff, ChevronLeft, ImageUp, X } from "lucide-react";
+import { CameraOff, ImageUp, X } from "lucide-react";
+import { BackButton } from "@/components/nav/BackButton";
 
 type Detector = (source: CanvasImageSource, w: number, h: number) => Promise<string | null>;
 
@@ -133,9 +133,7 @@ export function CameraScanner({ title, hint, backHref, onClose, onText }: { titl
     <div className="fixed inset-0 z-[70] flex flex-col bg-[#0B0D1A] text-white" role="dialog" aria-label={title}>
       <header className="relative z-10 flex items-center gap-2 px-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
         {backHref ? (
-          <Link href={backHref} className={round} aria-label="Back">
-            <ChevronLeft className="size-6" />
-          </Link>
+          <BackButton fallback={backHref} tone="dark" className="size-11" />
         ) : (
           <span className="size-11" />
         )}

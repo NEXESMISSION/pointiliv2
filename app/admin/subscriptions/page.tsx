@@ -28,7 +28,7 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
 
   return (
     <div className="animate-fade space-y-4">
-      <TopBar title="Subscriptions" subtitle={`${formatNumber(items.length)} business${items.length === 1 ? "" : "es"}`} large />
+      <TopBar back="/admin" title="Subscriptions" subtitle={`${formatNumber(items.length)} business${items.length === 1 ? "" : "es"}`} large />
       <Segmented active={filter} items={FILTERS.map((f) => ({ key: f.key, label: f.label, href: f.key === "all" ? "/admin/subscriptions" : `/admin/subscriptions?filter=${f.key}` }))} />
 
       {items.length === 0 ? (

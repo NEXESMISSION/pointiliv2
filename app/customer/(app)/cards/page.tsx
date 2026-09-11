@@ -12,7 +12,7 @@ export default async function CardsPage() {
   const { cards } = await rpc<{ cards: HomeCard[] }>("customer_home");
   return (
     <>
-      <TopBar title="My cards" large subtitle={cards.length ? `${cards.length} loyalty card${cards.length > 1 ? "s" : ""}` : undefined} />
+      <TopBar title="My cards" large back="/customer" subtitle={cards.length ? `${cards.length} loyalty card${cards.length > 1 ? "s" : ""}` : undefined} />
       {cards.length === 0 ? (
         <EmptyState
           icon={<CreditCard className="size-8" />}
