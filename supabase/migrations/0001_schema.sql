@@ -1,9 +1,9 @@
--- Pointidi V1 — tables, indexes, triggers.
+-- Pointili V1 — tables, indexes, triggers.
 -- Re-runnable: every statement is guarded (if not exists / or replace / drop if exists).
 
 -- ── Remove the previous "Pointili Tampon" skeleton, once ────────────────────
--- Its tables were empty. Guarded by `shops`, a table Pointidi never creates, so a
--- re-run of this file never touches Pointidi's own tables.
+-- Its tables were empty. Guarded by `shops`, a table Pointili never creates, so a
+-- re-run of this file never touches Pointili's own tables.
 do $$
 begin
   if to_regclass('public.shops') is not null then

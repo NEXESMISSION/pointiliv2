@@ -1,20 +1,40 @@
-/** The Pointidi mark: a map pin carrying a stamp dot. */
-export function LogoMark({ size = 32, color = "#4536F0", className = "" }: { size?: number; color?: string; className?: string }) {
+/**
+ * The Pointili mark: two stacked loyalty cards, the front one carrying a sparkle.
+ * Vector redraw of brand-mark.webp (96×70). The gap between the cards is a mask,
+ * so the mark sits cleanly on any background.
+ */
+export function LogoMark({ size = 32, tone = "color", className = "" }: { size?: number; tone?: "color" | "white"; className?: string }) {
+  const white = tone === "white";
+  const id = white ? "ptl-w" : "ptl-c";
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" className={className} aria-hidden>
-      <path d="M24 3C14.6 3 7 10.4 7 19.6 7 31.6 21.2 43.3 22.6 44.5a2.2 2.2 0 0 0 2.8 0C26.8 43.3 41 31.6 41 19.6 41 10.4 33.4 3 24 3Z" fill={color} />
-      <circle cx="24" cy="19.5" r="9.5" fill="#fff" />
-      <path d="M20.3 15.2h4.6a4.4 4.4 0 0 1 0 8.8h-2.2v3.2h-2.4v-12Zm2.4 2.2v4.4h2.1a2.2 2.2 0 0 0 0-4.4h-2.1Z" fill={color} />
+    <svg width={size} height={Math.round((size * 70) / 96)} viewBox="0 0 96 70" className={className} aria-hidden>
+      <defs>
+        <linearGradient id={`${id}-back`} x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0" stopColor="#7244EC" />
+          <stop offset="1" stopColor="#4F28C6" />
+        </linearGradient>
+        <linearGradient id={`${id}-front`} x1="0" y1="0" x2="0.25" y2="1">
+          <stop offset="0" stopColor="#7143E6" />
+          <stop offset="1" stopColor="#5029C5" />
+        </linearGradient>
+        <mask id={`${id}-gap`}>
+          <rect width="96" height="70" fill="#fff" />
+          <rect x="-2" y="14" width="86" height="58" rx="10" fill="#000" />
+        </mask>
+      </defs>
+      <rect x="16" y="5" width="72" height="50" rx="7" transform="rotate(8 52 30)" fill={white ? "#FFFFFF" : `url(#${id}-back)`} fillOpacity={white ? 0.55 : 1} mask={`url(#${id}-gap)`} />
+      <rect x="1" y="17" width="80" height="52" rx="8" fill={white ? "#FFFFFF" : `url(#${id}-front)`} />
+      <path d="M41 29C42.2 38.6 44.4 41.2 56 43 44.4 44.8 42.2 47.4 41 57 39.8 47.4 37.6 44.8 26 43 37.6 41.2 39.8 38.6 41 29Z" fill={white ? "#6535E0" : "#FFFFFF"} />
     </svg>
   );
 }
 
 export function Logo({ size = 30, light = false, className = "" }: { size?: number; light?: boolean; className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 ${className}`}>
-      <LogoMark size={size} color={light ? "#8279F9" : "#4536F0"} />
-      <span className={`font-extrabold tracking-tight ${light ? "text-white" : "text-ink"}`} style={{ fontSize: size * 0.8 }}>
-        Pointidi
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      <LogoMark size={Math.round(size * 1.15)} />
+      <span className={`font-extrabold tracking-tight ${light ? "text-white" : "text-ink"}`} style={{ fontSize: size * 0.78 }}>
+        Pointili
       </span>
     </span>
   );

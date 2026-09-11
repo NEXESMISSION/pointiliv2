@@ -25,7 +25,7 @@ export default function Error({ error, retry, reset }: { error: Error & { digest
               Try again
             </Button>
             <LinkButton href="/app" variant="outline" block>
-              Back to Pointidi
+              Back to Pointili
             </LinkButton>
           </div>
           {error.digest && <p className="mt-4 text-xs text-faint">Reference: {error.digest}</p>}

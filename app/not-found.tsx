@@ -21,7 +21,7 @@ export default function NotFound() {
           <p className="mt-2 text-[15px] leading-relaxed text-muted">This page doesn&apos;t exist or has moved. Let&apos;s get you back on track.</p>
           <div className="mt-6 grid gap-2.5">
             <LinkButton href="/app" block>
-              Open Pointidi
+              Open Pointili
             </LinkButton>
             <LinkButton href="/" variant="outline" block>
               Go to homepage

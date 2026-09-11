@@ -28,7 +28,7 @@ const STAMP_OPTIONS: { id: StampStyle; label: string; icon: ReactNode }[] = [
 function guessBrand(d: CardDesign) {
   if (d.template === "bold") return d.bg;
   if (d.template === "classic" || d.template === "pastel") return d.accent;
-  return "#4536F0";
+  return "#6535E0";
 }
 
 export function CardDesigner({ initial, description, business, stampsRequired, rewardName, welcome, disabled, branding }: { initial: CardDesign; description: string; business: Business; stampsRequired: number; rewardName: string; welcome: boolean; disabled?: boolean; branding: ReactNode }) {

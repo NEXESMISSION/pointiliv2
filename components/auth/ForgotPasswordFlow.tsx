@@ -164,9 +164,9 @@ function PhoneIllustration() {
   return (
     <div className="mx-auto mb-6 grid size-28 place-items-center rounded-[2rem] bg-brand-50" aria-hidden>
       <svg viewBox="0 0 64 64" className="size-16">
-        <rect x="18" y="6" width="28" height="52" rx="6" fill="#fff" stroke="#4536F0" strokeWidth="3" />
-        <rect x="23" y="16" width="18" height="12" rx="3" fill="#E3E2FF" />
-        <circle cx="32" cy="40" r="6" fill="#4536F0" />
+        <rect x="18" y="6" width="28" height="52" rx="6" fill="#fff" stroke="#6535E0" strokeWidth="3" />
+        <rect x="23" y="16" width="18" height="12" rx="3" fill="#EBE3FF" />
+        <circle cx="32" cy="40" r="6" fill="#6535E0" />
         <path d="M29.5 40l1.8 1.8 3.2-3.6" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" />
       </svg>
     </div>
@@ -177,9 +177,9 @@ function CodeIllustration() {
   return (
     <div className="mx-auto mb-6 grid size-28 place-items-center rounded-[2rem] bg-brand-50" aria-hidden>
       <svg viewBox="0 0 64 64" className="size-16">
-        <rect x="8" y="14" width="40" height="30" rx="6" fill="#fff" stroke="#4536F0" strokeWidth="3" />
-        <path d="M16 26h8M16 33h16" stroke="#A7A2FD" strokeWidth="3" strokeLinecap="round" />
-        <rect x="30" y="30" width="26" height="20" rx="6" fill="#4536F0" />
+        <rect x="8" y="14" width="40" height="30" rx="6" fill="#fff" stroke="#6535E0" strokeWidth="3" />
+        <path d="M16 26h8M16 33h16" stroke="#B9A1FC" strokeWidth="3" strokeLinecap="round" />
+        <rect x="30" y="30" width="26" height="20" rx="6" fill="#6535E0" />
         <path d="M36 40h2M42 40h2M48 40h2" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
       </svg>
     </div>

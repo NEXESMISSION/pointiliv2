@@ -17,8 +17,8 @@ export function Checking() {
       <Logo size={30} className="mb-16" />
       <div className="relative grid size-40 place-items-center">
         <svg className="absolute inset-0 size-full animate-spin [animation-duration:1.4s]" viewBox="0 0 100 100" aria-hidden>
-          <circle cx="50" cy="50" r="44" fill="none" stroke="#E3E2FF" strokeWidth="5" />
-          <path d="M50 6a44 44 0 0 1 44 44" fill="none" stroke="#4536F0" strokeWidth="5" strokeLinecap="round" />
+          <circle cx="50" cy="50" r="44" fill="none" stroke="#EBE3FF" strokeWidth="5" />
+          <path d="M50 6a44 44 0 0 1 44 44" fill="none" stroke="#6535E0" strokeWidth="5" strokeLinecap="round" />
         </svg>
         <ScanLine className="size-14 text-brand-600" />
       </div>
@@ -90,7 +90,7 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
       </div>
       <h1 className="mt-6 text-2xl font-bold tracking-tight text-ink">Almost there!</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-body">
-        Create your Pointidi account to collect your stamp
+        Create your Pointili account to collect your stamp
         {businessName ? (
           <>
             {" "}

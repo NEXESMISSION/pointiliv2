@@ -5,7 +5,7 @@ import { AdminBottomNav, AdminSideNav } from "@/components/admin/AdminNav";
 import { requireAdmin } from "@/lib/session";
 
 export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s · Pointidi Admin" },
+  title: { default: "Admin", template: "%s · Pointili Admin" },
   robots: { index: false, follow: false },
 };
 

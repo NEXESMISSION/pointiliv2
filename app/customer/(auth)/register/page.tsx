@@ -15,10 +15,10 @@ export default async function CustomerRegister({ searchParams }: { searchParams:
 
   return (
     <AuthShell>
-      <AuthHeading title="Create your account" subtitle="Join Pointidi and start collecting stamps!" />
+      <AuthHeading title="Create your account" subtitle="Join Pointili and start collecting stamps!" />
       {next?.startsWith("/scan/") && (
         <Alert tone="info" className="mb-5">
-          Create your Pointidi account to collect your stamp. It takes 20 seconds, and your stamp is saved meanwhile.
+          Create your Pointili account to collect your stamp. It takes 20 seconds, and your stamp is saved meanwhile.
         </Alert>
       )}
       <RegisterForm next={next} />

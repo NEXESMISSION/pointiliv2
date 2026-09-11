@@ -5,8 +5,12 @@ export function safeNext(next: unknown, fallback = "/customer"): string {
   return next;
 }
 
+/** Canonical origin for metadata, sitemap and share links. On Vercel, falls back to the project's production domain. */
 export function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3100").replace(/\/+$/, "");
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const url = explicit && !(process.env.VERCEL && explicit.includes("localhost")) ? explicit : vercel ? `https://${vercel}` : explicit || "http://localhost:3100";
+  return url.replace(/\/+$/, "");
 }
 
 export function clientIp(h: Headers): string | null {
@@ -26,7 +30,7 @@ export function rewardCodeFromScan(text: string): string | null {
   return /^\d{6}$/.test(digits) ? digits : null;
 }
 
-/** Pull a Pointidi scan token out of whatever a QR decoded to. */
+/** Pull a Pointili scan token out of whatever a QR decoded to. */
 export function tokenFromScan(text: string): string | null {
   const trimmed = text.trim();
   if (TOKEN_RE.test(trimmed)) return trimmed;

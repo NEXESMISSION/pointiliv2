@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** Registers the pass-through service worker that makes Pointidi installable. Silent on failure. */
+/** Registers the pass-through service worker that makes Pointili installable. Silent on failure. */
 export function ServiceWorker() {
   useEffect(() => {
     if (!("serviceWorker" in navigator) || process.env.NODE_ENV !== "production") return;

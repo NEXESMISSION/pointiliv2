@@ -23,7 +23,7 @@ export default async function CardsPage() {
             </LinkButton>
           }
         >
-          Your card appears here after your first stamp at a Pointidi business.
+          Your card appears here after your first stamp at a Pointili business.
         </EmptyState>
       ) : (
         <div className="space-y-3">

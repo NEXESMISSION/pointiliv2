@@ -153,7 +153,7 @@ export function RedeemConsole({ initialPending, initialFound, initialError, auto
           onClose={() => setScanning(false)}
           onText={(text) => {
             const value = rewardCodeFromScan(text);
-            if (!value) return tokenFromScan(text) ? "That's your stamp QR — scan the customer's reward QR." : "That isn't a Pointidi reward QR.";
+            if (!value) return tokenFromScan(text) ? "That's your stamp QR — scan the customer's reward QR." : "That isn't a Pointili reward QR.";
             setScanning(false);
             check(value);
             return null;

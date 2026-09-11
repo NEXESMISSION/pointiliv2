@@ -16,7 +16,7 @@ export default async function AdminDashboard() {
 
   return (
     <div className="animate-fade space-y-6">
-      <TopBar title="Pointidi Admin" subtitle="Everything happening on the platform" large />
+      <TopBar title="Pointili Admin" subtitle="Everything happening on the platform" large />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard label="Businesses" value={formatNumber(o.businesses)} icon={<Store className="size-5" />} tint="brand" sub={o.suspended_businesses ? `${o.suspended_businesses} suspended` : undefined} />
@@ -71,7 +71,7 @@ export default async function AdminDashboard() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-medium text-ink">{activityLabel(a.type)}</span>
                     <span className="block truncate text-sm text-muted">
-                      {a.business_name ?? "Pointidi"}
+                      {a.business_name ?? "Pointili"}
                       {a.customer_code != null && ` · #${a.customer_code}`}
                     </span>
                   </span>

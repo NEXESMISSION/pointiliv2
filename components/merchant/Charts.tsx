@@ -1,6 +1,6 @@
 /** Small, dependency-free SVG charts (server-rendered). */
 
-export function BarChart({ data, color = "#4536F0", height = 140, label }: { data: { label: string; value: number }[]; color?: string; height?: number; label: string }) {
+export function BarChart({ data, color = "#6535E0", height = 140, label }: { data: { label: string; value: number }[]; color?: string; height?: number; label: string }) {
   const max = Math.max(1, ...data.map((d) => d.value));
   const n = data.length || 1;
   const gap = n > 40 ? 1 : 3;
@@ -26,7 +26,7 @@ export function BarChart({ data, color = "#4536F0", height = 140, label }: { dat
   );
 }
 
-export function Donut({ a, b, aLabel, bLabel, aColor = "#4536F0", bColor = "#A7A2FD" }: { a: number; b: number; aLabel: string; bLabel: string; aColor?: string; bColor?: string }) {
+export function Donut({ a, b, aLabel, bLabel, aColor = "#6535E0", bColor = "#B9A1FC" }: { a: number; b: number; aLabel: string; bLabel: string; aColor?: string; bColor?: string }) {
   const total = a + b;
   const pa = total ? a / total : 0;
   const r = 36;

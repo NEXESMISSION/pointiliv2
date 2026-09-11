@@ -7,14 +7,14 @@ import { PLANS, TRIAL_DAYS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: `Two simple Pointidi plans: ${PLANS.six_month.price} TND for 6 months or ${PLANS.yearly.price} TND per year. Start with a ${TRIAL_DAYS}-day free trial, no card required.`,
+  description: `Two simple Pointili plans: ${PLANS.six_month.price} TND for 6 months or ${PLANS.yearly.price} TND per year. Start with a ${TRIAL_DAYS}-day free trial, no card required.`,
   alternates: { canonical: "/pricing" },
 };
 
 const FAQ = [
   {
     q: "How do customers join?",
-    a: "They scan your Pointidi QR with their phone camera and sign up with their phone number. It takes under a minute, and there's no app to download.",
+    a: "They scan your Pointili QR with their phone camera and sign up with their phone number. It takes under a minute, and there's no app to download.",
   },
   {
     q: "How do I pay?",

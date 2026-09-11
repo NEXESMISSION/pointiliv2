@@ -21,7 +21,7 @@ export const PAYMENT_METHODS = {
 
 /** Card styles. Inline colours (not class names) so any value renders without a Tailwind safelist. */
 export const CARD_COLORS = {
-  indigo: { label: "Indigo", bg: "#EEEEFF", accent: "#4536F0", soft: "#DCDAFF" },
+  indigo: { label: "Indigo", bg: "#EEEEFF", accent: "#6535E0", soft: "#DCDAFF" },
   emerald: { label: "Mint", bg: "#E6F8F0", accent: "#0E9F6E", soft: "#C5EEDD" },
   amber: { label: "Honey", bg: "#FFF4DE", accent: "#D97706", soft: "#FCE3B0" },
   orange: { label: "Peach", bg: "#FFEFE5", accent: "#EA580C", soft: "#FDD5BC" },

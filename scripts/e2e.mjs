@@ -1,5 +1,5 @@
 /**
- * Pointidi acceptance test (spec §50) + the security properties that matter,
+ * Pointili acceptance test (spec §50) + the security properties that matter,
  * run against the real Supabase project through the same RPCs the app calls.
  *
  *   npm run test:e2e

@@ -1,5 +1,5 @@
 /**
- * Demo merchant "Café Bonheur" for trying Pointidi without a second phone.
+ * Demo merchant "Café Bonheur" for trying Pointili without a second phone.
  *
  *   node scripts/demo.mjs            # ensure the demo merchant exists, print a fresh scan URL
  *   node scripts/demo.mjs --url-only # just the scan URL (for scripting)

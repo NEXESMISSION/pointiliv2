@@ -1,7 +1,7 @@
 /**
  * Apply supabase/migrations/*.sql in name order (every file is idempotent, so a
  * second run is a no-op), promote ADMIN_PHONES / ADMIN_EMAILS to admin, and put
- * the auth settings Pointidi depends on in place.
+ * the auth settings Pointili depends on in place.
  *
  *   npm run migrate              # everything
  *   npm run migrate -- 0002      # only files starting with 0002 (still promotes admins + auth config)

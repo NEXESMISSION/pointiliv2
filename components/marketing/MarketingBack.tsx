@@ -9,7 +9,7 @@ export function MarketingBack() {
   if (pathname === "/") return null;
   return (
     <span className="md:hidden">
-      <BackButton fallback="/" tone="dark" />
+      <BackButton fallback="/" />
     </span>
   );
 }

@@ -4,6 +4,7 @@ import { TopBar } from "@/components/nav/TopBar";
 import { Card, Divided, ListRow } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Stat";
 import { NameForm } from "@/components/customer/NameForm";
+import { InstallRow } from "@/components/InstallPrompt";
 import { requireUser } from "@/lib/session";
 import { formatPhone } from "@/lib/phone";
 import { initials } from "@/lib/format";
@@ -18,7 +19,7 @@ export default async function ProfilePage() {
       <TopBar title="Your profile" large back="/customer" />
       <Card className="flex flex-col items-center p-6 text-center">
         <Avatar label={initials(u.full_name, "P")} size={72} />
-        <p className="mt-3 text-lg font-bold text-ink">{u.full_name || "Pointidi member"}</p>
+        <p className="mt-3 text-lg font-bold text-ink">{u.full_name || "Pointili member"}</p>
         {u.phone && <p className="text-muted tabular">{formatPhone(u.phone)}</p>}
         <div className="mt-5 w-full">
           <NameForm defaultValue={u.full_name ?? ""} />
@@ -32,7 +33,8 @@ export default async function ProfilePage() {
       </Divided>
 
       <Divided className="mt-5">
-        <ListRow href="/how-it-works" icon={<CircleHelp className="size-5" />} title="How Pointidi works" />
+        <InstallRow />
+        <ListRow href="/how-it-works" icon={<CircleHelp className="size-5" />} title="How Pointili works" />
       </Divided>
 
       <form action={logout} className="mt-6">

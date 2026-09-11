@@ -6,6 +6,8 @@ import { Logo } from "@/components/Logo";
 import { requireMerchant } from "@/lib/session";
 import { formatLongDate } from "@/lib/format";
 
+export const metadata = { robots: { index: false, follow: false } };
+
 export default async function MerchantLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireMerchant();
   const sub = ctx.subscription;
@@ -36,17 +38,17 @@ export default async function MerchantLayout({ children }: { children: React.Rea
       />
       <div className="lg:pl-64">
         {suspended ? (
-          <Banner tone="danger">Your business is suspended. Please contact Pointidi support.</Banner>
+          <Banner tone="danger">Your business is suspended. Please contact Pointili support.</Banner>
         ) : sub && !sub.open ? (
           <Banner tone="danger" href="/billing" cta="Renew">
-            Your Pointidi subscription has expired. Your QR is paused; customers keep their stamps.
+            Your Pointili subscription has expired. Your QR is paused; customers keep their stamps.
           </Banner>
         ) : sub?.status === "expiring_soon" ? (
           <Banner tone="warning" href="/billing" cta={sub.plan === "trial" ? "Choose a plan" : "Renew"}>
             {sub.plan === "trial" ? "Your free trial" : "Your plan"} ends {formatLongDate(sub.expires_at)} ({sub.days_left} day{sub.days_left === 1 ? "" : "s"} left).
           </Banner>
         ) : null}
-        <main className="mx-auto w-full max-w-5xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-12 lg:pt-8">{children}</main>
+        <main className="mx-auto w-full max-w-4xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-12 lg:pt-8">{children}</main>
       </div>
       <MerchantNav />
     </div>

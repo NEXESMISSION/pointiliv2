@@ -29,7 +29,7 @@ export default async function BillingPage() {
       <TopBar title="Billing" large back="/dashboard" />
 
       <Card className="p-5">
-        <p className="text-sm font-medium text-muted">Your Pointidi plan</p>
+        <p className="text-sm font-medium text-muted">Your Pointili plan</p>
         <div className="mt-2 flex items-start justify-between gap-3">
           <div>
             <p className="text-2xl font-extrabold uppercase tracking-tight text-ink">{PLAN_LABEL[s.plan ?? ""] ?? "No plan"}</p>
@@ -60,7 +60,7 @@ export default async function BillingPage() {
           <p className="mt-1">
             Reference: <span className="rounded-lg bg-white px-2 py-0.5 font-mono font-bold tracking-wider text-ink">{pending.payment_reference}</span>
           </p>
-          <p className="mt-1">Quote this reference when you pay. Your plan activates as soon as Pointidi confirms the payment.{support ? ` Contact: ${support}` : ""}</p>
+          <p className="mt-1">Quote this reference when you pay. Your plan activates as soon as Pointili confirms the payment.{support ? ` Contact: ${support}` : ""}</p>
         </Alert>
       )}
 

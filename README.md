@@ -1,4 +1,4 @@
-# Pointidi
+# Pointili
 
 Mobile-first PWA loyalty cards for local businesses.
 **Customer:** Scan → Stamp → Done. **Merchant:** Open QR → leave it running.

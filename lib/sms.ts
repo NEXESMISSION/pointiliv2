@@ -8,7 +8,7 @@ export type SmsOutcome = { sent: true } | { sent: false; devCode?: string };
  * screen can show it. In production without a provider nothing is exposed.
  */
 export async function sendResetCode(phone: string, code: string): Promise<SmsOutcome> {
-  const body = `Pointidi: your password reset code is ${code}. It expires in 10 minutes.`;
+  const body = `Pointili: your password reset code is ${code}. It expires in 10 minutes.`;
 
   if (process.env.SMS_PROVIDER === "twilio" && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) {
     const sid = process.env.TWILIO_ACCOUNT_SID;

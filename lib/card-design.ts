@@ -25,7 +25,7 @@ export type CardDesign = {
 };
 
 export const SWATCHES = [
-  "#4536F0", "#7C3AED", "#DB2777", "#E11D48", "#EA580C", "#D97706",
+  "#6535E0", "#7C3AED", "#DB2777", "#E11D48", "#EA580C", "#D97706",
   "#65A30D", "#0E9F6E", "#0891B2", "#0284C7", "#6B4226", "#334155",
   "#111827", "#F5C451", "#FDF6EC", "#FFFFFF",
 ];
@@ -70,7 +70,7 @@ export const TEMPLATES: Record<TemplateId, { label: string; hint: string; make: 
 
 /** Any stored/partial design (or a card from before designs existed) → a complete, valid design. */
 export function resolveDesign(raw: Partial<CardDesign> | null | undefined, legacy?: { color?: string | null; icon?: string | null }): CardDesign {
-  const brand = CARD_COLORS[(legacy?.color ?? "indigo") as keyof typeof CARD_COLORS]?.accent ?? "#4536F0";
+  const brand = CARD_COLORS[(legacy?.color ?? "indigo") as keyof typeof CARD_COLORS]?.accent ?? "#6535E0";
   const legacyIcon = (CARD_ICONS as readonly string[]).includes(legacy?.icon ?? "") ? (legacy!.icon as CardIconName) : "coffee";
   const r = raw ?? {};
   const has = Object.keys(r).length > 0;

@@ -19,7 +19,7 @@ export function QrScanner() {
           return null;
         }
         if (rewardCodeFromScan(text)) return "That's a reward QR — the staff scans it.";
-        return "That isn't a Pointidi QR code.";
+        return "That isn't a Pointili QR code.";
       }}
     />
   );

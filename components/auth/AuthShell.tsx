@@ -12,7 +12,7 @@ export function AuthShell({ children, wide = false, back = "/" }: { children: Re
       >
         <div className="mb-6 flex h-11 items-center">
           <BackButton fallback={back} />
-          <Link href="/" className="mx-auto rounded-xl pr-10" aria-label="Pointidi home">
+          <Link href="/" className="mx-auto rounded-xl pr-10" aria-label="Pointili home">
             <Logo size={32} />
           </Link>
         </div>
@@ -24,9 +24,9 @@ export function AuthShell({ children, wide = false, back = "/" }: { children: Re
 
 export function AuthHeading({ title, subtitle }: { title: ReactNode; subtitle?: ReactNode }) {
   return (
-    <div className="mb-7">
+    <div className="mb-7 text-center">
       <h1 className="text-[1.65rem] font-bold leading-tight tracking-tight text-ink">{title}</h1>
-      {subtitle && <p className="mt-1.5 text-[15px] text-muted">{subtitle}</p>}
+      {subtitle && <p className="mx-auto mt-1.5 max-w-xs text-[15px] text-muted">{subtitle}</p>}
     </div>
   );
 }

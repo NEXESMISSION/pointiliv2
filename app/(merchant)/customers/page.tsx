@@ -19,7 +19,7 @@ const SORTS = [
   { key: "rewards", label: "Rewards" },
 ];
 
-const AVATAR_COLORS = ["#4536F0", "#0E9F6E", "#D97706", "#E11D48", "#0284C7", "#7C3AED"];
+const AVATAR_COLORS = ["#6535E0", "#0E9F6E", "#D97706", "#E11D48", "#0284C7", "#7C3AED"];
 
 export default async function CustomersPage({ searchParams }: { searchParams: Promise<{ q?: string; sort?: string }> }) {
   const { q = "", sort = "recent" } = await searchParams;

@@ -1,11 +1,11 @@
 /*
- * Pointidi service worker.
+ * Pointili service worker.
  *
  * Deliberately minimal: every request goes straight to the network so stamp
  * balances, rewards and the rotating QR are always live. The only thing cached
  * is a tiny offline page, served when a top-level navigation fails.
  */
-const CACHE = "pointidi-offline-v1";
+const CACHE = "pointili-offline-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

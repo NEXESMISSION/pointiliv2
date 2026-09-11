@@ -174,7 +174,7 @@ export function MerchantQr({ businessName, logo, cover, icon, color }: { busines
           className={`relative mt-[3vh] aspect-square w-[min(80vw,52vh,34rem)] rounded-[2rem] bg-white p-[5%] shadow-[0_30px_80px_-20px_rgb(0_0_0/0.6)] transition-[box-shadow,transform] duration-300 ${flashing ? "scale-[1.02] ring-8 ring-success-500" : ""}`}
         >
           {token && !error ? (
-            <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" aria-label="Pointidi stamp QR code" />
+            <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" aria-label="Pointili stamp QR code" />
           ) : error ? (
             <div className="grid size-full place-items-center p-4 text-center text-ink">
               <div>

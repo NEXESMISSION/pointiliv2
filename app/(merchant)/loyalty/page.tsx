@@ -23,7 +23,7 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
       <TopBar title={card ? "Loyalty card" : "Create loyalty card"} back="/dashboard" />
 
       {welcome && !card && (
-        <Alert tone="success" title={`Welcome to Pointidi, ${ctx.business.name}! 🎉`} className="mb-5">
+        <Alert tone="success" title={`Welcome to Pointili, ${ctx.business.name}! 🎉`} className="mb-5">
           First choose the reward and how many stamps it takes. Next you&apos;ll design how your card looks.
         </Alert>
       )}

@@ -68,7 +68,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                           {a.customer_code != null && <span className="font-normal text-muted"> · #{a.customer_code}</span>}
                         </span>
                         <span className="block truncate text-sm text-muted">
-                          {a.business_name ?? "Pointidi"}
+                          {a.business_name ?? "Pointili"}
                           {extra && ` · ${extra}`}
                         </span>
                       </span>

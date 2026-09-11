@@ -255,7 +255,7 @@ export async function registerBusiness(_: FormState, fd: FormData): Promise<Form
     });
     if (error) {
       if (/already|registered|exists|duplicate|unique/i.test(error.message)) {
-        return { error: "This phone number already has a Pointidi account. Log in first, then create your business.", values, at: now() };
+        return { error: "This phone number already has a Pointili account. Log in first, then create your business.", values, at: now() };
       }
       console.error("[register-business]", error.message);
       return { error: message("network"), values, at: now() };

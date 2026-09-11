@@ -34,22 +34,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-6">
-      <header className="pt-3 lg:pt-0">
-        <h1 className="text-2xl font-bold tracking-tight text-ink">
+      <header className="flex flex-col items-center pt-4 text-center lg:pt-0">
+        <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card?.icon} color={ctx.card?.color} size={56} rounded="rounded-2xl" />
+        <p className="mt-3 text-sm text-muted">
           {greeting()}
           {firstName ? `, ${firstName}` : ""} 👋
-        </h1>
-        <div className="mt-3 flex items-center gap-3">
-          <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card?.icon} color={ctx.card?.color} size={44} rounded="rounded-full" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-lg font-bold text-ink">{ctx.business.name}</p>
-            {ctx.subscription && (
-              <p className="flex items-center gap-2 text-sm text-muted">
-                {PLAN_LABEL[ctx.subscription.plan ?? ""] ?? "No plan"} <SubscriptionBadge status={ctx.subscription.status} plan={ctx.subscription.plan} />
-              </p>
-            )}
-          </div>
-        </div>
+        </p>
+        <h1 className="mt-0.5 max-w-full truncate text-2xl font-bold tracking-tight text-ink">{ctx.business.name}</h1>
+        {ctx.subscription && (
+          <p className="mt-1.5 flex items-center gap-2 text-sm text-muted">
+            {PLAN_LABEL[ctx.subscription.plan ?? ""] ?? "No plan"} <SubscriptionBadge status={ctx.subscription.status} plan={ctx.subscription.plan} />
+          </p>
+        )}
       </header>
 
       {ready && ctx.card && (

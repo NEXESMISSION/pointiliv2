@@ -1,21 +1,21 @@
 import type { ReactNode } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
+/** Clean white tiles; the tint only colours the icon. */
 const tints = {
-  brand: { box: "bg-brand-50", icon: "bg-white text-brand-600" },
-  green: { box: "bg-success-50", icon: "bg-white text-success-600" },
-  amber: { box: "bg-warning-50", icon: "bg-white text-warning-700" },
-  rose: { box: "bg-[#FFEEF6]", icon: "bg-white text-[#DB2777]" },
-  white: { box: "bg-white border border-line/80 shadow-card", icon: "bg-canvas text-body" },
+  brand: "bg-brand-50 text-brand-600",
+  green: "bg-success-50 text-success-600",
+  amber: "bg-warning-50 text-warning-700",
+  rose: "bg-[#FFEEF6] text-[#DB2777]",
+  white: "bg-canvas text-body",
 } as const;
 
 export function StatCard({ label, value, icon, tint = "white", change, sub }: { label: string; value: ReactNode; icon?: ReactNode; tint?: keyof typeof tints; change?: number | null; sub?: ReactNode }) {
-  const t = tints[tint];
   return (
-    <div className={`min-w-0 rounded-3xl p-4 ${t.box}`}>
-      {icon && <span className={`mb-3 grid size-10 place-items-center rounded-xl ${t.icon}`}>{icon}</span>}
-      <span className="block text-[1.7rem] font-bold leading-none tracking-tight text-ink tabular">{value}</span>
-      <span className="mt-1.5 block text-[13px] font-medium leading-snug text-body">{label}</span>
+    <div className="min-w-0 rounded-3xl border border-line bg-white p-4 shadow-card">
+      {icon && <span className={`mb-3 grid size-9 place-items-center rounded-xl ${tints[tint]}`}>{icon}</span>}
+      <span className="block text-[1.65rem] font-bold leading-none tracking-tight text-ink tabular">{value}</span>
+      <span className="mt-1.5 block text-[13px] font-medium leading-snug text-muted">{label}</span>
       {(change != null || sub) && (
         <div className="mt-2 flex items-center gap-1.5 text-xs">
           {change != null && (

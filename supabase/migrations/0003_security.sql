@@ -1,4 +1,4 @@
--- Pointidi V1 — Row Level Security, grants, storage. Re-runnable.
+-- Pointili V1 — Row Level Security, grants, storage. Re-runnable.
 --
 -- Model: the browser never writes a table. Every mutation is a security-definer
 -- function that identifies the caller with auth.uid(). Tables are readable only

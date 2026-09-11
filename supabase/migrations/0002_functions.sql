@@ -1,4 +1,4 @@
--- Pointidi V1 — business logic. Every value-changing operation lives here, runs
+-- Pointili V1 — business logic. Every value-changing operation lives here, runs
 -- atomically inside one transaction, and identifies the caller with auth.uid():
 -- a browser-supplied user id, business id or role is never trusted.
 -- Re-runnable (create or replace).
@@ -1073,7 +1073,7 @@ begin
 end $$;
 
 -- Merchant chooses a plan: a pending payment with a reference to quote when paying.
--- Pointidi confirms it from the admin panel, which activates the period.
+-- Pointili confirms it from the admin panel, which activates the period.
 create or replace function public.request_plan(p_plan text, p_method text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare v_biz uuid := public.require_business(true); v_ref text; v_i int := 0; v_id uuid;
@@ -1481,7 +1481,7 @@ create or replace function public.clean_card_design(p jsonb) returns jsonb
 language sql immutable set search_path = '' as $$
   select jsonb_build_object(
     'template', case when p ->> 'template' in ('bold', 'classic', 'pastel', 'midnight', 'photo', 'minimal') then p ->> 'template' else 'bold' end,
-    'bg', case when p ->> 'bg' ~ '^#[0-9A-Fa-f]{6}$' then upper(p ->> 'bg') else '#4536F0' end,
+    'bg', case when p ->> 'bg' ~ '^#[0-9A-Fa-f]{6}$' then upper(p ->> 'bg') else '#6535E0' end,
     'bg2', case when p ->> 'bg2' ~ '^#[0-9A-Fa-f]{6}$' then upper(p ->> 'bg2') end,
     'accent', case when p ->> 'accent' ~ '^#[0-9A-Fa-f]{6}$' then upper(p ->> 'accent') else '#FFFFFF' end,
     'text', case when p ->> 'text' in ('light', 'dark') then p ->> 'text' else 'light' end,

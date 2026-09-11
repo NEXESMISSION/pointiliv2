@@ -109,10 +109,10 @@ try {
   await mp.getByText("Logo updated").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(2500);
   console.log("  ✓ cover + logo uploaded in the card designer");
+  // Always make a real change: note the SAVED pattern first (picking Photo resets it), then set the opposite.
+  const savedDots = (await mp.getByRole("button", { name: "Dots", exact: true }).getAttribute("aria-pressed")) === "true";
   await mp.getByRole("button", { name: /^Photo/ }).click();
-  // Always make a real change (a previous run may already have saved Photo): flip the pattern.
-  const dotsOn = (await mp.getByRole("button", { name: "Dots", exact: true }).getAttribute("aria-pressed")) === "true";
-  await mp.getByRole("button", { name: dotsOn ? "None" : "Dots", exact: true }).click();
+  await mp.getByRole("button", { name: savedDots ? "None" : "Dots", exact: true }).click();
   await mp.getByRole("button", { name: "Save design" }).click();
   await mp.getByText("Card design saved").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(1500);
@@ -123,7 +123,7 @@ try {
     await shot(mp, n, path);
   }
   await mp.goto(BASE + "/qr", { waitUntil: "domcontentloaded" });
-  await mp.waitForSelector('[aria-label="Pointidi stamp QR code"] svg', { timeout: 30000 });
+  await mp.waitForSelector('[aria-label="Pointili stamp QR code"] svg', { timeout: 30000 });
   await shot(mp, "21-qr", null, { wait: 500, full: false });
 
   // the scan URL the merchant screen is showing right now

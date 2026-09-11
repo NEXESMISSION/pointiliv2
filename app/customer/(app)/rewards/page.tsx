@@ -41,7 +41,7 @@ export default async function RewardsPage() {
       <TopBar title="Rewards" large back="/customer" />
       {nothing ? (
         <EmptyState icon={<Gift className="size-8" />} title="No rewards yet" action={<LinkButton href="/customer/scan" block>Scan a QR code</LinkButton>}>
-          Collect stamps at Pointidi businesses to unlock free treats.
+          Collect stamps at Pointili businesses to unlock free treats.
         </EmptyState>
       ) : (
         <div className="space-y-7">
