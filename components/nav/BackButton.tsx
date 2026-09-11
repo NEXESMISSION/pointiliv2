@@ -74,9 +74,9 @@ export function BackButton({ fallback, tone = "light", className = "" }: { fallb
         }
       }}
       aria-label="Go back"
-      className={`grid size-10 shrink-0 place-items-center rounded-full transition active:scale-95 ${tone === "dark" ? "bg-white/10 text-white backdrop-blur hover:bg-white/20" : "bg-white text-ink shadow-card hover:bg-canvas"} ${className}`}
+      className={`grid size-10 shrink-0 place-items-center rounded-full transition-colors active:opacity-70 ${tone === "dark" ? "bg-white/10 text-white backdrop-blur hover:bg-white/20" : "text-ink hover:bg-black/[0.05]"} ${className}`}
     >
-      <ChevronLeft className="size-6" />
+      <ChevronLeft className="size-[22px]" strokeWidth={2.2} />
     </button>
   );
 }

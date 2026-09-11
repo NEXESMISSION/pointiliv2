@@ -23,11 +23,8 @@ export default function MorePage() {
       </Divided>
       <form action={logout} className="mt-4">
         <Divided>
-          <button type="submit" className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left hover:bg-canvas/70">
-            <span className="grid size-10 place-items-center rounded-2xl bg-danger-50 text-danger-600">
-              <LogOut className="size-5" />
-            </span>
-            <span className="text-[15px] font-medium text-danger-600">Log out</span>
+          <button type="submit" className="flex min-h-14 w-full items-center justify-center gap-2 px-4 text-[15px] font-medium text-danger-600 hover:bg-danger-50/60">
+            <LogOut className="size-[18px]" /> Log out
           </button>
         </Divided>
       </form>

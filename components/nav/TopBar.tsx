@@ -9,35 +9,37 @@ import { BackButton } from "./BackButton";
  */
 export function TopBar({ title, back, action, subtitle, large = false }: { title: ReactNode; back?: string; action?: ReactNode; subtitle?: ReactNode; large?: boolean }) {
   return (
-    <header className="mb-6 grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 pt-2">
+    <header className="mb-5 grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2 pt-1">
       <span className="flex justify-start">
         <BackButton fallback={back} />
       </span>
       <div className="min-w-0 text-center">
-        <h1 className={`truncate font-bold tracking-tight text-ink ${large ? "text-xl" : "text-lg"}`}>{title}</h1>
-        {subtitle && <p className="truncate text-[13px] text-muted">{subtitle}</p>}
+        <h1 className={`truncate font-semibold tracking-tight text-ink ${large ? "text-lg" : "text-[17px]"}`}>{title}</h1>
+        {subtitle && <p className="truncate text-xs text-muted">{subtitle}</p>}
       </div>
       <span className="flex justify-end">{action}</span>
     </header>
   );
 }
 
-/** Link-based filter tabs (state lives in the URL, so it survives refresh and back). */
+/** Link-based filter tabs as a quiet segmented control (state lives in the URL). */
 export function Segmented({ items, active }: { items: { href: string; label: string; key: string }[]; active: string }) {
   return (
-    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:justify-center">
-      {items.map((it) => (
-        <Link
-          key={it.key}
-          href={it.href}
-          scroll={false}
-          replace
-          className={`h-9 shrink-0 rounded-full px-4 text-sm font-semibold leading-9 transition ${it.key === active ? "bg-ink text-white" : "border border-line bg-white text-body hover:bg-canvas"}`}
-          aria-current={it.key === active ? "true" : undefined}
-        >
-          {it.label}
-        </Link>
-      ))}
+    <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
+      <div className="inline-flex min-w-full gap-1 rounded-xl bg-black/[0.045] p-1 sm:min-w-0">
+        {items.map((it) => (
+          <Link
+            key={it.key}
+            href={it.href}
+            scroll={false}
+            replace
+            className={`h-8 flex-1 shrink-0 whitespace-nowrap rounded-lg px-3 text-center text-[13px] font-medium leading-8 transition-colors ${it.key === active ? "bg-white text-ink shadow-card" : "text-muted hover:text-ink"}`}
+            aria-current={it.key === active ? "true" : undefined}
+          >
+            {it.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

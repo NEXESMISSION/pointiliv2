@@ -15,12 +15,8 @@ export function CustomerNav() {
         { href: "/customer/profile", label: "Profile", icon: User },
       ]}
       center={
-        <Link
-          href="/customer/scan"
-          aria-label="Scan QR code"
-          className="-mt-5 grid size-15 place-items-center rounded-full bg-brand-600 text-white shadow-brand ring-4 ring-white transition active:scale-95"
-        >
-          <ScanLine className="size-7" />
+        <Link href="/customer/scan" aria-label="Scan QR code" className="-mt-4 grid size-14 place-items-center rounded-2xl bg-brand-600 text-white shadow-brand ring-4 ring-white transition active:scale-95">
+          <ScanLine className="size-6" />
         </Link>
       }
     />

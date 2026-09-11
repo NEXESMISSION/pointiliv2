@@ -22,15 +22,17 @@ export function PlanPicker() {
           const p = PLANS[k];
           const on = plan === k;
           return (
-            <label key={k} className={`relative block cursor-pointer rounded-3xl border-2 bg-white p-5 transition ${on ? "border-brand-600 shadow-brand/30 shadow-lg" : "border-line"}`}>
+            <label key={k} className={`relative block cursor-pointer rounded-2xl bg-white p-5 shadow-card transition-colors ${on ? "border-2 border-brand-600" : "border-2 border-line hover:border-brand-200"}`}>
               <input type="radio" name="plan" value={k} checked={on} onChange={() => setPlan(k)} className="sr-only" />
-              {k === "yearly" && <span className="absolute -top-3 left-5 rounded-full bg-success-500 px-3 py-1 text-xs font-bold text-white">Best value</span>}
-              <div className="flex items-start justify-between">
-                <p className="text-lg font-bold text-ink">{p.name}</p>
-                <span className={`grid size-6 place-items-center rounded-full border-2 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-line"}`}>{on && <Check className="size-4" strokeWidth={3} />}</span>
+              <div className="flex items-center justify-between gap-3">
+                <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+                  {p.name}
+                  {k === "yearly" && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">Best value</span>}
+                </p>
+                <span className={`grid size-5 place-items-center rounded-full border-2 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-line"}`}>{on && <Check className="size-3" strokeWidth={3.5} />}</span>
               </div>
-              <p className="mt-2 text-3xl font-extrabold text-ink tabular">
-                {p.price} <span className="text-base font-semibold text-muted">TND / {p.period}</span>
+              <p className="mt-3 text-3xl font-bold tracking-tight text-ink tabular">
+                {p.price} <span className="text-sm font-medium tracking-normal text-muted">TND / {p.period}</span>
               </p>
               <p className="text-sm text-muted">≈ {p.perMonth}</p>
             </label>

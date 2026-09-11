@@ -32,8 +32,8 @@ export default async function BillingPage() {
         <p className="text-sm font-medium text-muted">Your Pointili plan</p>
         <div className="mt-2 flex items-start justify-between gap-3">
           <div>
-            <p className="text-2xl font-extrabold uppercase tracking-tight text-ink">{PLAN_LABEL[s.plan ?? ""] ?? "No plan"}</p>
-            <p className="text-body">
+            <p className="text-2xl font-semibold tracking-tight text-ink">{PLAN_LABEL[s.plan ?? ""] ?? "No plan"}</p>
+            <p className="text-sm text-muted">
               {s.plan === "trial" ? "Free" : s.plan === "yearly" ? "120 TND / year" : s.plan === "six_month" ? "80 TND / 6 months" : "—"}
             </p>
           </div>

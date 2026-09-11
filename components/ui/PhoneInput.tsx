@@ -8,7 +8,7 @@ export function PhoneInput({ name = "phone", id = "phone", defaultValue = "", au
   const [value, setValue] = useState(formatLocalDigits(defaultValue.replace(/^\+?216/, "")));
   return (
     <div
-      className="flex h-13 w-full items-center rounded-2xl border border-line bg-white transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15 aria-[invalid=true]:border-danger-500"
+      className="flex h-12 w-full items-center rounded-xl border border-line bg-white shadow-card transition focus-within:border-brand-500 focus-within:ring-[3px] focus-within:ring-brand-500/15 aria-[invalid=true]:border-danger-500"
       aria-invalid={invalid || undefined}
     >
       <span className="flex h-full items-center gap-2 border-r border-line pl-4 pr-3 text-base font-medium text-body" aria-hidden>
@@ -28,7 +28,7 @@ export function PhoneInput({ name = "phone", id = "phone", defaultValue = "", au
         onChange={(e) => setValue(formatLocalDigits(e.target.value))}
         aria-invalid={invalid || undefined}
         aria-label="Phone number"
-        className="h-full min-w-0 flex-1 rounded-r-2xl bg-transparent px-3 text-base tracking-wide text-ink tabular placeholder:text-faint focus:outline-none"
+        className="h-full min-w-0 flex-1 rounded-r-xl bg-transparent px-3 text-base tracking-wide text-ink tabular placeholder:text-faint focus:outline-none"
         dir="ltr"
       />
     </div>

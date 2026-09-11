@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { NavTracker } from "@/components/nav/BackButton";
 import { siteUrl } from "@/lib/url";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 const TITLE = "Pointili — Digital loyalty cards for local businesses";
 const DESCRIPTION = "Turn customers into regulars. Customers scan your QR at the counter, collect stamps on their phone and earn rewards. For cafés, restaurants, salons and shops in Tunisia.";
@@ -49,7 +49,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={jakarta.variable}>
+    <html lang="en" className={inter.variable}>
       <body className="min-h-dvh font-sans">
         <ToastProvider>{children}</ToastProvider>
         <ServiceWorker />

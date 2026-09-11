@@ -28,7 +28,7 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
 
   return (
     <div
-      className={`relative isolate overflow-hidden rounded-[1.75rem] shadow-lift ${className}`}
+      className={`relative isolate overflow-hidden rounded-[1.25rem] shadow-lift ${className}`}
       style={{ background: s.background, color: s.fg, border: s.border }}
       role="img"
       aria-label={`${business.name} loyalty card: ${done} of ${total} stamps${rewardName ? `, reward ${rewardName}` : ""}`}

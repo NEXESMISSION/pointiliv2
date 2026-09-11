@@ -1,4 +1,4 @@
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
 import { PLANS } from "@/lib/constants";
 
@@ -9,41 +9,35 @@ const LIST = [
   { ...PLANS.yearly, suffix: "per year", best: true },
 ];
 
-/** The two paid plans, full detail (pricing page). */
-export function PlanCards() {
+/** The two paid plans. `compact` drops the per-plan feature list (shown once below instead). */
+export function PlanCards({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2">
       {LIST.map((plan) => (
-        <div
-          key={plan.id}
-          className={`relative flex flex-col rounded-3xl bg-white p-6 sm:p-8 ${plan.best ? "order-first border-2 border-brand-600 shadow-lift md:order-none" : "border border-line/80 shadow-card"}`}
-        >
-          {plan.best && (
-            <span className="absolute -top-3.5 left-6 inline-flex items-center gap-1 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white shadow-brand">
-              <Sparkles className="size-3.5" aria-hidden />
-              Best value
-            </span>
-          )}
-          <h2 className="text-lg font-bold text-ink">{plan.name}</h2>
-          <p className="mt-3 flex flex-wrap items-baseline gap-x-1.5">
-            <span className="tabular text-5xl font-extrabold tracking-tight text-ink">{plan.price}</span>
-            <span className="text-lg font-bold text-ink">TND</span>
-            <span className="text-[15px] text-muted">{plan.suffix}</span>
+        <div key={plan.id} className={`flex flex-col rounded-2xl bg-white p-6 text-left shadow-card ${plan.best ? "border-2 border-brand-600" : "border border-line"}`}>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-[15px] font-semibold text-ink">{plan.name}</h3>
+            {plan.best && <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-semibold text-white">Best value</span>}
+          </div>
+          <p className="mt-4 flex flex-wrap items-baseline gap-x-1.5">
+            <span className="text-[2.75rem] font-bold leading-none tracking-[-0.04em] text-ink tabular">{plan.price}</span>
+            <span className="text-base font-semibold text-ink">TND</span>
+            <span className="text-sm text-muted">{plan.suffix}</span>
           </p>
-          <p className={`mt-1 text-sm font-semibold ${plan.best ? "text-brand-600" : "text-muted"}`}>≈ {plan.perMonth}</p>
-          <ul className="mt-6 space-y-3 border-t border-line pt-6">
-            {PLAN_FEATURES.map((feature) => (
-              <li key={feature} className="flex items-center gap-3 text-[15px] text-body">
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success-50 text-success-600">
-                  <Check className="size-3.5" strokeWidth={3} aria-hidden />
-                </span>
-                {feature}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-auto pt-8">
-            <LinkButton href="/register" variant={plan.best ? "primary" : "secondary"} block>
-              Start free
+          <p className={`mt-2 text-sm ${plan.best ? "font-medium text-brand-700" : "text-muted"}`}>≈ {plan.perMonth}</p>
+          {!compact && (
+            <ul className="mt-6 space-y-2.5 border-t border-line pt-6">
+              {PLAN_FEATURES.map((feature) => (
+                <li key={feature} className="flex items-center gap-2.5 text-sm text-body">
+                  <Check className="size-4 shrink-0 text-brand-600" strokeWidth={2.6} aria-hidden />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-auto pt-6">
+            <LinkButton href="/register" variant={plan.best ? "primary" : "outline"} block>
+              Start free trial
             </LinkButton>
           </div>
         </div>
@@ -52,21 +46,16 @@ export function PlanCards() {
   );
 }
 
-/** Compact side-by-side prices (landing teaser). */
-export function PlanTeaser() {
+/** One shared "everything included" checklist. */
+export function PlanFeatures() {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4">
-      {LIST.map((plan) => (
-        <div key={plan.id} className={`relative rounded-3xl bg-white p-4 sm:p-6 ${plan.best ? "border-2 border-brand-600 shadow-lift" : "border border-line/80 shadow-card"}`}>
-          {plan.best && <span className="absolute -top-2.5 right-3 rounded-full bg-brand-600 px-2.5 py-0.5 text-[11px] font-bold text-white">Best value</span>}
-          <p className="text-sm font-semibold text-muted">{plan.name}</p>
-          <p className="mt-1 flex items-baseline gap-1">
-            <span className="tabular text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{plan.price}</span>
-            <span className="text-sm font-bold text-ink">TND</span>
-          </p>
-          <p className={`mt-1 text-xs font-medium sm:text-sm ${plan.best ? "text-brand-600" : "text-muted"}`}>≈ {plan.perMonth}</p>
-        </div>
+    <ul className="flex flex-wrap justify-center gap-x-5 gap-y-2">
+      {PLAN_FEATURES.map((feature) => (
+        <li key={feature} className="inline-flex items-center gap-1.5 text-sm text-body">
+          <Check className="size-4 text-brand-600" strokeWidth={2.6} aria-hidden />
+          {feature}
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

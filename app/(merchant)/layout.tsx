@@ -18,9 +18,9 @@ export default async function MerchantLayout({ children }: { children: React.Rea
       <MerchantSideNav
         header={
           <div className="space-y-5">
-            <Logo size={28} />
-            <div className="flex items-center gap-3 rounded-2xl bg-canvas p-2.5">
-              <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card?.icon} color={ctx.card?.color} size={40} />
+            <Logo size={22} className="px-1" />
+            <div className="flex items-center gap-2.5 rounded-xl border border-line p-2">
+              <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card?.icon} color={ctx.card?.color} size={34} rounded="rounded-lg" />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-ink">{ctx.business.name}</p>
                 <p className="truncate text-xs text-muted">{ctx.member_role === "owner" ? "Owner" : "Staff"}</p>
@@ -30,13 +30,13 @@ export default async function MerchantLayout({ children }: { children: React.Rea
         }
         footer={
           <form action={logout}>
-            <button type="submit" className="flex h-11 w-full items-center rounded-2xl px-3 text-[15px] font-medium text-danger-600 hover:bg-danger-50">
+            <button type="submit" className="flex h-9 w-full items-center rounded-lg px-2.5 text-sm font-medium text-muted hover:bg-canvas hover:text-danger-600">
               Log out
             </button>
           </form>
         }
       />
-      <div className="lg:pl-64">
+      <div className="lg:pl-60">
         {suspended ? (
           <Banner tone="danger">Your business is suspended. Please contact Pointili support.</Banner>
         ) : sub && !sub.open ? (

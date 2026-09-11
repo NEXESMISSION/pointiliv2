@@ -43,13 +43,13 @@ export function InstallBanner() {
 
   return (
     <>
-      <div className="flex animate-rise items-center gap-3 rounded-3xl border border-line bg-white p-3 pl-4 shadow-card">
-        <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-50">
-          <LogoMark size={28} />
+      <div className="flex animate-rise items-center gap-3 rounded-2xl border border-line bg-white p-3 shadow-card">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50">
+          <LogoMark size={24} />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-semibold text-ink">Install Pointili</p>
-          <p className="truncate text-sm text-muted">Your cards, one tap from your home screen</p>
+          <p className="truncate text-[13px] text-muted">Your cards, one tap away</p>
         </div>
         <Button size="sm" onClick={() => (mode === "android" ? void install() : setIosHelp(true))}>
           Install
@@ -70,13 +70,13 @@ export function InstallRow() {
   if (mode !== "android" && mode !== "ios") return null;
   return (
     <>
-      <button type="button" onClick={() => (mode === "android" ? void install() : setIosHelp(true))} className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-canvas/70">
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-600">
-          <Download className="size-5" />
+      <button type="button" onClick={() => (mode === "android" ? void install() : setIosHelp(true))} className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-canvas/60">
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+          <Download className="size-[18px]" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-medium text-ink">Install the app</span>
-          <span className="block truncate text-sm text-muted">Open your cards from the home screen</span>
+          <span className="block truncate text-[13px] text-muted">Open your cards from the home screen</span>
         </span>
       </button>
       <IosInstallHelp open={iosHelp} onClose={() => setIosHelp(false)} />

@@ -18,9 +18,9 @@ export default async function ProfilePage() {
     <>
       <TopBar title="Your profile" large back="/customer" />
       <Card className="flex flex-col items-center p-6 text-center">
-        <Avatar label={initials(u.full_name, "P")} size={72} />
-        <p className="mt-3 text-lg font-bold text-ink">{u.full_name || "Pointili member"}</p>
-        {u.phone && <p className="text-muted tabular">{formatPhone(u.phone)}</p>}
+        <Avatar label={initials(u.full_name, "P")} size={64} />
+        <p className="mt-3 text-lg font-semibold tracking-tight text-ink">{u.full_name || "Pointili member"}</p>
+        {u.phone && <p className="text-sm text-muted tabular">{formatPhone(u.phone)}</p>}
         <div className="mt-5 w-full">
           <NameForm defaultValue={u.full_name ?? ""} />
         </div>
@@ -37,10 +37,12 @@ export default async function ProfilePage() {
         <ListRow href="/how-it-works" icon={<CircleHelp className="size-5" />} title="How Pointili works" />
       </Divided>
 
-      <form action={logout} className="mt-6">
-        <button type="submit" className="mx-auto flex h-12 items-center gap-2 rounded-2xl border border-danger-500/40 bg-white px-6 font-semibold text-danger-600 hover:bg-danger-50">
-          <LogOut className="size-5" /> Log out
-        </button>
+      <form action={logout} className="mt-5">
+        <Divided>
+          <button type="submit" className="flex min-h-14 w-full items-center justify-center gap-2 px-4 text-[15px] font-medium text-danger-600 hover:bg-danger-50/60">
+            <LogOut className="size-[18px]" /> Log out
+          </button>
+        </Divided>
       </form>
     </>
   );
