@@ -1,6 +1,6 @@
 {
-  "name": "pointili-tampon",
-  "version": "0.1.0",
+  "name": "pointidi",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3100",
@@ -9,32 +9,31 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "migrate": "node scripts/migrate.mjs",
-    "verify-db": "node scripts/verify-db.mjs",
-    "test-db": "node scripts/test-db.mjs",
-    "attack": "node scripts/attack.mjs",
-    "test-race": "node scripts/test-race.mjs",
-    "test-tampon": "node scripts/test-tampon.mjs",
-    "shot": "node scripts/shot.mjs"
+    "sql": "node scripts/sql.mjs",
+    "icons": "node scripts/icons.mjs",
+    "test:e2e": "node scripts/e2e.mjs"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.12.3",
-    "@supabase/supabase-js": "^2.110.5",
-    "next": "16.2.10",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
+    "jsqr": "^1.4.0",
+    "lucide-react": "^1.44.0",
+    "next": "16.3.4",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
-    "pg": "^8.22.0",
-    "playwright-core": "^1.61.1",
+    "eslint-config-next": "16.3.4",
+    "playwright-core": "^1.63.0",
+    "sharp": "^0.34.4",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

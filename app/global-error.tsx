@@ -1,75 +1,84 @@
 "use client";
 
-/**
- * Last resort: this fires only when the ROOT layout itself throws, so the app's
- * stylesheet and fonts aren't loaded — it must render its own <html>/<body> and
- * style itself inline. Kept deliberately tiny and dependency-free.
- */
-export default function GlobalError({
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+import { useEffect } from "react";
+
+const BRAND = "#4536F0";
+
+export default function GlobalError({ error, retry, reset }: { error: Error & { digest?: string }; retry?: () => void; reset?: () => void }) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
   return (
-    <html lang="fr">
+    <html lang="en">
       <body
         style={{
           margin: 0,
           minHeight: "100dvh",
-          display: "grid",
-          placeItems: "center",
-          padding: "24px",
-          background: "#eae5f6",
-          color: "#1a1330",
-          fontFamily:
-            "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-          textAlign: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px 20px",
+          boxSizing: "border-box",
+          background: "#F6F7FB",
+          color: "#0F1222",
+          fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+          WebkitFontSmoothing: "antialiased",
         }}
       >
-        <div style={{ maxWidth: "22rem" }}>
-          <div
-            style={{
-              margin: "0 auto",
-              width: 48,
-              height: 48,
-              display: "grid",
-              placeItems: "center",
-              borderRadius: 16,
-              background: "#e7e0ff",
-              color: "#5b3fd1",
-              fontSize: 24,
-              fontWeight: 800,
-            }}
-            aria-hidden
-          >
-            !
-          </div>
-          <h1 style={{ margin: "16px 0 8px", fontSize: 22, fontWeight: 800 }}>
-            Application indisponible
-          </h1>
-          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: "#625c7d" }}>
-            Une erreur inattendue s&apos;est produite. Réessaie dans un instant.
+        <title>Something went wrong · Pointidi</title>
+        <main
+          style={{
+            width: "100%",
+            maxWidth: 380,
+            background: "#fff",
+            border: "1px solid #E8EAF2",
+            borderRadius: 28,
+            boxShadow: "0 1px 2px rgb(16 24 40 / 0.04), 0 16px 40px -12px rgb(16 24 40 / 0.18)",
+            padding: "36px 24px 28px",
+            textAlign: "center",
+            boxSizing: "border-box",
+          }}
+        >
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 800, fontSize: 20, letterSpacing: "-0.02em" }}>
+            <svg width="28" height="28" viewBox="0 0 48 48" aria-hidden>
+              <path d="M24 3C14.6 3 7 10.4 7 19.6 7 31.6 21.2 43.3 22.6 44.5a2.2 2.2 0 0 0 2.8 0C26.8 43.3 41 31.6 41 19.6 41 10.4 33.4 3 24 3Z" fill={BRAND} />
+              <circle cx="24" cy="19.5" r="9.5" fill="#fff" />
+              <path d="M20.3 15.2h4.6a4.4 4.4 0 0 1 0 8.8h-2.2v3.2h-2.4v-12Zm2.4 2.2v4.4h2.1a2.2 2.2 0 0 0 0-4.4h-2.1Z" fill={BRAND} />
+            </svg>
+            Pointidi
+          </span>
+          <h1 style={{ margin: "28px 0 8px", fontSize: 24, lineHeight: 1.2, letterSpacing: "-0.02em" }}>Something went wrong</h1>
+          <p style={{ margin: "0 0 24px", color: "#6B7185", fontSize: 15, lineHeight: 1.55 }}>
+            Pointidi hit an unexpected problem. Your stamps and rewards are safe — please try again.
           </p>
           <button
             type="button"
-            onClick={reset}
+            onClick={() => (retry ?? reset)?.()}
             style={{
-              marginTop: 24,
-              width: "100%",
-              padding: "14px 0",
+              appearance: "none",
               border: 0,
+              width: "100%",
+              height: 52,
               borderRadius: 16,
-              background: "#5b3fd1",
+              background: BRAND,
               color: "#fff",
-              fontSize: 15,
-              fontWeight: 700,
+              font: "inherit",
+              fontSize: 16,
+              fontWeight: 600,
               cursor: "pointer",
+              boxShadow: "0 10px 24px -8px rgb(69 54 240 / 0.55)",
             }}
           >
-            Réessayer
+            Try again
           </button>
-        </div>
+          {/* A full reload is the reliable way out when the root layout itself failed. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/" style={{ display: "inline-block", marginTop: 16, color: BRAND, fontSize: 15, fontWeight: 600, textDecoration: "none", padding: "8px 12px" }}>
+            Go to homepage
+          </a>
+          {error.digest && <p style={{ margin: "12px 0 0", color: "#9AA0B3", fontSize: 12 }}>Reference: {error.digest}</p>}
+        </main>
       </body>
     </html>
   );

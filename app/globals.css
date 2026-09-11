@@ -1,316 +1,127 @@
 @import "tailwindcss";
 
-/*
-  ═══════════════════════════════════════════════════════════════════
-  Pointili Tampon — the design tokens, and the handful of rules that are
-  load-bearing for a phone held up at a counter. Structure ported from v1
-  app/globals.css; the palette is new (warm paper, one house mauve) because
-  the customer's card wears the SHOP's colour and everything of ours has to
-  sit quietly around it.
-
-  THE TRAP, twice over: Tailwind v4 ships its utilities in @layer utilities
-  and everything below that is not in a layer is UNLAYERED — so a plain class
-  here beats any utility on the same element whatever its specificity. That
-  is why .safe-t adds a variable rather than a padding (the caller's pt-4
-  would lose), and why `.lang-tn h1` has to exist at all (a bare `h1` rule
-  beats the inherited Arabic stack and Poppins ships no Arabic glyphs).
-  ═══════════════════════════════════════════════════════════════════
-*/
 @theme {
-  /* — surfaces — */
-  --color-cloud: #f4efe6;      /* the page: warm paper, so a white card pops */
-  --color-mist: #ece7dd;       /* a band a step down from the page */
-  --color-hair: #d9d2c4;       /* visible hairline borders */
-  --color-paper: #ffffff;      /* cards */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* — text — */
-  --color-charcoal: #1b1720;   /* near-black */
-  --color-ink: #1b1720;        /* alias — "ink" reads better next to "stamp" */
-  --color-slate: #6b6478;      /* muted, but readable */
+  --color-brand-50: #f0f0ff;
+  --color-brand-100: #e3e2ff;
+  --color-brand-200: #cac8ff;
+  --color-brand-300: #a7a2fd;
+  --color-brand-400: #8279f9;
+  --color-brand-500: #5f53f5;
+  --color-brand-600: #4536f0;
+  --color-brand-700: #3a2bd1;
+  --color-brand-800: #3024a8;
+  --color-brand-900: #2a2385;
+  --color-brand-950: #19144f;
 
-  /* — the house colour (the mark, auth, console; never a customer card) — */
-  --color-royal: #5b3fd1;
-  --color-lilac: #e9e3ff;
+  --color-ink: #0f1222;
+  --color-body: #3b4054;
+  --color-muted: #6b7185;
+  --color-faint: #9aa0b3;
+  --color-line: #e8eaf2;
+  --color-canvas: #f6f7fb;
 
-  /* — states — */
-  --color-ok: #2f9e6e;         /* a stamp landed; a reward to serve */
-  --color-gold: #c98a00;       /* a full card */
-  --color-gold-soft: #fbedc2;
-  --color-seal: #e5484d;       /* refused / danger */
-  --color-seal-soft: #fdecec;
+  --color-success-50: #ebfaf2;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-danger-50: #fff1f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-warning-50: #fff8eb;
+  --color-warning-500: #f59e0b;
+  --color-warning-700: #b45309;
 
-  /* — type — */
-  --font-display: var(--font-poppins-var), var(--font-inter), sans-serif;
-  --font-poppins: var(--font-poppins-var), var(--font-inter), sans-serif;
-  --font-body: var(--font-inter), system-ui, sans-serif;
-  --font-mono: var(--font-space-mono), monospace;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 6px 20px -6px rgb(16 24 40 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(16 24 40 / 0.05), 0 16px 40px -12px rgb(16 24 40 / 0.18);
+  --shadow-brand: 0 10px 24px -8px rgb(69 54 240 / 0.55);
 
-  --app-max-width: 480px;
+  --animate-pop: pop 520ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  --animate-rise: rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade: fade 300ms ease-out both;
+  --animate-stamp: stamp 600ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  --animate-flash: flash 1800ms ease-out both;
+
+  @keyframes pop {
+    0% { transform: scale(0.4); opacity: 0; }
+    60% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+  @keyframes rise {
+    from { transform: translateY(12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes stamp {
+    0% { transform: scale(1.8) rotate(-12deg); opacity: 0; }
+    70% { transform: scale(0.92) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); }
+  }
+  @keyframes flash {
+    0% { transform: translateY(16px) scale(0.9); opacity: 0; }
+    12% { transform: translateY(0) scale(1.04); opacity: 1; }
+    20% { transform: scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-}
-
-/*
-  Never zoom the page when a field is focused.
-
-  iOS Safari scales the whole viewport in whenever you tap a field whose text
-  is under 16px — and since iOS 10 it ignores `maximum-scale`, so the viewport
-  meta cannot prevent it. Keeping every field at 16px is the only thing that
-  works. In @layer base on purpose: a deliberate display field (the 6-digit
-  code pad) is a plain utility and still wins. A floor, not a cap.
-*/
 @layer base {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "cv11", "ss01";
+    overscroll-behavior-y: none;
+  }
+  /* 16px inputs: iOS zooms the page into anything smaller */
+  input,
   select,
   textarea {
     font-size: 16px;
   }
-}
-
-body {
-  background: var(--color-cloud);
-  color: var(--color-charcoal);
-  font-family: var(--font-body);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-poppins);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
-}
-
-/*
-  ── SAFE AREAS ────────────────────────────────────────────────────────
-  Installed to a home screen the page owns the whole display. app/layout.tsx
-  sets viewport-fit=cover so env() is real; these two classes spend it.
-
-  THEY ADD THE INSET TO THE CALLER'S PADDING, stated as a variable: an
-  unlayered class beats a Tailwind utility outright, so `class="safe-t pt-4"`
-  would silently discard the pt-4. `[--safe-pt:1.25rem]` is how a caller says
-  its own padding. The 1rem default means a caller that says nothing is still
-  not flush.
-*/
-.safe-t {
-  padding-top: calc(env(safe-area-inset-top, 0px) + var(--safe-pt, 1rem));
-}
-.safe-b {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--safe-pb, 1rem));
-}
-
-/* the phone column — the customer's screens and the till are phone-shaped */
-.app-shell {
-  width: 100%;
-  max-width: var(--app-max-width);
-  margin-inline: auto;
-  min-height: 100dvh;
-  position: relative;
-}
-
-/*
-  ── THE OWNER'S SURFACES (auth, setup, settings) ──────────────────────
-  Six tokens on :root, NOT on .a-shell: anything rendered through a portal
-  into document.body is outside the shell and would compute them to nothing.
-*/
-:root {
-  --o-surface: #f4efe6;
-  --o-panel: #ffffff;
-  --o-inset: #f3eee6;
-  --o-edge: #e2dbcf;
-  --o-accent: #5b3fd1;
-  --o-muted: #6b6478;
-}
-.a-shell {
-  /* Kills double-tap-to-zoom on the till — a cashier tapping fast was zooming
-     the page. Pinch zoom stays available (manipulation only removes the
-     double-tap and tap-delay behaviours). */
-  touch-action: manipulation;
-  background: var(--o-surface);
-  color: var(--color-charcoal);
-}
-.a-card {
-  background: var(--o-panel);
-  border: 1px solid var(--o-edge);
-  border-radius: 22px;
-  box-shadow: 0 1px 2px rgba(27, 23, 32, 0.04), 0 10px 26px -22px rgba(27, 23, 32, 0.4);
-}
-.a-inset {
-  background: var(--o-inset);
-  border: 1px solid var(--o-edge);
-  border-radius: 16px;
-}
-.a-field {
-  width: 100%;
-  border-radius: 14px;
-  border: 1px solid var(--o-edge);
-  background: var(--o-panel);
-  padding: 14px 16px;
-  font-size: 16px; /* 16px so iOS never zooms on focus */
-  font-weight: 600;
-  color: var(--color-charcoal);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.a-field::placeholder {
-  color: var(--o-muted);
-  font-weight: 500;
-}
-.a-field:focus {
-  outline: none;
-  border-color: var(--o-accent);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--o-accent), transparent 84%);
-}
-.a-field[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-.a-field[type="number"]::-webkit-outer-spin-button,
-.a-field[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-/* the primary action — big enough to hit without looking */
-.a-btn {
-  width: 100%;
-  min-height: 52px;
-  border-radius: 14px;
-  background: var(--o-accent);
-  color: #fff;
-  font-weight: 800;
-  font-size: 15px;
-  box-shadow: 0 12px 26px -16px color-mix(in oklab, var(--o-accent), transparent 20%);
-  transition: transform 0.1s, background 0.15s;
-}
-.a-btn:active { transform: scale(0.99); }
-/* A DISARMED BUTTON IS OUTLINED, NOT FADED: a faded violet slab reads as a
-   rendering fault, and the next move is to press it anyway. */
-.a-btn:disabled {
-  opacity: 1;
-  box-shadow: none;
-  background: var(--o-panel);
-  border: 1px solid var(--o-edge);
-  color: color-mix(in oklab, var(--color-slate) 70%, transparent);
-  cursor: not-allowed;
-}
-.a-btn--ghost {
-  background: var(--o-panel);
-  border: 1px solid var(--o-edge);
-  color: var(--color-charcoal);
-  box-shadow: none;
-}
-
-/*
-  ── DIALOGS ───────────────────────────────────────────────────────────
-  Geometry only; the veil's colour stays with the caller. Centred, scrollable
-  inside, and it never rises: travel from the middle of the screen reads as a
-  wobble, so the only entrance is a touch of scale.
-*/
-.d-modal {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
-}
-.d-modal > * {
-  margin: auto;
-}
-.d-pop {
-  animation: d-settle 200ms cubic-bezier(0.16, 0.9, 0.3, 1) both;
-}
-@keyframes d-settle {
-  from { transform: scale(0.965); opacity: 0; }
-  to   { transform: scale(1);     opacity: 1; }
-}
-
-/*
-  ── PULL TO REFRESH (components/PullToRefresh) ────────────────────────
-  Only inside the installed app, which has no reload button of its own.
-*/
-.ptr {
-  pointer-events: none;
-  padding-top: max(env(safe-area-inset-top), 10px);
-}
-.ptr-dial {
-  display: grid;
-  place-items: center;
-  height: 38px;
-  width: 38px;
-  border-radius: 999px;
-  background: #fff;
-  color: var(--cafe, #5b3fd1);
-  box-shadow: 0 10px 26px -10px rgba(27, 23, 32, 0.45);
-  transition: transform 120ms ease-out, opacity 120ms ease-out;
-}
-.ptr-dial--busy {
-  animation: ptr-spin 700ms linear infinite;
-}
-@keyframes ptr-spin {
-  to { transform: rotate(360deg); }
-}
-/* And the rubber band goes with it — only installed, so the browser's own
-   gesture keeps working in a tab. */
-@media (display-mode: standalone), (display-mode: fullscreen) {
-  html,
-  body {
-    overscroll-behavior-y: contain;
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
   }
 }
 
-/*
-  ── TUNISIAN ──────────────────────────────────────────────────────────
-  The Arabic stack on the body AND on every heading (see the trap at the top:
-  the bare h1 rule wins over the inherited family, and Poppins has no Arabic
-  glyphs, so headings fell back per glyph mid-word). Slightly looser leading:
-  Arabic script sits lower.
-
-  AND ARABIC IS NOT LETTERSPACED. Negative tracking eats the word space
-  ("الكوارط متاعي" became one word); positive tracking pulls apart letters
-  that are supposed to JOIN. The subtree resets to normal, except a code chip
-  or a figure — Latin inside an Arabic page, already dir="ltr" and font-mono.
-*/
-.lang-tn {
-  font-family: "SF Arabic", "Geeza Pro", "Noto Naskh Arabic",
-    "Noto Sans Arabic", Tahoma, "Segoe UI", var(--font-body);
-  line-height: 1.75;
-}
-.lang-tn .font-mono,
-.lang-tn [class*="tabular"] {
-  font-family: var(--font-mono);
-}
-.lang-tn h1,
-.lang-tn h2,
-.lang-tn h3,
-.lang-tn h4 {
-  font-family: "SF Arabic", "Geeza Pro", "Noto Naskh Arabic",
-    "Noto Sans Arabic", Tahoma, "Segoe UI", var(--font-body);
-}
-.lang-tn *:not(.font-mono):not([class*="tabular"]) {
-  letter-spacing: normal;
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .bottom-nav-space {
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
 }
 
-/*
-  ── MOTION ────────────────────────────────────────────────────────────
-  transform and opacity only, and prefers-reduced-motion wins, always.
-  Vestibular disorders are real and a loyalty card is not worth a headache.
-  Owners add their own @keyframes below their own comment block; every one
-  of them must have a reduce counterpart here or in its own file.
-*/
 @media (prefers-reduced-motion: reduce) {
-  .d-pop,
-  .ptr-dial--busy {
-    animation: none;
-  }
-  * {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
   }
 }

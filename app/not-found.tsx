@@ -1,55 +1,34 @@
-import Link from "next/link";
-import { currentLang, dir, translator } from "@/lib/i18n";
-import { cafeVars } from "@/lib/theme";
+import type { Metadata } from "next";
+import { Compass } from "lucide-react";
+import { Logo } from "@/components/Logo";
+import { LinkButton } from "@/components/ui/Button";
 
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Page not found",
+  robots: { index: false },
+};
 
-/**
- * The 404, which is almost always somebody's customer: a mistyped slug, a
- * link that lost its last character. Its exit is their wallet, never the
- * sales page — nobody arrives at a 404 wanting to buy software.
- *
- * THE TRAP: it does not guess which shop they meant. A near-miss search from
- * an unauthenticated error page sends somebody to a stranger's shop convinced
- * it is theirs. The QR on the counter is right there and is never wrong.
- */
-export default async function NotFound() {
-  const lang = await currentLang();
-  const t = translator(lang);
-
+export default function NotFound() {
   return (
-    <div
-      lang={lang === "tn" ? "ar-TN" : "fr"}
-      dir={dir(lang)}
-      className={`app-shell safe-t safe-b flex min-h-dvh flex-col items-center justify-center px-6 text-center [--safe-pb:2rem] [--safe-pt:2rem] ${lang === "tn" ? "lang-tn" : ""}`}
-      style={cafeVars(null)}
-    >
-      <span
-        className="grid h-14 w-14 place-items-center rounded-2xl text-[26px]"
-        style={{ background: "var(--cafe-soft)" }}
-        aria-hidden
-      >
-        🔎
-      </span>
-
-      <h1 className="mt-5 text-[24px] leading-tight text-ink">{t("Cette adresse ne mène nulle part")}</h1>
-      <p className="mx-auto mt-2 max-w-[30ch] text-[13.5px] leading-relaxed text-slate">
-        {t("Le lien est peut-être incomplet. Le QR du comptoir ouvre toujours la bonne carte.")}
-      </p>
-
-      <div className="mt-7 w-full max-w-[320px]">
-        <Link
-          href="/moi"
-          className="block w-full rounded-2xl py-3.5 text-[14.5px] font-bold"
-          style={{ background: "var(--cafe)", color: "var(--cafe-ink)" }}
-        >
-          {t("Mes cartes")}
-        </Link>
+    <main className="pt-safe pb-safe grid min-h-dvh place-items-center px-5 py-10">
+      <div className="w-full max-w-sm animate-rise text-center">
+        <Logo size={28} />
+        <div className="mt-8 rounded-3xl border border-line/80 bg-white p-7 shadow-card">
+          <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+            <Compass className="size-8" aria-hidden />
+          </span>
+          <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-ink">Page not found</h1>
+          <p className="mt-2 text-[15px] leading-relaxed text-muted">This page doesn&apos;t exist or has moved. Let&apos;s get you back on track.</p>
+          <div className="mt-6 grid gap-2.5">
+            <LinkButton href="/app" block>
+              Open Pointidi
+            </LinkButton>
+            <LinkButton href="/" variant="outline" block>
+              Go to homepage
+            </LinkButton>
+          </div>
+        </div>
       </div>
-
-      <p dir="ltr" className="mt-8 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate">
-        ✦ pointili.online
-      </p>
-    </div>
+    </main>
   );
 }

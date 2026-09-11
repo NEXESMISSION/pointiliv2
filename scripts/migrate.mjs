@@ -1,93 +1,64 @@
-// Replay supabase/migrations/*.sql in sorted order, then seed the super-admin
-// list. Idempotent: every file is written to be re-run, so running this twice
-// is a no-op and the ship gate relies on that.
-//
-//   node scripts/migrate.mjs                    tampon-test (DATABASE_URL)
-//   node scripts/migrate.mjs --prod --i-know    tampon-prod (DATABASE_URL_PROD)
-//   node scripts/migrate.mjs --reset [--i-know] drop schema public first (test only)
-import { connect, dbHost, dbUrl, env, PROD } from "./db.mjs";
-import { readFileSync, readdirSync } from "node:fs";
+/**
+ * Apply supabase/migrations/*.sql in name order (every file is idempotent, so a
+ * second run is a no-op), promote ADMIN_PHONES / ADMIN_EMAILS to admin, and put
+ * the auth settings Pointidi depends on in place.
+ *
+ *   npm run migrate              # everything
+ *   npm run migrate -- 0002      # only files starting with 0002 (still promotes admins + auth config)
+ */
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { management, runSql } from "./sql.mjs";
 
-const c = await connect();
-console.log(`target: ${dbHost(dbUrl())}${PROD ? "  (PRODUCTION)" : "  (test)"}`);
+const only = process.argv.slice(2).find((a) => !a.startsWith("--"));
+const dir = join(process.cwd(), "supabase", "migrations");
+const files = readdirSync(dir)
+  .filter((f) => f.endsWith(".sql") && (!only || f.startsWith(only)))
+  .sort();
 
-const reset = process.argv.includes("--reset");
-
-if (reset) {
-  /*
-    --reset is `drop schema public cascade`. Unrecoverable. In v1 it ate a real
-    café that someone had created through the UI. Never on production, and
-    never on a database with shops in it without --i-know.
-  */
-  if (PROD) {
-    console.error("\nREFUSING: --reset on the production database is not a thing this script does.\n");
-    await c.end();
-    process.exit(1);
-  }
-  const { rows } = await c
-    .query(`select name, slug from shops order by created_at`)
-    .catch(() => ({ rows: [] }));
-
-  if (rows.length && !process.argv.includes("--i-know")) {
-    console.error(`\nREFUSING TO RESET — ${rows.length} shop(s) live in this database:`);
-    for (const r of rows) console.error(`  · ${r.name} (/${r.slug})`);
-    console.error("\nThis DESTROYS them. If you really mean it:");
-    console.error("  node scripts/migrate.mjs --reset --i-know\n");
-    await c.end();
-    process.exit(1);
-  }
-
-  console.log("dropping public schema…");
-  await c.query(`drop schema public cascade; create schema public;`);
-  await c.query(`
-    grant usage on schema public to anon, authenticated, service_role;
-    grant all on schema public to postgres;
-    alter default privileges in schema public grant all on tables to postgres, service_role;
-    alter default privileges in schema public grant all on sequences to postgres, service_role;
-  `);
-  console.log("public schema reset");
-}
-
-for (const f of readdirSync("supabase/migrations").filter((f) => f.endsWith(".sql")).sort()) {
-  process.stdout.write(`applying ${f} … `);
+for (const f of files) {
+  const t0 = Date.now();
   try {
-    await c.query(readFileSync(`supabase/migrations/${f}`, "utf8"));
-    console.log("ok");
+    await runSql(readFileSync(join(dir, f), "utf8"));
+    console.log(`✓ ${f} (${Date.now() - t0} ms)`);
   } catch (e) {
-    console.log("FAILED");
-    console.error(`  ${e.message}`);
-    await c.end();
+    console.error(`✗ ${f}\n${e.message}`);
     process.exit(1);
   }
 }
 
-/*
-  The super-admin list lives in platform_settings.super_admin_emails and is
-  read by handle_new_user() at signup. The database cannot read an env var,
-  so the migration seeds it from SUPER_ADMIN_EMAILS here, every run: the row
-  always mirrors .env.local of the machine that last migrated. An empty or
-  missing variable is left alone rather than wiping the list.
-*/
-const admins = (env.SUPER_ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((s) => s.trim().toLowerCase())
-  .filter(Boolean);
-if (admins.length) {
-  await c.query(
-    `update platform_settings set super_admin_emails = $1::text[], updated_at = now() where id`,
-    [admins],
-  );
-  /* Already-existing accounts on the list get the role too: the trigger only
-     fires on INSERT, and the founder signs up before the list is seeded. */
-  const { rowCount } = await c.query(
-    `update profiles set role = 'super_admin'
-      where lower(email) = any($1::text[]) and role <> 'super_admin'`,
-    [admins],
-  );
-  console.log(`super_admin_emails: ${admins.length} address(es) seeded${rowCount ? `, ${rowCount} profile(s) promoted` : ""}`);
-} else {
-  console.log("super_admin_emails: SUPER_ADMIN_EMAILS not set — list left as is");
+// ── admins ─────────────────────────────────────────────────────────────────
+const quote = (s) => `'${String(s).replace(/'/g, "''")}'`;
+const phones = (process.env.ADMIN_PHONES || "").split(",").map((s) => s.trim()).filter(Boolean);
+const emails = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+if (phones.length || emails.length) {
+  const conds = [];
+  if (phones.length) conds.push(`phone in (${phones.map(quote).join(",")})`);
+  if (emails.length) {
+    conds.push(`lower(email) in (${emails.map(quote).join(",")})`);
+    conds.push(`id in (select id from auth.users where lower(email) in (${emails.map(quote).join(",")}))`);
+  }
+  const out = await runSql(`update public.profiles set role = 'admin' where role <> 'admin' and (${conds.join(" or ")}) returning id;`);
+  console.log(`✓ admins promoted: ${Array.isArray(out) ? out.length : 0}`);
 }
 
-await c.end();
-console.log("migrations applied");
+// ── auth settings ──────────────────────────────────────────────────────────
+// Public sign-up is closed: every account is created by the server (validated
+// phone, rate-limited), never by a direct call to the auth API with the anon key.
+const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3100";
+await management("/config/auth", {
+  method: "PATCH",
+  body: {
+    disable_signup: true,
+    mailer_autoconfirm: true,
+    password_min_length: 8,
+    site_url: site,
+    uri_allow_list: [site, "http://localhost:3100"].map((u) => `${u}/**`).join(","),
+    security_sb_forwarded_for_enabled: true,
+    rate_limit_token_refresh: 1800,
+    rate_limit_verify: 300,
+    jwt_exp: 3600,
+    refresh_token_rotation_enabled: true,
+  },
+});
+console.log("✓ auth config");
