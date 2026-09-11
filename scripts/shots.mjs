@@ -126,6 +126,16 @@ try {
   await mp.goto(BASE + "/qr", { waitUntil: "domcontentloaded" });
   await mp.waitForSelector('[aria-label="Pointili stamp QR code"] svg', { timeout: 30000 });
   await shot(mp, "21-qr", null, { wait: 500, full: false });
+  await shot(mp, "22-counter-qr", "/counter-qr");
+  const joinPath = new URL(await mp.locator("p.break-all").innerText()).pathname;
+
+  // printed counter QR, scanned by someone signed out
+  const jc = await browser.newContext(phone);
+  const jp = await jc.newPage();
+  await jp.goto(BASE + joinPath, { waitUntil: "networkidle" });
+  await jp.getByRole("link", { name: "Get my card" }).waitFor({ timeout: 30000 });
+  await shot(jp, "23-join-signed-out", null);
+  await jc.close();
 
   // the scan URL the merchant screen is showing right now
   const minted = await mp.evaluate(async () => (await fetch("/api/qr/mint", { method: "POST" })).json());
@@ -164,6 +174,11 @@ try {
   await cp.waitForURL(/customer\/cards\/.+/);
   await shot(cp, "34-card-detail", null);
   await shot(cp, "38-scanner", "/customer/scan", { full: false });
+
+  // the counter QR, scanned by a customer who already has the card → opens it
+  await cp.goto(BASE + joinPath, { waitUntil: "networkidle" });
+  if (!/\/customer\/cards\/[0-9a-f-]{36}/.test(cp.url())) problems.push(`counter QR (signed in) did not open the card: ${cp.url()}`);
+  else console.log("  ✓ counter QR opens the customer's existing card");
 
   // ── admin (temporary account) ────────────────────────────────────────────
   console.log("admin");

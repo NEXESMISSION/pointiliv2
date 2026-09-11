@@ -145,6 +145,32 @@ async function main() {
   const anonClaim = await anonClient.rpc("claim_qr_token", { p_token: tc.data.token, p_claim: claimSecret });
   check("claim_qr_token is not callable with the public key", !!anonClaim.error, anonClaim.data);
 
+  section("Counter QR (printed, never changes, join only)");
+  const joinCode = (await rpc(merchant, "session_context", {})).data?.business?.join_code;
+  check("business has a permanent join code", /^[A-Za-z0-9_-]{12}$/.test(joinCode ?? ""), joinCode);
+  const preview = await admin.rpc("join_card_preview", { p_code: joinCode });
+  check("join page preview shows the card and reward", preview.data?.ok && preview.data.card.stamps_required === 10 && preview.data.reward?.name === "Free Coffee", preview.data);
+  const anonPreview = await anonClient.rpc("join_card_preview", { p_code: joinCode });
+  check("join preview is not callable with the public key", !!anonPreview.error, anonPreview.data);
+  const anonJoin = await anonClient.rpc("join_card", { p_code: joinCode });
+  check("public key cannot join a card", !!anonJoin.error, anonJoin.data);
+  const joiner = await makeUser("joiner");
+  const j1 = await rpc(joiner, "join_card", { p_code: joinCode });
+  check("scanning the counter QR adds the card", j1.data?.ok && j1.data.created === true, j1.data);
+  const jHome = await rpc(joiner, "customer_home", {});
+  check("the new card shows 0 / 10 on the customer's home", jHome.data?.cards?.length === 1 && jHome.data.cards[0].balance === 0 && jHome.data.cards[0].card.stamps_required === 10, jHome.data?.cards);
+  const j2 = await rpc(joiner, "join_card", { p_code: joinCode });
+  check("scanning it again opens the same card — no second card, no stamp", j2.data?.ok && j2.data.created === false && j2.data.customer_id === j1.data.customer_id, j2.data);
+  const jBalance = (await rpc(joiner, "customer_card", { p_customer_id: j1.data.customer_id })).data?.customer?.balance;
+  check("the counter QR never gives a stamp", jBalance === 0, jBalance);
+  const jOwn = await rpc(merchant, "join_card", { p_code: joinCode });
+  check("the owner cannot join their own card", jOwn.data?.error === "own_business", jOwn.data);
+  const jBad = await rpc(joiner, "join_card", { p_code: "made-up-code-1" });
+  check("made-up join code → invalid", jBad.data?.error === "invalid", jBad.data);
+  const tj = await rpc(merchant, "mint_qr_token", {});
+  const jStamp = await rpc(joiner, "collect_stamp", { p_token: tj.data.token, p_claim: null });
+  check("the joined card then collects stamps from the live QR", jStamp.data?.ok && jStamp.data.customer.balance === 1 && jStamp.data.customer.id === j1.data.customer_id, jStamp.data?.customer);
+
   section("9–11 · Customer reaches 10 / 10 and unlocks Free Coffee");
   let last;
   let home = await rpc(customer, "customer_home", {});
@@ -193,7 +219,7 @@ async function main() {
 
   section("15 · Merchant dashboard");
   const dash = await rpc(merchant, "merchant_dashboard", {});
-  check("dashboard counts customers (3) and 1 redemption", dash.data?.customers === 3 && dash.data.rewards_redeemed === 1, dash.data);
+  check("dashboard counts customers (4, incl. the one who joined by counter QR) and 1 redemption", dash.data?.customers === 4 && dash.data.rewards_redeemed === 1, dash.data);
   check("dashboard shows stamps this month", dash.data?.stamps_this_month >= 12, dash.data?.stamps_this_month);
   const list = await rpc(merchant, "merchant_customers", { p_search: null, p_sort: "active", p_limit: 50, p_offset: 0 });
   const top = list.data?.items?.[0];

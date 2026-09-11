@@ -21,6 +21,11 @@ export default async function CustomerRegister({ searchParams }: { searchParams:
           Create your Pointili account to collect your stamp. It takes 20 seconds, and your stamp is saved meanwhile.
         </Alert>
       )}
+      {next?.startsWith("/join/") && (
+        <Alert tone="info" className="mb-5">
+          Create your free account and the card is added to your phone right away.
+        </Alert>
+      )}
       <RegisterForm next={next} />
     </AuthShell>
   );

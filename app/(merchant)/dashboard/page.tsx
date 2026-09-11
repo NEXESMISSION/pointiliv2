@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, CreditCard, Gift, QrCode, RefreshCw, ScanLine, Ticket, Users } from "lucide-react";
+import { ChevronRight, CreditCard, Gift, Printer, QrCode, RefreshCw, ScanLine, Ticket, Users } from "lucide-react";
 import { BusinessAvatar } from "@/components/CardIcon";
 import { ActivityRow } from "@/components/merchant/ActivityRow";
 import { Alert } from "@/components/ui/Alert";
@@ -66,6 +66,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </LinkButton>
         </Card>
       ) : (
+        <div className="space-y-2.5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2.5">
           <Link
             href="/qr"
@@ -87,6 +88,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <span className="text-[11px] font-medium text-muted">Reward</span>
           </Link>
         </div>
+          <Link href="/counter-qr" className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3 shadow-card transition-colors hover:bg-canvas/60">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-canvas text-body">
+              <Printer className="size-[18px]" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-medium text-ink">Counter QR to print</span>
+              <span className="block truncate text-[13px] text-muted">Customers scan it to get your card</span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-faint" />
+          </Link>
+        </div>
       )}
 
       {d.pending_redemptions > 0 && (
@@ -100,7 +112,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       )}
 
       <section>
-        <SectionTitle>This month</SectionTitle>
+        <SectionTitle>Overview</SectionTitle>
         <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
           <StatCard tint="green" icon={<Users />} value={formatNumber(d.customers)} label="Customers" />
           <StatCard tint="brand" icon={<QrCode />} value={formatNumber(d.stamps_this_month)} label="Stamps" sub={`${formatNumber(d.stamps_today)} today`} />

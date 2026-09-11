@@ -30,6 +30,14 @@ export function rewardCodeFromScan(text: string): string | null {
   return /^\d{6}$/.test(digits) ? digits : null;
 }
 
+export const JOIN_CODE_RE = /^[A-Za-z0-9_-]{8,32}$/;
+
+/** The printed counter QR encodes `<origin>/join/<code>`. */
+export function joinCodeFromScan(text: string): string | null {
+  const m = text.trim().match(/\/join\/([A-Za-z0-9_-]{8,32})(?:[/?#]|$)/);
+  return m ? m[1]! : null;
+}
+
 /** Pull a Pointili scan token out of whatever a QR decoded to. */
 export function tokenFromScan(text: string): string | null {
   const trimmed = text.trim();

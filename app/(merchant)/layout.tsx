@@ -14,7 +14,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   const suspended = ctx.business.status === "suspended";
 
   return (
-    <div className="min-h-dvh bg-canvas">
+    <div className="min-h-dvh bg-canvas print:min-h-0 print:bg-white">
       <MerchantSideNav
         header={
           <div className="space-y-5">
@@ -36,7 +36,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
           </form>
         }
       />
-      <div className="lg:pl-60">
+      <div className="lg:pl-60 print:!pl-0">
         {suspended ? (
           <Banner tone="danger">Your business is suspended. Please contact Pointili support.</Banner>
         ) : sub && !sub.open ? (
@@ -48,7 +48,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
             {sub.plan === "trial" ? "Your free trial" : "Your plan"} ends {formatLongDate(sub.expires_at)} ({sub.days_left} day{sub.days_left === 1 ? "" : "s"} left).
           </Banner>
         ) : null}
-        <main className="mx-auto w-full max-w-4xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-12 lg:pt-8">{children}</main>
+        <main className="mx-auto w-full max-w-4xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-12 lg:pt-8 print:!p-0">{children}</main>
       </div>
       <MerchantNav />
     </div>
@@ -57,7 +57,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
 
 function Banner({ tone, children, href, cta }: { tone: "danger" | "warning"; children: React.ReactNode; href?: string; cta?: string }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] text-sm font-medium lg:px-8 lg:pt-2.5 ${tone === "danger" ? "bg-danger-600 text-white" : "bg-warning-50 text-warning-700"}`} role="status">
+    <div className={`flex items-center gap-3 px-4 py-2.5 print:hidden pt-[calc(0.625rem+env(safe-area-inset-top))] text-sm font-medium lg:px-8 lg:pt-2.5 ${tone === "danger" ? "bg-danger-600 text-white" : "bg-warning-50 text-warning-700"}`} role="status">
       <p className="flex-1">{children}</p>
       {href && cta && (
         <Link href={href} className={`shrink-0 rounded-xl px-3 py-1.5 font-semibold ${tone === "danger" ? "bg-white text-danger-600" : "bg-warning-500 text-white"}`}>

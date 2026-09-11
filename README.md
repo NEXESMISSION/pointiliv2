@@ -29,7 +29,8 @@ npm run dev                    # http://localhost:3100
 - **Public:** `/`, `/how-it-works`, `/pricing`
 - **Customer:** `/customer/register`, `/customer/login`, `/customer/forgot-password`, `/customer` (home), `/customer/cards/:id`, `/customer/rewards`, `/customer/rewards/use/:id`, `/customer/profile`, `/customer/scan`
 - **Scan link (what the QR encodes):** `/scan/:token`
-- **Merchant:** `/register`, `/login`, `/dashboard`, `/qr`, `/loyalty`, `/rewards`, `/customers`, `/customers/:id`, `/redeem`, `/activity`, `/analytics`, `/billing`, `/settings`
+- **Counter QR link (printed, never changes):** `/join/:code`
+- **Merchant:** `/register`, `/login`, `/dashboard`, `/qr`, `/counter-qr`, `/loyalty`, `/rewards`, `/customers`, `/customers/:id`, `/redeem`, `/activity`, `/analytics`, `/billing`, `/settings`
 - **Admin:** `/admin`, `/admin/businesses`, `/admin/subscriptions`, `/admin/payments`, `/admin/customers`, `/admin/activity`, `/admin/system`
 
 ## How it works
@@ -39,6 +40,8 @@ npm run dev                    # http://localhost:3100
 **The QR.** `/qr` mints a single-use token (`mint_qr_token`: 24 random bytes, only the SHA-256 is stored, 60 s life). The screen polls every 2 s and rotates as soon as the token is used or 15 s before it expires; each stamp flashes "+1 STAMP · #code". A Wake Lock keeps the screen on.
 
 **The stamp** (`collect_stamp`, one transaction, row locks on token and card): token exists → not used/expired → business active and subscribed → not the merchant's own business → card active → per-customer cooldown (default 1 h) → insert stamp, mark token used, bump balance → return progress and newly unlocked rewards. Two phones scanning one QR, or one phone double-submitting, yields exactly one stamp.
+
+**The counter QR (printed).** `/counter-qr` shows a poster with a permanent QR to `/join/<businesses.join_code>` — print it (A4) or download the PNG. It only adds the card to the customer's phone with 0 stamps (`join_card`; scanning again just opens the card), so a photo of it can't earn anything. Signed out, the join page shows the card (`join_card_preview`, service role) and sends the person to register / log in, then back to add the card. Stamps still come only from the live `/qr`.
 
 **Signed-out scans.** The scan page POSTs (never a GET side-effect, so link previews can't burn tokens). Signed out, the server reserves the token for that browser with an httpOnly claim cookie for 20 minutes, so a first-time customer can register and still get the stamp; the merchant screen rotates immediately.
 

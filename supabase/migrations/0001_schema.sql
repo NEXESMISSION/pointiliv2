@@ -125,6 +125,15 @@ alter table public.businesses add column if not exists cover_url text;
 alter table public.loyalty_cards add column if not exists design jsonb not null default '{}'::jsonb;
 create index if not exists customers_business_last_idx on public.customers (business_id, last_stamp_at desc);
 
+-- The business's permanent counter QR (/join/<code>). It only adds the card to a
+-- customer's phone — never a stamp — so it can be printed and stuck anywhere.
+create or replace function public.gen_join_code() returns text
+language sql volatile set search_path = '' as $$
+  select translate(encode(extensions.gen_random_bytes(9), 'base64'), '+/', '-_')
+$$;
+alter table public.businesses add column if not exists join_code text not null default public.gen_join_code();
+create unique index if not exists businesses_join_code_key on public.businesses (join_code);
+
 -- ── rotating QR tokens ──────────────────────────────────────────────────────
 -- Only the SHA-256 of the token is stored. A token is single-use: the first
 -- successful scan (or the first anonymous claim) consumes it and the merchant

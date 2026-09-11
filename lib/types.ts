@@ -27,6 +27,7 @@ export type SessionContext = {
     address: string | null;
     status: "active" | "suspended";
     created_at: string;
+    join_code: string;
   } | null;
   card: {
     id: string;

@@ -21,6 +21,11 @@ export default async function CustomerLogin({ searchParams }: { searchParams: Pr
           Log in to collect your stamp. It&apos;s saved for 20 minutes.
         </Alert>
       )}
+      {next?.startsWith("/join/") && (
+        <Alert tone="info" className="mb-5">
+          Log in and the card is added to your phone right away.
+        </Alert>
+      )}
       <LoginForm portal="customer" next={next} />
     </AuthShell>
   );

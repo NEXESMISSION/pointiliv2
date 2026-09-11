@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Gift, Sparkles } from "lucide-react";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { TopBar } from "@/components/nav/TopBar";
+import { Alert } from "@/components/ui/Alert";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { UseRewardButton } from "@/components/customer/UseRewardButton";
 import { rpc } from "@/lib/session";
@@ -14,8 +15,8 @@ export const metadata = { title: "Loyalty card" };
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
-export default async function CardDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function CardDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ joined?: string }> }) {
+  const [{ id }, { joined }] = await Promise.all([params, searchParams]);
   if (!UUID.test(id)) notFound();
   const data = await rpc<(CardPayload & { history: HistoryItem[] }) | null>("customer_card", { p_customer_id: id });
   if (!data) notFound();
@@ -31,6 +32,12 @@ export default async function CardDetail({ params }: { params: Promise<{ id: str
       <TopBar title={business.name} subtitle={[categoryLabel(business.category), business.address].filter(Boolean).join(" · ")} back="/customer/cards" />
 
       <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} rewardName={primary?.name} />
+
+      {joined && customer.total_stamps === 0 && (
+        <Alert tone="success" title="Card added" className="mt-4 animate-rise">
+          When you pay, scan the QR on the counter screen to collect your first stamp.
+        </Alert>
+      )}
 
       {unlocked.length > 0 ? (
         <section className="mt-5 space-y-3">

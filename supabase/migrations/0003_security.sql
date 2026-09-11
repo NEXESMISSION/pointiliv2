@@ -85,6 +85,7 @@ grant execute on function public.is_admin(), public.is_business_member(uuid), pu
 -- customer
 grant execute on function
   public.collect_stamp(text, text),
+  public.join_card(text),
   public.customer_home(),
   public.customer_card(uuid),
   public.customer_rewards(),

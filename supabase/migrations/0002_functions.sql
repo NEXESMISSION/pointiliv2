@@ -422,6 +422,79 @@ begin
   return v;
 end $$;
 
+-- ═══ counter QR (permanent, join only) ═════════════════════════════════════
+
+-- What the join page shows before anyone signs in. SERVICE ROLE ONLY.
+create or replace function public.join_card_preview(p_code text) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare b public.businesses%rowtype; k public.loyalty_cards%rowtype;
+begin
+  if p_code is null or p_code !~ '^[A-Za-z0-9_-]{8,32}$' then return public.err('invalid'); end if;
+  select * into b from public.businesses where join_code = p_code;
+  if b.id is null then return public.err('invalid'); end if;
+  if b.status <> 'active' then return public.err('business_unavailable'); end if;
+  select * into k from public.loyalty_cards where business_id = b.id;
+  if k.id is null or not k.active then
+    return public.err('card_inactive', jsonb_build_object('business', jsonb_build_object('name', b.name)));
+  end if;
+  return jsonb_build_object(
+    'ok', true,
+    'open', public.business_is_open(b.id),
+    'business', jsonb_build_object('name', b.name, 'logo_url', b.logo_url, 'cover_url', b.cover_url,
+                                   'category', b.category, 'address', b.address),
+    'card', jsonb_build_object('name', k.name, 'description', k.description, 'stamps_required', k.stamps_required,
+                               'color', k.color, 'icon', k.icon, 'design', k.design),
+    'reward', (select jsonb_build_object('name', r.name, 'description', r.description)
+               from public.rewards r where r.loyalty_card_id = k.id and r.is_primary)
+  );
+end $$;
+
+-- A signed-in person scanned the counter QR: add the card with 0 stamps, or
+-- return the card they already have. Never adds a stamp.
+create or replace function public.join_card(p_code text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_uid uuid := auth.uid();
+  b public.businesses%rowtype;
+  k public.loyalty_cards%rowtype;
+  v_id uuid;
+  v_try int := 0;
+  v_created boolean := false;
+begin
+  if v_uid is null then return public.err('not_authenticated'); end if;
+  if p_code is null or p_code !~ '^[A-Za-z0-9_-]{8,32}$' then return public.err('invalid'); end if;
+  if not exists (select 1 from public.profiles where id = v_uid) then return public.err('not_authenticated'); end if;
+
+  select * into b from public.businesses where join_code = p_code;
+  if b.id is null then return public.err('invalid'); end if;
+
+  select id into v_id from public.customers where business_id = b.id and user_id = v_uid;
+  if v_id is not null then return jsonb_build_object('ok', true, 'customer_id', v_id, 'created', false); end if;
+
+  if not public.rate_limit_hit('join:' || v_uid, 20, 600) then return public.err('rate_limited'); end if;
+  if b.status <> 'active' then return public.err('business_unavailable'); end if;
+  if exists (select 1 from public.business_members where business_id = b.id and user_id = v_uid) then
+    return public.err('own_business');
+  end if;
+  select * into k from public.loyalty_cards where business_id = b.id;
+  if k.id is null or not k.active then return public.err('card_inactive'); end if;
+
+  while v_id is null loop
+    v_try := v_try + 1;
+    begin
+      insert into public.customers (business_id, user_id, code)
+      values (b.id, v_uid, public.gen_customer_code(b.id))
+      returning id into v_id;
+      v_created := true;
+    exception when unique_violation then
+      if v_try > 5 then raise; end if;
+      select id into v_id from public.customers where business_id = b.id and user_id = v_uid;
+    end;
+  end loop;
+
+  return jsonb_build_object('ok', true, 'customer_id', v_id, 'created', v_created);
+end $$;
+
 -- ═══ customer ══════════════════════════════════════════════════════════════
 
 create or replace function public.customer_home() returns jsonb
@@ -434,7 +507,7 @@ begin
     'cards', coalesce((
       select jsonb_agg(item order by sort_at desc nulls last)
       from (
-        select c.last_stamp_at as sort_at, jsonb_build_object(
+        select coalesce(c.last_stamp_at, c.created_at) as sort_at, jsonb_build_object(
           'customer_id', c.id, 'code', c.code, 'balance', c.stamps_balance,
           'total_stamps', c.total_stamps, 'last_stamp_at', c.last_stamp_at,
           'business', jsonb_build_object('id', b.id, 'name', b.name, 'logo_url', b.logo_url, 'cover_url', b.cover_url, 'category', b.category),
@@ -665,7 +738,7 @@ begin
     'member_role', v_role,
     'business', (select jsonb_build_object('id', b.id, 'name', b.name, 'logo_url', b.logo_url, 'category', b.category,
                                            'phone', b.phone, 'address', b.address, 'status', b.status, 'created_at', b.created_at,
-                                           'cover_url', b.cover_url)
+                                           'cover_url', b.cover_url, 'join_code', b.join_code)
                  from public.businesses b where b.id = v_biz),
     'card', (select jsonb_build_object('id', k.id, 'name', k.name, 'description', k.description,
                                        'stamps_required', k.stamps_required, 'color', k.color, 'icon', k.icon,

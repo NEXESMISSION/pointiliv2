@@ -33,7 +33,7 @@ export function BottomNav({ items, center, hideOnDesktop = true }: { items: NavI
     );
   };
   return (
-    <nav className={`fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 pb-safe backdrop-blur ${hideOnDesktop ? "lg:hidden" : ""}`} aria-label="Main">
+    <nav className={`fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 pb-safe backdrop-blur print:hidden ${hideOnDesktop ? "lg:hidden" : ""}`} aria-label="Main">
       <div className="mx-auto flex h-16 max-w-md items-stretch px-2">
         {center ? (
           <>
@@ -53,7 +53,7 @@ export function BottomNav({ items, center, hideOnDesktop = true }: { items: NavI
 export function SideNav({ items, header, footer }: { items: NavItem[]; header?: ReactNode; footer?: ReactNode }) {
   const pathname = usePathname();
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-white lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-white lg:flex print:!hidden">
       <div className="px-4 pb-4 pt-5">{header}</div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3" aria-label="Main">
         {items.map((item) => {

@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 /**
  * The Pointili mark: two stacked loyalty cards, the front one carrying a sparkle.
  * Vector redraw of brand-mark.webp (96×70). The gap between the cards is a mask,
@@ -5,7 +7,10 @@
  */
 export function LogoMark({ size = 32, tone = "color", className = "" }: { size?: number; tone?: "color" | "white"; className?: string }) {
   const white = tone === "white";
-  const id = white ? "ptl-w" : "ptl-c";
+  // Unique per instance: a shared id resolves to the FIRST mark on the page, and
+  // when that one sits in a hidden container (the desktop sidebar on a phone, or
+  // when printing) every other mark loses its gradient and mask.
+  const id = `ptl${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   return (
     <svg width={size} height={Math.round((size * 70) / 96)} viewBox="0 0 96 70" className={className} aria-hidden>
       <defs>

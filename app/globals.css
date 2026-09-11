@@ -138,3 +138,15 @@
     transition-duration: 1ms !important;
   }
 }
+
+/* Counter QR poster */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+}

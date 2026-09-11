@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { rewardCodeFromScan, tokenFromScan } from "@/lib/url";
+import { joinCodeFromScan, rewardCodeFromScan, tokenFromScan } from "@/lib/url";
 import { CameraScanner } from "./CameraScanner";
 
 /** Customer: scan the business's stamp QR. */
@@ -16,6 +16,11 @@ export function QrScanner() {
         const token = tokenFromScan(text);
         if (token) {
           router.push(`/scan/${token}`);
+          return null;
+        }
+        const join = joinCodeFromScan(text);
+        if (join) {
+          router.push(`/join/${join}`);
           return null;
         }
         if (rewardCodeFromScan(text)) return "That's a reward QR — the staff scans it.";

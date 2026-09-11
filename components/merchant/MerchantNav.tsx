@@ -1,12 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Activity, ChartColumn, CreditCard, Ellipsis, Gift, LayoutDashboard, QrCode, Receipt, Settings, Ticket, Users } from "lucide-react";
+import { Activity, ChartColumn, CreditCard, Ellipsis, Gift, LayoutDashboard, Printer, QrCode, Receipt, Settings, Ticket, Users } from "lucide-react";
 import { BottomNav, SideNav, type NavItem } from "@/components/nav/Nav";
 
 const SIDE: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/qr", label: "Open QR", icon: QrCode },
+  { href: "/counter-qr", label: "Counter QR", icon: Printer },
   { href: "/redeem", label: "Redeem reward", icon: Ticket },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/activity", label: "Activity", icon: Activity },

@@ -13,7 +13,7 @@ import { ChevronLeft } from "lucide-react";
  * as soon as you move on, and home screens start a fresh trail.
  */
 const KEY = "pd_trail";
-const TRANSIENT = [/^\/login$/, /^\/register$/, /^\/customer\/(login|register|forgot-password|scan)$/, /^\/scan\//, /^\/app$/, /^\/customer\/rewards\/use\//];
+const TRANSIENT = [/^\/login$/, /^\/register$/, /^\/customer\/(login|register|forgot-password|scan)$/, /^\/scan\//, /^\/join\//, /^\/app$/, /^\/customer\/rewards\/use\//];
 const ROOTS = new Set(["/customer", "/dashboard", "/admin"]);
 
 function read(): string[] {

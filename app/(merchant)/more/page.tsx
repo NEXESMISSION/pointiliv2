@@ -1,4 +1,4 @@
-import { Activity, ChartColumn, CreditCard, Gift, LogOut, Palette, Receipt, Settings, Ticket } from "lucide-react";
+import { Activity, ChartColumn, CreditCard, Gift, LogOut, Palette, Printer, Receipt, Settings, Ticket } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Divided, ListRow } from "@/components/ui/Card";
@@ -11,6 +11,7 @@ export default function MorePage() {
       <TopBar title="More" large back="/dashboard" />
       <Divided>
         <ListRow href="/redeem" icon={<Ticket className="size-5" />} title="Redeem a reward" />
+        <ListRow href="/counter-qr" icon={<Printer className="size-5" />} title="Counter QR" subtitle="Print it — customers scan to get your card" />
         <ListRow href="/activity" icon={<Activity className="size-5" />} title="Activity" />
         <ListRow href="/analytics" icon={<ChartColumn className="size-5" />} title="Analytics" />
       </Divided>
