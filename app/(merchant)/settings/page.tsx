@@ -2,7 +2,8 @@ import { CreditCard, Gift, KeyRound, LogOut, Receipt, Smartphone } from "lucide-
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Card, Divided, ListRow, SectionTitle } from "@/components/ui/Card";
-import { BusinessForm, LogoForm } from "@/components/merchant/SettingsForms";
+import { BusinessForm } from "@/components/merchant/SettingsForms";
+import { BrandingEditor } from "@/components/merchant/BrandingEditor";
 import { NameForm } from "@/components/customer/NameForm";
 import { requireMerchant } from "@/lib/session";
 import { formatPhone } from "@/lib/phone";
@@ -23,7 +24,7 @@ export default async function SettingsPage() {
       <section>
         <SectionTitle>Business</SectionTitle>
         <Card className="p-5">
-          <LogoForm logo={b.logo_url} icon={ctx.card?.icon} color={ctx.card?.color} disabled={!isOwner} />
+          <BrandingEditor bare logo={b.logo_url} cover={b.cover_url} icon={ctx.card?.icon} color={ctx.card?.color} disabled={!isOwner} />
           <div className="my-5 h-px bg-line" />
           <BusinessForm business={b} disabled={!isOwner} />
         </Card>

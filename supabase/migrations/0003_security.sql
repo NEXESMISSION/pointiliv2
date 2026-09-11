@@ -102,6 +102,7 @@ grant execute on function
   public.qr_token_state(uuid, timestamptz),
   public.save_loyalty_card(text, text, int, text, text, text, text, int),
   public.merchant_rewards(),
+  public.merchant_card_impact(),
   public.save_reward(uuid, text, text, int, boolean),
   public.merchant_dashboard(),
   public.merchant_activity(text, date, date),
@@ -150,6 +151,6 @@ end $$;
 
 -- ── storage: business logos (public read, uploads only via the server) ─────
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('logos', 'logos', true, 1048576, array['image/png', 'image/jpeg', 'image/webp'])
+values ('logos', 'logos', true, 3145728, array['image/png', 'image/jpeg', 'image/webp'])
 on conflict (id) do update
   set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;

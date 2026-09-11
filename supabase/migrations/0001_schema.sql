@@ -111,6 +111,14 @@ create table if not exists public.customers (
   unique (business_id, code)
 );
 create index if not exists customers_user_idx on public.customers (user_id);
+
+-- The goal this customer's current card started with. When the owner later
+-- RAISES the stamps required, customers already mid-card keep their goal; when
+-- the owner LOWERS it, everyone benefits at once (effective = least of the two).
+-- Null = no card in progress; set by the first stamp, cleared when the main
+-- reward is redeemed.
+alter table public.customers add column if not exists card_target int check (card_target between 1 and 100);
+alter table public.businesses add column if not exists cover_url text;
 create index if not exists customers_business_last_idx on public.customers (business_id, last_stamp_at desc);
 
 -- ── rotating QR tokens ──────────────────────────────────────────────────────
@@ -295,6 +303,11 @@ set phone = coalesce(p.phone, nullif(u.raw_app_meta_data ->> 'phone', '')),
     full_name = coalesce(p.full_name, nullif(u.raw_app_meta_data ->> 'full_name', ''))
 from auth.users u
 where u.id = p.id and (p.phone is null and u.raw_app_meta_data ? 'phone');
+
+-- Cards in progress before card_target existed keep the goal they had.
+update public.customers c set card_target = k.stamps_required
+from public.loyalty_cards k
+where k.business_id = c.business_id and c.card_target is null and c.stamps_balance > 0;
 
 -- Backfill users created before this trigger existed.
 insert into public.profiles (id, email)

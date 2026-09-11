@@ -76,36 +76,55 @@ export async function updateBusiness(_: FormState, fd: FormData): Promise<FormSt
   return { ok: true, message: "Business details saved", at: now() };
 }
 
-const LOGO_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+const IMAGE_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+type ImageKind = "logo" | "cover";
 
-export async function uploadLogo(_: FormState, fd: FormData): Promise<FormState> {
-  const ctx = await getContext();
-  if (!ctx?.business || ctx.member_role !== "owner") return { ok: false, message: "Only the owner can change the logo.", at: now() };
-  const file = fd.get("logo");
-  if (!(file instanceof File) || file.size === 0) return { ok: false, message: "Choose an image first.", at: now() };
-  const ext = LOGO_TYPES[file.type];
-  if (!ext) return { ok: false, message: "Use a PNG, JPG or WebP image.", at: now() };
-  if (file.size > 1024 * 1024) return { ok: false, message: "The image must be under 1 MB.", at: now() };
-
-  const admin = createAdminClient();
-  const path = `${ctx.business.id}/logo-${Date.now()}.${ext}`;
-  const { error } = await admin.storage.from("logos").upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type, upsert: false });
-  if (error) {
-    console.error("[logo]", error.message);
-    return { ok: false, message: message("network"), at: now() };
-  }
-  const url = admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
-  // Identity and ownership were verified above through the user's own session.
-  await admin.from("businesses").update({ logo_url: url }).eq("id", ctx.business.id);
-  revalidatePath("/", "layout");
-  return { ok: true, message: "Logo updated", at: now() };
+/** Path inside the "logos" bucket for a public URL we issued, so replaced images don't pile up. */
+function storedPath(url: string | null | undefined): string | null {
+  const m = url?.match(/\/storage\/v1\/object\/public\/logos\/(.+)$/);
+  return m ? decodeURIComponent(m[1]!) : null;
 }
 
-export async function removeLogo() {
+/** Logo or cover photo. The browser already cropped and compressed it; this re-checks type and size. */
+export async function uploadBusinessImage(fd: FormData): Promise<{ ok: boolean; message: string }> {
+  const kind: ImageKind = fd.get("kind") === "cover" ? "cover" : "logo";
   const ctx = await getContext();
-  if (!ctx?.business || ctx.member_role !== "owner") return;
-  await createAdminClient().from("businesses").update({ logo_url: null }).eq("id", ctx.business.id);
+  if (!ctx?.business || ctx.member_role !== "owner") return { ok: false, message: "Only the owner can change the branding." };
+  const file = fd.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, message: "Choose an image first." };
+  const ext = IMAGE_TYPES[file.type];
+  if (!ext) return { ok: false, message: "Use a PNG, JPG or WebP image." };
+  if (file.size > 3 * 1024 * 1024) return { ok: false, message: "The image must be under 3 MB." };
+
+  const admin = createAdminClient();
+  const path = `${ctx.business.id}/${kind}-${Date.now()}.${ext}`;
+  const { error } = await admin.storage
+    .from("logos")
+    .upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type, cacheControl: "31536000", upsert: false });
+  if (error) {
+    console.error(`[${kind}]`, error.message);
+    return { ok: false, message: message("network") };
+  }
+  const url = admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
+  const previous = kind === "cover" ? ctx.business.cover_url : ctx.business.logo_url;
+  // Identity and ownership were verified above through the user's own session.
+  await admin.from("businesses").update(kind === "cover" ? { cover_url: url } : { logo_url: url }).eq("id", ctx.business.id);
+  const old = storedPath(previous);
+  if (old) await admin.storage.from("logos").remove([old]);
   revalidatePath("/", "layout");
+  return { ok: true, message: kind === "cover" ? "Cover photo updated" : "Logo updated" };
+}
+
+export async function removeBusinessImage(kind: ImageKind): Promise<{ ok: boolean; message: string }> {
+  const ctx = await getContext();
+  if (!ctx?.business || ctx.member_role !== "owner") return { ok: false, message: "Only the owner can change the branding." };
+  const admin = createAdminClient();
+  const previous = kind === "cover" ? ctx.business.cover_url : ctx.business.logo_url;
+  await admin.from("businesses").update(kind === "cover" ? { cover_url: null } : { logo_url: null }).eq("id", ctx.business.id);
+  const old = storedPath(previous);
+  if (old) await admin.storage.from("logos").remove([old]);
+  revalidatePath("/", "layout");
+  return { ok: true, message: kind === "cover" ? "Cover photo removed" : "Logo removed" };
 }
 
 export async function requestPlan(_: FormState, fd: FormData): Promise<FormState> {

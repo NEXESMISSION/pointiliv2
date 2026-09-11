@@ -58,6 +58,30 @@ try {
   const m = await browser.newContext(phone);
   const mp = await m.newPage();
   await loginUi(mp, "20000001", process.env.DEMO_MERCHANT_PASSWORD);
+
+  // Branding through the real UI: the browser crops + compresses, the server stores.
+  const sharp = (await import("sharp")).default;
+  const coverPath = join(OUT, "_cover.png");
+  const logoPath = join(OUT, "_logo.png");
+  await sharp(
+    Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b2418"/><stop offset="1" stop-color="#a0643a"/></linearGradient></defs><rect width="1600" height="900" fill="url(#g)"/><circle cx="1150" cy="470" r="260" fill="#f4e4d4"/><circle cx="1150" cy="470" r="200" fill="#6b3f22"/><circle cx="380" cy="220" r="120" fill="#fff" opacity=".08"/><circle cx="260" cy="700" r="180" fill="#fff" opacity=".06"/></svg>`,
+    ),
+  ).png().toFile(coverPath);
+  await sharp(
+    Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" rx="96" fill="#1f2937"/><text x="256" y="335" font-size="230" text-anchor="middle" fill="#fbbf24" font-family="Arial" font-weight="700">CB</text></svg>`,
+    ),
+  ).png().toFile(logoPath);
+  await mp.goto(BASE + "/loyalty", { waitUntil: "networkidle" });
+  await mp.locator('input[type="file"]').nth(0).setInputFiles(coverPath);
+  await mp.getByText("Cover photo updated").waitFor({ timeout: 60000 });
+  await mp.waitForTimeout(2000);
+  await mp.locator('input[type="file"]').nth(1).setInputFiles(logoPath);
+  await mp.getByText("Logo updated").waitFor({ timeout: 60000 });
+  await mp.waitForTimeout(2500);
+  console.log("  ✓ cover + logo uploaded through the loyalty page");
+
   for (const [n, path] of [["10-dashboard", "/dashboard"], ["11-loyalty", "/loyalty"], ["12-rewards", "/rewards"], ["13-reward-new", "/rewards/new"], ["14-customers", "/customers"], ["15-activity", "/activity?range=month"], ["16-analytics", "/analytics"], ["17-billing", "/billing"], ["18-settings", "/settings"], ["19-more", "/more"], ["20-redeem", "/redeem"]]) {
     await shot(mp, n, path);
   }

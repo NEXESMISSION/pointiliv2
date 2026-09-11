@@ -51,9 +51,10 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
           <p className="text-lg font-bold text-ink">{business.name}</p>
           <p className="text-sm font-medium text-body tabular">
             <span className="font-bold" style={{ color: c.accent }}>
-              {customer.balance}
+              {Math.min(customer.balance, required)}
             </span>{" "}
             / {required} stamps
+            {customer.balance > required && <span className="text-muted"> · +{customer.balance - required} saved</span>}
           </p>
         </div>
       </div>

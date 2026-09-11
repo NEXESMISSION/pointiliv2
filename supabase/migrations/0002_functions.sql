@@ -80,6 +80,15 @@ language sql immutable set search_path = '' as $$
   select jsonb_build_object('ok', false, 'error', p_code) || coalesce(p_extra, '{}'::jsonb)
 $$;
 
+-- What a reward costs THIS customer. The card's main reward costs the customer's
+-- own goal (card_target) when that is lower than today's setting — so raising
+-- the stamps required never takes a reward away from someone mid-card — and
+-- today's setting when it is lower, so lowering it helps everyone at once.
+create or replace function public.reward_cost(p_is_primary boolean, p_required int, p_target int) returns int
+language sql immutable set search_path = '' as $$
+  select case when p_is_primary and p_target is not null then least(p_target, p_required) else p_required end
+$$;
+
 -- ═══ subscriptions ═════════════════════════════════════════════════════════
 
 create or replace function public.plan_price(p_plan text) returns numeric
@@ -174,8 +183,8 @@ begin
 
   select coalesce(jsonb_agg(jsonb_build_object(
            'id', r.id, 'name', r.name, 'description', r.description,
-           'stamps_required', r.stamps_required, 'is_primary', r.is_primary,
-           'unlocked', c.stamps_balance >= r.stamps_required,
+           'stamps_required', public.reward_cost(r.is_primary, r.stamps_required, c.card_target), 'is_primary', r.is_primary,
+           'unlocked', c.stamps_balance >= public.reward_cost(r.is_primary, r.stamps_required, c.card_target),
            'pending', (select jsonb_build_object('id', x.id, 'code', x.code, 'expires_at', x.expires_at)
                        from public.reward_redemptions x
                        where x.customer_id = c.id and x.reward_id = r.id and x.status = 'pending' and x.expires_at > now()
@@ -184,20 +193,21 @@ begin
   into v_rewards
   from public.rewards r where r.business_id = c.business_id and r.active;
 
-  select jsonb_build_object('id', r.id, 'name', r.name, 'stamps_required', r.stamps_required,
-                            'remaining', r.stamps_required - c.stamps_balance)
+  select jsonb_build_object('id', r.id, 'name', r.name, 'stamps_required', x.cost, 'remaining', x.cost - c.stamps_balance)
   into v_next
   from public.rewards r
-  where r.business_id = c.business_id and r.active and r.stamps_required > c.stamps_balance
-  order by r.stamps_required limit 1;
+  cross join lateral (select public.reward_cost(r.is_primary, r.stamps_required, c.card_target) as cost) x
+  where r.business_id = c.business_id and r.active and x.cost > c.stamps_balance
+  order by x.cost limit 1;
 
   if p_old_balance is not null then
-    select coalesce(jsonb_agg(jsonb_build_object('id', r.id, 'name', r.name, 'stamps_required', r.stamps_required)
-                              order by r.stamps_required), '[]'::jsonb)
+    select coalesce(jsonb_agg(jsonb_build_object('id', r.id, 'name', r.name, 'stamps_required', x.cost)
+                              order by x.cost), '[]'::jsonb)
     into v_new
     from public.rewards r
+    cross join lateral (select public.reward_cost(r.is_primary, r.stamps_required, c.card_target) as cost) x
     where r.business_id = c.business_id and r.active
-      and r.stamps_required > p_old_balance and r.stamps_required <= c.stamps_balance;
+      and x.cost > p_old_balance and x.cost <= c.stamps_balance;
   end if;
 
   return jsonb_build_object(
@@ -205,10 +215,12 @@ begin
       'id', c.id, 'code', c.code, 'balance', c.stamps_balance, 'total_stamps', c.total_stamps,
       'rewards_redeemed', c.rewards_redeemed, 'first_stamp_at', c.first_stamp_at, 'last_stamp_at', c.last_stamp_at),
     'business', jsonb_build_object(
-      'id', b.id, 'name', b.name, 'logo_url', b.logo_url, 'category', b.category,
+      'id', b.id, 'name', b.name, 'logo_url', b.logo_url, 'cover_url', b.cover_url, 'category', b.category,
       'address', b.address, 'status', b.status),
     'card', case when k.id is null then null else jsonb_build_object(
-      'id', k.id, 'name', k.name, 'description', k.description, 'stamps_required', k.stamps_required,
+      'id', k.id, 'name', k.name, 'description', k.description,
+      'stamps_required', public.reward_cost(true, k.stamps_required, c.card_target),
+      'card_stamps_required', k.stamps_required,
       'color', k.color, 'icon', k.icon, 'cooldown_minutes', k.cooldown_minutes, 'active', k.active) end,
     'rewards', v_rewards,
     'next_reward', v_next,
@@ -385,6 +397,7 @@ begin
   update public.customers
   set stamps_balance = stamps_balance + 1,
       total_stamps = total_stamps + 1,
+      card_target = coalesce(card_target, k.stamps_required),
       first_stamp_at = coalesce(first_stamp_at, now()),
       last_stamp_at = now()
   where id = c.id
@@ -423,16 +436,17 @@ begin
         select c.last_stamp_at as sort_at, jsonb_build_object(
           'customer_id', c.id, 'code', c.code, 'balance', c.stamps_balance,
           'total_stamps', c.total_stamps, 'last_stamp_at', c.last_stamp_at,
-          'business', jsonb_build_object('id', b.id, 'name', b.name, 'logo_url', b.logo_url, 'category', b.category),
-          'card', jsonb_build_object('name', k.name, 'stamps_required', coalesce(k.stamps_required, 10),
+          'business', jsonb_build_object('id', b.id, 'name', b.name, 'logo_url', b.logo_url, 'cover_url', b.cover_url, 'category', b.category),
+          'card', jsonb_build_object('name', k.name, 'stamps_required', public.reward_cost(true, coalesce(k.stamps_required, 10), c.card_target),
                                      'color', coalesce(k.color, 'indigo'), 'icon', coalesce(k.icon, 'coffee')),
-          'next_reward', (select jsonb_build_object('name', r.name, 'stamps_required', r.stamps_required,
-                                                    'remaining', r.stamps_required - c.stamps_balance)
+          'next_reward', (select jsonb_build_object('name', r.name, 'stamps_required', x.cost, 'remaining', x.cost - c.stamps_balance)
                           from public.rewards r
-                          where r.business_id = c.business_id and r.active and r.stamps_required > c.stamps_balance
-                          order by r.stamps_required limit 1),
+                          cross join lateral (select public.reward_cost(r.is_primary, r.stamps_required, c.card_target) as cost) x
+                          where r.business_id = c.business_id and r.active and x.cost > c.stamps_balance
+                          order by x.cost limit 1),
           'unlocked', coalesce((select jsonb_agg(r.name order by r.stamps_required) from public.rewards r
-                                where r.business_id = c.business_id and r.active and r.stamps_required <= c.stamps_balance), '[]'::jsonb),
+                                where r.business_id = c.business_id and r.active
+                                  and public.reward_cost(r.is_primary, r.stamps_required, c.card_target) <= c.stamps_balance), '[]'::jsonb),
           'primary_reward', (select r.name from public.rewards r where r.business_id = c.business_id and r.is_primary)
         ) as item
         from public.customers c
@@ -473,31 +487,34 @@ begin
   return jsonb_build_object(
     'unlocked', coalesce((
       select jsonb_agg(jsonb_build_object(
-        'reward_id', r.id, 'name', r.name, 'description', r.description, 'stamps_required', r.stamps_required,
+        'reward_id', r.id, 'name', r.name, 'description', r.description,
+        'stamps_required', public.reward_cost(r.is_primary, r.stamps_required, c.card_target),
         'customer_id', c.id, 'balance', c.stamps_balance,
         'business', jsonb_build_object('name', b.name, 'logo_url', b.logo_url, 'category', b.category),
         'card', jsonb_build_object('color', k.color, 'icon', k.icon)
       ) order by c.last_stamp_at desc, r.stamps_required)
       from public.customers c
-      join public.rewards r on r.business_id = c.business_id and r.active and r.stamps_required <= c.stamps_balance
+      join public.rewards r on r.business_id = c.business_id and r.active
+        and public.reward_cost(r.is_primary, r.stamps_required, c.card_target) <= c.stamps_balance
       join public.businesses b on b.id = c.business_id
       left join public.loyalty_cards k on k.business_id = c.business_id
       where c.user_id = v_uid
     ), '[]'::jsonb),
     'upcoming', coalesce((
       select jsonb_agg(u.item order by u.remaining) from (
-        select distinct on (c.id) (r.stamps_required - c.stamps_balance) as remaining, jsonb_build_object(
-          'reward_id', r.id, 'name', r.name, 'stamps_required', r.stamps_required,
-          'customer_id', c.id, 'balance', c.stamps_balance, 'remaining', r.stamps_required - c.stamps_balance,
+        select distinct on (c.id) (x.cost - c.stamps_balance) as remaining, jsonb_build_object(
+          'reward_id', r.id, 'name', r.name, 'stamps_required', x.cost,
+          'customer_id', c.id, 'balance', c.stamps_balance, 'remaining', x.cost - c.stamps_balance,
           'business', jsonb_build_object('name', b.name, 'logo_url', b.logo_url, 'category', b.category),
           'card', jsonb_build_object('color', k.color, 'icon', k.icon)
         ) as item
         from public.customers c
-        join public.rewards r on r.business_id = c.business_id and r.active and r.stamps_required > c.stamps_balance
+        join public.rewards r on r.business_id = c.business_id and r.active
+        cross join lateral (select public.reward_cost(r.is_primary, r.stamps_required, c.card_target) as cost) x
         join public.businesses b on b.id = c.business_id
         left join public.loyalty_cards k on k.business_id = c.business_id
-        where c.user_id = v_uid
-        order by c.id, r.stamps_required
+        where c.user_id = v_uid and x.cost > c.stamps_balance
+        order by c.id, x.cost
       ) u
     ), '[]'::jsonb),
     'history', coalesce((
@@ -521,6 +538,7 @@ declare
   x public.reward_redemptions%rowtype;
   v_code text;
   v_i int := 0;
+  v_cost int;
 begin
   if v_uid is null then return public.err('not_authenticated'); end if;
   if not public.rate_limit_hit('redeem_req:' || v_uid, 20, 600) then return public.err('rate_limited'); end if;
@@ -532,7 +550,8 @@ begin
   end if;
 
   select * into c from public.customers where business_id = r.business_id and user_id = v_uid for update;
-  if c.id is null or c.stamps_balance < r.stamps_required then return public.err('not_enough_stamps'); end if;
+  v_cost := public.reward_cost(r.is_primary, r.stamps_required, c.card_target);
+  if c.id is null or c.stamps_balance < v_cost then return public.err('not_enough_stamps'); end if;
 
   update public.reward_redemptions set status = 'expired'
   where customer_id = c.id and status = 'pending' and expires_at <= now();
@@ -558,7 +577,7 @@ begin
   end loop;
 
   insert into public.reward_redemptions (reward_id, customer_id, business_id, user_id, reward_name, stamps_spent, code, expires_at)
-  values (r.id, c.id, r.business_id, v_uid, r.name, r.stamps_required, v_code, now() + interval '15 minutes')
+  values (r.id, c.id, r.business_id, v_uid, r.name, v_cost, v_code, now() + interval '15 minutes')
   returning * into x;
 
   return jsonb_build_object('ok', true, 'id', x.id, 'code', x.code, 'expires_at', x.expires_at,
@@ -643,7 +662,8 @@ begin
              from public.profiles p where p.id = v_uid),
     'member_role', v_role,
     'business', (select jsonb_build_object('id', b.id, 'name', b.name, 'logo_url', b.logo_url, 'category', b.category,
-                                           'phone', b.phone, 'address', b.address, 'status', b.status, 'created_at', b.created_at)
+                                           'phone', b.phone, 'address', b.address, 'status', b.status, 'created_at', b.created_at,
+                                           'cover_url', b.cover_url)
                  from public.businesses b where b.id = v_biz),
     'card', (select jsonb_build_object('id', k.id, 'name', k.name, 'description', k.description,
                                        'stamps_required', k.stamps_required, 'color', k.color, 'icon', k.icon,
@@ -675,6 +695,11 @@ begin
     returning id into v_card;
     v_created := true;
   else
+    -- Customers mid-card keep the goal they started with (see reward_cost).
+    update public.customers c
+    set card_target = (select stamps_required from public.loyalty_cards where id = v_card)
+    where c.business_id = v_biz and c.card_target is null and c.stamps_balance > 0;
+
     update public.loyalty_cards
     set name = trim(p_name), description = nullif(trim(p_description), ''), stamps_required = p_stamps_required,
         color = p_color, icon = p_icon, cooldown_minutes = p_cooldown_minutes, active = true
@@ -736,6 +761,9 @@ begin
     if r.is_primary then
       if p_stamps_required not between 2 and 30 then return public.err('invalid_stamps'); end if;
       p_active := true; -- the card's own reward stays on
+      update public.customers c
+      set card_target = (select stamps_required from public.loyalty_cards where id = v_card)
+      where c.business_id = v_biz and c.card_target is null and c.stamps_balance > 0;
       update public.loyalty_cards set stamps_required = p_stamps_required where id = v_card;
     end if;
     update public.rewards
@@ -829,8 +857,9 @@ begin
                  'id', c.id, 'code', c.code, 'name', p.full_name, 'phone_masked', public.mask_phone(p.phone),
                  'balance', c.stamps_balance, 'total_stamps', c.total_stamps, 'rewards_redeemed', c.rewards_redeemed,
                  'first_stamp_at', c.first_stamp_at, 'last_stamp_at', c.last_stamp_at,
+                 'target', public.reward_cost(true, coalesce((select stamps_required from public.loyalty_cards where business_id = v_biz), 10), c.card_target),
                  'reward_ready', exists (select 1 from public.rewards r where r.business_id = v_biz and r.active
-                                         and r.stamps_required <= c.stamps_balance)) as item
+                                         and public.reward_cost(r.is_primary, r.stamps_required, c.card_target) <= c.stamps_balance)) as item
         from public.customers c join public.profiles p on p.id = c.user_id
         where c.business_id = v_biz
           and (v_q is null
@@ -852,7 +881,8 @@ begin
   if c.id is null then return null; end if;
   return public.card_payload(c.id) || jsonb_build_object(
     'profile', (select jsonb_build_object('name', full_name, 'phone_masked', public.mask_phone(phone)) from public.profiles where id = c.user_id),
-    'rewards_earned', c.rewards_redeemed + (select count(*) from public.rewards r where r.business_id = v_biz and r.active and r.stamps_required <= c.stamps_balance),
+    'rewards_earned', c.rewards_redeemed + (select count(*) from public.rewards r where r.business_id = v_biz and r.active
+                                              and public.reward_cost(r.is_primary, r.stamps_required, c.card_target) <= c.stamps_balance),
     'history', coalesce((
       select jsonb_agg(h order by at desc) from (
         select s.created_at as at, jsonb_build_object('type', 'stamp', 'at', s.created_at) as h
@@ -920,8 +950,10 @@ begin
   select * into c from public.customers where id = x.customer_id for update;
   if c.stamps_balance < x.stamps_spent then return public.err('not_enough_stamps'); end if;
 
+  -- Redeeming the main reward closes this card; the next one takes today's goal.
   update public.customers
-  set stamps_balance = stamps_balance - x.stamps_spent, rewards_redeemed = rewards_redeemed + 1
+  set stamps_balance = stamps_balance - x.stamps_spent, rewards_redeemed = rewards_redeemed + 1,
+      card_target = case when (select is_primary from public.rewards where id = x.reward_id) then null else card_target end
   where id = c.id;
   update public.reward_redemptions
   set status = 'redeemed', redeemed_by = auth.uid(), redeemed_at = now()
@@ -942,28 +974,31 @@ declare
   c public.customers%rowtype;
   r public.rewards%rowtype;
   x public.reward_redemptions%rowtype;
+  v_cost int;
 begin
   select * into c from public.customers where id = p_customer_id and business_id = v_biz for update;
   if c.id is null then return public.err('not_found'); end if;
   select * into r from public.rewards where id = p_reward_id and business_id = v_biz and active;
   if r.id is null then return public.err('reward_not_found'); end if;
-  if c.stamps_balance < r.stamps_required then return public.err('not_enough_stamps'); end if;
+  v_cost := public.reward_cost(r.is_primary, r.stamps_required, c.card_target);
+  if c.stamps_balance < v_cost then return public.err('not_enough_stamps'); end if;
 
   update public.reward_redemptions set status = 'cancelled'
   where customer_id = c.id and reward_id = r.id and status = 'pending';
 
   insert into public.reward_redemptions (reward_id, customer_id, business_id, user_id, reward_name, stamps_spent,
                                          code, status, expires_at, redeemed_by, redeemed_at)
-  values (r.id, c.id, v_biz, c.user_id, r.name, r.stamps_required, public.random_digits(6), 'redeemed', now(), auth.uid(), now())
+  values (r.id, c.id, v_biz, c.user_id, r.name, v_cost, public.random_digits(6), 'redeemed', now(), auth.uid(), now())
   returning * into x;
 
   update public.customers
-  set stamps_balance = stamps_balance - r.stamps_required, rewards_redeemed = rewards_redeemed + 1
+  set stamps_balance = stamps_balance - v_cost, rewards_redeemed = rewards_redeemed + 1,
+      card_target = case when r.is_primary then null else card_target end
   where id = c.id;
 
   insert into public.activity_logs (business_id, actor_id, customer_id, type, data)
   values (v_biz, auth.uid(), c.id, 'reward_redeemed',
-          jsonb_build_object('reward_name', r.name, 'stamps_spent', r.stamps_required, 'code', c.code, 'redemption_id', x.id));
+          jsonb_build_object('reward_name', r.name, 'stamps_spent', v_cost, 'code', c.code, 'redemption_id', x.id));
 
   return jsonb_build_object('ok', true, 'redemption', public.redemption_view(x));
 end $$;
@@ -1432,4 +1467,27 @@ begin
   update public.password_resets set used_at = now() where id = x.id;
   return jsonb_build_object('ok', true, 'user_id', x.user_id,
                             'auth_email', (select email from auth.users where id = x.user_id));
+end $$;
+
+-- ═══ card changes: who is affected ═════════════════════════════════════════
+-- Progress of every customer mid-card, grouped by (their goal, their stamps), so
+-- the loyalty page can say exactly what a change would do before it is saved.
+create or replace function public.merchant_card_impact() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v_biz uuid := public.require_business(false); v_req int;
+begin
+  select stamps_required into v_req from public.loyalty_cards where business_id = v_biz;
+  return jsonb_build_object(
+    'stamps_required', v_req,
+    'customers', (select count(*) from public.customers where business_id = v_biz),
+    'pending_redemptions', (select count(*) from public.reward_redemptions
+                            where business_id = v_biz and status = 'pending' and expires_at > now()),
+    'progress', coalesce((
+      select jsonb_agg(jsonb_build_object('target', t, 'balance', b, 'n', n))
+      from (select public.reward_cost(true, coalesce(v_req, 10), c.card_target) as t, least(c.stamps_balance, 100) as b, count(*) as n
+            from public.customers c
+            where c.business_id = v_biz and c.stamps_balance > 0
+            group by 1, 2) s
+    ), '[]'::jsonb)
+  );
 end $$;

@@ -79,12 +79,12 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                     #{c.code} · {c.phone_masked}
                   </span>
                   <span className="mt-0.5 block text-sm text-body tabular sm:hidden">
-                    <b className="text-brand-600">{c.balance}</b>/{required} · {c.total_stamps} visits
+                    <b className="text-brand-600">{c.balance}</b>/{c.target ?? required} · {c.total_stamps} visits
                   </span>
                 </span>
               </span>
               <span className="hidden text-sm tabular sm:block">
-                <b className="text-brand-600">{c.balance}</b>/{required} {c.reward_ready && <Badge tone="success" className="ml-1">Reward</Badge>}
+                <b className="text-brand-600">{c.balance}</b>/{c.target ?? required} {c.reward_ready && <Badge tone="success" className="ml-1">Reward</Badge>}
               </span>
               <span className="hidden text-sm text-body tabular sm:block">{c.total_stamps}</span>
               <span className="hidden text-sm text-muted sm:block">{timeAgo(c.last_stamp_at)}</span>

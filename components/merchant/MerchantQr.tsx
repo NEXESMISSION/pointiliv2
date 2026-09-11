@@ -19,7 +19,7 @@ type Flash = { id: string; code: number };
  *  · each stamp flashes "+1 STAMP" with the customer number
  *  · the screen is kept awake (Wake Lock) and recovers from network drops by itself
  */
-export function MerchantQr({ businessName, logo, icon, color }: { businessName: string; logo: string | null; icon: string; color: string }) {
+export function MerchantQr({ businessName, logo, cover, icon, color }: { businessName: string; logo: string | null; cover: string | null; icon: string; color: string }) {
   const [token, setToken] = useState<Token | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
@@ -90,7 +90,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
     } finally {
       busy.current = false;
     }
-  }, [mint]);
+  }, [mint, router]);
 
   useEffect(() => {
     const first = setTimeout(tick, 0);
@@ -137,6 +137,13 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-[#0B0D1A] text-white">
+      {cover && (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={cover} alt="" className="pointer-events-none absolute inset-0 size-full scale-105 object-cover opacity-80 blur-[3px]" aria-hidden />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0B0D1A]/60 via-[#0B0D1A]/30 to-[#0B0D1A]/75" aria-hidden />
+        </>
+      )}
       <div className="pointer-events-none absolute inset-0 opacity-60" style={{ background: `radial-gradient(60% 45% at 50% 42%, ${c.accent}55, transparent 70%)` }} aria-hidden />
 
       <header className="relative z-10 flex items-center gap-2 px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6">

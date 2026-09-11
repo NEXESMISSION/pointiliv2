@@ -43,6 +43,10 @@ npm run dev                    # http://localhost:3100
 
 **Rewards.** Unlocked when balance ≥ reward stamps. The customer taps "Use reward" → a 6-digit code (15 min) → the merchant confirms at the counter (`/redeem`, live list) or from the customer page. Stamps are deducted only on merchant confirmation, under a lock, so a reward can't be redeemed twice or remotely.
 
+**Changing the card later is fair.** Each customer's card remembers the goal it started with (`customers.card_target`). Raising the stamps required never takes a reward away from someone mid-card — they finish at their old goal and the next card uses the new one. Lowering it helps everyone immediately (`reward_cost` = the lower of the two). Extra stamps past a full card carry over. The loyalty page shows who a change affects (`merchant_card_impact`) and asks for confirmation before saving.
+
+**Branding.** Owners upload a logo and a cover photo (loyalty page or settings). The browser crops and compresses them (logo 512², cover 1600×700, WebP/JPEG) before upload; they appear on customers' cards and behind the QR screen.
+
 **Billing.** New businesses get a 30-day trial. Plans: 6 Months 80 TND, Yearly 120 TND. The merchant requests a plan (pending payment with a `PTD-XXXXXX` reference); an admin confirms the payment, which adds the period after any time still covered. An expired subscription pauses the QR; customers keep their stamps.
 
 ## Security model

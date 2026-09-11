@@ -22,9 +22,10 @@ export function CardTile({ card }: { card: HomeCard }) {
           <p className="truncate text-[17px] font-bold text-ink">{card.business.name}</p>
           <p className="text-sm font-medium text-body tabular">
             <span style={{ color: c.accent }} className="font-bold">
-              {card.balance}
+              {Math.min(card.balance, required)}
             </span>{" "}
             / {required} stamps
+            {card.balance > required && <span className="text-muted"> · +{card.balance - required} saved</span>}
           </p>
         </div>
         <ChevronRight className="size-5 shrink-0 text-faint" />

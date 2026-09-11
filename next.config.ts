@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
     optimizePackageImports: ["lucide-react"],
+    // Logo/cover uploads are compressed in the browser first; this is headroom, not the target.
+    serverActions: { bodySizeLimit: "4mb" },
   },
   async headers() {
     return [

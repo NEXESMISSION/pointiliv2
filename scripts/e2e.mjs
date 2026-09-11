@@ -245,6 +245,47 @@ async function main() {
   check("subscription active on Yearly again, ~1 year left", bill.data?.subscription?.open && bill.data.subscription.plan === "yearly" && bill.data.subscription.days_left >= 364, bill.data?.subscription);
   const back = await rpc(merchant, "mint_qr_token", {});
   check("QR works again after renewal", back.data?.ok, back.data);
+
+  section("Changing the card is fair to customers mid-card");
+  const saveCard = (n, reward = "Free Coffee") =>
+    rpc(merchant, "save_loyalty_card", {
+      p_name: "E2E Loyalty", p_description: "", p_stamps_required: n, p_reward_name: reward,
+      p_reward_description: "", p_color: "emerald", p_icon: "coffee", p_cooldown_minutes: 0,
+    });
+  const stampAs = async (who) => {
+    const t = await rpc(merchant, "mint_qr_token", {});
+    return rpc(who, "collect_stamp", { p_token: t.data.token, p_claim: null });
+  };
+  // newcomer has 1 stamp: bring them to a complete 10-stamp card
+  let nb;
+  for (let i = 0; i < 9; i++) nb = await stampAs(newcomer);
+  check("newcomer completes 10 / 10", nb.data?.customer?.balance === 10 && nb.data.newly_unlocked?.length === 1, nb.data?.customer);
+
+  await saveCard(12);
+  const afterRaise = await rpc(newcomer, "customer_card", { p_customer_id: nb.data.customer.id });
+  check("owner raises 10 → 12: the customer at 10 keeps their unlocked reward", afterRaise.data?.rewards?.[0]?.unlocked === true && afterRaise.data.card.stamps_required === 10, { card: afterRaise.data?.card, reward: afterRaise.data?.rewards?.[0] });
+  const imp = await rpc(merchant, "merchant_card_impact", {});
+  check("impact report shows their protected goal", imp.data?.stamps_required === 12 && imp.data.progress.some((r) => r.target === 10 && r.balance === 10), imp.data);
+
+  const newStranger = await makeUser("fresh customer");
+  const fs = await stampAs(newStranger);
+  check("a new customer after the change needs 12", fs.data?.card?.stamps_required === 12, fs.data?.card);
+
+  const nreq = await rpc(newcomer, "request_redemption", { p_reward_id: afterRaise.data.rewards[0].id });
+  check("protected customer redeems at their old price (10)", nreq.data?.ok, nreq.data);
+  const nconf = await rpc(merchant, "merchant_confirm_redemption", { p_id: nreq.data.id });
+  check("merchant confirms; 10 stamps spent", nconf.data?.ok && nconf.data.redemption.stamps_spent === 10, nconf.data?.redemption);
+  const next = await stampAs(newcomer);
+  check("their next card uses the new goal of 12", next.data?.ok && next.data.card.stamps_required === 12 && next.data.customer.balance === 1, { card: next.data?.card, balance: next.data?.customer?.balance });
+
+  const otherNow = (await rpc(other, "customer_home", {})).data.cards[0];
+  await saveCard(Math.max(2, otherNow.balance));
+  const afterLower = (await rpc(other, "customer_home", {})).data.cards[0];
+  check(`owner lowers to ${Math.max(2, otherNow.balance)}: a customer with ${otherNow.balance} stamps unlocks right away`, afterLower.unlocked.includes("Free Coffee") && afterLower.card.stamps_required === Math.max(2, otherNow.balance), afterLower);
+
+  const renamed = await saveCard(Math.max(2, otherNow.balance), "Free Cappuccino");
+  const afterRename = (await rpc(other, "customer_home", {})).data.cards[0];
+  check("renaming the reward shows the new name", renamed.data?.ok && afterRename.unlocked.includes("Free Cappuccino"), afterRename.unlocked);
 }
 
 try {
