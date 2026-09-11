@@ -139,15 +139,19 @@ export async function cancelPlanRequest(id: string) {
   revalidatePath("/billing");
 }
 
-export async function lookupRedemption(_: FormState, fd: FormData): Promise<FormState> {
-  const code = str(fd, "code").replace(/\D/g, "");
-  if (code.length !== 6) return { ok: false, fields: { code: "Enter the 6-digit code from the customer's screen." }, values: { code }, at: now() };
+/** Find a pending reward by the 6 digits typed, or read from the customer's reward QR. */
+export async function lookupRedemptionCode(raw: string): Promise<{ ok: boolean; error?: string; redemption?: RedemptionView }> {
+  const code = String(raw ?? "").replace(/\D/g, "");
+  if (code.length !== 6) return { ok: false, error: "Enter the 6-digit code from the customer's screen." };
   const res = await call("merchant_lookup_redemption", { p_code: code });
-  if (!res.ok) {
-    const text = res.error === "not_found" ? "No active reward request with this code." : res.error === "expired" ? "This code has expired. Ask the customer to tap “Use reward” again." : message(res.error);
-    return { ok: false, error: text, values: { code }, at: now() };
-  }
-  return { ok: true, data: res.redemption as RedemptionView, values: { code }, at: now() };
+  if (!res.ok) return { ok: false, error: redemptionLookupError(res.error) };
+  return { ok: true, redemption: res.redemption as RedemptionView };
+}
+
+function redemptionLookupError(code: string | undefined) {
+  if (code === "not_found") return "No active reward with this code. Ask the customer to tap “Use reward” again.";
+  if (code === "expired") return "This reward code has expired. Ask the customer to tap “Use reward” again.";
+  return message(code);
 }
 
 export async function confirmRedemption(id: string): Promise<{ ok: boolean; message: string; redemption?: RedemptionView }> {

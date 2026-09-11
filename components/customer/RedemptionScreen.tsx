@@ -9,7 +9,7 @@ import { TopBar } from "@/components/nav/TopBar";
 import type { RedemptionStatus } from "@/lib/types";
 
 /** Shows the code to the staff and waits, live, for the merchant to confirm. */
-export function RedemptionScreen({ initial }: { initial: RedemptionStatus }) {
+export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus; qrSvg: string }) {
   const [state, setState] = useState(initial);
   const [now, setNow] = useState(() => Date.now());
   const [cancelling, startCancel] = useTransition();
@@ -76,8 +76,15 @@ export function RedemptionScreen({ initial }: { initial: RedemptionStatus }) {
           </div>
         ) : (
           <>
-            <p className="mt-6 text-sm font-medium text-body">Show this code to the staff</p>
-            <p className="mt-2 font-mono text-5xl font-extrabold tracking-[0.18em] text-brand-700 tabular" aria-label={`Code ${state.code.split("").join(" ")}`}>
+            <p className="mt-6 text-sm font-medium text-body">Show this QR to the staff</p>
+            <div
+              className="mx-auto mt-3 aspect-square w-[min(72vw,16rem)] rounded-3xl border border-line bg-white p-4 shadow-card [&>svg]:size-full"
+              role="img"
+              aria-label="Reward QR code"
+              dangerouslySetInnerHTML={{ __html: qrSvg }}
+            />
+            <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted">or tell them the code</p>
+            <p className="mt-1 font-mono text-4xl font-extrabold tracking-[0.18em] text-brand-700 tabular" aria-label={`Code ${state.code.split("").join(" ")}`}>
               {state.code.slice(0, 3)} {state.code.slice(3)}
             </p>
             <div className="mt-5 flex items-center justify-center gap-2 text-sm text-muted">

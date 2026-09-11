@@ -101,8 +101,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:hidden">
-        <LinkButton href="/redeem" variant="outline" block icon={<Ticket className="size-5" />}>
-          Redeem a reward
+        <LinkButton href="/redeem?scan=1" variant="outline" block icon={<Ticket className="size-5" />}>
+          Scan a reward
         </LinkButton>
       </section>
 

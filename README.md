@@ -19,6 +19,7 @@ npm run dev                    # http://localhost:3100
 | `npm run migrate` | Replays every migration over the Supabase Management API (HTTPS), promotes `ADMIN_PHONES` / `ADMIN_EMAILS`, closes public sign-up |
 | `npm run test:e2e` | Spec §50 acceptance scenario + replay, race, claim and authorization checks against the real database (throwaway users, cleaned up) |
 | `node scripts/demo.mjs` | Ensures the demo merchant **Café Bonheur** (phone `20 000 001`, password in `.env.local` → `DEMO_MERCHANT_PASSWORD`) and prints a fresh scan URL |
+| `node scripts/reward-flow.mjs` | Real two-browser test of the reward QR: 10 stamps → "Use reward" → staff scans the QR on `/redeem` → confirm → both screens update; a used QR is refused |
 | `node scripts/shots.mjs` | Phone-size screenshots of every screen with a sideways-overflow check (needs `npm run dev` and Chrome) |
 | `npm run sql -- "select 1"` | Run SQL over HTTPS |
 | `npm run icons` | Regenerate PWA icons |

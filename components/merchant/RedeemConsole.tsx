@@ -1,21 +1,38 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
-import { Check, Gift, Ticket } from "lucide-react";
-import { confirmRedemption, lookupRedemption } from "@/app/actions/merchant";
-import type { FormState } from "@/app/actions/types";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { Check, Gift, ScanLine, Ticket } from "lucide-react";
+import { confirmRedemption, lookupRedemptionCode } from "@/app/actions/merchant";
+import { CameraScanner } from "@/components/scan/CameraScanner";
 import { Alert } from "@/components/ui/Alert";
-import { Button, SubmitButton } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
+import { rewardCodeFromScan, tokenFromScan } from "@/lib/url";
 import type { RedemptionView } from "@/lib/types";
 
-export function RedeemConsole({ initialPending }: { initialPending: RedemptionView[] }) {
-  const [state, action] = useActionState<FormState, FormData>(lookupRedemption, null);
+export function RedeemConsole({ initialPending, initialFound, initialError, autoScan }: { initialPending: RedemptionView[]; initialFound: RedemptionView | null; initialError: string | null; autoScan: boolean }) {
   const [pending, setPending] = useState(initialPending);
+  const [found, setFound] = useState<RedemptionView | null>(initialFound);
+  const [error, setError] = useState<string | null>(initialError);
   const [done, setDone] = useState<RedemptionView | null>(null);
-  const [dismissedAt, setDismissedAt] = useState(0);
-  const found = state?.ok && (state.at ?? 0) > dismissedAt ? (state.data as RedemptionView) : null;
+  const [scanning, setScanning] = useState(autoScan && !initialFound);
+  const [code, setCode] = useState("");
+  const [checking, startCheck] = useTransition();
+  const router = useRouter();
+
+  const check = (value: string) =>
+    startCheck(async () => {
+      setError(null);
+      const res = await lookupRedemptionCode(value);
+      if (res.ok && res.redemption) {
+        setFound(res.redemption);
+        setCode("");
+      } else {
+        setError(res.error ?? "Something went wrong. Please try again.");
+      }
+    });
 
   // Live list: a request appears here seconds after the customer taps "Use reward".
   useEffect(() => {
@@ -31,6 +48,14 @@ export function RedeemConsole({ initialPending }: { initialPending: RedemptionVi
     return () => clearInterval(iv);
   }, []);
 
+  // The reward on screen is not repeated in the waiting list (one Confirm button per reward).
+  const waiting = pending.filter((r) => r.id !== found?.id);
+
+  const finish = (r: RedemptionView) => {
+    setFound(null);
+    setDone(r);
+  };
+
   if (done) {
     return (
       <Card className="animate-rise p-6 text-center">
@@ -39,17 +64,29 @@ export function RedeemConsole({ initialPending }: { initialPending: RedemptionVi
         </span>
         <p className="mt-4 text-2xl font-extrabold text-ink">Reward redeemed!</p>
         <p className="mt-1 text-lg font-semibold text-success-600">{done.reward_name}</p>
-        <p className="text-muted">Customer #{done.customer.code}</p>
-        <Button
-          block
-          className="mt-6"
-          onClick={() => {
-            setDone(null);
-            setDismissedAt(Date.now());
-          }}
-        >
-          Done
-        </Button>
+        <p className="text-muted">{done.customer.name || `Customer #${done.customer.code}`}</p>
+        <div className="mt-6 space-y-2">
+          <Button
+            block
+            icon={<ScanLine className="size-5" />}
+            onClick={() => {
+              setDone(null);
+              setScanning(true);
+            }}
+          >
+            Scan next reward
+          </Button>
+          <Button
+            block
+            variant="outline"
+            onClick={() => {
+              setDone(null);
+              router.replace("/redeem");
+            }}
+          >
+            Done
+          </Button>
+        </div>
       </Card>
     );
   }
@@ -57,44 +94,72 @@ export function RedeemConsole({ initialPending }: { initialPending: RedemptionVi
   return (
     <div className="space-y-6">
       {found ? (
-        <Confirm r={found} onDone={setDone} onCancel={() => setDismissedAt(Date.now())} />
+        <Confirm r={found} onDone={finish} onCancel={() => setFound(null)} />
       ) : (
-        <Card className="p-5">
-          <form action={action} className="space-y-4">
-            <label htmlFor="code" className="block text-sm font-medium text-body">
-              Enter the 6-digit code
+        <Card className="space-y-4 p-5">
+          <Button size="xl" block icon={<ScanLine className="size-6" />} onClick={() => setScanning(true)}>
+            Scan reward QR
+          </Button>
+          <div className="flex items-center gap-3 text-xs text-faint">
+            <span className="h-px flex-1 bg-line" /> or type the code <span className="h-px flex-1 bg-line" />
+          </div>
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              check(code);
+            }}
+          >
+            <label htmlFor="code" className="sr-only">
+              6-digit code
             </label>
             <input
               id="code"
-              name="code"
               inputMode="numeric"
               autoComplete="off"
               maxLength={7}
               placeholder="000 000"
-              defaultValue={state?.values?.code ?? ""}
-              key={state?.at}
-              className="h-16 w-full rounded-2xl border border-line bg-white text-center font-mono text-3xl font-bold tracking-[0.3em] text-ink placeholder:text-line focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, ""))}
+              className="h-14 min-w-0 flex-1 rounded-2xl border border-line bg-white text-center font-mono text-2xl font-bold tracking-[0.25em] text-ink placeholder:text-line focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
             />
-            {(state?.error || state?.fields?.code) && <Alert>{state.error ?? state.fields?.code}</Alert>}
-            <SubmitButton pendingText="Checking…">Check code</SubmitButton>
+            <Button type="submit" variant="secondary" className="h-14 shrink-0" loading={checking} disabled={code.replace(/\D/g, "").length !== 6}>
+              Check
+            </Button>
           </form>
+          {error && <Alert>{error}</Alert>}
         </Card>
       )}
 
       <section>
         <SectionTitle>Waiting at the counter</SectionTitle>
-        {pending.length === 0 ? (
+        {waiting.length === 0 ? (
           <Card className="flex items-center gap-3 p-4 text-sm text-muted">
-            <Ticket className="size-5" /> No reward requests right now.
+            <Ticket className="size-5" /> {found ? "No other reward requests right now." : "No reward requests right now."}
           </Card>
         ) : (
           <div className="space-y-3">
-            {pending.map((r) => (
-              <Confirm key={r.id} r={r} compact onDone={setDone} />
+            {waiting.map((r) => (
+              <Confirm key={r.id} r={r} compact onDone={finish} />
             ))}
           </div>
         )}
       </section>
+
+      {scanning && (
+        <CameraScanner
+          title="Scan reward QR"
+          hint="Point your camera at the customer's reward QR"
+          onClose={() => setScanning(false)}
+          onText={(text) => {
+            const value = rewardCodeFromScan(text);
+            if (!value) return tokenFromScan(text) ? "That's your stamp QR — scan the customer's reward QR." : "That isn't a Pointidi reward QR.";
+            setScanning(false);
+            check(value);
+            return null;
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -103,7 +168,7 @@ function Confirm({ r, compact, onDone, onCancel }: { r: RedemptionView; compact?
   const [busy, start] = useTransition();
   const toast = useToast();
   return (
-    <Card className={compact ? "p-4" : "p-5"}>
+    <Card className={compact ? "p-4" : "animate-rise p-5 ring-2 ring-success-500"}>
       <div className="flex items-center gap-3">
         <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-warning-50 text-warning-700">
           <Gift className="size-6" />
@@ -118,7 +183,11 @@ function Confirm({ r, compact, onDone, onCancel }: { r: RedemptionView; compact?
           {r.code.slice(0, 3)} {r.code.slice(3)}
         </p>
       </div>
-      {!compact && <p className="mt-3 text-sm text-muted">Check the code matches the customer&apos;s screen. This uses {r.stamps_spent} of their {r.customer.balance} stamps.</p>}
+      {!compact && (
+        <p className="mt-3 text-sm text-muted">
+          Uses {r.stamps_spent} of their {r.customer.balance} stamps. Give the reward, then confirm.
+        </p>
+      )}
       <div className="mt-4 flex gap-2">
         {onCancel && (
           <Button variant="outline" size="md" onClick={onCancel} className="flex-1">
@@ -127,7 +196,7 @@ function Confirm({ r, compact, onDone, onCancel }: { r: RedemptionView; compact?
         )}
         <Button
           variant="success"
-          size="md"
+          size={compact ? "md" : "lg"}
           className="flex-1"
           loading={busy}
           icon={<Check className="size-5" />}

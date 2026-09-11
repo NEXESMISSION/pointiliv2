@@ -17,6 +17,15 @@ export function clientIp(h: Headers): string | null {
 
 export const TOKEN_RE = /^[A-Za-z0-9_-]{20,64}$/;
 
+/** Reward QR on the customer's phone encodes `<origin>/redeem?code=123456`; staff may also type the 6 digits. */
+export function rewardCodeFromScan(text: string): string | null {
+  const trimmed = text.trim();
+  const url = trimmed.match(/\/redeem\?(?:[^#]*&)?code=(\d{6})(?:[&#]|$)/);
+  if (url) return url[1]!;
+  const digits = trimmed.replace(/\s/g, "");
+  return /^\d{6}$/.test(digits) ? digits : null;
+}
+
 /** Pull a Pointidi scan token out of whatever a QR decoded to. */
 export function tokenFromScan(text: string): string | null {
   const trimmed = text.trim();
