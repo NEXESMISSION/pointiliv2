@@ -110,6 +110,9 @@ try {
   await mp.waitForTimeout(2500);
   console.log("  ✓ cover + logo uploaded in the card designer");
   await mp.getByRole("button", { name: /^Photo/ }).click();
+  // Always make a real change (a previous run may already have saved Photo): flip the pattern.
+  const dotsOn = (await mp.getByRole("button", { name: "Dots", exact: true }).getAttribute("aria-pressed")) === "true";
+  await mp.getByRole("button", { name: dotsOn ? "None" : "Dots", exact: true }).click();
   await mp.getByRole("button", { name: "Save design" }).click();
   await mp.getByText("Card design saved").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(1500);
