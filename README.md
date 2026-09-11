@@ -58,6 +58,22 @@ npm run dev                    # http://localhost:3100
 - Service-role key is server-only (`import "server-only"`), used for account creation, the anonymous claim, password resets, logo uploads, and admin password resets after an admin check.
 - Rate limits live in Postgres (`rate_limits`): login per phone and IP, registration, stamps per user, QR minting per business, code lookups, password reset requests and verification attempts.
 
+## Deploy (Vercel)
+
+Live: **https://pointidi.vercel.app** — Vercel project `pointidi` (team `nexesmissions-projects`, Hobby), functions in `dub1` next to Supabase `eu-west-1`.
+
+Production env vars on the project: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (type *config*, it is public by design), `SUPABASE_SERVICE_ROLE_KEY` (secret). QR and reward-QR links use the request's own host, so no site URL variable is needed.
+
+Deploy the committed branch from a **git-free export** — on the Hobby plan Vercel blocks CLI deployments whose git commit author isn't a member of the Vercel account (`TEAM_ACCESS_REQUIRED`), and an export has no commit metadata:
+
+```bash
+rm -rf ../pointidi-deploy && mkdir ../pointidi-deploy && git archive pointidi-v1 | tar -x -C ../pointidi-deploy
+cd ../pointidi-deploy && npx vercel link --yes --project pointidi --scope nexesmissions-projects && rm -f .env.local
+npx vercel deploy --prod --yes --archive=tgz
+```
+
+Then check it: `SHOTS_BASE=https://pointidi.vercel.app node scripts/shots.mjs` and `SHOTS_BASE=https://pointidi.vercel.app node scripts/reward-flow.mjs`. (Do not use `vercel deploy --temporary`: anonymous deployments are capped at 20 functions.)
+
 ## Needs an external account before launch
 
 - **SMS for password reset.** Set `SMS_PROVIDER=twilio` + `TWILIO_*`. Without it, codes are shown on screen in development only; in production an admin can issue a temporary password from `/admin/customers`.
