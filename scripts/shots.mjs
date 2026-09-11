@@ -65,7 +65,8 @@ try {
   await p.locator('input[name="password"]').fill("keepme-12345");
   await p.locator('input[name="confirm"]').fill("keepme-12345");
   await p.getByRole("button", { name: "Create account" }).click();
-  await p.getByText(/already exists/i).waitFor({ timeout: 60000 });
+  // Either answer is an error that must keep the fields (repeated runs hit the sign-up rate limit).
+  await p.getByText(/already exists|too many attempts/i).first().waitFor({ timeout: 60000 });
   const keptPw = await p.locator('input[name="password"]').inputValue();
   const keptConfirm = await p.locator('input[name="confirm"]').inputValue();
   const keptPhone = await p.getByLabel("Phone number").inputValue();
