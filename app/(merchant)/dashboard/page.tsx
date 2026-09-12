@@ -9,9 +9,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { SubscriptionBadge } from "@/components/ui/Badge";
 import { requireMerchant, rpc } from "@/lib/session";
 import { formatNumber } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 import type { ActivityItem } from "@/lib/types";
 
-export const metadata = { title: "Home" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t.nav.merchant.home };
+}
 
 type Dashboard = {
   customers: number;
@@ -25,15 +29,15 @@ type Dashboard = {
 
 /** The counter screen: show the QR, give a reward, three numbers. Nothing else. */
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ ready?: string }> }) {
-  const ctx = await requireMerchant();
+  const [ctx, { t, locale, count }] = await Promise.all([requireMerchant(), getI18n()]);
   const [d, { ready }] = await Promise.all([rpc<Dashboard>("merchant_dashboard"), searchParams]);
   const canOpenQr = !!ctx.card && ctx.business.status === "active" && ctx.subscription?.open;
   const needsAttention = !!ctx.subscription && ctx.subscription.status !== "active";
 
   const stats = [
-    { label: "Customers", value: formatNumber(d.customers), href: "/customers" },
-    { label: "Stamps today", value: formatNumber(d.stamps_today), href: "/activity?range=today" },
-    { label: "Rewards given", value: formatNumber(d.rewards_redeemed), href: "/activity?range=month" },
+    { label: t.merchant.home.statCustomers, value: formatNumber(d.customers, locale), href: "/customers" },
+    { label: t.merchant.home.statStampsToday, value: formatNumber(d.stamps_today, locale), href: "/activity?range=today" },
+    { label: t.merchant.home.statRewards, value: formatNumber(d.rewards_redeemed, locale), href: "/activity?range=month" },
   ];
 
   return (
@@ -49,8 +53,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </header>
 
       {ready && ctx.card && (
-        <Alert tone="success" title="Your card is ready!">
-          Show your QR and let your first customer scan it.
+        <Alert tone="success" title={t.merchant.home.cardReady}>
+          {t.merchant.home.showQrFirst}
         </Alert>
       )}
 
@@ -59,10 +63,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <span className="mx-auto grid size-12 place-items-center rounded-full bg-brand-50 text-brand-600">
             <CreditCard className="size-6" />
           </span>
-          <p className="mt-4 text-base font-semibold text-ink">Create your card</p>
-          <p className="mx-auto mt-1 max-w-xs text-sm text-muted">Two questions: how many stamps, and what they get.</p>
+          <p className="mt-4 text-base font-semibold text-ink">{t.merchant.home.createTitle}</p>
+          <p className="mx-auto mt-1 max-w-xs text-sm text-muted">{t.merchant.home.createHint}</p>
           <LinkButton href="/loyalty?welcome=1" block className="mt-5">
-            Create my card
+            {t.merchant.home.createCta}
           </LinkButton>
         </Card>
       ) : (
@@ -74,11 +78,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             style={{ background: "linear-gradient(150deg, #7547EE 0%, #5029C5 100%)" }}
           >
             <QrCode className="size-8" />
-            <span className="text-xl font-semibold leading-tight">Show QR</span>
-            <span className="text-[13px] text-white/70">Customers scan it for a stamp</span>
+            <span className="text-xl font-semibold leading-tight">{t.nav.merchant.showQr}</span>
+            <span className="text-[13px] text-white/70">{t.merchant.home.qrHint}</span>
           </Link>
           <LinkButton href="/redeem?scan=1" variant="outline" size="lg" block icon={<Gift className="size-5" />}>
-            Give a reward
+            {t.merchant.home.giveReward}
           </LinkButton>
         </div>
       )}
@@ -86,10 +90,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {d.pending_redemptions > 0 && (
         <Link href="/redeem" className="flex items-center gap-3 rounded-2xl border border-warning-500/25 bg-warning-50 px-4 py-3.5 text-warning-700">
           <Ticket className="size-5 shrink-0" />
-          <span className="flex-1 text-sm font-semibold">
-            {d.pending_redemptions} customer{d.pending_redemptions > 1 ? "s" : ""} waiting for a reward
-          </span>
-          <ChevronRight className="size-4" />
+          <span className="flex-1 text-sm font-semibold">{count(t.merchant.home.waiting, d.pending_redemptions)}</span>
+          <ChevronRight className="rtl:-scale-x-100 size-4" />
         </Link>
       )}
 
@@ -106,15 +108,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <SectionTitle
           action={
             <Link href="/activity" className="text-[13px] font-semibold text-brand-600">
-              See all
+              {t.common.seeAll}
             </Link>
           }
         >
-          Latest
+          {t.merchant.home.latest}
         </SectionTitle>
         {d.recent.length === 0 ? (
-          <EmptyState icon={<Users />} title="No customers yet" action={ctx.card ? <LinkButton href="/qr" block>Show QR</LinkButton> : undefined}>
-            Show your QR and let your first customer scan it.
+          <EmptyState icon={<Users />} title={t.merchant.home.noCustomers} action={ctx.card ? <LinkButton href="/qr" block>{t.nav.merchant.showQr}</LinkButton> : undefined}>
+            {t.merchant.home.showQrFirst}
           </EmptyState>
         ) : (
           <Card className="divide-y divide-line overflow-hidden">

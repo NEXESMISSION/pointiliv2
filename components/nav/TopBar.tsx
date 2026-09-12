@@ -3,21 +3,21 @@ import type { ReactNode } from "react";
 import { BackButton } from "./BackButton";
 
 /**
- * Page header: back on the left, title centred, optional action on the right.
- * The back button returns to the previous screen of this visit, or to `back`
- * (the parent page) when the page was opened directly.
+ * Page header: the title is centred on the page, the back button sits at the
+ * start and the optional action at the end — both pinned to the title's own
+ * line, so a two-line header never drags them out of alignment.
  */
 export function TopBar({ title, back, action, subtitle, large = false }: { title: ReactNode; back?: string; action?: ReactNode; subtitle?: ReactNode; large?: boolean }) {
   return (
-    <header className="mb-5 grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2 pt-1">
-      <span className="flex justify-start">
+    <header className="relative mb-5 pt-1 text-center">
+      <span className="absolute start-0 top-1 flex h-11 items-center">
         <BackButton fallback={back} />
       </span>
-      <div className="min-w-0 text-center">
-        <h1 className={`truncate font-semibold tracking-tight text-ink ${large ? "text-lg" : "text-[17px]"}`}>{title}</h1>
-        {subtitle && <p className="truncate text-xs text-muted">{subtitle}</p>}
-      </div>
-      <span className="flex justify-end">{action}</span>
+      {action && <span className="absolute end-0 top-1 flex h-11 items-center">{action}</span>}
+      <h1 className={`flex h-11 items-center justify-center px-12 font-semibold tracking-tight text-ink ${large ? "text-lg" : "text-[17px]"}`}>
+        <span className="truncate">{title}</span>
+      </h1>
+      {subtitle && <p className="mx-auto max-w-[calc(100%-3rem)] truncate text-xs text-muted">{subtitle}</p>}
     </header>
   );
 }

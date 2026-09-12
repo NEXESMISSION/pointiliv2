@@ -1,3 +1,7 @@
+"use client";
+
+import { useT } from "@/components/i18n/Provider";
+
 export function Spinner({ className = "size-5" }: { className?: string }) {
   return (
     <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -7,11 +11,12 @@ export function Spinner({ className = "size-5" }: { className?: string }) {
   );
 }
 
-export function LoadingState({ label = "Loading…" }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
+  const { t } = useT();
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted" role="status" aria-live="polite">
       <Spinner className="size-7 text-brand-600" />
-      <p className="text-sm">{label}</p>
+      <p className="text-sm">{label ?? t.common.loading}</p>
     </div>
   );
 }

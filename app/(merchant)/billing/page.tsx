@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Receipt } from "lucide-react";
 import { TopBar } from "@/components/nav/TopBar";
 import { Badge, SubscriptionBadge } from "@/components/ui/Badge";
@@ -5,11 +6,15 @@ import { Card, SectionTitle } from "@/components/ui/Card";
 import { Alert } from "@/components/ui/Alert";
 import { PlanPicker, CancelPlanRequestButton } from "@/components/merchant/PlanPicker";
 import { requireMerchant, rpc } from "@/lib/session";
-import { PAYMENT_METHODS, PLAN_LABEL } from "@/lib/constants";
+import { PAYMENT_METHODS, PLANS } from "@/lib/constants";
+import { getI18n } from "@/lib/i18n/server";
 import { formatDate, formatLongDate, formatTND } from "@/lib/format";
 import type { SubscriptionState } from "@/lib/types";
 
-export const metadata = { title: "Billing" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.ops.billing.title };
+}
 
 type Payment = { id: string; plan: string; amount: number; currency: string; method: keyof typeof PAYMENT_METHODS; status: string; payment_reference: string; created_at: string; confirmed_at: string | null };
 type Billing = { subscription: SubscriptionState; payments: Payment[]; subscriptions: { id: string; plan: string; price: number; starts_at: string; expires_at: string; status: string }[] };
@@ -17,67 +22,84 @@ type Billing = { subscription: SubscriptionState; payments: Payment[]; subscript
 const STATUS_TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = { paid: "success", pending: "warning", failed: "danger", cancelled: "neutral" };
 
 export default async function BillingPage() {
+  const { t, locale, count, fill } = await getI18n();
   const ctx = await requireMerchant("/billing");
   const b = await rpc<Billing>("merchant_billing");
   const s = b.subscription;
   const pending = b.payments.find((p) => p.status === "pending");
   const isOwner = ctx.member_role === "owner";
   const support = [process.env.NEXT_PUBLIC_SUPPORT_PHONE, process.env.NEXT_PUBLIC_SUPPORT_EMAIL].filter(Boolean).join(" · ");
+  const w = t.ops.billing;
+  const planName = (plan: string | null | undefined) => t.data.plans[(plan ?? "none") as keyof typeof t.data.plans] ?? t.data.plans.none;
+  const methodName = (m: string) => t.data.payments[m as keyof typeof t.data.payments] ?? m;
 
   return (
     <div className="mx-auto max-w-3xl">
-      <TopBar title="Billing" large back="/dashboard" />
+      <TopBar title={w.title} large back="/dashboard" />
 
       <Card className="p-5">
-        <p className="text-sm font-medium text-muted">Your Pointili plan</p>
+        <p className="text-sm font-medium text-muted">{w.yourPlan}</p>
         <div className="mt-2 flex items-start justify-between gap-3">
           <div>
-            <p className="text-2xl font-semibold tracking-tight text-ink">{PLAN_LABEL[s.plan ?? ""] ?? "No plan"}</p>
+            <p className="text-2xl font-semibold tracking-tight text-ink">{planName(s.plan)}</p>
             <p className="text-sm text-muted">
-              {s.plan === "trial" ? "Free" : s.plan === "yearly" ? "120 TND / year" : s.plan === "six_month" ? "80 TND / 6 months" : "—"}
+              {s.plan === "trial"
+                ? t.common.free
+                : s.plan === "yearly"
+                  ? `${formatTND(PLANS.yearly.price, locale)} ${t.data.planPeriod.yearly}`
+                  : s.plan === "six_month"
+                    ? `${formatTND(PLANS.six_month.price, locale)} ${t.data.planPeriod.six_month}`
+                    : "—"}
             </p>
           </div>
           <SubscriptionBadge status={s.status} plan={s.plan} />
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-canvas p-3 text-sm">
           <div>
-            <p className="text-muted">Status</p>
-            <p className="font-semibold text-ink">{s.open ? "Active" : s.status === "cancelled" ? "Cancelled" : "Expired"}</p>
+            <p className="text-muted">{w.status}</p>
+            <p className="font-semibold text-ink">{s.open ? t.data.subscription.active : s.status === "cancelled" ? t.data.subscription.cancelled : t.data.subscription.expired}</p>
           </div>
           <div>
-            <p className="text-muted">{s.open ? "Expires" : "Ended"}</p>
-            <p className="font-semibold text-ink">{formatLongDate(s.expires_at)}</p>
+            <p className="text-muted">{s.open ? w.expiresOn : w.endedOn}</p>
+            <p className="font-semibold text-ink">{formatLongDate(s.expires_at, locale)}</p>
           </div>
         </div>
-        {s.open && <p className="mt-3 text-sm text-muted">{s.days_left} days left. Renewing adds time after your current period — you never lose days.</p>}
+        {s.open && (
+          <p className="mt-3 text-sm text-muted">
+            {count(t.formats.daysLeft, s.days_left)}. {w.renewNote}
+          </p>
+        )}
       </Card>
 
       {pending && (
-        <Alert tone="warning" title="Payment pending" className="mt-5" action={isOwner ? <CancelPlanRequestButton id={pending.id} /> : undefined}>
+        <Alert tone="warning" title={w.pendingTitle} className="mt-5" action={isOwner ? <CancelPlanRequestButton id={pending.id} /> : undefined}>
           <p>
-            {PLAN_LABEL[pending.plan]} · <b>{formatTND(pending.amount)}</b> by {PAYMENT_METHODS[pending.method] ?? pending.method}
+            {planName(pending.plan)} · <b>{formatTND(pending.amount, locale)}</b> {fill(w.byMethod, { method: methodName(pending.method) })}
           </p>
           <p className="mt-1">
-            Reference: <span className="rounded-lg bg-white px-2 py-0.5 font-mono font-bold tracking-wider text-ink">{pending.payment_reference}</span>
+            {w.reference} <span dir="ltr" className="inline-block rounded-lg bg-white px-2 py-0.5 font-mono font-bold tracking-wider text-ink">{pending.payment_reference}</span>
           </p>
-          <p className="mt-1">Quote this reference when you pay. Your plan activates as soon as Pointili confirms the payment.{support ? ` Contact: ${support}` : ""}</p>
+          <p className="mt-1">
+            {w.quoteReference}
+            {support ? fill(w.contact, { support }) : ""}
+          </p>
         </Alert>
       )}
 
       {isOwner ? (
         <section className="mt-6">
-          <SectionTitle>{s.open && s.plan !== "trial" ? "Renew your plan" : "Choose your plan"}</SectionTitle>
+          <SectionTitle>{s.open && s.plan !== "trial" ? w.renewPlan : w.choosePlan}</SectionTitle>
           <PlanPicker />
         </section>
       ) : (
-        <Alert tone="info" className="mt-5">Only the business owner can manage billing.</Alert>
+        <Alert tone="info" className="mt-5">{w.ownerOnly}</Alert>
       )}
 
       <section className="mt-8">
-        <SectionTitle>Payment history</SectionTitle>
+        <SectionTitle>{w.paymentHistory}</SectionTitle>
         {b.payments.length === 0 ? (
           <Card className="flex items-center gap-3 p-4 text-sm text-muted">
-            <Receipt className="size-5" /> No payments yet.
+            <Receipt className="size-5" /> {w.noPayments}
           </Card>
         ) : (
           <Card className="divide-y divide-line/80">
@@ -85,13 +107,13 @@ export default async function BillingPage() {
               <div key={p.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-ink">
-                    {PLAN_LABEL[p.plan]} · {formatTND(p.amount)}
+                    {planName(p.plan)} · {formatTND(p.amount, locale)}
                   </p>
                   <p className="truncate text-sm text-muted">
-                    {formatDate(p.created_at)} · <span className="font-mono">{p.payment_reference}</span>
+                    {formatDate(p.created_at, locale)} · <span dir="ltr" className="inline-block font-mono">{p.payment_reference}</span>
                   </p>
                 </div>
-                <Badge tone={STATUS_TONE[p.status] ?? "neutral"}>{p.status[0]!.toUpperCase() + p.status.slice(1)}</Badge>
+                <Badge tone={STATUS_TONE[p.status] ?? "neutral"}>{t.data.paymentStatus[p.status as keyof typeof t.data.paymentStatus] ?? p.status}</Badge>
               </div>
             ))}
           </Card>

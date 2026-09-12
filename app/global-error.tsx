@@ -10,7 +10,7 @@ export default function GlobalError({ error, retry, reset }: { error: Error & { 
   }, [error]);
 
   return (
-    <html lang="en">
+    <html lang="fr">
       <body
         style={{
           margin: 0,
@@ -26,7 +26,7 @@ export default function GlobalError({ error, retry, reset }: { error: Error & { 
           WebkitFontSmoothing: "antialiased",
         }}
       >
-        <title>Something went wrong · Pointili</title>
+        <title>Une erreur est survenue · Pointili</title>
         <main
           style={{
             width: "100%",
@@ -48,9 +48,9 @@ export default function GlobalError({ error, retry, reset }: { error: Error & { 
             </svg>
             Pointili
           </span>
-          <h1 style={{ margin: "28px 0 8px", fontSize: 24, lineHeight: 1.2, letterSpacing: "-0.02em" }}>Something went wrong</h1>
+          <h1 style={{ margin: "28px 0 8px", fontSize: 24, lineHeight: 1.2, letterSpacing: "-0.02em" }}>Une erreur est survenue</h1>
           <p style={{ margin: "0 0 24px", color: "#6B7185", fontSize: 15, lineHeight: 1.55 }}>
-            Pointili hit an unexpected problem. Your stamps and rewards are safe — please try again.
+            Pointili a rencontré un problème inattendu. Vos tampons et vos récompenses sont en sécurité — réessayez.
           </p>
           <button
             type="button"
@@ -70,14 +70,14 @@ export default function GlobalError({ error, retry, reset }: { error: Error & { 
               boxShadow: "0 10px 24px -8px rgb(101 53 224 / 0.55)",
             }}
           >
-            Try again
+            Réessayer
           </button>
           {/* A full reload is the reliable way out when the root layout itself failed. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/" style={{ display: "inline-block", marginTop: 16, color: BRAND, fontSize: 15, fontWeight: 600, textDecoration: "none", padding: "8px 12px" }}>
-            Go to homepage
+            Aller à l&apos;accueil
           </a>
-          {error.digest && <p style={{ margin: "12px 0 0", color: "#9AA0B3", fontSize: 12 }}>Reference: {error.digest}</p>}
+          {error.digest && <p style={{ margin: "12px 0 0", color: "#9AA0B3", fontSize: 12 }}>Référence : {error.digest}</p>}
         </main>
       </body>
     </html>

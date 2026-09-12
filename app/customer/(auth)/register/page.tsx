@@ -1,29 +1,35 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthHeading, AuthShell } from "@/components/auth/AuthShell";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { Alert } from "@/components/ui/Alert";
+import { getI18n } from "@/lib/i18n/server";
 import { getContext, homeFor } from "@/lib/session";
 import { safeNext } from "@/lib/url";
 
-export const metadata = { title: "Create your account" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.auth.register.title };
+}
 
 export default async function CustomerRegister({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next: rawNext } = await searchParams;
   const next = rawNext ? safeNext(rawNext) : undefined;
   const ctx = await getContext();
   if (ctx) redirect(next ?? homeFor(ctx));
+  const { t } = await getI18n();
 
   return (
     <AuthShell>
-      <AuthHeading title="Create your account" subtitle="Join Pointili and start collecting stamps!" />
+      <AuthHeading title={t.auth.register.title} subtitle={t.auth.register.subtitle} />
       {next?.startsWith("/scan/") && (
         <Alert tone="info" className="mb-5">
-          Create your Pointili account to collect your stamp. It takes 20 seconds, and your stamp is saved meanwhile.
+          {t.auth.register.scanNotice}
         </Alert>
       )}
       {next?.startsWith("/join/") && (
         <Alert tone="info" className="mb-5">
-          Create your free account and the card is added to your phone right away.
+          {t.auth.register.joinNotice}
         </Alert>
       )}
       <RegisterForm next={next} />

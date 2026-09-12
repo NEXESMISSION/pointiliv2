@@ -1,0 +1,143 @@
+import { ns } from "../dict";
+
+/**
+ * The counter screens: the rotating stamp QR (/scan/<token>), the printed card
+ * QR (/join/<code>) and the in-app camera. Read at a counter, in a queue —
+ * every sentence stays short.
+ */
+export const scan = ns({
+  fr: {
+    titles: {
+      stamp: "Prendre votre tampon",
+      camera: "Scanner un QR code",
+      join: "Obtenir la carte de fidélité",
+    },
+    checking: {
+      title: "On vérifie votre tampon…",
+      hint: "Un instant",
+    },
+    success: {
+      title: "Tampon obtenu !",
+      unlocked: "Récompense débloquée !",
+      toGo: "pour débloquer {reward}",
+      viewCard: "Voir la carte",
+    },
+    needsAccount: {
+      title: "Encore une étape !",
+      body: "Créez votre compte Pointili pour prendre votre tampon",
+      at: "chez",
+      held: "Votre tampon est gardé 20 minutes",
+      createAccount: "Créer un compte",
+    },
+    error: {
+      alreadyStamped: "Tampon déjà pris",
+      tooSoon: "À la prochaine visite !",
+      network: "Problème de connexion",
+      generic: "Tampon non ajouté",
+      nextAt: "Vous pourrez prendre votre prochain tampon à partir de {time}.",
+      qrChanges: "Le QR à l'écran change tout seul — scannez celui affiché maintenant.",
+      viewMyCard: "Voir ma carte",
+      scanAgain: "Scanner à nouveau",
+    },
+    camera: {
+      close: "Fermer le scanner",
+      starting: "Démarrage de la caméra… autorisez l'accès si votre téléphone le demande.",
+      denied: "L'accès à la caméra est désactivé",
+      unsupported: "Caméra non disponible",
+      allow: "Autorisez la caméra dans les réglages de votre navigateur, ou utilisez le bouton photo ci-dessous.",
+      photoAria: "Scanner la photo d'un QR code",
+      fromPhoto: "Scanner depuis une photo",
+      noQr: "Aucun QR code dans cette photo.",
+      unreadable: "Impossible de lire cette photo.",
+    },
+    qr: {
+      title: "Scanner le QR",
+      hint: "Dirigez la caméra vers le QR code du commerce",
+      rewardQr: "C'est un QR de récompense — c'est au commerce de le scanner.",
+      notPointili: "Ce n'est pas un QR code Pointili.",
+    },
+    join: {
+      heading: "Votre carte chez",
+      rewardLine: "Collectez {stamps} et recevez",
+      noRewardLine: "Collectez des tampons à chaque visite et gagnez des récompenses.",
+      paused: "Les tampons sont en pause dans ce commerce. Vous pouvez quand même ajouter la carte.",
+      perkFree: "Gratuit, avec votre numéro de téléphone",
+      perkNoApp: "Aucune application à télécharger",
+      perkScan: "Scannez le QR du comptoir pour collecter des tampons",
+      getCard: "Obtenir ma carte",
+      ownTitle: "C'est votre propre carte",
+      ownBody: "Vos clients scannent ce QR pour ajouter votre carte sur leur téléphone. Ça marche — essayez avec un autre téléphone.",
+      errorTitle: "Impossible d'ouvrir cette carte",
+      backToDashboard: "Retour au tableau de bord",
+    },
+    haveAccount: "J'ai déjà un compte",
+    goToCards: "Aller à mes cartes",
+  },
+  tn: {
+    titles: {
+      stamp: "خوذ الطابع متاعك",
+      camera: "سكاني كود QR",
+      join: "خوذ كارط الوفاء",
+    },
+    checking: {
+      title: "قاعدين نشوفو الطابع متاعك…",
+      hint: "استنى ثانية",
+    },
+    success: {
+      title: "خذيت الطابع!",
+      unlocked: "ربحت كادو!",
+      toGo: "باش تاخو {reward}",
+      viewCard: "شوف الكارط",
+    },
+    needsAccount: {
+      title: "باقي خطوة وحدة!",
+      body: "اعمل حساب Pointili باش تاخو الطابع متاعك",
+      at: "في",
+      held: "الطابع متاعك محفوظ 20 دقيقة",
+      createAccount: "اعمل حساب",
+    },
+    error: {
+      alreadyStamped: "الطابع تاخذ قبل",
+      tooSoon: "نتلاقاو في الزيارة الجاية!",
+      network: "مشكل في الكونيكسيون",
+      generic: "الطابع ما تزادش",
+      nextAt: "تنجم تاخو الطابع الجاي من {time}.",
+      qrChanges: "الكود في الشاشة يتبدّل وحدو — سكاني اللي ظاهر توّا.",
+      viewMyCard: "شوف الكارط متاعي",
+      scanAgain: "عاود سكاني",
+    },
+    camera: {
+      close: "سكّر السكانير",
+      starting: "الكاميرا قاعدة تحل… اقبل إذا سألك التليفون.",
+      denied: "الكاميرا مسكّرة",
+      unsupported: "الكاميرا موش موجودة",
+      allow: "اقبل الكاميرا في إعدادات التليفون، ولا استعمل زرّ التصويرة اللي تحت.",
+      photoAria: "سكاني كود QR من تصويرة",
+      fromPhoto: "سكاني من تصويرة",
+      noQr: "ما فمّاش كود QR في التصويرة هاذي.",
+      unreadable: "ما نجّمناش نقراو التصويرة هاذي.",
+    },
+    qr: {
+      title: "سكاني الكود",
+      hint: "وجّه الكاميرا للكود متاع المحل",
+      rewardQr: "هذا كود كادو — المحل هو اللي يسكانيه.",
+      notPointili: "هذا موش كود QR متاع Pointili.",
+    },
+    join: {
+      heading: "الكارط متاعك في",
+      rewardLine: "لمّ {stamps} وخوذ",
+      noRewardLine: "لمّ الطوابع في كل زيارة وخوذ كوادو.",
+      paused: "المحل هذا وقّف الطوابع توّا. أما تنجم زيد الكارط.",
+      perkFree: "بلاش، بنومرو التليفون متاعك",
+      perkNoApp: "ما تحمّل حتى أبليكاسيون",
+      perkScan: "سكاني كود الكونتوار باش تلمّ الطوابع",
+      getCard: "خوذ الكارط متاعي",
+      ownTitle: "هذي الكارط متاعك إنت",
+      ownBody: "الحرفاء متاعك يسكانيو الكود هذا باش يزيدو الكارط متاعك في التليفون. تخدم — جرّب بتليفون آخر.",
+      errorTitle: "ما نجّمناش نحلّو الكارط هاذي",
+      backToDashboard: "ارجع للوحة التحكم",
+    },
+    haveAccount: "عندي حساب",
+    goToCards: "روح للكارطات متاعي",
+  },
+});

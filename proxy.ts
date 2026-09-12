@@ -1,18 +1,55 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE,
+  LOCALE_HEADER,
+  LOCALE_MAX_AGE,
+  isLocale,
+  isMarketingPath,
+  localeFromAcceptLanguage,
+  localePath,
+  splitLocalePath,
+  type Locale,
+} from "@/lib/i18n/config";
 
 /**
- * Keeps the Supabase session alive so customers never have to log in again.
+ * Two jobs before the page renders:
  *
- * Server Components cannot write cookies, so a token refreshed during a render
- * would be lost — and with refresh-token rotation, lost means logged out. The
- * proxy refreshes BEFORE the render, only when the access token is close to
- * expiry (a refresh is a network call; most requests skip it).
+ *  1. Language. /tn/... wins, then the cookie, then the browser's own
+ *     preference. Public pages redirect to the address of that language so
+ *     each one has its own URL; every render reads it from a request header.
+ *  2. Session. Server Components cannot write cookies, so a token refreshed
+ *     during a render would be lost — and with refresh-token rotation, lost
+ *     means logged out. The refresh happens here, only when the access token
+ *     is close to expiry (most requests skip it).
  */
 export async function proxy(request: NextRequest) {
-  if (!needsRefresh(request)) return NextResponse.next({ request });
+  const { pathname } = request.nextUrl;
+  const { locale: fromPath } = splitLocalePath(pathname);
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
+  const locale: Locale = fromPath ?? (isLocale(cookieLocale) ? cookieLocale : localeFromAcceptLanguage(request.headers.get("accept-language")));
 
-  let response = NextResponse.next({ request });
+  if (!fromPath && isMarketingPath(pathname) && locale !== DEFAULT_LOCALE) {
+    const url = request.nextUrl.clone();
+    url.pathname = localePath(pathname, locale) || "/";
+    const redirect = NextResponse.redirect(url);
+    redirect.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: LOCALE_MAX_AGE, sameSite: "lax" });
+    return redirect;
+  }
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(LOCALE_HEADER, locale);
+
+  const fresh = () => {
+    const res = NextResponse.next({ request: { headers: requestHeaders } });
+    if (cookieLocale !== locale) res.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: LOCALE_MAX_AGE, sameSite: "lax" });
+    return res;
+  };
+
+  if (!needsRefresh(request)) return fresh();
+
+  let response = fresh();
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     global: { headers: ip ? { "Sb-Forwarded-For": ip } : {} },
@@ -22,7 +59,7 @@ export async function proxy(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
-        response = NextResponse.next({ request });
+        response = fresh();
         for (const { name, value, options } of cookiesToSet) {
           // A deletion must carry an explicit past expiry or Next re-emits it as a live session cookie.
           if (value === "") response.cookies.set(name, "", { ...options, maxAge: 0, expires: new Date(0) });

@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
 import { MerchantQr } from "@/components/merchant/MerchantQr";
 import { requireMerchant } from "@/lib/session";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "QR code", robots: { index: false } };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t.merchant.qr.title, robots: { index: false } };
+}
 
 export default async function QrPage() {
   const ctx = await requireMerchant("/qr");

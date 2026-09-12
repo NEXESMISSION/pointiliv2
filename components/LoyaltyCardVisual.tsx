@@ -1,6 +1,9 @@
+"use client";
+
 import { Check, Gift, Heart, Star } from "lucide-react";
 import { CardIcon } from "@/components/CardIcon";
 import { patternImage, surface, type CardDesign } from "@/lib/card-design";
+import { useT } from "@/components/i18n/Provider";
 
 type Props = {
   design: CardDesign;
@@ -19,6 +22,7 @@ type Props = {
 
 /** The loyalty card, in the owner's own design. One component for every place a card appears. */
 export function LoyaltyCardVisual({ design, business, subtitle, filled, total, rewardName, size = "full", animateIndex, className = "" }: Props) {
+  const { t, fill } = useT();
   const s = surface(design, !!business.cover_url);
   const tile = size === "tile";
   const done = Math.min(filled, total);
@@ -31,7 +35,7 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
       className={`relative isolate overflow-hidden rounded-[1.25rem] shadow-lift ${className}`}
       style={{ background: s.background, color: s.fg, border: s.border }}
       role="img"
-      aria-label={`${business.name} loyalty card: ${done} of ${total} stamps${rewardName ? `, reward ${rewardName}` : ""}`}
+      aria-label={`${fill(t.customer.loyaltyCard.aria, { business: business.name, done, total })}${rewardName ? fill(t.customer.loyaltyCard.ariaReward, { reward: rewardName }) : ""}`}
     >
       {s.photo && business.cover_url && (
         <>
@@ -60,7 +64,7 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
               </span>
             )}
           </span>
-          <span className="shrink-0 text-right leading-none">
+          <span dir="ltr" className="shrink-0 text-end leading-none">
             <span className={`font-extrabold tabular ${tile ? "text-2xl" : "text-[1.75rem]"}`}>{done}</span>
             <span className="text-base font-semibold tabular" style={{ color: s.muted }}>
               /{total}
@@ -100,7 +104,7 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
             <Gift className="size-4 shrink-0" />
             <span className="min-w-0 flex-1 truncate">{rewardName}</span>
             <span className="shrink-0" style={{ color: complete ? undefined : s.muted }}>
-              {complete ? "Ready 🎉" : `${total - filled} to go`}
+              {complete ? t.customer.loyaltyCard.ready : fill(t.customer.loyaltyCard.toGo, { n: total - filled })}
               {extras > 0 ? ` · +${extras}` : ""}
             </span>
           </div>

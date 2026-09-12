@@ -29,10 +29,10 @@ export function ListRow({ href, icon, title, subtitle, trailing, danger, onClick
         <span className={`block truncate text-[15px] font-medium ${danger ? "text-danger-600" : "text-ink"}`}>{title}</span>
         {subtitle && <span className="block truncate text-[13px] text-muted">{subtitle}</span>}
       </span>
-      {trailing ?? (href ? <ChevronRight className="size-4 shrink-0 text-faint" /> : null)}
+      {trailing ?? (href ? <ChevronRight className="rtl:-scale-x-100 size-4 shrink-0 text-faint" /> : null)}
     </>
   );
-  const cls = "flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-canvas/60";
+  const cls = "flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-canvas/60";
   if (href) return <Link href={href} className={cls}>{inner}</Link>;
   if (onClick) return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
   return <div className={cls}>{inner}</div>;

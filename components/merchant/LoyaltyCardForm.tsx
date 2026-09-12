@@ -12,6 +12,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import { ToastOnResult } from "@/components/ui/Toast";
+import { useT } from "@/components/i18n/Provider";
 import { COOLDOWN_OPTIONS } from "@/lib/constants";
 import { useFormAction } from "@/lib/use-form-action";
 import type { CardDesign } from "@/lib/card-design";
@@ -29,21 +30,7 @@ type Initial = {
 };
 type Business = { name: string; logo_url: string | null; cover_url: string | null; category: string };
 
-const REWARD_IDEAS: Record<string, string[]> = {
-  cafe: ["Free Coffee", "Free Cappuccino", "Free Croissant"],
-  restaurant: ["Free Dessert", "Free Drink", "10% off your meal"],
-  fast_food: ["Free Sandwich", "Free Fries", "Free Drink"],
-  pizzeria: ["Free Pizza", "Free Drink", "Free Dessert"],
-  bakery: ["Free Croissant", "Free Cake Slice", "Free Baguette"],
-  ice_cream: ["Free Ice Cream", "Free Juice", "Free Topping"],
-  salon: ["Free Haircut", "Free Beard Trim", "50% off a cut"],
-  beauty: ["Free Manicure", "Free Facial", "20% off a treatment"],
-  retail: ["10% Discount", "Free Gift", "15 TND off"],
-  other: ["Free Gift", "10% Discount"],
-};
 const STAMP_PICKS = [6, 8, 10, 12];
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /**
  * Two questions: how many stamps, and what they get. The reward wording, the
@@ -52,7 +39,10 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
  */
 export function LoyaltyCardForm({ initial, business, design, isNew, disabled, impact }: { initial: Initial; business: Business; design: CardDesign; isNew: boolean; disabled?: boolean; impact: CardImpact | null }) {
   const { state, submit, pending } = useFormAction<FormState>(saveLoyaltyCard, null);
-  const ideas = REWARD_IDEAS[business.category] ?? REWARD_IDEAS.other!;
+  const { t, count, fill } = useT();
+  const w = t.merchant.loyalty;
+  const allIdeas = t.merchant.ideas as unknown as Record<string, Record<string, string>>;
+  const ideas = Object.values(allIdeas[business.category] ?? allIdeas.other!);
   const [stamps, setStamps] = useState(initial.stamps_required);
   const [reward, setReward] = useState(initial.reward_name || ideas[0]!);
   const [rewardDesc, setRewardDesc] = useState(initial.reward_description);
@@ -64,31 +54,51 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
   // ── what saving would do to customers already collecting ──────────────
   const current = impact?.stamps_required ?? null;
   const rows = impact?.progress ?? [];
-  const count = (f: (r: CardImpact["progress"][number]) => boolean) => rows.filter(f).reduce((a, r) => a + r.n, 0);
+  const tally = (f: (r: CardImpact["progress"][number]) => boolean) => rows.filter(f).reduce((a, r) => a + r.n, 0);
   const raised = !isNew && current !== null && stamps > current;
   const lowered = !isNew && current !== null && stamps < current;
-  const keepGoal = raised ? count((r) => r.target < stamps) : 0;
-  const unlockNow = lowered ? count((r) => r.balance >= stamps && r.balance < r.target) : 0;
+  const keepGoal = raised ? tally((r) => r.target < stamps) : 0;
+  const unlockNow = lowered ? tally((r) => r.balance >= stamps && r.balance < r.target) : 0;
   const renamed = !isNew && !!initial.reward_name && reward.trim() !== initial.reward_name && (impact?.customers ?? 0) > 0;
   const needsConfirm = keepGoal > 0 || unlockNow > 0 || renamed;
 
   const picks = [...new Set([...STAMP_PICKS, stamps])].sort((a, b) => a - b);
-  const cooldownOptions = COOLDOWN_OPTIONS.some((o) => o.value === initial.cooldown_minutes)
-    ? COOLDOWN_OPTIONS
-    : [...COOLDOWN_OPTIONS, { value: initial.cooldown_minutes, label: initial.cooldown_minutes === 0 ? "No limit (demo)" : `${initial.cooldown_minutes} minutes` }];
+  const cooldownLabel = (minutes: number) => {
+    const c = t.data.cooldown;
+    if (minutes === 0) return c.none;
+    if (minutes === 5) return c.m5;
+    if (minutes === 60) return c.h1;
+    if (minutes === 240) return c.h4;
+    if (minutes === 720) return c.h12;
+    if (minutes === 1440) return c.daily;
+    return fill(c.custom, { n: minutes });
+  };
+  const cooldownValues = COOLDOWN_OPTIONS.some((o) => o.value === initial.cooldown_minutes)
+    ? COOLDOWN_OPTIONS.map((o) => o.value as number)
+    : [...COOLDOWN_OPTIONS.map((o) => o.value as number), initial.cooldown_minutes];
 
   const impactMessages = (
     <>
       {raised && keepGoal > 0 && (
         <li>
-          <b>{plural(keepGoal, "customer")}</b> already collecting keep their current goal. {stamps} stamps applies to their next card and to new customers.
+          <b>{count(t.common.customersCount, keepGoal)}</b> {fill(w.keepGoalRest, { n: stamps })}
         </li>
       )}
-      {lowered && <li>{unlockNow > 0 ? <><b>{plural(unlockNow, "customer")}</b> unlock {reward || "the reward"} right away.</> : <>Everyone needs fewer stamps, starting now.</>}</li>}
+      {lowered && (
+        <li>
+          {unlockNow > 0 ? (
+            <>
+              <b>{count(t.common.customersCount, unlockNow)}</b> {fill(w.unlockNowRest, { reward: reward || w.theReward })}
+            </>
+          ) : (
+            <>{w.fewerAll}</>
+          )}
+        </li>
+      )}
       {renamed && (
         <li>
-          Customers will see &ldquo;{reward.trim()}&rdquo; instead of &ldquo;{initial.reward_name}&rdquo;.
-          {impact && impact.pending_redemptions > 0 ? ` ${plural(impact.pending_redemptions, "request")} already made keep the old name.` : ""}
+          {fill(w.renamed, { next: reward.trim(), prev: initial.reward_name })}
+          {impact && impact.pending_redemptions > 0 ? fill(w.renamedPending, { requests: count(w.requestsCount, impact.pending_redemptions) }) : ""}
         </li>
       )}
     </>
@@ -101,7 +111,7 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
           <LoyaltyCardVisual design={design} business={business} subtitle={initial.description} filled={Math.max(1, Math.round(stamps * 0.4))} total={stamps} rewardName={reward} />
           {!isNew && (
             <Link href="/loyalty/design" className="mt-3 flex items-center justify-center gap-1.5 py-1 text-[13px] font-semibold text-brand-600">
-              <Palette className="size-4" /> Change how it looks
+              <Palette className="size-4" /> {w.changeLook}
             </Link>
           )}
         </aside>
@@ -119,7 +129,7 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
             submit(new FormData(e.currentTarget));
           }}
         >
-          <ToastOnResult result={state?.ok ? state : null} />
+          <ToastOnResult result={state?.ok ? { ...state, message: w.saved } : null} />
           <input type="hidden" name="name" value={initial.name} />
           <input type="hidden" name="description" value={initial.description} />
           <input type="hidden" name="color" value={initial.color} />
@@ -130,7 +140,7 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
             {state?.error && <Alert>{state.error}</Alert>}
 
             <Card className="p-5">
-              <p className="text-[15px] font-semibold text-ink">How many stamps?</p>
+              <p className="text-[15px] font-semibold text-ink">{w.stampsQuestion}</p>
               <div className="mt-3 grid grid-cols-4 gap-2">
                 {picks.map((n) => (
                   <button
@@ -144,18 +154,18 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
                   </button>
                 ))}
               </div>
-              <p className="mt-2.5 text-[13px] text-muted">Most shops pick 10 — about one reward a month for a regular.</p>
+              <p className="mt-2.5 text-[13px] text-muted">{w.stampsHint}</p>
 
               {(raised || lowered) && (keepGoal > 0 || lowered) && (
-                <Alert tone={lowered ? "success" : "info"} className="mt-4" title={lowered ? "Good news for your customers" : "Fair for your regulars"}>
+                <Alert tone={lowered ? "success" : "info"} className="mt-4" title={lowered ? w.goodNews : w.fair}>
                   <ul className="list-none space-y-1">{impactMessages}</ul>
                 </Alert>
               )}
             </Card>
 
             <Card className="p-5">
-              <p className="text-[15px] font-semibold text-ink">What do they get?</p>
-              <Input className="mt-3" id="reward_name" name="reward_name" value={reward} onChange={(e) => setReward(e.target.value)} placeholder="Free Coffee" required maxLength={60} aria-label="Reward" />
+              <p className="text-[15px] font-semibold text-ink">{w.rewardQuestion}</p>
+              <Input className="mt-3" id="reward_name" name="reward_name" value={reward} onChange={(e) => setReward(e.target.value)} placeholder={w.rewardPlaceholder} required maxLength={60} aria-label={t.common.reward} />
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {ideas.map((idea) => (
                   <button
@@ -176,35 +186,33 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
             </Card>
 
             {!disabled && (
-              <SubmitButton pending={pending} pendingText="Saving…">
-                {isNew ? "Create my card" : "Save"}
+              <SubmitButton pending={pending} pendingText={t.common.saving}>
+                {isNew ? t.merchant.home.createCta : t.common.save}
               </SubmitButton>
             )}
 
             <details className="group overflow-hidden rounded-2xl border border-line bg-white shadow-card">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
-                More options
+                {t.common.moreOptions}
                 <ChevronDown className="size-4 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />
               </summary>
               <div className="space-y-4 border-t border-line p-5">
-                <Field label="A line about the reward" htmlFor="reward_description">
-                  <Textarea id="reward_description" name="reward_description" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} placeholder="Get one regular coffee for free." maxLength={200} rows={2} />
+                <Field label={w.rewardLine} htmlFor="reward_description">
+                  <Textarea id="reward_description" name="reward_description" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} placeholder={w.rewardLinePlaceholder} maxLength={200} rows={2} />
                 </Field>
-                <Field label="One stamp per customer every" htmlFor="cooldown_minutes" hint="Stops someone collecting several stamps in one visit.">
+                <Field label={w.cooldownLabel} htmlFor="cooldown_minutes" hint={w.cooldownHint}>
                   <Select id="cooldown_minutes" name="cooldown_minutes" value={cooldown} onChange={(e) => setCooldown(e.target.value)}>
-                    {cooldownOptions.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
+                    {cooldownValues.map((v) => (
+                      <option key={v} value={v}>
+                        {cooldownLabel(v)}
                       </option>
                     ))}
                   </Select>
                 </Field>
-                <Field label="Another number of stamps" htmlFor="stamps_exact">
+                <Field label={w.otherNumber} htmlFor="stamps_exact">
                   <Input id="stamps_exact" type="number" min={2} max={30} value={stamps} onChange={(e) => setStamps(Math.min(30, Math.max(2, Number(e.target.value) || 2)))} className="tabular" />
                 </Field>
-                <p className="text-[13px] leading-relaxed text-muted">
-                  Changing the card is always fair: asking for more stamps only applies to new cards, asking for fewer helps everyone right away, and nobody ever loses a stamp.
-                </p>
+                <p className="text-[13px] leading-relaxed text-muted">{w.fairPrint}</p>
               </div>
             </details>
           </fieldset>
@@ -214,15 +222,15 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
       <ConfirmDialog
         open={ask}
         onClose={() => setAsk(false)}
-        title="Save these changes?"
-        confirmLabel="Save"
+        title={w.confirmTitle}
+        confirmLabel={t.common.save}
         onConfirm={() => {
           confirmed.current = true;
           setAsk(false);
           form.current?.requestSubmit();
         }}
       >
-        <ul className="list-disc space-y-2 pl-5">{impactMessages}</ul>
+        <ul className="list-disc space-y-2 ps-5">{impactMessages}</ul>
       </ConfirmDialog>
     </>
   );

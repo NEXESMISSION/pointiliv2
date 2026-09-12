@@ -3,10 +3,12 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "./Button";
+import { useT } from "@/components/i18n/Provider";
 
 /** Bottom sheet on phones, centered dialog on larger screens. Built on <dialog> for focus trapping and Esc. */
 export function Modal({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title?: ReactNode; children: ReactNode; footer?: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const { t } = useT();
 
   useEffect(() => {
     const d = ref.current;
@@ -27,7 +29,7 @@ export function Modal({ open, onClose, title, children, footer }: { open: boolea
       <div className="animate-rise rounded-t-3xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-lift sm:rounded-3xl sm:pb-5">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div className="text-lg font-semibold text-ink">{title}</div>
-          <button type="button" onClick={onClose} className="-m-2 grid size-10 place-items-center rounded-xl text-muted hover:bg-canvas" aria-label="Close">
+          <button type="button" onClick={onClose} className="-m-2 grid size-10 place-items-center rounded-xl text-muted hover:bg-canvas" aria-label={t.common.close}>
             <X className="size-5" />
           </button>
         </div>
@@ -38,7 +40,8 @@ export function Modal({ open, onClose, title, children, footer }: { open: boolea
   );
 }
 
-export function ConfirmDialog({ open, onClose, onConfirm, title, children, confirmLabel = "Confirm", tone = "primary", loading }: { open: boolean; onClose: () => void; onConfirm: () => void; title: ReactNode; children?: ReactNode; confirmLabel?: string; tone?: "primary" | "danger"; loading?: boolean }) {
+export function ConfirmDialog({ open, onClose, onConfirm, title, children, confirmLabel, tone = "primary", loading }: { open: boolean; onClose: () => void; onConfirm: () => void; title: ReactNode; children?: ReactNode; confirmLabel?: string; tone?: "primary" | "danger"; loading?: boolean }) {
+  const { t } = useT();
   return (
     <Modal
       open={open}
@@ -47,10 +50,10 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, children, confi
       footer={
         <>
           <Button variant="outline" size="md" onClick={onClose} className="sm:w-auto">
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button variant={tone === "danger" ? "danger" : "primary"} size="md" onClick={onConfirm} loading={loading} className="sm:w-auto">
-            {confirmLabel}
+            {confirmLabel ?? t.common.confirm}
           </Button>
         </>
       }

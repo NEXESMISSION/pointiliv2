@@ -6,11 +6,15 @@ import { BrandingEditor } from "@/components/merchant/BrandingEditor";
 import { CardDesigner } from "@/components/merchant/CardDesigner";
 import { requireMerchant } from "@/lib/session";
 import { resolveDesign } from "@/lib/card-design";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Design your card" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t.merchant.design.title };
+}
 
 export default async function DesignPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
-  const ctx = await requireMerchant("/loyalty/design");
+  const [ctx, { t }] = await Promise.all([requireMerchant("/loyalty/design"), getI18n()]);
   if (!ctx.card) redirect("/loyalty?welcome=1");
   const { welcome } = await searchParams;
   const isOwner = ctx.member_role === "owner";
@@ -18,24 +22,24 @@ export default async function DesignPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="mx-auto max-w-5xl">
-      <TopBar title="Design your card" back="/loyalty" subtitle="Make it look like your shop" />
+      <TopBar title={t.merchant.design.title} back="/loyalty" subtitle={t.merchant.design.subtitle} />
       {welcome && (
         <Alert
           tone="success"
-          title="Your card is ready — now make it yours ✨"
+          title={t.merchant.design.welcomeTitle}
           className="mb-5"
           action={
             <Link href="/dashboard?ready=1" className="font-semibold underline">
-              Skip for now
+              {t.merchant.design.skipForNow}
             </Link>
           }
         >
-          Pick a style and your colours. This is exactly what customers see on their phone.
+          {t.merchant.design.welcomeBody}
         </Alert>
       )}
       {!isOwner && (
         <Alert tone="info" className="mb-5">
-          Only the business owner can change the card design.
+          {t.merchant.design.ownerOnly}
         </Alert>
       )}
       <CardDesigner

@@ -27,10 +27,10 @@ async function shot(page, name, path, { wait = 800, full = true, noBack = false 
   if (path) await page.goto(BASE + path, { waitUntil: "networkidle", timeout: 90000 });
   await page.waitForTimeout(wait);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  const errorScreen = await page.getByText("Something went wrong").count();
+  const errorScreen = await page.locator("[data-error-screen]").count();
   // Every screen except the home screens offers a way back.
-  const isHome = ["/", "/customer", "/dashboard", "/admin"].includes(new URL(page.url()).pathname);
-  const missingBack = !noBack && !isHome && (await page.locator('button[aria-label="Go back"]').count()) === 0;
+  const isHome = ["/", "/tn", "/customer", "/dashboard", "/admin"].includes(new URL(page.url()).pathname);
+  const missingBack = !noBack && !isHome && (await page.locator('button[data-back]').count()) === 0;
   if (overflow > 1) problems.push(`${name}: horizontal overflow ${overflow}px`);
   if (errorScreen) problems.push(`${name}: error screen`);
   if (missingBack) problems.push(`${name}: no back button`);
@@ -41,9 +41,9 @@ async function shot(page, name, path, { wait = 800, full = true, noBack = false 
 
 async function loginUi(page, digits, password, portal = "/login") {
   await page.goto(BASE + portal, { waitUntil: "networkidle" });
-  await page.getByLabel("Phone number").fill(digits);
+  await page.locator('input[type="tel"]').fill(digits);
   await page.locator('input[name="password"]').fill(password);
-  await Promise.all([page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 60000 }), page.getByRole("button", { name: "Log in" }).click()]);
+  await Promise.all([page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 60000 }), page.locator('form button[type="submit"]').click()]);
 }
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
@@ -61,26 +61,39 @@ try {
 
   // A failed sign-up or login must keep what was typed.
   await p.goto(BASE + "/customer/register", { waitUntil: "networkidle" });
-  await p.getByLabel("Phone number").fill("20000001");
+  await p.locator('input[type="tel"]').fill("20000001");
   await p.locator('input[name="password"]').fill("keepme-12345");
   await p.locator('input[name="confirm"]').fill("keepme-12345");
-  await p.getByRole("button", { name: "Create account" }).click();
-  // Either answer is an error that must keep the fields (repeated runs hit the sign-up rate limit).
-  await p.getByText(/already exists|too many attempts/i).first().waitFor({ timeout: 60000 });
+  await p.locator('form button[type="submit"]').click();
+  // Any refusal is fine (repeated runs hit the sign-up rate limit) — the fields must survive it.
+  await p.locator('[role="alert"], input[aria-invalid="true"]').first().waitFor({ timeout: 60000 });
   const keptPw = await p.locator('input[name="password"]').inputValue();
   const keptConfirm = await p.locator('input[name="confirm"]').inputValue();
-  const keptPhone = await p.getByLabel("Phone number").inputValue();
+  const keptPhone = await p.locator('input[type="tel"]').inputValue();
   if (keptPw !== "keepme-12345" || keptConfirm !== "keepme-12345" || !keptPhone.replace(/\D/g, "").includes("20000001")) problems.push("register: typed values were cleared after an error");
   else console.log("  ✓ sign-up error keeps phone and both passwords");
   await p.screenshot({ path: join(OUT, "09-register-error.png") });
 
   await p.goto(BASE + "/customer/login", { waitUntil: "networkidle" });
-  await p.getByLabel("Phone number").fill("20000001");
+  await p.locator('input[type="tel"]').fill("20000001");
   await p.locator('input[name="password"]').fill("definitely-wrong-1");
-  await p.getByRole("button", { name: "Log in" }).click();
-  await p.getByText(/wrong phone number or password/i).waitFor({ timeout: 60000 });
+  await p.locator('form button[type="submit"]').click();
+  await p.locator('[role="alert"]').first().waitFor({ timeout: 60000 });
   if ((await p.locator('input[name="password"]').inputValue()) !== "definitely-wrong-1") problems.push("login: password was cleared after an error");
   else console.log("  ✓ wrong password keeps what was typed");
+
+  // ── Tunisian (RTL) ───────────────────────────────────────────────────────
+  console.log("tunisian");
+  const tnCtx = await browser.newContext({ ...phone, locale: "ar-TN" });
+  await tnCtx.addCookies([{ name: "pl_lang", value: "tn", url: BASE }]);
+  const tp = await tnCtx.newPage();
+  for (const [n, path] of [["60-tn-landing", "/tn"], ["61-tn-how", "/tn/how-it-works"], ["62-tn-pricing", "/tn/pricing"], ["63-tn-customer-login", "/customer/login"], ["64-tn-business-register", "/register"]]) {
+    await shot(tp, n, path, { noBack: n === "60-tn-landing" });
+  }
+  const rtl = await tp.evaluate(() => document.documentElement.dir + "/" + document.documentElement.lang);
+  if (rtl !== "rtl/ar-TN") problems.push(`tunisian page is not RTL (${rtl})`);
+  else console.log("  ✓ tunisian pages render right-to-left");
+  await tnCtx.close();
 
   // ── merchant ─────────────────────────────────────────────────────────────
   console.log("merchant");
@@ -104,18 +117,18 @@ try {
   ).png().toFile(logoPath);
   await mp.goto(BASE + "/loyalty/design", { waitUntil: "networkidle" });
   await mp.locator('input[type="file"]').nth(0).setInputFiles(coverPath);
-  await mp.getByText("Cover photo updated").waitFor({ timeout: 60000 });
+  await mp.getByText("Photo de couverture mise à jour").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(2000);
   await mp.locator('input[type="file"]').nth(1).setInputFiles(logoPath);
-  await mp.getByText("Logo updated").waitFor({ timeout: 60000 });
+  await mp.getByText("Logo mis à jour").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(2500);
   console.log("  ✓ cover + logo uploaded in the card designer");
   // Always make a real change: note the SAVED pattern first (picking Photo resets it), then set the opposite.
-  const savedDots = (await mp.getByRole("button", { name: "Dots", exact: true }).getAttribute("aria-pressed")) === "true";
+  const savedDots = (await mp.getByRole("button", { name: "Points", exact: true }).getAttribute("aria-pressed")) === "true";
   await mp.getByRole("button", { name: /^Photo/ }).click();
-  await mp.getByRole("button", { name: savedDots ? "None" : "Dots", exact: true }).click();
-  await mp.getByRole("button", { name: "Save design" }).click();
-  await mp.getByText("Card design saved").waitFor({ timeout: 60000 });
+  await mp.getByRole("button", { name: savedDots ? "Aucun" : "Points", exact: true }).click();
+  await mp.getByRole("button", { name: /^Enregistrer l/ }).click();
+  await mp.getByText("Apparence de la carte enregistrée").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(1500);
   console.log("  ✓ card design saved (Photo style)");
   await shot(mp, "11b-design", null);
@@ -124,7 +137,7 @@ try {
     await shot(mp, n, path);
   }
   await mp.goto(BASE + "/qr", { waitUntil: "domcontentloaded" });
-  await mp.waitForSelector('[aria-label="Pointili stamp QR code"] svg', { timeout: 30000 });
+  await mp.waitForSelector("[data-qr] svg", { timeout: 30000 });
   await shot(mp, "21-qr", null, { wait: 500, full: false });
   await shot(mp, "22-counter-qr", "/counter-qr");
   const joinPath = new URL(await mp.locator("p.break-all").innerText()).pathname;
@@ -133,7 +146,7 @@ try {
   const jc = await browser.newContext(phone);
   const jp = await jc.newPage();
   await jp.goto(BASE + joinPath, { waitUntil: "networkidle" });
-  await jp.getByRole("link", { name: "Get my card" }).waitFor({ timeout: 30000 });
+  await jp.getByRole("link", { name: "Obtenir ma carte" }).waitFor({ timeout: 30000 });
   await shot(jp, "23-join-signed-out", null);
   await jc.close();
 
@@ -146,17 +159,17 @@ try {
   const c = await browser.newContext(phone);
   const cp = await c.newPage();
   await cp.goto(BASE + scanUrl.pathname, { waitUntil: "domcontentloaded" });
-  await cp.getByText("Almost there!").waitFor({ timeout: 30000 });
+  await cp.getByText("Encore une étape !").waitFor({ timeout: 30000 });
   await shot(cp, "30-scan-needs-account", null, { full: false });
-  await cp.getByRole("link", { name: "Create account" }).click();
+  await cp.getByRole("link", { name: "Créer un compte" }).first().click();
   await cp.waitForURL(/customer\/register/);
   const digits = `5${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
   const pw = randomBytes(8).toString("base64url");
-  await cp.getByLabel("Phone number").fill(digits);
+  await cp.locator('input[type="tel"]').fill(digits);
   await cp.locator('input[name="password"]').fill(pw);
   await cp.locator('input[name="confirm"]').fill(pw);
-  await cp.getByRole("button", { name: "Create account" }).click();
-  await cp.getByText("Stamp collected!").waitFor({ timeout: 60000 });
+  await cp.locator('form button[type="submit"]').click();
+  await cp.getByText("Tampon obtenu !").waitFor({ timeout: 60000 });
   const { data: who } = await admin.rpc("auth_lookup", { p_identifier: `+216${digits}` });
   if (who) cleanup.push(who.user_id);
   await cp.waitForTimeout(1200);

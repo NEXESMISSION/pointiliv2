@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { useT } from "@/components/i18n/Provider";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; exact?: boolean; badge?: number };
 
@@ -15,6 +16,7 @@ function isActive(pathname: string, item: NavItem) {
 /** Mobile bottom navigation (hidden from lg up when a sidebar exists). */
 export function BottomNav({ items, center, hideOnDesktop = true }: { items: NavItem[]; center?: ReactNode; hideOnDesktop?: boolean }) {
   const pathname = usePathname();
+  const { t } = useT();
   const half = Math.ceil(items.length / 2);
   const render = (item: NavItem) => {
     const active = isActive(pathname, item);
@@ -28,12 +30,12 @@ export function BottomNav({ items, center, hideOnDesktop = true }: { items: NavI
       >
         <Icon className="size-[22px]" strokeWidth={active ? 2.3 : 1.8} />
         <span className="max-w-full truncate">{item.label}</span>
-        {!!item.badge && <span className="absolute right-[calc(50%-1.25rem)] top-0.5 grid min-w-4 place-items-center rounded-full bg-danger-500 px-1 text-[10px] leading-4 text-white">{item.badge}</span>}
+        {!!item.badge && <span className="absolute end-[calc(50%-1.25rem)] top-0.5 grid min-w-4 place-items-center rounded-full bg-danger-500 px-1 text-[10px] leading-4 text-white">{item.badge}</span>}
       </Link>
     );
   };
   return (
-    <nav className={`fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 pb-safe backdrop-blur print:hidden ${hideOnDesktop ? "lg:hidden" : ""}`} aria-label="Main">
+    <nav className={`fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 pb-safe backdrop-blur print:hidden ${hideOnDesktop ? "lg:hidden" : ""}`} aria-label={t.nav.mainAria}>
       <div className="mx-auto flex h-16 max-w-md items-stretch px-2">
         {center ? (
           <>
@@ -52,10 +54,11 @@ export function BottomNav({ items, center, hideOnDesktop = true }: { items: NavI
 /** Desktop sidebar. */
 export function SideNav({ items, header, footer }: { items: NavItem[]; header?: ReactNode; footer?: ReactNode }) {
   const pathname = usePathname();
+  const { t } = useT();
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-white lg:flex print:!hidden">
+    <aside className="fixed inset-y-0 start-0 z-30 hidden w-60 flex-col border-e border-line bg-white lg:flex print:!hidden">
       <div className="px-4 pb-4 pt-5">{header}</div>
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3" aria-label="Main">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3" aria-label={t.nav.mainAria}>
         {items.map((item) => {
           const active = isActive(pathname, item);
           const Icon = item.icon;

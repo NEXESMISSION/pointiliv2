@@ -6,6 +6,7 @@ import { LogoMark } from "@/components/Logo";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useInstall } from "@/lib/install";
+import { useT } from "@/components/i18n/Provider";
 
 const DISMISS_KEY = "pd_install_dismissed_at";
 const DISMISS_DAYS = 14;
@@ -21,6 +22,8 @@ function recentlyDismissed() {
 
 /** A quiet card on the customer home: install Pointili like a normal app. */
 export function InstallBanner() {
+  const { t } = useT();
+  const i = t.customer.install;
   const { mode, install } = useInstall();
   const [hidden, setHidden] = useState(true);
   const [iosHelp, setIosHelp] = useState(false);
@@ -48,13 +51,13 @@ export function InstallBanner() {
           <LogoMark size={24} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-semibold text-ink">Install Pointili</p>
-          <p className="truncate text-[13px] text-muted">Your cards, one tap away</p>
+          <p className="text-[15px] font-semibold text-ink">{i.title}</p>
+          <p className="truncate text-[13px] text-muted">{i.subtitle}</p>
         </div>
         <Button size="sm" onClick={() => (mode === "android" ? void install() : setIosHelp(true))}>
-          Install
+          {i.action}
         </Button>
-        <button type="button" onClick={dismiss} aria-label="Not now" className="grid size-9 place-items-center rounded-full text-faint hover:bg-canvas hover:text-muted">
+        <button type="button" onClick={dismiss} aria-label={i.notNow} className="grid size-9 place-items-center rounded-full text-faint hover:bg-canvas hover:text-muted">
           <X className="size-4" />
         </button>
       </div>
@@ -65,18 +68,20 @@ export function InstallBanner() {
 
 /** A list row version (profile page). Renders nothing when installing isn't possible or already done. */
 export function InstallRow() {
+  const { t } = useT();
+  const i = t.customer.install;
   const { mode, install } = useInstall();
   const [iosHelp, setIosHelp] = useState(false);
   if (mode !== "android" && mode !== "ios") return null;
   return (
     <>
-      <button type="button" onClick={() => (mode === "android" ? void install() : setIosHelp(true))} className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-canvas/60">
+      <button type="button" onClick={() => (mode === "android" ? void install() : setIosHelp(true))} className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-canvas/60">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
           <Download className="size-[18px]" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-medium text-ink">Install the app</span>
-          <span className="block truncate text-[13px] text-muted">Open your cards from the home screen</span>
+          <span className="block text-[15px] font-medium text-ink">{i.rowTitle}</span>
+          <span className="block truncate text-[13px] text-muted">{i.rowSubtitle}</span>
         </span>
       </button>
       <IosInstallHelp open={iosHelp} onClose={() => setIosHelp(false)} />
@@ -85,15 +90,17 @@ export function InstallRow() {
 }
 
 function IosInstallHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useT();
+  const i = t.customer.install;
   return (
-    <Modal open={open} onClose={onClose} title="Add Pointili to your Home Screen" footer={<Button onClick={onClose}>Got it</Button>}>
+    <Modal open={open} onClose={onClose} title={i.iosTitle} footer={<Button onClick={onClose}>{i.gotIt}</Button>}>
       <ol className="space-y-4">
         <li className="flex items-center gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-canvas text-brand-600">
             <Share className="size-5" />
           </span>
           <span>
-            Tap <b>Share</b> at the bottom of Safari
+            {i.step1Before} <b>{i.step1Action}</b> {i.step1After}
           </span>
         </li>
         <li className="flex items-center gap-3">
@@ -101,7 +108,8 @@ function IosInstallHelp({ open, onClose }: { open: boolean; onClose: () => void 
             <SquarePlus className="size-5" />
           </span>
           <span>
-            Choose <b>Add to Home Screen</b>, then <b>Add</b>
+            {i.step2Before} <b>{i.step2Action}</b>
+            {i.step2Mid} <b>{i.step2Action2}</b>
           </span>
         </li>
       </ol>

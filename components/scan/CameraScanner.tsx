@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CameraOff, ImageUp, X } from "lucide-react";
 import { BackButton } from "@/components/nav/BackButton";
+import { useT } from "@/components/i18n/Provider";
 
 type Detector = (source: CanvasImageSource, w: number, h: number) => Promise<string | null>;
 
@@ -40,6 +41,7 @@ async function makeDetector(canvas: HTMLCanvasElement): Promise<Detector> {
  * error message to show while it keeps looking.
  */
 export function CameraScanner({ title, hint, backHref, onClose, onText }: { title: string; hint: string; backHref?: string; onClose?: () => void; onText: (text: string) => string | null }) {
+  const { t } = useT();
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const detector = useRef<Detector | null>(null);
@@ -120,10 +122,10 @@ export function CameraScanner({ title, hint, backHref, onClose, onText }: { titl
       const bitmap = await createImageBitmap(file);
       detector.current ??= await makeDetector(canvas.current!);
       const text = await detector.current(bitmap, bitmap.width, bitmap.height);
-      if (!text) setMessage("No QR code found in that photo.");
+      if (!text) setMessage(t.scan.camera.noQr);
       else handle(text);
     } catch {
-      setMessage("Couldn't read that photo.");
+      setMessage(t.scan.camera.unreadable);
     }
   }
 
@@ -139,7 +141,7 @@ export function CameraScanner({ title, hint, backHref, onClose, onText }: { titl
         )}
         <h1 className="flex-1 text-center text-base font-semibold">{title}</h1>
         {onClose ? (
-          <button type="button" onClick={onClose} className={round} aria-label="Close scanner">
+          <button type="button" onClick={onClose} className={round} aria-label={t.scan.camera.close}>
             <X className="size-6" />
           </button>
         ) : (
@@ -157,8 +159,8 @@ export function CameraScanner({ title, hint, backHref, onClose, onText }: { titl
             <span className="mx-auto grid size-16 place-items-center rounded-full bg-white/10">
               <CameraOff className="size-8" />
             </span>
-            <p className="mt-4 text-lg font-semibold">{status === "denied" ? "Camera access is off" : "Camera not available"}</p>
-            <p className="mt-2 text-sm text-white/70">Allow camera access in your browser settings, or use the photo button below.</p>
+            <p className="mt-4 text-lg font-semibold">{status === "denied" ? t.scan.camera.denied : t.scan.camera.unsupported}</p>
+            <p className="mt-2 text-sm text-white/70">{t.scan.camera.allow}</p>
           </div>
         ) : (
           <>
@@ -168,7 +170,7 @@ export function CameraScanner({ title, hint, backHref, onClose, onText }: { titl
               ))}
               {status === "scanning" && <span className="absolute inset-x-6 top-1/2 h-0.5 animate-pulse rounded-full bg-brand-400 shadow-[0_0_16px_4px_rgb(130_121_249/0.6)]" />}
             </div>
-            <p className="mt-8 text-center text-[15px] font-medium text-white/90">{status === "starting" ? "Starting camera… allow access if your phone asks." : hint}</p>
+            <p className="mt-8 text-center text-[15px] font-medium text-white/90">{status === "starting" ? t.scan.camera.starting : hint}</p>
           </>
         )}
         {message && (
@@ -179,11 +181,11 @@ export function CameraScanner({ title, hint, backHref, onClose, onText }: { titl
       </div>
 
       <div className="relative z-10 flex flex-col items-center gap-2 pb-[calc(2rem+env(safe-area-inset-bottom))]">
-        <label className="grid size-16 cursor-pointer place-items-center rounded-full border border-white/25 bg-white/10 backdrop-blur transition active:scale-95" aria-label="Scan a photo of a QR code">
+        <label className="grid size-16 cursor-pointer place-items-center rounded-full border border-white/25 bg-white/10 backdrop-blur transition active:scale-95" aria-label={t.scan.camera.photoAria}>
           <ImageUp className="size-7" />
           <input type="file" accept="image/*" className="sr-only" onChange={(e) => fromFile(e.target.files?.[0])} />
         </label>
-        <span className="text-xs text-white/60">Scan from a photo</span>
+        <span className="text-xs text-white/60">{t.scan.camera.fromPhoto}</span>
       </div>
     </div>
   );

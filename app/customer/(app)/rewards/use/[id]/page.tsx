@@ -3,9 +3,13 @@ import { notFound } from "next/navigation";
 import { RedemptionScreen } from "@/components/customer/RedemptionScreen";
 import { rpc } from "@/lib/session";
 import { requestOrigin } from "@/lib/origin";
+import { getI18n } from "@/lib/i18n/server";
 import type { RedemptionStatus } from "@/lib/types";
 
-export const metadata = { title: "Use reward" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t.customer.use.title };
+}
 
 export default async function UseReward({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

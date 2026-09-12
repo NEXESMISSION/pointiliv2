@@ -1,8 +1,10 @@
 import { PLANS } from "@/lib/constants";
+import { getI18n } from "@/lib/i18n/server";
 import { siteUrl } from "@/lib/url";
 
 /** Structured data so search engines understand what Pointili is and what it costs. */
-export function JsonLd() {
+export async function JsonLd() {
+  const { t, fill } = await getI18n();
   const url = siteUrl();
   const data = {
     "@context": "https://schema.org",
@@ -21,11 +23,11 @@ export function JsonLd() {
         url,
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web, Android, iOS",
-        description: "Digital loyalty cards for cafés, restaurants, salons and local businesses. Customers scan a rotating QR, collect stamps and earn rewards.",
+        description: t.marketing.meta.appDescription,
         publisher: { "@id": `${url}/#org` },
-        offers: [PLANS.six_month, PLANS.yearly].map((p) => ({
+        offers: ([PLANS.six_month, PLANS.yearly] as const).map((p) => ({
           "@type": "Offer",
-          name: `${p.name} plan`,
+          name: fill(t.marketing.plans.offerName, { plan: t.data.plans[p.id] }),
           price: p.price,
           priceCurrency: "TND",
         })),

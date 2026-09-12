@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { CATEGORIES } from "@/lib/constants";
+import { getI18n } from "@/lib/i18n/server";
 import type { SubscriptionState } from "@/lib/types";
 
 /* ── Shapes returned by the admin_* database functions ─────────────────────── */
@@ -131,22 +132,9 @@ export type AdminSystem = {
 
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
 
-export const ACTIVITY_LABEL: Record<string, string> = {
-  stamp: "+1 stamp",
-  reward_redeemed: "Reward redeemed",
-  business_created: "New business",
-  subscription_activated: "Plan activated",
-  payment_requested: "Payment requested",
-  business_suspended: "Business suspended",
-  business_activated: "Business activated",
-  subscription_cancelled: "Subscription cancelled",
-  card_created: "Loyalty card created",
-  card_updated: "Loyalty card updated",
-  reward_created: "Reward added",
-};
-
-export function activityLabel(type: string): string {
-  return ACTIVITY_LABEL[type] ?? type.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+/** The activity names come from the dictionary: `activityLabel(t.admin.activity.types, a.type)`. */
+export function activityLabel(labels: Record<string, string>, type: string): string {
+  return labels[type] ?? type.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
 const ACTIVITY_ICON: Record<string, { icon: LucideIcon; tone: string }> = {
@@ -177,21 +165,24 @@ export function categoryIcon(category: string | null | undefined): string {
   return CATEGORIES[(category ?? "other") as keyof typeof CATEGORIES]?.icon ?? "star";
 }
 
-export function PaymentBadge({ status }: { status: string }) {
+export async function PaymentBadge({ status }: { status: string }) {
+  const { t } = await getI18n();
+  const s = t.data.paymentStatus;
   switch (status) {
     case "pending":
-      return <Badge tone="warning">Pending</Badge>;
+      return <Badge tone="warning">{s.pending}</Badge>;
     case "paid":
-      return <Badge tone="success">Paid</Badge>;
+      return <Badge tone="success">{s.paid}</Badge>;
     case "failed":
-      return <Badge tone="danger">Failed</Badge>;
+      return <Badge tone="danger">{s.failed}</Badge>;
     default:
-      return <Badge tone="neutral">{status === "cancelled" ? "Cancelled" : status}</Badge>;
+      return <Badge tone="neutral">{status === "cancelled" ? s.cancelled : status}</Badge>;
   }
 }
 
-export function BusinessStatusBadge({ status }: { status: string }) {
-  return status === "suspended" ? <Badge tone="danger">Suspended</Badge> : null;
+export async function BusinessStatusBadge({ status }: { status: string }) {
+  const { t } = await getI18n();
+  return status === "suspended" ? <Badge tone="danger">{t.admin.business.suspended}</Badge> : null;
 }
 
 export function isPast(iso: string | null | undefined): boolean {
@@ -210,14 +201,14 @@ export function qs(params: Record<string, string | null | undefined>): string {
 export function SearchForm({ action, q, placeholder, hidden = {} }: { action: string; q?: string; placeholder: string; hidden?: Record<string, string | undefined> }) {
   return (
     <Form action={action} className="relative" role="search">
-      <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-faint" aria-hidden />
+      <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-faint" aria-hidden />
       <input
         type="search"
         name="q"
         defaultValue={q}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="block h-12 w-full rounded-2xl border border-line bg-white pl-12 pr-4 text-base text-ink placeholder:text-faint transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+        className="block h-12 w-full rounded-2xl border border-line bg-white ps-12 pe-4 text-base text-ink placeholder:text-faint transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
       />
       {Object.entries(hidden).map(([k, v]) => (v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
     </Form>

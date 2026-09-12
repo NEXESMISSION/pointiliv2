@@ -4,26 +4,31 @@ import { TopBar } from "@/components/nav/TopBar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkButton } from "@/components/ui/Button";
 import { rpc } from "@/lib/session";
+import { getI18n } from "@/lib/i18n/server";
 import type { HomeCard } from "@/lib/types";
 
-export const metadata = { title: "My cards" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t.customer.cards.title };
+}
 
 export default async function CardsPage() {
+  const { t, count } = await getI18n();
   const { cards } = await rpc<{ cards: HomeCard[] }>("customer_home");
   return (
     <>
-      <TopBar title="My cards" large back="/customer" subtitle={cards.length ? `${cards.length} loyalty card${cards.length > 1 ? "s" : ""}` : undefined} />
+      <TopBar title={t.customer.cards.title} large back="/customer" subtitle={cards.length ? count(t.customer.cards.count, cards.length) : undefined} />
       {cards.length === 0 ? (
         <EmptyState
           icon={<CreditCard className="size-8" />}
-          title="No loyalty cards yet"
+          title={t.customer.noCards}
           action={
             <LinkButton href="/customer/scan" block icon={<ScanLine className="size-5" />}>
-              Scan a QR code
+              {t.customer.scanQr}
             </LinkButton>
           }
         >
-          Your card appears here after your first stamp at a Pointili business.
+          {t.customer.cards.emptyBody}
         </EmptyState>
       ) : (
         <div className="space-y-3">

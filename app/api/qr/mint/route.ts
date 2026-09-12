@@ -17,7 +17,9 @@ export async function POST() {
   if (!res.ok || !res.token) return NextResponse.json({ ok: false, error: res.error ?? "network" }, { headers: noStore });
 
   const url = `${await requestOrigin()}/scan/${res.token}`;
-  const svg = await QRCode.toString(url, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F1222", light: "#FFFFFF" } });
+  // `width` gives the SVG real width/height attributes: browsers that do not
+  // infer a size from viewBox alone (Opera, some in-app browsers) still draw it.
+  const svg = await QRCode.toString(url, { type: "svg", width: 512, margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F1222", light: "#FFFFFF" } });
 
   return NextResponse.json(
     { ok: true, id: res.id, url, svg, expires_at: res.expires_at, ttl_seconds: res.ttl_seconds, server_now: new Date().toISOString() },

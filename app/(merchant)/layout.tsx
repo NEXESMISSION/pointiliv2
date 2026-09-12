@@ -5,11 +5,12 @@ import { BusinessAvatar } from "@/components/CardIcon";
 import { Logo } from "@/components/Logo";
 import { requireMerchant } from "@/lib/session";
 import { formatLongDate } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 
 export const metadata = { robots: { index: false, follow: false } };
 
 export default async function MerchantLayout({ children }: { children: React.ReactNode }) {
-  const ctx = await requireMerchant();
+  const [ctx, { t, locale, count, fill }] = await Promise.all([requireMerchant(), getI18n()]);
   const sub = ctx.subscription;
   const suspended = ctx.business.status === "suspended";
 
@@ -23,7 +24,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
               <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card?.icon} color={ctx.card?.color} size={34} rounded="rounded-lg" />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-ink">{ctx.business.name}</p>
-                <p className="truncate text-xs text-muted">{ctx.member_role === "owner" ? "Owner" : "Staff"}</p>
+                <p className="truncate text-xs text-muted">{ctx.member_role === "owner" ? t.nav.merchant.owner : t.nav.merchant.staff}</p>
               </div>
             </div>
           </div>
@@ -31,21 +32,24 @@ export default async function MerchantLayout({ children }: { children: React.Rea
         footer={
           <form action={logout}>
             <button type="submit" className="flex h-9 w-full items-center rounded-lg px-2.5 text-sm font-medium text-muted hover:bg-canvas hover:text-danger-600">
-              Log out
+              {t.common.logout}
             </button>
           </form>
         }
       />
-      <div className="lg:pl-60 print:!pl-0">
+      <div className="lg:ps-60 print:!ps-0">
         {suspended ? (
-          <Banner tone="danger">Your business is suspended. Please contact Pointili support.</Banner>
+          <Banner tone="danger">{t.merchant.banner.suspended}</Banner>
         ) : sub && !sub.open ? (
-          <Banner tone="danger" href="/billing" cta="Renew">
-            Your Pointili subscription has expired. Your QR is paused; customers keep their stamps.
+          <Banner tone="danger" href="/billing" cta={t.merchant.banner.renew}>
+            {t.merchant.banner.expired}
           </Banner>
         ) : sub?.status === "expiring_soon" ? (
-          <Banner tone="warning" href="/billing" cta={sub.plan === "trial" ? "Choose a plan" : "Renew"}>
-            {sub.plan === "trial" ? "Your free trial" : "Your plan"} ends {formatLongDate(sub.expires_at)} ({sub.days_left} day{sub.days_left === 1 ? "" : "s"} left).
+          <Banner tone="warning" href="/billing" cta={sub.plan === "trial" ? t.merchant.banner.choosePlan : t.merchant.banner.renew}>
+            {fill(sub.plan === "trial" ? t.merchant.banner.trialEnds : t.merchant.banner.planEnds, {
+              date: formatLongDate(sub.expires_at, locale),
+              left: count(t.formats.daysLeft, sub.days_left),
+            })}
           </Banner>
         ) : null}
         <main className="mx-auto w-full max-w-4xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-12 lg:pt-8 print:!p-0">{children}</main>

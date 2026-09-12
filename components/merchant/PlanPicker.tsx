@@ -9,15 +9,22 @@ import type { FormState } from "@/app/actions/types";
 import { SubmitButton } from "@/components/ui/Button";
 import { Field, Select } from "@/components/ui/Field";
 import { ToastOnResult } from "@/components/ui/Toast";
+import { useT } from "@/components/i18n/Provider";
+import { formatNumber, formatTND } from "@/lib/format";
 import { PAYMENT_METHODS, PLANS, type PaidPlan } from "@/lib/constants";
 
+/** What one month works out to, so the two prices can be compared. */
+const MONTHS: Record<PaidPlan, number> = { six_month: 6, yearly: 12 };
+
 export function PlanPicker() {
+  const { t, locale, fill } = useT();
   const { state, onSubmit, pending } = useFormAction<FormState>(requestPlan, null);
   const [plan, setPlan] = useState<PaidPlan>("yearly");
+  const w = t.ops.billing;
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <ToastOnResult result={state} />
-      <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Plan">
+      <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label={w.planAria}>
         {(Object.keys(PLANS) as PaidPlan[]).map((k) => {
           const p = PLANS[k];
           const on = plan === k;
@@ -26,36 +33,37 @@ export function PlanPicker() {
               <input type="radio" name="plan" value={k} checked={on} onChange={() => setPlan(k)} className="sr-only" />
               <div className="flex items-center justify-between gap-3">
                 <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-                  {p.name}
-                  {k === "yearly" && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">Best value</span>}
+                  {t.data.plans[k]}
+                  {k === "yearly" && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{w.bestValue}</span>}
                 </p>
                 <span className={`grid size-5 place-items-center rounded-full border-2 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-line"}`}>{on && <Check className="size-3" strokeWidth={3.5} />}</span>
               </div>
               <p className="mt-3 text-3xl font-bold tracking-tight text-ink tabular">
-                {p.price} <span className="text-sm font-medium tracking-normal text-muted">TND / {p.period}</span>
+                {formatNumber(p.price, locale)} <span className="text-sm font-medium tracking-normal text-muted">{t.formats.currency} {t.data.planPeriod[k]}</span>
               </p>
-              <p className="text-sm text-muted">≈ {p.perMonth}</p>
+              <p className="text-sm text-muted">≈ {fill(t.formats.perMonth, { price: formatNumber(Math.round((p.price / MONTHS[k]) * 10) / 10, locale) })}</p>
             </label>
           );
         })}
       </div>
-      <Field label="How will you pay?" htmlFor="method">
+      <Field label={w.howWillYouPay} htmlFor="method">
         <Select id="method" name="method" defaultValue="bank_transfer">
-          {Object.entries(PAYMENT_METHODS).map(([k, label]) => (
+          {(Object.keys(PAYMENT_METHODS) as (keyof typeof PAYMENT_METHODS)[]).map((k) => (
             <option key={k} value={k}>
-              {label}
+              {t.data.payments[k]}
             </option>
           ))}
         </Select>
       </Field>
-      <SubmitButton pending={pending} pendingText="Sending…">
-        Request {PLANS[plan].name} · {PLANS[plan].price} TND
+      <SubmitButton pending={pending} pendingText={t.common.sending}>
+        {fill(w.requestPlan, { plan: t.data.plans[plan], price: formatTND(PLANS[plan].price, locale) })}
       </SubmitButton>
     </form>
   );
 }
 
 export function CancelPlanRequestButton({ id }: { id: string }) {
+  const { t } = useT();
   const [pending, start] = useTransition();
   const router = useRouter();
   return (
@@ -70,7 +78,7 @@ export function CancelPlanRequestButton({ id }: { id: string }) {
       }
       className="text-sm font-semibold underline disabled:opacity-50"
     >
-      Cancel request
+      {t.ops.billing.cancelRequest}
     </button>
   );
 }

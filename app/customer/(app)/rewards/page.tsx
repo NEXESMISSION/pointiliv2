@@ -11,8 +11,12 @@ import { UseRewardButton } from "@/components/customer/UseRewardButton";
 import { rpc } from "@/lib/session";
 import { cardColor } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Rewards" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t.common.rewards };
+}
 
 type Biz = { name: string; logo_url: string | null; category: string };
 type Style = { color: string; icon: string };
@@ -24,6 +28,7 @@ type Rewards = {
 type Pending = { id: string; reward_id?: string };
 
 export default async function RewardsPage() {
+  const { t, locale, count } = await getI18n();
   const data = await rpc<Rewards>("customer_rewards");
   // pending codes live on the card payload; fetch only for cards with unlocked rewards
   const pendingByReward = new Map<string, string>();
@@ -38,16 +43,16 @@ export default async function RewardsPage() {
 
   return (
     <>
-      <TopBar title="Rewards" large back="/customer" />
+      <TopBar title={t.common.rewards} large back="/customer" />
       {nothing ? (
-        <EmptyState icon={<Gift className="size-8" />} title="No rewards yet" action={<LinkButton href="/customer/scan" block>Scan a QR code</LinkButton>}>
-          Collect stamps at Pointili businesses to unlock free treats.
+        <EmptyState icon={<Gift className="size-8" />} title={t.customer.rewards.emptyTitle} action={<LinkButton href="/customer/scan" block>{t.customer.scanQr}</LinkButton>}>
+          {t.customer.rewards.emptyBody}
         </EmptyState>
       ) : (
         <div className="space-y-7">
           {data.unlocked.length > 0 && (
             <section>
-              <SectionTitle>Ready to use 🎉</SectionTitle>
+              <SectionTitle>{t.customer.rewards.readyToUse}</SectionTitle>
               <div className="space-y-3">
                 {data.unlocked.map((r) => {
                   const c = cardColor(r.card.color);
@@ -59,7 +64,7 @@ export default async function RewardsPage() {
                           <p className="truncate text-[17px] font-bold text-ink">{r.name}</p>
                           <p className="truncate text-sm text-muted">{r.business.name}</p>
                         </div>
-                        <Badge tone="success">Unlocked</Badge>
+                        <Badge tone="success">{t.customer.rewards.unlockedBadge}</Badge>
                       </div>
                       {r.description && <p className="mt-3 rounded-2xl p-3 text-sm text-body" style={{ background: c.bg }}>{r.description}</p>}
                       <div className="mt-3">
@@ -74,7 +79,7 @@ export default async function RewardsPage() {
 
           {data.upcoming.length > 0 && (
             <section>
-              <SectionTitle>In progress</SectionTitle>
+              <SectionTitle>{t.customer.rewards.inProgress}</SectionTitle>
               <Card className="divide-y divide-line/80">
                 {data.upcoming.map((r) => {
                   const c = cardColor(r.card.color);
@@ -84,12 +89,12 @@ export default async function RewardsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="truncate font-semibold text-ink">{r.name}</p>
-                          <p className="shrink-0 text-xs font-semibold text-muted tabular">
+                          <p className="shrink-0 text-xs font-semibold text-muted tabular" dir="ltr">
                             {r.balance}/{r.stamps_required}
                           </p>
                         </div>
                         <p className="mb-2 truncate text-sm text-muted">
-                          {r.business.name} · {r.remaining} more
+                          {r.business.name} · {count(t.common.stampsToGo, r.remaining)}
                         </p>
                         <ProgressBar value={r.balance} max={r.stamps_required} color={c.accent} />
                       </div>
@@ -102,7 +107,7 @@ export default async function RewardsPage() {
 
           {data.history.length > 0 && (
             <section>
-              <SectionTitle>Redeemed</SectionTitle>
+              <SectionTitle>{t.customer.rewards.redeemed}</SectionTitle>
               <Card className="divide-y divide-line/80">
                 {data.history.map((h) => (
                   <div key={h.id} className="flex items-center gap-3 px-4 py-3">
@@ -113,7 +118,7 @@ export default async function RewardsPage() {
                       <p className="truncate font-medium text-ink">{h.reward_name}</p>
                       <p className="truncate text-sm text-muted">{h.business_name}</p>
                     </div>
-                    <p className="text-xs text-muted">{formatDate(h.redeemed_at)}</p>
+                    <p className="text-xs text-muted">{formatDate(h.redeemed_at, locale)}</p>
                   </div>
                 ))}
               </Card>

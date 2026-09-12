@@ -7,6 +7,7 @@ import { removeBusinessImage, uploadBusinessImage } from "@/app/actions/merchant
 import { BusinessAvatar, CardIcon } from "@/components/CardIcon";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
+import { useT } from "@/components/i18n/Provider";
 import { cardColor } from "@/lib/constants";
 
 type Kind = "logo" | "cover";
@@ -47,13 +48,15 @@ export function ImageUploader({ kind, url, disabled, icon, color }: { kind: Kind
   const input = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const router = useRouter();
+  const { t } = useT();
+  const w = kind === "cover" ? { saved: t.merchant.branding.coverSaved, removed: t.merchant.branding.coverRemoved } : { saved: t.merchant.branding.logoSaved, removed: t.merchant.branding.logoRemoved };
   const shown = preview ?? url;
   const c = cardColor(color);
 
   const onFile = (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast("Choose an image file.", "error");
+      toast(t.merchant.branding.notImage, "error");
       return;
     }
     start(async () => {
@@ -64,12 +67,12 @@ export function ImageUploader({ kind, url, disabled, icon, color }: { kind: Kind
         fd.append("kind", kind);
         fd.append("file", new File([blob], `${kind}.${blob.type === "image/webp" ? "webp" : "jpg"}`, { type: blob.type }));
         const res = await uploadBusinessImage(fd);
-        toast(res.message, res.ok ? "success" : "error");
+        toast(res.ok ? w.saved : res.message, res.ok ? "success" : "error");
         if (res.ok) router.refresh();
         else setPreview(null);
       } catch {
         setPreview(null);
-        toast("Couldn't read that image. Try a JPG or PNG photo.", "error");
+        toast(t.merchant.branding.badImage, "error");
       } finally {
         if (input.current) input.current.value = "";
       }
@@ -80,7 +83,7 @@ export function ImageUploader({ kind, url, disabled, icon, color }: { kind: Kind
     start(async () => {
       const res = await removeBusinessImage(kind);
       setPreview(null);
-      toast(res.message, res.ok ? "success" : "error");
+      toast(res.ok ? w.removed : res.message, res.ok ? "success" : "error");
       router.refresh();
     });
 
@@ -96,11 +99,11 @@ export function ImageUploader({ kind, url, disabled, icon, color }: { kind: Kind
   if (kind === "cover") {
     return (
       <div>
-        <p className="mb-2 text-sm font-medium text-body">Cover photo</p>
+        <p className="mb-2 text-sm font-medium text-body">{t.merchant.branding.cover}</p>
         <div className="relative aspect-[16/7] overflow-hidden rounded-2xl" style={shown ? undefined : { background: `linear-gradient(135deg, ${c.accent}, ${c.accent}B3)` }}>
           {shown ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={shown} alt="Cover photo" className="size-full object-cover" />
+            <img src={shown} alt={t.merchant.branding.coverAlt} className="size-full object-cover" />
           ) : (
             <div className="grid size-full place-items-center text-white">
               <CardIcon name={icon} className="size-14 opacity-30" />
@@ -112,17 +115,17 @@ export function ImageUploader({ kind, url, disabled, icon, color }: { kind: Kind
             </div>
           )}
           {!disabled && (
-            <div className="absolute bottom-2 right-2 flex gap-2">
-              {picker(url ? "Change" : "Add cover photo", true)}
+            <div className="absolute bottom-2 end-2 flex gap-2">
+              {picker(url ? t.common.change : t.merchant.branding.addCover, true)}
               {url && !busy && (
-                <button type="button" onClick={remove} className="grid size-10 place-items-center rounded-xl bg-black/55 text-white backdrop-blur hover:bg-black/70" aria-label="Remove cover photo">
+                <button type="button" onClick={remove} className="grid size-10 place-items-center rounded-xl bg-black/55 text-white backdrop-blur hover:bg-black/70" aria-label={t.merchant.branding.removeCover}>
                   <Trash2 className="size-4" />
                 </button>
               )}
             </div>
           )}
         </div>
-        <p className="mt-1.5 text-xs text-muted">Your shop, your counter or your best product. Shown on customers&apos; cards and behind your QR.</p>
+        <p className="mt-1.5 text-xs text-muted">{t.merchant.branding.coverHint}</p>
       </div>
     );
   }
@@ -138,14 +141,14 @@ export function ImageUploader({ kind, url, disabled, icon, color }: { kind: Kind
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-ink">Logo</p>
-        <p className="text-xs text-muted">Square images work best.</p>
+        <p className="font-semibold text-ink">{t.merchant.branding.logo}</p>
+        <p className="text-xs text-muted">{t.merchant.branding.logoHint}</p>
         {!disabled && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {picker(url ? "Change logo" : "Upload logo")}
+            {picker(url ? t.merchant.branding.changeLogo : t.merchant.branding.uploadLogo)}
             {url && !busy && (
               <button type="button" onClick={remove} className="h-10 px-2 text-sm font-semibold text-danger-600">
-                Remove
+                {t.common.remove}
               </button>
             )}
           </div>

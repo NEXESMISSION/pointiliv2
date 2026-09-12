@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { formatLocalDigits } from "@/lib/phone";
+import { useT } from "@/components/i18n/Provider";
 
 /** Tunisian number: fixed +216 prefix with flag, 8 digits grouped as they are typed. */
 export function PhoneInput({ name = "phone", id = "phone", defaultValue = "", autoFocus, invalid }: { name?: string; id?: string; defaultValue?: string; autoFocus?: boolean; invalid?: boolean }) {
+  const { t } = useT();
   const [value, setValue] = useState(formatLocalDigits(defaultValue.replace(/^\+?216/, "")));
   return (
     <div
       className="flex h-12 w-full items-center rounded-xl border border-line bg-white shadow-card transition focus-within:border-brand-500 focus-within:ring-[3px] focus-within:ring-brand-500/15 aria-[invalid=true]:border-danger-500"
       aria-invalid={invalid || undefined}
     >
-      <span className="flex h-full items-center gap-2 border-r border-line pl-4 pr-3 text-base font-medium text-body" aria-hidden>
+      <span className="flex h-full items-center gap-2 border-e border-line ps-4 pe-3 text-base font-medium text-body" aria-hidden>
         <TunisiaFlag />
         +216
       </span>
@@ -27,8 +29,8 @@ export function PhoneInput({ name = "phone", id = "phone", defaultValue = "", au
         value={value}
         onChange={(e) => setValue(formatLocalDigits(e.target.value))}
         aria-invalid={invalid || undefined}
-        aria-label="Phone number"
-        className="h-full min-w-0 flex-1 rounded-r-xl bg-transparent px-3 text-base tracking-wide text-ink tabular placeholder:text-faint focus:outline-none"
+        aria-label={t.common.phoneNumber}
+        className="h-full min-w-0 flex-1 rounded-e-xl bg-transparent px-3 text-base tracking-wide text-ink tabular placeholder:text-faint focus:outline-none"
         dir="ltr"
       />
     </div>

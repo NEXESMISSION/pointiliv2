@@ -1,6 +1,10 @@
 import { ImageResponse } from "next/og";
+import { messagesFor } from "@/lib/i18n/messages";
 
-export const alt = "Pointili — digital loyalty cards for local businesses";
+/** The share card is one image for everyone, so it speaks French. */
+const og = messagesFor("fr").marketing.og;
+
+export const alt = og.alt;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -19,21 +23,21 @@ export default function OpengraphImage() {
             <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: -1 }}>Pointili</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: 76, fontWeight: 800, lineHeight: 1.02, letterSpacing: -2 }}>Turn customers into regulars.</span>
-            <span style={{ fontSize: 30, marginTop: 22, opacity: 0.82 }}>Digital loyalty cards for cafés, restaurants and salons.</span>
+            <span style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.02, letterSpacing: -2 }}>{og.title}</span>
+            <span style={{ fontSize: 28, marginTop: 22, opacity: 0.82 }}>{og.subtitle}</span>
           </div>
-          <span style={{ fontSize: 26, opacity: 0.7 }}>Scan · Stamp · Reward</span>
+          <span style={{ fontSize: 26, opacity: 0.7 }}>{og.tagline}</span>
         </div>
         <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "flex-end" }}>
           <div style={{ display: "flex", flexDirection: "column", width: 380, background: "#fff", borderRadius: 36, padding: 32, color: "#111322", boxShadow: "0 30px 60px rgba(20,10,60,0.35)" }}>
             <span style={{ fontSize: 30, fontWeight: 800 }}>Café Bonheur</span>
-            <span style={{ fontSize: 20, color: "#6E7385", marginTop: 4 }}>7 / 10 stamps</span>
+            <span style={{ fontSize: 20, color: "#6E7385", marginTop: 4 }}>{og.cardStamps}</span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 26 }}>
               {stamps.map((on, i) => (
                 <div key={i} style={{ width: 52, height: 52, borderRadius: 26, background: on ? "#6535E0" : "#F5F1FF", border: on ? "none" : "3px dashed #B9A1FC", display: "flex" }} />
               ))}
             </div>
-            <div style={{ display: "flex", marginTop: 26, background: "#F5F1FF", borderRadius: 18, padding: "14px 18px", fontSize: 22, fontWeight: 700, color: "#5328C4" }}>🎁 Free coffee · 3 to go</div>
+            <div style={{ display: "flex", marginTop: 26, background: "#F5F1FF", borderRadius: 18, padding: "14px 18px", fontSize: 22, fontWeight: 700, color: "#5328C4" }}>{og.cardReward}</div>
           </div>
         </div>
       </div>

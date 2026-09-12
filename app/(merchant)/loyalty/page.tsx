@@ -5,12 +5,16 @@ import { LoyaltyCardForm } from "@/components/merchant/LoyaltyCardForm";
 import { requireMerchant, rpc } from "@/lib/session";
 import { CATEGORIES } from "@/lib/constants";
 import { resolveDesign } from "@/lib/card-design";
+import { getI18n } from "@/lib/i18n/server";
 import type { CardImpact } from "@/lib/types";
 
-export const metadata = { title: "Loyalty card" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t.nav.merchant.card };
+}
 
 export default async function LoyaltyPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
-  const ctx = await requireMerchant("/loyalty");
+  const [ctx, { t, count, fill }] = await Promise.all([requireMerchant("/loyalty"), getI18n()]);
   const card = ctx.card;
   const [{ welcome }, impact] = await Promise.all([searchParams, card ? rpc<CardImpact>("merchant_card_impact") : Promise.resolve(null)]);
   const category = ctx.business.category as keyof typeof CATEGORIES;
@@ -20,17 +24,21 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="mx-auto max-w-5xl">
-      <TopBar title={card ? "Your card" : "Create your card"} back={card ? "/more" : "/dashboard"} subtitle={impact && impact.customers > 0 ? `Live · ${impact.customers} customer${impact.customers > 1 ? "s" : ""}` : undefined} />
+      <TopBar
+        title={card ? t.merchant.loyalty.yourCard : t.merchant.loyalty.createTitle}
+        back={card ? "/more" : "/dashboard"}
+        subtitle={impact && impact.customers > 0 ? fill(t.merchant.loyalty.live, { customers: count(t.common.customersCount, impact.customers) }) : undefined}
+      />
 
       {welcome && !card && (
         <Alert tone="info" className="mb-4">
-          Two questions and your card is ready.
+          {t.merchant.loyalty.welcome}
         </Alert>
       )}
 
       {!isOwner && (
         <Alert tone="info" className="mb-4">
-          Only the owner can change the card.
+          {t.merchant.loyalty.ownerOnly}
         </Alert>
       )}
 
@@ -41,7 +49,7 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
         isNew={!card}
         impact={impact}
         initial={{
-          name: card?.name ?? `${ctx.business.name} Loyalty`,
+          name: card?.name ?? fill(t.merchant.loyalty.defaultName, { name: ctx.business.name }),
           description: card?.description ?? "",
           stamps_required: card?.stamps_required ?? 10,
           reward_name: card?.reward?.name ?? "",
@@ -55,7 +63,7 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
       {card && isOwner && (
         <p className="mt-5 text-center">
           <Link href="/rewards" className="text-[13px] font-semibold text-brand-600">
-            Add a second, bigger reward
+            {t.merchant.loyalty.addBigger}
           </Link>
         </p>
       )}

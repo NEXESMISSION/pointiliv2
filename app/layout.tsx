@@ -1,41 +1,55 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { NavTracker } from "@/components/nav/BackButton";
+import { I18nProvider } from "@/components/i18n/Provider";
+import { DIR, HTML_LANG, OG_LOCALE, localePath } from "@/lib/i18n/config";
+import { getI18n } from "@/lib/i18n/server";
 import { siteUrl } from "@/lib/url";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+// Latin text uses Inter; Arabic glyphs fall through to this one, so the
+// Tunisian version is set in a real Arabic typeface.
+const arabic = IBM_Plex_Sans_Arabic({ subsets: ["arabic"], weight: ["400", "500", "600", "700"], variable: "--font-arabic", display: "swap" });
 
-const TITLE = "Pointili — Digital loyalty cards for local businesses";
-const DESCRIPTION = "Turn customers into regulars. Customers scan your QR at the counter, collect stamps on their phone and earn rewards. For cafés, restaurants, salons and shops in Tunisia.";
+const KEYWORDS = [
+  "carte de fidélité",
+  "carte de fidélité numérique",
+  "fidélité QR",
+  "tampons fidélité",
+  "application fidélité café",
+  "Tunisie",
+  "كارط وفاء",
+  "برنامج وفاء",
+  "تونس",
+];
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl()),
-  title: { default: TITLE, template: "%s · Pointili" },
-  description: DESCRIPTION,
-  applicationName: "Pointili",
-  keywords: ["loyalty card", "digital stamp card", "carte de fidélité", "QR loyalty", "café loyalty app", "Tunisia", "Tunisie", "rewards", "punch card"],
-  authors: [{ name: "Pointili" }],
-  creator: "Pointili",
-  publisher: "Pointili",
-  category: "business",
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    siteName: "Pointili",
-    title: TITLE,
-    description: DESCRIPTION,
-    url: "/",
-    locale: "en_US",
-  },
-  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
-  appleWebApp: { capable: true, title: "Pointili", statusBarStyle: "default" },
-  formatDetection: { telephone: false, email: false, address: false },
-  other: { "mobile-web-app-capable": "yes" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t, locale } = await getI18n();
+  const title = t.common.site.title;
+  const description = t.common.site.description;
+  const url = localePath("/", locale) || "/";
+  return {
+    metadataBase: new URL(siteUrl()),
+    title: { default: title, template: "%s · Pointili" },
+    description,
+    applicationName: "Pointili",
+    keywords: KEYWORDS,
+    authors: [{ name: "Pointili" }],
+    creator: "Pointili",
+    publisher: "Pointili",
+    category: "business",
+    alternates: { canonical: url, languages: { fr: "/", "ar-TN": "/tn", "x-default": "/" } },
+    openGraph: { type: "website", siteName: "Pointili", title, description, url, locale: OG_LOCALE[locale] },
+    twitter: { card: "summary_large_image", title, description },
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
+    appleWebApp: { capable: true, title: "Pointili", statusBarStyle: "default" },
+    formatDetection: { telephone: false, email: false, address: false },
+    other: { "mobile-web-app-capable": "yes" },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -47,11 +61,14 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { locale } = await getI18n();
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang={HTML_LANG[locale]} dir={DIR[locale]} className={`${inter.variable} ${arabic.variable}`}>
       <body className="min-h-dvh font-sans">
-        <ToastProvider>{children}</ToastProvider>
+        <I18nProvider locale={locale}>
+          <ToastProvider>{children}</ToastProvider>
+        </I18nProvider>
         <ServiceWorker />
         <NavTracker />
       </body>

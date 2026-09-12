@@ -17,7 +17,7 @@ export function BarChart({ data, color = "#6535E0", height = 140, label }: { dat
           return <rect key={i} x={i * w + gap * 0.05} y={height - h} width={Math.max(0.4, w - gap * 0.1)} height={h} rx="0.6" fill={color} opacity={d.value ? 1 : 0.15} />;
         })}
       </svg>
-      <figcaption className="mt-1.5 flex justify-between text-[11px] text-muted">
+      <figcaption dir="ltr" className="mt-1.5 flex justify-between text-[11px] text-muted">
         {ticks.map((t, i) => (
           <span key={i}>{t.label}</span>
         ))}

@@ -44,12 +44,12 @@ if (!ctx.business) {
 }
 if (!ctx.card) {
   await merchant.rpc("save_loyalty_card", {
-    p_name: "Café Bonheur Loyalty", p_description: "Coffee & more", p_stamps_required: 10, p_reward_name: "Free Coffee",
-    p_reward_description: "Get a free regular coffee when you collect 10 stamps.", p_color: "emerald", p_icon: "coffee",
+    p_name: "Fidélité Café Bonheur", p_description: "Café & gourmandises", p_stamps_required: 10, p_reward_name: "Café offert",
+    p_reward_description: "Un café offert dès 10 tampons.", p_color: "emerald", p_icon: "coffee",
     // demo only: no wait between stamps so the whole card can be tried in one sitting
     p_cooldown_minutes: 0,
   });
-  log("created loyalty card: 10 stamps → Free Coffee");
+  log("created loyalty card: 10 tampons → Café offert");
 }
 
 const { data: t, error: mintErr } = await merchant.rpc("mint_qr_token");

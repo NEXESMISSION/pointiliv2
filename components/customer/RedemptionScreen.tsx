@@ -6,10 +6,12 @@ import { cancelRedemption } from "@/app/actions/customer";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Confetti } from "@/components/Confetti";
 import { TopBar } from "@/components/nav/TopBar";
+import { useT } from "@/components/i18n/Provider";
 import type { RedemptionStatus } from "@/lib/types";
 
 /** Shows the code to the staff and waits, live, for the merchant to confirm. */
 export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus; qrSvg: string }) {
+  const { t, fill } = useT();
   const [state, setState] = useState(initial);
   const [now, setNow] = useState(() => Date.now());
   const [cancelling, startCancel] = useTransition();
@@ -42,13 +44,13 @@ export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus
         <div className="grid size-24 animate-pop place-items-center rounded-full bg-success-500 text-white shadow-lift">
           <Check className="size-12" strokeWidth={3} />
         </div>
-        <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-ink">Reward redeemed!</h1>
+        <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-ink">{t.customer.use.doneTitle}</h1>
         <p className="mt-2 text-xl font-bold text-success-600">{state.reward_name}</p>
         <p className="text-muted">{state.business_name}</p>
-        <p className="mt-2 text-sm text-muted">Enjoy! Your card starts filling up again.</p>
+        <p className="mt-2 text-sm text-muted">{t.customer.use.enjoy}</p>
         <div className="mt-8 w-full max-w-xs space-y-2">
           <LinkButton href={`/customer/cards/${state.customer_id}`} block>
-            Done
+            {t.common.done}
           </LinkButton>
         </div>
       </div>
@@ -57,7 +59,7 @@ export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus
 
   return (
     <>
-      <TopBar title="Use reward" back="/customer/rewards" />
+      <TopBar title={t.customer.use.title} back="/customer/rewards" />
       <div className="rounded-3xl bg-white p-6 text-center shadow-card">
         <span className="mx-auto grid size-16 place-items-center rounded-3xl bg-brand-50 text-brand-600">
           <Gift className="size-8" />
@@ -68,23 +70,27 @@ export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus
         {state.status === "cancelled" || expired ? (
           <div className="mt-6 space-y-3">
             <p className="rounded-2xl bg-warning-50 p-3 text-sm font-medium text-warning-700">
-              {state.status === "cancelled" ? "This request was cancelled." : "This code expired. Your stamps are safe — request a new code."}
+              {state.status === "cancelled" ? t.errors.cancelled : t.customer.use.expired}
             </p>
             <LinkButton href="/customer/rewards" block>
-              Back to rewards
+              {t.customer.use.backToRewards}
             </LinkButton>
           </div>
         ) : (
           <>
-            <p className="mt-6 text-sm font-medium text-body">Show this QR to the staff</p>
+            <p className="mt-6 text-sm font-medium text-body">{t.customer.use.showQr}</p>
             <div
               className="mx-auto mt-3 aspect-square w-[min(72vw,16rem)] rounded-3xl border border-line bg-white p-4 shadow-card [&>svg]:size-full"
               role="img"
-              aria-label="Reward QR code"
+              aria-label={t.customer.use.qrAria}
               dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
-            <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted">or tell them the code</p>
-            <p className="mt-1 font-mono text-4xl font-extrabold tracking-[0.18em] text-brand-700 tabular" aria-label={`Code ${state.code.split("").join(" ")}`}>
+            <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted">{t.customer.use.orCode}</p>
+            <p
+              dir="ltr"
+              className="mt-1 font-mono text-4xl font-extrabold tracking-[0.18em] text-brand-700 tabular"
+              aria-label={fill(t.customer.use.codeAria, { code: state.code.split("").join(" ") })}
+            >
               {state.code.slice(0, 3)} {state.code.slice(3)}
             </p>
             <div className="mt-5 flex items-center justify-center gap-2 text-sm text-muted">
@@ -92,11 +98,16 @@ export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus
                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-400 opacity-60" />
                 <span className="relative inline-flex size-2.5 rounded-full bg-brand-600" />
               </span>
-              Waiting for confirmation · {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+              <span>
+                {t.customer.use.waiting} ·{" "}
+                <span dir="ltr" className="tabular">
+                  {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+                </span>
+              </span>
             </div>
-            <p className="mt-4 text-xs text-faint">Your stamps are only used once the staff confirms.</p>
+            <p className="mt-4 text-xs text-faint">{t.customer.use.onlyAfterConfirm}</p>
             <Button variant="ghost" size="md" className="mt-4" loading={cancelling} onClick={() => startCancel(() => cancelRedemption(state.id))}>
-              Cancel request
+              {t.customer.use.cancelRequest}
             </Button>
           </>
         )}

@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useT } from "@/components/i18n/Provider";
 
 type Tone = "success" | "warning" | "danger" | "brand" | "neutral";
 
@@ -15,16 +18,18 @@ export function Badge({ tone = "neutral", children, className = "" }: { tone?: T
 }
 
 export function SubscriptionBadge({ status, plan }: { status: string | null | undefined; plan?: string | null }) {
+  const { t } = useT();
+  const s = t.data.subscription;
   switch (status) {
     case "active":
-      return <Badge tone={plan === "trial" ? "brand" : "success"}>{plan === "trial" ? "Trial" : "Active"}</Badge>;
+      return <Badge tone={plan === "trial" ? "brand" : "success"}>{plan === "trial" ? s.trial : s.active}</Badge>;
     case "expiring_soon":
-      return <Badge tone="warning">Expiring soon</Badge>;
+      return <Badge tone="warning">{s.expiring_soon}</Badge>;
     case "cancelled":
-      return <Badge tone="neutral">Cancelled</Badge>;
+      return <Badge tone="neutral">{s.cancelled}</Badge>;
     case "expired":
-      return <Badge tone="danger">Expired</Badge>;
+      return <Badge tone="danger">{s.expired}</Badge>;
     default:
-      return <Badge tone="neutral">No plan</Badge>;
+      return <Badge tone="neutral">{s.none}</Badge>;
   }
 }

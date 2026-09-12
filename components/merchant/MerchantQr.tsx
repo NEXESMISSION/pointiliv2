@@ -7,8 +7,8 @@ import { Check, Maximize, Minimize, WifiOff } from "lucide-react";
 import { BackButton } from "@/components/nav/BackButton";
 import { BusinessAvatar } from "@/components/CardIcon";
 import { Spinner } from "@/components/ui/Spinner";
+import { useT } from "@/components/i18n/Provider";
 import { cardColor, QR_POLL_MS, QR_ROTATE_BEFORE_MS } from "@/lib/constants";
-import { message } from "@/lib/messages";
 
 type Token = { id: string; svg: string; expiresLocal: number; mintedLocal: number };
 type Flash = { id: string; code: number };
@@ -33,6 +33,8 @@ export function MerchantQr({ businessName, logo, cover, icon, color }: { busines
   const seen = useRef(new Set<string>());
   const busy = useRef(false);
   const router = useRouter();
+  const { t, msg } = useT();
+  const w = t.merchant.qr;
   const c = cardColor(color);
 
   const mint = useCallback(async () => {
@@ -157,7 +159,7 @@ export function MerchantQr({ businessName, logo, cover, icon, color }: { busines
           type="button"
           onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {})}
           className="grid size-11 place-items-center rounded-full bg-white/10 backdrop-blur hover:bg-white/15"
-          aria-label={fullscreen ? "Exit full screen" : "Full screen"}
+          aria-label={fullscreen ? w.exitFullscreen : w.fullscreen}
         >
           {fullscreen ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
         </button>
@@ -165,31 +167,31 @@ export function MerchantQr({ businessName, logo, cover, icon, color }: { busines
 
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <h1 className="text-center text-[clamp(1.6rem,4.5vh,3rem)] font-bold leading-tight tracking-tight">
-          Scan to collect
+          {w.headline1}
           <br />
-          your stamp
+          {w.headline2}
         </h1>
 
         <div
           className={`relative mt-[3vh] aspect-square w-[min(80vw,52vh,34rem)] rounded-[2rem] bg-white p-[5%] shadow-[0_30px_80px_-20px_rgb(0_0_0/0.6)] transition-[box-shadow,transform] duration-300 ${flashing ? "scale-[1.02] ring-8 ring-success-500" : ""}`}
         >
           {token && !error ? (
-            <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" aria-label="Pointili stamp QR code" />
+            <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" data-qr="1" aria-label={w.qrAria} />
           ) : error ? (
             <div className="grid size-full place-items-center p-4 text-center text-ink">
               <div>
-                <p className="text-lg font-bold">{message(error)}</p>
+                <p className="text-lg font-bold">{msg(error)}</p>
                 {error === "subscription_expired" && (
                   <Link href="/billing" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
-                    Renew plan
+                    {w.renewPlan}
                   </Link>
                 )}
                 {error === "no_card" && (
                   <Link href="/loyalty" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
-                    Create loyalty card
+                    {w.createCard}
                   </Link>
                 )}
-                {(error === "network" || error === "rate_limited") && <p className="mt-2 text-sm text-muted">Retrying automatically…</p>}
+                {(error === "network" || error === "rate_limited") && <p className="mt-2 text-sm text-muted">{w.retrying}</p>}
               </div>
             </div>
           ) : (
@@ -200,7 +202,7 @@ export function MerchantQr({ businessName, logo, cover, icon, color }: { busines
           {offline && token && (
             <div className="absolute inset-0 grid place-items-center rounded-[2rem] text-ink">
               <p className="flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold shadow-lift">
-                <WifiOff className="size-5" /> Reconnecting…
+                <WifiOff className="size-5" /> {w.reconnecting}
               </p>
             </div>
           )}
@@ -209,10 +211,11 @@ export function MerchantQr({ businessName, logo, cover, icon, color }: { busines
         <div className="mt-[3vh] flex h-14 items-center">
           {flashing ? (
             <div key={flashes[flashes.length - 1]!.id} className="flex animate-pop items-center gap-2 rounded-full bg-success-500 px-7 py-3.5 text-xl font-extrabold shadow-[0_12px_30px_-8px_rgb(34_197_94/0.7)]" role="status" aria-live="polite">
-              <Check className="size-6" strokeWidth={3} /> +1 STAMP · #{flashes[flashes.length - 1]!.code}
+              <Check className="size-6" strokeWidth={3} /> {w.stampFlash} ·{" "}
+              <span dir="ltr">#{flashes[flashes.length - 1]!.code}</span>
             </div>
           ) : (
-            <div className="rounded-full bg-success-500/90 px-8 py-3 text-xl font-extrabold tracking-wide">+1 STAMP</div>
+            <div className="rounded-full bg-success-500/90 px-8 py-3 text-xl font-extrabold tracking-wide">{w.stampFlash}</div>
           )}
         </div>
 
@@ -220,7 +223,7 @@ export function MerchantQr({ businessName, logo, cover, icon, color }: { busines
           <div className="h-1 overflow-hidden rounded-full bg-white/15">
             <div className="h-full rounded-full bg-white/70 transition-[width] duration-500 ease-linear" style={{ width: `${token ? Math.min(100, (remaining / Math.max(lifetime, 1)) * 100) : 0}%` }} />
           </div>
-          <p className="mt-2 text-center text-sm text-white/70">QR updates automatically</p>
+          <p className="mt-2 text-center text-sm text-white/70">{w.autoUpdates}</p>
         </div>
       </main>
     </div>

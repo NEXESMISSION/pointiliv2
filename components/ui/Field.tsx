@@ -35,10 +35,10 @@ export function Textarea({ className = "", ...rest }: ComponentProps<"textarea">
 export function Select({ className = "", children, ...rest }: ComponentProps<"select">) {
   return (
     <div className="relative">
-      <select className={`${inputClass} appearance-none pr-10 ${className}`} {...rest}>
+      <select className={`${inputClass} appearance-none pe-10 ${className}`} {...rest}>
         {children}
       </select>
-      <svg className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+      <svg className="pointer-events-none absolute end-4 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
         <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" />
       </svg>
     </div>

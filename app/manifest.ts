@@ -4,10 +4,10 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/app",
-    name: "Pointili — Loyalty cards",
+    name: "Pointili — Cartes de fidélité",
     short_name: "Pointili",
-    description: "Your loyalty cards on your phone. Scan the QR at the counter, collect stamps, earn rewards.",
-    lang: "en",
+    description: "Vos cartes de fidélité sur votre téléphone. Scannez le QR au comptoir, collectez des tampons, gagnez des récompenses.",
+    lang: "fr",
     dir: "ltr",
     start_url: "/app?source=pwa",
     scope: "/",
@@ -25,8 +25,8 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "Scan a QR", short_name: "Scan", url: "/customer/scan", icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }] },
-      { name: "My cards", short_name: "Cards", url: "/customer/cards", icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }] },
+      { name: "Scanner un QR", short_name: "Scanner", url: "/customer/scan", icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }] },
+      { name: "Mes cartes", short_name: "Cartes", url: "/customer/cards", icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }] },
     ],
   };
 }

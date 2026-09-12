@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getContext } from "@/lib/session";
-import { message } from "@/lib/messages";
+import { getI18n } from "@/lib/i18n/server";
 import type { RedemptionView } from "@/lib/types";
 import type { CardDesign } from "@/lib/card-design";
 import type { FormState } from "./types";
@@ -27,6 +27,7 @@ async function call(fn: string, args: Record<string, unknown>): Promise<RpcResul
 }
 
 export async function saveLoyaltyCard(_: FormState, fd: FormData): Promise<FormState> {
+  const { t, msg } = await getI18n();
   const values = Object.fromEntries(["name", "description", "stamps_required", "reward_name", "reward_description", "color", "icon", "cooldown_minutes"].map((k) => [k, str(fd, k)]));
   const res = await call("save_loyalty_card", {
     p_name: values.name,
@@ -38,20 +39,22 @@ export async function saveLoyaltyCard(_: FormState, fd: FormData): Promise<FormS
     p_icon: values.icon,
     p_cooldown_minutes: int(fd, "cooldown_minutes"),
   });
-  if (!res.ok) return { ok: false, error: message(res.error), values, at: now() };
+  if (!res.ok) return { ok: false, error: msg(res.error), values, at: now() };
   revalidatePath("/", "layout");
   if (res.created) redirect("/loyalty/design?welcome=1");
-  return { ok: true, message: "Loyalty card saved", values, at: now() };
+  return { ok: true, message: t.ops.toasts.loyaltyCardSaved, values, at: now() };
 }
 
 /** The owner's own card look. The database validates every field (clean_card_design). */
 export async function saveCardDesign(input: { design: CardDesign; description: string }): Promise<{ ok: boolean; message: string }> {
+  const { t, msg } = await getI18n();
   const res = await call("save_card_design", { p_description: input.description, p_design: input.design });
   revalidatePath("/", "layout");
-  return { ok: res.ok, message: res.ok ? "Card design saved" : message(res.error) };
+  return { ok: res.ok, message: res.ok ? t.ops.toasts.cardDesignSaved : msg(res.error) };
 }
 
 export async function saveReward(_: FormState, fd: FormData): Promise<FormState> {
+  const { msg } = await getI18n();
   const id = str(fd, "id") || null;
   const values = { name: str(fd, "name"), description: str(fd, "description"), stamps_required: str(fd, "stamps_required") };
   const res = await call("save_reward", {
@@ -61,27 +64,29 @@ export async function saveReward(_: FormState, fd: FormData): Promise<FormState>
     p_stamps_required: int(fd, "stamps_required"),
     p_active: fd.get("active") === null ? true : fd.get("active") === "on" || fd.get("active") === "true",
   });
-  if (!res.ok) return { ok: false, error: message(res.error), values, at: now() };
+  if (!res.ok) return { ok: false, error: msg(res.error), values, at: now() };
   revalidatePath("/rewards");
   redirect("/rewards");
 }
 
 export async function setRewardActive(id: string, active: boolean, reward: { name: string; description: string | null; stamps_required: number }) {
+  const { t, msg } = await getI18n();
   const res = await call("save_reward", { p_id: id, p_name: reward.name, p_description: reward.description ?? "", p_stamps_required: reward.stamps_required, p_active: active });
   revalidatePath("/rewards");
-  return { ok: res.ok, message: res.ok ? (active ? "Reward activated" : "Reward paused") : message(res.error), at: now() };
+  return { ok: res.ok, message: res.ok ? (active ? t.ops.toasts.rewardActivated : t.ops.toasts.rewardPaused) : msg(res.error), at: now() };
 }
 
 export async function updateBusiness(_: FormState, fd: FormData): Promise<FormState> {
+  const { t, msg } = await getI18n();
   const res = await call("update_business", {
     p_name: str(fd, "name"),
     p_category: str(fd, "category"),
     p_phone: str(fd, "phone"),
     p_address: str(fd, "address"),
   });
-  if (!res.ok) return { ok: false, message: message(res.error), at: now() };
+  if (!res.ok) return { ok: false, message: msg(res.error), at: now() };
   revalidatePath("/", "layout");
-  return { ok: true, message: "Business details saved", at: now() };
+  return { ok: true, message: t.ops.toasts.businessSaved, at: now() };
 }
 
 const IMAGE_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
@@ -95,14 +100,15 @@ function storedPath(url: string | null | undefined): string | null {
 
 /** Logo or cover photo. The browser already cropped and compressed it; this re-checks type and size. */
 export async function uploadBusinessImage(fd: FormData): Promise<{ ok: boolean; message: string }> {
+  const { t, msg } = await getI18n();
   const kind: ImageKind = fd.get("kind") === "cover" ? "cover" : "logo";
   const ctx = await getContext();
-  if (!ctx?.business || ctx.member_role !== "owner") return { ok: false, message: "Only the owner can change the branding." };
+  if (!ctx?.business || ctx.member_role !== "owner") return { ok: false, message: t.ops.toasts.ownerOnlyBranding };
   const file = fd.get("file");
-  if (!(file instanceof File) || file.size === 0) return { ok: false, message: "Choose an image first." };
+  if (!(file instanceof File) || file.size === 0) return { ok: false, message: t.ops.toasts.chooseImage };
   const ext = IMAGE_TYPES[file.type];
-  if (!ext) return { ok: false, message: "Use a PNG, JPG or WebP image." };
-  if (file.size > 3 * 1024 * 1024) return { ok: false, message: "The image must be under 3 MB." };
+  if (!ext) return { ok: false, message: t.ops.toasts.imageType };
+  if (file.size > 3 * 1024 * 1024) return { ok: false, message: t.ops.toasts.imageTooBig };
 
   const admin = createAdminClient();
   const path = `${ctx.business.id}/${kind}-${Date.now()}.${ext}`;
@@ -111,7 +117,7 @@ export async function uploadBusinessImage(fd: FormData): Promise<{ ok: boolean; 
     .upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type, cacheControl: "31536000", upsert: false });
   if (error) {
     console.error(`[${kind}]`, error.message);
-    return { ok: false, message: message("network") };
+    return { ok: false, message: msg("network") };
   }
   const url = admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
   const previous = kind === "cover" ? ctx.business.cover_url : ctx.business.logo_url;
@@ -120,26 +126,28 @@ export async function uploadBusinessImage(fd: FormData): Promise<{ ok: boolean; 
   const old = storedPath(previous);
   if (old) await admin.storage.from("logos").remove([old]);
   revalidatePath("/", "layout");
-  return { ok: true, message: kind === "cover" ? "Cover photo updated" : "Logo updated" };
+  return { ok: true, message: kind === "cover" ? t.ops.toasts.coverUpdated : t.ops.toasts.logoUpdated };
 }
 
 export async function removeBusinessImage(kind: ImageKind): Promise<{ ok: boolean; message: string }> {
+  const { t } = await getI18n();
   const ctx = await getContext();
-  if (!ctx?.business || ctx.member_role !== "owner") return { ok: false, message: "Only the owner can change the branding." };
+  if (!ctx?.business || ctx.member_role !== "owner") return { ok: false, message: t.ops.toasts.ownerOnlyBranding };
   const admin = createAdminClient();
   const previous = kind === "cover" ? ctx.business.cover_url : ctx.business.logo_url;
   await admin.from("businesses").update(kind === "cover" ? { cover_url: null } : { logo_url: null }).eq("id", ctx.business.id);
   const old = storedPath(previous);
   if (old) await admin.storage.from("logos").remove([old]);
   revalidatePath("/", "layout");
-  return { ok: true, message: kind === "cover" ? "Cover photo removed" : "Logo removed" };
+  return { ok: true, message: kind === "cover" ? t.ops.toasts.coverRemoved : t.ops.toasts.logoRemoved };
 }
 
 export async function requestPlan(_: FormState, fd: FormData): Promise<FormState> {
+  const { t, msg, fill } = await getI18n();
   const res = await call("request_plan", { p_plan: str(fd, "plan"), p_method: str(fd, "method") });
-  if (!res.ok) return { ok: false, message: message(res.error), at: now() };
+  if (!res.ok) return { ok: false, message: msg(res.error), at: now() };
   revalidatePath("/billing");
-  return { ok: true, message: `Request sent — reference ${res.payment_reference}`, at: now() };
+  return { ok: true, message: fill(t.ops.toasts.planRequested, { reference: String(res.payment_reference ?? "") }), at: now() };
 }
 
 export async function cancelPlanRequest(id: string) {
@@ -149,29 +157,30 @@ export async function cancelPlanRequest(id: string) {
 
 /** Find a pending reward by the 6 digits typed, or read from the customer's reward QR. */
 export async function lookupRedemptionCode(raw: string): Promise<{ ok: boolean; error?: string; redemption?: RedemptionView }> {
+  const { t, msg } = await getI18n();
   const code = String(raw ?? "").replace(/\D/g, "");
-  if (code.length !== 6) return { ok: false, error: "Enter the 6-digit code from the customer's screen." };
+  if (code.length !== 6) return { ok: false, error: t.ops.toasts.enterCode };
   const res = await call("merchant_lookup_redemption", { p_code: code });
-  if (!res.ok) return { ok: false, error: redemptionLookupError(res.error) };
+  if (!res.ok) {
+    const e = res.error;
+    const text = e === "not_found" ? t.ops.toasts.codeNotFound : e === "expired" ? t.ops.toasts.codeExpired : msg(e);
+    return { ok: false, error: text };
+  }
   return { ok: true, redemption: res.redemption as RedemptionView };
 }
 
-function redemptionLookupError(code: string | undefined) {
-  if (code === "not_found") return "No active reward with this code. Ask the customer to tap “Use reward” again.";
-  if (code === "expired") return "This reward code has expired. Ask the customer to tap “Use reward” again.";
-  return message(code);
-}
-
 export async function confirmRedemption(id: string): Promise<{ ok: boolean; message: string; redemption?: RedemptionView }> {
+  const { t, msg } = await getI18n();
   const res = await call("merchant_confirm_redemption", { p_id: id });
   revalidatePath("/redeem");
   revalidatePath("/dashboard");
-  if (!res.ok) return { ok: false, message: message(res.error) };
-  return { ok: true, message: "Reward redeemed", redemption: res.redemption as RedemptionView };
+  if (!res.ok) return { ok: false, message: msg(res.error) };
+  return { ok: true, message: t.ops.toasts.rewardGiven, redemption: res.redemption as RedemptionView };
 }
 
 export async function redeemDirect(customerId: string, rewardId: string): Promise<{ ok: boolean; message: string }> {
+  const { t, msg } = await getI18n();
   const res = await call("merchant_redeem_direct", { p_customer_id: customerId, p_reward_id: rewardId });
   revalidatePath(`/customers/${customerId}`);
-  return { ok: res.ok, message: res.ok ? "Reward redeemed" : message(res.error) };
+  return { ok: res.ok, message: res.ok ? t.ops.toasts.rewardGiven : msg(res.error) };
 }

@@ -9,10 +9,12 @@ import { Field } from "@/components/ui/Field";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { SubmitButton } from "@/components/ui/Button";
+import { useT } from "@/components/i18n/Provider";
 import { useFormAction } from "@/lib/use-form-action";
 import { AuthHeading } from "./AuthShell";
 
 export function ForgotPasswordFlow() {
+  const { t } = useT();
   const req = useFormAction<FormState>(requestResetCode, null);
   const ver = useFormAction<FormState>(verifyResetCode, null);
   const pw = useFormAction<FormState>(setNewPassword, null);
@@ -27,17 +29,17 @@ export function ForgotPasswordFlow() {
   if (step === "password") {
     return (
       <>
-        <AuthHeading title="Choose a new password" subtitle="Use at least 8 characters." />
+        <AuthHeading title={t.auth.forgot.newTitle} subtitle={t.auth.forgot.newSubtitle} />
         <form onSubmit={pw.onSubmit} className="space-y-5" noValidate>
           {latest === pwState && pwState?.error && <Alert>{pwState.error}</Alert>}
-          <Field label="New password" htmlFor="password" error={pwState?.fields?.password}>
+          <Field label={t.auth.newPassword} htmlFor="password" error={pwState?.fields?.password}>
             <PasswordInput autoComplete="new-password" invalid={!!pwState?.fields?.password} />
           </Field>
-          <Field label="Confirm password" htmlFor="confirm" error={pwState?.fields?.confirm}>
+          <Field label={t.auth.confirmPassword} htmlFor="confirm" error={pwState?.fields?.confirm}>
             <PasswordInput name="confirm" autoComplete="new-password" invalid={!!pwState?.fields?.confirm} />
           </Field>
-          <SubmitButton pending={pw.pending} pendingText="Saving…">
-            Save password
+          <SubmitButton pending={pw.pending} pendingText={t.common.saving}>
+            {t.auth.forgot.savePassword}
           </SubmitButton>
         </form>
       </>
@@ -49,24 +51,27 @@ export function ForgotPasswordFlow() {
       <>
         <CodeIllustration />
         <AuthHeading
-          title="Enter verification code"
+          title={t.auth.forgot.codeTitle}
           subtitle={
             <>
-              We sent a 6-digit code to <span className="font-semibold text-ink tabular">+216 {reqState?.values?.phone}</span>
+              {t.auth.forgot.codeSentTo}{" "}
+              <span className="font-semibold text-ink tabular" dir="ltr">
+                +216 {reqState?.values?.phone}
+              </span>
             </>
           }
         />
         {reqState?.devCode && latest === reqState && (
-          <Alert tone="info" title="Development mode" className="mb-4">
-            No SMS provider is configured, so here is the code: <span className="font-mono text-base font-bold tracking-widest">{reqState.devCode}</span>
+          <Alert tone="info" title={t.auth.forgot.devTitle} className="mb-4">
+            {t.auth.forgot.devBody} <span className="font-mono text-base font-bold tracking-widest">{reqState.devCode}</span>
           </Alert>
         )}
         <form onSubmit={ver.onSubmit} className="space-y-5" noValidate>
           {latest?.error && latest !== pwState && <Alert>{latest.error}</Alert>}
           <OtpInput invalid={!!verState?.fields?.code} />
           {verState?.fields?.code && <p className="text-center text-sm text-danger-600">{verState.fields.code}</p>}
-          <SubmitButton pending={ver.pending} pendingText="Checking…">
-            Continue
+          <SubmitButton pending={ver.pending} pendingText={t.auth.forgot.checking}>
+            {t.auth.forgot.continue}
           </SubmitButton>
         </form>
         <form onSubmit={req.onSubmit} className="mt-5 text-center">
@@ -80,19 +85,19 @@ export function ForgotPasswordFlow() {
   return (
     <>
       <PhoneIllustration />
-      <AuthHeading title="Reset your password" subtitle="Enter your phone number and we'll send you a code to reset your password." />
+      <AuthHeading title={t.auth.forgot.title} subtitle={t.auth.forgot.subtitle} />
       <form onSubmit={req.onSubmit} className="space-y-5" noValidate>
         {latest?.error && <Alert>{latest.error}</Alert>}
-        <Field label="Phone number" htmlFor="phone" error={reqState?.fields?.phone}>
+        <Field label={t.common.phoneNumber} htmlFor="phone" error={reqState?.fields?.phone}>
           <PhoneInput defaultValue={reqState?.values?.phone ?? ""} invalid={!!reqState?.fields?.phone} autoFocus />
         </Field>
-        <SubmitButton pending={req.pending} pendingText="Sending…">
-          Send code
+        <SubmitButton pending={req.pending} pendingText={t.common.sending}>
+          {t.auth.forgot.send}
         </SubmitButton>
       </form>
       <p className="mt-6 text-center text-sm">
         <Link href="/customer/login" className="font-semibold text-brand-600 hover:underline">
-          Back to login
+          {t.auth.forgot.backToLogin}
         </Link>
       </p>
     </>
@@ -100,6 +105,7 @@ export function ForgotPasswordFlow() {
 }
 
 function OtpInput({ invalid }: { invalid?: boolean }) {
+  const { t, fill } = useT();
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const set = (i: number, v: string) => {
@@ -131,7 +137,7 @@ function OtpInput({ invalid }: { invalid?: boolean }) {
           autoComplete={i === 0 ? "one-time-code" : "off"}
           maxLength={6}
           autoFocus={i === 0}
-          aria-label={`Digit ${i + 1}`}
+          aria-label={fill(t.auth.forgot.digit, { n: i + 1 })}
           aria-invalid={invalid || undefined}
           className="h-14 w-full min-w-0 rounded-2xl border border-line bg-white text-center text-xl font-bold text-ink tabular focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15 aria-[invalid=true]:border-danger-500"
         />
@@ -141,21 +147,22 @@ function OtpInput({ invalid }: { invalid?: boolean }) {
 }
 
 function ResendButton({ at }: { at?: number }) {
+  const { t, fill } = useT();
   const [left, setLeft] = useState(60);
   useEffect(() => {
     const start = at ?? Date.now();
     const tick = () => setLeft(Math.max(0, 60 - Math.floor((Date.now() - start) / 1000)));
     const first = setTimeout(tick, 0);
-    const t = setInterval(tick, 1000);
+    const timer = setInterval(tick, 1000);
     return () => {
       clearTimeout(first);
-      clearInterval(t);
+      clearInterval(timer);
     };
   }, [at]);
-  if (left > 0) return <p className="text-sm text-muted tabular">Resend code in 00:{String(left).padStart(2, "0")}</p>;
+  if (left > 0) return <p className="text-sm text-muted tabular">{fill(t.auth.forgot.resendIn, { s: String(left).padStart(2, "0") })}</p>;
   return (
     <button type="submit" className="text-sm font-semibold text-brand-600 hover:underline">
-      Resend code
+      {t.auth.forgot.resend}
     </button>
   );
 }

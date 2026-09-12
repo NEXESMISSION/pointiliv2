@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { ChevronLeft } from "lucide-react";
+import { useT } from "@/components/i18n/Provider";
 
 /**
  * Smart back: returns to the previous screen of THIS app visit, or to the
@@ -57,6 +58,7 @@ function subscribe(cb: () => void) {
 
 export function BackButton({ fallback, tone = "light", className = "" }: { fallback?: string; tone?: "light" | "dark"; className?: string }) {
   const router = useRouter();
+  const { t } = useT();
   const canGoBack = useSyncExternalStore(subscribe, () => read().length > 1, () => false);
   if (!canGoBack && !fallback) return null;
 
@@ -73,10 +75,11 @@ export function BackButton({ fallback, tone = "light", className = "" }: { fallb
           router.push(fallback);
         }
       }}
-      aria-label="Go back"
+      aria-label={t.common.backAria}
+      data-back="1"
       className={`grid size-10 shrink-0 place-items-center rounded-full transition-colors active:opacity-70 ${tone === "dark" ? "bg-white/10 text-white backdrop-blur hover:bg-white/20" : "text-ink hover:bg-black/[0.05]"} ${className}`}
     >
-      <ChevronLeft className="size-[22px]" strokeWidth={2.2} />
+      <ChevronLeft className="rtl:-scale-x-100 size-[22px]" strokeWidth={2.2} />
     </button>
   );
 }

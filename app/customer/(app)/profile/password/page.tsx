@@ -1,13 +1,18 @@
 import { TopBar } from "@/components/nav/TopBar";
 import { Card } from "@/components/ui/Card";
 import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
+import { getI18n } from "@/lib/i18n/server";
 
-export const metadata = { title: "Change password" };
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return { title: t.customer.profile.changePassword };
+}
 
-export default function ChangePasswordPage() {
+export default async function ChangePasswordPage() {
+  const { t } = await getI18n();
   return (
     <>
-      <TopBar title="Change password" back="/customer/profile" />
+      <TopBar title={t.customer.profile.changePassword} back="/customer/profile" />
       <Card className="p-5">
         <ChangePasswordForm />
       </Card>

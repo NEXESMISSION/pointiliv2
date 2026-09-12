@@ -9,9 +9,11 @@ import { PhoneInput } from "@/components/ui/PhoneInput";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { SubmitButton } from "@/components/ui/Button";
 import { CATEGORIES } from "@/lib/constants";
+import { useT } from "@/components/i18n/Provider";
 import { useFormAction } from "@/lib/use-form-action";
 
 export function BusinessRegisterForm({ signedIn, defaultName, defaultEmail }: { signedIn: boolean; defaultName: string; defaultEmail: string }) {
+  const { t } = useT();
   // No form reset: a problem with one field never wipes the others (or the password).
   const { state, onSubmit, pending } = useFormAction<FormState>(registerBusiness, null);
   const f = state?.fields ?? {};
@@ -21,9 +23,10 @@ export function BusinessRegisterForm({ signedIn, defaultName, defaultEmail }: { 
       {state?.error && (
         <Alert
           action={
-            /log in/i.test(state.error) ? (
+            // The action marks the one error whose way out is to sign in first.
+            state.data === "login" ? (
               <Link href="/login?next=/register" className="font-semibold underline">
-                Log in
+                {t.auth.login.submit}
               </Link>
             ) : undefined
           }
@@ -32,49 +35,77 @@ export function BusinessRegisterForm({ signedIn, defaultName, defaultEmail }: { 
         </Alert>
       )}
 
-      <Field label="Business name" htmlFor="business_name" error={f.business_name}>
-        <Input id="business_name" name="business_name" placeholder="Café Bonheur" required maxLength={60} autoComplete="organization" aria-invalid={!!f.business_name || undefined} autoFocus />
+      <Field label={t.auth.business.name} htmlFor="business_name" error={f.business_name}>
+        <Input
+          id="business_name"
+          name="business_name"
+          placeholder={t.auth.business.namePlaceholder}
+          required
+          maxLength={60}
+          autoComplete="organization"
+          aria-invalid={!!f.business_name || undefined}
+          autoFocus
+        />
       </Field>
 
-      <Field label="Category" htmlFor="category">
+      <Field label={t.auth.business.category} htmlFor="category">
         <Select id="category" name="category" defaultValue="cafe">
-          {Object.entries(CATEGORIES).map(([k, c]) => (
+          {Object.keys(CATEGORIES).map((k) => (
             <option key={k} value={k}>
-              {c.label}
+              {t.data.categories[k as keyof typeof CATEGORIES]}
             </option>
           ))}
         </Select>
       </Field>
 
-      <Field label="Your name" htmlFor="full_name" error={f.full_name}>
-        <Input id="full_name" name="full_name" placeholder="Sarah Ben Ali" defaultValue={defaultName} required maxLength={80} autoComplete="name" aria-invalid={!!f.full_name || undefined} />
+      <Field label={t.auth.business.ownerName} htmlFor="full_name" error={f.full_name}>
+        <Input
+          id="full_name"
+          name="full_name"
+          placeholder={t.auth.business.ownerPlaceholder}
+          defaultValue={defaultName}
+          required
+          maxLength={80}
+          autoComplete="name"
+          aria-invalid={!!f.full_name || undefined}
+        />
       </Field>
 
       {!signedIn && (
-        <Field label="Phone" htmlFor="phone" error={f.phone} hint="You'll log in with this number.">
+        <Field label={t.auth.business.phone} htmlFor="phone" error={f.phone} hint={t.auth.business.phoneHint}>
           <PhoneInput invalid={!!f.phone} />
         </Field>
       )}
 
-      <Field label="Email (optional)" htmlFor="email" error={f.email}>
-        <Input id="email" name="email" type="email" inputMode="email" placeholder="you@business.tn" defaultValue={defaultEmail} autoComplete="email" aria-invalid={!!f.email || undefined} />
+      <Field label={t.auth.business.email} htmlFor="email" error={f.email}>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          inputMode="email"
+          placeholder={t.auth.business.emailPlaceholder}
+          defaultValue={defaultEmail}
+          autoComplete="email"
+          aria-invalid={!!f.email || undefined}
+          dir="ltr"
+        />
       </Field>
 
       {!signedIn && (
-        <Field label="Password" htmlFor="password" error={f.password} hint="At least 8 characters.">
+        <Field label={t.common.password} htmlFor="password" error={f.password} hint={t.auth.passwordHint}>
           <PasswordInput autoComplete="new-password" invalid={!!f.password} />
         </Field>
       )}
 
-      <SubmitButton pending={pending} pendingText="Creating your business…">
-        Create business
+      <SubmitButton pending={pending} pendingText={t.auth.business.submitting}>
+        {t.auth.business.submit}
       </SubmitButton>
 
       {!signedIn && (
         <p className="text-center text-sm text-muted">
-          Already have an account?{" "}
+          {t.auth.haveAccount}{" "}
           <Link href="/login" className="font-semibold text-brand-600 hover:underline">
-            Log in
+            {t.auth.login.submit}
           </Link>
         </p>
       )}

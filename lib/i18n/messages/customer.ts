@@ -1,0 +1,200 @@
+import { ns, p } from "../dict";
+
+/** The screens a customer sees: home, cards, rewards, redemption, profile, install. */
+export const customer = ns({
+  fr: {
+    scanQr: "Scanner un QR code",
+    howItWorks: "Comment Pointili marche",
+    noCards: "Aucune carte de fidélité",
+
+    home: {
+      title: "Accueil",
+      welcome: "Bienvenue",
+      yourCards: "Vos cartes",
+      rewardReady: "Récompense prête 🎉",
+      rewardAt: "{reward} chez {business}",
+      andMore: p({ one: "+{n} autre", other: "+{n} autres" }),
+      emptyBody: "Allez dans un commerce Pointili et scannez le QR au comptoir pour recevoir votre premier tampon.",
+      seeAllCards: "Voir les {n} cartes",
+    },
+
+    cards: {
+      title: "Mes cartes",
+      count: p({ one: "{n} carte de fidélité", other: "{n} cartes de fidélité" }),
+      emptyBody: "Votre carte apparaît ici après votre premier tampon dans un commerce Pointili.",
+    },
+
+    card: {
+      title: "Carte de fidélité",
+      addedTitle: "Carte ajoutée",
+      addedBody: "Au moment de payer, scannez le QR sur l'écran du comptoir pour recevoir votre premier tampon.",
+      unlockedTitle: "Récompense débloquée !",
+      showAtCounter: "Au comptoir, appuyez ci-dessous et montrez votre QR au personnel.",
+      toUnlock: p({ one: "encore {n} tampon pour la débloquer", other: "encore {n} tampons pour la débloquer" }),
+      keepCollecting: "Continuez à collecter",
+      allRewards: "Toutes les récompenses",
+      ready: "Prête",
+      toGo: "encore {n}",
+      history: "Historique",
+      noHistory: "Aucune activité pour le moment.",
+      stampCollected: "Tampon collecté",
+      rewardRedeemed: "{name} utilisée",
+      customerLabel: "Client n°",
+    },
+
+    rewards: {
+      emptyTitle: "Aucune récompense pour l'instant",
+      emptyBody: "Collectez des tampons dans les commerces Pointili pour débloquer des récompenses gratuites.",
+      readyToUse: "À utiliser 🎉",
+      unlockedBadge: "Prête",
+      inProgress: "En cours",
+      redeemed: "Utilisées",
+    },
+
+    use: {
+      title: "Utiliser la récompense",
+      showMyCode: "Afficher mon code",
+      doneTitle: "Récompense utilisée !",
+      enjoy: "Profitez-en ! Votre carte recommence à se remplir.",
+      expired: "Ce code a expiré. Vos tampons sont en sécurité — demandez un nouveau code.",
+      backToRewards: "Retour aux récompenses",
+      showQr: "Montrez ce QR au personnel",
+      qrAria: "QR code de la récompense",
+      orCode: "ou donnez-leur le code",
+      codeAria: "Code {code}",
+      waiting: "En attente de confirmation",
+      onlyAfterConfirm: "Vos tampons ne sont retirés qu'après confirmation du personnel.",
+      cancelRequest: "Annuler la demande",
+    },
+
+    profile: {
+      title: "Votre profil",
+      member: "Membre Pointili",
+      myRewards: "Mes récompenses",
+      changePassword: "Changer le mot de passe",
+    },
+
+    install: {
+      title: "Installer Pointili",
+      subtitle: "Vos cartes, à portée de main",
+      action: "Installer",
+      notNow: "Pas maintenant",
+      rowTitle: "Installer l'application",
+      rowSubtitle: "Ouvrez vos cartes depuis l'écran d'accueil",
+      iosTitle: "Ajouter Pointili à l'écran d'accueil",
+      gotIt: "J'ai compris",
+      step1Before: "Appuyez sur",
+      step1Action: "Partager",
+      step1After: "en bas de Safari",
+      step2Before: "Choisissez",
+      step2Action: "Sur l'écran d'accueil",
+      step2Mid: ", puis",
+      step2Action2: "Ajouter",
+    },
+
+    loyaltyCard: {
+      aria: "Carte de fidélité {business} : {done} sur {total} tampons",
+      ariaReward: ", récompense {reward}",
+      ready: "Prête 🎉",
+      toGo: "encore {n}",
+    },
+  },
+
+  tn: {
+    scanQr: "سكاني كود QR",
+    howItWorks: "كيفاش يخدم Pointili",
+    noCards: "مازال ما عندك كارط وفاء",
+
+    home: {
+      title: "الرئيسية",
+      welcome: "مرحبا بيك",
+      yourCards: "الكارطات متاعك",
+      rewardReady: "كادو حاضر 🎉",
+      rewardAt: "{reward} في {business}",
+      andMore: p({ other: "+{n} زادة" }),
+      emptyBody: "روح لمحل Pointili وسكاني كود QR في الكونتوار باش تاخو أول طابع متاعك.",
+      seeAllCards: "شوف {n} كارطات",
+    },
+
+    cards: {
+      title: "الكارطات متاعي",
+      count: p({ one: "كارط وفاء واحدة", other: "{n} كارطات وفاء" }),
+      emptyBody: "الكارط متاعك تبان هنا بعد أول طابع في محل Pointili.",
+    },
+
+    card: {
+      title: "كارط الوفاء",
+      addedTitle: "تزادت الكارط",
+      addedBody: "كي تخلّص، سكاني الكود اللي في شاشة الكونتوار باش تاخو أول طابع.",
+      unlockedTitle: "الكادو تحلّ!",
+      showAtCounter: "في الكونتوار، أضغط تحت وورّي كود QR متاعك للعامل.",
+      toUnlock: p({ one: "مازال طابع واحد باش تحلّو", other: "مازال {n} طوابع باش تحلّو" }),
+      keepCollecting: "كمّل لمّ في الطوابع",
+      allRewards: "الكوادو الكل",
+      ready: "حاضر",
+      toGo: "مازال {n}",
+      history: "الحركة",
+      noHistory: "مازال ما صار والو.",
+      stampCollected: "طابع تزاد",
+      rewardRedeemed: "{name} تعطى",
+      customerLabel: "حريف رقم",
+    },
+
+    rewards: {
+      emptyTitle: "مازال ما عندك كوادو",
+      emptyBody: "لمّ الطوابع في محلات Pointili باش تحلّ كوادو بلاش.",
+      readyToUse: "حاضرين للاستعمال 🎉",
+      unlockedBadge: "حاضر",
+      inProgress: "في الطريق",
+      redeemed: "اللي استعملتهم",
+    },
+
+    use: {
+      title: "استعمل الكادو",
+      showMyCode: "ورّي الكود متاعي",
+      doneTitle: "الكادو تعطى!",
+      enjoy: "بالصحة! الكارط متاعك بدات تتعمّر من جديد.",
+      expired: "الكود هذا فات وقتو. الطوابع متاعك في أمان — اطلب كود جديد.",
+      backToRewards: "ارجع للكوادو",
+      showQr: "ورّي الكود هذا للعامل",
+      qrAria: "كود QR متاع الكادو",
+      orCode: "ولّا قلّو الكود",
+      codeAria: "الكود {code}",
+      waiting: "في انتظار التأكيد",
+      onlyAfterConfirm: "الطوابع ما تتنحّاش كان بعد ما العامل يأكّد.",
+      cancelRequest: "ألغي الطلب",
+    },
+
+    profile: {
+      title: "البروفايل متاعك",
+      member: "عضو في Pointili",
+      myRewards: "الكوادو متاعي",
+      changePassword: "بدّل كلمة السر",
+    },
+
+    install: {
+      title: "نزّل Pointili",
+      subtitle: "الكارطات متاعك في نقرة",
+      action: "نزّل",
+      notNow: "موش توّا",
+      rowTitle: "نزّل الأبليكاسيون",
+      rowSubtitle: "حلّ الكارطات متاعك من الشاشة الرئيسية",
+      iosTitle: "زيد Pointili للشاشة الرئيسية",
+      gotIt: "فهمت",
+      step1Before: "أضغط على زرّ",
+      step1Action: "Partager",
+      step1After: "اللي في الأسفل في Safari",
+      step2Before: "اختار",
+      step2Action: "Sur l'écran d'accueil",
+      step2Mid: "، وبعد",
+      step2Action2: "Ajouter",
+    },
+
+    loyaltyCard: {
+      aria: "كارط الوفاء متاع {business}: {done} من {total} طوابع",
+      ariaReward: "، الكادو {reward}",
+      ready: "حاضر 🎉",
+      toGo: "مازال {n}",
+    },
+  },
+});

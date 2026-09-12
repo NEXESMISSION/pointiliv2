@@ -59,13 +59,14 @@ export function rgba(hex: string, a: number) {
 }
 
 // ── templates: starting points built from the owner's main colour ────────
-export const TEMPLATES: Record<TemplateId, { label: string; hint: string; make: (brand: string) => Partial<CardDesign> }> = {
-  bold: { label: "Bold", hint: "Your colour, full card", make: (c) => ({ bg: c, bg2: shade(c, 0.28), accent: "#FFFFFF", text: isLight(c) ? "dark" : "light", pattern: "waves", use_cover: false }) },
-  classic: { label: "Classic", hint: "Clean white card", make: (c) => ({ bg: "#FFFFFF", bg2: null, accent: isLight(c) ? shade(c, 0.35) : c, text: "dark", pattern: "none", use_cover: false }) },
-  pastel: { label: "Soft", hint: "Light tint of your colour", make: (c) => ({ bg: mix(c, "#FFFFFF", 0.88), bg2: mix(c, "#FFFFFF", 0.72), accent: isLight(c) ? shade(c, 0.35) : c, text: "dark", pattern: "dots", use_cover: false }) },
-  midnight: { label: "Midnight", hint: "Dark with gold stamps", make: () => ({ bg: "#111827", bg2: "#27303F", accent: "#F5C451", text: "light", pattern: "grid", use_cover: false }) },
-  photo: { label: "Photo", hint: "Your cover photo", make: () => ({ bg: "#111827", bg2: null, accent: "#FFFFFF", text: "light", pattern: "none", use_cover: true }) },
-  minimal: { label: "Minimal", hint: "Calm and simple", make: () => ({ bg: "#FAFAF7", bg2: null, accent: "#111827", text: "dark", pattern: "none", stamp: "check", use_cover: false }) },
+/** Names and hints live in lib/i18n/messages/data.ts (t.data.templates). */
+export const TEMPLATES: Record<TemplateId, { make: (brand: string) => Partial<CardDesign> }> = {
+  bold: { make: (c) => ({ bg: c, bg2: shade(c, 0.28), accent: "#FFFFFF", text: isLight(c) ? "dark" : "light", pattern: "waves", use_cover: false }) },
+  classic: { make: (c) => ({ bg: "#FFFFFF", bg2: null, accent: isLight(c) ? shade(c, 0.35) : c, text: "dark", pattern: "none", use_cover: false }) },
+  pastel: { make: (c) => ({ bg: mix(c, "#FFFFFF", 0.88), bg2: mix(c, "#FFFFFF", 0.72), accent: isLight(c) ? shade(c, 0.35) : c, text: "dark", pattern: "dots", use_cover: false }) },
+  midnight: { make: () => ({ bg: "#111827", bg2: "#27303F", accent: "#F5C451", text: "light", pattern: "grid", use_cover: false }) },
+  photo: { make: () => ({ bg: "#111827", bg2: null, accent: "#FFFFFF", text: "light", pattern: "none", use_cover: true }) },
+  minimal: { make: () => ({ bg: "#FAFAF7", bg2: null, accent: "#111827", text: "dark", pattern: "none", stamp: "check", use_cover: false }) },
 };
 
 /** Any stored/partial design (or a card from before designs existed) → a complete, valid design. */
