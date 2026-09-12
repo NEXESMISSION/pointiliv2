@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Activity } from "lucide-react";
 import { Segmented, TopBar } from "@/components/nav/TopBar";
 import { ActivityRow } from "@/components/merchant/ActivityRow";
@@ -37,7 +38,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="mx-auto max-w-3xl">
-      <TopBar title="Activity" large back="/dashboard" />
+      <TopBar title="Activity" large back="/more" action={<Link href="/analytics" className="whitespace-nowrap text-[13px] font-semibold text-brand-600">Charts</Link>} />
       <div className="mb-4">
         <Segmented active={range} items={RANGES.map((r) => ({ ...r, href: `/activity?range=${r.key}` }))} />
       </div>

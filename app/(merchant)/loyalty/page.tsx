@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TopBar } from "@/components/nav/TopBar";
 import { Alert } from "@/components/ui/Alert";
 import { LoyaltyCardForm } from "@/components/merchant/LoyaltyCardForm";
@@ -14,34 +15,22 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
   const [{ welcome }, impact] = await Promise.all([searchParams, card ? rpc<CardImpact>("merchant_card_impact") : Promise.resolve(null)]);
   const category = ctx.business.category as keyof typeof CATEGORIES;
   const isOwner = ctx.member_role === "owner";
-  const midCard = impact?.progress.reduce((a, r) => a + r.n, 0) ?? 0;
   const icon = card?.icon ?? CATEGORIES[category]?.icon ?? "coffee";
   const color = card?.color ?? "emerald";
 
   return (
     <div className="mx-auto max-w-5xl">
-      <TopBar title={card ? "Loyalty card" : "Create loyalty card"} back="/dashboard" />
+      <TopBar title={card ? "Your card" : "Create your card"} back={card ? "/more" : "/dashboard"} subtitle={impact && impact.customers > 0 ? `Live · ${impact.customers} customer${impact.customers > 1 ? "s" : ""}` : undefined} />
 
       {welcome && !card && (
-        <Alert tone="success" title={`Welcome to Pointili, ${ctx.business.name}! 🎉`} className="mb-5">
-          First choose the reward and how many stamps it takes. Next you&apos;ll design how your card looks.
+        <Alert tone="info" className="mb-4">
+          Two questions and your card is ready.
         </Alert>
       )}
 
-      {impact && impact.customers > 0 && (
-        <div className="mb-5 flex items-center gap-2.5 rounded-2xl bg-success-50 px-4 py-3 text-sm font-medium text-success-600" role="status">
-          <span className="relative flex size-2.5 shrink-0">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-success-500 opacity-60" />
-            <span className="relative inline-flex size-2.5 rounded-full bg-success-500" />
-          </span>
-          Your card is live · {impact.customers} customer{impact.customers > 1 ? "s" : ""}
-          {midCard > 0 ? ` · ${midCard} collecting now` : ""}
-        </div>
-      )}
-
       {!isOwner && (
-        <Alert tone="info" className="mb-5">
-          Only the business owner can change the loyalty card.
+        <Alert tone="info" className="mb-4">
+          Only the owner can change the card.
         </Alert>
       )}
 
@@ -62,6 +51,14 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
           cooldown_minutes: card?.cooldown_minutes ?? 60,
         }}
       />
+
+      {card && isOwner && (
+        <p className="mt-5 text-center">
+          <Link href="/rewards" className="text-[13px] font-semibold text-brand-600">
+            Add a second, bigger reward
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

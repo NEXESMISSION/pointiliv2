@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Minus, Palette, Plus } from "lucide-react";
+import { ChevronDown, Palette } from "lucide-react";
 import { saveLoyaltyCard } from "@/app/actions/merchant";
 import type { FormState } from "@/app/actions/types";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
@@ -10,7 +10,6 @@ import { Alert } from "@/components/ui/Alert";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/Button";
-import { buttonClass } from "@/components/ui/button-styles";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import { ToastOnResult } from "@/components/ui/Toast";
 import { COOLDOWN_OPTIONS } from "@/lib/constants";
@@ -46,6 +45,11 @@ const STAMP_PICKS = [6, 8, 10, 12];
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
+/**
+ * Two questions: how many stamps, and what they get. The reward wording, the
+ * wait between stamps and the fine print live under "More options", so a new
+ * owner can finish their card in ten seconds.
+ */
 export function LoyaltyCardForm({ initial, business, design, isNew, disabled, impact }: { initial: Initial; business: Business; design: CardDesign; isNew: boolean; disabled?: boolean; impact: CardImpact | null }) {
   const { state, submit, pending } = useFormAction<FormState>(saveLoyaltyCard, null);
   const ideas = REWARD_IDEAS[business.category] ?? REWARD_IDEAS.other!;
@@ -68,6 +72,7 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
   const renamed = !isNew && !!initial.reward_name && reward.trim() !== initial.reward_name && (impact?.customers ?? 0) > 0;
   const needsConfirm = keepGoal > 0 || unlockNow > 0 || renamed;
 
+  const picks = [...new Set([...STAMP_PICKS, stamps])].sort((a, b) => a - b);
   const cooldownOptions = COOLDOWN_OPTIONS.some((o) => o.value === initial.cooldown_minutes)
     ? COOLDOWN_OPTIONS
     : [...COOLDOWN_OPTIONS, { value: initial.cooldown_minutes, label: initial.cooldown_minutes === 0 ? "No limit (demo)" : `${initial.cooldown_minutes} minutes` }];
@@ -82,8 +87,8 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
       {lowered && <li>{unlockNow > 0 ? <><b>{plural(unlockNow, "customer")}</b> unlock {reward || "the reward"} right away.</> : <>Everyone needs fewer stamps, starting now.</>}</li>}
       {renamed && (
         <li>
-          Customers will see “{reward.trim()}” instead of “{initial.reward_name}”.
-          {impact && impact.pending_redemptions > 0 ? ` ${plural(impact.pending_redemptions, "request")} already made keep “${initial.reward_name}”.` : ""}
+          Customers will see &ldquo;{reward.trim()}&rdquo; instead of &ldquo;{initial.reward_name}&rdquo;.
+          {impact && impact.pending_redemptions > 0 ? ` ${plural(impact.pending_redemptions, "request")} already made keep the old name.` : ""}
         </li>
       )}
     </>
@@ -94,11 +99,9 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
       <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <aside className="order-first min-w-0 lg:sticky lg:top-8 lg:order-last">
           <LoyaltyCardVisual design={design} business={business} subtitle={initial.description} filled={Math.max(1, Math.round(stamps * 0.4))} total={stamps} rewardName={reward} />
-          {isNew ? (
-            <p className="mt-3 text-center text-sm text-muted">Next you&apos;ll choose colours, stamps and style.</p>
-          ) : (
-            <Link href="/loyalty/design" className={buttonClass("secondary", "md", true, "mt-3")}>
-              <Palette className="size-5" /> Customize design
+          {!isNew && (
+            <Link href="/loyalty/design" className="mt-3 flex items-center justify-center gap-1.5 py-1 text-[13px] font-semibold text-brand-600">
+              <Palette className="size-4" /> Change how it looks
             </Link>
           )}
         </aside>
@@ -121,99 +124,89 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
           <input type="hidden" name="description" value={initial.description} />
           <input type="hidden" name="color" value={initial.color} />
           <input type="hidden" name="icon" value={initial.icon} />
+          <input type="hidden" name="stamps_required" value={stamps} />
           {/* fieldsets default to min-width: min-content, which pushes content past a phone screen */}
-          <fieldset disabled={disabled} className="min-w-0 space-y-5">
+          <fieldset disabled={disabled} className="min-w-0 space-y-4">
             {state?.error && <Alert>{state.error}</Alert>}
 
-            <Card className="space-y-5 p-5">
-              <p className="font-semibold text-ink">Reward</p>
-
-              <Field label="Stamps to earn it" htmlFor="stamps_required" hint="Most shops pick 8 or 10 — about one reward a month for a regular.">
-                <div className="flex h-13 items-center rounded-2xl border border-line bg-white">
-                  <input id="stamps_required" name="stamps_required" value={stamps} readOnly className="h-full min-w-0 flex-1 bg-transparent px-4 text-lg font-semibold text-ink tabular focus:outline-none" aria-live="polite" />
-                  <button type="button" onClick={() => setStamps((s) => Math.max(2, s - 1))} className="grid size-12 place-items-center text-body hover:text-brand-600 disabled:opacity-40" disabled={stamps <= 2} aria-label="Fewer stamps">
-                    <Minus className="size-5" />
+            <Card className="p-5">
+              <p className="text-[15px] font-semibold text-ink">How many stamps?</p>
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {picks.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setStamps(n)}
+                    aria-pressed={stamps === n}
+                    className={`h-12 rounded-xl text-lg font-semibold tabular transition-colors ${stamps === n ? "bg-brand-600 text-white shadow-brand" : "border border-line bg-white text-body hover:bg-canvas"}`}
+                  >
+                    {n}
                   </button>
-                  <span className="h-6 w-px bg-line" />
-                  <button type="button" onClick={() => setStamps((s) => Math.min(30, s + 1))} className="grid size-12 place-items-center text-body hover:text-brand-600 disabled:opacity-40" disabled={stamps >= 30} aria-label="More stamps">
-                    <Plus className="size-5" />
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {STAMP_PICKS.map((n) => (
-                    <button key={n} type="button" onClick={() => setStamps(n)} className={`h-9 rounded-full px-4 text-sm font-semibold transition ${stamps === n ? "bg-brand-600 text-white" : "border border-line bg-white text-body hover:bg-canvas"}`}>
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </Field>
+                ))}
+              </div>
+              <p className="mt-2.5 text-[13px] text-muted">Most shops pick 10 — about one reward a month for a regular.</p>
 
               {(raised || lowered) && (keepGoal > 0 || lowered) && (
-                <Alert tone={lowered ? "success" : "info"} title={lowered ? "Good news for your customers" : "Fair for your regulars"}>
+                <Alert tone={lowered ? "success" : "info"} className="mt-4" title={lowered ? "Good news for your customers" : "Fair for your regulars"}>
                   <ul className="list-none space-y-1">{impactMessages}</ul>
                 </Alert>
               )}
+            </Card>
 
-              <Field label="Reward" htmlFor="reward_name">
-                <Input id="reward_name" name="reward_name" value={reward} onChange={(e) => setReward(e.target.value)} placeholder="Free Coffee" required maxLength={60} />
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {ideas.map((idea) => (
-                    <button key={idea} type="button" onClick={() => setReward(idea)} className={`h-9 rounded-full px-3.5 text-sm font-medium transition ${reward === idea ? "bg-brand-50 text-brand-700 ring-1 ring-brand-300" : "border border-line bg-white text-body hover:bg-canvas"}`}>
-                      {idea}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-
+            <Card className="p-5">
+              <p className="text-[15px] font-semibold text-ink">What do they get?</p>
+              <Input className="mt-3" id="reward_name" name="reward_name" value={reward} onChange={(e) => setReward(e.target.value)} placeholder="Free Coffee" required maxLength={60} aria-label="Reward" />
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {ideas.map((idea) => (
+                  <button
+                    key={idea}
+                    type="button"
+                    onClick={() => setReward(idea)}
+                    className={`h-8 rounded-full px-3 text-[13px] font-medium transition-colors ${reward === idea ? "bg-brand-50 text-brand-700 ring-1 ring-brand-300" : "border border-line bg-white text-body hover:bg-canvas"}`}
+                  >
+                    {idea}
+                  </button>
+                ))}
+              </div>
               {renamed && (
-                <Alert tone="warning">
+                <Alert tone="warning" className="mt-4">
                   <ul className="list-none">{impactMessages}</ul>
                 </Alert>
               )}
-
-              <Field label="Reward description" htmlFor="reward_description">
-                <Textarea id="reward_description" name="reward_description" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} placeholder="Get one regular coffee for free." maxLength={200} rows={2} />
-              </Field>
-            </Card>
-
-            <Card className="space-y-4 p-5">
-              <p className="font-semibold text-ink">Rules</p>
-              <Field label="One stamp per customer every" htmlFor="cooldown_minutes" hint="Stops someone collecting several stamps in one visit.">
-                <Select id="cooldown_minutes" name="cooldown_minutes" value={cooldown} onChange={(e) => setCooldown(e.target.value)}>
-                  {cooldownOptions.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <details className="rounded-2xl bg-canvas p-3 text-sm text-body">
-                <summary className="cursor-pointer font-semibold text-ink">What happens when I change the card?</summary>
-                <ul className="mt-2 list-disc space-y-1.5 pl-5">
-                  <li>
-                    <b>More stamps:</b> customers already collecting keep the goal they started with. The new number applies to their next card and to new customers.
-                  </li>
-                  <li>
-                    <b>Fewer stamps:</b> everyone benefits right away.
-                  </li>
-                  <li>
-                    <b>New reward name:</b> shown to everyone at once. Rewards a customer already asked to use keep the old name.
-                  </li>
-                  <li>
-                    <b>Design, logo, cover:</b> just the look — nobody loses a stamp.
-                  </li>
-                  <li>
-                    <b>Card complete:</b> customers can keep collecting. Extra stamps carry over to the next card after you confirm the reward.
-                  </li>
-                </ul>
-              </details>
             </Card>
 
             {!disabled && (
               <SubmitButton pending={pending} pendingText="Saving…">
-                {isNew ? "Create card & design it" : "Save changes"}
+                {isNew ? "Create my card" : "Save"}
               </SubmitButton>
             )}
+
+            <details className="group overflow-hidden rounded-2xl border border-line bg-white shadow-card">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+                More options
+                <ChevronDown className="size-4 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <div className="space-y-4 border-t border-line p-5">
+                <Field label="A line about the reward" htmlFor="reward_description">
+                  <Textarea id="reward_description" name="reward_description" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} placeholder="Get one regular coffee for free." maxLength={200} rows={2} />
+                </Field>
+                <Field label="One stamp per customer every" htmlFor="cooldown_minutes" hint="Stops someone collecting several stamps in one visit.">
+                  <Select id="cooldown_minutes" name="cooldown_minutes" value={cooldown} onChange={(e) => setCooldown(e.target.value)}>
+                    {cooldownOptions.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Another number of stamps" htmlFor="stamps_exact">
+                  <Input id="stamps_exact" type="number" min={2} max={30} value={stamps} onChange={(e) => setStamps(Math.min(30, Math.max(2, Number(e.target.value) || 2)))} className="tabular" />
+                </Field>
+                <p className="text-[13px] leading-relaxed text-muted">
+                  Changing the card is always fair: asking for more stamps only applies to new cards, asking for fewer helps everyone right away, and nobody ever loses a stamp.
+                </p>
+              </div>
+            </details>
           </fieldset>
         </form>
       </div>
@@ -222,7 +215,7 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
         open={ask}
         onClose={() => setAsk(false)}
         title="Save these changes?"
-        confirmLabel="Save changes"
+        confirmLabel="Save"
         onConfirm={() => {
           confirmed.current = true;
           setAsk(false);

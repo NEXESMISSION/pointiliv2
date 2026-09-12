@@ -1,27 +1,34 @@
-import { Activity, ChartColumn, CreditCard, Gift, LogOut, Palette, Printer, Receipt, Settings, Ticket } from "lucide-react";
+import { Activity, CreditCard, LogOut, Printer, Receipt, Settings, Users } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Divided, ListRow } from "@/components/ui/Card";
+import { requireMerchant } from "@/lib/session";
+import { PLAN_LABEL } from "@/lib/constants";
 
 export const metadata = { title: "More" };
 
-export default function MorePage() {
+/** The only menu: one flat list, then log out. */
+export default async function MorePage() {
+  const ctx = await requireMerchant("/more");
+  const card = ctx.card;
+
   return (
     <>
       <TopBar title="More" large back="/dashboard" />
       <Divided>
-        <ListRow href="/redeem" icon={<Ticket className="size-5" />} title="Redeem a reward" />
-        <ListRow href="/counter-qr" icon={<Printer className="size-5" />} title="Counter QR" subtitle="Print it — customers scan to get your card" />
+        <ListRow href="/customers" icon={<Users className="size-5" />} title="Customers" />
         <ListRow href="/activity" icon={<Activity className="size-5" />} title="Activity" />
-        <ListRow href="/analytics" icon={<ChartColumn className="size-5" />} title="Analytics" />
+        <ListRow
+          href="/loyalty"
+          icon={<CreditCard className="size-5" />}
+          title="Loyalty card"
+          subtitle={card ? `${card.stamps_required} stamps · ${card.reward?.name ?? ""}` : "Not created yet"}
+        />
+        <ListRow href="/counter-qr" icon={<Printer className="size-5" />} title="Counter QR" subtitle="Print it for your counter" />
+        <ListRow href="/billing" icon={<Receipt className="size-5" />} title="Billing" subtitle={PLAN_LABEL[ctx.subscription?.plan ?? ""] ?? "No plan"} />
+        <ListRow href="/settings" icon={<Settings className="size-5" />} title="Settings" subtitle="Shop details, logo, password" />
       </Divided>
-      <Divided className="mt-4">
-        <ListRow href="/loyalty" icon={<CreditCard className="size-5" />} title="Loyalty card" subtitle="Reward, stamps and rules" />
-        <ListRow href="/loyalty/design" icon={<Palette className="size-5" />} title="Design your card" subtitle="Style, colours, stamps, logo" />
-        <ListRow href="/rewards" icon={<Gift className="size-5" />} title="Rewards" />
-        <ListRow href="/billing" icon={<Receipt className="size-5" />} title="Billing" />
-        <ListRow href="/settings" icon={<Settings className="size-5" />} title="Settings" />
-      </Divided>
+
       <form action={logout} className="mt-4">
         <Divided>
           <button type="submit" className="flex min-h-14 w-full items-center justify-center gap-2 px-4 text-[15px] font-medium text-danger-600 hover:bg-danger-50/60">
