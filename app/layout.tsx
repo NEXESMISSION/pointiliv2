@@ -14,18 +14,6 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 // Tunisian version is set in a real Arabic typeface.
 const arabic = IBM_Plex_Sans_Arabic({ subsets: ["arabic"], weight: ["400", "500", "600", "700"], variable: "--font-arabic", display: "swap" });
 
-const KEYWORDS = [
-  "كارط وفاء",
-  "كارط تامبون",
-  "تامبونات قهوة",
-  "كود QR وفاء",
-  "برنامج وفاء",
-  "تونس",
-  "carte de fidélité",
-  "carte de fidélité numérique",
-  "fidélité QR",
-  "Tunisie",
-];
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
@@ -37,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: title, template: "%s · Pointili" },
     description,
     applicationName: "Pointili",
-    keywords: KEYWORDS,
+    keywords: t.common.site.keywords,
     authors: [{ name: "Pointili" }],
     creator: "Pointili",
     publisher: "Pointili",

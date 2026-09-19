@@ -14,6 +14,7 @@ export const common = ns({
     site: {
       title: "Pointili — Cartes de fidélité numériques pour les commerces",
       description: "Transformez vos clients en habitués. Ils scannent votre QR au comptoir, collectent des tampons sur leur téléphone et gagnent des récompenses. Pour les cafés, restaurants, salons et boutiques en Tunisie.",
+      keywords: "carte de fidélité, carte de fidélité numérique, fidélité QR, tampons fidélité, application fidélité café, Tunisie",
     },
     save: "Enregistrer",
     saving: "Enregistrement…",
@@ -79,6 +80,7 @@ export const common = ns({
     site: {
       title: "Pointili — كارطات وفاء ديجيتال للمحلات",
       description: "خلّي حرفاءك يرجعولك ديما. يسكانيو الكود متاعك في الكونتوار، يلمّو التامبونات في التليفون وياخذو كوادو. للقهاوي والمطاعم وصالونات الحلاقة والحوانت في تونس.",
+      keywords: "كارط وفاء, كارط تامبون, تامبونات قهوة, كود QR وفاء, برنامج وفاء للمحلات, تونس",
     },
     save: "سجّل",
     saving: "قاعد يسجّل…",

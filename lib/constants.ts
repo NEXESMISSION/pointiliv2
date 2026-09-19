@@ -1,14 +1,8 @@
 export const PLANS = {
-  six_month: { id: "six_month", name: "6 Months", price: 80, period: "6 months", perMonth: "13.3 TND / month" },
-  yearly: { id: "yearly", name: "Yearly", price: 120, period: "year", perMonth: "10 TND / month" },
+  six_month: { id: "six_month", price: 80 },
+  yearly: { id: "yearly", price: 120 },
 } as const;
 export type PaidPlan = keyof typeof PLANS;
-
-export const PLAN_LABEL: Record<string, string> = {
-  trial: "Free trial",
-  six_month: "6 Months",
-  yearly: "Yearly",
-};
 
 export const TRIAL_DAYS = 30;
 
@@ -65,9 +59,6 @@ export const CATEGORIES = {
   other: { label: "Other", icon: "star" },
 } as const;
 
-export function categoryLabel(c: string | null | undefined) {
-  return CATEGORIES[(c ?? "other") as keyof typeof CATEGORIES]?.label ?? "Other";
-}
 
 export const COOLDOWN_OPTIONS = [
   { value: 5, label: "5 minutes" },

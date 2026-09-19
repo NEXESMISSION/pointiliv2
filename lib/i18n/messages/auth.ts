@@ -115,7 +115,7 @@ export const auth = ns({
       heading: "مرحبا بيك من جديد 👋",
       subtitle: "ادخل للكونت متاعك",
       businessTitle: "دخول المحلات",
-      businessSubtitle: "شوف التابلو متاع المحل متاعك",
+      businessSubtitle: "شوف لوحة التحكم متاع المحل متاعك",
       forgot: "نسيت كلمة السر؟",
       submit: "ادخل",
       submitting: "قاعد يدخّل…",
