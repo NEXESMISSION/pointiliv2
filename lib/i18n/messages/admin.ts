@@ -284,7 +284,7 @@ export const admin = ns({
       seeRenewals: "شوف التجديدات",
       recentActivity: "آخر الحركة",
       emptyTitle: "مازال ما فماش حركة",
-      emptyBody: "التامبونات والمحلات الجديدة والدفوعات باش يبانو هنا.",
+      emptyBody: "التامبونات والمحلات الجديدة والدفوعات باش يبانو هوني.",
     },
 
     businesses: {
@@ -356,7 +356,7 @@ export const admin = ns({
       title: "الاشتراكات",
       count: p({ one: "محل واحد", other: "{n} محلات" }),
       filters: { active: "نشيطة", expiring_soon: "قرب يكمّل", expired: "كمّل", cancelled: "ملغية" },
-      emptyTitle: "ما فما شي هنا",
+      emptyTitle: "ما فما شي هوني",
       emptyBody: "ما فما حتى اشتراك في الفيلتر هذا.",
       expiresOn: "يكمّل {date}",
       expiredOn: "كمّل {date}",
@@ -386,7 +386,7 @@ export const admin = ns({
       emptyFoundTitle: "ما لقينا حتى حد",
       emptyTitle: "مازال ما فماش حرفاء",
       emptySearch: "ما فما شي يشبه «{q}». جرّب آخر أرقام النومرو.",
-      emptyBody: "الحرفاء يبانو هنا كي يعملو حساب.",
+      emptyBody: "الحرفاء يبانو هوني كي يعملو كونت.",
       roleAdmin: "أدمين",
       roleMerchant: "مولى محل",
       cardsUnit: p({ one: "كارط", other: "كارطات" }),
@@ -408,7 +408,7 @@ export const admin = ns({
         business_suspended: "توقيفات",
       },
       emptyTitle: "ما فماش حركة",
-      emptyBody: "مازال ما صار شي هنا.",
+      emptyBody: "مازال ما صار شي هوني.",
       types: {
         stamp: "+1 تامبون",
         reward_redeemed: "كادو تعطى",
@@ -455,7 +455,7 @@ export const admin = ns({
     },
 
     more: {
-      customersSub: "لوّج على حساب، بدّل كلمة السر",
+      customersSub: "لوّج على كونت، عوّض كلمة السر",
       activitySub: "كل شي يصير في المنصة",
       systemSub: "صحة قاعدة البيانات والتنظيف",
     },
@@ -489,8 +489,8 @@ export const admin = ns({
       rejectPaymentTitle: "ارفض الدفعة",
       rejectPaymentLabel: "سجّلها فاشلة",
       rejectPaymentBody: "تحب تسجّل دفعة {amount} من {name} فاشلة؟ ما يتفعّل حتى عرض.",
-      resetPassword: "بدّل كلمة السر",
-      resetTitle: "تحب تبدّل كلمة السر؟",
+      resetPassword: "عوّض كلمة السر",
+      resetTitle: "تحب تعوّض كلمة السر؟",
       resetConfirm: "اعمل كلمة سر مؤقتة",
       resetBefore: "باش تتعمل كلمة سر مؤقتة جديدة لـ ",
       resetAfter: ". كلمة السر الحالية توقف تخدم توّا.",

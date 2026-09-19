@@ -7,7 +7,6 @@ import {
   LOCALE_MAX_AGE,
   isLocale,
   isMarketingPath,
-  localeFromAcceptLanguage,
   localePath,
   splitLocalePath,
   type Locale,
@@ -16,9 +15,11 @@ import {
 /**
  * Two jobs before the page renders:
  *
- *  1. Language. /tn/... wins, then the cookie, then the browser's own
- *     preference. Public pages redirect to the address of that language so
- *     each one has its own URL; every render reads it from a request header.
+ *  1. Language. Tunisian, unless /fr/... or the cookie says otherwise —
+ *     phones sold here are often set to French, so the browser's own
+ *     preference is deliberately ignored. Public pages redirect to the
+ *     address of that language so each one has its own URL; every render
+ *     reads it from a request header.
  *  2. Session. Server Components cannot write cookies, so a token refreshed
  *     during a render would be lost — and with refresh-token rotation, lost
  *     means logged out. The refresh happens here, only when the access token
@@ -28,7 +29,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { locale: fromPath } = splitLocalePath(pathname);
   const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
-  const locale: Locale = fromPath ?? (isLocale(cookieLocale) ? cookieLocale : localeFromAcceptLanguage(request.headers.get("accept-language")));
+  const locale: Locale = fromPath ?? (isLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE);
 
   if (!fromPath && isMarketingPath(pathname) && locale !== DEFAULT_LOCALE) {
     const url = request.nextUrl.clone();

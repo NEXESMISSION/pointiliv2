@@ -155,6 +155,15 @@ try {
   await shot(jp, "23-join-signed-out", null);
   await jc.close();
 
+  // The screen a customer meets most: what a scan looks like signed out, in Tunisian.
+  const tnScan = await mp.evaluate(async () => (await fetch("/api/qr/mint", { method: "POST" })).json());
+  const tnc = await browser.newContext({ ...phone, locale: "ar-TN" });
+  const tnp = await tnc.newPage();
+  await tnp.goto(BASE + new URL(tnScan.url).pathname, { waitUntil: "load" });
+  await tnp.waitForSelector("a[href*='/customer/register']", { timeout: 30000 });
+  await shot(tnp, "65-tn-scan-signed-out", null, { full: false, noBack: true });
+  await tnc.close();
+
   // the scan URL the merchant screen is showing right now
   const minted = await mp.evaluate(async () => (await fetch("/api/qr/mint", { method: "POST" })).json());
   const scanUrl = new URL(minted.url);
@@ -164,12 +173,15 @@ try {
   const c = await french(await browser.newContext(phone));
   const cp = await c.newPage();
   await cp.goto(BASE + scanUrl.pathname, { waitUntil: "domcontentloaded" });
-  await cp.getByText("Prenez votre tampon").waitFor({ timeout: 30000 });
+  await cp.getByText("Votre tampon vous attend").waitFor({ timeout: 30000 });
   await shot(cp, "30-scan-signed-out", null, { full: false, noBack: true });
+  await cp.getByRole("link", { name: "Créer mon compte" }).first().click();
+  await cp.waitForURL(/customer\/register/);
   const digits = `5${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
   const pw = randomBytes(8).toString("base64url");
   await cp.locator('input[type="tel"]').fill(digits);
   await cp.locator('input[name="password"]').fill(pw);
+  await cp.locator('input[name="confirm"]').fill(pw);
   await cp.locator('form button[type="submit"]').click();
   await cp.getByText("Tampon obtenu !").waitFor({ timeout: 60000 });
   const { data: who } = await admin.rpc("auth_lookup", { p_identifier: `+216${digits}` });

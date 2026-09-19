@@ -44,7 +44,7 @@ export async function HeroShowcase({ qr }: { qr: string }) {
             <CardIcon name="coffee" className="size-4 sm:size-5" />
           </span>
           <span className="min-w-0 text-start leading-tight">
-            <span className="block truncate text-[11px] font-semibold text-ink sm:text-sm">Café Bonheur</span>
+            <span className="block truncate text-[11px] font-semibold text-ink sm:text-sm">{s.demoCafe}</span>
             <span className="block truncate text-[10px] text-muted sm:text-xs">{s.scanForStamp}</span>
           </span>
         </div>
@@ -73,7 +73,7 @@ export async function HeroShowcase({ qr }: { qr: string }) {
               <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-white/15 sm:size-9 sm:rounded-xl">
                 <CardIcon name="coffee" className="size-3.5 sm:size-5" />
               </span>
-              <span className="min-w-0 flex-1 truncate text-[11px] font-semibold sm:text-[15px]">Café Bonheur</span>
+              <span className="min-w-0 flex-1 truncate text-[11px] font-semibold sm:text-[15px]">{s.demoCafe}</span>
               <span className="text-[13px] font-bold tabular sm:text-xl">
                 7<span className="text-[10px] font-medium text-white/60 sm:text-sm">/10</span>
               </span>
@@ -93,7 +93,7 @@ export async function HeroShowcase({ qr }: { qr: string }) {
               <CardIcon name="scissors" className="size-3.5 sm:size-4" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[10px] font-semibold text-ink sm:text-[13px]">Salon Yasmine</span>
+              <span className="block truncate text-[10px] font-semibold text-ink sm:text-[13px]">{s.demoSalon}</span>
               <span className="mt-1 block h-1 overflow-hidden rounded-full bg-line">
                 <span className="block h-full w-[38%] rounded-full bg-ink" />
               </span>
@@ -109,6 +109,7 @@ export async function HeroShowcase({ qr }: { qr: string }) {
 /** Small product snippets that illustrate each step. */
 export async function StepVisual({ step, qr }: { step: "qr" | "scan" | "stamp" | "reward"; qr: string }) {
   const { t } = await getI18n();
+  const s = t.marketing.showcase;
   return (
     <div aria-hidden className="relative grid h-44 place-items-center overflow-hidden rounded-xl bg-canvas">
       <div className="absolute inset-0 bg-[radial-gradient(#dcdce3_1px,transparent_1px)] [background-size:16px_16px] opacity-70" />
@@ -139,7 +140,7 @@ export async function StepVisual({ step, qr }: { step: "qr" | "scan" | "stamp" |
         {step === "stamp" && (
           <div className="w-52 rounded-2xl p-3.5 text-white shadow-lift" style={{ background: "linear-gradient(150deg, #7547EE 0%, #5029C5 100%)" }}>
             <div className="flex items-center justify-between text-[13px] font-semibold">
-              <span>Café Bonheur</span>
+              <span>{s.demoCafe}</span>
               <span className="tabular">8/10</span>
             </div>
             <div className="mt-3">

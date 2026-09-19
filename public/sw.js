@@ -5,7 +5,7 @@
  * balances, rewards and the rotating QR are always live. The only thing cached
  * is a tiny offline page, served when a top-level navigation fails.
  */
-const CACHE = "pointili-offline-v2";
+const CACHE = "pointili-offline-v3";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

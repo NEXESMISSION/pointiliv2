@@ -3,6 +3,14 @@ import { ns, p } from "../dict";
 /** Words that show up on every second screen. */
 export const common = ns({
   fr: {
+    pwa: {
+      name: "Pointili — Cartes de fidélité",
+      description: "Vos cartes de fidélité sur votre téléphone. Scannez le QR au comptoir, collectez des tampons, gagnez des récompenses.",
+      scan: "Scanner un QR",
+      scanShort: "Scanner",
+      cards: "Mes cartes",
+      cardsShort: "Cartes",
+    },
     site: {
       title: "Pointili — Cartes de fidélité numériques pour les commerces",
       description: "Transformez vos clients en habitués. Ils scannent votre QR au comptoir, collectent des tampons sur leur téléphone et gagnent des récompenses. Pour les cafés, restaurants, salons et boutiques en Tunisie.",
@@ -60,6 +68,14 @@ export const common = ns({
     backToPointili: "Retour à Pointili",
   },
   tn: {
+    pwa: {
+      name: "Pointili — كارطات وفاء",
+      description: "كارطات الوفاء متاعك في التليفون. سكاني الكود في الكونتوار، لمّ التامبونات وخوذ كوادو.",
+      scan: "سكاني كود QR",
+      scanShort: "سكاني",
+      cards: "الكارطات متاعي",
+      cardsShort: "كارطات",
+    },
     site: {
       title: "Pointili — كارطات وفاء ديجيتال للمحلات",
       description: "خلّي حرفاءك يرجعولك ديما. يسكانيو الكود متاعك في الكونتوار، يلمّو التامبونات في التليفون وياخذو كوادو. للقهاوي والمطاعم وصالونات الحلاقة والحوانت في تونس.",
@@ -104,14 +120,14 @@ export const common = ns({
     customers: "حرفاء",
     stampsCount: p({ one: "تامبون واحد", other: "{n} تامبونات" }),
     customersCount: p({ one: "حريف واحد", other: "{n} حرفاء" }),
-    visitsCount: p({ one: "زيارة واحدة", other: "{n} زيارات" }),
+    visitsCount: p({ one: "مرّة وحدة", other: "{n} مرّات" }),
     stampsToGo: p({ one: "باقيلك تامبون واحد", other: "باقيلك {n} تامبونات" }),
     outOf: "{done}/{total}",
     errorTitle: "صار مشكل",
     errorBody: "ما نجّمناش نحمّلو الصفحة. التامبونات والكوادو متاعك في أمان — عاود جرّب.",
     errorReference: "المرجع: {digest}",
     notFoundTitle: "الصفحة ما لقيناهاش",
-    notFoundBody: "الصفحة هذي ما موجودة أو تبدّلت.",
+    notFoundBody: "الصفحة هذي ماهياش موجودة ولّا تبدّلت.",
     openPointili: "حلّ Pointili",
     goHome: "روح للرئيسية",
     backToPointili: "ارجع لـ Pointili",

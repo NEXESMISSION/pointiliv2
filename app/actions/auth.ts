@@ -149,7 +149,7 @@ export async function requestResetCode(_: FormState, fd: FormData): Promise<Form
 
   let devCode: string | undefined;
   if (res.sent) {
-    const outcome = await sendResetCode(phone, code);
+    const outcome = await sendResetCode(phone, code, fill(t.auth.sms.resetCode, { code }));
     if (!outcome.sent) devCode = outcome.devCode;
   }
   (await cookies()).set(RESET_PHONE, phone, shortCookie);

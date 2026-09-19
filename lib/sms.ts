@@ -6,9 +6,9 @@ export type SmsOutcome = { sent: true } | { sent: false; devCode?: string };
  * Sends a password-reset code. Twilio when configured; otherwise the code is
  * written to the server log, and — in development only — handed back so the
  * screen can show it. In production without a provider nothing is exposed.
+ * The message itself comes from the caller, in the language of the screen.
  */
-export async function sendResetCode(phone: string, code: string): Promise<SmsOutcome> {
-  const body = `Pointili: your password reset code is ${code}. It expires in 10 minutes.`;
+export async function sendResetCode(phone: string, code: string, body: string): Promise<SmsOutcome> {
 
   if (process.env.SMS_PROVIDER === "twilio" && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) {
     const sid = process.env.TWILIO_ACCOUNT_SID;

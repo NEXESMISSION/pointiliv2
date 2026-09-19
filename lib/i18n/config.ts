@@ -49,10 +49,3 @@ export function splitLocalePath(pathname: string): { locale: Locale | null; path
   }
   return { locale: null, path: pathname };
 }
-
-/** Tunisian unless the visitor asked for French: the shop owners here are Tunisian. */
-export function localeFromAcceptLanguage(header: string | null): Locale {
-  if (!header) return DEFAULT_LOCALE;
-  const first = header.split(",")[0]?.split(";")[0]?.trim().toLowerCase() ?? "";
-  return first.startsWith("fr") ? "fr" : DEFAULT_LOCALE;
-}

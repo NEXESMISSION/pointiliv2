@@ -15,15 +15,16 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 const arabic = IBM_Plex_Sans_Arabic({ subsets: ["arabic"], weight: ["400", "500", "600", "700"], variable: "--font-arabic", display: "swap" });
 
 const KEYWORDS = [
+  "كارط وفاء",
+  "كارط تامبون",
+  "تامبونات قهوة",
+  "كود QR وفاء",
+  "برنامج وفاء",
+  "تونس",
   "carte de fidélité",
   "carte de fidélité numérique",
   "fidélité QR",
-  "tampons fidélité",
-  "application fidélité café",
   "Tunisie",
-  "كارط وفاء",
-  "برنامج وفاء",
-  "تونس",
 ];
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -41,7 +42,6 @@ export async function generateMetadata(): Promise<Metadata> {
     creator: "Pointili",
     publisher: "Pointili",
     category: "business",
-    alternates: { canonical: url, languages: { "ar-TN": "/", fr: "/fr", "x-default": "/" } },
     openGraph: { type: "website", siteName: "Pointili", title, description, url, locale: OG_LOCALE[locale] },
     twitter: { card: "summary_large_image", title, description },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
