@@ -51,7 +51,7 @@ export const data = ns({
     payments: { bank_transfer: "تحويل بنكي", d17: "D17", cash: "كاش", other: "أخرى" },
     paymentStatus: { paid: "مدفوع", pending: "في الانتظار", failed: "فشل", cancelled: "ملغي" },
     subscription: { active: "نشيط", trial: "تجربة", expiring_soon: "قرب يكمّل", cancelled: "ملغي", expired: "كمّل", none: "بلا عرض" },
-    cooldown: { m5: "5 دقائق", h1: "ساعة", h4: "4 سوايع", h12: "12 ساعة", daily: "مرة في النهار", none: "بلا حدود (تجربة)", custom: "{n} دقيقة" },
+    cooldown: { m5: "5 دقايق", h1: "ساعة", h4: "4 سوايع", h12: "12 ساعة", daily: "مرة في النهار", none: "بلا حدود (تجربة)", custom: "{n} دقيقة" },
     colors: { indigo: "نيلي", emerald: "نعناعي", amber: "عسلي", orange: "خوخي", rose: "وردي", violet: "ليلكي", sky: "سماوي", slate: "رمادي" },
     templates: {
       bold: { name: "قوي", hint: "لونك في الكارط الكل" },
