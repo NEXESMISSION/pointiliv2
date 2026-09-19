@@ -31,6 +31,8 @@ type Initial = {
 type Business = { name: string; logo_url: string | null; cover_url: string | null; category: string };
 
 const STAMP_PICKS = [6, 8, 10, 12];
+/** The three answers that cover almost every shop; the rest live under "More options". */
+const WAIT_PICKS = [0, 60, 1440];
 
 /**
  * Two questions: how many stamps, and what they get. The reward wording, the
@@ -185,6 +187,26 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
               )}
             </Card>
 
+            <Card className="p-5">
+              <p className="text-[15px] font-semibold text-ink">{w.waitQuestion}</p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {WAIT_PICKS.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setCooldown(String(v))}
+                    aria-pressed={cooldown === String(v)}
+                    className={`h-12 rounded-xl px-2 text-[15px] font-semibold transition-colors ${cooldown === String(v) ? "bg-brand-600 text-white shadow-brand" : "border border-line bg-white text-body hover:bg-canvas"}`}
+                  >
+                    {v === 0 ? w.waitEveryTime : v === 60 ? w.waitHour : w.waitDay}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2.5 text-[13px] text-muted">{w.waitHint}</p>
+              {!WAIT_PICKS.includes(Number(cooldown)) && <p className="mt-2 text-[13px] font-medium text-brand-600">{cooldownLabel(Number(cooldown))}</p>}
+              <input type="hidden" name="cooldown_minutes" value={cooldown} />
+            </Card>
+
             {!disabled && (
               <SubmitButton pending={pending} pendingText={t.common.saving}>
                 {isNew ? t.merchant.home.createCta : t.common.save}
@@ -201,7 +223,7 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
                   <Textarea id="reward_description" name="reward_description" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} placeholder={w.rewardLinePlaceholder} maxLength={200} rows={2} />
                 </Field>
                 <Field label={w.cooldownLabel} htmlFor="cooldown_minutes" hint={w.cooldownHint}>
-                  <Select id="cooldown_minutes" name="cooldown_minutes" value={cooldown} onChange={(e) => setCooldown(e.target.value)}>
+                  <Select id="cooldown_minutes" value={cooldown} onChange={(e) => setCooldown(e.target.value)}>
                     {cooldownValues.map((v) => (
                       <option key={v} value={v}>
                         {cooldownLabel(v)}

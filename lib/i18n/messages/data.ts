@@ -57,7 +57,7 @@ export const data = ns({
       bold: { name: "قوي", hint: "لونك في الكارط الكل" },
       classic: { name: "كلاسيك", hint: "كارط بيضاء ونظيفة" },
       pastel: { name: "هادي", hint: "لون خفيف متاعك" },
-      midnight: { name: "ليلي", hint: "خلفية كحلة وطوابع ذهبية" },
+      midnight: { name: "ليلي", hint: "خلفية كحلة وتامبونات ذهبية" },
       photo: { name: "تصويرة", hint: "التصويرة متاعك في الخلفية" },
       minimal: { name: "بسيط", hint: "هادي وبسيط" },
     },

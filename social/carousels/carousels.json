@@ -1,0 +1,2260 @@
+{
+  "carousels": [
+    {
+      "id": "c1",
+      "title": "شنوّة Pointili؟",
+      "question": "C'est quoi, en une phrase ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P1.png",
+          "title": "حرفاءك يجيو مرّة…\nوما يرجعوش؟",
+          "sub": "هاو كيفاش تخلّيهم يرجعولك"
+        },
+        {
+          "type": "text",
+          "badge": "logo",
+          "title": "Pointili هي\nكارط الوفاء،\nأما في التليفون",
+          "hl": "في التليفون",
+          "sub": "كيما كارط الفيدليتي… أما ما تتنساش وما تضيعش"
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr.png",
+          "title": "في الكونتوار، كود يتبدّل وحدو",
+          "sub": "الحريف يسكانيه بكاميرا التليفون"
+        },
+        {
+          "type": "screen",
+          "screen": "stamp-success.png",
+          "title": "وياخو تامبون في ثانية",
+          "hl": "في ثانية",
+          "sub": "في التليفون متاعو، بلا أبليكاسيون"
+        },
+        {
+          "type": "photo",
+          "photo": "P2.png",
+          "title": "كمّل التامبونات؟ ياخو كادو",
+          "hl": "كادو",
+          "sub": "قهوة بلاش، حلاقة بلاش… إنت تختار",
+          "photoH": 900,
+          "photoY": 20
+        },
+        {
+          "type": "text",
+          "title": "والنتيجة؟\nيرجعلك إنت،\nموش لغيرك.",
+          "hl": "يرجعلك إنت"
+        },
+        {
+          "type": "cta",
+          "title": "تحب Pointili\nفي محلّك؟",
+          "hl": "في محلّك؟",
+          "sub": "إحنا نعملولك كل شي",
+          "subHl": "كل شي",
+          "next": [
+            "تبعثلنا ميساج",
+            "نحلّولك الكونت ونحضّرولك الكارط",
+            "وإنت تبدا تعطي التامبونات"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "title": "كيفاش تخدم Pointili في محلك؟",
+      "question": "كيفاش تخدم Pointili في محلك؟",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P3.png",
+          "title": "كيفاش تخدم Pointili\nفي محلك؟",
+          "sub": "الحكاية ساهلة برشا."
+        },
+        {
+          "type": "list",
+          "title": "الحكاية ساهلة",
+          "sub": "الحريف يعملها وحدو.",
+          "items": [
+            {
+              "text": "الحريف يشري"
+            },
+            {
+              "text": "يسكاني الكود"
+            },
+            {
+              "text": "ياخو تامبون"
+            },
+            {
+              "text": "يرجع ويكمل التامبونات"
+            },
+            {
+              "num": "🎁",
+              "text": "ياخو الكادو متاعو",
+              "gift": true
+            }
+          ]
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr.png",
+          "step": "1",
+          "title": "تحلّ الكود في الكونتوار",
+          "sub": "تليفون ولا تابلات، وخلّيه قدّامهم.",
+          "phoneTop": 560
+        },
+        {
+          "type": "photo",
+          "photo": "P1.png",
+          "step": "2",
+          "title": "الحريف يخلّص ويسكاني",
+          "sub": "بكاميرا تليفونو. ما يلزمو حتى شي.",
+          "photoH": 880,
+          "photoY": 20
+        },
+        {
+          "type": "screen",
+          "screen": "stamp-success.png",
+          "step": "3",
+          "title": "ياخو التامبون فيسع",
+          "hl": "فيسع",
+          "sub": "ويشوف قدّاش باقيلو للكادو.",
+          "phoneTop": 560
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr-flash.png",
+          "title": "وإنت تشوف +1 في الإيكران",
+          "hl": "+1",
+          "sub": "والكود يتبدّل وحدو للي بعدو.",
+          "phoneW": 430,
+          "phoneTop": 520
+        },
+        {
+          "type": "screen",
+          "screen": "card-unlocked.png",
+          "step": "4",
+          "title": "كمّل العشرة تامبونات؟",
+          "sub": "الكادو يتحلّ وحدو في تليفونو.",
+          "phoneTop": 560
+        },
+        {
+          "type": "photo",
+          "photo": "P2.png",
+          "step": "5",
+          "title": "الكادو ما يتعطاش وحدو",
+          "sub": "يورّيك الكود، تسكانيه وتأكّد.",
+          "photoH": 820,
+          "photoY": 16
+        },
+        {
+          "type": "text",
+          "title": "الحريف يعملها وحدو.\nوإنت كمّل خدمتك.",
+          "hl": "وإنت كمّل خدمتك.",
+          "sub": "بلا كرتون، بلا أبليكاسيون، بلا وجيعة راس."
+        },
+        {
+          "type": "cta",
+          "title": "تحب Pointili\nفي محلك؟",
+          "hl": "في محلك؟",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c3",
+      "title": "الحرفاء متاعي يلزمهم يحمّلوا أبليكاسيون؟",
+      "question": "Mes clients doivent télécharger une app ?",
+      "slides": [
+        {
+          "type": "question",
+          "title": "الحرفاء متاعك يلزمهم\nيحمّلوا أبليكاسيون؟",
+          "hl": "أبليكاسيون؟",
+          "sub": "لا.\nالحريف ما يلزمو يحمّل حتى شي."
+        },
+        {
+          "type": "text",
+          "title": "لا.\nما يحمّلوا حتى شي.",
+          "hl": "لا.",
+          "sub": "كل شي يصير من التليفون متاعهم،\nمن غير ما يركّبوا application.",
+          "size": 118
+        },
+        {
+          "type": "photo",
+          "photo": "A2.png",
+          "step": "1",
+          "title": "يسكاني الكود بالكاميرا",
+          "sub": "يفتح الكاميرا،\nيسكاني الـQR Code،\nويكمّل من غادي.",
+          "photoH": 790,
+          "photoY": 30
+        },
+        {
+          "type": "screen",
+          "screen": "customer-register.png",
+          "step": "2",
+          "title": "أول مرّة: نومرو وكلمة سر",
+          "sub": "أول مرّة برك يعمل الكونت متاعو،\nوبعدها يدخل فيسع.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "stamp-success.png",
+          "step": "3",
+          "title": "التامبون يتزاد فيسع",
+          "hl": "فيسع",
+          "sub": "الحريف يسكاني الكود،\nوالتامبون متاعو يتزاد في الحين.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "customer-card-7.png",
+          "title": "والكارط تبقى معاه",
+          "hl": "معاه",
+          "sub": "ما تضيعش، وما تتنساش في الدار.\nديما موجودة في تليفونو.",
+          "phoneTop": 560
+        },
+        {
+          "type": "list",
+          "title": "علاش الحريف يحبّها؟",
+          "items": [
+            {
+              "num": "✓",
+              "text": "ما تاخذش بلاصة في التليفون"
+            },
+            {
+              "num": "✓",
+              "text": "ما تتنساش في الدار"
+            },
+            {
+              "num": "✓",
+              "text": "ديما معاه وقت ما يحب"
+            },
+            {
+              "num": "✓",
+              "text": "والتامبونات متاعو محفوظين"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "badge": "✓",
+          "title": "حرفاءك ما يلزمهم شي...",
+          "sub": "لا application،\nلا كارط كرتون،\nلا وجايع راس.\nيسكاني بالكاميرا وخلاص."
+        },
+        {
+          "type": "cta",
+          "title": "حرفاءك ما يلزمهمش\nيركّبوا شي...\nوإنت زادة ما تتعبش.",
+          "hl": "وإنت زادة ما تتعبش.",
+          "size": 76,
+          "sub": "Pointili تتكفّل بالباقي.",
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c10",
+      "title": "شنوة تربح إنت من Pointili؟",
+      "question": "Qu'est-ce que j'y gagne ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P10.png",
+          "title": "تحب حرفاءك\nيرجعولك أكثر؟",
+          "hl": "يرجعولك أكثر؟",
+          "sub": "هاو شنوة تربح من Pointili."
+        },
+        {
+          "type": "flow",
+          "title": "كيفاش تخدم؟",
+          "sub": "بلا أبليكاسيون — بكاميرا تليفونو برك.",
+          "steps": [
+            {
+              "screen": "owner-qr.png",
+              "text": "يسكاني الكود"
+            },
+            {
+              "screen": "stamp-success.png",
+              "text": "ياخو تامبون"
+            },
+            {
+              "screen": "card-unlocked.png",
+              "text": "10 = كادو",
+              "gift": true
+            }
+          ]
+        },
+        {
+          "type": "bars",
+          "title": "حريف واحد يجيبلك قدّاش؟",
+          "hl": "قدّاش؟",
+          "sub": "قهوة بدينار ونص، 26 مرّة في الشهر.",
+          "unit": "د.ت",
+          "bars": [
+            {
+              "label": "حريف واحد في الشهر",
+              "value": "39",
+              "amount": 39
+            },
+            {
+              "label": "Pointili تكلّفك",
+              "value": "10",
+              "amount": 10
+            }
+          ],
+          "note": "120 د.ت في العام ولا 80 د.ت لـ 6 شهور."
+        },
+        {
+          "type": "screen",
+          "screen": "customer-card-7.png",
+          "step": "1",
+          "title": "علاش يرجعلك؟",
+          "hl": "علاش",
+          "sub": "يشوف قدّاش باقيلو للكادو،\nويرجع يكمّل.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "owner-customers.png",
+          "step": "2",
+          "title": "تعرف شكون حرفاءك",
+          "sub": "تتعمّر وحدها مع كل scan: شكون رجع،\nقدّاش عندو، وشكون قرّب للكادو.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "owner-dashboard.png",
+          "step": "3",
+          "title": "والأرقام قدّامك كل نهار",
+          "sub": "تامبونات اليوم، عدد الحرفاء،\nوالكوادو اللي تعطات.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "owner-loyalty.png",
+          "step": "4",
+          "title": "والكادو إنت تختارو",
+          "hl": "إنت تختارو",
+          "sub": "قدّاش من تامبون؟ وشنوة ياخو؟\nإنت تقرّر، وإحنا نحضّرولك الكارط.",
+          "phoneTop": 660
+        },
+        {
+          "type": "cta",
+          "title": "تحب تبدا\nفي محلك؟",
+          "hl": "في محلك؟",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c11",
+      "title": "Pointili تعطّل الخدمة؟",
+      "question": "Ça ne va pas ralentir le service ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "B-cafe.png",
+          "photoY": 45,
+          "title": "Pointili تعطّل\nالخدمة؟",
+          "hl": "تعطّل",
+          "sub": "لا، بالعكس. تخلّيها أسهل وقت الزحمة."
+        },
+        {
+          "type": "flow",
+          "title": "ما توقّفش خدمتك",
+          "hl": "ما توقّفش",
+          "sub": "الحريف يعمل الـscan وحدو،\nوإنت كمّل خدمتك عادي.",
+          "steps": [
+            {
+              "screen": "owner-qr.png",
+              "text": "الـcode في الـcomptoir"
+            },
+            {
+              "screen": "stamp-success.png",
+              "text": "ياخو الـtampon"
+            },
+            {
+              "screen": "owner-qr-flash.png",
+              "text": "الـcode يتبدّل"
+            }
+          ]
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr.png",
+          "step": "1",
+          "title": "في الصباح، حضّر الـcode",
+          "sub": "في التليفون ولا الـtablette،\nوتحطّو في الـcomptoir.",
+          "phoneTop": 560
+        },
+        {
+          "type": "photo",
+          "photo": "S11c.png",
+          "step": "2",
+          "title": "الحريف يخلّص ويعمل scan",
+          "sub": "ما يلزمكش توقّف على كل حريف."
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr-flash.png",
+          "step": "3",
+          "title": "والـcode يتبدّل وحدو",
+          "hl": "يتبدّل وحدو",
+          "sub": "كل scan عندو code صالح لمرّة برك.",
+          "phoneW": 430,
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "customer-register.png",
+          "title": "حريف جديد؟",
+          "hl": "حريف جديد؟",
+          "sub": "يعمل الـcompte وحدو فيسع،\nوبعدها يكمّل.",
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "owner-counter-qr.png",
+          "title": "وكود مطبوع في الـcomptoir",
+          "sub": "يحلّ الكارط متاعو وحدو\nوهو يستنّى في الصف.",
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "owner-activity.png",
+          "title": "وكل شي بيدك",
+          "hl": "بيدك",
+          "sub": "كل scan يتسجّل، والـcadeau\nما يتعطاش كان كي تتأكّد إنت.",
+          "phoneTop": 660
+        },
+        {
+          "type": "cta",
+          "title": "ساهلة\nمن أوّل نهار",
+          "hl": "من أوّل نهار",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الـcompte",
+            "نجهّزولك الكارط والـcode",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c12",
+      "title": "شكون ينجم يستعمل Pointili؟",
+      "question": "Quels commerces peuvent l'utiliser ?",
+      "slides": [
+        {
+          "type": "question",
+          "title": "شكون ينجم يستعمل\nPointili؟",
+          "hl": "Pointili؟",
+          "sub": "عندك حرفاء يرجعولك؟\nيعني هي تخدم معاك."
+        },
+        {
+          "type": "flow",
+          "title": "نفس الحكاية في كل محل",
+          "hl": "كل محل",
+          "sub": "تحطّ الكود، الحريف يسكاني،\nوالتامبون يزيد وحدو.",
+          "steps": [
+            {
+              "screen": "owner-qr.png",
+              "text": "يسكاني الكود"
+            },
+            {
+              "screen": "stamp-success.png",
+              "text": "ياخو تامبون"
+            },
+            {
+              "screen": "card-unlocked.png",
+              "text": "ياخو الكادو",
+              "gift": true
+            }
+          ]
+        },
+        {
+          "type": "pair",
+          "halves": [
+            {
+              "photo": "B-cafe.png",
+              "photoY": 45,
+              "chip": "☕ Café",
+              "card": {
+                "name": "Café Ennour",
+                "sub": "Café",
+                "color": "#6B4226",
+                "color2": "#43291A",
+                "icon": "coffee",
+                "total": 10,
+                "filled": 7,
+                "reward": "قهوة بلاش",
+                "left": "باقيلو 3"
+              },
+              "cardSide": "right"
+            },
+            {
+              "photo": "B-bakery.png",
+              "photoY": 35,
+              "chip": "🥐 Boulangerie",
+              "cardSide": "right",
+              "card": {
+                "name": "Boulangerie Salma",
+                "sub": "Boulangerie · Pâtisserie",
+                "color": "#D97706",
+                "color2": "#9A5405",
+                "icon": "croissant",
+                "total": 10,
+                "filled": 6,
+                "reward": "كرواسون بلاش",
+                "left": "باقيلو 4"
+              }
+            }
+          ],
+          "caption": "قهوة ولا كرواسون، كل مرّة تامبون.\nوالحريف يرجع باش يكمل."
+        },
+        {
+          "type": "pair",
+          "halves": [
+            {
+              "photo": "B-barber.png",
+              "photoY": 35,
+              "chip": "💈 Coiffure",
+              "cardSide": "right",
+              "card": {
+                "name": "Coiffure Karim",
+                "sub": "Salon de coiffure",
+                "color": "#334155",
+                "color2": "#1B2433",
+                "icon": "scissors",
+                "total": 8,
+                "filled": 5,
+                "reward": "حلاقة بلاش",
+                "left": "باقيلو 3"
+              }
+            },
+            {
+              "photo": "B-beauty.png",
+              "photoY": 50,
+              "chip": "💅 Institut de beauté",
+              "card": {
+                "name": "Lina Beauty",
+                "sub": "Beauté · Spa",
+                "color": "#DB2777",
+                "color2": "#9D1A56",
+                "icon": "sparkles",
+                "total": 6,
+                "filled": 4,
+                "reward": "مانيكير بلاش",
+                "left": "باقيلو 2"
+              },
+              "cardSide": "right"
+            }
+          ],
+          "caption": "كل مرّة يجي = تامبون.\nوالحريف عندو علاش يرجعلك."
+        },
+        {
+          "type": "pair",
+          "halves": [
+            {
+              "photo": "B-pizza.png",
+              "photoY": 45,
+              "chip": "🍕 Pizzeria · Snack",
+              "card": {
+                "name": "Pizzeria Hamdi",
+                "sub": "Pizzeria",
+                "color": "#E11D48",
+                "color2": "#9E1232",
+                "icon": "pizza",
+                "total": 8,
+                "filled": 5,
+                "reward": "بيتزا بلاش",
+                "left": "باقيلو 3"
+              }
+            },
+            {
+              "photo": "B-juice.png",
+              "photoY": 40,
+              "chip": "🍹 Jus · Glacier",
+              "cardSide": "right",
+              "card": {
+                "name": "Jus El Bahja",
+                "sub": "Jus · Glacier",
+                "color": "#0E9F6E",
+                "color2": "#08704D",
+                "icon": "cup-soda",
+                "total": 8,
+                "filled": 6,
+                "reward": "عصير بلاش",
+                "left": "باقيلو 2"
+              }
+            }
+          ],
+          "caption": "أي محل عندو حرفاء يرجعولو\nينجم يخدم بيها."
+        },
+        {
+          "type": "pair",
+          "halves": [
+            {
+              "photo": "B-carwash.png",
+              "photoY": 45,
+              "chip": "🚗 Lavage auto",
+              "cardSide": "right",
+              "card": {
+                "name": "Lavage Sami",
+                "sub": "Lavage",
+                "color": "#0284C7",
+                "color2": "#015C8C",
+                "icon": "car",
+                "total": 5,
+                "filled": 3,
+                "reward": "غسلة بلاش",
+                "left": "باقيلو 2"
+              }
+            },
+            {
+              "list": {
+                "title": "وبرشا محلات أخرى",
+                "items": [
+                  "Café & Resto",
+                  "Boulangerie",
+                  "Snack & Fast food",
+                  "Salon",
+                  "Boutique",
+                  "وغيرهم برشا"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "screen",
+          "screen": "owner-loyalty.png",
+          "title": "والكادو إنت تختارو",
+          "hl": "إنت تختارو",
+          "sub": "قهوة؟ remise؟ حاجة من المحل؟\nإنت تقرّر شنوة تعطي لحرفاءك.",
+          "phoneTop": 560
+        },
+        {
+          "type": "cta",
+          "title": "محلك واحد منهم؟",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c8",
+      "title": "شنوّة تعطي كادو؟",
+      "question": "Je donne quoi comme cadeau ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P2.png",
+          "title": "شنوّة تعطي كادو\nلحرفاءك؟",
+          "sub": "أمثلة حسب المحل"
+        },
+        {
+          "type": "photo",
+          "photo": "P1.png",
+          "title": "قهوة ☕",
+          "sub": "10 تامبونات = قهوة بلاش",
+          "subHl": "قهوة بلاش",
+          "photoH": 900,
+          "photoY": 20
+        },
+        {
+          "type": "photo",
+          "photo": "P12-barber.png",
+          "title": "حلّاق 💈",
+          "sub": "8 حلاقات = حلاقة بلاش",
+          "subHl": "حلاقة بلاش"
+        },
+        {
+          "type": "photo",
+          "photo": "P6.png",
+          "title": "مخبزة 🥐",
+          "sub": "10 تامبونات = كرواسون بلاش",
+          "subHl": "كرواسون بلاش"
+        },
+        {
+          "type": "photo",
+          "photo": "P12-pizza.png",
+          "title": "بيتزيريا 🍕",
+          "sub": "8 تامبونات = بيتزا صغيرة بلاش",
+          "subHl": "بيتزا صغيرة بلاش"
+        },
+        {
+          "type": "photo",
+          "photo": "P12-nails.png",
+          "title": "صالون تجميل 💅",
+          "sub": "6 زيارات = مانيكير بلاش",
+          "subHl": "مانيكير بلاش"
+        },
+        {
+          "type": "text",
+          "badge": "💡",
+          "title": "نصيحة:\nما تطلبش برشا تامبونات",
+          "hl": "ما تطلبش برشا",
+          "sub": "الحريف لازم يحسّ اللي هو قريب يوصل. 8 ولا 10 تخدم مليح."
+        },
+        {
+          "type": "cta",
+          "title": "اختار الكادو متاعك",
+          "sub": "إحنا نعملولك كل شي",
+          "subHl": "كل شي",
+          "next": [
+            "تبعثلنا ميساج",
+            "نحلّولك الكونت ونحضّرولك الكارط",
+            "وإنت تبدا تعطي التامبونات"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c5",
+      "title": "ينجم حد يغشّ؟",
+      "question": "Ils vont tricher ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P1.png",
+          "title": "ينجم حد ياخو\nتامبونات بلاش؟",
+          "sub": "لا. هاو علاش"
+        },
+        {
+          "type": "text",
+          "badge": "✗",
+          "title": "يصوّر الكود\nويبعثو لصاحبو؟",
+          "sub": "ما يخدمش."
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr.png",
+          "title": "الكود يتبدّل بعد كل سكان",
+          "hl": "بعد كل سكان",
+          "sub": "وكل كود يخدم مرّة وحدة برك"
+        },
+        {
+          "type": "text",
+          "badge": "✗",
+          "title": "يسكاني 10 مرّات\nورا بعضهم؟",
+          "sub": "لا. إنت تختار: تامبون كل ساعة، كل نهار…"
+        },
+        {
+          "type": "photo",
+          "photo": "P2.png",
+          "title": "والكادو ما يتعطاش وحدو",
+          "sub": "لازم إنت تأكّد في الكونتوار",
+          "photoH": 900,
+          "photoY": 20
+        },
+        {
+          "type": "text",
+          "badge": "✓",
+          "title": "المحل متاعك،\nالقواعد متاعك.",
+          "hl": "القواعد متاعك"
+        },
+        {
+          "type": "cta",
+          "title": "تحب Pointili\nفي محلّك؟",
+          "hl": "في محلّك؟",
+          "sub": "إحنا نعملولك كل شي",
+          "subHl": "كل شي",
+          "next": [
+            "تبعثلنا ميساج",
+            "نحلّولك الكونت ونحضّرولك الكارط",
+            "وإنت تبدا تعطي التامبونات"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c4",
+      "title": "علاش موش كارط كرتون؟",
+      "question": "Pourquoi quitter mes cartes en carton ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P5.png",
+          "title": "مازلت تخدم\nبكارط الكرتون؟",
+          "sub": "هاو شنوّة تخسر"
+        },
+        {
+          "type": "text",
+          "badge": "✗",
+          "title": "تتنسى في الدار",
+          "sub": "والحريف يخسر التامبونات متاعو"
+        },
+        {
+          "type": "text",
+          "badge": "✗",
+          "title": "تضيع ولا تتقطّع",
+          "sub": "ويعاود من الصفر"
+        },
+        {
+          "type": "text",
+          "badge": "✗",
+          "title": "حد ينجم يزيد\nتامبونات بيدو",
+          "sub": "وإنت ما تعرف شي"
+        },
+        {
+          "type": "text",
+          "badge": "✗",
+          "title": "ما تعرفش شكون\nحرفاءك الوفيين",
+          "sub": "ولا قدّاش يرجعو"
+        },
+        {
+          "type": "screen",
+          "screen": "customer-card-7.png",
+          "title": "مع Pointili: الكارط ديما في التليفون",
+          "hl": "ديما في التليفون"
+        },
+        {
+          "type": "screen",
+          "screen": "owner-dashboard.png",
+          "title": "والأرقام قدّامك كل نهار",
+          "hl": "كل نهار"
+        },
+        {
+          "type": "cta",
+          "title": "بدّل الكرتون",
+          "sub": "إحنا نعملولك كل شي",
+          "subHl": "كل شي",
+          "next": [
+            "تبعثلنا ميساج",
+            "نحلّولك الكونت ونحضّرولك الكارط",
+            "وإنت تبدا تعطي التامبونات"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c7",
+      "title": "صعيبة؟",
+      "question": "Je ne suis pas doué avec ces trucs",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P6.png",
+          "title": "ما تعرفش في التكنولوجيا؟\nما يهمّكش.",
+          "sub": "3 خطوات برك"
+        },
+        {
+          "type": "screen",
+          "screen": "business-register.png",
+          "step": "1",
+          "title": "اعمل كونت",
+          "sub": "بنومرو التليفون"
+        },
+        {
+          "type": "screen",
+          "screen": "owner-loyalty.png",
+          "step": "2",
+          "title": "جاوب على سؤالين",
+          "sub": "قدّاش من تامبون؟ شنوّة ياخذو؟",
+          "screenY": 30
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr.png",
+          "step": "3",
+          "title": "حلّ الكود في تليفون ولا تابلات",
+          "sub": "وخلّيه في الكونتوار"
+        },
+        {
+          "type": "screen",
+          "screen": "owner-counter-qr.png",
+          "badge": "🎁",
+          "title": "بونوس: طبّع كود الكونتوار",
+          "sub": "باش الحرفاء يزيدو الكارط متاعك حتى قبل ما يشريو"
+        },
+        {
+          "type": "text",
+          "title": "هذاكا هو.\n5 دقايق.",
+          "hl": "5 دقايق",
+          "sub": "والمحل متاعك جاهز"
+        },
+        {
+          "type": "text",
+          "badge": "💬",
+          "title": "تحتاج معاونة؟",
+          "sub": "ابعثلنا ميساج، نجاوبوك"
+        },
+        {
+          "type": "cta",
+          "title": "ما تحبش تعملها\nوحدك؟",
+          "hl": "وحدك؟",
+          "sub": "إحنا نعملولك كل شي",
+          "subHl": "كل شي",
+          "next": [
+            "تبعثلنا ميساج",
+            "نحلّولك الكونت ونحضّرولك الكارط",
+            "وإنت تبدا تعطي التامبونات"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c6",
+      "title": "قدّاش تكلّف Pointili؟",
+      "question": "Combien ça coûte, et ça vaut le coup ?",
+      "slides": [
+        {
+          "type": "question",
+          "title": "قدّاش تكلّف\nPointili؟",
+          "hl": "قدّاش",
+          "sub": "ساهلة وواضحة.\nما فماش مصاريف مخبّية."
+        },
+        {
+          "type": "plans",
+          "title": "عرضين برك",
+          "hl": "عرضين",
+          "sub": "اختار العرض اللي يناسب محلك.",
+          "plans": [
+            {
+              "name": "عام",
+              "price": "120",
+              "currency": "د.ت",
+              "period": "في العام",
+              "month": "≈ 10 د.ت / شهر",
+              "best": "أحسن سوم"
+            },
+            {
+              "name": "6 شهور",
+              "price": "80",
+              "currency": "د.ت",
+              "period": "لـ 6 شهور",
+              "month": "≈ 13.3 د.ت / شهر"
+            }
+          ]
+        },
+        {
+          "type": "equal",
+          "title": "يعني 10 د.ت في الشهر",
+          "hl": "10 د.ت",
+          "amount": "10",
+          "unit": "د.ت / شهر",
+          "count": 5,
+          "icon": "coffee",
+          "caption": "تقريبًا ثمن 5 قهاوي في الشهر."
+        },
+        {
+          "type": "list",
+          "title": "شنوّة داخل في السوم؟",
+          "items": [
+            {
+              "num": "✓",
+              "text": "حرفاء بلا حدود"
+            },
+            {
+              "num": "✓",
+              "text": "تامبونات بلا حدود"
+            },
+            {
+              "num": "✓",
+              "text": "كود آمن يتبدّل وحدو"
+            },
+            {
+              "num": "✓",
+              "text": "كود الكونتوار"
+            },
+            {
+              "num": "✓",
+              "text": "الحرفاء والأرقام متاعهم"
+            }
+          ]
+        },
+        {
+          "type": "screen",
+          "screen": "owner-billing-plans.png",
+          "title": "تخلّص كيما يعجبك",
+          "hl": "كيما يعجبك",
+          "sub": "D17، تحويل بنكي ولا كاش.\nإنت تختار العرض اللي يناسبك.",
+          "phoneTop": 560
+        },
+        {
+          "type": "text",
+          "badge": "✓",
+          "title": "ما فمّاش خلاص\nمخبّي",
+          "hl": "مخبّي",
+          "sub": "تخلّص الاشتراك،\nوكل شي آخر داخل في الخدمة.\nواضحة من اللول."
+        },
+        {
+          "type": "cta",
+          "title": "اختار العرض\nمتاعك",
+          "hl": "متاعك",
+          "sub": "إحنا نسهّلوها عليك من اللول:",
+          "next": [
+            "نجهّزولك الكونت",
+            "نعملولك الكارط والكود",
+            "وإنت تبدا تخدم"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c9",
+      "title": "أسئلة يسألوها برشا",
+      "question": "Et si… ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P8.png",
+          "title": "أسئلة يسألوها برشا 🤔",
+          "sub": "5 أجوبة في دقيقة"
+        },
+        {
+          "type": "text",
+          "badge": "?",
+          "title": "نجم نبدّل الكادو\nمن بعد؟",
+          "sub": "إيه. واللي بداو يلمّو ما يخسرو حتى تامبون."
+        },
+        {
+          "type": "text",
+          "badge": "?",
+          "title": "يلزمها إنترنت؟",
+          "sub": "إيه. كي تقصّ، الكود يرجع وحدو أوّل ما ترجع الكونيكسيون."
+        },
+        {
+          "type": "text",
+          "badge": "?",
+          "title": "نومرو الحريف يبان؟",
+          "sub": "لا. إنت تشوف كان آخر 3 أرقام."
+        },
+        {
+          "type": "text",
+          "badge": "?",
+          "title": "الاشتراك وفى؟",
+          "sub": "الكود يتوقّف، أما الحرفاء يحافظو على التامبونات متاعهم."
+        },
+        {
+          "type": "text",
+          "badge": "?",
+          "title": "نجم نعمل أكثر\nمن كادو؟",
+          "sub": "إيه. زيد كادو ثاني أكبر، مثلاً بعد 20 تامبون."
+        },
+        {
+          "type": "cta",
+          "title": "عندك سؤال آخر؟",
+          "sub": "إحنا نعملولك كل شي",
+          "subHl": "كل شي",
+          "next": [
+            "تبعثلنا ميساج",
+            "نحلّولك الكونت ونحضّرولك الكارط",
+            "وإنت تبدا تعطي التامبونات"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c13",
+      "title": "وإذا حرفاءي ما استعملوهاش؟",
+      "question": "Et si mes clients ne l'utilisent pas ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "A2.png",
+          "title": "وإذا حرفاءك\nما استعملوهاش؟",
+          "sub": "هاو كيفاش يبداو من أوّل نهار"
+        },
+        {
+          "type": "text",
+          "badge": "💡",
+          "title": "الحرفاء يحبّو الكادو…\nأما لازم يعرفو بيه",
+          "hl": "لازم يعرفو بيه",
+          "sub": "4 حاجات صغار، وتبدا تخدم"
+        },
+        {
+          "type": "screen",
+          "screen": "owner-counter-qr.png",
+          "step": "1",
+          "title": "حطّ كود الكونتوار قدّام الكاسة",
+          "sub": "يشوفوه وهوما يخلّصو"
+        },
+        {
+          "type": "photo",
+          "photo": "A1.png",
+          "step": "2",
+          "title": "قول جملة وحدة وقت الخلاص",
+          "sub": "سكاني الكود، والقهوة العاشرة عليّ 😉",
+          "photoH": 880
+        },
+        {
+          "type": "screen",
+          "screen": "stamp-success.png",
+          "step": "3",
+          "title": "خلّي أوّل تامبون يصير قدّامك",
+          "sub": "يشوف الكارط تتعمّر، ويحب يرجع يكمّلها"
+        },
+        {
+          "type": "text",
+          "badge": "4",
+          "title": "ورّي الكود\nفي الستوري",
+          "hl": "في الستوري",
+          "sub": "صوّر كود الكونتوار وانشرو في الإنستا والفايسبوك"
+        },
+        {
+          "type": "screen",
+          "screen": "owner-customers.png",
+          "title": "وتشوف شكون بدا يرجع",
+          "hl": "بدا يرجع",
+          "sub": "كل حريف جديد يبان عندك بالتامبونات متاعو"
+        },
+        {
+          "type": "cta",
+          "title": "ابدا اليوم",
+          "sub": "إحنا نعملولك كل شي",
+          "subHl": "كل شي",
+          "next": [
+            "تبعثلنا ميساج",
+            "نحلّولك الكونت ونحضّرولك الكارط",
+            "وإنت تبدا تعطي التامبونات"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c14",
+      "title": "حريف واحد يسوى قدّاش؟",
+      "question": "Combien vaut un seul client fidèle ?",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "N1.png",
+          "title": "حريف واحد\nيسوى قدّاش؟",
+          "sub": "خلّينا نحسبوها مع بعضنا."
+        },
+        {
+          "type": "text",
+          "title": "حريف يجي كل صباح\nيشرب قهوتو\nبدينار ونص",
+          "hl": "بدينار ونص",
+          "sub": "حريف واحد،\nأما يرجع كل يوم."
+        },
+        {
+          "type": "stat",
+          "big": "39 د.ت",
+          "bigSize": 190,
+          "icons": {
+            "count": 26,
+            "cols": 13,
+            "icon": "coffee"
+          },
+          "title": "26 قهوة × 1.5 د.ت",
+          "sub": "= 39 د.ت في الشهر"
+        },
+        {
+          "type": "stat",
+          "big": "468 د.ت",
+          "bigSize": 200,
+          "title": "39 د.ت × 12 شهر",
+          "sub": "= 468 د.ت في العام\nمن حريف واحد برك."
+        },
+        {
+          "type": "stat",
+          "big": "1 / 10",
+          "bigSize": 190,
+          "icons": {
+            "count": 10,
+            "cols": 10,
+            "icon": "coffee",
+            "gift": true
+          },
+          "title": "قهوة بلاش\nعلى كل 10 مرات يجي فيها",
+          "hl": "على كل 10 مرات",
+          "sub": "إنت تعطي قهوة،\nأما الحريف يرجعلك 10 مرات."
+        },
+        {
+          "type": "bars",
+          "title": "وسوم Pointili؟",
+          "hl": "Pointili؟",
+          "sub": "إنت تعطي كادو صغير،\nأما تربح حريف يرجعلك باستمرار.",
+          "unit": "د.ت",
+          "bars": [
+            {
+              "label": "حريف واحد يجيبلك",
+              "value": "39",
+              "amount": 39
+            },
+            {
+              "label": "Pointili تكلّفك",
+              "value": "10",
+              "amount": 10
+            }
+          ],
+          "note": "حريف يرجع = قيمة أكبر للمحل."
+        },
+        {
+          "type": "cta",
+          "title": "خلّي حرفاءك\nيرجعولك",
+          "hl": "يرجعولك",
+          "next": [
+            "تحفّزهم يرجعوا",
+            "تعرف شكون يرجع",
+            "وكل شي يتسجّل وحدو"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c20",
+      "title": "نهار في محلك مع Pointili",
+      "question": "شنوة تربح إنت من Pointili؟",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P3.png",
+          "title": "شنوة تربح إنت\nمن Pointili؟",
+          "sub": "هاو نهار كامل في محلك."
+        },
+        {
+          "type": "photo",
+          "photo": "S11c.png",
+          "step": "9:20",
+          "title": "حريف يشري ويسكاني",
+          "sub": "ياخو تامبون، وإنت تكمّل خدمتك."
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr-flash.png",
+          "step": "10:05",
+          "title": "وإنت تشوف +1 في الإيكران",
+          "sub": "كل سكان يبان عندك، بلا ما تعمل شي.",
+          "phoneW": 430,
+          "phoneTop": 560
+        },
+        {
+          "type": "screen",
+          "screen": "customer-card-7.png",
+          "step": "الخميس",
+          "title": "يرجع يكمّل الكارط",
+          "sub": "باقيلو 3 تامبونات، ويجي يشرب عندك\nموش عند اللي قدّامك.",
+          "phoneTop": 660
+        },
+        {
+          "type": "photo",
+          "photo": "P2.png",
+          "step": "بعد جمعة",
+          "title": "كمّل العشرة؟ ياخو قهوتو",
+          "sub": "يورّيك الكود، تسكانيه وتأكّد."
+        },
+        {
+          "type": "screen",
+          "screen": "owner-dashboard.png",
+          "step": "العشية",
+          "title": "وفي العشية تشوف نهارك",
+          "sub": "57 تامبون، 7 حرفاء، و3 كوادو تعطات.",
+          "phoneTop": 660
+        },
+        {
+          "type": "cta",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle",
+          "title": "تحب نهارك\nيولّي هكّا؟",
+          "hl": "يولّي هكّا؟"
+        }
+      ]
+    },
+    {
+      "id": "c21",
+      "title": "كارط الكرتون ولا Pointili؟",
+      "question": "شنوة تربح إنت من Pointili؟",
+      "slides": [
+        {
+          "type": "question",
+          "title": "كارط الكرتون\nولا Pointili؟",
+          "hl": "ولا Pointili؟",
+          "sub": "شوف الفرق وقرّر إنت."
+        },
+        {
+          "type": "compare",
+          "title": "نفس الفكرة، أما…",
+          "hl": "نفس الفكرة",
+          "sub": "وحدة في الجيب، ووحدة في التليفون.",
+          "paper": {
+            "tag": "كارط كرتون",
+            "name": "Café Ennour",
+            "sub": "carte fidélité",
+            "filled": 6,
+            "foot": "10 tampons = قهوة",
+            "notes": [
+              "تتنسى في الدار",
+              "تتقطّع وتضيع",
+              "أي حد يزيدلها بالقلم"
+            ]
+          },
+          "digital": {
+            "tag": "Pointili",
+            "card": {
+              "name": "Café Ennour",
+              "sub": "Café",
+              "color": "#6535E0",
+              "color2": "#4A24B5",
+              "icon": "coffee",
+              "total": 10,
+              "filled": 7,
+              "reward": "قهوة بلاش",
+              "left": "باقيلو 3"
+            },
+            "notes": [
+              "ديما في التليفون",
+              "تتعمّر وحدها",
+              "الكود يتبدّل"
+            ]
+          }
+        },
+        {
+          "type": "list",
+          "title": "الكرتون كل نهار",
+          "sub": "حاجات تصير في المحل",
+          "items": [
+            {
+              "num": "✗",
+              "text": "الحريف ينساها في الدار"
+            },
+            {
+              "num": "✗",
+              "text": "تتقطّع، تتبلّل، وتضيع"
+            },
+            {
+              "num": "✗",
+              "text": "أي حد ينجم يزيد tampon بالقلم"
+            },
+            {
+              "num": "✗",
+              "text": "وما تعرفش شكون حريف وفي"
+            }
+          ]
+        },
+        {
+          "type": "screen",
+          "screen": "customer-home.png",
+          "title": "مع Pointili: في تليفونو ديما",
+          "hl": "في تليفونو",
+          "sub": "ما تتنساش، وما تضيع.",
+          "phoneTop": 560
+        },
+        {
+          "type": "list",
+          "title": "ونفس الحاجات… تتحلّ",
+          "sub": "وحدها",
+          "items": [
+            {
+              "num": "✓",
+              "text": "تتعمّر وحدها بـ scan"
+            },
+            {
+              "num": "✓",
+              "text": "الكود يتبدّل، ما ينجمش يتقلّد"
+            },
+            {
+              "num": "✓",
+              "text": "تعرف شكون يرجعلك وقدّاش عندو"
+            },
+            {
+              "num": "🎁",
+              "text": "والكادو ما يتعطى كان كي إنت تأكّد",
+              "gift": true
+            }
+          ]
+        },
+        {
+          "type": "bars",
+          "title": "والسوم؟",
+          "hl": "والسوم؟",
+          "sub": "10 د.ت في الشهر، وحريف واحد ينجم يغطّي السوم.",
+          "unit": "د.ت",
+          "bars": [
+            {
+              "label": "حريف واحد في الشهر",
+              "value": "39",
+              "amount": 39
+            },
+            {
+              "label": "Pointili في الشهر",
+              "value": "10",
+              "amount": 10
+            }
+          ],
+          "note": "120 د.ت في العام ولا 80 د.ت لـ 6 شهور."
+        },
+        {
+          "type": "cta",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle",
+          "title": "عوّض الكرتون\nبـ Pointili",
+          "hl": "بـ Pointili"
+        }
+      ]
+    },
+    {
+      "id": "c22",
+      "title": "3 حاجات ما تعرفهمش على حرفاءك",
+      "question": "شنوة تربح إنت من Pointili؟",
+      "slides": [
+        {
+          "type": "question",
+          "eyebrow": "سؤال صغير",
+          "title": "تعرف شكون\nحرفاءك الوفياء؟",
+          "hl": "حرفاءك الوفياء؟",
+          "sub": "3 حاجات ما تعرفهمش توّا."
+        },
+        {
+          "type": "screen",
+          "screen": "owner-customers.png",
+          "step": "1",
+          "title": "شكون يرجعلك برشا",
+          "sub": "مرتّبة بالمرّات اللي جا فيهم،\nوتتعمّر وحدها مع كل scan.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "owner-customer-detail.png",
+          "step": "2",
+          "title": "وشكون قرّب للكادو",
+          "sub": "تعرفو كي يجي، وتستقبلو كيما يستاهل.",
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "owner-dashboard.png",
+          "step": "3",
+          "title": "وقدّاش من حركة اليوم",
+          "sub": "57 تامبون، 7 حرفاء، و3 كوادو تعطات.",
+          "phoneTop": 660
+        },
+        {
+          "type": "photo",
+          "photo": "A1.png",
+          "step": "",
+          "title": "وكي تعرفهم… يرجعولك أكثر",
+          "sub": "كلمة صغيرة وقت الخلاص تكفي:\n«سكاني الكود، والعاشرة عليّ».",
+          "photoY": 25
+        },
+        {
+          "type": "cta",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle",
+          "title": "تحب تعرف\nحرفاءك؟",
+          "hl": "حرفاءك؟"
+        }
+      ]
+    },
+    {
+      "id": "c23",
+      "title": "الحريف اللي جا مرّة وما رجعش",
+      "question": "شنوة تربح إنت من Pointili؟",
+      "slides": [
+        {
+          "type": "question",
+          "eyebrow": "سؤال يوجع",
+          "title": "قدّاش من حريف\nجا مرّة وما رجعش؟",
+          "hl": "وما رجعش؟",
+          "sub": "وإنت حتى ما تعرفش."
+        },
+        {
+          "type": "photo",
+          "photo": "P11.png",
+          "title": "يشري مرّة… وما عادش تشوفو",
+          "sub": "ما عندو حتى حاجة تربطو بمحلك."
+        },
+        {
+          "type": "screen",
+          "screen": "stamp-success.png",
+          "step": "1",
+          "title": "مع Pointili، من أوّل مرّة",
+          "sub": "ياخو tampon، ويولّي عندو كارط\nفي محلك إنت.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "customer-card-7.png",
+          "step": "2",
+          "title": "وعندو علاش يرجع",
+          "hl": "علاش يرجع",
+          "sub": "موش بالسوم — باقيلو 3 tampons\nوياخو الكادو.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "owner-customers.png",
+          "step": "3",
+          "title": "وإنت تشوف شكون رجع وشكون وقف",
+          "sub": "آخر مرّة جا فيها كل حريف، قدّامك.",
+          "phoneTop": 620
+        },
+        {
+          "type": "photo",
+          "photo": "A1.png",
+          "title": "واللي وقف؟ تنجم ترجّعو",
+          "sub": "كلمة وقت الخلاص:\n«سكاني الكود، والعاشرة عليّ».",
+          "photoY": 25
+        },
+        {
+          "type": "cta",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle",
+          "title": "ما تخلّيش حرفاءك\nيمشيو ساكت",
+          "hl": "يمشيو ساكت"
+        }
+      ]
+    },
+    {
+      "id": "c24",
+      "title": "جملة وحدة وقت الخلاص",
+      "question": "شنوة تربح إنت من Pointili؟",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P2.png",
+          "title": "جملة وحدة\nوقت الخلاص",
+          "sub": "وتبدّل حريف عابر لحريف يرجعلك."
+        },
+        {
+          "type": "text",
+          "title": "«سكاني الكود،\nوالعاشرة عليّ»",
+          "hl": "والعاشرة عليّ",
+          "size": 96,
+          "sub": "هذي هي الجملة الكل."
+        },
+        {
+          "type": "screen",
+          "screen": "owner-qr.png",
+          "step": "1",
+          "title": "الكود قدّامو في الكونتوار",
+          "sub": "يسكاني بكاميرا تليفونو، بلا أبليكاسيون.",
+          "phoneTop": 560
+        },
+        {
+          "type": "screen",
+          "screen": "stamp-success.png",
+          "step": "2",
+          "title": "3 ثواني وياخو التامبون",
+          "sub": "ويشوف قدّاش باقيلو للكادو.",
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "card-unlocked.png",
+          "step": "3",
+          "title": "وفي العاشرة ياخو قهوتو",
+          "sub": "يورّيك الكود، تسكانيه وتأكّد.",
+          "phoneTop": 620
+        },
+        {
+          "type": "bars",
+          "title": "والجملة هذي شنوة تجيب؟",
+          "hl": "شنوة تجيب؟",
+          "sub": "حريف يرجع كل صباح، بدينار ونص.",
+          "unit": "د.ت",
+          "bars": [
+            {
+              "label": "حريف واحد في الشهر",
+              "value": "39",
+              "amount": 39
+            },
+            {
+              "label": "Pointili تكلّفك",
+              "value": "10",
+              "amount": 10
+            }
+          ],
+          "note": "120 د.ت في العام ولا 80 د.ت لـ 6 شهور."
+        },
+        {
+          "type": "cta",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle",
+          "title": "قول الجملة\nفي محلك",
+          "hl": "في محلك"
+        }
+      ]
+    },
+    {
+      "id": "c25",
+      "title": "الأسئلة اللي يسألوك الحرفاء",
+      "question": "شنوة تربح إنت من Pointili؟",
+      "slides": [
+        {
+          "type": "question",
+          "eyebrow": "في الكونتوار",
+          "title": "شنوة باش\nيسألوك الحرفاء؟",
+          "hl": "يسألوك الحرفاء؟",
+          "sub": "وشنوة تجاوبهم في كلمة."
+        },
+        {
+          "type": "list",
+          "title": "الأسئلة والجواب",
+          "sub": "الكل في الكونتوار",
+          "items": [
+            {
+              "num": "؟",
+              "text": "يلزمني أبليكاسيون؟",
+              "small": "لا. بكاميرا التليفون برك."
+            },
+            {
+              "num": "؟",
+              "text": "تاخذلي وقت؟",
+              "small": "3 ثواني ويكمّل طريقو."
+            },
+            {
+              "num": "؟",
+              "text": "لازم إيمايل؟",
+              "small": "نومرو وكلمة سر، وخلاص."
+            },
+            {
+              "num": "؟",
+              "text": "وإذا بدّلت التليفون؟",
+              "small": "التامبونات محفوظين في الكونت متاعو."
+            }
+          ]
+        },
+        {
+          "type": "screen",
+          "screen": "customer-register.png",
+          "step": "1",
+          "title": "أوّل مرّة: نومرو وكلمة سر",
+          "sub": "20 ثانية، بلا إيمايل وبلا أبليكاسيون.",
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "stamp-success.png",
+          "step": "2",
+          "title": "وبعدها: سكان وخلاص",
+          "sub": "التامبون يتسجّل عندو في الحين.",
+          "phoneTop": 620
+        },
+        {
+          "type": "photo",
+          "photo": "A2.png",
+          "title": "وإنت؟ تكمّل خدمتك",
+          "sub": "هو يعملها وحدو في الكونتوار."
+        },
+        {
+          "type": "screen",
+          "screen": "customer-card-7.png",
+          "title": "والكارط تبقى في تليفونو",
+          "hl": "في تليفونو",
+          "sub": "يشوفها وقت ما يحب، وما تضيعش.",
+          "phoneTop": 620
+        },
+        {
+          "type": "cta",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle",
+          "title": "حرفاءك\nما يلزمهم شي",
+          "hl": "ما يلزمهم شي"
+        }
+      ]
+    },
+    {
+      "id": "c26",
+      "title": "قدّاش يلزم باش ترجّع سوم Pointili؟",
+      "question": "شنوة تربح إنت من Pointili؟",
+      "slides": [
+        {
+          "type": "question",
+          "eyebrow": "حساب صغير",
+          "title": "Pointili تكلّفك\n10 د.ت في الشهر",
+          "hl": "10 د.ت",
+          "sub": "قدّاش يلزم باش ترجّعهم؟"
+        },
+        {
+          "type": "calc",
+          "title": "هاو الحساب",
+          "sub": "بسوم القهوة",
+          "rows": [
+            {
+              "value": "1,5",
+              "label": "د.ت — القهوة"
+            },
+            {
+              "op": "×",
+              "value": "7",
+              "label": "قهاوي في الشهر"
+            }
+          ],
+          "result": {
+            "value": "10,5",
+            "label": "د.ت"
+          },
+          "note": "7 قهاوي زايدة في الشهر، والاشتراك رجع."
+        },
+        {
+          "type": "equal",
+          "title": "7 قهاوي في الشهر برك",
+          "hl": "7 قهاوي",
+          "sub": "يعني حريفين يرجعو مرّة زايدة في الجمعة.",
+          "amount": "10",
+          "unit": "د.ت / شهر",
+          "count": 7,
+          "icon": "coffee",
+          "caption": "وكل شي زايد يبقى ربح."
+        },
+        {
+          "type": "screen",
+          "screen": "customer-card-7.png",
+          "step": "1",
+          "title": "والكارط هي اللي ترجّعهم",
+          "sub": "باقيلو 3 تامبونات، يرجع يكمّل.",
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "owner-dashboard.png",
+          "step": "2",
+          "title": "وتشوف الحركة كل نهار",
+          "sub": "57 تامبون، 7 حرفاء، و3 كوادو تعطات.",
+          "phoneTop": 660
+        },
+        {
+          "type": "bars",
+          "title": "وفي الحقيقة؟",
+          "hl": "وفي الحقيقة؟",
+          "sub": "حريف واحد وفي يغطّي الاشتراك 4 مرّات.",
+          "unit": "د.ت",
+          "bars": [
+            {
+              "label": "حريف واحد في الشهر",
+              "value": "39",
+              "amount": 39
+            },
+            {
+              "label": "Pointili تكلّفك",
+              "value": "10",
+              "amount": 10
+            }
+          ],
+          "note": "120 د.ت في العام ولا 80 د.ت لـ 6 شهور."
+        },
+        {
+          "type": "cta",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle",
+          "title": "تحب تحسبها\nمعانا؟",
+          "hl": "معانا؟"
+        }
+      ]
+    },
+    {
+      "id": "c30",
+      "title": "شنوة نعطي ككادو؟",
+      "question": "شنوة نعطي ككادو في الكارط متاعي؟",
+      "slides": [
+        {
+          "type": "question",
+          "eyebrow": "أهم حاجة في الكارط",
+          "title": "شنوة نعطي\nككادو؟",
+          "hl": "ككادو؟",
+          "sub": "الكادو هو اللي يرجّع الحريف. هاو كيفاش تختارو."
+        },
+        {
+          "type": "list",
+          "title": "الكادو الباهي",
+          "sub": "3 حاجات برك",
+          "items": [
+            {
+              "num": "✓",
+              "text": "من المحل متاعك",
+              "small": "موش حاجة تشريها من البرّا"
+            },
+            {
+              "num": "✓",
+              "text": "الحريف يفهمو في ثانية",
+              "small": "«قهوة بلاش» يفهمها أكثر من «‎-15%‎»"
+            },
+            {
+              "num": "✓",
+              "text": "ما يعطّلكش وقت الخلاص"
+            }
+          ]
+        },
+        {
+          "type": "compare",
+          "title": "كادو واضح ولا remise؟",
+          "hl": "كادو واضح",
+          "sub": "الحريف يحب يعرف شنوة باش ياخو.",
+          "paper": {
+            "tag": "موش واضح",
+            "name": "-15% في المرّة الجاية",
+            "sub": "remise",
+            "filled": 4,
+            "foot": "شنوة يعني؟ قدّاش؟",
+            "notes": [
+              "يحسب في راسو",
+              "ما يفرحش",
+              "ينساه"
+            ]
+          },
+          "digital": {
+            "tag": "واضح",
+            "card": {
+              "name": "Café Ennour",
+              "sub": "Café",
+              "color": "#6535E0",
+              "color2": "#4A24B5",
+              "icon": "coffee",
+              "total": 10,
+              "filled": 9,
+              "reward": "قهوة بلاش",
+              "left": "باقيلو 1"
+            },
+            "notes": [
+              "يعرف شنوة ياخو",
+              "يشوف قدّاش باقيلو",
+              "يرجع يكمّل"
+            ]
+          }
+        },
+        {
+          "type": "pair",
+          "caption": "قهوة على 10، ولا كرواسون على 8.\nإنت تختار قدّاش وشنوة.",
+          "halves": [
+            {
+              "photo": "B-cafe.png",
+              "photoY": 45,
+              "chip": "☕ Café",
+              "card": {
+                "name": "Café Ennour",
+                "sub": "Café",
+                "color": "#6B4226",
+                "color2": "#43291A",
+                "icon": "coffee",
+                "total": 10,
+                "filled": 7,
+                "reward": "قهوة بلاش",
+                "left": "باقيلو 3"
+              },
+              "cardSide": "right"
+            },
+            {
+              "photo": "B-bakery.png",
+              "photoY": 35,
+              "chip": "🥐 Boulangerie",
+              "cardSide": "right",
+              "card": {
+                "name": "Boulangerie Salma",
+                "sub": "Boulangerie · Pâtisserie",
+                "color": "#D97706",
+                "color2": "#9A5405",
+                "icon": "croissant",
+                "total": 8,
+                "filled": 6,
+                "reward": "كرواسون بلاش",
+                "left": "باقيلو 2"
+              }
+            }
+          ]
+        },
+        {
+          "type": "pair",
+          "caption": "في الصالون، الكادو يكون خدمة صغيرة.\nوما يضرّكش في الربح.",
+          "halves": [
+            {
+              "photo": "B-barber.png",
+              "photoY": 35,
+              "chip": "💈 Coiffure",
+              "cardSide": "right",
+              "card": {
+                "name": "Coiffure Karim",
+                "sub": "Salon de coiffure",
+                "color": "#334155",
+                "color2": "#1B2433",
+                "icon": "scissors",
+                "total": 8,
+                "filled": 5,
+                "reward": "حلاقة بلاش",
+                "left": "باقيلو 3"
+              }
+            },
+            {
+              "photo": "B-beauty.png",
+              "photoY": 50,
+              "chip": "💅 Institut de beauté",
+              "card": {
+                "name": "Lina Beauty",
+                "sub": "Beauté · Spa",
+                "color": "#DB2777",
+                "color2": "#9D1A56",
+                "icon": "sparkles",
+                "total": 6,
+                "filled": 4,
+                "reward": "مانيكير بلاش",
+                "left": "باقيلو 2"
+              },
+              "cardSide": "right"
+            }
+          ]
+        },
+        {
+          "type": "screen",
+          "screen": "owner-loyalty.png",
+          "title": "وإنت تبدّلو وقت ما تحب",
+          "hl": "وقت ما تحب",
+          "sub": "قدّاش من tampon؟ وشنوة الكادو؟\nتبدّلهم في ثانية.",
+          "phoneTop": 620
+        },
+        {
+          "type": "cta",
+          "title": "ما تعرفش شنوة\nتعطي؟",
+          "hl": "شنوة تعطي؟",
+          "sub": "قوللنا شنوة تبيع، ونقوللك شنوة تعطي:",
+          "next": [
+            "نختارو معاك الكادو",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c31",
+      "title": "علاش حريف يرجعلك وآخر ينساك؟",
+      "question": "علاش الحريف يرجعلك؟",
+      "slides": [
+        {
+          "type": "question",
+          "eyebrow": "سؤال ساهل",
+          "title": "علاش حريف يرجعلك\nوآخر ينساك؟",
+          "hl": "وآخر ينساك؟",
+          "sub": "الفرق حاجة صغيرة في تليفونو."
+        },
+        {
+          "type": "compare",
+          "title": "نفس الحريف، نفس القهوة",
+          "hl": "نفس الحريف",
+          "sub": "أما وحدة فارغة ووحدة قرّبت.",
+          "paper": {
+            "tag": "بلا كارط",
+            "card": {
+              "name": "Café Ennour",
+              "sub": "Café",
+              "color": "#6535E0",
+              "color2": "#4A24B5",
+              "icon": "coffee",
+              "total": 10,
+              "filled": 0,
+              "reward": "قهوة بلاش",
+              "left": "باقيلو 10"
+            },
+            "notes": [
+              "ما يحسّ بحتى شي",
+              "ينسى المحل",
+              "يمشي للي أقرب"
+            ]
+          },
+          "digital": {
+            "tag": "عندو كارط",
+            "card": {
+              "name": "Café Ennour",
+              "sub": "Café",
+              "color": "#6535E0",
+              "color2": "#4A24B5",
+              "icon": "coffee",
+              "total": 10,
+              "filled": 8,
+              "reward": "قهوة بلاش",
+              "left": "باقيلو 2"
+            },
+            "notes": [
+              "يشوف قدّاش باقيلو",
+              "يحب يكمّل",
+              "يرجعلك إنت"
+            ]
+          }
+        },
+        {
+          "type": "photo",
+          "photo": "P2.png",
+          "step": "2",
+          "title": "وإنت تفكّرو بكلمة",
+          "sub": "«باقيلك 3 برك» — وترجع تشوفو."
+        },
+        {
+          "type": "screen",
+          "screen": "owner-customers.png",
+          "step": "3",
+          "title": "وتعرف شكون قرّب",
+          "sub": "تشوف شكون باقيلو tampon\nولا زوز برك.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "card-unlocked.png",
+          "step": "4",
+          "title": "وكي يكمّل، ياخو الكادو",
+          "hl": "ياخو الكادو",
+          "sub": "وتبدا كارط جديدة… ويرجع.",
+          "phoneTop": 620
+        },
+        {
+          "type": "cta",
+          "title": "خلّي حرفاءك\nيقربو للكادو",
+          "hl": "يقربو للكادو",
+          "sub": "إحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c40",
+      "title": "إعلان 1 — الحريف ما يحمّل حتى شي",
+      "question": "الحريف يعمل scan وبرك",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "S11c.png",
+          "title": "الحريف يعمل scan\nوبرك",
+          "hl": "وبرك",
+          "sub": "ما فما لا application لا téléchargement."
+        },
+        {
+          "type": "screen",
+          "screen": "stamp-success.png",
+          "title": "ياخو tampon في ثواني",
+          "hl": "في ثواني",
+          "sub": "يعمل scan، ياخو الـtampon،\nويرجع المرّة الجاية.",
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "card-unlocked.png",
+          "title": "كمّل 10 tampons\nوياخو الـcadeau",
+          "hl": "الـcadeau",
+          "sub": "إنت تختار: قهوة بلاش، حلاقة بلاش،\nولا حاجة من محلك.",
+          "phoneTop": 620
+        },
+        {
+          "type": "cta",
+          "title": "إنت ما تعمل شي",
+          "hl": "ما تعمل شي",
+          "sub": "إحنا نحضّرولك الكل، وإنت تبدا:",
+          "next": [
+            "نحلّولك الـcompte",
+            "نجهّزولك الكارط والـcode",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c41",
+      "title": "إعلان 2 — شرا اليوم… وبعد؟",
+      "question": "خلّي الحريف عندو علاش يرجع",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "P2.png",
+          "title": "الحريف شرا منك اليوم…\nوبعد؟",
+          "hl": "وبعد؟",
+          "sub": "إذا ما عندوش سبب يرجع، ينجم ينساك."
+        },
+        {
+          "type": "screen",
+          "screen": "customer-card-7.png",
+          "title": "خلّيه يعرف قدّاش باقيلو",
+          "hl": "قدّاش باقيلو",
+          "sub": "7/10 اليوم… والمرّة الجاية يجي\nوهو يعرف اللي قرّب للكادو.",
+          "phoneTop": 660
+        },
+        {
+          "type": "cta",
+          "title": "كل مرّة تقرّبو\nللكادو",
+          "hl": "تقرّبو",
+          "sub": "إنت تربح حريف يرجعلك. وإحنا نعملولك كل شي:",
+          "next": [
+            "نحلّولك الـcompte",
+            "نجهّزولك الكارط والـcode",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c42",
+      "title": "إعلان 3 — تعرف شنوة صاير في محلك",
+      "question": "تعرف شكون يرجع لمحلك؟",
+      "slides": [
+        {
+          "type": "screen",
+          "screen": "owner-customers.png",
+          "title": "تعرف شكون يرجع لمحلك؟",
+          "hl": "شكون يرجع",
+          "sub": "Pointili تورّيك حرفاءك، الـtampons متاعهم،\nوشكون قرّب للكادو.",
+          "phoneTop": 660
+        },
+        {
+          "type": "screen",
+          "screen": "owner-dashboard.png",
+          "title": "وتعرف شنوة صار اليوم",
+          "hl": "شنوة صار اليوم",
+          "sub": "قدّاش من حريف جا، وقدّاش من tampon تعطى.",
+          "phoneTop": 620
+        },
+        {
+          "type": "screen",
+          "screen": "card-unlocked.png",
+          "title": "والكادو ما يتعطاش كان كي تأكّد إنت",
+          "hl": "كي تأكّد إنت",
+          "sub": "والـcode يتبدّل بعد كل scan.",
+          "phoneTop": 620
+        },
+        {
+          "type": "cta",
+          "title": "إنت تخدم…\nوPointili تتبّعلك الباقي",
+          "hl": "تتبّعلك الباقي",
+          "sub": "نحلّولك الـcompte ونجهّزولك كل شي:",
+          "next": [
+            "نحلّولك الـcompte",
+            "نجهّزولك الكارط والـcode",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c43",
+      "title": "إعلان — شنوّة هو Pointili؟",
+      "question": "شنوّة هو Pointili؟",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "AD-1.png",
+          "title": "الحريف شرا منك\nاليوم… وبعد؟",
+          "hl": "وبعد؟",
+          "sub": "إذا ما عندوش سبب يرجع، ينجم ينساك.",
+          "top": true
+        },
+        {
+          "type": "hook",
+          "photo": "AD-2.png",
+          "title": "الحريف يعمل scan",
+          "hl": "scan",
+          "sub": "بكاميرا تليفونو — بلا application وبلا téléchargement."
+        },
+        {
+          "type": "hook",
+          "photo": "AD-3.png",
+          "title": "كمّل الـtampons،\nياخو الكادو",
+          "hl": "ياخو الكادو",
+          "sub": "إنت تختار: قهوة بلاش، حلاقة بلاش، ولا حاجة من محلك."
+        },
+        {
+          "type": "hook",
+          "photo": "AD-4.png",
+          "title": "تركيب مرّة\nوحدة برك",
+          "hl": "مرّة وحدة",
+          "sub": "نحلّولك الـcompte، نجهّزولك الكارط والـcode، وإنت تبدا."
+        },
+        {
+          "type": "cta",
+          "title": "تحب تبدا\nفي محلك؟",
+          "hl": "في محلك؟",
+          "sub": "السوم واضح، وحرفاء بلا حدود:",
+          "next": [
+            "80 د.ت لـ 6 شهور",
+            "120 د.ت في العام",
+            "تركيب مرّة وحدة، إحنا نعملوه"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    }
+  ]
+}

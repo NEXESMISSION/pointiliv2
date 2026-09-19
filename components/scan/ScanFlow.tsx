@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { processScan, type ScanOutcome } from "@/app/actions/scan";
-import { Checking, NeedsAccount, ScanError, StampSuccess } from "./ScanScreens";
+import { Checking, ScanError, StampSuccess } from "./ScanScreens";
+import { StampSignIn } from "./StampSignIn";
 
 /** Scan → Stamp → Done. One POST, then the answer. */
 export function ScanFlow({ token }: { token: string }) {
@@ -26,7 +27,7 @@ export function ScanFlow({ token }: { token: string }) {
 
   if (!outcome) return <Checking />;
   if (outcome.kind === "stamped") return <StampSuccess result={outcome.result} />;
-  if (outcome.kind === "auth") return <NeedsAccount token={token} businessName={outcome.businessName} />;
+  if (outcome.kind === "auth") return <StampSignIn token={token} businessName={outcome.businessName} />;
   return (
     <ScanError
       code={outcome.code}

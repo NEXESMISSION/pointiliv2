@@ -29,7 +29,7 @@ async function shot(page, name, path, { wait = 800, full = true, noBack = false 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   const errorScreen = await page.locator("[data-error-screen]").count();
   // Every screen except the home screens offers a way back.
-  const isHome = ["/", "/tn", "/customer", "/dashboard", "/admin"].includes(new URL(page.url()).pathname);
+  const isHome = ["/", "/fr", "/customer", "/dashboard", "/admin"].includes(new URL(page.url()).pathname);
   const missingBack = !noBack && !isHome && (await page.locator('button[data-back]').count()) === 0;
   if (overflow > 1) problems.push(`${name}: horizontal overflow ${overflow}px`);
   if (errorScreen) problems.push(`${name}: error screen`);
@@ -49,10 +49,16 @@ async function loginUi(page, digits, password, portal = "/login") {
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
 const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 
+// Tunisian is the default language, so the screens shot in French ask for French.
+async function french(context) {
+  await context.addCookies([{ name: "pl_lang", value: "fr", url: BASE }]);
+  return context;
+}
+
 try {
   // ── public ───────────────────────────────────────────────────────────────
   console.log("public");
-  const pub = await browser.newContext(phone);
+  const pub = await french(await browser.newContext(phone));
   const p = await pub.newPage();
   await shot(p, "01-landing", "/", { noBack: true });
   for (const [n, path] of [["02-how", "/how-it-works"], ["03-pricing", "/pricing"], ["04-customer-login", "/customer/login"], ["05-customer-register", "/customer/register"], ["06-forgot", "/customer/forgot-password"], ["07-business-login", "/login"], ["08-business-register", "/register"]]) {
@@ -85,9 +91,8 @@ try {
   // ── Tunisian (RTL) ───────────────────────────────────────────────────────
   console.log("tunisian");
   const tnCtx = await browser.newContext({ ...phone, locale: "ar-TN" });
-  await tnCtx.addCookies([{ name: "pl_lang", value: "tn", url: BASE }]);
   const tp = await tnCtx.newPage();
-  for (const [n, path] of [["60-tn-landing", "/tn"], ["61-tn-how", "/tn/how-it-works"], ["62-tn-pricing", "/tn/pricing"], ["63-tn-customer-login", "/customer/login"], ["64-tn-business-register", "/register"]]) {
+  for (const [n, path] of [["60-tn-landing", "/"], ["61-tn-how", "/how-it-works"], ["62-tn-pricing", "/pricing"], ["63-tn-customer-login", "/customer/login"], ["64-tn-business-register", "/register"]]) {
     await shot(tp, n, path, { noBack: n === "60-tn-landing" });
   }
   const rtl = await tp.evaluate(() => document.documentElement.dir + "/" + document.documentElement.lang);
@@ -97,7 +102,7 @@ try {
 
   // ── merchant ─────────────────────────────────────────────────────────────
   console.log("merchant");
-  const m = await browser.newContext(phone);
+  const m = await french(await browser.newContext(phone));
   const mp = await m.newPage();
   await loginUi(mp, "20000001", process.env.DEMO_MERCHANT_PASSWORD);
 
@@ -143,7 +148,7 @@ try {
   const joinPath = new URL(await mp.locator("p.break-all").innerText()).pathname;
 
   // printed counter QR, scanned by someone signed out
-  const jc = await browser.newContext(phone);
+  const jc = await french(await browser.newContext(phone));
   const jp = await jc.newPage();
   await jp.goto(BASE + joinPath, { waitUntil: "networkidle" });
   await jp.getByRole("link", { name: "Obtenir ma carte" }).waitFor({ timeout: 30000 });
@@ -156,18 +161,15 @@ try {
 
   // ── customer: scan signed out → register → stamp ─────────────────────────
   console.log("customer");
-  const c = await browser.newContext(phone);
+  const c = await french(await browser.newContext(phone));
   const cp = await c.newPage();
   await cp.goto(BASE + scanUrl.pathname, { waitUntil: "domcontentloaded" });
-  await cp.getByText("Encore une étape !").waitFor({ timeout: 30000 });
-  await shot(cp, "30-scan-needs-account", null, { full: false });
-  await cp.getByRole("link", { name: "Créer un compte" }).first().click();
-  await cp.waitForURL(/customer\/register/);
+  await cp.getByText("Prenez votre tampon").waitFor({ timeout: 30000 });
+  await shot(cp, "30-scan-signed-out", null, { full: false, noBack: true });
   const digits = `5${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
   const pw = randomBytes(8).toString("base64url");
   await cp.locator('input[type="tel"]').fill(digits);
   await cp.locator('input[name="password"]').fill(pw);
-  await cp.locator('input[name="confirm"]').fill(pw);
   await cp.locator('form button[type="submit"]').click();
   await cp.getByText("Tampon obtenu !").waitFor({ timeout: 60000 });
   const { data: who } = await admin.rpc("auth_lookup", { p_identifier: `+216${digits}` });
@@ -200,7 +202,7 @@ try {
   const { data: au } = await admin.auth.admin.createUser({ email: `216${adminDigits}@phone.pointidi.app`, password: adminPw, email_confirm: true, app_metadata: { phone: `+216${adminDigits}` } });
   cleanup.push(au.user.id);
   await admin.from("profiles").update({ role: "admin" }).eq("id", au.user.id);
-  const a = await browser.newContext(phone);
+  const a = await french(await browser.newContext(phone));
   const ap = await a.newPage();
   await loginUi(ap, adminDigits, adminPw);
   for (const [n, path] of [["40-admin", "/admin"], ["41-admin-businesses", "/admin/businesses"], ["42-admin-subscriptions", "/admin/subscriptions"], ["43-admin-payments", "/admin/payments?status=all"], ["44-admin-customers", "/admin/customers"], ["45-admin-activity", "/admin/activity"], ["46-admin-system", "/admin/system"]]) {

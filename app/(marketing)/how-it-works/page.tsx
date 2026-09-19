@@ -11,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t.nav.site.howItWorks,
     description: t.marketing.meta.howDescription,
-    alternates: { canonical: path("/how-it-works"), languages: { fr: "/how-it-works", "ar-TN": "/tn/how-it-works", "x-default": "/how-it-works" } },
+    alternates: { canonical: path("/how-it-works"), languages: { "ar-TN": "/how-it-works", fr: "/fr/how-it-works", "x-default": "/how-it-works" } },
   };
 }
 

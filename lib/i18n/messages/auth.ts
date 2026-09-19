@@ -36,8 +36,8 @@ export const auth = ns({
 
     business: {
       title: "Créer votre commerce",
-      subtitle: "Commencez gratuitement pendant 30 jours. Sans carte bancaire.",
-      subtitleSignedIn: "Connecté en tant que {who}. Gratuit pendant 30 jours.",
+      subtitle: "Votre carte de fidélité, prête en cinq minutes.",
+      subtitleSignedIn: "Connecté en tant que {who}.",
       name: "Nom du commerce",
       namePlaceholder: "Café Bonheur",
       category: "Catégorie",
@@ -120,23 +120,23 @@ export const auth = ns({
       submitting: "قاعد يدخّل…",
       createAccount: "اعمل حساب",
       createBusiness: "اعمل المحل متاعك",
-      scanNotice: "ادخل باش تاخو الطابع متاعك. باش يتحفظ 20 دقيقة.",
+      scanNotice: "ادخل باش تاخو التامبون متاعك. باش يتحفظ 20 دقيقة.",
       joinNotice: "ادخل والكارط تتزاد في التليفون متاعك توّا.",
     },
 
     register: {
       title: "اعمل حساب",
-      subtitle: "ابدا مع Pointili ولمّ الطوابع متاعك!",
+      subtitle: "ابدا مع Pointili ولمّ التامبونات متاعك!",
       submit: "اعمل الحساب",
       submitting: "قاعد يعمل الحساب متاعك…",
-      scanNotice: "اعمل حساب Pointili باش تاخو الطابع متاعك. ياخذلك 20 ثانية، والطابع متاعك محفوظ.",
+      scanNotice: "اعمل حساب Pointili باش تاخو التامبون متاعك. ياخذلك 20 ثانية، والتامبون متاعك محفوظ.",
       joinNotice: "اعمل حساب بلاش والكارط تتزاد في التليفون متاعك توّا.",
     },
 
     business: {
       title: "اعمل المحل متاعك",
-      subtitle: "ابدا بلاش 30 يوم. من غير كارط بنكية.",
-      subtitleSignedIn: "داخل بـ {who}. بلاش 30 يوم.",
+      subtitle: "كارط الوفاء متاعك، جاهزة في خمس دقايق.",
+      subtitleSignedIn: "داخل بـ {who}.",
       name: "اسم المحل",
       namePlaceholder: "قهوة السعادة",
       category: "النوع",

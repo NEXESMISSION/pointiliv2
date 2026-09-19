@@ -2,25 +2,25 @@ import type { Metadata } from "next";
 import { PageIntro } from "@/components/marketing/PageIntro";
 import { PlanCards } from "@/components/marketing/Plans";
 import { CtaBand, Faq, SectionHead } from "@/components/marketing/Section";
-import { PLANS, TRIAL_DAYS } from "@/lib/constants";
+import { PLANS } from "@/lib/constants";
 import { getI18n } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t, fill, path } = await getI18n();
   return {
     title: t.nav.site.pricing,
-    description: fill(t.marketing.meta.pricingDescription, { six: PLANS.six_month.price, year: PLANS.yearly.price, days: TRIAL_DAYS }),
-    alternates: { canonical: path("/pricing"), languages: { fr: "/pricing", "ar-TN": "/tn/pricing", "x-default": "/pricing" } },
+    description: fill(t.marketing.meta.pricingDescription, { six: PLANS.six_month.price, year: PLANS.yearly.price }),
+    alternates: { canonical: path("/pricing"), languages: { "ar-TN": "/pricing", fr: "/fr/pricing", "x-default": "/pricing" } },
   };
 }
 
 export default async function PricingPage() {
-  const { t, fill } = await getI18n();
+  const { t } = await getI18n();
 
   return (
     <>
       <PageIntro eyebrow={t.nav.site.pricing} title={t.marketing.pricing.pageTitle}>
-        {fill(t.marketing.pricing.pageLead, { days: TRIAL_DAYS })}
+        {t.marketing.pricing.pageLead}
       </PageIntro>
 
       <section className="border-t border-line bg-canvas">

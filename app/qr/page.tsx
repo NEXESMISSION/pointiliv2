@@ -11,5 +11,5 @@ export async function generateMetadata() {
 export default async function QrPage() {
   const ctx = await requireMerchant("/qr");
   if (!ctx.card) redirect("/loyalty?welcome=1");
-  return <MerchantQr businessName={ctx.business.name} logo={ctx.business.logo_url} cover={ctx.business.cover_url} icon={ctx.card.icon} color={ctx.card.color} />;
+  return <MerchantQr businessName={ctx.business.name} logo={ctx.business.logo_url} icon={ctx.card.icon} color={ctx.card.color} />;
 }

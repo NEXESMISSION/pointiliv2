@@ -78,4 +78,4 @@ export const COOLDOWN_OPTIONS = [
 ] as const;
 
 export const QR_ROTATE_BEFORE_MS = 15_000;
-export const QR_POLL_MS = 2_000;
+export const QR_POLL_MS = 900;

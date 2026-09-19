@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
     creator: "Pointili",
     publisher: "Pointili",
     category: "business",
-    alternates: { canonical: url, languages: { fr: "/", "ar-TN": "/tn", "x-default": "/" } },
+    alternates: { canonical: url, languages: { "ar-TN": "/", fr: "/fr", "x-default": "/" } },
     openGraph: { type: "website", siteName: "Pointili", title, description, url, locale: OG_LOCALE[locale] },
     twitter: { card: "summary_large_image", title, description },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },

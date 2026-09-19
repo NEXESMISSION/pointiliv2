@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clock, QrCode, RefreshCw, ScanLine, Store, WifiOff, X } from "lucide-react";
+import { Check, Clock, QrCode, RefreshCw, ScanLine, WifiOff, X } from "lucide-react";
 import { Confetti } from "@/components/Confetti";
 import { Logo } from "@/components/Logo";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
@@ -73,41 +73,6 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
         </LinkButton>
         <LinkButton href="/customer" variant="ghost" block>
           {t.common.done}
-        </LinkButton>
-      </div>
-    </div>
-  );
-}
-
-export function NeedsAccount({ token, businessName }: { token: string; businessName: string | null }) {
-  const { t } = useT();
-  const next = encodeURIComponent(`/scan/${token}`);
-  return (
-    <div className="flex flex-1 flex-col text-center">
-      <Logo size={30} className="mx-auto" />
-      <div className="mx-auto mt-12 grid size-24 animate-pop place-items-center rounded-[2rem] bg-brand-50 text-brand-600">
-        <Store className="size-11" />
-      </div>
-      <h1 className="mt-6 text-2xl font-bold tracking-tight text-ink">{t.scan.needsAccount.title}</h1>
-      <p className="mt-2 text-[15px] leading-relaxed text-body">
-        {t.scan.needsAccount.body}
-        {businessName ? (
-          <>
-            {" "}
-            {t.scan.needsAccount.at} <span className="font-semibold text-ink">{businessName}</span>
-          </>
-        ) : null}
-        .
-      </p>
-      <p className="mx-auto mt-4 flex items-center gap-1.5 rounded-full bg-success-50 px-3 py-1.5 text-sm font-medium text-success-600">
-        <Clock className="size-4" /> {t.scan.needsAccount.held}
-      </p>
-      <div className="mt-auto space-y-2 pt-10">
-        <LinkButton href={`/customer/register?next=${next}`} block>
-          {t.scan.needsAccount.createAccount}
-        </LinkButton>
-        <LinkButton href={`/customer/login?next=${next}`} variant="outline" block>
-          {t.scan.haveAccount}
         </LinkButton>
       </div>
     </div>

@@ -1,19 +1,18 @@
 /**
- * Pointili speaks two languages: French (default, no URL prefix) and Tunisian
- * Derja in Arabic script, right-to-left, under /tn. Public pages exist at both
- * addresses so each language can be indexed; the app screens follow the
- * language cookie.
+ * Pointili speaks Tunisian Derja by default (Arabic script, right-to-left, no
+ * URL prefix) and French under /fr. Public pages exist at both addresses so
+ * each language can be indexed; the app screens follow the language cookie.
  */
 export const LOCALES = ["fr", "tn"] as const;
 export type Locale = (typeof LOCALES)[number];
 
-export const DEFAULT_LOCALE: Locale = "fr";
+export const DEFAULT_LOCALE: Locale = "tn";
 export const LOCALE_COOKIE = "pl_lang";
 export const LOCALE_HEADER = "x-pl-lang";
 export const LOCALE_MAX_AGE = 31_536_000;
 
 /** URL prefix per language ("" for the default). */
-export const PREFIX: Record<Locale, string> = { fr: "", tn: "/tn" };
+export const PREFIX: Record<Locale, string> = { fr: "/fr", tn: "" };
 export const HTML_LANG: Record<Locale, string> = { fr: "fr", tn: "ar-TN" };
 export const DIR: Record<Locale, "ltr" | "rtl"> = { fr: "ltr", tn: "rtl" };
 /** Latin digits in both languages — that is how Tunisians write numbers. */
@@ -34,13 +33,13 @@ export function isMarketingPath(path: string): boolean {
   return (MARKETING_PATHS as readonly string[]).includes(path);
 }
 
-/** "/pricing" → "/tn/pricing" for Tunisian, unchanged for French. */
+/** "/pricing" → "/fr/pricing" for French, unchanged for Tunisian. */
 export function localePath(path: string, locale: Locale): string {
   if (locale === DEFAULT_LOCALE || !isMarketingPath(path)) return path;
   return path === "/" ? PREFIX[locale] : `${PREFIX[locale]}${path}`;
 }
 
-/** Strips a language prefix: "/tn/pricing" → { locale: "tn", path: "/pricing" }. */
+/** Strips a language prefix: "/fr/pricing" → { locale: "fr", path: "/pricing" }. */
 export function splitLocalePath(pathname: string): { locale: Locale | null; path: string } {
   for (const locale of LOCALES) {
     const prefix = PREFIX[locale];
@@ -51,13 +50,9 @@ export function splitLocalePath(pathname: string): { locale: Locale | null; path
   return { locale: null, path: pathname };
 }
 
-/** What the browser asks for, when we have nothing else to go on. */
+/** Tunisian unless the visitor asked for French: the shop owners here are Tunisian. */
 export function localeFromAcceptLanguage(header: string | null): Locale {
   if (!header) return DEFAULT_LOCALE;
-  for (const part of header.split(",")) {
-    const tag = part.split(";")[0]!.trim().toLowerCase();
-    if (tag.startsWith("ar")) return "tn";
-    if (tag.startsWith("fr")) return "fr";
-  }
-  return DEFAULT_LOCALE;
+  const first = header.split(",")[0]?.split(";")[0]?.trim().toLowerCase() ?? "";
+  return first.startsWith("fr") ? "fr" : DEFAULT_LOCALE;
 }

@@ -27,3 +27,7 @@ npm-debug.log*
 scratch/
 .e2e/
 /supabase/.temp/
+
+# rendered carousels (re-made with social/carousels/render.mjs) and scratch reviews
+social/carousels/out/
+social/carousels/review/

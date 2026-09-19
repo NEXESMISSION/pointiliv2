@@ -7,16 +7,15 @@ import { JsonLd } from "@/components/marketing/JsonLd";
 import { PlanCards, PlanFeatures } from "@/components/marketing/Plans";
 import { CtaBand, DotGrid, Faq, SectionHead } from "@/components/marketing/Section";
 import { HeroShowcase, StepVisual, demoQr } from "@/components/marketing/Showcase";
-import { TRIAL_DAYS } from "@/lib/constants";
 import { getI18n } from "@/lib/i18n/server";
 import type { Messages } from "@/lib/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t, fill, path } = await getI18n();
+  const { t, path } = await getI18n();
   return {
     title: { absolute: t.marketing.meta.homeTitle },
-    description: fill(t.marketing.meta.homeDescription, { days: TRIAL_DAYS }),
-    alternates: { canonical: path("/"), languages: { fr: "/", "ar-TN": "/tn", "x-default": "/" } },
+    description: t.marketing.meta.homeDescription,
+    alternates: { canonical: path("/"), languages: { "ar-TN": "/", fr: "/fr", "x-default": "/" } },
   };
 }
 
@@ -70,7 +69,7 @@ export default async function LandingPage() {
               {m.hero.seeHow}
             </LinkButton>
           </div>
-          <p className="mt-4 text-[13px] text-muted">{fill(m.hero.note, { days: TRIAL_DAYS })}</p>
+          <p className="mt-4 text-[13px] text-muted">{m.hero.note}</p>
         </div>
         <div className="relative mx-auto mt-12 max-w-[35rem] px-5 pb-16 sm:mt-16 sm:pb-24">
           <HeroShowcase qr={qr} />
@@ -143,7 +142,7 @@ export default async function LandingPage() {
       <section className="border-t border-line bg-white">
         <div className="mx-auto max-w-3xl px-5 py-16 sm:py-24">
           <SectionHead eyebrow={t.nav.site.pricing} title={m.pricing.title}>
-            {fill(m.pricing.lead, { days: TRIAL_DAYS })}
+            {m.pricing.lead}
           </SectionHead>
           <div className="mt-10 sm:mt-14">
             <PlanCards compact />
