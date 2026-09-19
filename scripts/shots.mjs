@@ -24,7 +24,7 @@ const cleanup = [];
 const problems = [];
 
 async function shot(page, name, path, { wait = 800, full = true, noBack = false } = {}) {
-  if (path) await page.goto(BASE + path, { waitUntil: "networkidle", timeout: 90000 });
+  if (path) await page.goto(BASE + path, { waitUntil: "load", timeout: 90000 });
   await page.waitForTimeout(wait);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   const errorScreen = await page.locator("[data-error-screen]").count();
@@ -40,7 +40,7 @@ async function shot(page, name, path, { wait = 800, full = true, noBack = false 
 }
 
 async function loginUi(page, digits, password, portal = "/login") {
-  await page.goto(BASE + portal, { waitUntil: "networkidle" });
+  await page.goto(BASE + portal, { waitUntil: "load" });
   await page.locator('input[type="tel"]').fill(digits);
   await page.locator('input[name="password"]').fill(password);
   await Promise.all([page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 60000 }), page.locator('form button[type="submit"]').click()]);
@@ -66,7 +66,7 @@ try {
   }
 
   // A failed sign-up or login must keep what was typed.
-  await p.goto(BASE + "/customer/register", { waitUntil: "networkidle" });
+  await p.goto(BASE + "/customer/register", { waitUntil: "load" });
   await p.locator('input[type="tel"]').fill("20000001");
   await p.locator('input[name="password"]').fill("keepme-12345");
   await p.locator('input[name="confirm"]').fill("keepme-12345");
@@ -80,7 +80,7 @@ try {
   else console.log("  ✓ sign-up error keeps phone and both passwords");
   await p.screenshot({ path: join(OUT, "09-register-error.png") });
 
-  await p.goto(BASE + "/customer/login", { waitUntil: "networkidle" });
+  await p.goto(BASE + "/customer/login", { waitUntil: "load" });
   await p.locator('input[type="tel"]').fill("20000001");
   await p.locator('input[name="password"]').fill("definitely-wrong-1");
   await p.locator('form button[type="submit"]').click();
@@ -120,7 +120,7 @@ try {
       `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" rx="96" fill="#1f2937"/><text x="256" y="335" font-size="230" text-anchor="middle" fill="#fbbf24" font-family="Arial" font-weight="700">CB</text></svg>`,
     ),
   ).png().toFile(logoPath);
-  await mp.goto(BASE + "/loyalty/design", { waitUntil: "networkidle" });
+  await mp.goto(BASE + "/loyalty/design", { waitUntil: "load" });
   await mp.locator('input[type="file"]').nth(0).setInputFiles(coverPath);
   await mp.getByText("Photo de couverture mise à jour").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(2000);
@@ -150,7 +150,7 @@ try {
   // printed counter QR, scanned by someone signed out
   const jc = await french(await browser.newContext(phone));
   const jp = await jc.newPage();
-  await jp.goto(BASE + joinPath, { waitUntil: "networkidle" });
+  await jp.goto(BASE + joinPath, { waitUntil: "load" });
   await jp.getByRole("link", { name: "Obtenir ma carte" }).waitFor({ timeout: 30000 });
   await shot(jp, "23-join-signed-out", null);
   await jc.close();
@@ -184,14 +184,14 @@ try {
   for (const [n, path] of [["32-home", "/customer"], ["33-cards", "/customer/cards"], ["35-rewards", "/customer/rewards"], ["36-profile", "/customer/profile"], ["37-password", "/customer/profile/password"]]) {
     await shot(cp, n, path);
   }
-  await cp.goto(BASE + "/customer", { waitUntil: "networkidle" });
+  await cp.goto(BASE + "/customer", { waitUntil: "load" });
   await cp.locator('a[href^="/customer/cards/"]').first().click();
   await cp.waitForURL(/customer\/cards\/.+/);
   await shot(cp, "34-card-detail", null);
   await shot(cp, "38-scanner", "/customer/scan", { full: false });
 
   // the counter QR, scanned by a customer who already has the card → opens it
-  await cp.goto(BASE + joinPath, { waitUntil: "networkidle" });
+  await cp.goto(BASE + joinPath, { waitUntil: "load" });
   if (!/\/customer\/cards\/[0-9a-f-]{36}/.test(cp.url())) problems.push(`counter QR (signed in) did not open the card: ${cp.url()}`);
   else console.log("  ✓ counter QR opens the customer's existing card");
 
@@ -208,7 +208,7 @@ try {
   for (const [n, path] of [["40-admin", "/admin"], ["41-admin-businesses", "/admin/businesses"], ["42-admin-subscriptions", "/admin/subscriptions"], ["43-admin-payments", "/admin/payments?status=all"], ["44-admin-customers", "/admin/customers"], ["45-admin-activity", "/admin/activity"], ["46-admin-system", "/admin/system"]]) {
     await shot(ap, n, path);
   }
-  await ap.goto(BASE + "/admin/businesses", { waitUntil: "networkidle" });
+  await ap.goto(BASE + "/admin/businesses", { waitUntil: "load" });
   const first = ap.locator('a[href^="/admin/businesses/"]').first();
   if (await first.count()) {
     await first.click();
