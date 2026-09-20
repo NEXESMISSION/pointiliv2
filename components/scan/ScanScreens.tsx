@@ -86,7 +86,9 @@ export function ScanError({ code, result, onRetry }: { code: string; result?: St
   const Icon = ERROR_ICON[code] ?? X;
   const name = result && "business" in result ? result.business?.name : undefined;
   const customerId = result && "customer" in result ? result.customer?.id : undefined;
-  const soft = code === "too_soon" || code === "already_processed";
+  // A code that expired, was used or never existed: they missed it, nothing more to explain.
+  const missed = code === "expired" || code === "already_used" || code === "invalid" || code === "not_found";
+  const soft = missed || code === "too_soon" || code === "already_processed";
   const nextAt = result && "next_at" in result ? result.next_at : undefined;
 
   return (
@@ -96,12 +98,11 @@ export function ScanError({ code, result, onRetry }: { code: string; result?: St
         <Icon className="size-9" />
       </div>
       <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">
-        {code === "already_processed" ? t.scan.error.alreadyStamped : code === "too_soon" ? t.scan.error.tooSoon : code === "network" ? t.scan.error.network : t.scan.error.generic}
+        {missed ? t.scan.error.missed : code === "already_processed" ? t.scan.error.alreadyStamped : code === "too_soon" ? t.scan.error.tooSoon : code === "network" ? t.scan.error.network : t.scan.error.generic}
       </h1>
       {name && <p className="mt-1 font-semibold text-body">{name}</p>}
-      <p className="mx-auto mt-3 max-w-xs text-[15px] leading-relaxed text-muted">{msg(code)}</p>
+      <p className="mx-auto mt-3 max-w-xs text-[15px] leading-relaxed text-muted">{missed ? t.scan.error.missedBody : msg(code)}</p>
       {code === "too_soon" && nextAt && <p className="mt-2 text-sm font-medium text-body">{fill(t.scan.error.nextAt, { time: formatTime(nextAt, locale) })}</p>}
-      {(code === "expired" || code === "already_used") && <p className="mt-2 text-sm text-muted">{t.scan.error.qrChanges}</p>}
 
       <div className="space-y-2 pt-8">
         {code === "network" && onRetry && (
