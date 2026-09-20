@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient, hasSessionCookie } from "@/lib/supabase/server";
 import type { Role, SessionContext } from "@/lib/types";
 
+const TRANSIENT = /fetch failed|network|ECONNRESET|ETIMEDOUT|timeout|502|503|504/i;
+
 /**
  * Who is asking, in one round trip. The RPC runs as the user; PostgREST verifies
  * the JWT, so an absent/expired/forged session simply yields null.
@@ -12,7 +14,11 @@ import type { Role, SessionContext } from "@/lib/types";
 export const getContext = cache(async (): Promise<SessionContext | null> => {
   if (!(await hasSessionCookie())) return null;
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("session_context");
+  let { data, error } = await supabase.rpc("session_context");
+  // A dropped connection is not a sign-out: bouncing to the login screen on a
+  // blip is how a signed-in person comes to believe the app forgot them.
+  if (error && TRANSIENT.test(error.message)) ({ data, error } = await supabase.rpc("session_context"));
+  if (error && TRANSIENT.test(error.message)) throw new Error(`session_context: ${error.message}`);
   if (error || !data) return null;
   return data as SessionContext;
 });
@@ -48,7 +54,7 @@ export async function requireAdmin(): Promise<SessionContext> {
 export async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
   const supabase = await createClient();
   let { data, error } = await supabase.rpc(fn, args);
-  if (error && /fetch failed|network|ECONNRESET|ETIMEDOUT/i.test(error.message)) {
+  if (error && TRANSIENT.test(error.message)) {
     ({ data, error } = await supabase.rpc(fn, args));
   }
   if (error) {

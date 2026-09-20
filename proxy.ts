@@ -60,6 +60,9 @@ export async function proxy(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
+        // requestHeaders is a copy made before the refresh: without this the page
+        // renders with the expired token and refreshes a second time on its own.
+        requestHeaders.set("cookie", request.cookies.toString());
         response = fresh();
         for (const { name, value, options } of cookiesToSet) {
           // A deletion must carry an explicit past expiry or Next re-emits it as a live session cookie.
@@ -75,7 +78,13 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-const REFRESH_WINDOW_S = 300;
+/**
+ * Access tokens live a week. Refreshing a day early means the rotation happens
+ * while the person is using the app on a working connection — not at the
+ * moment a PWA wakes up after days on a weak one, where a lost response leaves
+ * the phone holding a spent refresh token and the next open logs them out.
+ */
+const REFRESH_WINDOW_S = 86_400;
 
 function needsRefresh(request: NextRequest): boolean {
   const parts = request.cookies
