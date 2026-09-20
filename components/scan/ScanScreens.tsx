@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, Clock, QrCode, RefreshCw, ScanLine, WifiOff, X } from "lucide-react";
+import { Clock, QrCode, RefreshCw, ScanLine, WifiOff, X } from "lucide-react";
 import { Confetti } from "@/components/Confetti";
+import { IMPACT_MS, StampDrop } from "./StampDrop";
 import { Logo } from "@/components/Logo";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { Button, LinkButton } from "@/components/ui/Button";
@@ -36,21 +37,23 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
   const design = resolveDesign(card?.design, { color: card?.color, icon: card?.icon });
   const primary = rewards.find((r) => r.is_primary) ?? rewards[0];
   const unlocked = newly_unlocked[0];
+  /* Everything arrives out of the stamp's impact, in reading order — see StampDrop. */
+  const after = (ms: number) => ({ animationDelay: `${IMPACT_MS + ms}ms` });
 
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden text-center">
       <Confetti count={unlocked ? 60 : 32} />
-      <div className="grid size-16 shrink-0 animate-pop place-items-center rounded-full bg-success-500 text-white shadow-[0_12px_30px_-8px_rgb(34_197_94/0.6)]">
-        <Check className="size-8" strokeWidth={3.2} />
-      </div>
-      <h1 className="mt-3 animate-rise text-2xl font-extrabold tracking-tight text-ink">{t.scan.success.title}</h1>
+      <StampDrop label={t.scan.stampWord} tone="success" size={96} />
+      <h1 className="animate-rise text-2xl font-extrabold tracking-tight text-ink" style={after(100)}>
+        {t.scan.success.title}
+      </h1>
 
-      <div className="mt-4 w-full text-start">
+      <div className="mt-4 w-full animate-rise text-start" style={after(180)}>
         <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} rewardName={primary?.name} animateIndex={Math.min(customer.balance, total) - 1} />
       </div>
 
       {unlocked ? (
-        <div className="mt-4 w-full animate-rise rounded-3xl border-2 border-dashed border-success-500 p-4">
+        <div className="mt-4 w-full animate-rise rounded-3xl border-2 border-dashed border-success-500 p-4" style={after(280)}>
           <p className="text-3xl" aria-hidden>
             🎉
           </p>
@@ -62,12 +65,12 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
           </div>
         </div>
       ) : next_reward ? (
-        <p className="mt-4 text-[15px] text-body">
+        <p className="mt-4 animate-rise text-[15px] text-body" style={after(280)}>
           <span className="font-bold text-ink">{count(t.common.stampsToGo, next_reward.remaining)}</span> {fill(t.scan.success.toGo, { reward: next_reward.name })}
         </p>
       ) : null}
 
-      <div className="w-full space-y-2 pt-6">
+      <div className="w-full animate-rise space-y-2 pt-6" style={after(360)}>
         <LinkButton href={`/customer/cards/${customer.id}`} variant={unlocked ? "outline" : "primary"} block>
           {t.scan.success.viewCard}
         </LinkButton>

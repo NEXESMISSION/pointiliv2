@@ -74,6 +74,8 @@ export const scan = ns({
       backToDashboard: "Retour au tableau de bord",
     },
     haveAccount: "J'ai un compte",
+    /** The word beside the +1 on the landing stamp. */
+    stampWord: "tampon",
     goToCards: "Aller à mes cartes",
   },
   tn: {
@@ -144,6 +146,7 @@ export const scan = ns({
       backToDashboard: "ارجع للوحة التحكم",
     },
     haveAccount: "عندي كونت",
+    stampWord: "تامبون",
     goToCards: "روح للكارطات متاعي",
   },
 });
