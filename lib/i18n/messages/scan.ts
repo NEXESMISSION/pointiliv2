@@ -24,12 +24,12 @@ export const scan = ns({
     },
     needsAccount: {
       title: "Tampon réservé",
-      body: "Un compte et il est à vous",
-      warning: "Vous partez sans compte ? Tampon perdu.",
+      body: "Il manque juste un compte.",
+      warning: "Vous partez sans compte ? Perdu.",
       at: "chez",
       held: "20 minutes seulement",
       createAccount: "Créer mon compte",
-      firstTime: "Juste votre numéro",
+      firstTime: "Votre numéro, c'est tout.",
     },
     error: {
       alreadyStamped: "Tampon déjà pris",
@@ -92,13 +92,13 @@ export const scan = ns({
       viewCard: "شوف الكارط",
     },
     needsAccount: {
-      title: "تامبون محجوزلك",
-      body: "لازمك كونت باش تلمّو",
-      warning: "تخرج بلا كونت؟ التامبون يطير",
+      title: "حجزنالك التامبون",
+      body: "يلزمو كونت برك.",
+      warning: "تخرج بلا كونت؟ يطير.",
       at: "في",
       held: "20 دقيقة برك",
       createAccount: "اعمل كونت",
-      firstTime: "بنومرو التليفون برك",
+      firstTime: "نومرو تليفون وخلاص.",
     },
     error: {
       alreadyStamped: "التامبون تاخذ قبل",

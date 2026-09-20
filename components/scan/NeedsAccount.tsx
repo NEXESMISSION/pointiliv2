@@ -26,11 +26,11 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
       </div>
 
       <div className="space-y-1">
-        <h1 className="text-[23px] font-extrabold leading-tight tracking-tight text-ink">{w.title}</h1>
+        <h1 className="text-[26px] font-extrabold leading-tight tracking-tight text-ink">{w.title}</h1>
         {businessName && <p className="text-base font-semibold text-brand-600">{businessName}</p>}
       </div>
 
-      <p className="max-w-[32ch] text-[15px] leading-relaxed text-body">{w.body}</p>
+      <p className="text-[15px] text-body">{w.body}</p>
 
       <p className="inline-flex max-w-[34ch] items-center gap-2 rounded-2xl bg-warning-50 px-4 py-3 text-[15px] font-semibold leading-snug text-warning-700">
         <AlertTriangle className="size-5 shrink-0" aria-hidden />
