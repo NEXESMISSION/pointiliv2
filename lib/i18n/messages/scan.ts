@@ -24,8 +24,8 @@ export const scan = ns({
     },
     needsAccount: {
       title: "Tampon réservé",
-      body: "Il manque juste un compte.",
-      warning: "Vous partez sans compte ? Perdu.",
+      body: "Un compte, et il est à vous.",
+      warning: "Sans compte, le tampon est perdu.",
       at: "chez",
       held: "20 minutes seulement",
       createAccount: "Créer mon compte",
@@ -93,12 +93,12 @@ export const scan = ns({
     },
     needsAccount: {
       title: "حجزنالك التامبون",
-      body: "يلزمو كونت برك.",
-      warning: "تخرج بلا كونت؟ يطير.",
+      body: "لازمك كونت باش تلمّو",
+      warning: "بلا كونت، التامبون يطير",
       at: "في",
       held: "20 دقيقة برك",
       createAccount: "اعمل كونت",
-      firstTime: "نومرو تليفون وخلاص.",
+      firstTime: "بنومرو التليفون وخلاص",
     },
     error: {
       alreadyStamped: "التامبون تاخذ قبل",
