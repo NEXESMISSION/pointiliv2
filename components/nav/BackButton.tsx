@@ -14,8 +14,20 @@ import { useT } from "@/components/i18n/Provider";
  * as soon as you move on, and home screens start a fresh trail.
  */
 const KEY = "pd_trail";
-const TRANSIENT = [/^\/login$/, /^\/register$/, /^\/customer\/(login|register|forgot-password|scan)$/, /^\/scan\//, /^\/join\//, /^\/app$/, /^\/customer\/rewards\/use\//];
-const ROOTS = new Set(["/customer", "/dashboard", "/admin"]);
+const TRANSIENT = [
+  /^\/login$/,
+  /^\/register$/,
+  /^\/customer\/(login|register|forgot-password|scan)$/,
+  /^\/scan\//,
+  /^\/join\//,
+  /^\/app$/,
+  /^\/customer\/rewards\/use\//,
+  // the public site: once you are inside the app, "back" must never walk out of it
+  /^\/(fr)?$/,
+  /^\/(fr\/)?(how-it-works|pricing)$/,
+];
+/** A screen someone opens the app ON: landing here starts a fresh trail. */
+const ROOTS = new Set(["/customer", "/dashboard", "/admin", "/qr"]);
 
 function read(): string[] {
   try {
