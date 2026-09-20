@@ -2,6 +2,7 @@ import {
   CakeSlice,
   Coffee,
   Croissant,
+  Dumbbell,
   Hamburger,
   Heart,
   IceCreamCone,
@@ -26,6 +27,7 @@ export const ICONS: Record<string, LucideIcon> = {
   scissors: Scissors,
   sparkles: Sparkles,
   "shopping-bag": ShoppingBag,
+  dumbbell: Dumbbell,
   heart: Heart,
   star: Star,
 };

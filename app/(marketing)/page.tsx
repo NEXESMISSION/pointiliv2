@@ -26,6 +26,7 @@ const MADE_FOR = [
   { icon: "pizza", key: "pizzerias" },
   { icon: "scissors", key: "salons" },
   { icon: "ice-cream", key: "juice" },
+  { icon: "dumbbell", key: "gyms" },
 ] as const;
 
 const STEPS = [

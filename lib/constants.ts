@@ -56,6 +56,7 @@ export const CATEGORIES = {
   salon: { label: "Hair salon & barber", icon: "scissors" },
   beauty: { label: "Beauty & spa", icon: "sparkles" },
   retail: { label: "Shop", icon: "shopping-bag" },
+  gym: { label: "Gym", icon: "dumbbell" },
   other: { label: "Other", icon: "star" },
 } as const;
 

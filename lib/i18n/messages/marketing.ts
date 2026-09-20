@@ -30,6 +30,7 @@ export const marketing = ns({
       pizzerias: "Pizzerias",
       salons: "Coiffeurs & salons",
       juice: "Bars à jus",
+      gyms: "Salles de sport",
     },
     how: {
       title: "Trois étapes. Zéro papier.",
@@ -179,6 +180,7 @@ export const marketing = ns({
       pizzerias: "بيتزيريا",
       salons: "حلاقة وصالونات",
       juice: "عصير وجيلاتي",
+      gyms: "جيمات",
     },
     how: {
       title: "ثلاث خطوات. بلا ورق.",
