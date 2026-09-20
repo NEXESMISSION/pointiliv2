@@ -1,0 +1,817 @@
+[
+ {
+  "id": "c50",
+  "title": "كارط الكرتون ولّا Pointili؟",
+  "question": "Pourquoi quitter mes cartes en carton (et mes clients vont-ils devoir télécharger une app) ?",
+  "backlog": "6 · Pourquoi quitter mes cartes en carton ? — C4 · علاش موش كرتون؟ (avec, en une slide, la ligne 3 : « Mes clients vont devoir télécharger une app ? »)",
+  "slides": [
+   {
+    "type": "scene",
+    "photo": "SC-50-1.png",
+    "photoBrief": "Bright daylight at the counter of a small Tunisian pizzeria: a stack of worn beige cardboard loyalty cards with faded ink circles (no lettering) and a pen lie on the left side of a light-wood counter near the cash register, candid smartphone-photo look, warm natural window light, no text or logos anywhere, no phone in the picture, the lower-right third of the frame kept as calm empty counter.",
+    "photoY": 50,
+    "title": "كارط الكرتون\nولّا Pointili؟",
+    "hl": "Pointili",
+    "sub": "أسهل للحريف، وأسهل للمحل",
+    "screen": "customer-card-7.png",
+    "screenY": 0,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "نفس الفكرة، أما في التليفون",
+    "pillIcon": "smartphone",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-50-2.png",
+    "photoBrief": "Candid warm photo on a marble table in a Tunisian bakery: a crumpled, coffee-stained cardboard loyalty card with a torn corner and a few faded stamp marks (no lettering) lies forgotten beside an open leather wallet, a set of keys and croissant crumbs, soft morning window light, shallow depth of field, no text or logos anywhere, no phone in the picture, the lower-right third of the frame left as plain marble.",
+    "photoY": 50,
+    "title": "كارط الكرتون تتنسى…\nوتضيع",
+    "hl": "تضيع",
+    "sub": "ومعاها التامبونات متاع الحريف الكل",
+    "pill": "ويعاود من الصفر",
+    "pillIcon": "rotate-ccw"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-50-3.png",
+    "photoBrief": "A young Tunisian woman in her twenties at a bright fresh-juice bar, laughing lightly as she holds her phone low with its back to the camera (screen not visible), oranges, strawberries and a blender on the counter behind her, natural daylight, candid smartphone-photo style, no text or logos anywhere, plenty of clean space in the lower-right third of the frame.",
+    "photoY": 40,
+    "title": "علاش تخلّي الحريف\nيحمّل أبليكاسيون؟",
+    "hl": "أبليكاسيون",
+    "sub": "يسكاني بالكاميرا، تتحلّلو صفحة، خلاص",
+    "screen": "stamp-success.png",
+    "screenY": 0,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "بلا أبليكاسيون، بلا كرتون",
+    "pillIcon": "check"
+   },
+   {
+    "type": "flow",
+    "title": "كيفاش يخدم؟",
+    "hl": "كيفاش",
+    "sub": "الكود في إيكران الكونتوار،\nويتبدّل وحدو.",
+    "steps": [
+     {
+      "screen": "owner-qr.png",
+      "y": 35,
+      "text": "يشري، يسكاني الكود"
+     },
+     {
+      "screen": "stamp-success.png",
+      "y": 12,
+      "text": "ياخو تامبون"
+     },
+     {
+      "screen": "customer-home.png",
+      "y": 35,
+      "text": "والكارط ديما معاه"
+     }
+    ]
+   },
+   {
+    "type": "scene",
+    "photo": "SC-50-5.png",
+    "photoBrief": "Warm late-afternoon light in a sunlit Tunisian café with blue-and-white tiles: a smiling barista in an olive apron hands a small espresso across the counter to a regular customer in his twenties, both laughing, candid smartphone-photo look, no text or logos anywhere, no phone in the picture, the lower-right third of the frame kept as uncluttered counter.",
+    "photoY": 45,
+    "title": "وعلاش الكل هذا؟",
+    "hl": "علاش",
+    "sub": "يكمّل الكارط، ياخو الكادو، ويرجع",
+    "screen": "card-unlocked.png",
+    "screenY": 0,
+    "phone": {
+     "x": "right",
+     "top": 540,
+     "w": 440
+    },
+    "pill": "تعطي للحريف سبب باش يرجعلك",
+    "pillIcon": "gift",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "cta",
+    "title": "عوّض الكرتون،\nمن اليوم",
+    "hl": "عوّض الكرتون",
+    "sub": "ما يلزمك حتى شي، إحنا نجهّزو الكل",
+    "next": [
+     "نحلّولك الكونت",
+     "نجهّزولك الكارط والكود",
+     "وإنت تبدا توّا"
+    ],
+    "pill": "كلّمنا اليوم",
+    "pillIcon": "message-circle"
+   }
+  ],
+  "notes": "Same 5-beat arc as the client's sheet (old vs new → paper card → no app → how it works → why), same look, plus a proper CTA as slide 6. Corrections versus the AI sheet: the flow no longer scans a paper stand — the live counter code (owner-qr.png), the stamp landing (stamp-success.png), the card in the phone (customer-home.png); invented purple mock-ups replaced by real captures; Latin tampon/scan/application/reward became تامبون/يسكاني/أبليكاسيون/كادو. Review pass: «بدّل الكرتون» → «عوّض الكرتون» (the client's preferred verb for replacing), «نحنا» → «إحنا» for consistency, slide 2 sub shortened so «تضيع» is not said twice, slide 5 headline given spoken rhythm («وعلاش الكل هذا؟»), CTA sub made spoken («ما يلزمك حتى شي»), flow steps got a y crop, and every photoBrief now says explicitly no phone or back of phone only."
+ },
+ {
+  "id": "c51",
+  "title": "شنوّة يصير كي الحريف يسكاني؟",
+  "question": "Que se passe-t-il quand un client scanne le QR : que voit-il dans son téléphone, du premier tampon jusqu'au cadeau ?",
+  "backlog": "7.3 Show the experience — « What happens when a customer scans the QR » et « A complete Pointili journey: first visit → reward → new card »",
+  "notes": "Kept the client's five beats and look and fixed the facts: the phone scans a tablet with a live code, never the \"Scan & Earn\" paper stand; the real stamp-success screen instead of \"Tampon ajouté +1\"; the real first-scan step (scan-needs-account: account by phone number, stamp held 20 min); the real 7/10 card; the real unlocked card and the 6-digit reward-code screen instead of the \"Bravo\" pop-up. All Latin scan/tampon/reward inside Arabic rewritten as سكاني/تامبون/كادو; closing slide is the DM call to action. Review pass: «مش» → «موش», slide 5 headline reordered to «الكارط كملت؟» (the card is complete) with the sub quoting the screen's «حاضر».",
+  "slides": [
+   {
+    "type": "hook",
+    "photo": "SC-51-1.png",
+    "photoBrief": "Bright Tunisian neighbourhood café at the counter in morning light; on the counter a tablet on a small stand, its screen glowing with a large QR code; a young customer seen from behind lifts a phone toward it, the back of the phone to the camera and its screen not visible; espresso machine and pastries blurred behind; candid smartphone-photo look, no text, no logos.",
+    "photoY": 45,
+    "title": "شنوّة يصير كي الحريف\nيسكاني الـQR؟",
+    "hl": "يسكاني",
+    "sub": "من أوّل شرية حتى للكادو."
+   },
+   {
+    "type": "scene",
+    "photo": "SC-51-2.png",
+    "photoBrief": "Sunny Tunisian bakery counter, trays of croissants and baguettes behind glass; a smiling baker in a white apron hands a paper bag across the counter to a customer standing on the left; at the left end of the counter a tablet on a small stand, its screen glowing with a large QR code; the lower-right third of the frame calm and uncluttered; warm morning light, candid smartphone-photo look, no text, no logos, no phone in the picture.",
+    "photoY": 45,
+    "title": "يشري، يسكاني،\nياخو تامبون",
+    "hl": "ياخو تامبون",
+    "sub": "بكاميرا تليفونو، بلا أبليكاسيون.",
+    "screen": "stamp-success.png",
+    "phone": {
+     "x": "right",
+     "top": 520,
+     "w": 420
+    },
+    "pill": "الكود على التابلات، موش على ورقة",
+    "pillIcon": "qr-code"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-51-3.png",
+    "photoBrief": "Colourful Tunisian juice and ice-cream shop, oranges and strawberries piled behind the counter, afternoon light; a young woman in a headscarf on the left of the frame holds her phone low with its screen turned away from the camera while the vendor pours a fresh juice; the lower-right third of the frame calm and uncluttered; candid smartphone-photo look, no text, no logos.",
+    "photoY": 50,
+    "title": "أوّل مرّة برك:\nكونت بنومرو التليفون",
+    "hl": "أوّل مرّة برك",
+    "sub": "من بعد يقعد مكونكتي: يسكاني، وخلاص.",
+    "screen": "scan-needs-account.png",
+    "phone": {
+     "x": "right",
+     "top": 470,
+     "w": 400
+    },
+    "pill": "التامبون محجوزلو 20 دقيقة",
+    "pillIcon": "clock"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-51-4.png",
+    "photoBrief": "Small Tunisian pizzeria, wood-fired oven glowing at the back; a young man in a denim jacket sits at a table on the right side of the frame waiting for his order, hands around a glass of soda, no phone in the picture; the lower-left third of the frame calm and uncluttered; warm evening light, candid smartphone-photo look, no text, no logos.",
+    "photoY": 50,
+    "title": "الكارط ديما\nفي تليفونو",
+    "hl": "ديما",
+    "sub": "يشوف قدّاش باقيلو للكادو.",
+    "screen": "customer-card-7.png",
+    "phone": {
+     "x": "left",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "ما تضيعش، ما تتنساش في الدار",
+    "pillIcon": "smartphone"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-51-5.png",
+    "photoBrief": "Bright modern Tunisian barbershop, a barber in a black apron brushing off a client's neck in front of a big mirror, warm bulbs and a leather chair; on the reception desk at the left a tablet on a small stand, its screen glowing with a large QR code; the lower-right third of the frame calm and uncluttered; candid smartphone-photo look, no text, no logos, no phone in the picture.",
+    "photoY": 45,
+    "title": "الكارط كملت؟\nالكادو تحلّ",
+    "hl": "الكادو تحلّ",
+    "sub": "10/10، والكادو حاضر.",
+    "screen": "card-unlocked.png",
+    "phone": {
+     "x": "right",
+     "top": 470,
+     "w": 380
+    },
+    "pill": "يكبس على «استعمل الكادو»",
+    "pillIcon": "gift",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "screen",
+    "title": "يورّي الكود،\nياخو الكادو",
+    "hl": "ياخو الكادو",
+    "sub": "6 أرقام، العامل يدخّلهم وخلاص.\nوكارط جديدة تبدا.",
+    "screen": "reward-code.png",
+    "phoneTop": 470,
+    "phoneW": 560
+   },
+   {
+    "type": "cta",
+    "title": "تحب هالحكاية\nفي محلّك؟",
+    "hl": "في محلّك؟",
+    "sub": "إحنا نعملولك كل شي:",
+    "next": [
+     "نحلّولك الكونت",
+     "نجهّزولك الكارط والكود",
+     "وإنت تبدا توّا"
+    ],
+    "pill": "كلّمنا اليوم",
+    "pillIcon": "message-circle"
+   }
+  ]
+ },
+ {
+  "id": "c52",
+  "title": "علاش الحريف يرجع؟",
+  "question": "Pourquoi une carte de fidélité fait-elle revenir le client ?",
+  "backlog": "7.5 The psychology of loyalty — why people love collecting stamps, why \"one more and it's free\" works, \"come back\" vs \"come back and get a reward\", a small reward creates a habit, the power of a visible goal",
+  "notes": "Kept the AI sheet's spirit and look and the same five psychology points. Fixed: the paper \"Scan & Earn\" stand became a tablet with a glowing QR; the invented notification slide (\"بقالك زوز tampons\") is gone — the real stamp-success screen already says مازال 2, so the card tells him by itself; the \"Bravo! ربحت 5 DT كاش باك\" slide became the real card-unlocked screen — no cash-back, no pop-up; fake UI replaced by real screens; Latin tampons/reward/scan and bookish words (تنبيه، تحفيز، الوضوح، العودة، لأنه، مرة أخرى) became spoken Derja; CTA added. Review pass: «شنوّا» → «شنوّة», flow step «يشوف قدّاش مازال» → «يشوف قدّاش باقيلو», «Pointili يجهّزلك» → «Pointili تجهّزلك» (feminine, as in every other post).",
+  "slides": [
+   {
+    "type": "hook",
+    "photo": "SC-52-1.png",
+    "photoBrief": "Bright warm morning inside a small Tunisian café, a young woman with curly hair leaning on the wooden counter and laughing with the barista behind it, and on the counter beside her a tablet on a small stand, its screen glowing with a large QR code; natural window light, candid smartphone-photo look, her phone at her side with its screen turned away, no text, no logos.",
+    "photoY": 35,
+    "title": "علاش الحريف يرجع كي عندو كارط؟",
+    "hl": "يرجع",
+    "sub": "هاو شنوّة يصير في راسو."
+   },
+   {
+    "type": "scene",
+    "photo": "SC-52-2.png",
+    "photoBrief": "A neighbourhood bakery in Tunis in soft morning light, a man in his thirties at the counter smiling as the baker hands him a paper bag of warm bread, wooden shelves of baguettes and pastries behind them; candid smartphone-photo look, the lower-right third of the frame an empty stretch of clean counter, no phones visible, no text, no logos.",
+    "photoY": 45,
+    "title": "«ارجعلنا» كلمة. «عندك كادو» سبب.",
+    "hl": "سبب",
+    "screen": "customer-card-7.png",
+    "screenY": 4,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "الكادو مكتوب قدّامو: قهوة بلاش",
+    "pillIcon": "gift"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-52-3.png",
+    "photoBrief": "A sunny Tunisian juice and ice-cream bar, two teenage friends at the counter watching the server pour fresh orange juice into a tall glass, bowls of oranges and strawberries in the background, and on the counter a tablet on a small stand with its screen glowing with a large QR code; warm natural light, candid smartphone-photo look, the lower-left third of the frame left calm and uncluttered, no phones visible, no text, no logos.",
+    "photoY": 45,
+    "title": "كل ما يقرّب، يرجع أسرع",
+    "hl": "أسرع",
+    "sub": "كارط بداها، يحب يكمّلها.",
+    "screen": "stamp-success.png",
+    "screenY": 10,
+    "phone": {
+     "x": "left",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "الكارط تقلّو وحدها: مازال 2",
+    "pillIcon": "target",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-52-4.png",
+    "photoBrief": "Late-afternoon golden light in a traditional Tunisian café, a barista in an apron sliding a small espresso across the counter to a smiling regular in his fifties, tiled wall and brass coffee pots behind them; candid smartphone-photo look, the lower-right third of the frame a plain empty counter, no phones visible, no text, no logos.",
+    "photoY": 45,
+    "title": "قهوة بلاش… وتولّي عادة",
+    "hl": "عادة",
+    "sub": "موش لازم كادو كبير.",
+    "screen": "card-unlocked.png",
+    "screenY": 8,
+    "phone": {
+     "x": "right",
+     "top": 520,
+     "w": 420
+    },
+    "pill": "كادو صغير، وما ينساكش",
+    "pillIcon": "repeat"
+   },
+   {
+    "type": "flow",
+    "title": "الهدف قدّامو، في تليفونو",
+    "hl": "قدّامو",
+    "sub": "يعرف وين وصل، ويعرف علاش يرجع.",
+    "steps": [
+     {
+      "screen": "customer-home.png",
+      "y": 30,
+      "text": "يشوف قدّاش باقيلو"
+     },
+     {
+      "screen": "stamp-success.png",
+      "y": 12,
+      "text": "يسكاني، وياخو تامبون"
+     },
+     {
+      "screen": "reward-code.png",
+      "y": 20,
+      "gift": true,
+      "text": "يورّي الكود، وياخو الكادو"
+     }
+    ]
+   },
+   {
+    "type": "cta",
+    "title": "تحب حرفاءك يرجعولك؟",
+    "hl": "يرجعولك",
+    "sub": "Pointili تجهّزلك كل شي.",
+    "next": [
+     "نحلّولك الكونت",
+     "نجهّزولك الكارط والكود",
+     "وإنت تبدا توّا"
+    ],
+    "pill": "كلّمنا اليوم",
+    "pillIcon": "message-circle"
+   }
+  ]
+ },
+ {
+  "id": "c53",
+  "title": "من جهة الكونتوار: شنوّة يصير قدّامك؟",
+  "question": "Qu'est-ce qui se passe devant le commerçant quand un client scanne — du code vivant sur l'écran du comptoir jusqu'au cadeau validé, et comment il obtient sa carte ?",
+  "backlog": "7.6 Product demonstrations — « Customer scans QR → stamp appears », « Watch a card go from 0 → 10 », « Owner validates a reward with the 6-digit code » (+ « Create a loyalty card … from zero », corrected to: Pointili sets it up)",
+  "notes": "Kept the AI sheet's spirit and order: question → the code → +1 → 0→10 → validation → how to get the card → CTA. Corrections: the paper \"Scan & Earn\" stand became a tablet with the live code, slide 2 shows the real owner-qr screen with «تصويرة منّو ما تنفعش»; invented French screens replaced by the real ones (stamp-success, scan-needs-account, customer-card-7, card-unlocked, reward-code); \"دخل لموقع Pointili / انشر QR — Télécharger QR\" replaced by the three real questions of owner-loyalty with Pointili setting it up — no download, no self sign-up; Latin scan/tampon/code/validation/reward became Derja; closing CTA added. Review pass: the hook was opening the same way as c51 («شنوّة يصير كي الحريف يسكاني»), so it now opens from the owner's side of the counter («من جهة الكونتوار: الكود، التامبون، الكادو»); «PC» → «بي سي»; flow step «أوّل سكان» (scan in Arabic letters) → «أوّل مرّة»; slide 3 sub varied so it does not echo c51; CTA sub «بلا تكنولوجيا» → «بلا وجيعة راس».",
+  "slides": [
+   {
+    "type": "hook",
+    "photo": "SC-53-1.png",
+    "photoBrief": "Bright Tunisian café counter in morning light: on the counter, a tablet on a small stand, its screen glowing with a large QR code, angled toward the customer; a young man seen from behind at the counter, lifting his phone toward the tablet (only the back of the phone is visible, its screen hidden); a smiling barista in a dark apron behind the espresso machine, cups and pastries blurred; candid smartphone-photo look, natural light, no text anywhere, no logos.",
+    "photoY": 45,
+    "title": "من جهة الكونتوار:\nالكود، التامبون، الكادو",
+    "hl": "من جهة الكونتوار",
+    "sub": "شنوّة يصير قدّامك، خطوة بخطوة"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-53-2.png",
+    "photoBrief": "Warm Tunisian bakery counter with trays of croissants and baguettes behind glass; on the counter, a tablet on a small stand, its screen glowing with a large QR code; a middle-aged baker woman in a white apron smiling on the left; soft daylight from the shop front; the lower-right third of the frame is a calm empty stretch of wooden counter; candid smartphone-photo look, no text, no logos, no phone in the picture.",
+    "photoY": 50,
+    "title": "على الكونتوار: كود يتبدّل وحدو",
+    "hl": "يتبدّل وحدو",
+    "sub": "على تابلات، تليفون ولّا بي سي. موش ورقة.",
+    "screen": "owner-qr.png",
+    "screenY": 0,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "تصويرة منّو ما تنفعش",
+    "pillIcon": "ban"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-53-3.png",
+    "photoBrief": "Sunny Tunisian juice bar: a young woman in a headscarf laughing at the counter on the left, holding a tall glass of fresh orange juice, piles of oranges and strawberries behind her, window light; the lower-right third of the frame is a plain empty counter; candid smartphone-photo look, no phone visible, no text, no logos.",
+    "photoY": 50,
+    "title": "الحريف يسكاني: +1 تامبون",
+    "hl": "+1 تامبون",
+    "sub": "بلا أبليكاسيون، بلا ما يحمّل شي",
+    "screen": "stamp-success.png",
+    "screenY": 30,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "كل مرّة يشري، يزيدلو تامبون",
+    "pillIcon": "check"
+   },
+   {
+    "type": "flow",
+    "title": "الكارط تتعبّى: من 0 لـ 10",
+    "hl": "من 0 لـ 10",
+    "sub": "الحريف يشوف قدّاش باقيلو",
+    "steps": [
+     {
+      "screen": "scan-needs-account.png",
+      "y": 50,
+      "text": "أوّل مرّة: يعمل كونت"
+     },
+     {
+      "screen": "customer-card-7.png",
+      "y": 0,
+      "text": "7/10 — مازال 3"
+     },
+     {
+      "screen": "card-unlocked.png",
+      "y": 0,
+      "text": "10/10 — الكادو تحلّ!",
+      "gift": true
+     }
+    ]
+   },
+   {
+    "type": "scene",
+    "photo": "SC-53-5.png",
+    "photoBrief": "Small Tunisian barber shop in afternoon light: a barber in a black shirt at the reception counter on the left, smiling at a client whose back is to the camera, mirrors and clippers blurred behind them; the lower-right third of the frame is a plain counter with nothing on it; candid smartphone-photo look, no phone, no text, no logos.",
+    "photoY": 50,
+    "title": "الحريف يورّيك الكود، إنت تأكّدلو",
+    "hl": "تأكّدلو",
+    "sub": "6 أرقام، تكتبهم عندك وتعطيه الكادو",
+    "screen": "reward-code.png",
+    "screenY": 25,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "خذا الكادو، وكارط جديدة تبدا",
+    "pillIcon": "gift"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-53-6.png",
+    "photoBrief": "Tunisian pizzeria counter with a wood-fired oven glowing in the background: the owner, a man in his forties with rolled sleeves, leaning on the marble counter on the left with a relaxed smile, a little flour on the marble; warm evening light; the lower-right third of the frame is empty marble counter; candid smartphone-photo look, no text, no logos, no phone.",
+    "photoY": 50,
+    "title": "الكارط متاعك: 3 أسئلة وبرك",
+    "hl": "3 أسئلة",
+    "sub": "قدّاش تامبون؟ شنوّة الكادو؟ كل قدّاش؟",
+    "screen": "owner-loyalty.png",
+    "screenY": 40,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "Pointili تجهّزهالك في دقايق",
+    "pillIcon": "sparkles",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "cta",
+    "title": "تحبّ نجهّزوها لمحلّك؟",
+    "hl": "لمحلّك",
+    "sub": "بلا تعب، بلا وجيعة راس",
+    "next": [
+     "نحلّولك الكونت",
+     "نجهّزولك الكارط والكود",
+     "وإنت تبدا توّا"
+    ],
+    "pill": "كلّمنا اليوم",
+    "pillIcon": "message-circle"
+   }
+  ]
+ },
+ {
+  "id": "c54",
+  "title": "كل محلّ وكادوه",
+  "question": "Concrètement, ça donne quoi Pointili dans mon commerce à moi (café, coiffeur, salon, boulangerie, resto, fast-food, salle de sport) ?",
+  "backlog": "7.7 Business-specific examples — Pointili for a café / barber / beauty salon / bakery / restaurant / juice-fast-food (+ gym, un tampon par jour d'entraînement)",
+  "slides": [
+   {
+    "type": "scene",
+    "photo": "SC-54-1.png",
+    "photoBrief": "Bright Tunisian cafe counter in morning light, a smiling barista in a dark apron sliding a small white espresso cup across pale wood toward the camera, blue-and-white tiles and green plants behind him; on the counter a tablet on a small stand, its screen glowing with a large QR code; candid smartphone photo, natural light, no text, no logos, no phone in the picture; lower-right third of the frame calm and uncluttered.",
+    "photoY": 45,
+    "title": "Pointili في محلّك إنت،\nكيفاش تجي؟",
+    "hl": "في محلّك إنت",
+    "sub": "قهوة، حلاقة، مخبزة، ريستو… كل واحد وكادوه.",
+    "screen": "stamp-success.png",
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 430
+    },
+    "pill": "في القهوة: 10 قهاوي = قهوة بلاش",
+    "pillIcon": "coffee"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-54-2.png",
+    "photoBrief": "Warm Tunisian barbershop by day, a barber in a black shirt finishing a fade on a young man seated in a leather chair, sunlight through the front window, wooden counter under a wide mirror; on that counter a tablet on a small stand, its screen glowing with a large QR code; candid smartphone photo, natural light, no text, no logos, no phone in the picture; lower-left third of the frame calm and uncluttered.",
+    "photoY": 50,
+    "title": "في الحلاقة،\nأوّل مرّة برك يعمل كونت",
+    "hl": "أوّل مرّة برك",
+    "sub": "بنومرو التليفون وخلاص.",
+    "screen": "scan-needs-account.png",
+    "phone": {
+     "x": "left",
+     "top": 580,
+     "w": 420
+    },
+    "pill": "10 حلاقات = حلاقة بلاش",
+    "pillIcon": "scissors"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-54-3.png",
+    "photoBrief": "Bright beauty salon in Tunis, a hairdresser in her thirties blow-drying a client's long dark hair in front of a big mirror, white walls, soft daylight, orchids on a white reception desk; on the desk a tablet on a small stand, its screen glowing with a large QR code; candid smartphone photo, natural light, no text, no logos, no phone in the picture; lower-right third of the frame calm and uncluttered.",
+    "photoY": 45,
+    "title": "في الصالون،\nالكود على إيكران",
+    "hl": "على إيكران",
+    "sub": "يتبدّل وحدو كل شويّة.",
+    "screen": "owner-qr-flash.png",
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "6 مرّات = بروشينغ بلاش",
+    "pillIcon": "sparkles",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-54-4.png",
+    "photoBrief": "Tunisian bakery early in the morning, a baker around sixty in a white apron smiling behind a glass display of baguettes, croissants and cakes, warm oven light mixing with daylight from the open door; on the counter a tablet on a small stand, its screen glowing with a large QR code; candid smartphone photo, natural light, no text, no logos, no phone in the picture; lower-left third of the frame calm and uncluttered.",
+    "photoY": 50,
+    "title": "في المخبزة،\nتعرف شكون يجيك كل صباح",
+    "hl": "شكون يجيك",
+    "sub": "أمين جا 10 مرّات، وهادي 3.",
+    "screen": "owner-customers.png",
+    "phone": {
+     "x": "left",
+     "top": 580,
+     "w": 420
+    },
+    "pill": "10 مرّات = كرواسون بلاش",
+    "pillIcon": "croissant"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-54-5.png",
+    "photoBrief": "Sunny Tunisian restaurant at lunchtime, a waiter in a white shirt setting a plate of grilled fish and salad on a wooden table by the window, a couple laughing, olive-green chairs, white tablecloths; on the cashier counter behind them a tablet on a small stand, its screen glowing with a large QR code; candid smartphone photo, natural light, no text, no logos, no phone in the picture; lower-right third of the frame calm and uncluttered.",
+    "photoY": 50,
+    "title": "في الريستو،\nكمّل الكارط؟ يورّيك كود",
+    "hl": "يورّيك كود",
+    "sub": "6 أرقام، السرفور يكتبهم وخلاص.",
+    "screen": "reward-code.png",
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "10 ماكلات = قهوة بلاش بعد الماكلة",
+    "pillIcon": "gift",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-54-6.png",
+    "photoBrief": "Busy Tunisian fast-food counter, a young cook in a cap wrapping a makloub sandwich in paper, fries in a red basket beside him, plain bright tiled wall, warm daylight from the street door; on the counter a tablet on a small stand, its screen glowing with a large QR code; candid smartphone photo, natural light, no text, no logos, no phone in the picture; lower-left third of the frame calm and uncluttered.",
+    "photoY": 50,
+    "title": "في الفاست فود،\nتشوف كل شي في تليفونك",
+    "hl": "كل شي",
+    "sub": "57 تامبون اليوم، و3 كوادو تعطات.",
+    "screen": "owner-dashboard.png",
+    "phone": {
+     "x": "left",
+     "top": 580,
+     "w": 420
+    },
+    "pill": "10 سندويتشات = سندويتش بلاش",
+    "pillIcon": "sandwich"
+   },
+   {
+    "type": "cta",
+    "title": "يمشي مع أي محلّ.\nحتى الجيم.",
+    "hl": "حتى الجيم",
+    "sub": "في الجيم: تامبون على كل يوم تمرين.",
+    "next": [
+     "نحلّولك الكونت",
+     "نجهّزولك الكارط والكود",
+     "وإنت تبدا توّا"
+    ],
+    "pill": "كلّمنا اليوم",
+    "pillIcon": "message-circle"
+   }
+  ],
+  "notes": "Kept the client's look and their six shops in the same order, each as a scene with photo, phone, pill and strip. Corrected: every photo brief puts the code on a tablet on the counter, never a paper stand; the invented \"Scan & Earn\" / \"tampon ajouté\" phones are replaced by real screens (stamp-success, scan-needs-account, owner-qr-flash, owner-customers, reward-code, owner-dashboard); Latin scan/tampon became سكاني/تامبون; one true workflow fact per shop plus a realistic reward in each pill; closing cta added. The gym takes the cta title and its rule (a stamp per training day). Subs quote the numbers actually visible on each screen. Review pass: no language or fact change needed; photo briefs now state plainly that no phone is in the picture."
+ },
+ {
+  "id": "c55",
+  "title": "تخيّل: كل حريف عندو علاش يرجع",
+  "question": "Imagine : chaque client sort de chez toi avec une raison de revenir — ça donne quoi, concrètement, dans mon commerce (café, coiffeur, salon, boulangerie, restaurant) ?",
+  "backlog": "7.8 « Imagine this » — Imagine every customer leaving with a reason to return (illustré par 7.7 Business-specific examples : café, barber, beauty salon, bakery, restaurant)",
+  "notes": "Kept from the client's sheet: one «تخيّل حريف …» per business, five businesses in the same order, warm daylight people-photos, one pill per slide, phone lower-right, dark strip. Changed: Latin reward / fidélité / coiffeur / salon de beauté / boulangerie / restaurant and the Algerian «تاعو» → كادو، الكارط، حلّاق، صالون، مخبزة، مطعم، متاعو; «ياخذ» → ياخو; the invented membership perk dropped. Screens: invented French card, \"Bravo\" pop-up and «تخفيض خاص» badge replaced by real screens that walk the true journey (customer-card-7, card-unlocked, reward-code, stamp-success, owner-qr-flash). No paper anywhere; the salon slide shows how a reward is really taken; the bakery slide reflects the once-a-day rule. Closing CTA added. Review pass: bakery pill «سكاني، وهاو التامبون» (an order) → «يسكاني، وهاو التامبون» (the customer scans, like the rest of the post); CTA sub reworded so it is not the same line as c51's.",
+  "slides": [
+   {
+    "type": "hook",
+    "photo": "SC-55-1.png",
+    "photoBrief": "Bright morning in Tunis: a smiling young Tunisian woman in a beige coat steps out through the open glass door of a small corner café, a paper bag on her shoulder and a takeaway cup in her hand, blue-and-white tiles and hanging plants visible inside, soft sunlight on her face, candid smartphone snapshot, no text, no logos, no phone.",
+    "photoY": 40,
+    "title": "تخيّل: كل حريف يخرج\nوعندو علاش يرجع",
+    "hl": "علاش يرجع",
+    "sub": "في القهوة، عند الحلّاق، في المخبزة…"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-55-2.png",
+    "photoBrief": "Inside a sunny Tunisian café, a young man with a short beard and a dark jacket sits at a light-wood counter with an espresso cup, smiling down toward his hands below the frame, shelves of jars and a green plant behind him, warm natural light from a large window, candid smartphone-photo look, no phone screen visible, no text, no logos; the lower-right third of the frame is an empty stretch of counter.",
+    "photoY": 45,
+    "title": "تخيّل حريف قهوة",
+    "hl": "قهوة",
+    "sub": "يحب يرجع باش يكمّل الكارط متاعو",
+    "screen": "customer-card-7.png",
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "مازال 3 وياخو قهوة بلاش",
+    "pillIcon": "coffee"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-55-3.png",
+    "photoBrief": "A Tunisian barbershop in daylight: a barber in a black apron trims the hair of a smiling customer in a leather barber chair, mirror and wooden shelves with brushes and bottles behind them, warm tones, candid smartphone snapshot; both people are in the left half of the frame, the lower-right third is a calm wall and an empty chair; no text, no logos, no phone.",
+    "photoY": 50,
+    "title": "تخيّل حريف حلّاق",
+    "hl": "حلّاق",
+    "sub": "يرجع باش ياخو كادو صغير",
+    "screen": "card-unlocked.png",
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "الكارط كملت؟ الكادو تحلّ",
+    "pillIcon": "gift",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-55-4.png",
+    "photoBrief": "A small Tunisian beauty salon, bright and white: a beautician in a dark top applies a cream mask to a relaxed young woman lying back with a white headband, soft folded towels, a pale pink wall, big window daylight, candid smartphone-photo look, no text, no logos, no phone; the lower-right third of the frame is a plain calm surface.",
+    "photoY": 50,
+    "title": "تخيّل حريفة صالون",
+    "hl": "صالون",
+    "sub": "ترجع خاطر الكادو متاعها حاضر",
+    "screen": "reward-code.png",
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "تورّي كود من 6 أرقام، وخلاص",
+    "pillIcon": "sparkles"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-55-5.png",
+    "photoBrief": "Morning at a Tunisian neighbourhood bakery: behind a glass display of croissants and baguettes, a baker in a flour-dusted apron hands a warm paper bag to a young woman customer with a tote bag, both smiling, oven glow and daylight, candid smartphone snapshot, no text, no logos, no phone; the lower-right third of the frame shows only the plain wooden counter.",
+    "photoY": 50,
+    "title": "تخيّل حريف مخبزة",
+    "hl": "مخبزة",
+    "sub": "يجي كل صباح، وكل صباح تامبون",
+    "screen": "stamp-success.png",
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "يسكاني، وهاو التامبون",
+    "pillIcon": "check"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-55-6.png",
+    "photoBrief": "Early evening at the cash desk of a busy Tunisian restaurant, warm light through the windows: a smiling waiter in a dark shirt stands behind the counter, and on the counter, left of centre, a tablet on a small stand, its screen glowing with a large QR code; blurred tables, plates and a water carafe in the background, candid smartphone snapshot, no text, no logos, no paper stand, no printed card, no phone; the lower-right third of the frame stays calm and uncluttered.",
+    "photoY": 50,
+    "title": "تخيّل حريف مطعم",
+    "hl": "مطعم",
+    "sub": "يخلّص، يسكاني… ويرجع الجمعة الجاية",
+    "screen": "owner-qr-flash.png",
+    "phone": {
+     "x": "right",
+     "top": 520,
+     "w": 420
+    },
+    "pill": "الكود على التابلات، يتبدّل وحدو",
+    "pillIcon": "qr-code",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "cta",
+    "title": "تخيّلتها؟\nنعملوهالك في محلّك",
+    "hl": "في محلّك",
+    "sub": "إنت ما تعمل حتى شي:",
+    "next": [
+     "نحلّولك الكونت",
+     "نجهّزولك الكارط والكود",
+     "وإنت تبدا توّا"
+    ],
+    "pill": "كلّمنا اليوم",
+    "pillIcon": "message-circle"
+   }
+  ]
+ },
+ {
+  "id": "c56",
+  "title": "الحريف شرا مرّة… وما رجعش",
+  "question": "Comment donner au client une raison de revenir, et à quoi ça ressemble quand ta carte de fidélité vit dans son téléphone ?",
+  "backlog": "7.1 « The customer buys once and disappears » / « The difference between a customer who comes once and one who becomes a regular » / « How do you give a customer a reason to come back? » — puis 7.8 « Imagine your loyalty card living in your customer's phone » / « Imagine a customer seeing \"2 more visits until your reward\" » / « Imagine turning a normal purchase into the beginning of the next visit »",
+  "notes": "Kept the client's look and merged the two arcs into one 7-slide story: problem (1–2) → imagine (3–6) → CTA (7). Corrections versus the AI sheet: every phone carries a real screen instead of the invented \"Bravo ! Tu as 7/10\"; no paper stand — the customer scans the live code on the counter screen; the fake bell notification is dropped, the card itself shows مازال 3; the \"Bravo\" pop-up and icon row replaced by the real card-full screen; all French words in Arabic letters as the app writes them; fewer words; CTA «كلّمنا اليوم», no free offer, no self sign-up. The first-scan account step is deliberately left to the step-by-step post. Review pass: «شرى» → «شرا» (Tunisian, as in the posts already approved); «بلا ورق، بلا ضياع» → «بلا كرتون، وما تضيعش»; «كل شيء» → «كل شي»; slide 4 sub reworded so it is not the same line as c50's flow; slide 5 pill changed because it was word-for-word the café pill of c55.",
+  "slides": [
+   {
+    "type": "hook",
+    "photo": "SC-56-1.png",
+    "photoBrief": "Bright Tunisian fast-food counter at midday, a customer seen from behind pushing the glass door to leave with a wrapped sandwich, the owner behind the counter watching him go, empty stools along the counter, warm natural daylight, candid smartphone-photo look, no text, no logos, no phone.",
+    "photoY": 45,
+    "title": "الحريف شرا مرّة… وما رجعش",
+    "hl": "ما رجعش",
+    "sub": "علاش؟ ما عندو حتى سبب باش يرجع"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-56-2.png",
+    "photoBrief": "Small Tunisian pizzeria in the late afternoon, the pizzaiolo in a flour-dusted apron laughing with two regulars sitting at the counter, wood-fired oven glowing in the background, warm light, candid smartphone-photo look, the lower-right third of the frame calm and uncluttered, no text, no logos, no phone.",
+    "photoY": 40,
+    "title": "حريف مرّة ولّا حريف ديما؟",
+    "hl": "حريف ديما",
+    "sub": "اللي يجي ديما يعرفك، ويجيب صحابو",
+    "screen": "owner-customers.png",
+    "screenY": 10,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "تعرف شكون يجي ديما، وقدّاش",
+    "pillIcon": "users"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-56-3.png",
+    "photoBrief": "Sunny Tunisian bakery counter in the morning, trays of baguettes and croissants on the shelves behind, on the counter a tablet on a small stand, its screen glowing with a large QR code, the baker in the background sliding a tray into the rack, warm natural light, candid smartphone-photo look, the lower-right third of the frame calm and uncluttered, no text, no logos, no phone in the picture.",
+    "photoY": 50,
+    "title": "تخيّل كارطك في تليفون الحريف",
+    "hl": "في تليفون الحريف",
+    "sub": "بلا كرتون، وما تضيعش",
+    "screen": "customer-home.png",
+    "screenY": 28,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "كارطو معاه ديما، في جيبو",
+    "pillIcon": "smartphone"
+   },
+   {
+    "type": "screen",
+    "title": "يسكاني الكود، تامبون تزاد",
+    "hl": "تامبون تزاد",
+    "sub": "على الكونتوار، الكود في إيكران ويتبدّل وحدو",
+    "screen": "stamp-success.png",
+    "screenY": 10,
+    "phoneTop": 560
+   },
+   {
+    "type": "scene",
+    "photo": "SC-56-5.png",
+    "photoBrief": "Cozy Tunisian neighbourhood café, a young woman in a headscarf smiling as she walks back in through the open doorway, the barista greeting her from behind the espresso machine, morning sun through the window, candid smartphone-photo look, the lower-right third of the frame calm and uncluttered, no text, no logos, no phone.",
+    "photoY": 45,
+    "title": "يشوف مازال 3… ويرجع",
+    "hl": "ويرجع",
+    "sub": "شرية اليوم = سبب باش يرجع غدوة",
+    "screen": "customer-card-7.png",
+    "screenY": 12,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "3 برك، والقهوة بلاش",
+    "pillIcon": "gift",
+    "pillStyle": "violet"
+   },
+   {
+    "type": "scene",
+    "photo": "SC-56-6.png",
+    "photoBrief": "Bright Tunisian juice and ice-cream shop, a teenage boy grinning as the vendor hands him a tall cup of fresh orange juice across the counter, oranges and strawberries displayed behind, afternoon light, candid smartphone-photo look, the lower-right third of the frame calm and uncluttered, no text, no logos, no phone.",
+    "photoY": 50,
+    "title": "الكارط تعمرت، الكادو تحلّ",
+    "hl": "الكادو تحلّ",
+    "sub": "ياخو الكادو، وكارط جديدة تبدا",
+    "screen": "card-unlocked.png",
+    "screenY": 12,
+    "phone": {
+     "x": "right",
+     "top": 560,
+     "w": 420
+    },
+    "pill": "الكادو من عندك، الحريف يرجعلك",
+    "pillIcon": "sparkles"
+   },
+   {
+    "type": "cta",
+    "title": "خلّي كل حريف يرجعلك",
+    "hl": "يرجعلك",
+    "sub": "كل شي نجهّزوهولك:",
+    "next": [
+     "نحلّولك الكونت",
+     "نجهّزولك الكارط والكود",
+     "وإنت تبدا توّا"
+    ],
+    "pill": "كلّمنا اليوم",
+    "pillIcon": "message-circle"
+   }
+  ]
+ }
+]

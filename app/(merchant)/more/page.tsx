@@ -1,4 +1,4 @@
-import { Activity, CreditCard, LogOut, Printer, Receipt, Settings, Users } from "lucide-react";
+import { Activity, CreditCard, Gift, LogOut, Receipt, Settings, Users } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Divided, ListRow } from "@/components/ui/Card";
@@ -19,16 +19,17 @@ export default async function MorePage() {
   return (
     <>
       <TopBar title={t.nav.merchant.more} large back="/dashboard" />
+      {/* by how often an owner needs it: give a reward, who came, the card, then the rest */}
       <Divided>
+        <ListRow href="/redeem" icon={<Gift className="size-5" />} title={t.merchant.home.giveReward} />
         <ListRow href="/customers" icon={<Users className="size-5" />} title={t.nav.merchant.customers} />
-        <ListRow href="/activity" icon={<Activity className="size-5" />} title={t.nav.merchant.activity} />
         <ListRow
           href="/loyalty"
           icon={<CreditCard className="size-5" />}
           title={t.nav.merchant.card}
           subtitle={card ? `${count(t.common.stampsCount, card.stamps_required)} · ${card.reward?.name ?? ""}` : t.merchant.more.cardNone}
         />
-        <ListRow href="/counter-qr" icon={<Printer className="size-5" />} title={t.nav.merchant.counterQr} subtitle={t.merchant.more.counterQrHint} />
+        <ListRow href="/activity" icon={<Activity className="size-5" />} title={t.nav.merchant.activity} />
         <ListRow href="/billing" icon={<Receipt className="size-5" />} title={t.nav.merchant.billing} subtitle={plans[ctx.subscription?.plan ?? ""] ?? t.data.plans.none} />
         <ListRow href="/settings" icon={<Settings className="size-5" />} title={t.nav.merchant.settings} subtitle={t.merchant.more.settingsHint} />
       </Divided>

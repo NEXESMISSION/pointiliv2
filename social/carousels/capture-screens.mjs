@@ -131,7 +131,7 @@ const browser = await chromium.launch({ executablePath: "C:/Program Files/Google
 const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, locale: "ar-TN" };
 const newCtx = async () => {
   const c = await browser.newContext(phone);
-  await c.addCookies([{ name: "pl_lang", value: "tn", url: BASE }]);
+  await c.addCookies([{ name: "pl_lang2", value: "tn", url: BASE }]);
   return c;
 };
 const snap = async (page, name, { wait = 900 } = {}) => {
@@ -194,6 +194,18 @@ try {
   await cp.waitForURL(/\/customer\/rewards\/use\//, { timeout: 60000 });
   await cp.locator("svg").first().waitFor({ timeout: 30000 });
   await snap(cp, "reward-code", { wait: 2000 });
+
+  // what a scan looks like to someone with no account yet, and a code that expired
+  const guest = await newCtx();
+  const gp = await guest.newPage();
+  const t2 = await call(owner, "mint_qr_token");
+  await gp.goto(`${BASE}/scan/${t2.token}`, { waitUntil: "domcontentloaded" });
+  await gp.waitForSelector("a[href*='/customer/register']", { timeout: 60000 });
+  await snap(gp, "scan-needs-account", { wait: 1200 });
+  await gp.goto(`${BASE}/scan/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`, { waitUntil: "domcontentloaded" });
+  await gp.locator("h1").first().waitFor({ timeout: 60000 });
+  await snap(gp, "scan-missed", { wait: 1200 });
+  await guest.close();
 
   await op.goto(BASE + "/dashboard", { waitUntil: "load", timeout: 90000 });
   await snap(op, "owner-dashboard");

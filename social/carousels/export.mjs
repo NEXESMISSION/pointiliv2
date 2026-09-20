@@ -15,7 +15,8 @@ const DIR = import.meta.dirname;
 const OUT = path.join(DIR, "out");
 const IDEAS = process.argv.includes("--ideas");
 const ADS = process.argv.includes("--ads");
-const DEST = (process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : path.join(os.homedir(), "Desktop", "Pointili posts")) + (IDEAS ? path.sep + "_ideas" : ADS ? path.sep + "_ads" : "");
+const NEW = process.argv.includes("--new");
+const DEST = (process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : path.join(os.homedir(), "Desktop", "Pointili posts")) + (IDEAS ? path.sep + "_ideas" : ADS ? path.sep + "_ads" : NEW ? path.sep + "_new" : "");
 
 // what it is → the doubts → what it brings → the price
 const POSTS = [
@@ -45,7 +46,18 @@ const AD_POSTS = [
   ["c41", "AD 2 - he bought today and then"],
   ["c42", "AD 3 - you see your shop"],
 ];
+// the client's seven AI-made carousels, rebuilt with real screens and the real workflow
+const NEW_POSTS = [
+  ["c51", "10 - What happens on a scan"],
+  ["c53", "11 - From behind the counter"],
+  ["c50", "12 - Cardboard vs Pointili"],
+  ["c52", "13 - Why customers come back"],
+  ["c54", "14 - Every shop its reward"],
+  ["c55", "15 - Imagine"],
+  ["c56", "16 - He bought once and never came back"],
+];
 if (IDEAS) POSTS.splice(0, POSTS.length, ...IDEA_POSTS);
+if (NEW) POSTS.splice(0, POSTS.length, ...NEW_POSTS);
 if (ADS) POSTS.splice(0, POSTS.length, ...AD_POSTS);
 
 const cfg = JSON.parse(await readFile(path.join(DIR, "carousels.json"), "utf8"));
@@ -80,7 +92,7 @@ const sheet = (p, i) => `<!doctype html><html><head><meta charset="utf-8">
   img { display: block; width: 420px; height: 525px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.14); }
   figcaption { margin-top: 8px; font-size: 22px; color: #6B6B76; }
 </style></head><body><div class="wrap">
-  <div class="label"><span class="num">${String(i + 1).padStart(2, "0")}</span><span class="q" dir="rtl">${esc(p.title)}</span><span class="count">${p.slides.length} slides</span></div>
+  <div class="label"><span class="num">${p.folder.match(/^\d+/)?.[0] ?? String(i + 1).padStart(2, "0")}</span><span class="q" dir="rtl">${esc(p.title)}</span><span class="count">${p.slides.length} slides</span></div>
   <div class="row">${p.slides.map((f, n) => `<figure><img src="${p.id}/${f}"><figcaption>${n + 1}</figcaption></figure>`).join("")}</div>
 </div></body></html>`;
 

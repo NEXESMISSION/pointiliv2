@@ -23,10 +23,15 @@ export const getContext = cache(async (): Promise<SessionContext | null> => {
   return data as SessionContext;
 });
 
-export function homeFor(ctx: Pick<SessionContext, "user" | "business"> | null): string {
+/**
+ * Where someone lands after signing in or opening the installed app. A shop
+ * opens straight on its counter QR — that is what the phone is picked up for —
+ * unless there is no card yet, and then the home screen walks them through it.
+ */
+export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card"> | null): string {
   if (!ctx) return "/";
   if (ctx.user.role === "admin") return "/admin";
-  if (ctx.business) return "/dashboard";
+  if (ctx.business) return ctx.card ? "/qr" : "/dashboard";
   return "/customer";
 }
 

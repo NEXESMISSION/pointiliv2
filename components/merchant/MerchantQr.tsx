@@ -6,14 +6,18 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { Check, Maximize, Minimize, Smartphone, WifiOff, Zap } from "lucide-react";
 import { BackButton } from "@/components/nav/BackButton";
 import { BusinessAvatar } from "@/components/CardIcon";
+import { ScreenWash, STAMP_BURST_MS, STAMP_BURST_STAGGER_MS, StampBurst } from "@/components/celebrate/StampBurst";
 import { Spinner } from "@/components/ui/Spinner";
 import { useT } from "@/components/i18n/Provider";
 import { cardColor, QR_POLL_MS, QR_ROTATE_BEFORE_MS } from "@/lib/constants";
 
 type Token = { id: string; svg: string; expiresLocal: number; mintedLocal: number };
-type Flash = { id: string; code: number };
+/** `delay` staggers stamps that arrived in the same poll, so each one gets its own burst. */
+type Flash = { id: string; code: number; delay: number };
 
 const SPEED_KEY = "pl_qr_speed";
+/** The QR card's side, on a phone, a tablet or a desktop. The burst behind it is sized from the same value. */
+const QR_SIDE = "min(80vw, 52vh, 34rem)";
 
 /** The counter screen remembers the speed the shop picked, per device. */
 const speedListeners = new Set<() => void>();
@@ -44,7 +48,7 @@ const speed = {
  * lighting. Open it and leave it:
  *  · the next code is minted in advance, so a scanned code is replaced at once
  *  · every code is single-use, and unscanned ones rotate before they expire
- *  · each stamp flashes "+1 TAMPON" with the customer number
+ *  · each stamp bursts out from behind the code — "+1 #number", in the shop's colour — without ever covering it
  *  · open it on as many phones or tablets as you like — each one shows its own code
  *  · the screen is kept awake (Wake Lock) and recovers from network drops by itself
  */
@@ -121,9 +125,9 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
         const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
         if (fresh.length) {
           fresh.forEach((x) => seen.current.add(x.id));
-          setFlashes((f) => [...f, ...fresh.map((x) => ({ id: x.id, code: x.code }))]);
+          setFlashes((f) => [...f, ...fresh.map((x, i) => ({ id: x.id, code: x.code, delay: i * STAMP_BURST_STAGGER_MS }))]);
           navigator.vibrate?.(50);
-          setTimeout(() => setFlashes((f) => f.filter((x) => !fresh.some((y) => y.id === x.id))), 2600);
+          setTimeout(() => setFlashes((f) => f.filter((x) => !fresh.some((y) => y.id === x.id))), STAMP_BURST_MS + 600 + (fresh.length - 1) * STAMP_BURST_STAGGER_MS);
         }
         if (!s.open) {
           tokenRef.current = null;
@@ -187,11 +191,12 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
 
   const life = fast ? 20_000 : 45_000;
   const remaining = token ? Math.max(0, Math.min(token.expiresLocal - QR_ROTATE_BEFORE_MS, token.mintedLocal + life) - now) : 0;
-  const flashing = flashes.length > 0;
+  const latest = flashes[flashes.length - 1];
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-white text-ink">
       <div className="pointer-events-none absolute inset-0 opacity-40" style={{ background: `radial-gradient(70% 50% at 50% 0%, ${c.accent}22, transparent 70%)` }} aria-hidden />
+      {latest && <ScreenWash key={latest.id} accent={c.accent} delay={latest.delay} />}
 
       <header className="relative z-10 flex items-center gap-2 px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6">
         <BackButton fallback="/dashboard" className="size-11" />
@@ -226,47 +231,51 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
           {w.headline2}
         </h1>
 
-        <div
-          className={`relative mt-[3vh] aspect-square w-[min(80vw,52vh,34rem)] rounded-[2rem] border border-ink/5 bg-white p-[5%] shadow-[0_24px_60px_-28px_rgb(40_20_110/0.45)] transition-[box-shadow,transform] duration-300 ${flashing ? "scale-[1.02] ring-8 ring-success-500" : ""}`}
-        >
-          {token && !error ? (
-            <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" data-qr="1" aria-label={w.qrAria} />
-          ) : error ? (
-            <div className="grid size-full place-items-center p-4 text-center">
-              <div>
-                <p className="text-lg font-bold">{msg(error)}</p>
-                {error === "subscription_expired" && (
-                  <Link href="/billing" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
-                    {w.renewPlan}
-                  </Link>
-                )}
-                {error === "no_card" && (
-                  <Link href="/loyalty" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
-                    {w.createCard}
-                  </Link>
-                )}
-                {(error === "network" || error === "rate_limited") && <p className="mt-2 text-sm text-muted">{w.retrying}</p>}
+        {/* The party happens BEHIND the card: the code on top never moves, dims or gets covered, so it stays scannable throughout. */}
+        <div className="relative mt-[3vh] aspect-square" style={{ width: QR_SIDE }}>
+          {flashes.map((f) => (
+            <StampBurst key={f.id} code={f.code} accent={c.accent} soft={c.soft} side={QR_SIDE} delay={f.delay} />
+          ))}
+          <div className="absolute inset-0 rounded-[2rem] border border-ink/5 bg-white p-[5%] shadow-[0_24px_60px_-28px_rgb(40_20_110/0.45)]">
+            {token && !error ? (
+              <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" data-qr="1" aria-label={w.qrAria} />
+            ) : error ? (
+              <div className="grid size-full place-items-center p-4 text-center">
+                <div>
+                  <p className="text-lg font-bold">{msg(error)}</p>
+                  {error === "subscription_expired" && (
+                    <Link href="/billing" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
+                      {w.renewPlan}
+                    </Link>
+                  )}
+                  {error === "no_card" && (
+                    <Link href="/loyalty" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
+                      {w.createCard}
+                    </Link>
+                  )}
+                  {(error === "network" || error === "rate_limited") && <p className="mt-2 text-sm text-muted">{w.retrying}</p>}
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="grid size-full place-items-center text-brand-600">
-              <Spinner className="size-10" />
-            </div>
-          )}
-          {offline && token && (
-            <div className="absolute inset-0 grid place-items-center rounded-[2rem] bg-white/70">
-              <p className="flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold shadow-lift">
-                <WifiOff className="size-5" /> {w.reconnecting}
-              </p>
-            </div>
-          )}
+            ) : (
+              <div className="grid size-full place-items-center text-brand-600">
+                <Spinner className="size-10" />
+              </div>
+            )}
+            {offline && token && (
+              <div className="absolute inset-0 grid place-items-center rounded-[2rem] bg-white/70">
+                <p className="flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold shadow-lift">
+                  <WifiOff className="size-5" /> {w.reconnecting}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-[3vh] flex h-14 items-center">
-          {flashing ? (
-            <div key={flashes[flashes.length - 1]!.id} className="flex animate-pop items-center gap-2 rounded-full bg-success-500 px-7 py-3.5 text-xl font-extrabold text-white shadow-[0_12px_30px_-8px_rgb(34_197_94/0.5)]" role="status" aria-live="polite">
+          {latest ? (
+            <div key={latest.id} className="flex animate-pop items-center gap-2 rounded-full bg-success-500 px-7 py-3.5 text-xl font-extrabold text-white shadow-[0_12px_30px_-8px_rgb(34_197_94/0.5)]" role="status" aria-live="polite">
               <Check className="size-6" strokeWidth={3} /> {w.stampFlash} ·{" "}
-              <span dir="ltr">#{flashes[flashes.length - 1]!.code}</span>
+              <span dir="ltr">#{latest.code}</span>
             </div>
           ) : (
             <div className="rounded-full bg-success-500 px-8 py-3 text-xl font-extrabold tracking-wide text-white">{w.stampFlash}</div>

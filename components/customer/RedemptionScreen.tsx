@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Check, Gift } from "lucide-react";
+import { Gift } from "lucide-react";
 import { cancelRedemption } from "@/app/actions/customer";
 import { Button, LinkButton } from "@/components/ui/Button";
-import { Confetti } from "@/components/Confetti";
+import { GIFT_OPEN_MS, GiftOpen } from "@/components/celebrate/GiftOpen";
 import { TopBar } from "@/components/nav/TopBar";
 import { useT } from "@/components/i18n/Provider";
 import type { RedemptionStatus } from "@/lib/types";
@@ -38,17 +38,24 @@ export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus
   const expired = state.status === "expired" || (state.status === "pending" && left === 0);
 
   if (state.status === "redeemed") {
+    /* The payoff of ten visits: the gift opens, and everything comes out of it in reading order — see GiftOpen. */
+    const after = (ms: number) => ({ animationDelay: `${GIFT_OPEN_MS + ms}ms` });
     return (
       <div className="relative flex min-h-[80dvh] flex-col items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-b from-success-50 to-canvas px-6 text-center">
-        <Confetti />
-        <div className="grid size-20 animate-pop place-items-center rounded-full bg-success-500 text-white shadow-lift">
-          <Check className="size-10" strokeWidth={3} />
-        </div>
-        <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-ink">{t.customer.use.doneTitle}</h1>
-        <p className="mt-2 text-xl font-bold text-success-600">{state.reward_name}</p>
-        <p className="text-muted">{state.business_name}</p>
-        <p className="mt-2 text-sm text-muted">{t.customer.use.enjoy}</p>
-        <div className="mt-6 w-full max-w-xs space-y-2">
+        <GiftOpen size={112} fountain />
+        <h1 className="mt-3 animate-rise text-2xl font-extrabold tracking-tight text-ink" style={after(120)}>
+          {t.customer.use.doneTitle}
+        </h1>
+        <p className="mt-2 animate-land text-3xl font-extrabold uppercase tracking-tight text-success-600 text-balance" style={after(260)}>
+          {state.reward_name}
+        </p>
+        <p className="mt-1 animate-rise text-muted" style={after(420)}>
+          {state.business_name}
+        </p>
+        <p className="mt-2 animate-rise text-sm text-muted" style={after(480)}>
+          {t.customer.use.enjoy}
+        </p>
+        <div className="mt-6 w-full max-w-xs animate-rise space-y-2" style={after(560)}>
           <LinkButton href={`/customer/cards/${state.customer_id}`} block>
             {t.common.done}
           </LinkButton>

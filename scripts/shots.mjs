@@ -151,8 +151,9 @@ try {
   await mp.goto(BASE + "/qr", { waitUntil: "domcontentloaded" });
   await mp.waitForSelector("[data-qr] svg", { timeout: 30000 });
   await shot(mp, "21-qr", null, { wait: 500, full: false });
-  await shot(mp, "22-counter-qr", "/counter-qr");
-  const joinPath = new URL(await mp.locator('p[dir="ltr"]').first().innerText()).pathname;
+  // the printed counter page is gone; the join code itself still exists
+  const { data: joinBiz } = await admin.from("businesses").select("join_code").eq("name", "Café Bonheur").limit(1).maybeSingle();
+  const joinPath = `/join/${joinBiz.join_code}`;
 
   // printed counter QR, scanned by someone signed out
   const jc = await french(await browser.newContext(phone));

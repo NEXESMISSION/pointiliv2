@@ -45,6 +45,30 @@
   .placeholder small { display: block; font-size: 26px; font-weight: 500; }
 
   /* ── hook: photo, dark fade, big question ─────────────────────────────── */
+
+  /* scene: a full-bleed photo, the title on top, a real screen in a phone
+     frame over the picture, one caption pill — the look of the AI sheets,
+     with our screens in it */
+  .scene .photo { position: absolute; inset: 0; }
+  .scene .photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% var(--py, 50%); }
+  .scene .fade-top { position: absolute; inset: 0 0 auto 0; height: 520px; background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.82) 55%, rgba(255,255,255,0) 100%); }
+  .scene.on-dark .fade-top { height: 600px; background: linear-gradient(180deg, rgba(12,12,20,0.96) 0%, rgba(12,12,20,0.78) 50%, rgba(12,12,20,0) 100%); }
+  .scene .copy { position: absolute; right: 72px; left: 72px; top: 120px; }
+  .scene h1 { font-size: 78px; line-height: 1.18; max-width: 900px; }
+  .scene .sub { font-size: 40px; margin-top: 18px; max-width: 860px; }
+  .scene .scene-pill { position: absolute; bottom: 150px; display: flex; }
+  .scene.phone-right .scene-pill { left: 64px; right: calc(64px + var(--devw, 400px) + 28px); justify-content: flex-start; }
+  .scene.phone-left .scene-pill { right: 64px; left: calc(64px + var(--devw, 400px) + 28px); justify-content: flex-end; }
+  .scene.phone-center .scene-pill, .scene.no-phone .scene-pill { left: 72px; right: 72px; justify-content: center; }
+  .scene .scene-pill > div { display: inline-flex; align-items: center; gap: 18px; background: rgba(255,255,255,0.94); color: #17141f; border-radius: 999px; padding: 22px 34px; font-size: 36px; font-weight: 700; line-height: 1.3; box-shadow: 0 18px 50px -20px rgba(20,10,60,0.45); text-align: center; }
+  .scene .scene-pill > div.violet { background: #6535e0; color: #fff; }
+  .scene .scene-pill svg, .scene .scene-pill i { width: 40px; height: 40px; flex: none; }
+  .scene .scene-pill > div:not(.violet) svg { color: #6535e0; }
+  .scene .strip .name svg { width: 48px; height: 35px; }
+  .scene .strip { position: absolute; left: 0; right: 0; bottom: 0; height: 104px; background: #17141f; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 64px; direction: ltr; }
+  .scene .strip .name { display: flex; align-items: center; gap: 14px; font: 700 34px/1 "Inter", sans-serif; letter-spacing: -0.02em; }
+  .scene .strip .tag { font-size: 28px; opacity: 0.8; direction: rtl; }
+
   .hook .photo { position: absolute; inset: 0; }
   .hook .photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% var(--py, 50%); }
   .hook .fade { position: absolute; left: 0; right: 0; top: 720px; height: 630px; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.72) 100%); }
@@ -71,9 +95,18 @@
   .screen-slide .copy { position: absolute; top: 120px; right: 120px; left: 120px; }
   .screen-slide h1 { font-size: 72px; line-height: 1.19; max-width: 840px; }
   .screen-slide .sub { margin-top: 26px; font-size: 36px; line-height: 1.5; max-width: 760px; color: #6E6E77; }
-  .phone { position: absolute; left: 50%; transform: translateX(-50%); width: 740px; border-radius: 76px; background: #0c0c14; padding: 18px; box-shadow: 0 50px 90px -40px rgba(40,20,110,0.55), 0 0 0 2px #2a2a36 inset; }
-  .phone .glass { border-radius: 60px; overflow: hidden; background: #fff; aspect-ratio: 1170 / 2532; }
-  .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  /* THE phone. Always the whole device and the whole capture (390×844): its
+     width --dw is set by fitDevices() from the room the slide has left, and
+     everything else — bezel, corners, buttons — follows from that width. */
+  .device { position: absolute; width: var(--dw, 400px); padding: calc(var(--dw, 400px) * 0.028); border-radius: calc(var(--dw, 400px) * 0.14); background: #0c0c14; box-shadow: 0 40px 80px -36px rgba(20,10,60,0.6), 0 0 0 2px #2a2a36 inset; box-sizing: border-box; }
+  .device::before { content: ""; position: absolute; right: -4px; top: 24%; width: 4px; height: 11%; border-radius: 0 3px 3px 0; background: #0c0c14; }
+  .device::after { content: ""; position: absolute; left: -4px; top: 19%; width: 4px; height: 7%; border-radius: 3px 0 0 3px; background: #0c0c14; box-shadow: 0 calc(var(--dw, 400px) * 0.2) 0 #0c0c14; }
+  .device .glass { border-radius: calc(var(--dw, 400px) * 0.113); overflow: hidden; background: #fff; aspect-ratio: 1170 / 2532; direction: ltr; }
+  .device img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .device.center { left: 50%; transform: translateX(-50%); }
+  .device.left { left: 64px; }
+  .device.right { right: 64px; }
+  .device.inline { position: relative; }
   .screen-slide .brand { z-index: 7; }
 
   /* ── text: one strong idea ────────────────────────────────────────────── */
@@ -171,11 +204,8 @@
   .flow-slide h1 { font-size: 72px; }
   .flow-slide .sub { margin-top: 12px; font-size: 38px; color: var(--muted); }
   .flow { position: absolute; top: 480px; left: 36px; right: 36px; display: flex; justify-content: center; gap: 24px; }
-  .fstep { width: 314px; display: flex; flex-direction: column; align-items: center; }
-  .mini-phone { width: 100%; border-radius: 46px; background: #0c0c14; padding: 10px; box-shadow: 0 30px 60px -30px rgba(40,20,110,0.55); }
-  .mini-phone .glass { border-radius: 37px; overflow: hidden; background: #fff; aspect-ratio: 1170 / 1950; }
-  .mini-phone img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; display: block; }
-  .fcap { margin-top: 26px; display: flex; align-items: center; gap: 14px; font-size: 36px; font-weight: 700; }
+  .fstep { width: var(--dw, 300px); display: flex; flex-direction: column; align-items: center; }
+  .fcap { margin-top: 22px; display: flex; align-items: center; gap: 12px; font-size: 32px; font-weight: 700; line-height: 1.25; }
   .fcap .num { flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--violet); color: #fff; display: grid; place-items: center; font: 800 30px/1 "Inter", sans-serif; }
   .fcap.gift .num { background: #16a34a; }
 
@@ -306,7 +336,8 @@
   .cta .csteps li { display: flex; align-items: center; gap: 26px; height: 100px; font-size: 40px; font-weight: 600; line-height: 1.2; }
   .cta .csteps li + li { border-top: 2px solid rgba(255,255,255,0.13); }
   .cta .csteps .cn { flex: none; width: 52px; height: 52px; border-radius: 50%; background: #fff; color: var(--violet); display: grid; place-items: center; font-family: Inter, sans-serif; font-weight: 700; font-size: 34px; }
-  .cta.has-steps .pill { margin-top: 50px; }
+  /* in the flow, right under the list — absolute, it sat 1080px below .copy and fell off the slide */
+  .cta.has-steps .pill { position: static; transform: none; margin-top: 56px; }
   .cta .csteps .cn svg { width: 38px; height: 38px; }
   .cta .pill svg { width: 48px; height: 48px; }
 </style>
@@ -389,8 +420,8 @@
           <h1>${rich(s.title, s.hl)}</h1>
           ${s.sub ? `<p class="sub">${rich(s.sub, s.subHl)}</p>` : ""}
         </div>
-        <div class="phone" style="top:${s.phoneTop ?? (s.step ? 500 : 420)}px;${s.phoneW ? `width:${s.phoneW}px;border-radius:${Math.round(s.phoneW * 0.14)}px` : ""}">
-          <div class="glass">${s.screenData ? `<img src="${s.screenData}" alt="" style="object-position:50% ${s.screenY ?? 0}%">` : picture(null, s.screen)}</div>
+        <div class="device center" data-fit data-floor="1286" data-maxw="470">
+          <div class="glass">${s.screenData ? `<img src="${s.screenData}" alt="">` : picture(null, s.screen)}</div>
         </div>
       </section>`,
 
@@ -450,7 +481,7 @@
         ${counter(s)}
         <div class="copy"><h1>${rich(s.title, s.hl)}</h1>${s.sub ? `<p class="sub">${rich(s.sub)}</p>` : ""}</div>
         <div class="flow">
-          ${s.steps.map((st, i) => `<div class="fstep"><div class="mini-phone"><div class="glass">${st.screenData ? `<img src="${st.screenData}" alt="" style="object-position:50% ${st.y ?? 0}%">` : ""}</div></div><div class="fcap ${st.gift ? "gift" : ""}"><span class="num">${st.gift ? "🎁" : i + 1}</span>${esc(st.text)}</div></div>`).join("")}
+          ${s.steps.map((st, i) => `<div class="fstep"><div class="device inline"><div class="glass">${st.screenData ? `<img src="${st.screenData}" alt="">` : ""}</div></div><div class="fcap ${st.gift ? "gift" : ""}"><span class="num">${st.gift ? "🎁" : i + 1}</span>${esc(st.text)}</div></div>`).join("")}
         </div>
         ${brand()}
       </section>`,
@@ -553,6 +584,19 @@
         ${brand()}
       </section>`,
 
+    scene: (s) => `
+      <section class="slide scene ${s.dark ? "on-dark" : "on-light"} ${s.screen ? `phone-${s.phone?.x ?? "right"}` : "no-phone"}" style="${s.photoY != null ? `--py:${s.photoY}%;` : ""}">
+        <div class="photo">${picture(s.photoData, s.photo)}</div>
+        <div class="fade-top"></div>
+        ${counter(s)}
+        <div class="copy"><h1>${rich(s.title, s.hl)}</h1>${s.sub ? `<p class="sub">${rich(s.sub, s.subHl)}</p>` : ""}</div>
+        ${s.screen ? `<div class="device ${s.phone?.x ?? "right"}" data-fit data-floor="1222" data-maxw="400">
+          <div class="glass">${s.screenData ? `<img src="${s.screenData}" alt="">` : picture(null, s.screen)}</div>
+        </div>` : ""}
+        ${s.pill ? `<div class="scene-pill"><div class="${s.pillStyle === "violet" ? "violet" : ""}">${s.pillIcon ? `<i data-lucide="${esc(s.pillIcon)}"></i>` : ""}<span>${rich(s.pill, s.pillHl)}</span></div></div>` : ""}
+        <div class="strip"><div class="name">${MARK("white")}<span>Pointili</span></div><div class="tag">${esc(s.strip || "كارط الوفاء في تليفون الحريف")}</div></div>
+      </section>`,
+
     cta: (s) => `
       <section class="slide cta on-dark${s.next ? " has-steps" : ""}">
         <div class="rings"></div>
@@ -567,9 +611,37 @@
       </section>`,
   };
 
+  // device height = width × RATIO (bezel included), so width = room / RATIO
+  const RATIO = 0.944 * (2532 / 1170) + 0.056;
+  function fitDevices() {
+    const slide = document.querySelector("#root .slide");
+    if (!slide) return;
+    const top0 = slide.getBoundingClientRect().top;
+    const copy = slide.querySelector(".copy");
+    const under = copy ? copy.getBoundingClientRect().bottom - top0 : 120;
+    const one = slide.querySelector(".device[data-fit]");
+    if (one) {
+      const floor = Number(one.dataset.floor);
+      const dw = Math.min(Number(one.dataset.maxw), (floor - (under + 34)) / RATIO);
+      one.style.setProperty("--dw", `${dw}px`);
+      one.style.top = `${floor - dw * RATIO}px`;
+      slide.style.setProperty("--devw", `${dw}px`);
+    }
+    const flow = slide.querySelector(".flow");
+    if (flow) {
+      // three whole phones, their captions, and the brand mark all have to fit
+      const n = flow.children.length;
+      const top = under + 36;
+      const dw = Math.min((1008 - 24 * (n - 1)) / n, (1350 - 190 - top) / RATIO);
+      flow.style.top = `${top}px`;
+      flow.style.setProperty("--dw", `${dw}px`);
+    }
+  }
+
   window.renderSlide = (s) => {
     document.getElementById("root").innerHTML = (LAYOUTS[s.type] || LAYOUTS.text)(s);
     window.lucide?.createIcons({ attrs: { "stroke-width": 2.2 } });
+    fitDevices();
     const img = document.querySelector("#root img");
     return img && !img.complete ? new Promise((r) => (img.onload = img.onerror = r)) : null;
   };

@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { ChevronRight, CreditCard, Gift, QrCode, Ticket, Users } from "lucide-react";
+import { ChevronRight, CreditCard, Gift, QrCode, Ticket } from "lucide-react";
 import { BusinessAvatar } from "@/components/CardIcon";
-import { ActivityRow } from "@/components/merchant/ActivityRow";
 import { Alert } from "@/components/ui/Alert";
 import { LinkButton } from "@/components/ui/Button";
-import { Card, SectionTitle } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { Card } from "@/components/ui/Card";
 import { SubscriptionBadge } from "@/components/ui/Badge";
 import { requireMerchant, rpc } from "@/lib/session";
 import { formatNumber } from "@/lib/format";
@@ -104,28 +102,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         ))}
       </section>
 
-      <section>
-        <SectionTitle
-          action={
-            <Link href="/activity" className="text-[13px] font-semibold text-brand-600">
-              {t.common.seeAll}
-            </Link>
-          }
-        >
-          {t.merchant.home.latest}
-        </SectionTitle>
-        {d.recent.length === 0 ? (
-          <EmptyState icon={<Users />} title={t.merchant.home.noCustomers} action={ctx.card ? <LinkButton href="/qr" block>{t.nav.merchant.showQr}</LinkButton> : undefined}>
-            {t.merchant.home.showQrFirst}
-          </EmptyState>
-        ) : (
-          <Card className="divide-y divide-line overflow-hidden">
-            {d.recent.slice(0, 4).map((a) => (
-              <ActivityRow key={a.id} item={a} relative />
-            ))}
-          </Card>
-        )}
-      </section>
     </div>
   );
 }

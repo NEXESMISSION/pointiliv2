@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Check, Gift, ScanLine, Ticket } from "lucide-react";
 import { confirmRedemption, lookupRedemptionCode } from "@/app/actions/merchant";
+import { GIFT_QUICK_OPEN_MS, GiftOpen } from "@/components/celebrate/GiftOpen";
 import { CameraScanner } from "@/components/scan/CameraScanner";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -60,14 +61,20 @@ export function RedeemConsole({ initialPending, initialFound, initialError, auto
   };
 
   if (done) {
+    // A second and a half of gift: the words come out of the box, the buttons are ready from the start.
+    const after = (ms: number) => ({ animationDelay: `${GIFT_QUICK_OPEN_MS + ms}ms` });
     return (
       <Card className="animate-rise p-6 text-center">
-        <span className="mx-auto grid size-20 animate-pop place-items-center rounded-full bg-success-500 text-white">
-          <Check className="size-10" strokeWidth={3} />
-        </span>
-        <p className="mt-4 text-2xl font-extrabold text-ink">{w.givenTitle}</p>
-        <p className="mt-1 text-lg font-semibold text-success-600">{done.reward_name}</p>
-        <p className="text-muted">{done.customer.name || fill(t.ops.customers.anon, { code: done.customer.code })}</p>
+        <GiftOpen size={84} pace="quick" className="mx-auto" />
+        <p className="mt-2 animate-rise text-2xl font-extrabold text-ink" style={after(60)}>
+          {w.givenTitle}
+        </p>
+        <p className="mt-1 animate-pop text-lg font-semibold text-success-600" style={after(140)}>
+          {done.reward_name}
+        </p>
+        <p className="animate-rise text-muted" style={after(220)}>
+          {done.customer.name || fill(t.ops.customers.anon, { code: done.customer.code })}
+        </p>
         <div className="mt-6 space-y-2">
           <Button
             block

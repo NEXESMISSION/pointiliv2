@@ -142,19 +142,6 @@ export async function removeBusinessImage(kind: ImageKind): Promise<{ ok: boolea
   return { ok: true, message: kind === "cover" ? t.ops.toasts.coverRemoved : t.ops.toasts.logoRemoved };
 }
 
-export async function requestPlan(_: FormState, fd: FormData): Promise<FormState> {
-  const { t, msg, fill } = await getI18n();
-  const res = await call("request_plan", { p_plan: str(fd, "plan"), p_method: str(fd, "method") });
-  if (!res.ok) return { ok: false, message: msg(res.error), at: now() };
-  revalidatePath("/billing");
-  return { ok: true, message: fill(t.ops.toasts.planRequested, { reference: String(res.payment_reference ?? "") }), at: now() };
-}
-
-export async function cancelPlanRequest(id: string) {
-  await call("cancel_plan_request", { p_id: id });
-  revalidatePath("/billing");
-}
-
 /** Find a pending reward by the 6 digits typed, or read from the customer's reward QR. */
 export async function lookupRedemptionCode(raw: string): Promise<{ ok: boolean; error?: string; redemption?: RedemptionView }> {
   const { t, msg } = await getI18n();
