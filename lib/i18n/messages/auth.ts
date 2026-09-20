@@ -21,8 +21,8 @@ export const auth = ns({
       submitting: "Connexion…",
       createAccount: "Créer un compte",
       createBusiness: "Créer mon commerce",
-      scanNotice: "Connectez-vous pour prendre votre tampon. Il est gardé 20 minutes.",
-      joinNotice: "Connectez-vous et la carte est ajoutée à votre téléphone tout de suite.",
+      scanNotice: "Connectez-vous et prenez votre tampon.",
+      joinNotice: "Connectez-vous, la carte est ajoutée tout de suite.",
     },
 
     register: {
@@ -30,8 +30,8 @@ export const auth = ns({
       subtitle: "Rejoignez Pointili et commencez à collecter des tampons !",
       submit: "Créer mon compte",
       submitting: "Création de votre compte…",
-      scanNotice: "Créez votre compte Pointili pour prendre votre tampon. Ça prend 20 secondes, et votre tampon est gardé pendant ce temps.",
-      joinNotice: "Créez votre compte gratuit et la carte est ajoutée à votre téléphone tout de suite.",
+      scanNotice: "Créez votre compte et prenez votre tampon — 20 secondes.",
+      joinNotice: "Créez votre compte, la carte est ajoutée tout de suite.",
     },
 
     business: {
@@ -121,8 +121,8 @@ export const auth = ns({
       submitting: "قاعد يدخّل…",
       createAccount: "اعمل كونت",
       createBusiness: "اعمل المحل متاعك",
-      scanNotice: "ادخل باش تاخو التامبون متاعك. باش يتحفظ 20 دقيقة.",
-      joinNotice: "ادخل والكارط تتزاد في التليفون متاعك توّا.",
+      scanNotice: "ادخل وخوذ التامبون متاعك.",
+      joinNotice: "ادخل والكارط تتزاد توّا.",
     },
 
     register: {
@@ -130,8 +130,8 @@ export const auth = ns({
       subtitle: "ابدا مع Pointili ولمّ التامبونات متاعك!",
       submit: "اعمل الكونت",
       submitting: "قاعد يعمل الكونت متاعك…",
-      scanNotice: "اعمل كونت Pointili باش تاخو التامبون متاعك. ياخولك 20 ثانية، والتامبون متاعك محفوظ.",
-      joinNotice: "اعمل كونت بلاش والكارط تتزاد في التليفون متاعك توّا.",
+      scanNotice: "اعمل كونت وخوذ التامبون — 20 ثانية برك.",
+      joinNotice: "اعمل كونت والكارط تتزاد توّا.",
     },
 
     business: {

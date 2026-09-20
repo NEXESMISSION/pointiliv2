@@ -180,7 +180,7 @@ try {
   const c = await french(await browser.newContext(phone));
   const cp = await c.newPage();
   await cp.goto(BASE + scanUrl.pathname, { waitUntil: "domcontentloaded" });
-  await cp.getByText("Votre tampon vous attend").waitFor({ timeout: 30000 });
+  await cp.getByText("Tampon réservé").waitFor({ timeout: 30000 });
   await shot(cp, "30-scan-signed-out", null, { full: false, noBack: true });
   await cp.getByRole("link", { name: "Créer mon compte" }).first().click();
   await cp.waitForURL(/customer\/register/);

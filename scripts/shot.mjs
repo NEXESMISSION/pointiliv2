@@ -62,7 +62,8 @@ try {
 async function session() {
   if (mode === "public") return undefined;
   const role = mode === "scan" ? "merchant" : mode;
-  const file = `.e2e/auth-${role}.json`;
+  // one cache per server: a session from production is useless on localhost
+  const file = `.e2e/auth-${role}-${new URL(BASE).host.replace(/[^a-z0-9]+/gi, "-")}.json`;
   if (existsSync(file)) return JSON.parse(readFileSync(file, "utf8"));
 
   const ctx = await browser.newContext(phone);

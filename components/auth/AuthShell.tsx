@@ -11,9 +11,11 @@ import { useT } from "@/components/i18n/Provider";
 export function AuthShell({ children, wide = false, back = "/" }: { children: ReactNode; wide?: boolean; back?: string }) {
   const { t } = useT();
   return (
-    <div className="relative flex min-h-dvh items-center justify-center bg-white sm:bg-canvas sm:px-4 sm:py-8">
+    <div className="relative flex min-h-dvh flex-col overflow-y-auto bg-white sm:bg-canvas sm:px-4 sm:py-8">
+      {/* m-auto, not h-dvh: the form sits in the middle when it fits and stays
+          reachable when it does not (long form, error shown, keyboard open). */}
       <main
-        className={`relative mx-auto flex h-dvh w-full flex-col justify-center overflow-hidden bg-white px-6 py-4 sm:h-auto sm:overflow-visible sm:rounded-3xl sm:border sm:border-line sm:px-10 sm:py-8 sm:shadow-card ${wide ? "max-w-lg" : "max-w-md"}`}
+        className={`relative m-auto w-full bg-white px-6 py-5 sm:rounded-3xl sm:border sm:border-line sm:px-10 sm:py-8 sm:shadow-card ${wide ? "max-w-lg" : "max-w-md"}`}
       >
         <div className="mb-4 grid h-10 shrink-0 grid-cols-[1fr_auto_1fr] items-center">
           <BackButton fallback={back} className="-ms-2 justify-self-start" />
