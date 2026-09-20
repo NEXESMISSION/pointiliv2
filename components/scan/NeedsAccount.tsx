@@ -32,8 +32,8 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
 
       <p className="max-w-[32ch] text-[15px] leading-relaxed text-body">{w.body}</p>
 
-      <p className="flex max-w-[34ch] flex-col items-center gap-1.5 rounded-2xl bg-warning-50 px-4 py-3 text-sm font-semibold leading-relaxed text-warning-700">
-        <AlertTriangle className="size-5" aria-hidden />
+      <p className="inline-flex max-w-[34ch] items-center gap-2 rounded-2xl bg-warning-50 px-4 py-3 text-[15px] font-semibold leading-snug text-warning-700">
+        <AlertTriangle className="size-5 shrink-0" aria-hidden />
         {w.warning}
       </p>
 
@@ -42,7 +42,7 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
       </p>
 
       <div className="mt-1 w-full space-y-2">
-        <LinkButton href={`/customer/register?next=${next}`} block>
+        <LinkButton href={`/customer/register?next=${next}`} block className="animate-breathe">
           {w.createAccount}
         </LinkButton>
         <p className="text-xs text-muted">{w.firstTime}</p>
