@@ -12,9 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MerchantPasswordPage() {
   const { t } = await getI18n();
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto w-full max-w-md">
       <TopBar title={t.ops.settings.changePassword} back="/settings" />
-      <Card className="p-5">
+      <Card className="p-4">
         <ChangePasswordForm />
       </Card>
     </div>

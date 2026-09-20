@@ -19,12 +19,14 @@ export default async function AdminDashboard() {
   const o = await rpc<AdminOverview>("admin_overview");
   const { t, locale, count, fill } = await getI18n();
   const d = t.admin.dashboard;
+  // two alerts sit side by side so the screen never grows a second banner row
+  const bothAlerts = o.pending_payments > 0 && o.expiring_soon > 0;
 
   return (
-    <div className="animate-fade space-y-6">
+    <div className="animate-fade space-y-3">
       <TopBar title={d.title} subtitle={d.subtitle} large />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-3">
         <StatCard
           label={d.businesses}
           value={formatNumber(o.businesses, locale)}
@@ -64,7 +66,7 @@ export default async function AdminDashboard() {
       </div>
 
       {(o.pending_payments > 0 || o.expiring_soon > 0) && (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className={`grid gap-2.5 ${bothAlerts ? "grid-cols-2" : ""}`}>
           {o.pending_payments > 0 && (
             <Link href="/admin/payments?status=pending" className="block rounded-2xl transition active:scale-[0.99]">
               <Alert tone="warning" title={count(d.paymentsWaiting, o.pending_payments)} className="items-center">
@@ -100,7 +102,8 @@ export default async function AdminDashboard() {
           <EmptyState title={d.emptyTitle}>{d.emptyBody}</EmptyState>
         ) : (
           <Card className="divide-y divide-line/80 overflow-hidden">
-            {o.recent.map((a) => {
+            {/* only what fits on the screen — the rest is one tap away */}
+            {o.recent.slice(0, bothAlerts ? 2 : 3).map((a) => {
               const inner = (
                 <>
                   <ActivityIcon type={a.type} />
@@ -119,7 +122,7 @@ export default async function AdminDashboard() {
                   <span className="shrink-0 text-xs text-faint">{timeAgo(a.at, locale)}</span>
                 </>
               );
-              const cls = "flex min-h-16 items-center gap-3 px-4 py-3";
+              const cls = "flex items-center gap-2.5 px-3.5 py-2";
               return a.business_id ? (
                 <Link key={a.id} href={`/admin/businesses/${a.business_id}`} className={`${cls} transition hover:bg-canvas/70`}>
                   {inner}

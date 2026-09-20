@@ -7,7 +7,7 @@ export const LOCALES = ["fr", "tn"] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = "tn";
-export const LOCALE_COOKIE = "pl_lang";
+export const LOCALE_COOKIE = "pl_lang2";
 export const LOCALE_HEADER = "x-pl-lang";
 export const LOCALE_MAX_AGE = 31_536_000;
 

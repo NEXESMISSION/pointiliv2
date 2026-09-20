@@ -15,7 +15,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   const suspended = ctx.business.status === "suspended";
 
   return (
-    <div className="min-h-dvh bg-canvas print:min-h-0 print:bg-white">
+    <div className="flex h-dvh flex-col overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible print:bg-white">
       <MerchantSideNav
         header={
           <div className="space-y-5">
@@ -37,7 +37,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
           </form>
         }
       />
-      <div className="lg:ps-60 print:!ps-0">
+      <div className="flex min-h-0 flex-1 flex-col lg:ps-60 print:!ps-0">
         {suspended ? (
           <Banner tone="danger">{t.merchant.banner.suspended}</Banner>
         ) : sub && !sub.open ? (
@@ -52,7 +52,9 @@ export default async function MerchantLayout({ children }: { children: React.Rea
             })}
           </Banner>
         ) : null}
-        <main className="mx-auto w-full max-w-4xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-12 lg:pt-8 print:!p-0">{children}</main>
+        <main className="app-main print:!overflow-visible">
+          <div className="app-center mx-auto w-full max-w-3xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-8 lg:pt-6 print:!p-0">{children}</div>
+        </main>
       </div>
       <MerchantNav />
     </div>

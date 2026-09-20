@@ -22,26 +22,24 @@ export function PlanPicker() {
   const [plan, setPlan] = useState<PaidPlan>("yearly");
   const w = t.ops.billing;
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-2.5">
       <ToastOnResult result={state} />
-      <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label={w.planAria}>
+      <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label={w.planAria}>
         {(Object.keys(PLANS) as PaidPlan[]).map((k) => {
           const p = PLANS[k];
           const on = plan === k;
           return (
-            <label key={k} className={`relative block cursor-pointer rounded-2xl bg-white p-5 shadow-card transition-colors ${on ? "border-2 border-brand-600" : "border-2 border-line hover:border-brand-200"}`}>
+            <label key={k} className={`relative block cursor-pointer rounded-2xl bg-white p-2.5 text-center shadow-card transition-colors ${on ? "border-2 border-brand-600" : "border-2 border-line hover:border-brand-200"}`}>
               <input type="radio" name="plan" value={k} checked={on} onChange={() => setPlan(k)} className="sr-only" />
-              <div className="flex items-center justify-between gap-3">
-                <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-                  {t.data.plans[k]}
-                  {k === "yearly" && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{w.bestValue}</span>}
-                </p>
-                <span className={`grid size-5 place-items-center rounded-full border-2 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-line"}`}>{on && <Check className="size-3" strokeWidth={3.5} />}</span>
-              </div>
-              <p className="mt-3 text-3xl font-bold tracking-tight text-ink tabular">
-                {formatNumber(p.price, locale)} <span className="text-sm font-medium tracking-normal text-muted">{t.formats.currency} {t.data.planPeriod[k]}</span>
+              <span className={`absolute end-2 top-2 grid size-5 place-items-center rounded-full border-2 ${on ? "border-brand-600 bg-brand-600 text-white" : "border-line"}`}>{on && <Check className="size-3" strokeWidth={3.5} />}</span>
+              <p className="flex flex-wrap items-center justify-center gap-1.5 text-[15px] font-semibold text-ink">
+                {t.data.plans[k]}
+                {k === "yearly" && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{w.bestValue}</span>}
               </p>
-              <p className="text-sm text-muted">≈ {fill(t.formats.perMonth, { price: formatNumber(Math.round((p.price / MONTHS[k]) * 10) / 10, locale) })}</p>
+              <p className="mt-1 text-xl font-bold tracking-tight text-ink tabular">
+                {formatNumber(p.price, locale)} <span className="text-xs font-medium tracking-normal text-muted">{t.formats.currency} {t.data.planPeriod[k]}</span>
+              </p>
+              <p className="text-[13px] text-muted">≈ {fill(t.formats.perMonth, { price: formatNumber(Math.round((p.price / MONTHS[k]) * 10) / 10, locale) })}</p>
             </label>
           );
         })}

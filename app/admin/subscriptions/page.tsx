@@ -29,7 +29,7 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
   const filterLabel: Record<string, string> = { all: t.admin.all, ...w.filters };
 
   return (
-    <div className="animate-fade space-y-4">
+    <div className="animate-fade space-y-2.5">
       <TopBar back="/admin" title={w.title} subtitle={count(w.count, items.length)} large />
       <Segmented
         active={filter}
@@ -41,14 +41,15 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
           {w.emptyBody}
         </EmptyState>
       ) : (
-        <div className="space-y-2.5">
+        /* the list is the only thing that scrolls, and only inside its own frame */
+        <div className="max-h-[calc(100dvh-17rem)] space-y-2 overflow-y-auto overscroll-contain lg:max-h-none">
           {items.map((row) => {
             const s = row.subscription;
             const stripe = s.status === "expiring_soon" ? "bg-warning-500" : s.status === "expired" || s.status === "none" ? "bg-danger-500" : null;
             return (
               <Card key={row.business_id} className="relative overflow-hidden">
                 {stripe && <span className={`absolute inset-y-0 start-0 w-1.5 ${stripe}`} aria-hidden />}
-                <div className="flex flex-col gap-3 px-4 py-3.5 ps-5 lg:flex-row lg:items-center">
+                <div className="flex flex-col gap-2 px-3.5 py-2.5 ps-4.5 lg:flex-row lg:items-center">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link href={`/admin/businesses/${row.business_id}`} className="min-w-0 truncate text-[15px] font-semibold text-ink hover:text-brand-700">
@@ -78,7 +79,7 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
                   </div>
 
                   {row.pending_payment && (
-                    <div className="flex flex-col gap-2 rounded-2xl bg-warning-50 p-3 sm:flex-row sm:items-center lg:w-auto">
+                    <div className="flex items-center gap-2 rounded-xl bg-warning-50 p-2 lg:w-auto">
                       <div className="min-w-0 flex-1 text-sm">
                         <p className="font-semibold text-warning-700">
                           {fill(w.pending, {

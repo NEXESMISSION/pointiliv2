@@ -19,7 +19,7 @@ export function LoginForm({ portal, next }: { portal: "customer" | "business"; n
   const registerHref = portal === "business" ? "/register" : `/customer/register${next ? `?next=${encodeURIComponent(next)}` : ""}`;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+    <form onSubmit={onSubmit} className="space-y-3.5" noValidate>
       <input type="hidden" name="portal" value={portal} />
       {next && <input type="hidden" name="next" value={next} />}
       {state?.error && <Alert>{state.error}</Alert>}

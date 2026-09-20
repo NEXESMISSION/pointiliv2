@@ -24,7 +24,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
   const w = t.admin.customers;
 
   return (
-    <div className="animate-fade space-y-4">
+    <div className="animate-fade space-y-2.5">
       <TopBar
         back="/admin"
         title={w.title}
@@ -38,38 +38,38 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           {q ? fill(w.emptySearch, { q }) : w.emptyBody}
         </EmptyState>
       ) : (
-        <Card className="divide-y divide-line/80 overflow-hidden">
+        /* the directory is long by nature: it scrolls inside its own card */
+        <Card className="max-h-[calc(100dvh-18rem)] divide-y divide-line/80 overflow-y-auto overscroll-contain lg:max-h-none">
           {items.map((c) => {
             const phone = c.phone ? formatPhone(c.phone) : "—";
             return (
-              <div key={c.id} className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  <Avatar label={initials(c.name, "#")} size={44} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate text-[15px] font-semibold text-ink tabular">
-                        <span dir="ltr">{phone}</span>
-                      </p>
-                      {c.role !== "customer" && <Badge tone={c.role === "admin" ? "brand" : "neutral"}>{c.role === "admin" ? w.roleAdmin : w.roleMerchant}</Badge>}
-                    </div>
-                    <p className="truncate text-sm text-muted">{c.name || "—"}</p>
-                    <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
-                      <span>
-                        <span className="font-semibold text-body tabular">{formatNumber(c.cards, locale)}</span> {count(w.cardsUnit, c.cards)}
-                      </span>
-                      <span>
-                        <span className="font-semibold text-body tabular">{formatNumber(c.stamps, locale)}</span> {count(w.stampsUnit, c.stamps)}
-                      </span>
-                      <span>
-                        <span className="font-semibold text-body tabular">{formatNumber(c.redemptions, locale)}</span> {count(w.rewardsUnit, c.redemptions)}
-                      </span>
-                      <span>{fill(w.joined, { date: formatDate(c.created_at, locale) })}</span>
-                      <span>{fill(w.lastStamp, { ago: timeAgo(c.last_stamp_at, locale) })}</span>
+              <div key={c.id} className="flex items-start gap-2.5 px-3.5 py-2.5">
+                <Avatar label={initials(c.name, "#")} size={40} />
+                <div className="min-w-0 flex-1">
+                  {/* the action shares the phone's line, so the facts below keep the full width */}
+                  <div className="flex items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink tabular">
+                      <span dir="ltr">{phone}</span>
                     </p>
+                    <ResetPasswordButton userId={c.id} label={c.name ? `${c.name} (${phone})` : phone} />
                   </div>
-                </div>
-                <div className="sm:shrink-0">
-                  <ResetPasswordButton userId={c.id} label={c.name ? `${c.name} (${phone})` : phone} />
+                  <p className="flex items-center gap-2 text-[13px] text-muted">
+                    <span className="min-w-0 truncate">{c.name || "—"}</span>
+                    {c.role !== "customer" && <Badge tone={c.role === "admin" ? "brand" : "neutral"}>{c.role === "admin" ? w.roleAdmin : w.roleMerchant}</Badge>}
+                  </p>
+                  <p className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-xs text-muted">
+                    <span>
+                      <span className="font-semibold text-body tabular">{formatNumber(c.cards, locale)}</span> {count(w.cardsUnit, c.cards)}
+                    </span>
+                    <span>
+                      <span className="font-semibold text-body tabular">{formatNumber(c.stamps, locale)}</span> {count(w.stampsUnit, c.stamps)}
+                    </span>
+                    <span>
+                      <span className="font-semibold text-body tabular">{formatNumber(c.redemptions, locale)}</span> {count(w.rewardsUnit, c.redemptions)}
+                    </span>
+                    <span>{fill(w.joined, { date: formatDate(c.created_at, locale) })}</span>
+                    <span>{fill(w.lastStamp, { ago: timeAgo(c.last_stamp_at, locale) })}</span>
+                  </p>
                 </div>
               </div>
             );

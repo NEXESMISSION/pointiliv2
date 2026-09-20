@@ -17,7 +17,7 @@ export function RegisterForm({ next }: { next?: string }) {
   const { state, onSubmit, pending } = useFormAction<FormState>(registerCustomer, null);
   const f = state?.fields ?? {};
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+    <form onSubmit={onSubmit} className="space-y-3.5" noValidate>
       {next && <input type="hidden" name="next" value={next} />}
       {state?.error && <Alert>{state.error}</Alert>}
 

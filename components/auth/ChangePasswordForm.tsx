@@ -22,7 +22,7 @@ export function ChangePasswordForm() {
   }, [state?.ok, state?.at]);
 
   return (
-    <form ref={form} onSubmit={onSubmit} className="space-y-5" noValidate>
+    <form ref={form} onSubmit={onSubmit} className="space-y-3.5" noValidate>
       <ToastOnResult result={state} />
       {state?.error && <Alert>{state.error}</Alert>}
       <Field label={t.auth.changePassword.current} htmlFor="current" error={f.current}>

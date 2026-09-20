@@ -43,7 +43,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <div className="animate-fade space-y-4">
+    <div className="animate-fade space-y-2.5">
       <TopBar back="/admin" title={w.title} subtitle={w.subtitle} large />
       <Segmented active={type} items={KEYS.map((key) => ({ key, label: filterLabel[key]!, href: key === "all" ? "/admin/activity" : `/admin/activity?type=${key}` }))} />
 
@@ -52,10 +52,11 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
           {w.emptyBody}
         </EmptyState>
       ) : (
-        <div className="space-y-5">
+        /* a day-by-day log: it scrolls inside its own frame, day labels pinned */
+        <div className="max-h-[calc(100dvh-17rem)] space-y-3 overflow-y-auto overscroll-contain lg:max-h-none">
           {groups.map((g) => (
             <section key={g.key}>
-              <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted">{g.label}</h2>
+              <h2 className="sticky top-0 z-10 mb-1.5 bg-canvas px-1 py-0.5 text-xs font-semibold uppercase tracking-wide text-muted">{g.label}</h2>
               <Card className="divide-y divide-line/80 overflow-hidden">
                 {g.items.map((a) => {
                   const extra = detail(a);
@@ -80,7 +81,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                       <span className="shrink-0 text-xs text-faint tabular">{formatTime(a.at, locale)}</span>
                     </>
                   );
-                  const cls = "flex min-h-16 items-center gap-3 px-4 py-3";
+                  const cls = "flex items-center gap-2.5 px-3.5 py-2";
                   return a.business_id ? (
                     <Link key={a.id} href={`/admin/businesses/${a.business_id}`} className={`${cls} transition hover:bg-canvas/70`}>
                       {inner}

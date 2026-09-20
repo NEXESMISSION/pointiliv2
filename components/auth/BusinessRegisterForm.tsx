@@ -19,7 +19,7 @@ export function BusinessRegisterForm({ signedIn, defaultName, defaultEmail }: { 
   const f = state?.fields ?? {};
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+    <form onSubmit={onSubmit} className="space-y-3.5" noValidate>
       {state?.error && (
         <Alert
           action={

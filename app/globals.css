@@ -118,6 +118,26 @@
   .bottom-nav-space {
     padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
   }
+  /* An app screen is one screen: the shell is exactly the viewport, the
+     content sits in the middle of it, and only a list long enough to need it
+     scrolls — inside its own area, with the nav and the header staying put. */
+  .app-main {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .app-center {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    justify-content: center;
+  }
+  /* A child with mx-auto would otherwise cancel the stretch and size itself
+     from its content, which pushes wide rows past both screen edges. */
+  .app-center > * {
+    width: 100%;
+  }
   .tabular {
     font-variant-numeric: tabular-nums;
   }

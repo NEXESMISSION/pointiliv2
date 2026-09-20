@@ -14,11 +14,11 @@ export function RewardForm({ initial }: { initial: { id?: string; name: string; 
   const { t } = useT();
   const f = t.merchant.rewardForm;
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
+    <form onSubmit={onSubmit} className="space-y-4">
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
       {state?.error && <Alert>{state.error}</Alert>}
       {initial.is_primary && <Alert tone="info">{f.primaryNote}</Alert>}
-      <Card className="space-y-5 p-5">
+      <Card className="space-y-4 p-4">
         <Field label={f.nameLabel} htmlFor="name">
           <Input id="name" name="name" defaultValue={initial.name} placeholder={f.namePlaceholder} required maxLength={60} autoFocus={!initial.id} />
         </Field>
@@ -26,7 +26,7 @@ export function RewardForm({ initial }: { initial: { id?: string; name: string; 
           <Input id="stamps_required" name="stamps_required" type="number" inputMode="numeric" min={initial.is_primary ? 2 : 1} max={initial.is_primary ? 30 : 100} defaultValue={initial.stamps_required} required />
         </Field>
         <Field label={f.descLabel} htmlFor="description">
-          <Textarea id="description" name="description" defaultValue={initial.description} placeholder={f.descPlaceholder} maxLength={200} rows={3} />
+          <Textarea id="description" name="description" defaultValue={initial.description} placeholder={f.descPlaceholder} maxLength={200} rows={2} />
         </Field>
         {!initial.is_primary && (
           <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3">

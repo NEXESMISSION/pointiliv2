@@ -27,10 +27,10 @@ export default async function RedeemPage({ searchParams }: { searchParams: Promi
   }
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto w-full max-w-xl">
       <TopBar title={w.title} back="/dashboard" subtitle={w.subtitle} />
       <RedeemConsole initialPending={pending} initialFound={initialFound} initialError={initialError} autoScan={scan === "1"} />
-      <p className="mt-5 text-center text-[13px] leading-relaxed text-muted">{w.footnote}</p>
+      <p className="mt-4 text-center text-[13px] leading-relaxed text-muted">{w.footnote}</p>
     </div>
   );
 }

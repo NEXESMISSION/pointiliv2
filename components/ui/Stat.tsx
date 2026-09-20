@@ -12,14 +12,14 @@ const tints = {
 /** Compact metric: small label + icon on top, the number below. */
 export function StatCard({ label, value, icon, tint = "white", change, sub }: { label: string; value: ReactNode; icon?: ReactNode; tint?: keyof typeof tints; change?: number | null; sub?: ReactNode }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-line bg-white p-4 shadow-card">
-      <div className="flex items-center justify-between gap-2">
+    <div className="min-w-0 rounded-2xl border border-line bg-white p-3 text-center shadow-card">
+      <div className="flex items-center justify-center gap-1.5">
         <span className="truncate text-[13px] font-medium text-muted">{label}</span>
         {icon && <span className={`shrink-0 [&>svg]:size-4 ${tints[tint]}`}>{icon}</span>}
       </div>
-      <span className="mt-2 block text-2xl font-semibold leading-none tracking-tight text-ink tabular">{value}</span>
+      <span className="mt-1.5 block text-2xl font-semibold leading-none tracking-tight text-ink tabular">{value}</span>
       {(change != null || sub) && (
-        <div className="mt-2 flex items-center gap-1.5 text-xs">
+        <div className="mt-1.5 flex items-center justify-center gap-1.5 text-xs">
           {change != null && (
             <span className={`inline-flex items-center gap-0.5 font-semibold ${change >= 0 ? "text-success-600" : "text-danger-600"}`}>
               {change >= 0 ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}

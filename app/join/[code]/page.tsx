@@ -60,7 +60,7 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
 
   return (
     <Shell>
-      <h1 className="mt-8 text-center text-[1.6rem] font-semibold leading-tight tracking-[-0.025em] text-ink">
+      <h1 className="mt-4 text-center text-[1.6rem] font-semibold leading-tight tracking-[-0.025em] text-ink">
         {t.scan.join.heading}
         <br />
         {business.name}
@@ -75,7 +75,7 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
         )}
       </p>
 
-      <div className="mt-7">
+      <div className="mt-5">
         <LoyaltyCardVisual design={design} business={business} subtitle={card.description} filled={0} total={card.stamps_required} rewardName={reward?.name} />
       </div>
 
@@ -85,7 +85,7 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
         </Alert>
       )}
 
-      <ul className="mt-6 space-y-2.5 text-[15px] text-body">
+      <ul className="mt-5 space-y-2 text-[15px] text-body">
         {perks.map((perk) => (
           <li key={perk} className="flex items-center gap-2.5">
             <span className="grid size-5 shrink-0 place-items-center rounded-full bg-success-50 text-success-600">
@@ -96,7 +96,7 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
         ))}
       </ul>
 
-      <div className="mt-auto space-y-2 pt-8">
+      <div className="space-y-2 pt-6">
         <LinkButton href={`/customer/register?next=${next}`} block>
           {t.scan.join.getCard}
         </LinkButton>
@@ -110,8 +110,8 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col bg-white px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))] sm:my-10 sm:min-h-0 sm:rounded-3xl sm:border sm:border-line sm:shadow-card">
-      <div className="grid h-11 grid-cols-[2.5rem_1fr_2.5rem] items-center">
+    <main className="relative mx-auto flex h-dvh w-full max-w-md flex-col justify-center overflow-hidden bg-white px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))] sm:my-10 sm:h-auto sm:overflow-visible sm:rounded-3xl sm:border sm:border-line sm:shadow-card">
+      <div className="grid h-10 shrink-0 grid-cols-[2.5rem_1fr_2.5rem] items-center">
         <BackButton fallback="/customer" className="-ms-2" />
         <span className="justify-self-center">
           <Logo size={22} />
@@ -127,12 +127,12 @@ async function JoinError({ code, businessName }: { code: string; businessName?: 
   const own = code === "own_business";
   return (
     <Shell>
-      <div className="flex flex-1 flex-col items-center pt-14 text-center">
+      <div className="flex flex-col items-center pt-6 text-center">
         <div className={`grid size-20 place-items-center rounded-full ${own ? "bg-brand-50 text-brand-600" : "bg-danger-50 text-danger-600"}`}>{own ? <Store className="size-9" /> : <X className="size-9" />}</div>
         <h1 className="mt-6 text-2xl font-semibold tracking-tight text-ink">{own ? t.scan.join.ownTitle : t.scan.join.errorTitle}</h1>
         {businessName && <p className="mt-1 font-medium text-body">{businessName}</p>}
         <p className="mx-auto mt-3 max-w-xs text-[15px] leading-relaxed text-muted">{own ? t.scan.join.ownBody : msg(code === "invalid" ? "invalid" : code)}</p>
-        <div className="mt-auto w-full space-y-2 pt-10">
+        <div className="w-full space-y-2 pt-8">
           {own ? (
             <LinkButton href="/dashboard" block>
               {t.scan.join.backToDashboard}

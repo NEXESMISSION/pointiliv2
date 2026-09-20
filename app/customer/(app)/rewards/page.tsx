@@ -49,7 +49,8 @@ export default async function RewardsPage() {
           {t.customer.rewards.emptyBody}
         </EmptyState>
       ) : (
-        <div className="space-y-7">
+        // unlocked + in progress + history can run long: they scroll together, the title stays put
+        <div className="max-h-[66dvh] space-y-4 overflow-y-auto pb-1">
           {data.unlocked.length > 0 && (
             <section>
               <SectionTitle>{t.customer.rewards.readyToUse}</SectionTitle>
@@ -57,17 +58,17 @@ export default async function RewardsPage() {
                 {data.unlocked.map((r) => {
                   const c = cardColor(r.card.color);
                   return (
-                    <Card key={r.reward_id} className="p-4">
-                      <div className="flex items-center gap-3">
-                        <BusinessAvatar logo={r.business.logo_url} icon={r.card.icon} color={r.card.color} size={52} />
+                    <Card key={r.reward_id} className="p-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <BusinessAvatar logo={r.business.logo_url} icon={r.card.icon} color={r.card.color} size={44} />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[17px] font-bold text-ink">{r.name}</p>
-                          <p className="truncate text-sm text-muted">{r.business.name}</p>
+                          <p className="truncate text-base font-bold text-ink">{r.name}</p>
+                          <p className="truncate text-[13px] text-muted">{r.business.name}</p>
                         </div>
                         <Badge tone="success">{t.customer.rewards.unlockedBadge}</Badge>
                       </div>
-                      {r.description && <p className="mt-3 rounded-2xl p-3 text-sm text-body" style={{ background: c.bg }}>{r.description}</p>}
-                      <div className="mt-3">
+                      {r.description && <p className="mt-2.5 rounded-2xl p-2.5 text-[13px] text-body" style={{ background: c.bg }}>{r.description}</p>}
+                      <div className="mt-2.5">
                         <UseRewardButton rewardId={r.reward_id} pendingId={pendingByReward.get(r.reward_id)} size="md" />
                       </div>
                     </Card>
@@ -84,8 +85,8 @@ export default async function RewardsPage() {
                 {data.upcoming.map((r) => {
                   const c = cardColor(r.card.color);
                   return (
-                    <Link key={r.reward_id} href={`/customer/cards/${r.customer_id}`} className="flex items-center gap-3 p-4">
-                      <BusinessAvatar logo={r.business.logo_url} icon={r.card.icon} color={r.card.color} size={44} />
+                    <Link key={r.reward_id} href={`/customer/cards/${r.customer_id}`} className="flex items-center gap-2.5 p-3">
+                      <BusinessAvatar logo={r.business.logo_url} icon={r.card.icon} color={r.card.color} size={38} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="truncate font-semibold text-ink">{r.name}</p>
@@ -93,7 +94,7 @@ export default async function RewardsPage() {
                             {r.balance}/{r.stamps_required}
                           </p>
                         </div>
-                        <p className="mb-2 truncate text-sm text-muted">
+                        <p className="mb-1.5 truncate text-[13px] text-muted">
                           {r.business.name} · {count(t.common.stampsToGo, r.remaining)}
                         </p>
                         <ProgressBar value={r.balance} max={r.stamps_required} color={c.accent} />
@@ -110,13 +111,13 @@ export default async function RewardsPage() {
               <SectionTitle>{t.customer.rewards.redeemed}</SectionTitle>
               <Card className="divide-y divide-line/80">
                 {data.history.map((h) => (
-                  <div key={h.id} className="flex items-center gap-3 px-4 py-3">
-                    <span className="grid size-9 place-items-center rounded-full bg-warning-50 text-warning-700">
+                  <div key={h.id} className="flex items-center gap-2.5 px-3.5 py-2.5">
+                    <span className="grid size-8 place-items-center rounded-full bg-warning-50 text-warning-700">
                       <Gift className="size-4" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-ink">{h.reward_name}</p>
-                      <p className="truncate text-sm text-muted">{h.business_name}</p>
+                      <p className="truncate text-[15px] font-medium text-ink">{h.reward_name}</p>
+                      <p className="truncate text-[13px] text-muted">{h.business_name}</p>
                     </div>
                     <p className="text-xs text-muted">{formatDate(h.redeemed_at, locale)}</p>
                   </div>

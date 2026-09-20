@@ -17,7 +17,7 @@ export function BusinessForm({ business, disabled }: { business: NonNullable<Ses
   return (
     <form onSubmit={onSubmit}>
       <ToastOnResult result={state} />
-      <fieldset disabled={disabled} className="min-w-0 space-y-4">
+      <fieldset disabled={disabled} className="min-w-0 space-y-3">
         <Field label={w.businessName} htmlFor="name">
           <Input id="name" name="name" defaultValue={business.name} required maxLength={60} />
         </Field>
@@ -37,7 +37,7 @@ export function BusinessForm({ business, disabled }: { business: NonNullable<Ses
           <Input id="address" name="address" defaultValue={business.address ?? ""} placeholder={w.addressPlaceholder} maxLength={160} autoComplete="street-address" />
         </Field>
         {!disabled && (
-          <SubmitButton pending={pending} pendingText={t.common.saving}>
+          <SubmitButton size="md" pending={pending} pendingText={t.common.saving}>
             {w.saveBusiness}
           </SubmitButton>
         )}

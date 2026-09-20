@@ -39,20 +39,20 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
     <div className="mx-auto max-w-4xl">
       <TopBar title={c.title} large back="/dashboard" subtitle={fill(c.total, { n: formatNumber(data.total, locale) })} />
 
-      <form action="/customers" className="relative mb-3">
+      <form action="/customers" className="relative mb-2.5">
         <input type="hidden" name="sort" value={activeSort} />
-        <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-faint" />
+        <Search className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-faint" />
         <input
           name="q"
           defaultValue={q}
           type="search"
           inputMode="search"
           placeholder={c.searchPlaceholder}
-          className="h-12 w-full rounded-2xl border border-line bg-white ps-12 pe-4 text-base placeholder:text-faint focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+          className="h-11 w-full rounded-2xl border border-line bg-white ps-10 pe-4 text-base placeholder:text-faint focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
           aria-label={c.searchAria}
         />
       </form>
-      <div className="mb-4">
+      <div className="mb-2.5">
         <Segmented active={activeSort} items={SORT_KEYS.map((k) => ({ key: k, label: c.sort[k], href: qs(k) }))} />
       </div>
 
@@ -63,7 +63,8 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
       ) : data.items.length === 0 ? (
         <EmptyState title={c.noMatchTitle}>{fill(c.noMatchBody, { q })}</EmptyState>
       ) : (
-        <Card className="divide-y divide-line/80 overflow-hidden">
+        // the shop can have hundreds of customers; the list scrolls, the screen does not
+        <Card className="max-h-[54dvh] divide-y divide-line/80 overflow-y-auto">
           <div className="hidden grid-cols-[1fr_7rem_6rem_7rem_1.5rem] gap-3 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted sm:grid">
             <span>{c.colCustomer}</span>
             <span>{c.colStamps}</span>
@@ -72,17 +73,17 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             <span />
           </div>
           {data.items.map((row) => (
-            <Link key={row.id} href={`/customers/${row.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-canvas/70 sm:grid sm:grid-cols-[1fr_7rem_6rem_7rem_1.5rem]">
-              <span className="flex min-w-0 flex-1 items-center gap-3">
-                <Avatar label={row.name ? initials(row.name) : "#"} size={42} color={AVATAR_COLORS[row.code % AVATAR_COLORS.length]} />
+            <Link key={row.id} href={`/customers/${row.id}`} className="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-canvas/70 sm:grid sm:grid-cols-[1fr_7rem_6rem_7rem_1.5rem]">
+              <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                <Avatar label={row.name ? initials(row.name) : "#"} size={36} color={AVATAR_COLORS[row.code % AVATAR_COLORS.length]} />
                 <span className="min-w-0">
                   <span className="block truncate font-semibold text-ink">{row.name || fill(c.anon, { code: row.code })}</span>
-                  <span className="block truncate text-sm text-muted tabular">
+                  <span className="block truncate text-[13px] text-muted tabular">
                     <span dir="ltr" className="inline-block">
                       #{row.code} · {row.phone_masked}
                     </span>
                   </span>
-                  <span className="mt-0.5 block text-sm text-body tabular sm:hidden">
+                  <span className="block text-[13px] text-body tabular sm:hidden">
                     <b className="text-brand-600">{row.balance}</b>/{row.target ?? required} · {count(t.common.visitsCount, row.total_stamps)}
                   </span>
                 </span>

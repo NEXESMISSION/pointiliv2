@@ -41,12 +41,12 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   return (
     <div className="mx-auto max-w-3xl">
       <TopBar title={w.title} large back="/more" action={<Link href="/analytics" className="whitespace-nowrap text-[13px] font-semibold text-brand-600">{w.charts}</Link>} />
-      <div className="mb-4">
+      <div className="mb-2.5">
         <Segmented active={range} items={RANGE_KEYS.map((k) => ({ key: k, label: w.range[k], href: `/activity?range=${k}` }))} />
       </div>
 
       {range === "custom" && (
-        <form action="/activity" className="mb-4 flex flex-wrap items-end gap-2">
+        <form action="/activity" className="mb-2.5 flex flex-wrap items-end gap-2">
           <input type="hidden" name="range" value="custom" />
           <label className="min-w-0 flex-1 text-sm font-medium text-body">
             {w.from}
@@ -62,13 +62,13 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
         </form>
       )}
 
-      <div className="mb-4 grid grid-cols-2 gap-3">
-        <Card className="p-4">
-          <p className="text-2xl font-bold text-ink tabular">{formatNumber(data.stamps, locale)}</p>
+      <div className="mb-2.5 grid grid-cols-2 gap-2.5 text-center">
+        <Card className="p-2.5">
+          <p className="text-xl font-bold text-ink tabular">{formatNumber(data.stamps, locale)}</p>
           <p className="text-xs font-medium text-muted">{w.stamps}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-2xl font-bold text-ink tabular">{formatNumber(data.redemptions, locale)}</p>
+        <Card className="p-2.5">
+          <p className="text-xl font-bold text-ink tabular">{formatNumber(data.redemptions, locale)}</p>
           <p className="text-xs font-medium text-muted">{w.rewardsGiven}</p>
         </Card>
       </div>
@@ -78,10 +78,11 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
           {w.emptyBody}
         </EmptyState>
       ) : (
-        <div className="space-y-5">
+        // a month of stamps is a long list: it scrolls in here, the screen itself does not
+        <div className="max-h-[48dvh] space-y-2.5 overflow-y-auto">
           {[...groups.entries()].map(([k, items]) => (
             <section key={k}>
-              <h2 className="mb-2 text-sm font-semibold text-muted">{dayLabel(items[0]!.at, locale)}</h2>
+              <h2 className="mb-1.5 text-[13px] font-semibold text-muted">{dayLabel(items[0]!.at, locale)}</h2>
               <Card className="divide-y divide-line/80 overflow-hidden">
                 {items.map((a) => (
                   <ActivityRow key={a.id} item={a} />

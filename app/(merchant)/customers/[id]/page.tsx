@@ -1,9 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Gift } from "lucide-react";
 import { TopBar } from "@/components/nav/TopBar";
 import { Card, SectionTitle } from "@/components/ui/Card";
-import { LinkButton } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Stat";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { resolveDesign } from "@/lib/card-design";
@@ -39,51 +39,47 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
     <div className="mx-auto max-w-3xl">
       <TopBar title={w.detailTitle} back="/customers" />
 
-      <Card className="flex flex-col items-center p-6 text-center">
-        <Avatar label={profile.name ? initials(profile.name) : "#"} size={72} />
-        <p className="mt-3 text-xl font-bold text-ink">{title}</p>
-        <p className="text-muted tabular">
-          <span dir="ltr" className="inline-block">
-            #{customer.code} · {profile.phone_masked}
-          </span>
-        </p>
+      <Card className="flex flex-col items-center p-2.5 text-center">
+        <div className="flex items-center gap-2.5">
+          <Avatar label={profile.name ? initials(profile.name) : "#"} size={40} />
+          <div className="min-w-0 text-start">
+            <p className="truncate text-base font-bold text-ink">{title}</p>
+            <p className="text-[13px] text-muted tabular">
+              <span dir="ltr" className="inline-block">
+                #{customer.code} · {profile.phone_masked}
+              </span>
+            </p>
+          </div>
+        </div>
         {card && (
-          <div className="mt-5 w-full max-w-sm text-start">
-            <LoyaltyCardVisual design={resolveDesign(card.design, { color: card.color, icon: card.icon })} business={d.business} subtitle={card.description} filled={customer.balance} total={required} rewardName={rewards.find((r) => r.is_primary)?.name} />
+          // the short "tile" card: one row of stamps instead of two, so the screen holds
+          <div className="mt-2 w-full max-w-sm text-start">
+            <LoyaltyCardVisual size="tile" design={resolveDesign(card.design, { color: card.color, icon: card.icon })} business={d.business} subtitle={card.description} filled={customer.balance} total={required} rewardName={rewards.find((r) => r.is_primary)?.name} />
           </div>
         )}
       </Card>
 
-      <section className="mt-4 grid grid-cols-2 gap-3">
-        <Tile value={`${customer.balance}/${required}`} label={w.currentStamps} />
-        <Tile value={customer.total_stamps} label={w.totalVisits} />
-        <Tile value={d.rewards_earned} label={w.rewardsEarned} />
-        <Tile value={customer.rewards_redeemed} label={w.rewardsGiven} />
-      </section>
-
-      <Card className="mt-4 grid grid-cols-2 gap-4 p-4 text-sm">
-        <div>
-          <p className="text-muted">{w.firstActivity}</p>
-          <p className="font-semibold text-ink">{formatDate(customer.first_stamp_at, locale)}</p>
-        </div>
-        <div>
-          <p className="text-muted">{w.lastActivity}</p>
-          <p className="font-semibold text-ink">{timeAgo(customer.last_stamp_at, locale)}</p>
-        </div>
+      <Card className="mt-2 grid grid-cols-3 items-center gap-2 p-2 text-center">
+        <Cell value={`${customer.balance}/${required}`} label={w.currentStamps} />
+        <Cell value={customer.total_stamps} label={w.totalVisits} />
+        <Cell value={d.rewards_earned} label={w.rewardsEarned} />
+        <Cell value={customer.rewards_redeemed} label={w.rewardsGiven} />
+        <Cell value={formatDate(customer.first_stamp_at, locale)} label={w.firstActivity} small />
+        <Cell value={timeAgo(customer.last_stamp_at, locale)} label={w.lastActivity} small />
       </Card>
 
       {unlocked.length > 0 && (
-        <section className="mt-6">
+        <section className="mt-2">
           <SectionTitle>{w.readyToGive}</SectionTitle>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {unlocked.map((r) => (
-              <Card key={r.id} className="flex items-center gap-3 p-4">
-                <span className="grid size-12 shrink-0 place-items-center rounded-2xl" style={{ background: c.bg, color: c.accent }}>
-                  <Gift className="size-6" />
+              <Card key={r.id} className="flex items-center gap-2.5 p-2">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl" style={{ background: c.bg, color: c.accent }}>
+                  <Gift className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-ink">{r.name}</p>
-                  <p className="text-sm text-muted">{count(t.common.stampsCount, r.stamps_required)}</p>
+                  <p className="truncate text-[15px] font-bold text-ink">{r.name}</p>
+                  <p className="text-[13px] text-muted">{count(t.common.stampsCount, r.stamps_required)}</p>
                 </div>
                 <RedeemNowButton customerId={customer.id} rewardId={r.id} rewardName={r.name} customerLabel={title} stamps={r.stamps_required} />
               </Card>
@@ -92,18 +88,19 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
         </section>
       )}
 
-      <section className="mt-6">
-        <SectionTitle>{w.history}</SectionTitle>
+      <section className="mt-2">
+        <SectionTitle action={<Link href="/activity" className="whitespace-nowrap text-[13px] font-semibold text-brand-600">{w.viewAllActivity}</Link>}>{w.history}</SectionTitle>
         {d.history.length === 0 ? (
-          <p className="rounded-2xl bg-white p-4 text-sm text-muted shadow-card">{w.noHistory}</p>
+          <p className="rounded-2xl bg-white p-3 text-center text-sm text-muted shadow-card">{w.noHistory}</p>
         ) : (
-          <Card className="divide-y divide-line/80">
+          // a regular's history runs long: it scrolls in here, the screen itself does not
+          <Card className="max-h-32 divide-y divide-line/80 overflow-y-auto">
             {d.history.map((h, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3">
-                <span className={`grid size-8 place-items-center rounded-full text-sm font-bold ${h.type === "stamp" ? "bg-success-50 text-success-600" : "bg-warning-50 text-warning-700"}`}>
+              <div key={i} className="flex items-center gap-2.5 px-3 py-2">
+                <span className={`grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-bold ${h.type === "stamp" ? "bg-success-50 text-success-600" : "bg-warning-50 text-warning-700"}`}>
                   {h.type === "stamp" ? "+1" : <Gift className="size-4" />}
                 </span>
-                <p className="flex-1 text-[15px] font-medium text-ink">{h.type === "stamp" ? w.stampLine : fill(w.rewardLine, { name: h.reward_name ?? "" })}</p>
+                <p className="flex-1 text-sm font-medium text-ink">{h.type === "stamp" ? w.stampLine : fill(w.rewardLine, { name: h.reward_name ?? "" })}</p>
                 <p className="text-end text-xs text-muted">
                   {dayLabel(h.at, locale)} · {formatTime(h.at, locale)}
                 </p>
@@ -111,19 +108,17 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
             ))}
           </Card>
         )}
-        <LinkButton href="/activity" variant="outline" block className="mt-4">
-          {w.viewAllActivity}
-        </LinkButton>
       </section>
     </div>
   );
 }
 
-function Tile({ value, label }: { value: React.ReactNode; label: string }) {
+/** One figure in the six-cell summary; `small` is for a date, which needs the room. */
+function Cell({ value, label, small }: { value: React.ReactNode; label: string; small?: boolean }) {
   return (
-    <Card className="p-4 text-center">
-      <p className="text-2xl font-bold text-ink tabular">{value}</p>
+    <div>
+      <p className={`font-bold text-ink tabular ${small ? "text-[13px]" : "text-lg"}`}>{value}</p>
       <p className="text-xs font-medium text-muted">{label}</p>
-    </Card>
+    </div>
   );
 }

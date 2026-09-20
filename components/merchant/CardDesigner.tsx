@@ -38,6 +38,7 @@ export function CardDesigner({ initial, description, business, stampsRequired, r
   const [brand, setBrand] = useState(() => guessBrand(initial));
   const [subtitle, setSubtitle] = useState(description);
   const [preview, setPreview] = useState(Math.max(1, Math.round(stampsRequired * 0.6)));
+  const [tab, setTab] = useState("style");
   const [saving, start] = useTransition();
   const toast = useToast();
   const router = useRouter();
@@ -65,12 +66,143 @@ export function CardDesigner({ initial, description, business, stampsRequired, r
   const accentChoices = Array.from(new Set(["#FFFFFF", brand, "#F5C451", "#111827", shade(brand, 0.35), "#E11D48", "#0E9F6E"].map((c) => c.toUpperCase())));
   const bgChoices = Array.from(new Set([brand, shade(brand, 0.3), ...SWATCHES].map((c) => c.toUpperCase())));
 
+  // one panel at a time: the six sections stacked are three phone screens tall
+  const tabs = [
+    {
+      key: "style",
+      label: w.style,
+      hint: w.styleHint,
+      body: (
+        <div className="grid grid-cols-3 gap-2">
+          {TEMPLATE_IDS.map((tpl) => {
+            const look = { ...d, template: tpl, ...TEMPLATES[tpl].make(brand) } as CardDesign;
+            const s = surface(look, !!business.cover_url);
+            const active = d.template === tpl;
+            return (
+              <button
+                key={tpl}
+                type="button"
+                onClick={() => applyTemplate(tpl)}
+                className={`rounded-xl p-1 text-start transition ${active ? "bg-brand-50 ring-2 ring-brand-600" : "bg-canvas hover:bg-line/60"}`}
+                aria-pressed={active}
+              >
+                <span className="relative block h-14 overflow-hidden rounded-xl" style={{ background: s.background, border: s.border }}>
+                  {s.photo && business.cover_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={business.cover_url} alt="" className="absolute inset-0 size-full object-cover opacity-70" />
+                  )}
+                  {look.pattern !== "none" && <span className="absolute inset-0" style={{ backgroundImage: patternImage(look.pattern, s.light) }} />}
+                  <span className="absolute bottom-2 start-2 flex gap-1">
+                    {[0, 1, 2, 3].map((i) => (
+                      <span key={i} className="size-3.5 rounded-full" style={i < 2 ? { background: look.accent } : { border: `2px dashed ${s.emptyBorder}` }} />
+                    ))}
+                  </span>
+                  <span className="absolute start-2 top-2 h-2 w-10 rounded-full" style={{ background: s.fg, opacity: 0.8 }} />
+                </span>
+                <span className="block px-0.5 pt-1">
+                  <span className="block truncate text-[13px] font-semibold text-ink">{t.data.templates[tpl].name}</span>
+                  <span className="block truncate text-xs text-muted">{tpl === "photo" && !business.cover_url ? w.addCover : t.data.templates[tpl].hint}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ),
+    },
+    {
+      key: "colour",
+      label: w.mainColour,
+      body: <Swatches value={brand} choices={SWATCHES} onPick={pickBrand} label={w.colourAria} customLabel={w.customColour} fill={fill} />,
+    },
+    {
+      key: "stamps",
+      label: w.stamps,
+      body: (
+        <>
+          <div className="flex flex-wrap gap-2">
+            {STAMP_ORDER.map((id) => (
+              <Chip key={id} active={d.stamp === id} disabled={id === "logo" && !business.logo_url} onClick={() => set({ stamp: id })}>
+                {id === "icon" ? <CardIcon name={d.icon} className="size-4" /> : STAMP_ICONS[id]} {t.data.stampStyles[id]}
+              </Chip>
+            ))}
+          </div>
+          {d.stamp === "logo" && !business.logo_url && <p className="mt-2 text-xs text-muted">{w.logoNeeded}</p>}
+          {d.stamp === "icon" && (
+            <div className="mt-3 grid grid-cols-6 gap-2">
+              {CARD_ICONS.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => set({ icon: name })}
+                  aria-label={t.merchant.icons[name]}
+                  aria-pressed={d.icon === name}
+                  className={`grid aspect-square place-items-center rounded-2xl border transition ${d.icon === name ? "border-transparent bg-ink text-white" : "border-line bg-white text-body hover:bg-canvas"}`}
+                >
+                  <CardIcon name={name} className="size-5" />
+                </button>
+              ))}
+            </div>
+          )}
+          <p className="mb-1.5 mt-3 text-sm font-medium text-body">{w.stampColour}</p>
+          <Swatches value={d.accent} choices={accentChoices} onPick={(c) => set({ accent: c })} label={w.colourAria} customLabel={w.customColour} fill={fill} />
+        </>
+      ),
+    },
+    {
+      key: "background",
+      label: w.background,
+      body: (
+        <>
+          <Swatches value={d.bg} choices={bgChoices} onPick={(c) => set({ bg: c, text: isLight(c) ? "dark" : "light", use_cover: false })} label={w.colourAria} customLabel={w.customColour} fill={fill} />
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <Toggle label={w.gradient} checked={!!d.bg2} onChange={(on) => set({ bg2: on ? shade(d.bg, 0.28) : null })} />
+            <Toggle label={w.useCover} checked={d.use_cover} disabled={!business.cover_url} hint={business.cover_url ? undefined : w.coverNeeded} onChange={(on) => set({ use_cover: on, text: on ? "light" : d.text })} />
+          </div>
+          <p className="mb-1.5 mt-3 text-sm font-medium text-body">{w.pattern}</p>
+          <div className="flex flex-wrap gap-2">
+            {PATTERNS.map((p) => (
+              <Chip key={p} active={d.pattern === p} onClick={() => set({ pattern: p })}>
+                {t.data.patterns[p]}
+              </Chip>
+            ))}
+          </div>
+          <p className="mb-1.5 mt-3 text-sm font-medium text-body">{w.textColour}</p>
+          <div className="flex gap-2">
+            <Chip active={d.text === "light"} onClick={() => set({ text: "light" })}>
+              <span className="size-4 rounded-full border border-line bg-white" /> {w.light}
+            </Chip>
+            <Chip active={d.text === "dark"} onClick={() => set({ text: "dark" })} disabled={d.use_cover && !!business.cover_url}>
+              <span className="size-4 rounded-full bg-ink" /> {w.dark}
+            </Chip>
+          </div>
+        </>
+      ),
+    },
+    {
+      key: "text",
+      label: w.textOnCard,
+      body: (
+        <>
+          <label htmlFor="card-subtitle" className="mb-1.5 block text-sm font-medium text-body">
+            {w.shortLine}
+          </label>
+          <Input id="card-subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder={w.shortLinePlaceholder} maxLength={60} />
+        </>
+      ),
+    },
+    { key: "branding", label: t.merchant.branding.title, body: branding },
+  ];
+
   return (
     <>
-      <fieldset disabled={disabled} className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
+      <fieldset disabled={disabled} className="grid min-w-0 grid-cols-1 gap-2.5 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
         <aside className="order-first min-w-0 lg:sticky lg:top-8 lg:order-last">
-          <LoyaltyCardVisual design={d} business={business} subtitle={subtitle} filled={preview} total={stampsRequired} rewardName={rewardName} />
-          <label className="mt-3 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm shadow-card">
+          {/* a phone gets the compact card, so the controls fit under it without scrolling */}
+          <LoyaltyCardVisual size="tile" className="lg:hidden" design={d} business={business} subtitle={subtitle} filled={preview} total={stampsRequired} rewardName={rewardName} />
+          <div className="hidden lg:block">
+            <LoyaltyCardVisual design={d} business={business} subtitle={subtitle} filled={preview} total={stampsRequired} rewardName={rewardName} />
+          </div>
+          <label className="mt-2 flex items-center gap-2.5 rounded-xl bg-white px-3 py-2 text-[13px] shadow-card">
             <span className="font-medium text-body">{w.previewStamps}</span>
             <input type="range" min={0} max={stampsRequired} value={preview} onChange={(e) => setPreview(Number(e.target.value))} className="min-w-0 flex-1 accent-brand-600" />
             <span dir="ltr" className="w-12 text-end font-semibold text-ink tabular">
@@ -83,117 +215,36 @@ export function CardDesigner({ initial, description, business, stampsRequired, r
           </div>
         </aside>
 
-        <div className="min-w-0 space-y-5">
-          <Section title={w.style} hint={w.styleHint}>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {TEMPLATE_IDS.map((tpl) => {
-                const look = { ...d, template: tpl, ...TEMPLATES[tpl].make(brand) } as CardDesign;
-                const s = surface(look, !!business.cover_url);
-                const active = d.template === tpl;
-                return (
-                  <button
-                    key={tpl}
-                    type="button"
-                    onClick={() => applyTemplate(tpl)}
-                    className={`rounded-2xl p-1.5 text-start transition ${active ? "bg-brand-50 ring-2 ring-brand-600" : "bg-canvas hover:bg-line/60"}`}
-                    aria-pressed={active}
-                  >
-                    <span className="relative block h-20 overflow-hidden rounded-xl" style={{ background: s.background, border: s.border }}>
-                      {s.photo && business.cover_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={business.cover_url} alt="" className="absolute inset-0 size-full object-cover opacity-70" />
-                      )}
-                      {look.pattern !== "none" && <span className="absolute inset-0" style={{ backgroundImage: patternImage(look.pattern, s.light) }} />}
-                      <span className="absolute bottom-2 start-2 flex gap-1">
-                        {[0, 1, 2, 3].map((i) => (
-                          <span key={i} className="size-3.5 rounded-full" style={i < 2 ? { background: look.accent } : { border: `2px dashed ${s.emptyBorder}` }} />
-                        ))}
-                      </span>
-                      <span className="absolute start-2 top-2 h-2 w-10 rounded-full" style={{ background: s.fg, opacity: 0.8 }} />
-                    </span>
-                    <span className="block px-1 pb-0.5 pt-1.5">
-                      <span className="block text-sm font-semibold text-ink">{t.data.templates[tpl].name}</span>
-                      <span className="block truncate text-xs text-muted">{tpl === "photo" && !business.cover_url ? w.addCover : t.data.templates[tpl].hint}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </Section>
-
-          <Section title={w.mainColour}>
-            <Swatches value={brand} choices={SWATCHES} onPick={pickBrand} label={w.colourAria} customLabel={w.customColour} fill={fill} />
-          </Section>
-
-          <Section title={w.stamps}>
-            <div className="flex flex-wrap gap-2">
-              {STAMP_ORDER.map((id) => (
-                <Chip key={id} active={d.stamp === id} disabled={id === "logo" && !business.logo_url} onClick={() => set({ stamp: id })}>
-                  {id === "icon" ? <CardIcon name={d.icon} className="size-4" /> : STAMP_ICONS[id]} {t.data.stampStyles[id]}
-                </Chip>
-              ))}
-            </div>
-            {d.stamp === "logo" && !business.logo_url && <p className="mt-2 text-xs text-muted">{w.logoNeeded}</p>}
-            {d.stamp === "icon" && (
-              <div className="mt-4 grid grid-cols-6 gap-2">
-                {CARD_ICONS.map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => set({ icon: name })}
-                    aria-label={t.merchant.icons[name]}
-                    aria-pressed={d.icon === name}
-                    className={`grid aspect-square place-items-center rounded-2xl border transition ${d.icon === name ? "border-transparent bg-ink text-white" : "border-line bg-white text-body hover:bg-canvas"}`}
-                  >
-                    <CardIcon name={name} className="size-5" />
-                  </button>
-                ))}
+        <div className="min-w-0 space-y-2">
+          <div className="grid grid-cols-3 gap-1.5">
+            {tabs.map((tb) => (
+              <button
+                key={tb.key}
+                type="button"
+                onClick={() => setTab(tb.key)}
+                aria-pressed={tab === tb.key}
+                className={`h-9 truncate rounded-xl px-1.5 text-xs font-semibold transition ${tab === tb.key ? "bg-ink text-white" : "border border-line bg-white text-body hover:bg-canvas"}`}
+              >
+                {tb.label}
+              </button>
+            ))}
+          </div>
+          {/* the open panel scrolls inside itself, so the card above it never moves */}
+          <Card className={`overflow-y-auto p-3 lg:max-h-none ${welcome ? "max-h-[8rem]" : "max-h-[16rem]"}`}>
+            {tabs.map((tb) => (
+              <div key={tb.key} className={tab === tb.key ? "" : "hidden"}>
+                {tb.hint && <p className="mb-2 text-center text-xs text-muted">{tb.hint}</p>}
+                {tb.body}
               </div>
-            )}
-            <p className="mb-2 mt-4 text-sm font-medium text-body">{w.stampColour}</p>
-            <Swatches value={d.accent} choices={accentChoices} onPick={(c) => set({ accent: c })} label={w.colourAria} customLabel={w.customColour} fill={fill} />
-          </Section>
-
-          <Section title={w.background}>
-            <Swatches value={d.bg} choices={bgChoices} onPick={(c) => set({ bg: c, text: isLight(c) ? "dark" : "light", use_cover: false })} label={w.colourAria} customLabel={w.customColour} fill={fill} />
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Toggle label={w.gradient} checked={!!d.bg2} onChange={(on) => set({ bg2: on ? shade(d.bg, 0.28) : null })} />
-              <Toggle label={w.useCover} checked={d.use_cover} disabled={!business.cover_url} hint={business.cover_url ? undefined : w.coverNeeded} onChange={(on) => set({ use_cover: on, text: on ? "light" : d.text })} />
-            </div>
-            <p className="mb-2 mt-4 text-sm font-medium text-body">{w.pattern}</p>
-            <div className="flex flex-wrap gap-2">
-              {PATTERNS.map((p) => (
-                <Chip key={p} active={d.pattern === p} onClick={() => set({ pattern: p })}>
-                  {t.data.patterns[p]}
-                </Chip>
-              ))}
-            </div>
-            <p className="mb-2 mt-4 text-sm font-medium text-body">{w.textColour}</p>
-            <div className="flex gap-2">
-              <Chip active={d.text === "light"} onClick={() => set({ text: "light" })}>
-                <span className="size-4 rounded-full border border-line bg-white" /> {w.light}
-              </Chip>
-              <Chip active={d.text === "dark"} onClick={() => set({ text: "dark" })} disabled={d.use_cover && !!business.cover_url}>
-                <span className="size-4 rounded-full bg-ink" /> {w.dark}
-              </Chip>
-            </div>
-          </Section>
-
-          <Section title={w.textOnCard}>
-            <label htmlFor="card-subtitle" className="mb-1.5 block text-sm font-medium text-body">
-              {w.shortLine}
-            </label>
-            <Input id="card-subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder={w.shortLinePlaceholder} maxLength={60} />
-          </Section>
-
-          {branding}
+            ))}
+          </Card>
         </div>
       </fieldset>
 
       {!disabled && (
-        <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 mt-6 lg:bottom-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-ink/95 p-2 ps-4 text-white shadow-lift backdrop-blur">
-            <p className="min-w-0 flex-1 truncate text-sm">{dirty ? w.unsaved : welcome ? w.happy : w.allSaved}</p>
+        <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 mt-2.5 lg:bottom-4">
+          <div className="flex items-center gap-3 rounded-2xl bg-ink/95 p-1.5 ps-3 text-white shadow-lift backdrop-blur">
+            <p className="min-w-0 flex-1 truncate text-[13px]">{dirty ? w.unsaved : welcome ? w.happy : w.allSaved}</p>
             {welcome && (
               <Link href="/dashboard?ready=1" className="px-2 text-sm font-semibold text-white/70 hover:text-white">
                 {w.skip}
@@ -206,16 +257,6 @@ export function CardDesigner({ initial, description, business, stampsRequired, r
         </div>
       )}
     </>
-  );
-}
-
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
-  return (
-    <Card className="p-5">
-      <p className="font-semibold text-ink">{title}</p>
-      {hint && <p className="text-sm text-muted">{hint}</p>}
-      <div className="mt-4">{children}</div>
-    </Card>
   );
 }
 

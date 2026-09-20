@@ -37,24 +37,22 @@ export default async function BillingPage() {
     <div className="mx-auto max-w-3xl">
       <TopBar title={w.title} large back="/dashboard" />
 
-      <Card className="p-5">
+      <Card className="p-3 text-center">
         <p className="text-sm font-medium text-muted">{w.yourPlan}</p>
-        <div className="mt-2 flex items-start justify-between gap-3">
-          <div>
-            <p className="text-2xl font-semibold tracking-tight text-ink">{planName(s.plan)}</p>
-            <p className="text-sm text-muted">
-              {s.plan === "trial"
-                ? t.common.free
-                : s.plan === "yearly"
-                  ? `${formatTND(PLANS.yearly.price, locale)} ${t.data.planPeriod.yearly}`
-                  : s.plan === "six_month"
-                    ? `${formatTND(PLANS.six_month.price, locale)} ${t.data.planPeriod.six_month}`
-                    : "—"}
-            </p>
-          </div>
+        <p className="flex items-center justify-center gap-2 text-xl font-semibold tracking-tight text-ink">
+          {planName(s.plan)}
           <SubscriptionBadge status={s.status} plan={s.plan} />
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-canvas p-3 text-sm">
+        </p>
+        <p className="text-sm text-muted">
+          {s.plan === "trial"
+            ? t.common.free
+            : s.plan === "yearly"
+              ? `${formatTND(PLANS.yearly.price, locale)} ${t.data.planPeriod.yearly}`
+              : s.plan === "six_month"
+                ? `${formatTND(PLANS.six_month.price, locale)} ${t.data.planPeriod.six_month}`
+                : "—"}
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2.5 rounded-2xl bg-canvas p-2 text-sm">
           <div>
             <p className="text-muted">{w.status}</p>
             <p className="font-semibold text-ink">{s.open ? t.data.subscription.active : s.status === "cancelled" ? t.data.subscription.cancelled : t.data.subscription.expired}</p>
@@ -65,60 +63,65 @@ export default async function BillingPage() {
           </div>
         </div>
         {s.open && (
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-2 text-sm text-muted">
             {count(t.formats.daysLeft, s.days_left)}. {w.renewNote}
           </p>
         )}
       </Card>
 
-      {pending && (
-        <Alert tone="warning" title={w.pendingTitle} className="mt-5" action={isOwner ? <CancelPlanRequestButton id={pending.id} /> : undefined}>
-          <p>
-            {planName(pending.plan)} · <b>{formatTND(pending.amount, locale)}</b> {fill(w.byMethod, { method: methodName(pending.method) })}
-          </p>
-          <p className="mt-1">
-            {w.reference} <span dir="ltr" className="inline-block rounded-lg bg-white px-2 py-0.5 font-mono font-bold tracking-wider text-ink">{pending.payment_reference}</span>
-          </p>
-          <p className="mt-1">
-            {w.quoteReference}
-            {support ? fill(w.contact, { support }) : ""}
-          </p>
-        </Alert>
-      )}
-
-      {isOwner ? (
-        <section className="mt-6">
-          <SectionTitle>{s.open && s.plan !== "trial" ? w.renewPlan : w.choosePlan}</SectionTitle>
-          <PlanPicker />
-        </section>
-      ) : (
-        <Alert tone="info" className="mt-5">{w.ownerOnly}</Alert>
-      )}
-
-      <section className="mt-8">
-        <SectionTitle>{w.paymentHistory}</SectionTitle>
-        {b.payments.length === 0 ? (
-          <Card className="flex items-center gap-3 p-4 text-sm text-muted">
-            <Receipt className="size-5" /> {w.noPayments}
-          </Card>
-        ) : (
-          <Card className="divide-y divide-line/80">
-            {b.payments.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-ink">
-                    {planName(p.plan)} · {formatTND(p.amount, locale)}
-                  </p>
-                  <p className="truncate text-sm text-muted">
-                    {formatDate(p.created_at, locale)} · <span dir="ltr" className="inline-block font-mono">{p.payment_reference}</span>
-                  </p>
-                </div>
-                <Badge tone={STATUS_TONE[p.status] ?? "neutral"}>{t.data.paymentStatus[p.status as keyof typeof t.data.paymentStatus] ?? p.status}</Badge>
-              </div>
-            ))}
-          </Card>
+      {/* the plan stays in view; a pending request, the picker and the receipts
+          share one scroller, so no state pushes the screen out of shape */}
+      <div className="mt-2 max-h-[50dvh] space-y-2 overflow-y-auto">
+        {pending && (
+          <Alert tone="warning" title={w.pendingTitle} action={isOwner ? <CancelPlanRequestButton id={pending.id} /> : undefined}>
+            <p>
+              {planName(pending.plan)} · <b>{formatTND(pending.amount, locale)}</b> {fill(w.byMethod, { method: methodName(pending.method) })}
+            </p>
+            <p className="mt-1">
+              {w.reference} <span dir="ltr" className="inline-block rounded-lg bg-white px-2 py-0.5 font-mono font-bold tracking-wider text-ink">{pending.payment_reference}</span>
+            </p>
+            <p className="mt-1">
+              {w.quoteReference}
+              {support ? fill(w.contact, { support }) : ""}
+            </p>
+          </Alert>
         )}
-      </section>
+
+        {isOwner ? (
+          <section>
+            <SectionTitle className="mb-1">{s.open && s.plan !== "trial" ? w.renewPlan : w.choosePlan}</SectionTitle>
+            <PlanPicker />
+          </section>
+        ) : (
+          <Alert tone="info">{w.ownerOnly}</Alert>
+        )}
+
+        <section>
+          <SectionTitle className="mb-1">{w.paymentHistory}</SectionTitle>
+          {b.payments.length === 0 ? (
+            <Card className="flex items-center justify-center gap-2.5 p-3 text-sm text-muted">
+              <Receipt className="size-4" /> {w.noPayments}
+            </Card>
+          ) : (
+            // however many receipts pile up, the picker above stays reachable
+            <Card className="max-h-28 divide-y divide-line/80 overflow-y-auto">
+              {b.payments.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 px-3.5 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-semibold text-ink">
+                      {planName(p.plan)} · {formatTND(p.amount, locale)}
+                    </p>
+                    <p className="truncate text-[13px] text-muted">
+                      {formatDate(p.created_at, locale)} · <span dir="ltr" className="inline-block font-mono">{p.payment_reference}</span>
+                    </p>
+                  </div>
+                  <Badge tone={STATUS_TONE[p.status] ?? "neutral"}>{t.data.paymentStatus[p.status as keyof typeof t.data.paymentStatus] ?? p.status}</Badge>
+                </div>
+              ))}
+            </Card>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

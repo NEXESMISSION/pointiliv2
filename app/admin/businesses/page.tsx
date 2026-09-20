@@ -30,7 +30,7 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
   const filterLabel: Record<string, string> = { all: t.admin.all, ...w.filters };
 
   return (
-    <div className="animate-fade space-y-4">
+    <div className="animate-fade space-y-2.5">
       <TopBar
         back="/admin"
         title={w.title}
@@ -50,26 +50,26 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
         </EmptyState>
       ) : (
         <>
-          {/* Mobile: cards */}
-          <Card className="divide-y divide-line/80 overflow-hidden lg:hidden">
+          {/* Mobile: cards. The list is the only thing that scrolls, inside its own card. */}
+          <Card className="max-h-[calc(100dvh-21rem)] divide-y divide-line/80 overflow-y-auto overscroll-contain lg:hidden lg:max-h-none">
             {items.map((b) => (
-              <Link key={b.id} href={`/admin/businesses/${b.id}`} className="flex items-start gap-3 px-4 py-3.5 transition hover:bg-canvas/70">
-                <BusinessAvatar logo={b.logo_url} icon={categoryIcon(b.category)} size={44} />
+              <Link key={b.id} href={`/admin/businesses/${b.id}`} className="flex items-start gap-2.5 px-3.5 py-2.5 transition hover:bg-canvas/70">
+                <BusinessAvatar logo={b.logo_url} icon={categoryIcon(b.category)} size={40} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">{b.name}</p>
-                    <ChevronRight className="rtl:-scale-x-100 size-5 shrink-0 text-faint" />
+                    <ChevronRight className="rtl:-scale-x-100 size-4 shrink-0 text-faint" />
                   </div>
-                  <p className="truncate text-sm text-muted">
+                  <p className="truncate text-[13px] text-muted">
                     {b.owner.phone ? <span dir="ltr">{formatPhone(b.owner.phone)}</span> : (b.owner.email ?? "—")}
                     {b.owner.name && ` · ${b.owner.name}`}
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <span className="text-xs font-semibold text-body">{planName(b.subscription.plan, t.data.plans.none)}</span>
                     <SubscriptionBadge status={b.subscription.status} plan={b.subscription.plan} />
                     <BusinessStatusBadge status={b.status} />
                   </div>
-                  <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
+                  <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted">
                     <span className="inline-flex items-center gap-1">
                       <Users className="size-3.5" /> {formatNumber(b.customers, locale)}
                     </span>

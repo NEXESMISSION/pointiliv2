@@ -23,26 +23,28 @@ export default async function SettingsPage() {
   const w = t.ops.settings;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto w-full max-w-md space-y-3">
       <TopBar title={w.title} large back="/more" />
 
       <section>
         <SectionTitle>{w.yourShop}</SectionTitle>
-        <Card className="p-5">
+        {/* the shop form is the long part: it scrolls inside its own card, so the rest of the page stays put */}
+        <Card className="max-h-[19rem] overflow-y-auto p-3.5">
           <BrandingEditor bare logo={b.logo_url} cover={b.cover_url} icon={ctx.card?.icon} color={ctx.card?.color} disabled={!isOwner} />
-          <div className="my-5 h-px bg-line" />
+          <div className="my-3.5 h-px bg-line" />
           <BusinessForm business={b} disabled={!isOwner} />
         </Card>
       </section>
 
       <section>
         <SectionTitle>{w.you}</SectionTitle>
-        <Card className="space-y-4 p-5">
-          <div>
+        <Card className="space-y-3 p-3.5">
+          {/* relative: the form's sr-only label is absolute, and without this it stretches the page */}
+          <div className="relative">
             <p className="mb-1.5 text-[13px] font-medium text-body">{t.common.yourName}</p>
             <NameForm defaultValue={ctx.user.full_name ?? ""} />
           </div>
-          <div className="grid gap-4 text-sm sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2 text-[13px]">
             <div>
               <p className="text-muted">{w.loginPhone}</p>
               <p className="font-medium text-ink tabular">
@@ -57,7 +59,7 @@ export default async function SettingsPage() {
             </div>
           </div>
         </Card>
-        <Divided className="mt-3">
+        <Divided className="mt-2.5">
           <ListRow href="/settings/password" icon={<KeyRound className="size-5" />} title={w.changePassword} />
           <LanguageRow />
         </Divided>

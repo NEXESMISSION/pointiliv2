@@ -14,7 +14,7 @@ export default async function NewRewardPage() {
   if (!ctx.card) redirect("/loyalty");
   if (ctx.member_role !== "owner") redirect("/rewards");
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto w-full max-w-md">
       <TopBar title={t.merchant.rewardForm.addTitle} back="/rewards" />
       <RewardForm initial={{ name: "", description: "", stamps_required: Math.min(100, ctx.card.stamps_required + 5), active: true, is_primary: false }} />
     </div>

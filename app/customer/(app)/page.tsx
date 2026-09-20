@@ -14,6 +14,10 @@ export async function generateMetadata() {
   return { title: t.customer.home.title };
 }
 
+/** Cards on the home screen. Two leave room for the reward banner, the
+    install banner and the iPhone safe areas without the screen scrolling. */
+const HOME_CARDS = 2;
+
 type Home = { profile: { full_name: string | null; phone: string; role: string }; cards: HomeCard[] };
 
 export default async function CustomerHome() {
@@ -24,18 +28,18 @@ export default async function CustomerHome() {
   const initial = (firstName?.[0] ?? "").toUpperCase();
 
   return (
-    <div className="space-y-5">
-      <header className="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 pt-2">
+    <div className="space-y-3">
+      <header className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2">
         <span />
         <div className="min-w-0 text-center">
-          <p className="text-[13px] text-muted">{greeting(locale)}</p>
-          <h1 className="truncate text-xl font-semibold tracking-tight text-ink">
+          <p className="text-xs text-muted">{greeting(locale)}</p>
+          <h1 className="truncate text-lg font-semibold tracking-tight text-ink">
             {firstName ? firstName : home.cards.length ? t.customer.home.yourCards : t.customer.home.welcome}
           </h1>
         </div>
         <Link
           href="/customer/profile"
-          className="grid size-10 place-items-center rounded-full border border-line bg-white text-sm font-semibold text-ink shadow-card"
+          className="grid size-9 place-items-center rounded-full border border-line bg-white text-sm font-semibold text-ink shadow-card"
           aria-label={t.nav.customer.profile}
         >
           {initial || <User className="size-[18px]" />}
@@ -45,13 +49,13 @@ export default async function CustomerHome() {
       <InstallBanner />
 
       {ready.length > 0 && (
-        <Link href="/customer/rewards" className="flex animate-rise items-center gap-3 rounded-2xl border border-line bg-white p-3 shadow-card">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
-            <Gift className="size-5" />
+        <Link href="/customer/rewards" className="flex animate-rise items-center gap-2.5 rounded-2xl border border-line bg-white p-2.5 shadow-card">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+            <Gift className="size-[18px]" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold text-ink">{t.customer.home.rewardReady}</span>
-            <span className="block truncate text-[13px] text-muted">
+            <span className="block text-sm font-semibold text-ink">{t.customer.home.rewardReady}</span>
+            <span className="block truncate text-xs text-muted">
               {fill(t.customer.home.rewardAt, { reward: ready[0]!.unlocked[0]!, business: ready[0]!.business.name })}
               {ready.length > 1 ? ` · ${count(t.customer.home.andMore, ready.length - 1)}` : ""}
             </span>
@@ -78,12 +82,12 @@ export default async function CustomerHome() {
           {t.customer.home.emptyBody}
         </EmptyState>
       ) : (
-        <section className="space-y-3">
-          {home.cards.slice(0, 4).map((card) => (
+        <section className="space-y-2.5">
+          {home.cards.slice(0, HOME_CARDS).map((card) => (
             <CardTile key={card.customer_id} card={card} />
           ))}
-          {home.cards.length > 4 && (
-            <Link href="/customer/cards" className="flex h-11 items-center justify-center gap-1 rounded-xl text-sm font-semibold text-brand-600 hover:bg-white">
+          {home.cards.length > HOME_CARDS && (
+            <Link href="/customer/cards" className="flex h-10 items-center justify-center gap-1 rounded-xl text-sm font-semibold text-brand-600 hover:bg-white">
               {fill(t.customer.home.seeAllCards, { n: home.cards.length })} <ChevronRight className="rtl:-scale-x-100 size-4" />
             </Link>
           )}

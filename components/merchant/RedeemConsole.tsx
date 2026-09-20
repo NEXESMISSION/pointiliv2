@@ -95,11 +95,11 @@ export function RedeemConsole({ initialPending, initialFound, initialError, auto
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {found ? (
         <Confirm r={found} onDone={finish} onCancel={() => setFound(null)} />
       ) : (
-        <Card className="space-y-4 p-5">
+        <Card className="space-y-3.5 p-4">
           <Button size="xl" block icon={<ScanLine className="size-6" />} onClick={() => setScanning(true)}>
             {w.scanQr}
           </Button>
@@ -142,7 +142,7 @@ export function RedeemConsole({ initialPending, initialFound, initialError, auto
             <Ticket className="size-5" /> {found ? w.noOtherRequests : w.noRequests}
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="max-h-[17rem] space-y-2.5 overflow-y-auto">
             {waiting.map((r) => (
               <Confirm key={r.id} r={r} compact onDone={finish} />
             ))}

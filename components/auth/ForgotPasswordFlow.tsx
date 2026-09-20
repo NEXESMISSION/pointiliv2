@@ -30,7 +30,7 @@ export function ForgotPasswordFlow() {
     return (
       <>
         <AuthHeading title={t.auth.forgot.newTitle} subtitle={t.auth.forgot.newSubtitle} />
-        <form onSubmit={pw.onSubmit} className="space-y-5" noValidate>
+        <form onSubmit={pw.onSubmit} className="space-y-3.5" noValidate>
           {latest === pwState && pwState?.error && <Alert>{pwState.error}</Alert>}
           <Field label={t.auth.newPassword} htmlFor="password" error={pwState?.fields?.password}>
             <PasswordInput autoComplete="new-password" invalid={!!pwState?.fields?.password} />
@@ -66,7 +66,7 @@ export function ForgotPasswordFlow() {
             {t.auth.forgot.devBody} <span className="font-mono text-base font-bold tracking-widest">{reqState.devCode}</span>
           </Alert>
         )}
-        <form onSubmit={ver.onSubmit} className="space-y-5" noValidate>
+        <form onSubmit={ver.onSubmit} className="space-y-3.5" noValidate>
           {latest?.error && latest !== pwState && <Alert>{latest.error}</Alert>}
           <OtpInput invalid={!!verState?.fields?.code} />
           {verState?.fields?.code && <p className="text-center text-sm text-danger-600">{verState.fields.code}</p>}
@@ -86,7 +86,7 @@ export function ForgotPasswordFlow() {
     <>
       <PhoneIllustration />
       <AuthHeading title={t.auth.forgot.title} subtitle={t.auth.forgot.subtitle} />
-      <form onSubmit={req.onSubmit} className="space-y-5" noValidate>
+      <form onSubmit={req.onSubmit} className="space-y-3.5" noValidate>
         {latest?.error && <Alert>{latest.error}</Alert>}
         <Field label={t.common.phoneNumber} htmlFor="phone" error={reqState?.fields?.phone}>
           <PhoneInput defaultValue={reqState?.values?.phone ?? ""} invalid={!!reqState?.fields?.phone} autoFocus />

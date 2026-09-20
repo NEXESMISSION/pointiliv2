@@ -22,21 +22,27 @@ const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Applic
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const cleanup = [];
 const problems = [];
+// Every app screen is meant to fit the phone without scrolling.
+const tall = [];
 
 async function shot(page, name, path, { wait = 800, full = true, noBack = false } = {}) {
   if (path) await page.goto(BASE + path, { waitUntil: "load", timeout: 90000 });
   await page.waitForTimeout(wait);
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  const { overflow, scrollsDown } = await page.evaluate(() => ({
+    overflow: document.documentElement.scrollWidth - window.innerWidth,
+    scrollsDown: document.documentElement.scrollHeight - window.innerHeight,
+  }));
   const errorScreen = await page.locator("[data-error-screen]").count();
   // Every screen except the home screens offers a way back.
   const isHome = ["/", "/fr", "/customer", "/dashboard", "/admin"].includes(new URL(page.url()).pathname);
   const missingBack = !noBack && !isHome && (await page.locator('button[data-back]').count()) === 0;
   if (overflow > 1) problems.push(`${name}: horizontal overflow ${overflow}px`);
+  if (scrollsDown > 1) tall.push(`${name}: ${scrollsDown}px past the screen`);
   if (errorScreen) problems.push(`${name}: error screen`);
   if (missingBack) problems.push(`${name}: no back button`);
   await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: full });
   const bad = overflow > 1 || errorScreen || missingBack;
-  console.log(`  ${bad ? "✗" : "✓"} ${name}${overflow > 1 ? ` (overflow ${overflow}px)` : ""}${missingBack ? " (no back button)" : ""}`);
+  console.log(`  ${bad ? "✗" : "✓"} ${name}${overflow > 1 ? ` (overflow ${overflow}px)` : ""}${missingBack ? " (no back button)" : ""}${scrollsDown > 1 ? ` [scrolls ${scrollsDown}px]` : ""}`);
 }
 
 async function loginUi(page, digits, password, portal = "/login") {
@@ -51,7 +57,7 @@ const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isM
 
 // Tunisian is the default language, so the screens shot in French ask for French.
 async function french(context) {
-  await context.addCookies([{ name: "pl_lang", value: "fr", url: BASE }]);
+  await context.addCookies([{ name: "pl_lang2", value: "fr", url: BASE }]);
   return context;
 }
 
@@ -128,14 +134,15 @@ try {
   await mp.getByText("Logo mis à jour").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(2500);
   console.log("  ✓ cover + logo uploaded in the card designer");
-  // Always make a real change: note the SAVED pattern first (picking Photo resets it), then set the opposite.
-  const savedDots = (await mp.getByRole("button", { name: "Points", exact: true }).getAttribute("aria-pressed")) === "true";
-  await mp.getByRole("button", { name: /^Photo/ }).click();
-  await mp.getByRole("button", { name: savedDots ? "Aucun" : "Points", exact: true }).click();
+  // The designer is a set of tabs now: the background pattern lives under "Fond".
+  await mp.getByRole("button", { name: "Fond", exact: true }).click();
+  // Always make a real change: flip the pattern to whatever it is not.
+  const dots = (await mp.getByRole("button", { name: "Points", exact: true }).getAttribute("aria-pressed")) === "true";
+  await mp.getByRole("button", { name: dots ? "Aucun" : "Points", exact: true }).click();
   await mp.getByRole("button", { name: /^Enregistrer l/ }).click();
   await mp.getByText("Apparence de la carte enregistrée").waitFor({ timeout: 60000 });
   await mp.waitForTimeout(1500);
-  console.log("  ✓ card design saved (Photo style)");
+  console.log("  ✓ card design saved");
   await shot(mp, "11b-design", null);
 
   for (const [n, path] of [["10-dashboard", "/dashboard"], ["11-loyalty", "/loyalty"], ["12-rewards", "/rewards"], ["13-reward-new", "/rewards/new"], ["14-customers", "/customers"], ["15-activity", "/activity?range=month"], ["16-analytics", "/analytics"], ["17-billing", "/billing"], ["18-settings", "/settings"], ["19-more", "/more"], ["20-redeem", "/redeem"]]) {
@@ -145,7 +152,7 @@ try {
   await mp.waitForSelector("[data-qr] svg", { timeout: 30000 });
   await shot(mp, "21-qr", null, { wait: 500, full: false });
   await shot(mp, "22-counter-qr", "/counter-qr");
-  const joinPath = new URL(await mp.locator("p.break-all").innerText()).pathname;
+  const joinPath = new URL(await mp.locator('p[dir="ltr"]').first().innerText()).pathname;
 
   // printed counter QR, scanned by someone signed out
   const jc = await french(await browser.newContext(phone));

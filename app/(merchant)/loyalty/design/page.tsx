@@ -27,7 +27,7 @@ export default async function DesignPage({ searchParams }: { searchParams: Promi
         <Alert
           tone="success"
           title={t.merchant.design.welcomeTitle}
-          className="mb-5"
+          className="mb-2.5"
           action={
             <Link href="/dashboard?ready=1" className="font-semibold underline">
               {t.merchant.design.skipForNow}
@@ -38,7 +38,7 @@ export default async function DesignPage({ searchParams }: { searchParams: Promi
         </Alert>
       )}
       {!isOwner && (
-        <Alert tone="info" className="mb-5">
+        <Alert tone="info" className="mb-2.5">
           {t.merchant.design.ownerOnly}
         </Alert>
       )}
@@ -50,7 +50,7 @@ export default async function DesignPage({ searchParams }: { searchParams: Promi
         rewardName={ctx.card.reward?.name ?? ""}
         welcome={!!welcome}
         disabled={!isOwner}
-        branding={<BrandingEditor logo={ctx.business.logo_url} cover={ctx.business.cover_url} icon={design.icon} color={ctx.card.color} disabled={!isOwner} />}
+        branding={<BrandingEditor bare logo={ctx.business.logo_url} cover={ctx.business.cover_url} icon={design.icon} color={ctx.card.color} disabled={!isOwner} />}
       />
     </div>
   );

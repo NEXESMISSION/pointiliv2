@@ -41,8 +41,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   ];
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-col items-center pt-3 text-center lg:pt-0">
+    <div className="space-y-4">
+      <header className="flex flex-col items-center pt-1 text-center lg:pt-0">
         <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card?.icon} color={ctx.card?.color} size={44} rounded="rounded-xl" />
         <h1 className="mt-2 max-w-full truncate text-lg font-semibold tracking-tight text-ink">{ctx.business.name}</h1>
         {needsAttention && (
@@ -120,7 +120,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </EmptyState>
         ) : (
           <Card className="divide-y divide-line overflow-hidden">
-            {d.recent.slice(0, 5).map((a) => (
+            {d.recent.slice(0, 4).map((a) => (
               <ActivityRow key={a.id} item={a} relative />
             ))}
           </Card>

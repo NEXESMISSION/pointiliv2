@@ -31,7 +31,8 @@ export default async function CardsPage() {
           {t.customer.cards.emptyBody}
         </EmptyState>
       ) : (
-        <div className="space-y-3">
+        // the list is unbounded, so it scrolls inside the page and the title stays put
+        <div className="-mx-1 max-h-[66dvh] space-y-2.5 overflow-y-auto px-1 pb-1">
           {cards.map((card) => (
             <CardTile key={card.customer_id} card={card} />
           ))}

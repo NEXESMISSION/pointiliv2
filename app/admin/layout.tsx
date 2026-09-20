@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { t } = await getI18n();
 
   return (
-    <div className="min-h-dvh bg-canvas">
+    <div className="flex h-dvh flex-col overflow-hidden bg-canvas">
       <AdminSideNav
         footer={
           <form action={logout}>
@@ -29,8 +29,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </form>
         }
       />
-      <div className="lg:ps-64">
-        <main className="mx-auto w-full max-w-6xl px-4 pt-[calc(1rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-10">{children}</main>
+      <div className="flex min-h-0 flex-1 flex-col lg:ps-64">
+        <main className="app-main">
+          <div className="app-center mx-auto w-full max-w-4xl px-4 pt-[calc(1rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-8">{children}</div>
+        </main>
       </div>
       <AdminBottomNav />
     </div>

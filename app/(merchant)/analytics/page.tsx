@@ -61,30 +61,33 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   return (
     <div className="mx-auto max-w-4xl">
       <TopBar title={w.title} large back="/dashboard" />
-      <div className="mb-5">
+      <div className="mb-3">
         <Segmented active={active} items={RANGES.map((r) => ({ key: r.key, label: w.range[r.label], href: `/analytics?days=${r.key}` }))} />
       </div>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <section className="grid grid-cols-2 gap-2 lg:grid-cols-3">
         <StatCard tint="white" icon={<Users className="size-5" />} label={w.totalCustomers} value={formatNumber(a.customers_total, locale)} sub={fill(w.cameBack, { n: formatNumber(a.returning_rate, locale) })} />
         <StatCard tint="white" icon={<UserPlus className="size-5" />} label={w.newCustomers} value={formatNumber(a.new_customers, locale)} change={pctChange(a.new_customers, a.new_customers_prev)} sub={w.vsPrevious} />
         <StatCard tint="white" icon={<RefreshCw className="size-5" />} label={w.returningCustomers} value={formatNumber(a.returning_customers, locale)} sub={fill(w.ofActive, { n: formatNumber(a.active_customers, locale) })} />
         <StatCard tint="white" icon={<QrCode className="size-5" />} label={w.stampsIssued} value={formatNumber(a.stamps, locale)} change={pctChange(a.stamps, a.stamps_prev)} sub={w.vsPrevious} />
-        <StatCard tint="white" icon={<Gift className="size-5" />} label={w.rewardsGiven} value={formatNumber(a.redemptions, locale)} change={pctChange(a.redemptions, a.redemptions_prev)} sub={w.vsPrevious} />
+        {/* fifth of five: it takes the whole row rather than leaving a hole beside it */}
+        <div className="col-span-2 lg:col-span-1">
+          <StatCard tint="white" icon={<Gift className="size-5" />} label={w.rewardsGiven} value={formatNumber(a.redemptions, locale)} change={pctChange(a.redemptions, a.redemptions_prev)} sub={w.vsPrevious} />
+        </div>
       </section>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <Card className="p-5 lg:col-span-2">
-          <SectionTitle>{Number(active) > 30 ? w.stampsByWeek : w.stampsByDay}</SectionTitle>
+      <div className="mt-1.5 grid grid-cols-2 gap-2 lg:gap-4">
+        <Card className="p-2.5 lg:col-span-2 lg:p-5">
+          <SectionTitle className="mb-1">{Number(active) > 30 ? w.stampsByWeek : w.stampsByDay}</SectionTitle>
           <BarChart label={w.stampsIssued} data={bucket(a.series, "stamps", a.days, locale)} />
         </Card>
-        <Card className="p-5">
-          <SectionTitle>{w.newVsReturning}</SectionTitle>
-          <Donut a={a.returning_customers} b={a.active_customers - a.returning_customers} aLabel={w.returning} bLabel={w.newOnes} />
-        </Card>
-        <Card className="p-5">
-          <SectionTitle>{w.rewardsGiven}</SectionTitle>
+        <Card className="p-2.5 lg:p-5">
+          <SectionTitle className="mb-1">{w.rewardsGiven}</SectionTitle>
           <BarChart label={w.rewardsGiven} color="#D97706" data={bucket(a.series, "redemptions", a.days, locale)} />
+        </Card>
+        <Card className="col-span-2 p-2.5 lg:col-span-1 lg:p-5">
+          <SectionTitle className="mb-1">{w.newVsReturning}</SectionTitle>
+          <Donut a={a.returning_customers} b={a.active_customers - a.returning_customers} aLabel={w.returning} bLabel={w.newOnes} />
         </Card>
       </div>
     </div>

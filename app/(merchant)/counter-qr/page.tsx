@@ -34,62 +34,62 @@ export default async function CounterQrPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-md print:max-w-none">
+    <div className="mx-auto w-full max-w-md print:max-w-none">
       <div className="print:hidden">
         <TopBar title={t.nav.merchant.counterQr} subtitle={t.merchant.counterQr.subtitle} back="/dashboard" />
       </div>
 
-      {/* The poster */}
-      <article className="rounded-3xl border border-line bg-white px-6 pb-7 pt-8 text-center shadow-card print:mx-auto print:mt-6 print:max-w-[150mm] print:border-2 print:shadow-none">
+      {/* The poster: a small preview on the phone, full size on paper */}
+      <article className="rounded-3xl border border-line bg-white px-4 pb-2 pt-3 text-center shadow-card print:mx-auto print:mt-6 print:max-w-[150mm] print:border-2 print:px-8 print:pb-10 print:pt-10 print:shadow-none">
         <div className="flex justify-center">
-          <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card.icon} color={ctx.card.color} size={60} rounded="rounded-2xl" />
+          <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card.icon} color={ctx.card.color} size={40} rounded="rounded-2xl" />
         </div>
-        <p className="mt-3 text-lg font-semibold tracking-tight text-ink">{ctx.business.name}</p>
-        <h2 className="mt-5 text-[1.9rem] font-bold leading-[1.1] tracking-[-0.03em] text-ink print:text-5xl">
+        <p className="mt-1.5 text-sm font-semibold tracking-tight text-ink print:mt-3 print:text-2xl">{ctx.business.name}</p>
+        <h2 className="mt-1.5 text-[1.05rem] font-bold leading-[1.15] tracking-[-0.03em] text-ink print:mt-5 print:text-5xl">
           {t.merchant.counterQr.posterTitle1}
           <br />
           {t.merchant.counterQr.posterTitle2}
         </h2>
-        <div className="mx-auto mt-6 aspect-square w-full max-w-[16rem] rounded-2xl border border-line p-4 print:max-w-[95mm] print:p-5 [&>svg]:block [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: svg }} />
+        <div className="mx-auto mt-2 aspect-square w-full max-w-[6.75rem] rounded-2xl border border-line p-2 print:mt-6 print:max-w-[95mm] print:p-5 [&>svg]:block [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: svg }} />
         {reward && (
-          <p className="mx-auto mt-6 inline-flex max-w-full items-center gap-2 rounded-full bg-canvas px-4 py-2 text-sm font-medium text-ink print:border print:border-line print:text-lg">
+          <p className="mx-auto mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-full bg-canvas px-3 py-1 text-[13px] font-medium text-ink print:mt-6 print:border print:border-line print:px-4 print:py-2 print:text-lg">
             <Gift className="size-4 shrink-0 text-brand-600" />
             <span className="truncate">
               {count(t.common.stampsCount, ctx.card.stamps_required)} = {reward}
             </span>
           </p>
         )}
-        <p className="mt-4 text-[13px] text-muted print:text-base">{t.merchant.counterQr.posterHint}</p>
-        <div className="mt-6 flex justify-center opacity-80">
-          <Logo size={15} />
+        <p className="mt-1 text-[12px] text-muted print:mt-4 print:text-base">{t.merchant.counterQr.posterHint}</p>
+        <div className="mt-1.5 flex justify-center opacity-80 print:mt-6">
+          <Logo size={12} />
         </div>
       </article>
 
-      <div className="mt-5 grid grid-cols-2 gap-2.5 print:hidden">
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5 print:hidden">
         <PrintButton />
         <a href={png} download={`${ctx.business.name.replace(/[^\w-]+/g, "-")}-counter-qr.png`} className={buttonClass("outline", "lg", true)}>
           <Download className="size-5" /> {t.merchant.counterQr.image}
         </a>
       </div>
 
-      <Card className="mt-5 divide-y divide-line print:hidden">
+      <Card className="mt-2.5 divide-y divide-line print:hidden">
         {rows.map((row) => (
-          <div key={row.title} className="flex gap-3 p-4">
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-canvas text-body [&>svg]:size-[18px]">{row.icon}</span>
+          <div key={row.title} className="flex gap-2.5 p-2">
+            <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-canvas text-body [&>svg]:size-4">{row.icon}</span>
             <div className="min-w-0">
-              <p className="text-[15px] font-medium text-ink">{row.title}</p>
-              <p className="mt-0.5 text-[13px] leading-relaxed text-muted">{row.text}</p>
+              <p className="text-[13px] font-medium leading-tight text-ink">{row.title}</p>
+              <p className="text-[12px] leading-snug text-muted">{row.text}</p>
             </div>
           </div>
         ))}
       </Card>
 
-      <div className="mt-4 print:hidden">
+      <div className="mt-2.5 print:hidden">
         <LinkButton href="/qr" variant="secondary" block icon={<QrCode className="size-5" />}>
           {t.merchant.counterQr.openLive}
         </LinkButton>
       </div>
-      <p dir="ltr" className="mt-4 break-all text-center text-xs text-faint print:hidden">
+      <p dir="ltr" className="mt-1 truncate text-center text-xs text-faint print:hidden">
         {url}
       </p>
     </div>

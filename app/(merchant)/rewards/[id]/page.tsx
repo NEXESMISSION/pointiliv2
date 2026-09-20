@@ -19,7 +19,7 @@ export default async function EditRewardPage({ params }: { params: Promise<{ id:
   const reward = data.items.find((r) => r.id === id);
   if (!reward) notFound();
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="mx-auto w-full max-w-md">
       <TopBar title={t.merchant.rewardForm.editTitle} back="/rewards" />
       <RewardForm initial={{ ...reward, description: reward.description ?? "" }} />
     </div>

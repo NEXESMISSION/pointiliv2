@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Palette } from "lucide-react";
 import { TopBar } from "@/components/nav/TopBar";
 import { Alert } from "@/components/ui/Alert";
 import { LoyaltyCardForm } from "@/components/merchant/LoyaltyCardForm";
@@ -31,13 +32,13 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
       />
 
       {welcome && !card && (
-        <Alert tone="info" className="mb-4">
+        <Alert tone="info" className="mb-3">
           {t.merchant.loyalty.welcome}
         </Alert>
       )}
 
       {!isOwner && (
-        <Alert tone="info" className="mb-4">
+        <Alert tone="info" className="mb-3">
           {t.merchant.loyalty.ownerOnly}
         </Alert>
       )}
@@ -60,12 +61,13 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
         }}
       />
 
-      {card && isOwner && (
-        <p className="mt-5 text-center">
-          <Link href="/rewards" className="text-[13px] font-semibold text-brand-600">
-            {t.merchant.loyalty.addBigger}
+      {card && (
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] font-semibold text-brand-600">
+          <Link href="/loyalty/design" className="inline-flex items-center gap-1.5">
+            <Palette className="size-4" /> {t.merchant.loyalty.changeLook}
           </Link>
-        </p>
+          {isOwner && <Link href="/rewards">{t.merchant.loyalty.addBigger}</Link>}
+        </div>
       )}
     </div>
   );
