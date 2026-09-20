@@ -229,3 +229,73 @@ Légende : `hook` `photo` `screen` `text` `cta` · entre crochets : photo ou éc
 
 Pas de « فصحى بلهجة ». Garder les tournures naturelles : « الحريف اللي يرجع هو اللي يعيّش المحل », « يسكاني وخلاص », « محلك واحد منهم؟ ».
 Dernière slide : « كلّمنا اليوم » — le commerçant nous contacte, on crée le compte et on prépare tout.
+
+---
+
+## 7. Backlog d'idées de posts (fourni par le client, 20 septembre 2026)
+
+Liste du client, gardée telle quelle (en anglais). Chaque ligne est un post possible ; les catégories 5 et 7 sont celles qu'il veut voir en premier parce qu'elles ne « vendent » pas directement.
+
+### 7.1 The problem: customers don't come back
+- The customer buys once and disappears
+- You have regular customers, but nothing encourages them to come back
+- A good product isn't enough to make someone return
+- The difference between a customer who comes once and one who becomes a regular
+- How do you give a customer a reason to come back?
+
+### 7.2 The old way vs Pointili
+- Paper loyalty cards vs Pointili
+- Customer loses the paper card → stamps are gone
+- "Download our app" → why make the customer install something?
+- Manual loyalty management vs automatic stamps
+- What loyalty looks like without cards, papers or apps
+
+### 7.3 Show the experience
+- A customer's first Pointili stamp — step by step
+- What happens when a customer scans the QR
+- What happens when the customer completes the card
+- The customer gets the reward — from scan to free product
+- A complete Pointili journey: first visit → reward → new card
+
+### 7.4 Answer the questions in the owner's head
+- Does the customer need an app?
+- What does the business owner actually have to do every day?
+- Can I choose the number of stamps?
+- Can I choose the reward?
+- What happens if someone tries to cheat the system?
+- What happens if I change my loyalty offer later?
+- What does the customer need to create an account?
+- How does the business know when a reward is being used?
+
+### 7.5 The psychology of loyalty
+*Client : « These could be very good because they're not directly "buy Pointili" posts. »*
+- Why people love collecting stamps
+- Why "one more visit and I get something free" works
+- The psychological difference between "come back" and "come back and get a reward"
+- Why a small reward can create a habit
+- The power of giving customers a visible goal
+
+### 7.6 Product demonstrations
+- Watch a stamp get added in real time
+- Watch a card go from 0 → 10
+- Customer scans QR → stamp appears
+- Customer completes card → reward unlocks
+- Owner validates a reward with the 6-digit code
+- Create a loyalty card for a fictional café from zero
+
+### 7.7 Business-specific examples
+*Client : « This is where I'd make the product feel real, rather than like generic SaaS. » Chacun montre un cadeau réaliste et le parcours du client.*
+- Pointili for a café
+- Pointili for a barber
+- Pointili for a beauty salon
+- Pointili for a bakery
+- Pointili for a restaurant
+- Pointili for a juice/fast-food shop
+- (ajouté depuis : Pointili for a gym — un tampon par jour d'entraînement)
+
+### 7.8 "Imagine this" posts
+- Imagine every customer leaving with a reason to return
+- Imagine your loyalty card living in your customer's phone
+- Imagine never printing another loyalty card
+- Imagine a customer seeing "2 more visits until your reward"
+- Imagine turning a normal purchase into the beginning of the next visit
