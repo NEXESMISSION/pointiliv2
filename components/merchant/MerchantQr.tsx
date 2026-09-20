@@ -125,9 +125,13 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
         const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
         if (fresh.length) {
           fresh.forEach((x) => seen.current.add(x.id));
-          setFlashes((f) => [...f, ...fresh.map((x, i) => ({ id: x.id, code: x.code, delay: i * STAMP_BURST_STAGGER_MS }))]);
+          // A catch-up after a locked screen or an offline stretch is not a party: the server hands back up to
+          // twenty stamps at once, and twenty bursts would keep a counter tablet busy for ten seconds. Only the
+          // last two burst; the rest are marked seen and never replay.
+          const shown = fresh.slice(-2);
+          setFlashes((f) => [...f, ...shown.map((x, i) => ({ id: x.id, code: x.code, delay: i * STAMP_BURST_STAGGER_MS }))]);
           navigator.vibrate?.(50);
-          setTimeout(() => setFlashes((f) => f.filter((x) => !fresh.some((y) => y.id === x.id))), STAMP_BURST_MS + 600 + (fresh.length - 1) * STAMP_BURST_STAGGER_MS);
+          setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), STAMP_BURST_MS + 600 + (shown.length - 1) * STAMP_BURST_STAGGER_MS);
         }
         if (!s.open) {
           tokenRef.current = null;

@@ -50,9 +50,10 @@ export function StampBurst({ code, accent, soft, side, delay = 0 }: { code: numb
 
       {/* The count is Latin in both languages: "+1" must never read as "1+". */}
       <div className="absolute inset-x-0 bottom-full mb-1 flex justify-center">
+        {/* The white outline is part of the shadow: a ring-* utility is a box-shadow too, and an inline shadow would erase it. */}
         <span
-          className="cb-badge inline-flex items-baseline gap-3 rounded-full px-7 py-3 font-extrabold leading-none text-white ring-4 ring-white tabular"
-          style={{ background: accent, boxShadow: `0 18px 40px -12px ${accent}b3`, animationDelay: `${delay}ms` }}
+          className="cb-badge inline-flex items-baseline gap-3 rounded-full px-7 py-3 font-extrabold leading-none text-white tabular"
+          style={{ background: accent, boxShadow: `0 0 0 4px #fff, 0 18px 40px -12px ${accent}b3`, animationDelay: `${delay}ms` }}
         >
           <span dir="ltr" className="text-[clamp(2.5rem,7.5vh,5rem)]">
             +1
