@@ -86,7 +86,8 @@
   .hook .fade { position: absolute; left: 0; right: 0; top: var(--ft, 560px); bottom: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,calc(var(--scrim,0.72) * 0.55)) 34%, rgba(0,0,0,var(--scrim,0.72)) var(--fs, 58%), rgba(0,0,0,var(--scrim,0.72)) 100%); }
   .hook h1, .hook .sub { text-shadow: 0 2px 18px rgba(0,0,0,0.75); }
   .hook .copy { position: absolute; right: 72px; left: 72px; top: 915px; color: #fff; }
-  .hook h1 { font-size: 88px; line-height: 1.16; max-width: 880px; }
+  /* 1.16 let the dots under a ي touch the cap of a Latin letter below it */
+  .hook h1 { font-size: 88px; line-height: 1.24; max-width: 880px; }
   .hook .sub { margin-top: 28px; font-size: 46px; line-height: 1.42; max-width: 820px; color: rgba(255,255,255,0.95); }
   .swipe { position: absolute; bottom: 76px; left: 64px; z-index: 6; width: 76px; height: 76px; border-radius: 50%; background: #fff; color: var(--violet); display: grid; place-items: center; font: 700 44px/1 "Inter", sans-serif; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
 

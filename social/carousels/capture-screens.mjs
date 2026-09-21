@@ -65,7 +65,7 @@ const saved = await call(owner, "save_loyalty_card", {
   p_description: "قهوة وحلويات",
   p_stamps_required: 10,
   p_reward_name: "قهوة بلاش",
-  p_reward_description: "قهوة بلاش كي تكمّل 10 طوابع.",
+  p_reward_description: "قهوة بلاش كي تكمّل 10 تامبونات.",
   p_color: "violet",
   p_icon: "coffee",
   p_cooldown_minutes: 0,
@@ -183,6 +183,10 @@ try {
   await cp.locator("h1").filter({ hasText: "!" }).first().waitFor({ timeout: 60000 });
   await snap(cp, "stamp-success", { wait: 1600 });
   await snap(op, "owner-qr-flash", { wait: 1800 });
+  // the same card a moment later, with the stamp on it: a flow that ends on
+  // "and it stays with him" cannot show the count going back down
+  await cp.goto(BASE + "/customer", { waitUntil: "load", timeout: 90000 });
+  await snap(cp, "customer-home-after");
 
   await stamp();
   await stamp();
