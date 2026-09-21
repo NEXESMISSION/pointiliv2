@@ -6,6 +6,10 @@
  * the same decoder the camera uses.
  *
  *   node scripts/reward-flow.mjs [outDir]     (needs npm run dev + node scripts/demo.mjs once)
+ *
+ * The app is Tunisian by default; this run forces French (pl_lang2) so the
+ * script can look for words instead of matching Arabic, which never survives
+ * a copy-paste. Sign-in uses the field types, not the labels.
  */
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -27,10 +31,17 @@ const check = (name, ok, detail) => {
 };
 
 async function login(page, path, digits, password) {
-  await page.goto(BASE + path, { waitUntil: "networkidle" });
-  await page.getByLabel("Phone number").fill(digits);
+  await page.goto(BASE + path, { waitUntil: "load" });
+  await page.locator('input[type="tel"]').fill(digits);
   await page.locator('input[name="password"]').fill(password);
-  await Promise.all([page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 60000 }), page.getByRole("button", { name: "Log in" }).click()]);
+  await Promise.all([page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 60000 }), page.locator('form button[type="submit"]').click()]);
+}
+
+/** A French-speaking phone, so the words below are the ones on screen. */
+async function frenchPhone() {
+  const ctx = await browser.newContext(phone);
+  await ctx.addCookies([{ name: "pl_lang2", value: "fr", url: BASE }]);
+  return ctx.newPage();
 }
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
@@ -45,23 +56,23 @@ try {
   if (error) throw error;
   customerId = created.user.id;
 
-  const m = await (await browser.newContext(phone)).newPage();
+  const m = await frenchPhone();
   await login(m, "/login", "20000001", process.env.DEMO_MERCHANT_PASSWORD);
-  const c = await (await browser.newContext(phone)).newPage();
+  const c = await frenchPhone();
   await login(c, "/customer/login", digits, password);
 
   console.log("customer collects 10 stamps (demo card has no cooldown)");
   for (let i = 1; i <= 10; i++) {
     const minted = await m.evaluate(async () => (await fetch("/api/qr/mint", { method: "POST" })).json());
     await c.goto(BASE + new URL(minted.url).pathname, { waitUntil: "domcontentloaded" });
-    await c.getByText("Stamp collected!").waitFor({ timeout: 60000 });
+    await c.getByText("Tampon obtenu !").waitFor({ timeout: 60000 });
   }
-  check("10th stamp unlocks the reward", (await c.getByText("Reward unlocked!").count()) > 0);
+  check("10th stamp unlocks the reward", (await c.getByText("Récompense débloquée !").count()) > 0);
 
   console.log("customer taps Use reward");
-  await c.getByRole("button", { name: "Use reward" }).first().click();
+  await c.getByRole("link", { name: "Utiliser la récompense" }).or(c.getByRole("button", { name: "Utiliser la récompense" })).first().click();
   await c.waitForURL(/\/customer\/rewards\/use\//, { timeout: 60000 });
-  const qr = c.getByRole("img", { name: "Reward QR code" });
+  const qr = c.getByRole("img", { name: "QR code de la récompense" });
   await qr.waitFor();
   await c.screenshot({ path: join(OUT, "1-customer-reward-qr.png") });
   const qrPng = join(OUT, "_reward-qr.png");
@@ -69,34 +80,35 @@ try {
   check("customer screen shows the reward QR", true);
 
   console.log("staff scans it on the Redeem page");
-  await m.goto(BASE + "/redeem", { waitUntil: "networkidle" });
+  await m.goto(BASE + "/redeem", { waitUntil: "load" });
   await m.screenshot({ path: join(OUT, "2-redeem-page.png") });
-  await m.getByRole("button", { name: "Scan reward QR" }).click();
-  await m.getByRole("dialog", { name: "Scan reward QR" }).waitFor();
+  await m.getByRole("button", { name: "Scanner le QR de la récompense" }).first().click();
+  await m.getByRole("dialog").waitFor();
   await m.screenshot({ path: join(OUT, "3-scanner.png") });
   await m.locator('[role="dialog"] input[type="file"]').setInputFiles(qrPng);
   // The scanner closes itself on a valid reward QR and the scanned reward is shown highlighted.
-  await m.getByRole("dialog", { name: "Scan reward QR" }).waitFor({ state: "detached", timeout: 60000 });
-  await m.getByText("Give the reward, then confirm.").waitFor({ timeout: 60000 });
-  check("scanning the QR closes the scanner and shows that reward", (await m.getByRole("button", { name: "Confirm redemption" }).count()) === 1);
+  await m.getByRole("dialog").waitFor({ state: "detached", timeout: 60000 });
+  await m.getByText(/Donnez la récompense, puis confirmez/).waitFor({ timeout: 60000 });
+  check("scanning the QR closes the scanner and shows that reward", (await m.getByRole("button", { name: "Confirmer et donner" }).count()) === 1);
   await m.screenshot({ path: join(OUT, "4-found.png") });
 
-  await m.getByRole("button", { name: "Confirm redemption" }).first().click();
-  await m.getByText("Reward redeemed!").waitFor({ timeout: 60000 });
+  await m.getByRole("button", { name: "Confirmer et donner" }).first().click();
+  await m.getByText("Récompense donnée !").waitFor({ timeout: 60000 });
   await m.screenshot({ path: join(OUT, "5-staff-done.png") });
-  check("staff sees Reward redeemed!", true);
+  check("staff sees Récompense donnée !", true);
 
-  await c.getByText("Reward redeemed!").waitFor({ timeout: 15000 });
+  await c.getByText("Récompense utilisée !").waitFor({ timeout: 20000 });
   await c.screenshot({ path: join(OUT, "6-customer-done.png") });
-  check("customer screen switches to Reward redeemed! by itself", true);
+  check("customer screen switches to Récompense utilisée ! by itself", true);
 
   console.log("the same QR cannot be used twice");
-  await m.goto(BASE + "/redeem", { waitUntil: "networkidle" });
-  await m.getByRole("button", { name: "Scan reward QR" }).click();
+  await m.goto(BASE + "/redeem", { waitUntil: "load" });
+  await m.getByRole("button", { name: "Scanner le QR de la récompense" }).first().click();
   await m.locator('[role="dialog"] input[type="file"]').setInputFiles(qrPng);
-  await m.getByText(/no active reward|no longer active|expired/i).waitFor({ timeout: 60000 });
-  check("re-scanning a used reward QR is refused", (await m.getByRole("button", { name: "Confirm redemption" }).count()) === 0);
+  // the refusal lands either in the scanner or on the page behind it
+  await m.getByText(/Aucune récompense active|plus actif|expir/i).first().waitFor({ timeout: 60000 });
   await m.screenshot({ path: join(OUT, "7-reused.png") });
+  check("re-scanning a used reward QR is refused", (await m.getByRole("button", { name: "Confirmer et donner" }).count()) === 0);
 } catch (e) {
   failures.push(`crashed: ${e.message.split("\n")[0]}`);
   console.error(e);
