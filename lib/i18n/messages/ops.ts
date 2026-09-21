@@ -241,7 +241,7 @@ export const ops = ns({
       address: "العنوان",
       addressPlaceholder: "شارع الحبيب بورقيبة، تونس",
       instagram: "إنستغرام",
-      instagramHint: "الحريف يشوفو كي ياخو التامبون.",
+      instagramHint: "الحريف يشوفها كي ياخو التامبون.",
       saveBusiness: "سجّل معلومات المحل",
     },
     redeem: {

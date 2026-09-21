@@ -58,7 +58,7 @@ export const errors = ns({
     no_card: "اعمل كارط الوفاء متاعك قبل كل شي.",
     not_merchant: "الصفحة هذي للمحلات.",
     already_has_business: "الكونت هذا عندو محل.",
-    invalid_instagram: "اسم إنستغرام موش صحيح (حروف، أرقام، . و _).",
+    invalid_instagram: "اسم الإنستغرام موش صحيح. كان حروف، أرقام، . و _ برك.",
     invalid_name: "اكتب الاسم (من 2 لـ 60 حرف).",
     invalid_stamps: "اختار عدد تامبونات صحيح.",
     invalid_reward: "اكتب اسم الكادو.",
