@@ -12,6 +12,7 @@ import { chromium } from "playwright-core";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import sharp from "sharp";
 
 const DIR = import.meta.dirname;
 const only = process.argv.slice(2);
@@ -22,6 +23,55 @@ const dataUri = async (file) => {
   const ext = path.extname(file).slice(1).toLowerCase().replace("jpg", "jpeg");
   return `data:image/${ext};base64,${(await readFile(file)).toString("base64")}`;
 };
+
+/** Mean colour of a region — computed from raw pixels, because sharp's
+ * stats() ignores an extract() in the pipeline and reports the whole image. */
+async function meanRGB(input, region) {
+  const { data, info } = await sharp(input).extract(region).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  let r = 0, g = 0, b = 0;
+  for (let i = 0; i < data.length; i += info.channels) {
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+  }
+  const n = data.length / info.channels;
+  return [r / n, g / n, b / n];
+}
+
+/**
+ * How bright the photo is exactly where the words go — so the scrim behind them
+ * is as strong as THAT picture needs, instead of as strong as the photo we had
+ * in mind when we wrote the CSS.
+ *
+ * The slide is 1080×1350 and the photo is `object-fit: cover` with
+ * `object-position: 50% photoY%`, so the visible band has to be mapped back
+ * into the source pixels before it is measured.
+ *
+ * Returns the mean luminance (0 = black, 1 = white) of that band.
+ */
+async function bandLuma(file, { top, height, photoY = 50 }) {
+  const img = sharp(file);
+  const { width: iw, height: ih } = await img.metadata();
+  const scale = Math.max(1080 / iw, 1350 / ih); // cover
+  const vw = iw * scale;
+  const vh = ih * scale;
+  const offY = (vh - 1350) * (photoY / 100); // which part of the photo is on screen
+  const offX = (vw - 1080) / 2;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const region = {
+    left: Math.round(clamp(offX / scale, 0, iw - 1)),
+    top: Math.round(clamp((offY + top) / scale, 0, ih - 1)),
+    width: Math.round(clamp(1080 / scale, 1, iw)),
+    height: Math.round(clamp(height / scale, 1, ih)),
+  };
+  region.width = Math.min(region.width, iw - region.left);
+  region.height = Math.min(region.height, ih - region.top);
+  const [r, g, b] = (await meanRGB(file, region)).map((v) => v / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** The band each layout puts its words in, in slide pixels. */
+const TEXT_BAND = { scene: { top: 90, height: 430 }, hook: { top: 880, height: 400 }, photo: { top: 900, height: 380 } };
 
 const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
 const page = await browser.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 });
@@ -52,6 +102,8 @@ for (const c of cfg.carousels) {
       n: i + 1,
       total: c.slides.length,
       photoData: await dataUri(photoFile),
+      // 0 = the photo is dark there, 1 = blinding; the template turns it into a scrim
+      luma: photoFile && existsSync(photoFile) && TEXT_BAND[slide.type] ? await bandLuma(photoFile, { ...TEXT_BAND[slide.type], photoY: slide.photoY }) : null,
       screenData: slide.screen ? await dataUri(path.join(DIR, "screens", slide.screen)) : null,
     };
     await page.evaluate(async (s) => {
