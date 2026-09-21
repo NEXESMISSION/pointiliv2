@@ -2,9 +2,7 @@
 
 import { Clock } from "lucide-react";
 import { useT } from "@/components/i18n/Provider";
-
-/** Whole days left, rounded up: the last day still counts as a day. */
-export const daysUntil = (iso: string) => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
+import { daysUntil } from "@/lib/format";
 
 /**
  * The card's clock. The owner gives a card a life (30 days, say) and it starts

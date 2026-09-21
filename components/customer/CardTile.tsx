@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { CardDeadline, daysUntil } from "@/components/customer/CardDeadline";
+import { CardDeadline } from "@/components/customer/CardDeadline";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { resolveDesign } from "@/lib/card-design";
+import { daysUntil } from "@/lib/format";
 import type { HomeCard } from "@/lib/types";
 
 /** A loyalty card in the customer's list — the business's own card design. */

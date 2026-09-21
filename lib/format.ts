@@ -78,3 +78,6 @@ export function initials(name: string | null | undefined, fallback = "P"): strin
   if (!parts.length) return fallback;
   return (parts[0]![0]! + (parts[1]?.[0] ?? "")).toUpperCase();
 }
+
+/** Whole days left before an instant, rounded up: the last day still counts. */
+export const daysUntil = (iso: string) => Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
