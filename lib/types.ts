@@ -25,6 +25,7 @@ export type SessionContext = {
     category: string;
     phone: string | null;
     address: string | null;
+    instagram: string | null;
     status: "active" | "suspended";
     created_at: string;
     join_code: string;
@@ -37,6 +38,7 @@ export type SessionContext = {
     color: string;
     icon: string;
     cooldown_minutes: number;
+    valid_days: number;
     active: boolean;
     design: Partial<CardDesign> | null;
     reward: { id: string; name: string; description: string | null } | null;
@@ -44,9 +46,9 @@ export type SessionContext = {
   subscription: SubscriptionState | null;
 };
 
-export type BusinessMini = { id?: string; name: string; logo_url: string | null; cover_url?: string | null; category: string; address?: string | null; status?: string };
+export type BusinessMini = { id?: string; name: string; logo_url: string | null; cover_url?: string | null; category: string; address?: string | null; instagram?: string | null; status?: string };
 /** stamps_required is THIS customer's goal (see reward_cost in SQL); card_stamps_required is today's setting. */
-export type CardStyle = { id?: string; name?: string; description?: string | null; stamps_required: number; card_stamps_required?: number; color: string; icon: string; cooldown_minutes?: number; active?: boolean; design?: Partial<CardDesign> | null };
+export type CardStyle = { id?: string; name?: string; description?: string | null; stamps_required: number; card_stamps_required?: number; color: string; icon: string; cooldown_minutes?: number; valid_days?: number; active?: boolean; design?: Partial<CardDesign> | null };
 
 /** merchant_card_impact(): customers mid-card grouped by (their goal, their stamps). */
 export type CardImpact = {
@@ -75,6 +77,8 @@ export type CardPayload = {
     rewards_redeemed: number;
     first_stamp_at: string | null;
     last_stamp_at: string | null;
+    /** when this card dies and goes back to zero; null = it never does */
+    expires_at?: string | null;
   };
   business: BusinessMini;
   card: CardStyle | null;
@@ -95,6 +99,7 @@ export type HomeCard = {
   balance: number;
   total_stamps: number;
   last_stamp_at: string | null;
+  expires_at?: string | null;
   business: BusinessMini;
   card: CardStyle;
   next_reward: { name: string; stamps_required: number; remaining: number } | null;

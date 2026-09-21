@@ -97,6 +97,8 @@ export const ops = ns({
       businessPhone: "Téléphone du commerce",
       address: "Adresse",
       addressPlaceholder: "Avenue Habib Bourguiba, Tunis",
+      instagram: "Instagram",
+      instagramHint: "Vos clients le verront juste après avoir pris un tampon.",
       saveBusiness: "Enregistrer les informations",
     },
     redeem: {
@@ -238,6 +240,8 @@ export const ops = ns({
       businessPhone: "تليفون المحل",
       address: "العنوان",
       addressPlaceholder: "شارع الحبيب بورقيبة، تونس",
+      instagram: "إنستغرام",
+      instagramHint: "الحريف يشوفو كي ياخو التامبون.",
       saveBusiness: "سجّل معلومات المحل",
     },
     redeem: {

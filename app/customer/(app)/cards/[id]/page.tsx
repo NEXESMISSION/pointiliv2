@@ -4,6 +4,7 @@ import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { TopBar } from "@/components/nav/TopBar";
 import { Alert } from "@/components/ui/Alert";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import { CardDeadline } from "@/components/customer/CardDeadline";
 import { UseRewardButton } from "@/components/customer/UseRewardButton";
 import { rpc } from "@/lib/session";
 import { resolveDesign } from "@/lib/card-design";
@@ -38,6 +39,8 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
       <TopBar title={business.name} subtitle={[category, business.address].filter(Boolean).join(" · ")} back="/customer/cards" />
 
       <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} rewardName={primary?.name} />
+
+      {customer.expires_at && <CardDeadline expiresAt={customer.expires_at} className="mx-auto mt-2 w-fit" />}
 
       {/* the card stays put; the rest of the screen scrolls under it */}
       <div className="max-h-[38dvh] overflow-y-auto pb-1">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CardDeadline, daysUntil } from "@/components/customer/CardDeadline";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { resolveDesign } from "@/lib/card-design";
 import type { HomeCard } from "@/lib/types";
@@ -10,6 +11,7 @@ export function CardTile({ card }: { card: HomeCard }) {
   return (
     <Link href={`/customer/cards/${card.customer_id}`} className="block rounded-[1.25rem] transition active:scale-[0.98]">
       <LoyaltyCardVisual size="tile" design={design} business={card.business} subtitle={card.card.description} filled={card.balance} total={card.card.stamps_required} rewardName={reward} />
+      {card.expires_at && daysUntil(card.expires_at) <= 7 && <CardDeadline expiresAt={card.expires_at} className="mx-auto mt-1.5 w-fit" />}
     </Link>
   );
 }

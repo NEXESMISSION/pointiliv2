@@ -58,6 +58,7 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
           color,
           icon,
           cooldown_minutes: card?.cooldown_minutes ?? 60,
+          valid_days: card?.valid_days ?? 0,
         }}
       />
 

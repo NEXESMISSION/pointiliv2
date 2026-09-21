@@ -21,6 +21,7 @@ export const scan = ns({
       unlocked: "Récompense débloquée !",
       toGo: "pour débloquer {reward}",
       viewCard: "Voir la carte",
+      follow: "Suivre {shop} sur Instagram",
     },
     needsAccount: {
       title: "Tampon réservé",
@@ -93,6 +94,7 @@ export const scan = ns({
       unlocked: "ربحت كادو!",
       toGo: "باش تاخو {reward}",
       viewCard: "شوف الكارط",
+      follow: "تابع {shop} على إنستغرام",
     },
     needsAccount: {
       title: "حجزنالك التامبون",

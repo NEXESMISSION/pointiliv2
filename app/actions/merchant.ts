@@ -28,7 +28,7 @@ async function call(fn: string, args: Record<string, unknown>): Promise<RpcResul
 
 export async function saveLoyaltyCard(_: FormState, fd: FormData): Promise<FormState> {
   const { t, msg } = await getI18n();
-  const values = Object.fromEntries(["name", "description", "stamps_required", "reward_name", "reward_description", "color", "icon", "cooldown_minutes"].map((k) => [k, str(fd, k)]));
+  const values = Object.fromEntries(["name", "description", "stamps_required", "reward_name", "reward_description", "color", "icon", "cooldown_minutes", "valid_days"].map((k) => [k, str(fd, k)]));
   const res = await call("save_loyalty_card", {
     p_name: values.name,
     p_description: values.description,
@@ -38,6 +38,7 @@ export async function saveLoyaltyCard(_: FormState, fd: FormData): Promise<FormS
     p_color: values.color,
     p_icon: values.icon,
     p_cooldown_minutes: int(fd, "cooldown_minutes"),
+    p_valid_days: int(fd, "valid_days") || 0,
   });
   if (!res.ok) return { ok: false, error: msg(res.error), values, at: now() };
   revalidatePath("/", "layout");
@@ -83,6 +84,7 @@ export async function updateBusiness(_: FormState, fd: FormData): Promise<FormSt
     p_category: str(fd, "category"),
     p_phone: str(fd, "phone"),
     p_address: str(fd, "address"),
+    p_instagram: str(fd, "instagram"),
   });
   if (!res.ok) return { ok: false, message: msg(res.error), at: now() };
   revalidatePath("/", "layout");

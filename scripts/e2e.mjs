@@ -312,6 +312,53 @@ async function main() {
   const renamed = await saveCard(Math.max(2, otherNow.balance), "Free Cappuccino");
   const afterRename = (await rpc(other, "customer_home", {})).data.cards[0];
   check("renaming the reward shows the new name", renamed.data?.ok && afterRename.unlocked.includes("Free Cappuccino"), afterRename.unlocked);
+
+  section("The card has a life: 30 days from the first stamp");
+  const withLife = (days) =>
+    rpc(merchant, "save_loyalty_card", {
+      p_name: "E2E Loyalty", p_description: "", p_stamps_required: 10, p_reward_name: "Free Coffee",
+      p_reward_description: "", p_color: "emerald", p_icon: "coffee", p_cooldown_minutes: 0, p_valid_days: days,
+    });
+  check("owner sets a 30-day card", (await withLife(30)).data?.ok);
+  const mayfly = await makeUser("mayfly");
+  const m1 = await stampAs(mayfly);
+  const deadline = new Date(m1.data?.customer?.expires_at ?? 0).getTime();
+  const wanted = Date.now() + 30 * 86400000;
+  check("the first stamp starts the clock (~30 days out)", Math.abs(deadline - wanted) < 120000, m1.data?.customer?.expires_at);
+  const m2 = await stampAs(mayfly);
+  check("the second stamp does not push the deadline back", m2.data?.customer?.expires_at === m1.data.customer.expires_at, m2.data?.customer?.expires_at);
+
+  await runSql(`update public.customers set card_expires_at = now() - interval '1 second' where id = '${m1.data.customer.id}'`);
+  const deadHome = (await rpc(mayfly, "customer_home", {})).data.cards[0];
+  check("a card past its day reads as zero", deadHome.balance === 0 && deadHome.expires_at === null, deadHome);
+  const m3 = await stampAs(mayfly);
+  check("the next stamp starts a brand-new card at 1", m3.data?.ok && m3.data.customer.balance === 1, m3.data?.customer);
+  check("and a fresh 30 days with it", new Date(m3.data.customer.expires_at).getTime() > Date.now() + 29 * 86400000, m3.data?.customer?.expires_at);
+  const logged = await runSql(`select count(*)::int n from public.activity_logs where customer_id = '${m1.data.customer.id}' and type = 'card_expired'`);
+  check("the shop's log records the card that ran out", logged[0].n === 1, logged);
+
+  const dying = await makeUser("nearly out of time");
+  const d1 = await stampAs(dying);
+  await runSql(`update public.customers set stamps_balance = 10, card_target = 10, card_expires_at = now() - interval '1 second' where id = '${d1.data.customer.id}'`);
+  const noPay = await rpc(dying, "request_redemption", { p_reward_id: (await rpc(dying, "customer_card", { p_customer_id: d1.data.customer.id })).data.rewards[0].id });
+  check("an expired card cannot pay for a reward", noPay.data?.error === "not_enough_stamps", noPay.data);
+
+  check("owner switches the limit off", (await withLife(0)).data?.ok);
+  const freed = await runSql(`select count(*)::int n from public.customers where business_id = '${created.businesses[0]}' and card_expires_at is not null`);
+  check("no card is left with a deadline", freed[0].n === 0, freed);
+
+  section("The shop's Instagram, and the follow after a stamp");
+  const shop = { p_name: "E2E Café", p_category: "cafe", p_phone: null, p_address: null };
+  const ig = await rpc(merchant, "update_business", { ...shop, p_instagram: "https://www.instagram.com/E2E.Cafe/?hl=fr" });
+  const igCtx = await rpc(merchant, "session_context", {});
+  check("a pasted profile link is stored as a bare handle", ig.data?.ok && igCtx.data?.business?.instagram === "e2e.cafe", { ig: ig.data, saved: igCtx.data?.business?.instagram });
+  const igBad = await rpc(merchant, "update_business", { ...shop, p_instagram: "not a handle!" });
+  check("a name that is not a handle is refused", igBad.data?.error === "invalid_instagram", igBad.data);
+  const follower = await makeUser("follower");
+  const fStamp = await stampAs(follower);
+  check("the stamp screen knows where to send them", fStamp.data?.business?.instagram === "e2e.cafe", fStamp.data?.business);
+  const igOff = await rpc(merchant, "update_business", { ...shop, p_instagram: "" });
+  check("clearing the field removes it", igOff.data?.ok && (await rpc(merchant, "session_context", {})).data.business.instagram === null, igOff.data);
 }
 
 try {

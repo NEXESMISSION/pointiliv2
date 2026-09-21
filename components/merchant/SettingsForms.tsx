@@ -36,6 +36,9 @@ export function BusinessForm({ business, disabled }: { business: NonNullable<Ses
         <Field label={w.address} htmlFor="address">
           <Input id="address" name="address" defaultValue={business.address ?? ""} placeholder={w.addressPlaceholder} maxLength={160} autoComplete="street-address" />
         </Field>
+        <Field label={w.instagram} htmlFor="instagram" hint={w.instagramHint}>
+          <Input id="instagram" name="instagram" dir="ltr" defaultValue={business.instagram ?? ""} placeholder="@cafe.yasmine" maxLength={60} autoCapitalize="none" spellCheck={false} />
+        </Field>
         {!disabled && (
           <SubmitButton size="md" pending={pending} pendingText={t.common.saving}>
             {w.saveBusiness}

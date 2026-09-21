@@ -26,12 +26,15 @@ type Initial = {
   color: string;
   icon: string;
   cooldown_minutes: number;
+  valid_days: number;
 };
 type Business = { name: string; logo_url: string | null; cover_url: string | null; category: string };
 
 const STAMP_PICKS = [6, 8, 10, 12];
 /** The three answers that cover almost every shop; the rest live under "More options". */
 const WAIT_PICKS = [0, 60, 1440];
+/** How long a card lives once it is opened. 0 = it never dies. */
+const VALID_PICKS = [0, 15, 30, 60, 90, 180, 365];
 
 /**
  * Two questions: how many stamps, and what they get. The reward wording, the
@@ -48,6 +51,7 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
   const [reward, setReward] = useState(initial.reward_name || ideas[0]!);
   const [rewardDesc, setRewardDesc] = useState(initial.reward_description);
   const [cooldown, setCooldown] = useState(String(initial.cooldown_minutes));
+  const [validDays, setValidDays] = useState(String(initial.valid_days));
   const [ask, setAsk] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const confirmed = useRef(false);
@@ -202,6 +206,7 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
                 <p className="mt-0.5 text-xs leading-snug text-muted">{w.waitHint}</p>
                 {!WAIT_PICKS.includes(Number(cooldown)) && <p className="mt-1.5 text-xs font-medium text-brand-600">{cooldownLabel(Number(cooldown))}</p>}
                 <input type="hidden" name="cooldown_minutes" value={cooldown} />
+                <input type="hidden" name="valid_days" value={validDays} />
               </div>
             </Card>
 
@@ -225,6 +230,15 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
                     {cooldownValues.map((v) => (
                       <option key={v} value={v}>
                         {cooldownLabel(v)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label={w.validLabel} htmlFor="valid_days" hint={w.validHint}>
+                  <Select id="valid_days" value={validDays} onChange={(e) => setValidDays(e.target.value)}>
+                    {[...new Set([...VALID_PICKS, initial.valid_days])].sort((a, b) => a - b).map((v) => (
+                      <option key={v} value={v}>
+                        {v === 0 ? w.validNever : count(t.formats.days, v)}
                       </option>
                     ))}
                   </Select>

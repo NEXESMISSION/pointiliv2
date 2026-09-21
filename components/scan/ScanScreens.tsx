@@ -6,6 +6,8 @@ import { IMPACT_MS, StampDrop } from "./StampDrop";
 import { Logo } from "@/components/Logo";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { Button, LinkButton } from "@/components/ui/Button";
+import { CardDeadline } from "@/components/customer/CardDeadline";
+import { FollowInstagram } from "@/components/customer/FollowInstagram";
 import { UseRewardButton } from "@/components/customer/UseRewardButton";
 import { useT } from "@/components/i18n/Provider";
 import { resolveDesign } from "@/lib/card-design";
@@ -52,6 +54,8 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
         <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} rewardName={primary?.name} animateIndex={Math.min(customer.balance, total) - 1} />
       </div>
 
+      {!unlocked && customer.expires_at && <CardDeadline expiresAt={customer.expires_at} className="mt-2 animate-rise" />}
+
       {unlocked ? (
         <div className="mt-4 w-full animate-rise rounded-3xl border-2 border-dashed border-success-500 p-4" style={after(280)}>
           <p className="text-3xl" aria-hidden>
@@ -70,7 +74,13 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
         </p>
       ) : null}
 
-      <div className="w-full animate-rise space-y-2 pt-6" style={after(360)}>
+      {business.instagram && (
+        <div className="w-full animate-rise pt-5" style={after(340)}>
+          <FollowInstagram handle={business.instagram} shop={business.name} />
+        </div>
+      )}
+
+      <div className={`w-full animate-rise space-y-2 ${business.instagram ? "pt-3" : "pt-6"}`} style={after(400)}>
         <LinkButton href={`/customer/cards/${customer.id}`} variant={unlocked ? "outline" : "primary"} block>
           {t.scan.success.viewCard}
         </LinkButton>
