@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* B-roll cards for a 1080×1920 reel: one real app screen, one line of Tunisian,
+     nothing else. They are cut over the founder's voice, so they have to read in
+     a second and a half. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1080px; height: 1920px; overflow: hidden; font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; background: #000; }
+
+  .card { position: relative; width: 1080px; height: 1920px; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+  .card.dark { background: linear-gradient(165deg, #6535E0 0%, #4A24B5 58%, #33167F 100%); color: #fff; }
+  .card.light { background: linear-gradient(165deg, #FBFAFF 0%, #F0EBFF 100%); color: #17141F; }
+
+  /* the same soft waves the loyalty card uses, so the reel and the app rhyme */
+  .waves { position: absolute; inset: 0; opacity: 0.16; background-image:
+      radial-gradient(60% 40% at 15% 12%, #fff 0%, transparent 60%),
+      radial-gradient(50% 35% at 88% 82%, #fff 0%, transparent 62%); }
+  .card.light .waves { opacity: 0.5; background-image:
+      radial-gradient(55% 38% at 12% 10%, #E6DCFF 0%, transparent 62%),
+      radial-gradient(52% 36% at 90% 84%, #EFE7FF 0%, transparent 64%); }
+
+  .cap { position: relative; z-index: 3; margin-top: 150px; padding: 0 90px; text-align: center;
+         font-size: 74px; font-weight: 700; line-height: 1.24; letter-spacing: -0.01em; }
+  .card.dark .cap { text-shadow: 0 6px 30px rgba(10,4,40,0.45); }
+  .sub { position: relative; z-index: 3; margin-top: 18px; padding: 0 110px; text-align: center;
+         font-size: 40px; font-weight: 500; line-height: 1.35; opacity: 0.86; }
+
+  /* whole phone, never a floating screenshot */
+  .device { position: relative; z-index: 3; margin-top: 74px; width: var(--dw, 560px);
+            padding: calc(var(--dw, 560px) * 0.028); border-radius: calc(var(--dw, 560px) * 0.14);
+            background: #0c0c14; box-shadow: 0 60px 120px -40px rgba(12,4,50,0.75), 0 0 0 2px #2a2a36 inset; }
+  .device::before { content: ""; position: absolute; right: -5px; top: 24%; width: 5px; height: 11%; border-radius: 0 4px 4px 0; background: #0c0c14; }
+  .device::after { content: ""; position: absolute; left: -5px; top: 19%; width: 5px; height: 7%; border-radius: 4px 0 0 4px; background: #0c0c14; box-shadow: 0 calc(var(--dw, 560px) * 0.2) 0 #0c0c14; }
+  .device .glass { border-radius: calc(var(--dw, 560px) * 0.113); overflow: hidden; background: #fff; aspect-ratio: 1170 / 2532; direction: ltr; }
+  .device img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+
+  .mark { position: absolute; z-index: 4; left: 0; right: 0; bottom: 96px; display: flex; align-items: center;
+          justify-content: center; gap: 18px; font-family: Inter, sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.01em; }
+  .mark .dot { width: 54px; height: 54px; border-radius: 16px; background: rgba(255,255,255,0.16); display: grid; place-items: center; }
+  .card.light .mark .dot { background: #6535E0; }
+  .mark svg { width: 30px; height: 30px; }
+
+  /* the closing frame: no phone, just the name and where to find it */
+  .end { justify-content: center; }
+  .end .logo { position: relative; z-index: 3; width: 190px; height: 190px; border-radius: 54px; background: rgba(255,255,255,0.14);
+               display: grid; place-items: center; box-shadow: 0 40px 90px -30px rgba(10,4,40,0.6); }
+  .end .logo svg { width: 104px; height: 104px; }
+  .end h1 { position: relative; z-index: 3; margin-top: 46px; font-family: Inter, sans-serif; font-size: 104px; font-weight: 800; letter-spacing: -0.03em; }
+  .end .cap { margin-top: 24px; font-size: 56px; font-weight: 600; }
+  .end .url { position: relative; z-index: 3; margin-top: 54px; font-family: Inter, sans-serif; font-size: 42px; font-weight: 600;
+              background: rgba(255,255,255,0.15); padding: 22px 48px; border-radius: 999px; direction: ltr; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const MARK = '<svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="6" width="15" height="12" rx="3.2" fill="#fff"/><rect x="6.5" y="3" width="15" height="12" rx="3.2" fill="#fff" opacity="0.55"/><path d="M13.6 8.2l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#6535E0"/></svg>';
+
+  window.renderCard = async (c) => {
+    const root = document.getElementById("root");
+    if (c.type === "end") {
+      root.innerHTML = `
+        <div class="card dark end">
+          <div class="waves"></div>
+          <div class="logo">${MARK}</div>
+          <h1>Pointili</h1>
+          <div class="cap">${c.cap}</div>
+          <div class="url">${c.url}</div>
+        </div>`;
+    } else {
+      root.innerHTML = `
+        <div class="card ${c.tone || "dark"}">
+          <div class="waves"></div>
+          <div class="cap">${c.cap}</div>
+          ${c.sub ? `<div class="sub">${c.sub}</div>` : ""}
+          <div class="device" style="--dw:${c.dw || 560}px"><div class="glass"><img src="${c.screenData}" /></div></div>
+          <div class="mark"><span class="dot">${MARK}</span> Pointili</div>
+        </div>`;
+      const img = root.querySelector("img");
+      if (img && !img.complete) await new Promise((r) => { img.onload = r; img.onerror = r; });
+    }
+    await document.fonts.ready;
+  };
+</script>
+</body>
+</html>
