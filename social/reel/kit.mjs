@@ -132,6 +132,27 @@ same length, so it lines up at 0:00.
 Raw take: -15.3 LUFS, loudness range 0.7 LU (the room was as loud as you were).
 This one:  -14.0 LUFS, voice in front.
 
+WHAT GOES ON TOP  (overlays/ and sfx/)
+-------------------------------------
+Everything here has real alpha. Use the .mov in Premiere/Resolve/Final Cut, the
+.webm in CapCut desktop, or the PNG sequence in frames/ anywhere else.
+
+  0:00.0   hook-A|B|C.png        pick one, hold it 2.5 s, let it slide off
+  0:00.0   progress-bar          the full 44.6 s, pinned to the very top of frame
+  0:00.0   logo-bug.png          top-left, over the blurred shelf, until 0:26.8
+  0:07.2   plus-one              his right palm opens into empty frame — land it there
+  0:19.4   plus-one              he opens the same hand again, slightly lower
+  0:21.0   (the framing jumps bigger here — put a cut or a flash on it so it
+            reads as a decision and not as a bump)
+  0:26.8   scan-sweep            over the QR on card 01, once
+  0:30.6   tap-ripple            on card 02, where a thumb would be
+  0:35.7   reward-burst          on card 04, the moment the card is finished
+  0:41.6   riser + end card
+
+  sfx:  cut-pop on every card cut · stamp-thud under each plus-one ·
+        reward-chime with the burst · whoosh under the push-ins · riser into the end.
+        Keep them all around -24 dB under the voice; you should feel them, not hear them.
+
 WHAT IS STILL YOURS TO DO
 -------------------------
 1. Captions. Most people watch on mute. CapCut auto-captions in Arabic, 2-4 words
@@ -155,8 +176,11 @@ async function main() {
   const extraCards = path.join(DEST, "extra", "cards");
   const extraClips = path.join(DEST, "extra", "clips");
   const audio = path.join(DEST, "audio");
-  await rm(DEST, { recursive: true, force: true });
-  for (const d of [cards, clips, extraCards, extraClips, audio]) await mkdir(d, { recursive: true });
+  // only the folders this script owns — overlays/ and sfx/ are another script's
+  for (const d of [cards, clips, extraCards, extraClips, audio]) {
+    await rm(d, { recursive: true, force: true });
+    await mkdir(d, { recursive: true });
+  }
 
   console.log("the six in the cut");
   await renderAll(CUT, cards);
