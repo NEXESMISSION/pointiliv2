@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* The same cards as the reel, turned on their side for a screen that is wider
+     than it is tall. The words sit on the right because that is where Arabic
+     starts, and the window runs off the left edge so the card reads as a view
+     into something larger rather than a screenshot pasted on a colour. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1920px; height: 1080px; overflow: hidden; font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; background: #000; }
+
+  .card { position: relative; width: 1920px; height: 1080px; display: flex; align-items: center; overflow: hidden; }
+  .card.dark { background: linear-gradient(150deg, #6535E0 0%, #4A24B5 55%, #31157A 100%); color: #fff; }
+  .card.light { background: linear-gradient(150deg, #FCFBFF 0%, #EFE9FF 100%); color: #17141F; }
+
+  .waves { position: absolute; inset: 0; opacity: 0.17; background-image:
+      radial-gradient(48% 52% at 12% 16%, #fff 0%, transparent 62%),
+      radial-gradient(42% 46% at 92% 88%, #fff 0%, transparent 64%); }
+  .card.light .waves { opacity: 0.55; background-image:
+      radial-gradient(46% 50% at 10% 14%, #E4D9FF 0%, transparent 64%),
+      radial-gradient(44% 48% at 94% 90%, #EFE7FF 0%, transparent 66%); }
+
+  /* ── the words ─────────────────────────────────────────────────── */
+  .copy { position: relative; z-index: 3; width: 620px; margin-right: 96px; flex: none; display: grid; gap: 20px; }
+  .card:not(.end) .copy { margin-left: auto; }
+  .cap { font-size: 76px; font-weight: 700; line-height: 1.2; letter-spacing: -0.015em; }
+  .card.dark .cap { text-shadow: 0 6px 30px rgba(10,4,40,0.4); }
+  .sub { font-size: 38px; font-weight: 500; line-height: 1.38; opacity: 0.85; }
+
+  .mark { display: flex; align-items: center; gap: 16px; margin-top: 14px;
+          font-family: Inter, sans-serif; font-weight: 700; font-size: 36px; letter-spacing: -0.01em; }
+  .mark .dot { width: 50px; height: 50px; border-radius: 15px; background: #fff; display: grid; place-items: center;
+               box-shadow: 0 6px 18px -8px rgba(10,4,40,0.5); }
+  .mark svg { width: 32px; height: auto; display: block; }
+
+  /* ── the window ────────────────────────────────────────────────── */
+  .win {
+    position: absolute; z-index: 2; left: -120px; top: 50%; transform: translateY(-50%);
+    width: 1080px; border-radius: 22px; overflow: hidden; background: #1A1724;
+    box-shadow: 0 70px 140px -40px rgba(8,2,36,0.72), 0 0 0 1px rgba(255,255,255,0.08) inset;
+  }
+  .bar { height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 22px; background: #221E30; direction: ltr; }
+  .bar .d { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  .bar .url {
+    margin: 0 auto; background: #15121F; color: #B9B2CE; border-radius: 999px;
+    font-family: Inter, sans-serif; font-size: 20px; font-weight: 500; padding: 9px 30px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .bar .url svg { width: 16px; height: 16px; flex: none; }
+  .shot { display: block; width: 100%; height: 640px; object-fit: cover; object-position: top center; background: #fff; }
+
+  /* ── the closing frame ─────────────────────────────────────────── */
+  .end { justify-content: center; }
+  .end .copy { width: auto; margin: 0; justify-items: center; text-align: center; gap: 0; }
+  .end .logo { width: 176px; height: 176px; border-radius: 50px; background: #fff; display: grid; place-items: center;
+               box-shadow: 0 40px 90px -30px rgba(10,4,40,0.6); }
+  .end .logo svg { width: 110px; height: auto; display: block; }
+  .end h1 { margin-top: 40px; font-family: Inter, sans-serif; font-size: 104px; font-weight: 800; letter-spacing: -0.03em; }
+  .end .cap { margin-top: 18px; font-size: 48px; font-weight: 600; }
+  .end .url {
+    margin-top: 44px; font-family: Inter, sans-serif; font-size: 40px; font-weight: 600; direction: ltr;
+    background: rgba(255,255,255,0.15); padding: 20px 46px; border-radius: 999px;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const MARK = '<svg viewBox="0 0 96 70"><defs> <linearGradient id="pdb" x1="0" y1="0" x2="0.2" y2="1"><stop offset="0" stop-color="#7244EC"/><stop offset="1" stop-color="#4F28C6"/></linearGradient> <linearGradient id="pdf" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#7143E6"/><stop offset="1" stop-color="#5029C5"/></linearGradient> <mask id="pdm"><rect width="96" height="70" fill="#fff"/><rect x="-2" y="14" width="86" height="58" rx="10" fill="#000"/></mask> </defs> <rect x="16" y="5" width="72" height="50" rx="7" transform="rotate(8 52 30)" fill="url(#pdb)" fill-opacity="1" mask="url(#pdm)"/> <rect x="1" y="17" width="80" height="52" rx="8" fill="url(#pdf)"/> <path d="M41 29C42.2 38.6 44.4 41.2 56 43 44.4 44.8 42.2 47.4 41 57 39.8 47.4 37.6 44.8 26 43 37.6 41.2 39.8 38.6 41 29Z" fill="#FFFFFF"/></svg>';
+  const LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="#7E7792" stroke-width="2.2"><rect x="4" y="10.5" width="16" height="11" rx="2.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>';
+
+  window.renderCard = async (c) => {
+    const root = document.getElementById("root");
+    if (c.type === "end") {
+      root.innerHTML = `
+        <div class="card dark end">
+          <div class="waves"></div>
+          <div class="copy">
+            <div class="logo">${MARK}</div>
+            <h1>Pointili</h1>
+            <div class="cap">${c.cap}</div>
+            <div class="url">${c.url}</div>
+          </div>
+        </div>`;
+    } else {
+      root.innerHTML = `
+        <div class="card ${c.tone || "dark"}">
+          <div class="waves"></div>
+          <div class="win">
+            <div class="bar">
+              <span class="d" style="background:#FF5F57"></span>
+              <span class="d" style="background:#FEBC2E"></span>
+              <span class="d" style="background:#28C840"></span>
+              <span class="url">${LOCK} ${c.url || "pointili.online"}</span>
+            </div>
+            <img class="shot" src="${c.screenData}" />
+          </div>
+          <div class="copy">
+            <div class="cap">${c.cap}</div>
+            ${c.sub ? `<div class="sub">${c.sub}</div>` : ""}
+            <div class="mark"><span class="dot">${MARK}</span> Pointili</div>
+          </div>
+        </div>`;
+      const img = root.querySelector("img");
+      if (img && !img.complete) await new Promise((r) => { img.onload = r; img.onerror = r; });
+    }
+    await document.fonts.ready;
+  };
+</script>
+</body>
+</html>

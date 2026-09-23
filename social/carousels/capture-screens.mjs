@@ -16,7 +16,7 @@ import { createClient } from "@supabase/supabase-js";
 import { runSql } from "../../scripts/sql.mjs";
 
 const BASE = process.env.CAPTURE_BASE || "https://pointidi.vercel.app";
-const OUT = "social/carousels/screens";
+const OUT = process.argv.includes("--desktop") ? "social/carousels/screens-desktop" : "social/carousels/screens";
 mkdirSync(OUT, { recursive: true });
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -128,9 +128,12 @@ console.log("  أمين has 7/10");
 
 // ── browser ───────────────────────────────────────────────────────────────
 const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
+// --desktop captures the same screens at laptop width, into screens-desktop/
+const DESKTOP = process.argv.includes("--desktop");
 const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, locale: "ar-TN" };
+const desk = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, locale: "ar-TN" };
 const newCtx = async () => {
-  const c = await browser.newContext(phone);
+  const c = await browser.newContext(DESKTOP ? desk : phone);
   await c.addCookies([{ name: "pl_lang2", value: "tn", url: BASE }]);
   return c;
 };
