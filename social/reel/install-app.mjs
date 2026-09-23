@@ -26,6 +26,13 @@ const SRC = path.join(DIR, "app");
 const HOME = os.homedir();
 const APP = path.join(process.env.LOCALAPPDATA || path.join(HOME, "AppData", "Local"), "Pointili Captions");
 const LINK = path.join(HOME, "Desktop", "Pointili Captions.lnk");
+/* A desktop with sixty icons on it hides a shortcut completely. The Start
+   menu is the only place Windows Search looks, so the app goes there too and
+   is found by pressing Windows and typing its name. */
+const START = path.join(
+  process.env.APPDATA || path.join(HOME, "AppData", "Roaming"),
+  "Microsoft", "Windows", "Start Menu", "Programs", "Pointili Captions.lnk",
+);
 
 /** The browsers that can run a page as its own window, best first. */
 const BROWSERS = [
@@ -83,16 +90,22 @@ $s.TargetPath = ${q(browser.replace(/\//g, "\\"))}
 $s.Arguments = ${q(args)}
 $s.WorkingDirectory = ${q(APP)}
 $s.IconLocation = ${q(path.join(APP, "icon.ico"))}
-$s.Description = 'Make a caption, export a transparent PNG'
+$s.Description = 'Make a caption, export a PNG or a video'
 $s.Save()
 `;
   await run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps]);
 
+  // the same shortcut, where Windows Search can see it
+  await mkdir(path.dirname(START), { recursive: true });
+  await copyFile(LINK, START);
+
   console.log(`installed   ${APP}`);
   console.log(`shortcut    ${LINK}`);
+  console.log(`start menu  ${START}`);
   console.log(`window      ${path.basename(browser)} in app mode`);
   console.log(`\nDouble-click "Pointili Captions" on your desktop. To pin it: right-click the`);
-  console.log(`taskbar icon while it is open and choose Pin to taskbar.`);
+  console.log(`taskbar icon while it is open and choose Pin to taskbar. It is in the Start menu
+too: press Windows and type Pointili.`);
 }
 
 await main();
