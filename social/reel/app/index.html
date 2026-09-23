@@ -140,6 +140,11 @@
   .said { min-height: 15px; font-size: 11.5px; font-weight: 600; color: var(--green); }
   .said.warn { color: var(--danger); }
 
+  video { width: 100%; border-radius: 10px; display: block; background: #08070C; border: 1px solid var(--line); }
+  .bar-prog { height: 5px; border-radius: 3px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--line); }
+  .bar-prog i { display: block; height: 100%; width: 0; background: var(--brand); transition: width 0.12s linear; }
+  .swatch-row { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; }
+
   .batch-out { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
   .batch-out figure { margin: 0; display: grid; gap: 4px; }
   .batch-out img { width: 100%; border-radius: 7px; background: #0B0A10; display: block; }
@@ -171,6 +176,7 @@
   <aside class="side">
     <div class="tabs" role="tablist">
       <button type="button" role="tab" id="tab-design" aria-selected="true" aria-controls="pane-design">Design</button>
+      <button type="button" role="tab" id="tab-motion" aria-selected="false" aria-controls="pane-motion">Motion</button>
       <button type="button" role="tab" id="tab-batch" aria-selected="false" aria-controls="pane-batch">Batch</button>
     </div>
 
@@ -212,6 +218,21 @@
         </div>
         <label class="f" for="shift"><span class="t">Position <em class="val" id="shiftVal">0</em></span><input type="range" id="shift" min="-45" max="45" step="1" /></label>
         <label class="f"><span class="t"><span><input type="checkbox" id="shadow" /> Drop shadow</span></span></label>
+      </div>
+
+      <div class="group">
+        <h3>Colour</h3>
+        <div class="row">
+          <label class="f" for="chipColor"><span class="t">Chip</span><input type="color" id="chipColor" /></label>
+          <label class="f" for="textColor"><span class="t">Text</span><input type="color" id="textColor" /></label>
+        </div>
+        <label class="f" for="chipOpacity"><span class="t">Chip opacity <em class="val" id="chipOpacityVal">100</em></span><input type="range" id="chipOpacity" min="0" max="100" step="5" /></label>
+        <div class="row">
+          <label class="f" for="stroke"><span class="t">Outline <em class="val" id="strokeVal">0</em></span><input type="range" id="stroke" min="0" max="20" step="1" /></label>
+          <label class="f" for="strokeColor"><span class="t">Outline colour</span><input type="color" id="strokeColor" /></label>
+        </div>
+        <label class="f" for="shadowDepth"><span class="t">Shadow strength <em class="val" id="shadowDepthVal">55</em></span><input type="range" id="shadowDepth" min="0" max="100" step="5" /></label>
+        <p class="note">The last swatch on a line — the violet-ringed one — wears these two colours. <b>Chip opacity</b> thins whichever colour that line is already wearing, so footage reads through it.</p>
       </div>
 
       <div class="group">
@@ -260,6 +281,56 @@
       </div>
     </div>
 
+    <!-- ── motion ── -->
+    <div class="pane" id="pane-motion" role="tabpanel" aria-labelledby="tab-motion" hidden>
+      <div class="group">
+        <h3>Movement</h3>
+        <label class="f" for="anim"><span class="t">Animation</span>
+          <select id="anim">
+            <option value="fade">Fade in</option>
+            <option value="rise">Rise up</option>
+            <option value="pop">Pop</option>
+            <option value="slide">Slide in from the side</option>
+            <option value="words">Word by word</option>
+            <option value="type">Typewriter</option>
+            <option value="none">None — a still frame</option>
+          </select>
+        </label>
+        <div class="row three">
+          <label class="f" for="animIn"><span class="t">In <em class="val" id="animInVal">0.5</em></span><input type="range" id="animIn" min="0.1" max="2" step="0.1" /></label>
+          <label class="f" for="animHold"><span class="t">Hold <em class="val" id="animHoldVal">2</em></span><input type="range" id="animHold" min="0.2" max="8" step="0.2" /></label>
+          <label class="f" for="animOut"><span class="t">Out <em class="val" id="animOutVal">0.4</em></span><input type="range" id="animOut" min="0" max="2" step="0.1" /></label>
+        </div>
+        <label class="f" for="animStagger"><span class="t">Between lines <em class="val" id="animStaggerVal">0.18</em></span><input type="range" id="animStagger" min="0" max="1.5" step="0.02" /></label>
+        <button type="button" id="btnPlay" class="wide">▶ Play it</button>
+        <p class="note" id="animLen">—</p>
+      </div>
+
+      <div class="group">
+        <h3>Render a video</h3>
+        <label class="f" for="vbg"><span class="t">Behind the words</span>
+          <select id="vbg">
+            <option value="green">Green screen — keys out in any editor</option>
+            <option value="transparent">Transparent — WebM only</option>
+            <option value="black">Black</option>
+            <option value="design">Whatever the Design tab says</option>
+          </select>
+        </label>
+        <div class="row">
+          <label class="f" for="vfmt"><span class="t">Format</span><select id="vfmt"></select></label>
+          <label class="f" for="fps"><span class="t">FPS</span>
+            <select id="fps"><option value="25">25</option><option value="30">30</option><option value="50">50</option></select>
+          </label>
+        </div>
+        <button type="button" id="btnRender" class="primary wide">Render video</button>
+        <div class="bar-prog" id="vprog" hidden><i></i></div>
+        <p class="said" id="motionSaid"></p>
+        <video id="vidOut" controls hidden></video>
+        <button type="button" id="btnSaveVideo" class="wide" hidden>Save the video</button>
+        <p class="note">It records in real time, so a 3-second caption takes about 3 seconds. Green screen is the safe one: drop it in CapCut and key the green out. Transparent WebM keeps real alpha, but only some editors read it.</p>
+      </div>
+    </div>
+
     <!-- ── batch ── -->
     <div class="pane" id="pane-batch" role="tabpanel" aria-labelledby="tab-batch" hidden>
       <div class="group">
@@ -290,7 +361,40 @@ const STYLES = {
   green: { label: "Green",   fill: "#17B65A",            text: "#FFFFFF" },
   black: { label: "Black",   fill: "#0C0814",            text: "#FFFFFF" },
   none:  { label: "No chip", fill: null,                 text: "#FFFFFF" },
+  /* Wears the two colours from the Colour group — resolved in colorsFor(). */
+  custom: { label: "Custom", fill: "custom",              text: "custom" },
 };
+
+/** The same colour with its alpha scaled — #rrggbb or rgba() alike. */
+function withAlpha(color, mul) {
+  if (!color) return null;
+  if (mul >= 1) return color;
+  const hex = /^#([0-9a-f]{6})$/i.exec(color);
+  if (hex) {
+    const v = parseInt(hex[1], 16);
+    return "rgba(" + ((v >> 16) & 255) + "," + ((v >> 8) & 255) + "," + (v & 255) + "," + mul + ")";
+  }
+  const rgb = /^rgba?\(([^)]+)\)$/i.exec(color);
+  if (rgb) {
+    const p = rgb[1].split(",").map((x) => x.trim());
+    const a = p.length > 3 ? Number(p[3]) : 1;
+    return "rgba(" + p[0] + "," + p[1] + "," + p[2] + "," + a * mul + ")";
+  }
+  return color;
+}
+
+/**
+ * What a line is actually drawn with: its own swatch, the Custom swatch's two
+ * colours, then the opacity slider applied to whichever chip colour won. One
+ * place, so the swatch in the editor, the preview and the video agree.
+ */
+function colorsFor(style) {
+  const st = STYLES[style] || STYLES.dark;
+  const fill = st.fill === "custom" ? state.chipColor : st.fill;
+  const text = st.text === "custom" ? state.textColor : st.text;
+  const op = state.chipOpacity == null ? 100 : state.chipOpacity;
+  return { fill: withAlpha(fill, op / 100), text: text };
+}
 
 const PRESETS = {
   Hook: {
@@ -324,7 +428,12 @@ const off = document.createElement("canvas");
 
 let state = read(KEY) || structuredClone(PRESETS.Hook);
 let mine = read(MINE) || {};
-state = { font: "IBM Plex Sans Arabic", bgColor: "#6535E0", scale: "1", cw: 1080, ch: 420, shift: 0, ...state };
+state = {
+  font: "IBM Plex Sans Arabic", bgColor: "#6535E0", scale: "1", cw: 1080, ch: 420, shift: 0,
+  chipColor: "#6535E0", textColor: "#FFFFFF", chipOpacity: 100, stroke: 0, strokeColor: "#0C0814", shadowDepth: 55,
+  anim: "rise", animIn: 0.5, animHold: 2, animOut: 0.4, animStagger: 0.18, fps: "30", vbg: "green", vfmt: "",
+  ...state,
+};
 if (!state.font) state.font = "IBM Plex Sans Arabic";
 
 function read(k) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch { return null; } }
@@ -366,18 +475,52 @@ function sizeFor(lines, s) {
   return { w: Math.round(w * s), h: Math.round(h * s) };
 }
 
-function render(target, lines, s) {
+/* Easing, once. easeBack overshoots a little, which is what makes a pop pop. */
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const easeOut = (p) => 1 - Math.pow(1 - p, 3);
+const easeBack = (p) => { const c = 1.7; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
+
+/** How long the whole caption runs, from the Motion sliders. */
+function totalTime() {
+  const rows = Math.max(1, state.lines.filter((l) => l.text.trim()).length);
+  return state.animStagger * (rows - 1) + state.animIn + state.animHold + state.animOut;
+}
+
+/**
+ * How much of a line has arrived at progress p.
+ * Arabic reshapes as it is sliced, so a character prefix still reads — but it
+ * can cut a ligature mid-word, which is the whole reason "Word by word" sits
+ * next to it in the list.
+ */
+function revealed(text, p) {
+  if (state.anim === "type") {
+    const chars = Array.from(text);
+    return chars.slice(0, Math.ceil(chars.length * p)).join("");
+  }
+  const words = text.split(/\s+/).filter(Boolean);
+  return words.slice(0, Math.ceil(words.length * p)).join(" ");
+}
+
+/** opts.time (seconds) animates; leaving it out draws the settled frame that
+ *  the PNG export and the preview both want. opts.bg overrides the Design
+ *  background, which is how the video gets its green screen. */
+function render(target, lines, s, opts) {
+  opts = opts || {};
+  const t = opts.time;
+  const bgMode = opts.bg || state.bg;
   const { w, h } = sizeFor(lines, s);
   target.width = w; target.height = h;
   const c = target.getContext("2d");
   c.clearRect(0, 0, w, h);
 
-  if (state.bg === "solid") { c.fillStyle = state.bgColor; c.fillRect(0, 0, w, h); }
-  else if (state.bg === "brand") {
+  if (bgMode === "solid") { c.fillStyle = state.bgColor; c.fillRect(0, 0, w, h); }
+  else if (bgMode === "green") { c.fillStyle = "#00B140"; c.fillRect(0, 0, w, h); }
+  else if (bgMode === "black") { c.fillStyle = "#08070C"; c.fillRect(0, 0, w, h); }
+  else if (bgMode === "brand") {
     const g = c.createLinearGradient(0, 0, w * 0.4, h);
     g.addColorStop(0, "#6535E0"); g.addColorStop(1, "#33167F");
     c.fillStyle = g; c.fillRect(0, 0, w, h);
-  } else if (state.bg === "scrim") {
+  } else if (bgMode === "scrim") {
     const g = c.createLinearGradient(0, 0, 0, h);
     g.addColorStop(0, "rgba(6,4,16,0)"); g.addColorStop(0.45, "rgba(6,4,16,0.55)"); g.addColorStop(1, "rgba(6,4,16,0.82)");
     c.fillStyle = g; c.fillRect(0, 0, w, h);
@@ -391,26 +534,64 @@ function render(target, lines, s) {
   c.textBaseline = "middle";
   c.textAlign = "center";
 
+  /* Lines ARRIVE one after another but LEAVE together: an exit on its own
+     cue reads as a glitch rather than as choreography. */
+  const anim = t === undefined ? "none" : state.anim;
+  const outAt = state.animStagger * Math.max(0, rows.length - 1) + state.animIn + state.animHold;
+  const outP = anim === "none" || !state.animOut ? 0 : clamp01((t - outAt) / state.animOut);
+  const k = (state.shadowDepth == null ? 55 : state.shadowDepth) / 55;
+
   let y = (h - blockH) / 2 + (state.shift / 100) * h;
-  for (const r of rows) {
-    const st = STYLES[r.line.style] || STYLES.dark;
+  rows.forEach((r, i) => {
+    const inP = anim === "none" ? 1 : clamp01((t - i * state.animStagger) / state.animIn);
+    if (inP <= 0 || outP >= 1) { y += r.h + state.gap * s; return; }
+
+    const col = colorsFor(r.line.style);
     const x = state.align === "center" ? (w - r.w) / 2
             : state.align === "right" ? w - r.w - 40 * s
             : 40 * s;
+    const cx = x + r.w / 2, cy = y + r.h / 2, ty = cy + state.size * s * 0.04;
 
-    if (state.shadow) { c.shadowColor = "rgba(8,4,24,0.55)"; c.shadowBlur = 34 * s; c.shadowOffsetY = 12 * s; }
-    if (st.fill) { c.fillStyle = st.fill; c.beginPath(); c.roundRect(x, y, r.w, r.h, state.radius * s); c.fill(); }
+    /* A reveal IS the entrance: fading it as well would hide the letters that
+       are the point of it. */
+    const reveals = anim === "type" || anim === "words";
+    const ease = easeOut(inP);
+    const alpha = (reveals || anim === "none" ? 1 : ease) * (1 - outP);
+    const dy = anim === "rise" ? (1 - ease) * 46 * s : 0;
+    const dx = anim === "slide" ? (1 - ease) * 150 * s : 0;
+    const sc = anim === "pop" ? 0.62 + 0.38 * easeBack(inP) : 1;
+    const shown = reveals ? revealed(r.line.text, inP) : r.line.text;
+
+    c.save();
+    c.globalAlpha = alpha;
+    c.translate(cx + dx, cy + dy);
+    if (sc !== 1) c.scale(sc, sc);
+    c.translate(-cx, -cy);
+
+    if (state.shadow && k > 0) { c.shadowColor = "rgba(8,4,24," + 0.55 * k + ")"; c.shadowBlur = 34 * s; c.shadowOffsetY = 12 * s; }
+    if (col.fill) { c.fillStyle = col.fill; c.beginPath(); c.roundRect(x, y, r.w, r.h, state.radius * s); c.fill(); }
 
     // a chip already carries the shadow; bare text carries its own
-    c.shadowColor = st.fill ? "transparent" : "rgba(8,4,24,0.75)";
-    c.shadowBlur = st.fill ? 0 : 26 * s;
-    c.shadowOffsetY = st.fill ? 0 : 8 * s;
-    c.fillStyle = st.text;
-    c.fillText(r.line.text, x + r.w / 2, y + r.h / 2 + state.size * s * 0.04);
-    c.shadowColor = "transparent"; c.shadowBlur = 0; c.shadowOffsetY = 0;
+    const bare = !col.fill && state.shadow && k > 0;
+    c.shadowColor = bare ? "rgba(8,4,24," + 0.75 * k + ")" : "transparent";
+    c.shadowBlur = bare ? 26 * s : 0;
+    c.shadowOffsetY = bare ? 8 * s : 0;
+
+    /* The outline is drawn first and wears the shadow, so the glow sits
+       outside the whole letter instead of leaking between stroke and fill. */
+    if (state.stroke > 0) {
+      c.lineJoin = "round"; c.miterLimit = 2;
+      c.lineWidth = state.stroke * s * 2;
+      c.strokeStyle = state.strokeColor;
+      c.strokeText(shown, cx, ty);
+      c.shadowColor = "transparent"; c.shadowBlur = 0; c.shadowOffsetY = 0;
+    }
+    c.fillStyle = col.text;
+    c.fillText(shown, cx, ty);
+    c.restore();
 
     y += r.h + state.gap * s;
-  }
+  });
   return { w, h };
 }
 
@@ -445,7 +626,7 @@ function drawEditor() {
       const b = document.createElement("button");
       b.type = "button"; b.className = "sw"; b.title = s.label; b.setAttribute("aria-label", s.label);
       b.setAttribute("aria-pressed", String(line.style === key));
-      b.style.background = s.fill || "repeating-linear-gradient(45deg,#4a4560,#4a4560 4px,#2a2637 4px,#2a2637 8px)";
+      b.style.background = colorsFor(key).fill || "repeating-linear-gradient(45deg,#4a4560,#4a4560 4px,#2a2637 4px,#2a2637 8px)";
       b.addEventListener("click", () => { line.style = key; sync(); });
       styles.append(b);
     }
@@ -474,6 +655,7 @@ function drawEditor() {
 function sync(editor = true) {
   if (editor) drawEditor();
   paint();
+  showLen();
   write(KEY, state);
 }
 
@@ -489,7 +671,15 @@ const bindSelect = (id, key, after) => {
   el.addEventListener("change", () => { state[key] = el.value; after?.(); sync(false); });
 };
 
-for (const k of ["size", "padx", "pady", "radius", "gap", "shift"]) bindRange(k, k);
+for (const k of ["size", "padx", "pady", "radius", "gap", "shift",
+                 "chipOpacity", "stroke", "shadowDepth",
+                 "animIn", "animHold", "animOut", "animStagger"]) bindRange(k, k);
+/* A colour redraws the editor too: the Custom swatch has to show its colour. */
+for (const k of ["chipColor", "textColor", "strokeColor"]) {
+  const el = $(k); el.value = state[k];
+  el.addEventListener("input", () => { state[k] = el.value; sync(); });
+}
+bindSelect("anim", "anim"); bindSelect("vbg", "vbg"); bindSelect("fps", "fps");
 bindSelect("font", "font"); bindSelect("weight", "weight"); bindSelect("align", "align"); bindSelect("scale", "scale");
 bindSelect("preset", "preset", () => { $("customSize").hidden = state.preset !== "custom"; });
 bindSelect("bg", "bg", () => { $("bgColorWrap").hidden = state.bg !== "solid"; });
@@ -584,13 +774,13 @@ const nameFor = (lines, w) => {
 };
 const toBlob = (c) => new Promise((r) => c.toBlob(r, "image/png"));
 
-async function saveBlob(blob, filename) {
+async function saveBlob(blob, filename, type) {
   // A local window can write the file itself; the picker gives a real dialog.
   if (window.showSaveFilePicker) {
     try {
       const h = await window.showSaveFilePicker({
         suggestedName: filename,
-        types: [{ description: "PNG image", accept: { "image/png": [".png"] } }],
+        types: [type || { description: "PNG image", accept: { "image/png": [".png"] } }],
       });
       const s = await h.createWritable();
       await s.write(blob); await s.close();
@@ -683,10 +873,169 @@ $("btnBatchSave").addEventListener("click", async () => {
   $("batchSaid").textContent = `${i} saved to your downloads.`;
 });
 
+// ── motion: play it, then record it ─────────────────────────────
+let playing = 0;
+let lastVideo = null;
+
+function motionSay(msg, warn) {
+  const el = $("motionSaid");
+  el.textContent = msg;
+  el.classList.toggle("warn", !!warn);
+}
+
+/** The read-out under the sliders — how long the thing actually runs. */
+function showLen() {
+  const el = $("animLen");
+  if (!el) return;
+  const rows = state.lines.filter((l) => l.text.trim()).length;
+  el.textContent = state.anim === "none"
+    ? "No movement — the video would be one still frame."
+    : totalTime().toFixed(1) + " seconds, " + rows + (rows === 1 ? " line" : " lines") + ".";
+}
+
+/** Plays it on the stage, then settles back to the still frame. */
+function play() {
+  cancelAnimationFrame(playing);
+  const dur = totalTime(), t0 = performance.now();
+  const step = (now) => {
+    const t = (now - t0) / 1000;
+    render(canvas, state.lines, 1, { time: t });
+    if (t < dur) playing = requestAnimationFrame(step);
+    else paint();
+  };
+  playing = requestAnimationFrame(step);
+}
+$("btnPlay").addEventListener("click", play);
+
+/**
+ * What this window will actually encode, best first. MP4 plays anywhere and
+ * has no alpha; WebM keeps alpha but not every editor reads it — which is why
+ * the green screen is offered as the third way and is the default.
+ */
+const VIDEO_TYPES = [
+  { mime: "video/mp4;codecs=avc1.42E01E", ext: "mp4", label: "MP4 — plays everywhere" },
+  { mime: "video/webm;codecs=vp9", ext: "webm", label: "WebM VP9 — keeps transparency" },
+  { mime: "video/webm;codecs=vp8", ext: "webm", label: "WebM VP8 — keeps transparency" },
+  { mime: "video/webm", ext: "webm", label: "WebM" },
+];
+const usableTypes = () => VIDEO_TYPES.filter((t) => {
+  try { return MediaRecorder.isTypeSupported(t.mime); } catch (e) { return false; }
+});
+
+/* THE TRAP: the recording canvas is sized ONCE and never again. Assigning
+   canvas.width re-allocates the backing store, and the capture stream does not
+   survive that — so frames are drawn on `off` as usual and blitted here. */
+const vidCanvas = document.createElement("canvas");
+
+async function renderVideo() {
+  const types = usableTypes();
+  const chosen = types.filter((t) => t.mime === state.vfmt)[0] || types[0];
+  if (!chosen) return motionSay("This window has no video encoder.", true);
+  if (!state.lines.some((l) => l.text.trim())) return motionSay("Write a line first.", true);
+  if (state.vbg === "transparent" && chosen.ext !== "webm") {
+    motionSay("MP4 cannot hold transparency — pick WebM, or use the green screen.", true);
+    return;
+  }
+
+  const s = Number(state.scale);
+  const bg = state.vbg === "design" ? state.bg : state.vbg === "transparent" ? "none" : state.vbg;
+  const fps = Number(state.fps) || 30;
+  const frames = Math.max(1, Math.round(totalTime() * fps));
+
+  const size = render(off, state.lines, s, { time: 0, bg: bg });
+  vidCanvas.width = size.w;
+  vidCanvas.height = size.h;
+  const vc = vidCanvas.getContext("2d");
+  const stream = vidCanvas.captureStream(0);
+  const track = stream.getVideoTracks()[0];
+  const rec = new MediaRecorder(stream, { mimeType: chosen.mime, videoBitsPerSecond: 12000000 });
+  const chunks = [];
+  rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise((r) => { rec.onstop = r; });
+
+  $("btnRender").disabled = true;
+  $("btnSaveVideo").hidden = true;
+  $("vidOut").hidden = true;
+  $("vprog").hidden = false;
+  motionSay("Recording…");
+
+  rec.start();
+  const t0 = performance.now();
+  for (let i = 0; i <= frames; i++) {
+    render(off, state.lines, s, { time: i / fps, bg: bg });
+    vc.clearRect(0, 0, size.w, size.h);
+    vc.drawImage(off, 0, 0);
+    if (track.requestFrame) track.requestFrame();
+    else if (stream.requestFrame) stream.requestFrame();
+    $("vprog").firstElementChild.style.width = Math.round((i / frames) * 100) + "%";
+    /* Paced against the wall clock, because that is the clock MediaRecorder
+       stamps its frames with: running the loop flat out would encode a
+       three-second caption as half a second of video. */
+    const due = t0 + (i + 1) * (1000 / fps);
+    await new Promise((r) => setTimeout(r, Math.max(0, due - performance.now())));
+  }
+  rec.stop();
+  await stopped;
+  track.stop();
+
+  const blob = new Blob(chunks, { type: chosen.mime });
+  lastVideo = { blob: blob, ext: chosen.ext, mime: chosen.mime.split(";")[0] };
+  $("vidOut").src = URL.createObjectURL(blob);
+  $("vidOut").hidden = false;
+  $("btnSaveVideo").hidden = false;
+  $("btnRender").disabled = false;
+  $("vprog").hidden = true;
+  motionSay("Done — " + size.w + " × " + size.h + ", " + (blob.size / 1048576).toFixed(1) + " MB. Watch it, then save.");
+  paint();
+}
+
+$("btnRender").addEventListener("click", () => {
+  renderVideo().catch((e) => {
+    motionSay(String((e && e.message) || e), true);
+    $("btnRender").disabled = false;
+    $("vprog").hidden = true;
+  });
+});
+
+$("btnSaveVideo").addEventListener("click", async () => {
+  if (!lastVideo) return;
+  const accept = {};
+  accept[lastVideo.mime] = ["." + lastVideo.ext];
+  const base = nameFor(state.lines, vidCanvas.width).replace(/\.png$/, "");
+  const ok = await saveBlob(lastVideo.blob, base + "." + lastVideo.ext, {
+    description: lastVideo.ext.toUpperCase() + " video",
+    accept: accept,
+  });
+  if (ok) motionSay("Saved.");
+});
+
+/* The format list is whatever this Chrome can encode today, not a guess. */
+(function fillFormats() {
+  const el = $("vfmt");
+  el.textContent = "";
+  const types = usableTypes();
+  for (const t of types) {
+    const o = document.createElement("option");
+    o.value = t.mime;
+    o.textContent = t.label;
+    el.append(o);
+  }
+  if (!types.length) {
+    const o = document.createElement("option");
+    o.textContent = "No encoder in this window";
+    el.append(o);
+    $("btnRender").disabled = true;
+    return;
+  }
+  if (!types.some((t) => t.mime === state.vfmt)) state.vfmt = types[0].mime;
+  el.value = state.vfmt;
+  el.addEventListener("change", () => { state.vfmt = el.value; sync(false); });
+})();
+
 // ── tabs and keys ───────────────────────────────────────────────
-for (const id of ["design", "batch"]) {
+for (const id of ["design", "motion", "batch"]) {
   $(`tab-${id}`).addEventListener("click", () => {
-    for (const other of ["design", "batch"]) {
+    for (const other of ["design", "motion", "batch"]) {
       $(`tab-${other}`).setAttribute("aria-selected", String(other === id));
       $(`pane-${other}`).hidden = other !== id;
     }
