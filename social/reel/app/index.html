@@ -311,7 +311,7 @@
         <label class="f" for="vbg"><span class="t">Behind the words</span>
           <select id="vbg">
             <option value="green">Green screen — keys out in any editor</option>
-            <option value="transparent">Transparent — WebM only</option>
+            <option value="transparent">Transparent — PNG sequence only</option>
             <option value="black">Black</option>
             <option value="design">Whatever the Design tab says</option>
           </select>
@@ -327,7 +327,9 @@
         <p class="said" id="motionSaid"></p>
         <video id="vidOut" controls hidden></video>
         <button type="button" id="btnSaveVideo" class="wide" hidden>Save the video</button>
-        <p class="note">It records in real time, so a 3-second caption takes about 3 seconds. Green screen is the safe one: drop it in CapCut and key the green out. Transparent WebM keeps real alpha, but only some editors read it.</p>
+        <p class="note"><b>DaVinci Resolve:</b> use the PNG sequence. It is the only export that keeps real transparency — Chrome flattens alpha whenever it records video — and Resolve refuses the MP4 anyway, which comes out variable frame rate. In Resolve: drop the folder into the Media Pool, it arrives as one clip with its alpha.
+          <br /><br /><b>CapCut and phones:</b> MP4 on green, keyed out there. It records in real time, so a 3-second caption takes about 3 seconds.
+          <br /><br />To fold a sequence into a single ProRes 4444 file: <b>node social/reel/to-resolve.mjs &lt;folder&gt;</b></p>
       </div>
     </div>
 
@@ -927,13 +929,69 @@ const usableTypes = () => VIDEO_TYPES.filter((t) => {
    survive that — so frames are drawn on `off` as usual and blitted here. */
 const vidCanvas = document.createElement("canvas");
 
+/**
+ * A folder of numbered transparent PNGs — what Resolve actually wants, and the
+ * only export here that keeps an alpha channel. Slower than recording and
+ * worth it: every frame is drawn at full quality with no encoder in the way.
+ */
+async function renderSequence() {
+  if (!window.showDirectoryPicker) return motionSay("This window cannot write a folder — open the app from its desktop shortcut.", true);
+
+  let dir;
+  try {
+    dir = await window.showDirectoryPicker({ mode: "readwrite" });
+  } catch (e) {
+    if (e && e.name === "AbortError") return;
+    throw e;
+  }
+
+  const s = Number(state.scale);
+  const bg = state.vbg === "transparent" ? "none" : state.vbg === "design" ? state.bg : state.vbg;
+  const fps = Number(state.fps) || 30;
+  const frames = Math.max(1, Math.round(totalTime() * fps));
+  const pad = (i) => String(i).padStart(4, "0");
+
+  $("btnRender").disabled = true;
+  $("btnSaveVideo").hidden = true;
+  $("vidOut").hidden = true;
+  $("vprog").hidden = false;
+  motionSay("Writing frames…");
+
+  let size = { w: 0, h: 0 };
+  for (let i = 0; i < frames; i++) {
+    size = render(off, state.lines, s, { time: i / fps, bg: bg });
+    const blob = await toBlob(off);
+    const h = await dir.getFileHandle("caption_" + pad(i + 1) + ".png", { create: true });
+    const w = await h.createWritable();
+    await w.write(blob);
+    await w.close();
+    $("vprog").firstElementChild.style.width = Math.round(((i + 1) / frames) * 100) + "%";
+  }
+
+  /* So to-resolve.mjs never has to guess the frame rate. */
+  const meta = await dir.getFileHandle("pointili-sequence.json", { create: true });
+  const mw = await meta.createWritable();
+  await mw.write(new Blob([JSON.stringify({ fps: fps, frames: frames, width: size.w, height: size.h, transparent: bg === "none" }, null, 2)], { type: "application/json" }));
+  await mw.close();
+
+  $("btnRender").disabled = false;
+  $("vprog").hidden = true;
+  motionSay(frames + " frames at " + fps + " fps, " + size.w + " × " + size.h + ". Drag that folder into the Resolve media pool.");
+  paint();
+}
+
 async function renderVideo() {
+  if (!state.lines.some((l) => l.text.trim())) return motionSay("Write a line first.", true);
+  if (state.vfmt === "png") return renderSequence();
+
   const types = usableTypes();
   const chosen = types.filter((t) => t.mime === state.vfmt)[0] || types[0];
   if (!chosen) return motionSay("This window has no video encoder.", true);
-  if (!state.lines.some((l) => l.text.trim())) return motionSay("Write a line first.", true);
-  if (state.vbg === "transparent" && chosen.ext !== "webm") {
-    motionSay("MP4 cannot hold transparency — pick WebM, or use the green screen.", true);
+  /* Chrome hands back yuv420p however the canvas was drawn: the alpha is
+     flattened on the way out, in every codec it offers. Promising otherwise
+     would be a lie the person only discovers in their editor. */
+  if (state.vbg === "transparent") {
+    motionSay("Chrome flattens transparency when it records video — switch Format to PNG sequence.", true);
     return;
   }
 
@@ -1013,6 +1071,10 @@ $("btnSaveVideo").addEventListener("click", async () => {
 (function fillFormats() {
   const el = $("vfmt");
   el.textContent = "";
+  const seq = document.createElement("option");
+  seq.value = "png";
+  seq.textContent = "PNG sequence — transparent, for Resolve";
+  el.append(seq);
   const types = usableTypes();
   for (const t of types) {
     const o = document.createElement("option");
@@ -1021,13 +1083,12 @@ $("btnSaveVideo").addEventListener("click", async () => {
     el.append(o);
   }
   if (!types.length) {
-    const o = document.createElement("option");
-    o.textContent = "No encoder in this window";
-    el.append(o);
-    $("btnRender").disabled = true;
+    state.vfmt = "png";
+    el.value = "png";
+    el.addEventListener("change", () => { state.vfmt = el.value; sync(false); });
     return;
   }
-  if (!types.some((t) => t.mime === state.vfmt)) state.vfmt = types[0].mime;
+  if (state.vfmt !== "png" && !types.some((t) => t.mime === state.vfmt)) state.vfmt = types[0].mime;
   el.value = state.vfmt;
   el.addEventListener("change", () => { state.vfmt = el.value; sync(false); });
 })();
