@@ -1,0 +1,565 @@
+<title>Pointili Unit Economics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  /* A ledger, not a pitch deck: cool paper, hairline rules, every figure in the
+     same mono the product's own screens use. Violet is spent on revenue only. */
+  :root {
+    --paper:      #F7F6FA;
+    --sheet:      #FFFFFF;
+    --ink:        #17141F;
+    --body:       #4A4557;
+    --muted:      #7A748C;
+    --rule:       #E3DFEE;
+    --rule-soft:  #EFECF6;
+    --violet:     #6535E0;
+    --clay:       #A84A26;
+    --moss:       #146B44;
+    --amber:      #8A5A06;
+    --amber-dim:  #FDF4E3;
+    --danger:     #B3261E;
+    --danger-dim: #FDECEA;
+
+    --series-1:   #2a78d6;
+    --series-2:   #eb6834;
+    --series-3:   #1baf7a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #121019;
+      --sheet:      #1A1724;
+      --ink:        #F1EEF9;
+      --body:       #B8B2C8;
+      --muted:      #857F96;
+      --rule:       #2E2940;
+      --rule-soft:  #241F33;
+      --violet:     #A78BFA;
+      --clay:       #E08B62;
+      --moss:       #4FC28C;
+      --amber:      #D9A32E;
+      --amber-dim:  #2C2313;
+      --danger:     #F2837B;
+      --danger-dim: #33191A;
+
+      --series-1:   #3987e5;
+      --series-2:   #d95926;
+      --series-3:   #199e70;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      #121019;
+    --sheet:      #1A1724;
+    --ink:        #F1EEF9;
+    --body:       #B8B2C8;
+    --muted:      #857F96;
+    --rule:       #2E2940;
+    --rule-soft:  #241F33;
+    --violet:     #A78BFA;
+    --clay:       #E08B62;
+    --moss:       #4FC28C;
+    --amber:      #D9A32E;
+    --amber-dim:  #2C2313;
+    --danger:     #F2837B;
+    --danger-dim: #33191A;
+
+    --series-1:   #3987e5;
+    --series-2:   #d95926;
+    --series-3:   #199e70;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--body);
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 16px; line-height: 1.62;
+    padding-inline: 20px; padding-block: 0 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .measure { max-width: 66ch; }
+
+  h1, h2, h3 { color: var(--ink); text-wrap: balance; margin: 0; letter-spacing: -0.02em; }
+  h1 { font-size: clamp(30px, 5.4vw, 44px); font-weight: 600; line-height: 1.12; }
+  h2 { font-size: clamp(21px, 3.4vw, 27px); font-weight: 600; line-height: 1.22; }
+  p { margin: 0; }
+  strong { color: var(--ink); font-weight: 600; }
+  em { font-style: normal; color: var(--ink); font-weight: 500; }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.92em; color: var(--ink); }
+  .ar { font-family: "IBM Plex Sans Arabic", sans-serif; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+  }
+
+  header { padding-block: 54px 30px; border-bottom: 2px solid var(--ink); display: grid; gap: 14px; }
+  header p { max-width: 62ch; font-size: 17.5px; }
+  .stamp {
+    display: inline-flex; align-items: center; gap: 8px; font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; color: var(--muted); flex-wrap: wrap;
+  }
+  .stamp b { color: var(--ink); font-weight: 500; }
+
+  section { padding-block: 42px; border-bottom: 1px solid var(--rule); display: grid; gap: 18px; }
+  section > .head { display: grid; gap: 7px; }
+
+  .figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .fig { background: var(--sheet); padding: 16px 18px; display: grid; gap: 3px; }
+  .fig .k { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .fig .v { font-family: "IBM Plex Mono", monospace; font-size: 27px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .fig .v.good { color: var(--moss); }
+  .fig .n { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+
+  .scroll { overflow-x: auto; margin-inline: -20px; padding-inline: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 520px; }
+  caption { text-align: left; font-size: 13px; color: var(--muted); padding-bottom: 8px; }
+  th, td { text-align: right; padding: 9px 12px; border-bottom: 1px solid var(--rule-soft); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; padding-left: 0; }
+  td:last-child, th:last-child { padding-right: 0; }
+  thead th {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--rule); white-space: nowrap;
+  }
+  tbody td { color: var(--body); }
+  tbody td:first-child { color: var(--ink); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num, th.num { font-family: "IBM Plex Mono", monospace; }
+  tr.total td { border-top: 1px solid var(--ink); border-bottom: 0; font-weight: 600; color: var(--ink); padding-top: 11px; }
+  .pos { color: var(--moss); }
+  .neg { color: var(--clay); }
+
+  .note {
+    border-left: 2px solid var(--rule); padding: 2px 0 2px 16px; font-size: 14.5px; color: var(--body);
+    display: grid; gap: 6px; max-width: 64ch;
+  }
+  .note.warn { border-left-color: var(--amber); background: var(--amber-dim); padding: 12px 16px; }
+  .note.risk { border-left-color: var(--danger); background: var(--danger-dim); padding: 12px 16px; }
+  .note .lab { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .note.warn .lab { color: var(--amber); }
+  .note.risk .lab { color: var(--danger); }
+
+  .math {
+    font-family: "IBM Plex Mono", monospace; font-size: 13.5px; background: var(--sheet);
+    border: 1px solid var(--rule); padding: 14px 16px; display: grid; gap: 5px; color: var(--body);
+    overflow-x: auto; font-variant-numeric: tabular-nums;
+  }
+  .math b { color: var(--ink); font-weight: 600; }
+  .math .c { color: var(--muted); }
+
+  ul { margin: 0; padding-left: 20px; display: grid; gap: 10px; max-width: 64ch; }
+  li::marker { color: var(--muted); }
+
+  .model { background: var(--sheet); border: 1px solid var(--rule); padding: 18px; display: grid; gap: 18px; }
+  .dials { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+  .dial { display: grid; gap: 5px; }
+  .dial .t { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+  .dial .t b { font-family: "IBM Plex Mono", monospace; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--violet); }
+  input[type="range"]:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; color: var(--body); }
+  .legend i { width: 14px; height: 3px; border-radius: 2px; display: block; }
+
+  figure { margin: 0; display: grid; gap: 10px; }
+  .chart { position: relative; }
+  .chart svg { display: block; width: 100%; height: auto; }
+  .tip {
+    position: absolute; pointer-events: none; background: var(--ink); color: var(--paper);
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; line-height: 1.55; padding: 7px 9px;
+    border-radius: 6px; white-space: nowrap; transform: translate(-50%, -100%); opacity: 0; transition: opacity .1s;
+    font-variant-numeric: tabular-nums; z-index: 3;
+  }
+  .tip.on { opacity: 1; }
+  .tip b { color: var(--sheet); }
+
+  footer { padding-block: 34px; color: var(--muted); font-size: 13px; max-width: 64ch; display: grid; gap: 8px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Pointili · 23 September 2026</span>
+  <h1>What it costs, what it earns, and what breaks first</h1>
+  <p>Every figure below is computed from the running system — the prices in <code>lib/constants.ts</code>, the rows in the live database, the poll interval in the counter screen — or is a stated estimate you can re-base. Money is in Tunisian dinars, converted at <strong>1 USD = 3.15 TND</strong>.</p>
+  <span class="stamp">Today: <b>6 shops, all inside the 30-day trial · 0 TND collected · 0 TND/month spent</b></span>
+</header>
+
+<section>
+  <div class="head">
+    <span class="eyebrow">Where the money is today</span>
+    <h2>Nothing in, nothing out</h2>
+  </div>
+  <p class="measure">Six businesses exist in production and every one of them is on the free trial. The earliest ends <strong>11 October 2026</strong>, the last on <strong>20 October</strong>. So the first real question this business ever asks gets asked in about three weeks, six times over.</p>
+
+  <div class="figures">
+    <div class="fig"><span class="k">Shops</span><span class="v">6</span><span class="n">all on trial, none paid</span></div>
+    <div class="fig"><span class="k">Revenue</span><span class="v">0</span><span class="n">TND, ever</span></div>
+    <div class="fig"><span class="k">Running cost</span><span class="v good">0</span><span class="n">TND/month, free tiers</span></div>
+    <div class="fig"><span class="k">First decision</span><span class="v">11 Oct</span><span class="n">first trial expiry</span></div>
+  </div>
+
+  <div class="note">
+    <span class="lab">Worth knowing</span>
+    <p>Two of the six are your own demo and capture shops (Café Bonheur, Café Yasmine). The real prospects are Robusta, Hazem, Socrate and Kasper. <strong>Four trials, not six.</strong></p>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <span class="eyebrow">The platform bill</span>
+    <h2>About 0.20 TND an hour, whatever size you are</h2>
+  </div>
+  <p class="measure">You are on Supabase Free and Vercel Hobby, so the cash cost today is zero. That is not a state to plan on: Hobby is for non-commercial projects, and the free database has no daily backups. The honest minimum for a business that takes money:</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Monthly platform cost, at the point each becomes necessary</caption>
+      <thead>
+        <tr><th>Line</th><th class="num">USD</th><th class="num">TND</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Vercel Pro</td><td class="num">20</td><td class="num">63</td><td>commercial use, the ToS line</td></tr>
+        <tr><td>Supabase Pro</td><td class="num">25</td><td class="num">79</td><td>daily backups, 8 GB, 250 GB egress</td></tr>
+        <tr><td>Domain</td><td class="num">1.2</td><td class="num">4</td><td>a .com, amortised monthly</td></tr>
+        <tr class="total"><td>Everything</td><td class="num">46</td><td class="num">146</td><td>flat to roughly 400 shops</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="math">
+    <div><span class="c">per hour</span>&nbsp;&nbsp;&nbsp; 146 TND ÷ 730 h &nbsp;=&nbsp; <b>0.20 TND / hour</b></div>
+    <div><span class="c">per day</span>&nbsp;&nbsp;&nbsp;&nbsp; <b>4.8 TND</b> — one espresso</div>
+    <div><span class="c">covered by</span> 146 ÷ 10 &nbsp;=&nbsp; <b>15 shops</b> on the yearly plan</div>
+  </div>
+
+  <p class="measure">Fifteen paying shops pay for the entire platform, forever. The database is 15 MB with six shops on it, and an active shop adds roughly <strong>3–4 MB a year</strong> of durable rows — stamps, activity, customers. Eight gigabytes holds about two thousand shop-years. Storage is not going to be your problem.</p>
+</section>
+
+<section>
+  <div class="head">
+    <span class="eyebrow">The one cost that does scale</span>
+    <h2>The counter screen asks a question every 0.9 seconds</h2>
+  </div>
+  <p class="measure">The QR screen polls <code>/api/qr/state</code> on a 900 ms interval the whole time it is open, and since the owner's app now opens straight onto that screen, a shop with a tablet on the counter runs it all day. That is by design, and it is what makes a stamp feel instant. It is also the only line in this business that grows with every shop you sign.</p>
+
+  <div class="math">
+    <div>3600 s ÷ 0.9 s &nbsp;=&nbsp; <b>4,000 calls an hour</b>, per open screen</div>
+    <div>× 10 hours × 30 days &nbsp;=&nbsp; <b>1,200,000 calls per shop per month</b></div>
+    <div><span class="c">at 100 shops</span> &nbsp;=&nbsp; <b>120 million</b> function calls a month</div>
+    <div><span class="c">Supabase egress</span> ≈0.5 KB each &nbsp;=&nbsp; <b>600 MB per shop</b> — the 5 GB free tier is <b>8 shops</b></div>
+  </div>
+
+  <div class="note warn">
+    <span class="lab">The number to watch</span>
+    <p>At a hundred shops this is plausibly <strong>$80–150 a month</strong> in serverless invocations and compute, against <strong>$317</strong> of revenue at that size. A third of your gross margin, spent asking a database whether anything happened.</p>
+  </div>
+
+  <p class="measure">The fix is small, and worth doing before the tenth paying shop rather than the hundredth: poll at 900 ms for twenty seconds after a mint or a stamp, then fall back to four seconds while nothing is happening. Nobody standing at a counter notices, and the bill divides by four. A realtime subscription removes the polling entirely, at the cost of a connection ceiling you would then have to watch instead.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Calls per shop per month, ten hours a day</caption>
+      <thead><tr><th>Poll behaviour</th><th class="num">Per shop / month</th><th class="num">At 500 shops</th><th>Felt by the customer</th></tr></thead>
+      <tbody>
+        <tr><td>900 ms, always <em>(today)</em></td><td class="num">1,200,000</td><td class="num neg">600 M</td><td>instant</td></tr>
+        <tr><td>900 ms active → 4 s idle</td><td class="num">270,000</td><td class="num">135 M</td><td>instant</td></tr>
+        <tr><td>Realtime subscription</td><td class="num">~0</td><td class="num pos">~0</td><td>instant</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <span class="eyebrow">Margin</span>
+    <h2>96% gross, and that is the least interesting number here</h2>
+  </div>
+  <p class="measure">You take payment by bank transfer, D17 or cash, so <strong>no processor takes a cut</strong> — no 3%, no fixed fee per transaction. Sign-in is a phone number and a password stored as an email alias, so <strong>no SMS is sent</strong> to log anybody in. Both are quietly worth more than they look: a card processor and an SMS gateway would between them take 5–20% of a 120 TND subscription.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Monthly, all shops on the 120 TND yearly plan, with the poll fixed</caption>
+      <thead><tr><th>Shops</th><th class="num">Revenue</th><th class="num">Platform</th><th class="num">Gross</th><th class="num">Margin</th><th class="num">Cost / shop</th></tr></thead>
+      <tbody>
+        <tr><td>15</td><td class="num">150</td><td class="num">146</td><td class="num">4</td><td class="num">3%</td><td class="num">9.73</td></tr>
+        <tr><td>100</td><td class="num">1,000</td><td class="num">190</td><td class="num pos">810</td><td class="num">81%</td><td class="num">1.90</td></tr>
+        <tr><td>500</td><td class="num">5,000</td><td class="num">350</td><td class="num pos">4,650</td><td class="num">93%</td><td class="num">0.70</td></tr>
+        <tr><td>2,000</td><td class="num">20,000</td><td class="num">900</td><td class="num pos">19,100</td><td class="num">96%</td><td class="num">0.45</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="measure">Read the last column, not the margin column. Serving a shop costs you between <strong>half a dinar and two dinars a month</strong>. You charge ten. The software is not where your money goes.</p>
+</section>
+
+<section>
+  <div class="head">
+    <span class="eyebrow">Where it actually goes</span>
+    <h2>Feet, hands, and chasing payment</h2>
+  </div>
+  <p class="measure">This is sold by walking into a café and explaining it. Nothing about that scales the way software does, and at 120 TND a year the margin per visit is thin enough that the details decide whether it works at all.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>What one shop really costs to win and keep, first year</caption>
+      <thead><tr><th>Item</th><th class="num">TND</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>The visit that closes</td><td class="num">25–50</td><td>a rep at ~1,600 TND/month closing 1.5–3 a day</td></tr>
+        <tr><td>Setting the card up</td><td class="num">10</td><td>twenty minutes, once</td></tr>
+        <tr><td>Support, year one</td><td class="num">20–40</td><td>~10 minutes a month on WhatsApp</td></tr>
+        <tr><td>Collecting the money</td><td class="num">8–15</td><td>manual confirmation, sometimes chasing</td></tr>
+        <tr><td>Platform</td><td class="num">6–24</td><td>from the table above</td></tr>
+        <tr class="total"><td>Cost of year one</td><td class="num">69–139</td><td>against <strong>120 TND</strong> collected</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note warn">
+    <span class="lab">The uncomfortable line</span>
+    <p>On the pessimistic end of every row, <strong>year one loses money on every shop you sign.</strong> The business is entirely in year two — in the renewal, which costs almost nothing to earn. Everything that matters is therefore churn, not acquisition.</p>
+  </div>
+
+  <div class="math">
+    <div><span class="c">renew 60%</span>&nbsp; lifetime = 120 ÷ (1 − 0.60) = <b>300 TND</b> a shop</div>
+    <div><span class="c">renew 80%</span>&nbsp; lifetime = 120 ÷ (1 − 0.80) = <b>600 TND</b> a shop</div>
+    <div><span class="c">cost to win</span> 35–60 TND &nbsp;→&nbsp; <b>5× to 17×</b> back on the visit</div>
+  </div>
+
+  <p class="measure">One thing rescues the cash flow: <strong>you are paid a year up front.</strong> The 120 TND arrives on the day the rep walks out, and the rep cost 35. That is why annual prepay, not monthly billing, is the right shape for this market — and why the 6-month plan at 80 TND, which is <em>more</em> expensive per month, should stay the awkward option rather than become the default.</p>
+</section>
+
+<section>
+  <div class="head">
+    <span class="eyebrow">Growth</span>
+    <h2>Three honest speeds</h2>
+  </div>
+  <p class="measure">Cash in the bank over 24 months: a year's fee collected at signup and again at renewal, minus the platform, minus a salaried rep where one exists. Your own time is free in all three, because it is. Move the dials — they are the two numbers that decide everything.</p>
+
+  <div class="model">
+    <div class="dials">
+      <label class="dial" for="price">
+        <span class="t">Yearly price <b><span id="priceV">120</span> TND</b></span>
+        <input type="range" id="price" min="80" max="360" step="10" value="120">
+      </label>
+      <label class="dial" for="renew">
+        <span class="t">Shops that renew <b><span id="renewV">65</span>%</b></span>
+        <input type="range" id="renew" min="30" max="95" step="5" value="65">
+      </label>
+    </div>
+
+    <figure>
+      <figcaption class="legend" id="legend"></figcaption>
+      <div class="chart" id="chart">
+        <svg id="svg" viewBox="0 0 780 330" role="img" aria-label="Cumulative cash over 24 months under three growth speeds"></svg>
+        <div class="tip" id="tip"></div>
+      </div>
+    </figure>
+
+    <div class="scroll">
+      <table>
+        <caption>Where each speed stands at month 24</caption>
+        <thead><tr><th>Speed</th><th class="num">Shops</th><th class="num">Year-2 revenue</th><th class="num">Cash after 24 mo</th><th class="num">Thinnest month</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="lab">What the shapes mean</span>
+    <p><strong>Alone</strong> is you, part-time, four shops a month: it never loses money and it never becomes a company. <strong>Full-time</strong> is you selling every day. <strong>With a rep</strong> hires one person in month six. The cumulative line never goes backwards, but the <em>month</em> does: in month six the salary is bigger than the shops it signs, and that is the thinnest month in the table. Drop the renewal dial below 50% and watch which of the three still stands up.</p>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <span class="eyebrow">What I would change</span>
+    <h2>Four moves, in the order they pay</h2>
+  </div>
+  <ul>
+    <li><strong>Charge a 50 TND setup fee.</strong> It pays for the visit on the day of the visit, it makes year one profitable on its own, and a one-off fee is far easier for a Tunisian shop owner to accept than a higher subscription. Highest return on this list, and it costs one column in the database.</li>
+    <li><strong>Fix the poll before shop ten.</strong> 900 ms while something is happening, four seconds while nothing is. Nobody feels it, and the only cost that scales with your shop count divides by four.</li>
+    <li><strong>Add a tier above, don't raise the floor.</strong> Keep 120 TND as the door. Put multi-branch, staff accounts, a data export and customer messaging in a second plan at 300–360 TND. The shops that grow will pay it; the shops that would have refused 200 TND still come in at 120.</li>
+    <li><strong>Make renewal feel automatic.</strong> Everything above depends on the renewal rate. A reminder at day 335 carrying the owner's own numbers — <span class="ar">«رجعولك 47 حريف هالعام»</span> — and a D17 link is worth more than any feature you could build instead.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="head">
+    <span class="eyebrow">What could actually kill it</span>
+    <h2>Five risks, ranked</h2>
+  </div>
+
+  <div class="note risk">
+    <span class="lab">1 · Churn you cannot see coming</span>
+    <p>At 120 TND a year you cannot afford to win a shop twice. If renewal lands under 50%, this is a job rather than a business. You will not know the number until October 2027 — unless you start measuring what predicts it now: <strong>shops whose stamp count falls month over month.</strong></p>
+  </div>
+
+  <div class="note risk">
+    <span class="lab">2 · Password reset does not work in production</span>
+    <p>The reset flow sends a six-digit code by SMS and no SMS provider is configured, so the code is generated and never delivered. Today you fix it by hand from the admin. At fifty shops that is a phone call a week; at five hundred it is a person. A gateway costs roughly 0.20 TND a message — fine for resets, ruinous if you ever decide to SMS customers.</p>
+  </div>
+
+  <div class="note risk">
+    <span class="lab">3 · You are on a Hobby plan</span>
+    <p>Vercel's Hobby tier is for non-commercial use. The day you take the first dinar, the deployment sits outside the terms it runs under. 63 TND a month fixes it.</p>
+  </div>
+
+  <div class="note risk">
+    <span class="lab">4 · Collection is a person, not a system</span>
+    <p>Bank transfer, D17 and cash cost 0% in fees and about ten minutes each in attention. At a thousand shops on yearly plans that is <strong>83 payments a month</strong> to confirm by hand, and every one that slips becomes churn nobody chose.</p>
+  </div>
+
+  <div class="note risk">
+    <span class="lab">5 · One person knows everything</span>
+    <p>One founder holds the code, the database password, the Vercel account and the customer relationships. No amount of margin survives that person being unavailable for a fortnight.</p>
+  </div>
+</section>
+
+<footer>
+  <p>Prices from <code>lib/constants.ts</code>; shop, trial and table figures queried from the production database on 23 September 2026; the poll interval from <code>QR_POLL_MS</code>. Platform prices are list prices at the time of writing and the serverless figure is a range, not a quote — re-run it against a real invoice once there is one.</p>
+  <p>Sales pace, support minutes, renewal rate and the cost of a visit are assumptions, not measurements. They are the four numbers worth replacing with real ones first.</p>
+</footer>
+
+</div>
+
+<script>
+  "use strict";
+
+  const PLATFORM = 146;   // TND a month, flat to roughly 400 shops
+  const REP = 1600;       // TND a month, salary plus transport
+  const MONTHS = 24;
+
+  // Pace is the only thing that differs between the three speeds.
+  const SPEEDS = [
+    { name: "Alone, part-time", short: "Alone", series: "--series-1",
+      pace: () => 4, rep: () => 0 },
+    { name: "You, full-time", short: "Full-time", series: "--series-3",
+      pace: (m) => Math.min(20, 6 + m), rep: () => 0 },
+    { name: "With a rep from month 6", short: "With a rep", series: "--series-2",
+      pace: (m) => (m < 6 ? 6 + m : Math.min(45, 14 + (m - 5) * 4)), rep: (m) => (m >= 6 ? REP : 0) },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => Math.round(n).toLocaleString("en-US");
+  const tok = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  function model(price, renew) {
+    return SPEEDS.map((s) => {
+      const signed = [];
+      let cash = 0;
+      const points = [];
+      let year2 = 0, worst = { m: 1, net: Infinity };
+      for (let m = 1; m <= MONTHS; m++) {
+        const n = s.pace(m);
+        signed[m] = n;
+        let revenue = n * price;                                   // paid the day they sign
+        const renewals = m > 12 ? (signed[m - 12] || 0) * renew : 0;
+        revenue += renewals * price;
+        if (m > 12) year2 += renewals * price;
+        const net = revenue - PLATFORM - s.rep(m);
+        if (net < worst.net) worst = { m, net };
+        cash += net;
+        points.push(cash);
+      }
+      // still subscribed at month 24: everything signed in the last twelve months,
+      // plus the share of the older cohorts that renewed
+      const recent = signed.slice(13).reduce((a, b) => a + b, 0);
+      const older = signed.slice(1, 13).reduce((a, b) => a + b, 0);
+      return { ...s, points, live: recent + older * renew, year2, worst, end: cash };
+    });
+  }
+
+  function draw(data) {
+    const W = 780, H = 330, L = 64, R = 132, T = 16, B = 36;
+    const all = data.flatMap((d) => d.points).concat([0]);
+    const pad = (Math.max(...all) - Math.min(...all)) * 0.08 || 1;
+    const y0 = Math.min(...all) - pad, y1 = Math.max(...all) + pad;
+    const X = (m) => L + ((m - 1) / (MONTHS - 1)) * (W - L - R);
+    const Y = (v) => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
+
+    const ink = tok("--ink"), muted = tok("--muted"), rule = tok("--rule"), sheet = tok("--sheet");
+    const step = Math.max(5000, Math.round((y1 - y0) / 4 / 5000) * 5000);
+    const ticks = [];
+    for (let v = Math.ceil(y0 / step) * step; v <= y1; v += step) ticks.push(v);
+    if (y0 < 0 && y1 > 0 && !ticks.some((v) => Math.abs(v) < 1)) ticks.push(0);
+
+    let g = "";
+    for (const v of ticks) {
+      const zero = Math.abs(v) < 1;
+      g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) +
+           '" stroke="' + (zero ? muted : rule) + '" stroke-width="' + (zero ? 1.5 : 1) + '" fill="none"/>';
+      g += '<text x="' + (L - 10) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end" fill="' + muted +
+           '" font-family="IBM Plex Mono, monospace" font-size="11">' + (zero ? "0" : fmt(v / 1000) + "k") + '</text>';
+    }
+    for (const m of [1, 6, 12, 18, 24]) {
+      g += '<text x="' + X(m).toFixed(1) + '" y="' + (H - 10) + '" text-anchor="middle" fill="' + muted +
+           '" font-family="IBM Plex Mono, monospace" font-size="11">m' + m + '</text>';
+    }
+    g += '<line id="cross" x1="0" x2="0" y1="' + T + '" y2="' + (H - B) + '" stroke="' + muted + '" stroke-width="1" opacity="0"/>';
+
+    for (const d of data) {
+      const col = tok(d.series);
+      const path = d.points.map((v, i) => (i ? "L" : "M") + X(i + 1).toFixed(1) + " " + Y(v).toFixed(1)).join(" ");
+      g += '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+      const last = d.points[MONTHS - 1];
+      g += '<circle cx="' + X(MONTHS).toFixed(1) + '" cy="' + Y(last).toFixed(1) + '" r="4" fill="' + col +
+           '" stroke="' + sheet + '" stroke-width="2"/>';
+      g += '<text x="' + (W - R + 12) + '" y="' + (Y(last) + 3).toFixed(1) + '" fill="' + ink +
+           '" font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600">' + fmt(last / 1000) + 'k</text>';
+      g += '<text x="' + (W - R + 12) + '" y="' + (Y(last) + 18).toFixed(1) + '" fill="' + muted +
+           '" font-family="IBM Plex Sans, sans-serif" font-size="10.5">' + d.short + '</text>';
+    }
+    $("svg").innerHTML = g;
+    return { X, W, L, R };
+  }
+
+  function render() {
+    const price = Number($("price").value);
+    const renew = Number($("renew").value) / 100;
+    $("priceV").textContent = price;
+    $("renewV").textContent = Math.round(renew * 100);
+
+    const data = model(price, renew);
+    const geo = draw(data);
+
+    $("legend").innerHTML = data
+      .map((d) => '<span><i style="background:' + tok(d.series) + '"></i>' + d.name + '</span>')
+      .join("");
+
+    $("rows").innerHTML = data
+      .map((d) => '<tr><td>' + d.name + '</td><td class="num">' + fmt(d.live) + '</td><td class="num">' +
+        fmt(d.year2) + ' TND</td><td class="num ' + (d.end >= 0 ? "pos" : "neg") + '">' + fmt(d.end) +
+        ' TND</td><td class="num ' + (d.worst.net < 0 ? "neg" : "") + '">m' + d.worst.m + ' · ' + fmt(d.worst.net) + '</td></tr>')
+      .join("");
+
+    return { data, geo };
+  }
+
+  let current = render();
+  for (const id of ["price", "renew"]) $(id).addEventListener("input", () => { current = render(); });
+
+  const chart = $("chart"), tip = $("tip");
+  chart.addEventListener("pointermove", (e) => {
+    const r = chart.getBoundingClientRect();
+    const { X, W, L, R } = current.geo;
+    const x = ((e.clientX - r.left) / r.width) * W;
+    const m = Math.max(1, Math.min(MONTHS, Math.round(((x - L) / (W - L - R)) * (MONTHS - 1) + 1)));
+    const cross = $("cross");
+    if (cross) { cross.setAttribute("x1", X(m)); cross.setAttribute("x2", X(m)); cross.setAttribute("opacity", "0.5"); }
+    tip.innerHTML = "<b>month " + m + "</b><br>" +
+      current.data.map((d) => d.short + " &nbsp;<b>" + fmt(d.points[m - 1]) + "</b>").join("<br>");
+    tip.style.left = ((X(m) / W) * r.width) + "px";
+    tip.style.top = Math.max(76, r.height * 0.5) + "px";
+    tip.classList.add("on");
+  });
+  chart.addEventListener("pointerleave", () => {
+    tip.classList.remove("on");
+    const cross = $("cross");
+    if (cross) cross.setAttribute("opacity", "0");
+  });
+
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { current = render(); });
+</script>
