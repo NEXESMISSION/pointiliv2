@@ -41,7 +41,7 @@ const CUT = [
   { file: "03 - card fills", screen: "customer-home-after.png", cap: "الكارط تتعمّر في تليفونو", sub: "بلا أبليكاسيون، بلا كرتون", tone: "dark" },
   { file: "04 - reward unlocked", screen: "card-unlocked.png", cap: "كمّل؟ الكادو يتحلّ", sub: "وهو يعرف علاش يرجع", tone: "light" },
   { file: "05 - code at the counter", screen: "reward-code.png", cap: "يورّي الكود عندك", sub: "وإنت تأكّد، وخلاص", tone: "dark" },
-  { file: "06 - end card", type: "end", cap: "كارط الوفاء في تليفون الحريف", url: "pointidi.vercel.app" },
+  { file: "06 - end card", type: "end", cap: "كارط الوفاء في تليفون الحريف", url: "pointili.online" },
 ];
 
 /** Spares: same look, other screens, for when the voice-over says something else. */

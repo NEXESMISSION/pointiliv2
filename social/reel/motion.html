@@ -6,9 +6,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet" />
 <style>
-  /* B-roll cards for a 1080×1920 reel: one real app screen, one line of Tunisian,
-     nothing else. They are cut over the founder's voice, so they have to read in
-     a second and a half. */
+  /* The same card as cards.html, with a motion layer on top.
+   *
+   * Every animation is declared normally and then PAUSED; a frame is rendered by
+   * setting --t and letting a negative animation-delay scrub each one to that
+   * instant. So the motion is authored as CSS easing — real springs, real
+   * overshoot — and still renders deterministically, frame by frame, forever
+   * identical. Nothing here is tweened by hand in an editor.
+   */
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { width: 1080px; height: 1920px; overflow: hidden; font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; background: #000; }
 
@@ -16,8 +21,7 @@
   .card.dark { background: linear-gradient(165deg, #6535E0 0%, #4A24B5 58%, #33167F 100%); color: #fff; }
   .card.light { background: linear-gradient(165deg, #FBFAFF 0%, #F0EBFF 100%); color: #17141F; }
 
-  /* the same soft waves the loyalty card uses, so the reel and the app rhyme */
-  .waves { position: absolute; inset: 0; opacity: 0.16; background-image:
+  .waves { position: absolute; inset: -6%; opacity: 0.16; background-image:
       radial-gradient(60% 40% at 15% 12%, #fff 0%, transparent 60%),
       radial-gradient(50% 35% at 88% 82%, #fff 0%, transparent 62%); }
   .card.light .waves { opacity: 0.5; background-image:
@@ -30,14 +34,17 @@
   .sub { position: relative; z-index: 3; margin-top: 18px; padding: 0 110px; text-align: center;
          font-size: 40px; font-weight: 500; line-height: 1.35; opacity: 0.86; }
 
-  /* whole phone, never a floating screenshot */
   .device { position: relative; z-index: 3; margin-top: 74px; width: var(--dw, 560px);
             padding: calc(var(--dw, 560px) * 0.028); border-radius: calc(var(--dw, 560px) * 0.14);
             background: #0c0c14; box-shadow: 0 60px 120px -40px rgba(12,4,50,0.75), 0 0 0 2px #2a2a36 inset; }
   .device::before { content: ""; position: absolute; right: -5px; top: 24%; width: 5px; height: 11%; border-radius: 0 4px 4px 0; background: #0c0c14; }
   .device::after { content: ""; position: absolute; left: -5px; top: 19%; width: 5px; height: 7%; border-radius: 4px 0 0 4px; background: #0c0c14; box-shadow: 0 calc(var(--dw, 560px) * 0.2) 0 #0c0c14; }
-  .device .glass { border-radius: calc(var(--dw, 560px) * 0.113); overflow: hidden; background: #fff; aspect-ratio: 1170 / 2532; direction: ltr; }
+  .device .glass { position: relative; border-radius: calc(var(--dw, 560px) * 0.113); overflow: hidden; background: #fff; aspect-ratio: 1170 / 2532; direction: ltr; }
   .device img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+
+  /* the light that travels across the glass once the phone has settled */
+  .sheen { position: absolute; inset: -40% -120%; background:
+      linear-gradient(74deg, transparent 38%, rgba(255,255,255,0.46) 50%, transparent 62%); }
 
   .mark { position: absolute; z-index: 4; left: 0; right: 0; bottom: 96px; display: flex; align-items: center;
           justify-content: center; gap: 18px; font-family: Inter, sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.01em; }
@@ -45,15 +52,61 @@
                box-shadow: 0 6px 18px -8px rgba(10,4,40,0.5); }
   .mark svg { width: 34px; height: auto; display: block; }
 
-  /* the closing frame: no phone, just the name and where to find it */
   .end { justify-content: center; }
   .end .logo { position: relative; z-index: 3; width: 190px; height: 190px; border-radius: 54px; background: #fff;
                display: grid; place-items: center; box-shadow: 0 40px 90px -30px rgba(10,4,40,0.6); }
   .end .logo svg { width: 118px; height: auto; display: block; }
+  .end .ring { position: absolute; z-index: 2; width: 190px; height: 190px; border-radius: 50%; border: 5px solid rgba(255,255,255,0.5); }
   .end h1 { position: relative; z-index: 3; margin-top: 46px; font-family: Inter, sans-serif; font-size: 104px; font-weight: 800; letter-spacing: -0.03em; }
   .end .cap { margin-top: 24px; font-size: 56px; font-weight: 600; }
   .end .url { position: relative; z-index: 3; margin-top: 54px; font-family: Inter, sans-serif; font-size: 42px; font-weight: 600;
               background: rgba(255,255,255,0.15); padding: 22px 48px; border-radius: 999px; direction: ltr; }
+
+  /* ── the motion layer ─────────────────────────────────────────────
+     Every animation is paused and scrubbed to --t. Each element keeps its own
+     stagger in --d and the scrub subtracts from it, because folding the two into
+     one delay is the only way a paused animation can be both staggered and
+     addressable by time. The rule has to reach nested elements too — the light
+     on the glass lives three levels down and would otherwise run in real time,
+     which is to say differently in every render. */
+  .card, .card * {
+    animation-play-state: paused !important;
+    animation-fill-mode: both !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: calc(var(--d, 0s) - var(--t, 0s)) !important;
+  }
+
+  @keyframes rise      { from { opacity: 0; transform: translateY(46px); } to { opacity: 1; transform: none; } }
+  @keyframes riseSoft  { from { opacity: 0; transform: translateY(26px); } to { opacity: .86; transform: none; } }
+  @keyframes phoneIn   { from { opacity: 0; transform: translateY(150px) scale(.93); }
+                         70%  { opacity: 1; transform: translateY(-14px) scale(1.007); }
+                         to   { opacity: 1; transform: none; } }
+  @keyframes markIn    { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+  @keyframes drift     { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.1) translate(-1.6%, 1.4%); } }
+  @keyframes push      { from { transform: scale(1); } to { transform: scale(1.035); } }
+  @keyframes sweep     { from { opacity: 0; transform: translateX(125%); }
+                         14%  { opacity: 1; }
+                         86%  { opacity: 1; }
+                         to   { opacity: 0; transform: translateX(-125%); } }
+  @keyframes popIn     { from { opacity: 0; transform: scale(.55); }
+                         66%  { opacity: 1; transform: scale(1.06); }
+                         to   { opacity: 1; transform: none; } }
+  @keyframes ringOut   { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(2.6); } }
+
+  /* the whole card creeps forward the entire time, so a hold is never a freeze */
+  .card       { --d: 0s;    animation: push var(--dur, 3s) linear; transform-origin: 50% 46%; }
+  .waves      { --d: 0s;    animation: drift var(--dur, 3s) linear; }
+  .cap        { --d: 0s;    animation: rise .62s cubic-bezier(.22,.9,.28,1); }
+  .sub        { --d: .13s;  animation: riseSoft .62s cubic-bezier(.22,.9,.28,1); }
+  .device     { --d: .24s;  animation: phoneIn .92s cubic-bezier(.24,.86,.3,1); }
+  .sheen      { --d: 1.05s; animation: sweep .95s linear; }
+  .mark       { --d: .78s;  animation: markIn .55s cubic-bezier(.22,.9,.28,1); }
+
+  .end .ring  { --d: .12s;  animation: ringOut 1.1s cubic-bezier(.2,.7,.3,1); }
+  .end .logo  { --d: .02s;  animation: popIn .70s cubic-bezier(.24,.86,.3,1); }
+  .end h1     { --d: .26s;  animation: rise .60s cubic-bezier(.22,.9,.28,1); }
+  .end .cap   { --d: .42s;  animation: rise .60s cubic-bezier(.22,.9,.28,1); }
+  .end .url   { --d: .60s;  animation: rise .60s cubic-bezier(.22,.9,.28,1); }
 </style>
 </head>
 <body>
@@ -63,10 +116,12 @@
 
   window.renderCard = async (c) => {
     const root = document.getElementById("root");
+    document.documentElement.style.setProperty("--dur", (c.seconds || 3) + "s");
     if (c.type === "end") {
       root.innerHTML = `
         <div class="card dark end">
           <div class="waves"></div>
+          <div class="ring"></div>
           <div class="logo">${MARK}</div>
           <h1>Pointili</h1>
           <div class="cap">${c.cap}</div>
@@ -78,13 +133,21 @@
           <div class="waves"></div>
           <div class="cap">${c.cap}</div>
           ${c.sub ? `<div class="sub">${c.sub}</div>` : ""}
-          <div class="device" style="--dw:${c.dw || 560}px"><div class="glass"><img src="${c.screenData}" /></div></div>
+          <div class="device" style="--dw:${c.dw || 560}px">
+            <div class="glass"><img src="${c.screenData}" /><div class="sheen"></div></div>
+          </div>
           <div class="mark"><span class="dot">${MARK}</span> Pointili</div>
         </div>`;
       const img = root.querySelector("img");
       if (img && !img.complete) await new Promise((r) => { img.onload = r; img.onerror = r; });
     }
     await document.fonts.ready;
+  };
+
+  /** Move every paused animation to exactly t seconds. */
+  window.seek = (t) => {
+    document.documentElement.style.setProperty("--t", t + "s");
+    return t;
   };
 </script>
 </body>

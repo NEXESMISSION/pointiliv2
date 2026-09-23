@@ -1,6 +1,6 @@
 # Pointili (tampons) — carrousels Instagram / Facebook
 
-**Produit décrit :** l'app tampons — pointidi.vercel.app. Le client scanne le QR vivant du comptoir → +1 tampon → carte pleine = cadeau que le commerçant confirme. Le QR imprimé du comptoir ajoute seulement la carte (0 tampon).
+**Produit décrit :** l'app tampons — pointili.online. Le client scanne le QR vivant du comptoir → +1 tampon → carte pleine = cadeau que le commerçant confirme. Le QR imprimé du comptoir ajoute seulement la carte (0 tampon).
 
 Format 1080 × 1350 (4:5). Tounsi en écriture arabe, chiffres latins, « Pointili » en latin.
 
@@ -200,7 +200,7 @@ Légende : `hook` `photo` `screen` `text` `cta` · entre crochets : photo ou éc
 
 ## 6. À vérifier avant publication
 
-- **Le lien de la bio.** L'adresse actuelle est `pointidi.vercel.app` : « pointidi » ≠ « Pointili ». Sur un post, ça ressemble à une faute ou à une arnaque. Un vrai domaine (ex. pointili.tn) avant de pousser les posts.
+- **Le lien de la bio.** L'adresse actuelle est `pointili.online` : « pointidi » ≠ « Pointili ». Sur un post, ça ressemble à une faute ou à une arnaque. Un vrai domaine (ex. pointili.tn) avant de pousser les posts.
 - **« ابعثلنا ميساج »** suppose que quelqu'un répond aux messages de la page.
 
 ## Lexique tunisien (fourni par le client, à respecter dans chaque post)

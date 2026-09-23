@@ -9,19 +9,22 @@
  *    b-roll cards built from the REAL app screens (social/carousels/screens),
  *    in the order the product actually works: the QR, the stamp, the card, the
  *    reward, then the name.
+ *  - The cards are animated, not stills: motion.mjs renders them frame by frame
+ *    from motion.html, so the finished reel and the loose clips in the kit are
+ *    always the same animation rather than two things that drift apart.
  *  - The sound is a café at one flat level with no silence anywhere. It gets a
  *    high-pass, a measured de-noise, a presence lift, gentle compression and
  *    loudnorm to -14 LUFS, which is what Instagram and TikTok play back at.
  *
  * Nothing is invented: every picture in the reel is a screen of the running app.
  */
-import { chromium } from "playwright-core";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile, mkdir, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { openStage, renderClip } from "./motion.mjs";
 
 const run = promisify(execFile);
 const DIR = import.meta.dirname;
@@ -38,54 +41,27 @@ const TOTAL = 44.63;
 
 /** The b-roll, in the order the product works. */
 const CARDS = [
-  { screen: "owner-qr.png", cap: "الكود على الكونتوار", sub: "يتبدّل وحدو، ما يتسرقش", tone: "dark" },
-  { screen: "stamp-success.png", cap: "الحريف يسكاني", sub: "والتامبون يطيح ساعة ساعة", tone: "light" },
+  { file: "01", screen: "owner-qr.png", cap: "الكود على الكونتوار", sub: "يتبدّل وحدو، ما يتسرقش", tone: "dark" },
+  { file: "02", screen: "stamp-success.png", cap: "الحريف يسكاني", sub: "والتامبون يطيح ساعة ساعة", tone: "light" },
   // the home screen AFTER the stamp: card 2 already showed 8/10, so this one
   // cannot go back to 7/10 — the count only ever goes up
-  { screen: "customer-home-after.png", cap: "الكارط تتعمّر في تليفونو", sub: "بلا أبليكاسيون، بلا كرتون", tone: "dark" },
-  { screen: "card-unlocked.png", cap: "كمّل؟ الكادو يتحلّ", sub: "وهو يعرف علاش يرجع", tone: "light" },
-  { screen: "reward-code.png", cap: "يورّي الكود عندك", sub: "وإنت تأكّد، وخلاص", tone: "dark" },
-  { type: "end", cap: "كارط الوفاء في تليفون الحريف", url: "pointidi.vercel.app" },
+  { file: "03", screen: "customer-home-after.png", cap: "الكارط تتعمّر في تليفونو", sub: "بلا أبليكاسيون، بلا كرتون", tone: "dark" },
+  { file: "04", screen: "card-unlocked.png", cap: "كمّل؟ الكادو يتحلّ", sub: "وهو يعرف علاش يرجع", tone: "light" },
+  { file: "05", screen: "reward-code.png", cap: "يورّي الكود عندك", sub: "وإنت تأكّد، وخلاص", tone: "dark" },
+  { file: "06", type: "end", cap: "كارط الوفاء في تليفون الحريف", url: "pointili.online" },
 ];
 
-const dataUri = async (f) => `data:image/png;base64,${(await readFile(f)).toString("base64")}`;
-
-async function renderCards() {
-  const browser = await chromium.launch({ executablePath: CHROME, headless: true });
-  const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
-  await page.goto("file:///" + path.join(DIR, "cards.html").replace(/\\/g, "/"));
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(1200);
-
-  for (const [i, c] of CARDS.entries()) {
-    const payload = { ...c };
-    if (c.screen) {
-      const file = path.join(SCREENS, c.screen);
-      if (!existsSync(file)) throw new Error(`missing screen: ${file}`);
-      payload.screenData = await dataUri(file);
-    }
-    await page.evaluate((p) => window.renderCard(p), payload);
-    await page.waitForTimeout(250);
-    await page.screenshot({ path: path.join(WORK, `card-${i + 1}.png`) });
-    console.log(`  ✓ card ${i + 1} — ${c.cap}`);
-  }
-  await browser.close();
-}
-
-/** One clip per card: a slow push-in, so a still never looks like a freeze. */
-async function animate() {
+/** The cards, animated, one clip each — the same renderer the kit uses. */
+async function cards() {
   const each = (TOTAL - A_ROLL_END) / CARDS.length;
-  const frames = Math.round(each * 24);
-  for (let i = 0; i < CARDS.length; i++) {
-    const src = path.join(WORK, `card-${i + 1}.png`);
-    const out = path.join(WORK, `clip-${i + 1}.mp4`);
-    await run(FF, [
-      "-v", "error", "-y",
-      "-loop", "1", "-framerate", "24", "-t", each.toFixed(3), "-i", src,
-      "-vf", `scale=2160:3840,zoompan=z='min(1.0+on/${frames * 14},1.07)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=24,format=yuv420p`,
-      "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18", out,
-    ]);
-    console.log(`  ✓ clip ${i + 1} — ${each.toFixed(2)}s`);
+  const { browser, page } = await openStage();
+  try {
+    for (const [i, c] of CARDS.entries()) {
+      await renderClip(page, c, path.join(WORK, `clip-${i + 1}.mp4`), each, WORK);
+      console.log(`  ✓ ${i + 1} — ${c.cap}`);
+    }
+  } finally {
+    await browser.close();
   }
   return each;
 }
@@ -95,10 +71,8 @@ async function main() {
   await rm(WORK, { recursive: true, force: true });
   await mkdir(WORK, { recursive: true });
 
-  console.log("b-roll cards");
-  await renderCards();
-  console.log("push-in");
-  await animate();
+  console.log("b-roll, animated");
+  await cards();
 
   console.log("the part that was filmed");
   await run(FF, [
