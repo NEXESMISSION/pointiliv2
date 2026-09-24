@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["next", "dev"],
       "autoPort": true
+    },
+    {
+      "name": "business-docs",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "social/business"],
+      "port": 8765
     }
   ]
 }

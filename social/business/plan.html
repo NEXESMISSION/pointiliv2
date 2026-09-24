@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pointili Growth Plan</title>
+<meta name="description" content="Pointili, 24 September 2026: where the business stands, who it sells to, how a shop is won and kept, the next 90 days week by week, and the year at three speeds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* The same ledger as economics.html: cool paper, hairline rules, mono for
+     every figure, violet spent only on what earns money. */
+  :root {
+    --paper: #F7F6FA; --sheet: #FFFFFF; --ink: #17141F; --body: #4A4557; --muted: #7A748C;
+    --rule: #E3DFEE; --rule-soft: #EFECF6; --violet: #6535E0; --violet-dim: #EFE9FC;
+    --clay: #A84A26; --moss: #146B44; --moss-dim: #E6F4EC; --amber: #8A5A06; --amber-dim: #FDF4E3;
+    --danger: #B3261E; --danger-dim: #FDECEA;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #121019; --sheet: #1A1724; --ink: #F1EEF9; --body: #B8B2C8; --muted: #857F96;
+      --rule: #2E2940; --rule-soft: #241F33; --violet: #A78BFA; --violet-dim: #2A2140;
+      --clay: #E08B62; --moss: #4FC28C; --moss-dim: #16291F; --amber: #D9A32E; --amber-dim: #2C2313;
+      --danger: #F2837B; --danger-dim: #33191A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #121019; --sheet: #1A1724; --ink: #F1EEF9; --body: #B8B2C8; --muted: #857F96;
+    --rule: #2E2940; --rule-soft: #241F33; --violet: #A78BFA; --violet-dim: #2A2140;
+    --clay: #E08B62; --moss: #4FC28C; --moss-dim: #16291F; --amber: #D9A32E; --amber-dim: #2C2313;
+    --danger: #F2837B; --danger-dim: #33191A;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--body);
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 16px; line-height: 1.62;
+    padding-inline: 20px; padding-block: 0 80px; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1, h2, h3 { color: var(--ink); text-wrap: balance; margin: 0; letter-spacing: -0.02em; }
+  h1 { font-size: clamp(30px, 5.4vw, 44px); font-weight: 600; line-height: 1.12; }
+  h2 { font-size: clamp(21px, 3.4vw, 27px); font-weight: 600; line-height: 1.22; }
+  h3 { font-size: 17px; font-weight: 600; line-height: 1.3; }
+  p { margin: 0; max-width: 66ch; }
+  strong { color: var(--ink); font-weight: 600; }
+  em { font-style: normal; color: var(--ink); font-weight: 500; }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.92em; color: var(--ink); }
+  a { color: var(--violet); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--violet) 40%, transparent); }
+  .ar { font-family: "IBM Plex Sans Arabic", sans-serif; direction: rtl; unicode-bidi: isolate; color: var(--ink); }
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  header { padding-block: 54px 30px; border-bottom: 2px solid var(--ink); display: grid; gap: 14px; }
+  header p { max-width: 62ch; font-size: 17.5px; }
+  .stamp { display: flex; align-items: center; gap: 8px 14px; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .stamp b { color: var(--ink); font-weight: 500; }
+  nav.toc { padding-block: 22px; border-bottom: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+  nav.toc a { color: var(--muted); border: 0; }
+  nav.toc a:hover { color: var(--violet); }
+  section { padding-block: 42px; border-bottom: 1px solid var(--rule); display: grid; gap: 18px; }
+  section > .head { display: grid; gap: 7px; }
+  .figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .fig { background: var(--sheet); padding: 16px 18px; display: grid; gap: 3px; }
+  .fig .k { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .fig .v { font-family: "IBM Plex Mono", monospace; font-size: 27px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .fig .v.good { color: var(--moss); }
+  .fig .v.bad { color: var(--clay); }
+  .fig .n { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+  .scroll { overflow-x: auto; margin-inline: -20px; padding-inline: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 560px; }
+  caption { text-align: left; font-size: 13px; color: var(--muted); padding-bottom: 8px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th:first-child, td:first-child { padding-left: 0; }
+  td:last-child, th:last-child { padding-right: 0; }
+  thead th { font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  tbody td { color: var(--body); }
+  tbody td:first-child { color: var(--ink); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num, th.num { font-family: "IBM Plex Mono", monospace; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.total td { border-top: 1px solid var(--ink); border-bottom: 0; font-weight: 600; color: var(--ink); padding-top: 11px; }
+  td.ar, th.ar { text-align: right; }
+  .pos { color: var(--moss); }
+  .neg { color: var(--clay); }
+  .note { border-left: 2px solid var(--rule); padding: 2px 0 2px 16px; font-size: 14.5px; color: var(--body); display: grid; gap: 6px; max-width: 64ch; }
+  .note.warn { border-left-color: var(--amber); background: var(--amber-dim); padding: 12px 16px; }
+  .note.risk { border-left-color: var(--danger); background: var(--danger-dim); padding: 12px 16px; }
+  .note.good { border-left-color: var(--moss); background: var(--moss-dim); padding: 12px 16px; }
+  .note.key { border-left-color: var(--violet); background: var(--violet-dim); padding: 12px 16px; }
+  .note .lab { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .note.warn .lab { color: var(--amber); }
+  .note.risk .lab { color: var(--danger); }
+  .note.good .lab { color: var(--moss); }
+  .note.key .lab { color: var(--violet); }
+  .math { font-family: "IBM Plex Mono", monospace; font-size: 13.5px; background: var(--sheet); border: 1px solid var(--rule); padding: 14px 16px; display: grid; gap: 5px; color: var(--body); overflow-x: auto; font-variant-numeric: tabular-nums; }
+  .math b { color: var(--ink); font-weight: 600; }
+  .math .c { color: var(--muted); }
+  ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 10px; max-width: 64ch; }
+  li::marker { color: var(--muted); }
+  ol li::marker { font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+  .card { background: var(--sheet); border: 1px solid var(--rule); padding: 18px; display: grid; gap: 10px; align-content: start; }
+  .card h3 { font-size: 15.5px; }
+  .card ul { gap: 7px; font-size: 14.5px; }
+  .script { background: var(--sheet); border: 1px solid var(--rule); display: grid; }
+  .line { display: grid; grid-template-columns: 96px 1fr; gap: 6px 16px; padding: 14px 18px; border-bottom: 1px solid var(--rule-soft); }
+  .line:last-child { border-bottom: 0; }
+  .line .who { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding-top: 6px; }
+  .line .say { display: grid; gap: 4px; }
+  .line .say .ar { font-size: 18px; line-height: 1.7; text-align: right; }
+  .line .say .gl { font-size: 13.5px; color: var(--muted); }
+  @media (max-width: 520px) { .line { grid-template-columns: 1fr; } }
+  .check { list-style: none; padding: 0; }
+  .check li { display: grid; grid-template-columns: 18px 1fr; gap: 12px; align-items: start; }
+  .check li::before { content: ""; width: 14px; height: 14px; margin-top: 6px; border: 1.5px solid var(--muted); border-radius: 2px; }
+  .timeline { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .tl { background: var(--sheet); display: grid; grid-template-columns: 120px 1fr; gap: 6px 18px; padding: 14px 18px; }
+  .tl .when { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); line-height: 1.5; padding-top: 3px; }
+  .tl .when b { display: block; color: var(--ink); font-weight: 500; }
+  .tl .what { display: grid; gap: 4px; font-size: 14.5px; }
+  .tl .what b { color: var(--ink); font-weight: 600; }
+  .tl .goal { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--violet); }
+  @media (max-width: 520px) { .tl { grid-template-columns: 1fr; } }
+  footer { padding-top: 28px; font-size: 13px; color: var(--muted); display: grid; gap: 8px; max-width: 66ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Pointili · 24 September 2026</p>
+  <h1>The growth plan: from four silent trials to shops that pay and renew</h1>
+  <p>Four cafés said yes and none of them is stamping. Zero dinars collected. Thirty-three finished posts and ten followers. This is the plan to turn that into paying shops, in the order the problems actually come: make the shops that already exist use it, take the first money, then make winning the next shop a routine instead of an event.</p>
+  <div class="stamp">
+    <span><b>6</b> shops in production, 4 real</span><span>·</span>
+    <span><b>0 TND</b> collected</span><span>·</span>
+    <span><b>6</b> stamps at real counters in two weeks</span><span>·</span>
+    <span><b>3</b> posts, 10 followers</span><span>·</span>
+    <span>first real trial ends <b>11 Oct</b></span>
+  </div>
+</header>
+
+<nav class="toc">
+  <a href="#now">1 · Where we stand</a><a href="#who">2 · What we sell, to whom</a><a href="#order">3 · Three problems, in order</a>
+  <a href="#offer">4 · The offer</a><a href="#win">5 · Winning a shop</a><a href="#keep">6 · Keeping a shop</a>
+  <a href="#online">7 · Instagram, Facebook, WhatsApp</a><a href="#ninety">8 · The next 90 days</a><a href="#year">9 · The year, three speeds</a>
+  <a href="#product">10 · Product work that serves growth</a><a href="#risks">11 · Risks</a><a href="#week">12 · This week</a>
+</nav>
+
+<!-- 1 -->
+<section id="now">
+  <div class="head">
+    <p class="eyebrow">1 · Where we stand</p>
+    <h2>Signed is not the same as using</h2>
+  </div>
+  <div class="figures">
+    <div class="fig"><div class="k">Real shops</div><div class="v">4</div><div class="n">robusta, hazem, Socrate, Kasper. All cafés, all on the 30-day trial.</div></div>
+    <div class="fig"><div class="k">Stamps, real shops</div><div class="v bad">6</div><div class="n">in 13 days, across the four. Your two demo shops hold the other 64.</div></div>
+    <div class="fig"><div class="k">Customers, real shops</div><div class="v">7</div><div class="n">cards on customers' phones, most of them the owner and friends testing.</div></div>
+    <div class="fig"><div class="k">Revenue</div><div class="v">0 TND</div><div class="n">one payment row in the database, a test.</div></div>
+    <div class="fig"><div class="k">Content in stock</div><div class="v good">33</div><div class="n">finished carousels and ads, 3 published. Ten weeks at three a week.</div></div>
+    <div class="fig"><div class="k">First decision</div><div class="v">11 Oct</div><div class="n">robusta's trial ends; hazem 12 Oct; Socrate and Kasper 20 Oct.</div></div>
+  </div>
+
+  <div class="scroll"><table>
+    <caption>The production database, 24 September 2026 (your own Café Bonheur and Café Yasmine left out)</caption>
+    <thead><tr><th>Shop</th><th>Since</th><th>Trial ends</th><th class="num">Customers</th><th class="num">Stamps</th><th>Last stamp</th><th>Read</th></tr></thead>
+    <tbody>
+      <tr><td>robusta</td><td>11 Sep</td><td>11 Oct</td><td class="num">4</td><td class="num">3</td><td>23 Sep</td><td>tried it with a few people, the QR is not living on the counter</td></tr>
+      <tr><td>hazem</td><td>12 Sep</td><td>12 Oct</td><td class="num">2</td><td class="num">1</td><td>12 Sep</td><td>one stamp on install day, silent since</td></tr>
+      <tr><td>Socrate coffee shop</td><td>20 Sep</td><td>20 Oct</td><td class="num">0</td><td class="num">0</td><td>—</td><td>never opened</td></tr>
+      <tr><td>Kasper</td><td>20 Sep</td><td>20 Oct</td><td class="num">1</td><td class="num">2</td><td>23 Sep</td><td>testing, one phone</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note key">
+    <span class="lab">The one fact this plan is built on</span>
+    <p>A café that serves 150 coffees a day, with the live QR on the counter and a waiter who says «سكاني وخوذ تامبون», produces 20 to 40 stamps a day inside two weeks. Four real cafés together produced six in thirteen days. The screen is not on the counter. Until it is, nothing in sections 5 to 9 matters, and no owner will pay in October for something he has not seen work.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>What already works</h3>
+      <ul>
+        <li>The product: a stamp lands in three seconds, no app, Tunisian by default, the QR cannot be photographed, the tests pass.</li>
+        <li>The price: 120 TND a year is a third of the nearest Tunisian competitor and needs no device.</li>
+        <li>The ask: the owner messages, you set everything up. No self-serve funnel to babysit.</li>
+        <li>The content: 33 posts in the owner's own words, an economics page, a reel kit, a caption maker.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>What is missing</h3>
+      <ul>
+        <li>A routine that puts you in front of ten shop owners a morning.</li>
+        <li>A first paying shop, and a first photo of a real reward being handed over.</li>
+        <li>A reason for a shop to keep the screen on: a device, a poster, a staff sentence, a follow-up visit.</li>
+        <li>A presence where owners actually look you up: Facebook, WhatsApp Business, Google. The landing page's «كلّمنا اليوم» still sends them to a sign-up form.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="who">
+  <div class="head">
+    <p class="eyebrow">2 · What we sell, to whom</p>
+    <h2>Cafés first, one neighbourhood at a time</h2>
+  </div>
+  <p>The promise in one sentence, the one the posts already use: <span class="ar">الحريف اللي يرجع هو اللي يعيّش المحل</span>. A reason to come back, on the customer's own phone, in three seconds, for ten dinars a month.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Why cafés, and why now</h3>
+      <ul>
+        <li><strong>Frequency.</strong> A regular comes every day. A loyalty card that fills in ten days is felt; one that fills in a year is forgotten. Nothing else on the high street has a daily ticket.</li>
+        <li><strong>The maths is small and true.</strong> One regular at 1.5 TND, 26 days a month, is 39 TND a month and about 470 TND a year. The reward, a free coffee, costs the owner half a dinar. The owner can check it in his head; post c14 already says it.</li>
+        <li><strong>There are about 20,000 of them.</strong> The cafetiers' chamber counted roughly twenty thousand cafés in 2024, other estimates run higher. You do not need the market to be big. You need one zone to be dense.</li>
+        <li><strong>The owner is at the counter.</strong> He decides on the spot, pays cash, and sees the stamps happen in front of him.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Then, and not yet</h3>
+      <ul>
+        <li><strong>Next:</strong> barbers (one chair, one owner, a visit every two or three weeks at 8 to 15 TND), bakeries (daily), juice and fast-food. Same script, same zone, once the café script closes one in five.</li>
+        <li><strong>Later:</strong> salons and gyms. Lower frequency, bigger ticket, more staff between the owner and the counter.</li>
+        <li><strong>Not now:</strong> restaurants (weekly at best, waiter-mediated, owner rarely at the counter) and chains (they need staff accounts and branches, a second tier you have not built and should not build for the first 30 shops).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="scroll"><table>
+    <caption>The alternatives an owner in Tunis can actually buy this month</caption>
+    <thead><tr><th></th><th>Pointili</th><th>Poinety</th><th>Digital Menu</th><th>Paper cards</th></tr></thead>
+    <tbody>
+      <tr><td>What the customer needs</td><td>phone camera, phone number</td><td>install their app</td><td>a QR menu; loyalty is points inside it</td><td>keep the card, not lose it</td></tr>
+      <tr><td>What the shop needs</td><td>a phone or tablet on the counter</td><td>their NFC device, included</td><td>a menu on their platform</td><td>a printer, an ink stamp</td></tr>
+      <tr><td>Price a year</td><td class="num">120</td><td class="num">290 – 390</td><td class="num">from ≈192</td><td class="num">≈ 50, plus fraud</td></tr>
+      <tr><td>Free trial</td><td>none: you pay, we install</td><td>30 days</td><td>—</td><td>—</td></tr>
+      <tr><td>Can it be cheated</td><td>rotating single-use code, owner confirms the reward</td><td>needs the device present</td><td>—</td><td>anyone who finds the stamp</td></tr>
+      <tr><td>What they can say against us</td><td colspan="4">«you need a screen on the counter». Have the answer ready before the first visit; it is in section 4.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Two sentences beat Poinety in a doorway: <em>the customer installs nothing</em>, which is the first reason people never join a loyalty programme, and <em>it costs a third</em>. Do not argue features. Nobody buys a feature in a café at nine in the morning.</p>
+</section>
+
+<!-- 3 -->
+<section id="order">
+  <div class="head">
+    <p class="eyebrow">3 · Three problems, in order</p>
+    <h2>Activation, then money, then a routine</h2>
+  </div>
+  <ol>
+    <li><strong>Activation, now until 11 October.</strong> The shops that said yes do not use it. The likely reasons, in the order I would check them: no device on the counter; the staff never got a sentence to say; the owner installed it, closed the tab and forgot; the reward chosen is not one a customer would chase; nobody came back after install day. The fix is not a message. It is a visit, with a phone stand and a laminated poster in your bag, where you put the screen on the counter with the owner and stamp his next ten customers yourself.</li>
+    <li><strong>First revenue, 11 to 20 October.</strong> Four trials end. Four conversations about money, at the counter, in cash. A shop with fewer than twenty stamps by then will not pay, and it should not: ask what stopped it and write the answer down. That answer is worth more than the 80 dinars. Target: two of the four pay.</li>
+    <li><strong>A repeatable way to win the next shop, from 12 October.</strong> Three mornings a week in one zone, ten doors a morning, every visit logged. Ten paying shops by 15 November, twenty-five by the end of December. Instagram is not this routine; it is what the owner checks that evening to see whether you are real.</li>
+  </ol>
+</section>
+
+<!-- 4 -->
+<section id="offer">
+  <div class="head">
+    <p class="eyebrow">4 · The offer</p>
+    <h2>The price stays. The free month goes.</h2>
+  </div>
+  <ul>
+    <li><strong>120 TND a year, 80 TND for six months.</strong> Do not discount. Ten dinars a month is already «five coffees», and the cheapest thing in the market by a wide margin. A discount tells the owner the price was never real.</li>
+    <li><strong>Paid on install day, in cash or D17.</strong> The four trial shops are what «try it and pay later» produces: nothing on the counter. From now on the standard first sale is the six-month plan, 80 TND, handed over before you leave. A shop that paid 80 dinars puts the tablet on the counter. The 30-day trial stays in the code as a safety so a shop can be live before a transfer clears, and the admin confirms the payment the same day. It is never said out loud, never posted, never offered.</li>
+    <li><strong>«We set up everything» means this, in thirty minutes:</strong> the account, the three-question card, the logo, the counter poster printed and laminated, a phone stand, the shop's device open on the QR screen and plugged in, Pointili on the owner's own phone, the first five stamps with real customers while he watches, the staff sentence, and your WhatsApp number on the poster.</li>
+    <li><strong>The renewal is the business.</strong> At six months the 80-dinar shop renews to the yearly plan at 120. The economics page already showed year one barely covers a visit; every dinar of margin is in the second year. Section 6 is about earning that renewal from day three.</li>
+  </ul>
+
+  <div class="note warn">
+    <span class="lab">The objection you will hear most</span>
+    <p><span class="ar">«ما عنديش تابلات»</span> — the counter needs a screen showing the live code. Three answers, in the order to use them. <strong>One:</strong> any old Android phone plugged into a charger; most cafés have one in a drawer, and a used one costs about 100 dinars in any bazaar. <strong>Two:</strong> a Pointili «pack counter»: a used Android phone, a stand and a charger, sold at cost plus thirty dinars, or lent against a deposit. <strong>Three:</strong> if this is the first objection at ten of the first thirty visits, build the owner-confirms mode (printed code → the stamp request appears on the owner's phone → he taps ✓). Do not build it before you have heard it ten times.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Later, not now</h3>
+      <ul>
+        <li><strong>A 50 TND setup fee</strong> the day a paid rep does the visit instead of you. Your own visit costs nothing; a rep's costs 35 to 60 dinars, and the fee pays for it the same day.</li>
+        <li><strong>A second tier at 300 to 360 TND</strong> (branches, staff accounts, messaging customers, export) the day the third shop asks for any of those. Keep 120 as the door.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Referral, from the first paying shop</h3>
+      <ul>
+        <li><strong>20 TND cash</strong> to an owner for every shop he brings that pays. It is not a free offer; it is paying him for a visit you did not make, at a quarter of the first payment.</li>
+        <li>Ask at the moment a reward is first handed over, when he is pleased: <span class="ar">«شكون تعرف من أصحاب المحلات هوني؟»</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="win">
+  <div class="head">
+    <p class="eyebrow">5 · Winning a shop</p>
+    <h2>One zone, ten doors a morning, every visit written down</h2>
+  </div>
+  <p><strong>Pick one zone</strong> and stay in it until it is done: the neighbourhood of the four trial shops or your own, a walk of about three kilometres with a hundred or more cafés. Density is the strategy, not a convenience. An owner sees the card in the phone of a customer who got it next door. Owners talk to each other across the street. Ten visits fit in one morning on foot. A support visit on day three costs you twenty minutes, not a taxi.</p>
+
+  <div class="math">
+    <span><b>10</b> doors a morning × <b>3</b> mornings a week  =  <b>120</b> visits a month</span>
+    <span>owner present about half the time  →  <b>60</b> conversations</span>
+    <span>listens to the two-minute demo about six in ten  →  <b>36</b> demos</span>
+    <span>closes, on the spot or on the Thursday return, one in four or five  →  <b>7 to 11</b> shops a month, alone</span>
+    <span class="c">If after 60 visits fewer than one in twenty closes, the effort is not the problem. Change one thing, the opening line, the price framing, the zone, and measure again.</span>
+  </div>
+
+  <h3>The visit, in the words to say</h3>
+  <div class="script">
+    <div class="line"><div class="who">Open · 10 s</div><div class="say"><div class="ar">عسلامة، أنا [الاسم]، عندي حاجة صغيرة للقهاوي هوني في [الحومة]. دقيقتين برك.</div><div class="gl">Name, place, «two minutes». Nothing about technology.</div></div></div>
+    <div class="line"><div class="who">Question · 10 s</div><div class="say"><div class="ar">الحريف يجي مرّة… ويرجع؟ ولا يجي مرّة وينساك؟</div><div class="gl">The question from posts c23 and c56. Let him answer. He will talk about his regulars.</div></div></div>
+    <div class="line"><div class="who">Demo · 60 s</div><div class="say"><div class="ar">جرّب إنت. حلّ الكاميرا وسكاني.</div><div class="gl">Your second phone or tablet shows the demo café's live code. He scans with his own camera and sees «+1 تامبون» in three seconds. Do not explain the product; make him do it. Then show the customer side: «مازال 3».</div></div></div>
+    <div class="line"><div class="who">Price · 10 s</div><div class="say"><div class="ar">120 دينار في العام. يعني 10 دينار في الشهر، 5 قهاوي. ولا 80 لـ 6 شهور.</div><div class="gl">Say it once, plainly, then stop talking.</div></div></div>
+    <div class="line"><div class="who">Close · 10 s</div><div class="say"><div class="ar">نجهّزولك كل شي توّا، في نص ساعة: الكارط، الكود، البوستر. إنت تختار الكادو برك.</div><div class="gl">If yes: set it up now, take the 80 dinars, first stamps with his next customers. If «نشوف»: <span class="ar">«نرجعلك الخميس»</span>, and come back Thursday.</div></div></div>
+  </div>
+
+  <div class="scroll"><table>
+    <caption>Objections, one line each. All of them are already answered in the FAQ and the posts.</caption>
+    <thead><tr><th>He says</th><th>You say</th></tr></thead>
+    <tbody>
+      <tr><td class="ar">لازم يحمّلو أبليكاسيون؟</td><td class="ar">لا. الكاميرا برك، ونومرو التليفون أوّل مرّة.</td></tr>
+      <tr><td class="ar">ينجم حد يغشّ؟</td><td class="ar">الكود يتبدّل بعد كل سكاني، والكادو ما يتعطاش كان كي تأكّد إنت.</td></tr>
+      <tr><td class="ar">وكي يقصّ الإنترنت؟</td><td class="ar">الكود يرجع وحدو كي ترجع الكونيكسيون. حتى تامبون ما يضيع.</td></tr>
+      <tr><td class="ar">حرفائي كبار، ما يعرفوش</td><td class="ar">يسكانيو على خاطر القهوة البلاش. جرّبها على 10 حرفاء اليوم، ونشوفو.</td></tr>
+      <tr><td class="ar">غالية</td><td class="ar">حريف واحد يرجع مرّة زايدة في الشهر يخلّصها. حريف واحد.</td></tr>
+      <tr><td class="ar">ما عنديش تابلات</td><td>the three answers in section 4</td></tr>
+      <tr><td class="ar">نشوف</td><td class="ar">مرحبا. نرجعلك الخميس الصباح.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>In the bag</h3>
+      <ul class="check">
+        <li>A second phone or tablet with the demo café's QR screen open, charged.</li>
+        <li>Five phone stands (a bazaar, 10 to 15 TND each).</li>
+        <li>A roll of stickers: <span class="ar">سكاني وخوذ تامبون</span>, for the counter and the till.</li>
+        <li>Cards with the WhatsApp number and the Instagram QR.</li>
+        <li>A receipt book. Cash needs a paper receipt with the shop's name, the plan and the date.</li>
+        <li>Your own D17 QR printed, for owners who do not carry cash.</li>
+        <li>The counter poster is per shop (it carries the shop's join code), so it comes on the day-three visit, laminated. Or print it at the nearest librairie the same morning.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>The visit log</h3>
+      <p>One line per door, every door, including the ones that said no: shop, owner's first name, phone, outcome, the exact objection, the date to return. In a notebook or a sheet, it does not matter. This list is the business. In three months it tells you the close rate, the objection to answer in the next post, and which street to walk again.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="keep">
+  <div class="head">
+    <p class="eyebrow">6 · Keeping a shop</p>
+    <h2>Activated in fourteen days, renewed on the strength of its own numbers</h2>
+  </div>
+  <p><strong>A shop is activated</strong> when it has 20 stamps and 10 customers within fourteen days of install. Below that, it is a shop you have not finished selling. The economics page said the whole business lives in the renewal; the renewal is decided in the first two weeks, when the screen either stays on the counter or goes back in the drawer.</p>
+
+  <div class="timeline">
+    <div class="tl"><div class="when"><b>Day 0</b>install</div><div class="what"><b>The first five stamps happen while you are there.</b> Real customers, the owner watching the screen say «+1». The staff hear the sentence from you, not from a note.</div></div>
+    <div class="tl"><div class="when"><b>Day 3</b>visit</div><div class="what"><b>Poster, stand, screen still on?</b> Bring the laminated poster. Count the stamps on the admin page in front of him. If the screen is off, find out why before you leave.</div></div>
+    <div class="tl"><div class="when"><b>Day 7</b>WhatsApp</div><div class="what"><b>His numbers, in one line.</b> <span class="ar">«هالجمعة: 34 تامبون، 12 حريف. الأوّل قرّب للكادو.»</span></div></div>
+    <div class="tl"><div class="when"><b>Day 14</b>visit if needed</div><div class="what"><b>Under 20 stamps? Go.</b> Something at the counter is wrong: the device, the sentence, the reward. Fix it at the counter, not by message.</div></div>
+    <div class="tl"><div class="when"><b>Day 20–30</b>first reward</div><div class="what"><b>Be there, or ask for a photo.</b> The first free coffee handed over at a real counter is the strongest post you will ever publish, and the moment to ask for the referral.</div></div>
+    <div class="tl"><div class="when"><b>Every Monday</b>WhatsApp</div><div class="what"><b>One line, every shop, by hand, until thirty shops.</b> Stamps, customers, rewards, from the admin page. It takes ten minutes for ten shops, it is the relationship, and it is your churn alarm.</div></div>
+    <div class="tl"><div class="when"><b>Day 150</b>six-month plans</div><div class="what"><b>The renewal message carries his year.</b> <span class="ar">«رجعولك 47 حريف، 3 كوادو تعطاو. العرض يكمّل نهار 12. نجدّدو للعام بـ 120؟»</span> plus a D17 link. For the six-month shops this falls in March and April 2027; the reminder has to exist by February.</div></div>
+  </div>
+
+  <div class="note risk">
+    <span class="lab">The churn alarm</span>
+    <p>Stamps this week under half of the shop's four-week average. Visit within three days. You will not see a renewal rate until spring; a falling stamp count you can see every Monday, and it is the only thing that predicts it.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="online">
+  <div class="head">
+    <p class="eyebrow">7 · Instagram, Facebook, WhatsApp, Google</p>
+    <h2>Online is where the owner checks whether you are real</h2>
+  </div>
+  <p>Content is not the acquisition channel for the first hundred shops. It is the credibility check. The owner you visited at nine will look you up at nine in the evening. What he must find: a page that posts three times a week, real shops, real stamps, a WhatsApp button that answers.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Instagram</h3>
+      <ul>
+        <li>Publish the thirty finished posts, Monday, Wednesday and Friday evenings, in the order PLAN.md already set: what it is, a day at the counter, «does the customer need an app», the reward examples, cheating, paper cards, «is it hard», the price, the FAQ. Then the second wave.</li>
+        <li>Stop producing new carousels until ten shops pay. After that the content is the shops: the first reward at robusta, the poster on a real counter, an owner saying one sentence to camera. One of those is worth ten carousels.</li>
+        <li>Keep the reel kit for exactly that: a nine-second phone clip of a real scan, captions from the caption maker.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Facebook, the same day</h3>
+      <ul>
+        <li>A Pointili page, the same name and cover, the same posts the same evening. The café owner over thirty-five lives on Facebook, not Instagram. This costs nothing and doubles the reach of everything already made.</li>
+        <li>Post the reward examples (c8, c30, c54) in the groups where café owners buy equipment and hire staff. No selling in the text, just the question and the picture.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>WhatsApp Business</h3>
+      <ul>
+        <li>The support number on a WhatsApp Business profile: a greeting in Tunisian, the two plans in the catalogue, quick replies for the five FAQ.</li>
+        <li>The landing page's «كلّمنا اليوم» and «ابدا توّا» currently open the sign-up form. Point them at WhatsApp with a prefilled message, like the billing page already does. The whole positioning is «message us, we set it up»; the site should do what the posts say.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Google, and the customers themselves</h3>
+      <ul>
+        <li>A Google Business Profile for Pointili so «carte fidélité Tunisie» finds a real business with a phone number. The site's SEO is already done.</li>
+        <li>Every stamp puts Pointili in a customer's phone; the customer home already links your Instagram. Add one button, <span class="ar">«اقترح محلّك»</span>: the customer names a shop he would like to see it in, you get a lead and an introduction.</li>
+        <li>Paid ads only after ten paying shops and two owners on camera, then 100 TND on the c40 to c43 ads, Tunis, small business owners, WhatsApp as the button, judged in conversations not likes. Meta needs a foreign-currency card; sort that out before you need it.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="ninety">
+  <div class="head">
+    <p class="eyebrow">8 · The next 90 days</p>
+    <h2>24 September to 31 December, week by week</h2>
+  </div>
+  <div class="timeline">
+    <div class="tl"><div class="when"><b>Week 0</b>24 – 30 Sep</div><div class="what"><b>Activate the four.</b> Visit each with a stand and a poster; put the screen on the counter with the owner; stamp his next ten customers. WhatsApp Business live. Facebook page up. Three posts out. Buy the stands, print the stickers, get a receipt book. Choose the zone and list sixty cafés in it.<span class="goal">goal · 4 screens on 4 counters, 30 real stamps</span></div></div>
+    <div class="tl"><div class="when"><b>Week 1</b>1 – 7 Oct</div><div class="what"><b>First cold mornings.</b> Twenty doors in the zone with the demo phone. Day-7 WhatsApp to the four with their numbers. Three posts.<span class="goal">goal · 2 new shops, paid at install</span></div></div>
+    <div class="tl"><div class="when"><b>Week 2</b>8 – 14 Oct</div><div class="what"><b>The money conversations.</b> robusta and hazem end their trials: at the counter, 80 or 120, cash or D17. Thirty doors. Note every objection.<span class="goal">goal · 2 of 4 trials paid, 3 more installs</span></div></div>
+    <div class="tl"><div class="when"><b>Week 3</b>15 – 21 Oct</div><div class="what"><b>Socrate and Kasper end.</b> Thirty doors. The first reward handed over somewhere: photograph it. Vercel Pro the day the first dinar is in.<span class="goal">goal · 6 paying shops</span></div></div>
+    <div class="tl"><div class="when"><b>Weeks 4 – 6</b>22 Oct – 11 Nov</div><div class="what"><b>The routine.</b> Thirty doors a week, Thursday returns, Monday numbers. Ask every paying owner for one name. Landing CTA to WhatsApp. First owner on camera.<span class="goal">goal · 12 paying shops, close rate known</span></div></div>
+    <div class="tl"><div class="when"><b>Weeks 7 – 9</b>12 Nov – 2 Dec</div><div class="what"><b>Second trade, same streets.</b> Barbers with the same script and a haircut as the reward. Fix the counter-screen poll before the tenth paying shop. «Suggest a shop» on the customer home.<span class="goal">goal · 20 paying shops</span></div></div>
+    <div class="tl"><div class="when"><b>Weeks 10 – 13</b>3 – 31 Dec</div><div class="what"><b>Second zone, or a second pair of feet.</b> Either walk the next neighbourhood or give the script and 30 TND a closed shop to one trusted person on commission. Build the day-150 renewal message before February.<span class="goal">goal · 25 to 30 paying, 2,500 to 3,000 TND collected</span></div></div>
+  </div>
+  <div class="note">
+    <span class="lab">The Sunday review, twenty minutes</span>
+    <p>Six numbers, written down every week: shops paying, shops active (stamps in the last 7 days), stamps per active shop, doors visited, shops closed, the objection heard most. If a week has no doors visited, the plan did not happen that week, whatever else got built.</p>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="year">
+  <div class="head">
+    <p class="eyebrow">9 · The year, three speeds</p>
+    <h2>October 2026 to September 2027</h2>
+  </div>
+  <p>Assumptions, all of them yours to re-base: the average first payment is 100 TND (half take six months at 80, half a year at 120); six-month shops renew at 65 per cent onto the yearly plan; the platform costs 63 TND a month from the first paid shop (Vercel Pro) and 146 from about the tenth (Supabase Pro added); your own time is not counted, because it is not paid. Renewals inside the year come only from the six-month shops signed before April.</p>
+
+  <div class="scroll"><table>
+    <caption>Twelve months, rounded. Speed is the only thing that differs.</caption>
+    <thead><tr><th>Speed</th><th>Shops a month</th><th class="num">Signed</th><th class="num">Live at Sep 2027</th><th class="num">Collected, TND</th><th class="num">Platform</th><th class="num">Other</th><th class="num">Left</th></tr></thead>
+    <tbody>
+      <tr><td>Slow, evenings only</td><td>4</td><td class="num">48</td><td class="num">≈ 44</td><td class="num">≈ 5,700</td><td class="num">≈ 1,500</td><td class="num">—</td><td class="num">≈ 4,200</td></tr>
+      <tr><td>Base, three mornings a week</td><td>8, then 12 from January</td><td class="num">132</td><td class="num">≈ 120</td><td class="num">≈ 15,500</td><td class="num">≈ 1,500</td><td class="num">—</td><td class="num pos">≈ 14,000</td></tr>
+      <tr><td>Fast, full-time plus one person on commission</td><td>15, then 25</td><td class="num">270</td><td class="num">≈ 250</td><td class="num">≈ 31,700</td><td class="num">≈ 2,000</td><td class="num">≈ 3,200 commissions</td><td class="num pos">≈ 26,500</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="math">
+    <span class="c">base speed, month by month</span>
+    <span>sales   132 shops × 100  =  <b>13,200</b></span>
+    <span>renewals   60 shops signed before April × ½ on six months × 65% × 120  =  <b>2,340</b></span>
+    <span>platform   63 × 12 + 79 × 9  =  <b>1,467</b></span>
+    <span>left   ≈ <b>14,000</b> TND, about <b>1,170</b> a month — one modest salary, for one person, from month twelve</span>
+  </div>
+
+  <div class="note key">
+    <span class="lab">What the table means</span>
+    <p>At the base speed Pointili pays one person a modest salary by this time next year and nothing more. It becomes a company at five hundred shops, or sooner with a second tier and customer messaging, and that is a 2027–2028 question. The 2026 questions are only two: does one visit in five close, and do the first six-month shops renew in April. Everything else is noise until those two numbers exist.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>When to add a person</h3>
+      <ul>
+        <li>Not a salary before thirty paying shops. A rep at 1,600 TND a month has to close fourteen shops a month just to cover himself at 120 each.</li>
+        <li>Commission first: 30 TND per paying shop to one person who already walks those streets, a delivery rider, a student, a cousin with a moto. Give him the demo phone and the script; keep the install visit for yourself.</li>
+        <li>The setup fee from section 4 arrives with the first salaried rep, not before.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>The levers, in order of weight</h3>
+      <ul>
+        <li><strong>Renewal rate.</strong> 50 per cent makes this a job; 80 per cent makes each shop worth 600 TND over its life.</li>
+        <li><strong>Close rate per visit.</strong> Decides whether one person can reach a hundred shops in a year.</li>
+        <li><strong>A second tier.</strong> The only way revenue per shop moves, and it needs shops asking first.</li>
+        <li><strong>Price.</strong> The weakest lever. Leave it.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="product">
+  <div class="head">
+    <p class="eyebrow">10 · Product work that serves growth</p>
+    <h2>Seven small things, and a list of what not to build</h2>
+  </div>
+  <ol>
+    <li><strong>Landing buttons to WhatsApp.</strong> «كلّمنا اليوم» opens a prefilled WhatsApp message; the sign-up form stays reachable for the rare owner who insists. An hour.</li>
+    <li><strong>Vercel Pro the day the first shop pays.</strong> The Hobby plan is for non-commercial use; 63 TND a month keeps the deployment inside the terms it runs under.</li>
+    <li><strong>«اقترح محلّك» on the customer home.</strong> A shop name and a neighbourhood, stored with the customer who suggested it. Half a day, and it turns every stamp collector into a scout.</li>
+    <li><strong>The counter-screen poll, before the tenth paying shop.</strong> 900 ms for twenty seconds after a stamp, four seconds while nothing happens. The only cost that grows with every shop, divided by four, and nobody at a counter notices.</li>
+    <li><strong>The renewal message, before February.</strong> Day 150 for six-month plans, day 335 for yearly, carrying the shop's own numbers and a D17 link. The first six-month renewals fall in March and April 2027.</li>
+    <li><strong>Password reset by hand until thirty shops.</strong> The SMS code is generated and never sent because no gateway is configured. The admin resets it on a phone call today; wire a gateway when the calls become weekly.</li>
+    <li><strong>Owner-confirms mode, only if the field asks for it.</strong> Printed code, request on the owner's phone, one tap. Ten objections first.</li>
+  </ol>
+  <div class="note">
+    <span class="lab">Not before thirty paying shops</span>
+    <p>Branches and staff accounts, customer messaging, a second tier, more carousels, French marketing, a card processor, new trade categories on the site, a redesign of anything. Every one of these is a reason not to be on a street at nine in the morning.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="risks">
+  <div class="head">
+    <p class="eyebrow">11 · Risks</p>
+    <h2>What could stop it, the signal, and the answer</h2>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Risk</th><th>You will see it as</th><th>The answer</th></tr></thead>
+    <tbody>
+      <tr><td>Shops sign and never use it</td><td>fewer than 10 stamps a week per shop</td><td>paid at install; the day-3 visit; the screen placed by you, not by a message</td></tr>
+      <tr><td>Renewal under 50 per cent</td><td>April 2027, the first six-month shops</td><td>Monday numbers from week one; a reward handed over inside the first month; the day-150 message with his own figures</td></tr>
+      <tr><td>The counter needs a screen and owners refuse</td><td>the objection count in the visit log</td><td>the pack counter; owner-confirms mode at ten objections</td></tr>
+      <tr><td>Poinety drops the app and the device</td><td>their website</td><td>price, density and the relationship. A competitor cannot visit your forty shops every Monday; you can</td></tr>
+      <tr><td>You are the only person who knows anything</td><td>a week you are ill</td><td>passwords in a manager, a written admin runbook (confirm a payment, reset a password, print a poster), a second admin phone</td></tr>
+      <tr><td>Payments confirmed by hand slip</td><td>a shop's QR stops and he did not know why</td><td>a D17 link per shop, a monthly reconcile against the admin's pending list; a card processor only when the volume pays its fee</td></tr>
+      <tr><td>Hobby hosting for a commercial product</td><td>the first dinar</td><td>Vercel Pro, section 10</td></tr>
+      <tr><td>An owner locked out of his account</td><td>a call at eight in the morning</td><td>the manual reset until thirty shops; then a gateway at about 0.20 TND a message</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 12 -->
+<section id="week">
+  <div class="head">
+    <p class="eyebrow">12 · This week</p>
+    <h2>24 to 30 September, in order</h2>
+  </div>
+  <ol>
+    <li><strong>Visit robusta, hazem, Socrate and Kasper.</strong> Bring a stand and the laminated poster. Put the live QR on the counter with the owner and stamp his next ten customers yourself. Ask each one what stopped him, and write it down word for word.</li>
+    <li><strong>WhatsApp Business on the support number.</strong> A Tunisian greeting, the two plans in the catalogue, five quick replies. Then point the landing buttons at it.</li>
+    <li><strong>A Facebook page.</strong> Same name, same cover. Post c1 on both tonight, then Monday, Wednesday, Friday.</li>
+    <li><strong>Buy five stands, print stickers, get a receipt book</strong> and print your D17 code.</li>
+    <li><strong>Choose the zone</strong> and list sixty cafés in it on a map, with the ones already visited marked. First cold morning: Monday 28 September.</li>
+    <li><strong>Decide the trial, once.</strong> Every shop created from now on has its payment confirmed on install day. The thirty days are a fallback for a transfer in flight, not an offer, and never appear in a post.</li>
+    <li><strong>Sunday, twenty minutes:</strong> the six numbers in section 8, in a sheet, every week from now on.</li>
+  </ol>
+</section>
+
+<footer>
+  <p>Shop, stamp, customer and trial figures are from the production database on 24 September 2026; the content count from carousels.json; the Instagram figures from the public profile the same day. Prices from lib/constants.ts. Poinety's prices (24 or 33 DT a month, 290 or 390 a year, NFC device, app required, 30-day trial) and Digital Menu's (from 16 DT a month) are from their websites on the same day. The café count is the cafetiers' chamber figure reported by La Presse in October 2024; other estimates run to 40,000. Platform prices and the unit-economics figures are those of economics.html.</p>
+  <p>Close rate, owner-present rate, the average first payment, the renewal rate and the shops-per-month paces are assumptions, not measurements. The visit log replaces the first two within a month; April 2027 replaces the fourth.</p>
+</footer>
+
+</div>
+</body>
+</html>
