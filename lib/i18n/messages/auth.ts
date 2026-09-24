@@ -136,7 +136,7 @@ export const auth = ns({
 
     business: {
       title: "اعمل المحل متاعك",
-      subtitle: "كارط الوفاء متاعك، جاهزة في خمس دقايق.",
+      subtitle: "كارط الفيدليتي متاعك، جاهزة في خمس دقايق.",
       subtitleSignedIn: "داخل بـ {who}.",
       name: "اسم المحل",
       namePlaceholder: "قهوة السعادة",

@@ -268,7 +268,7 @@ export const ops = ns({
       codeInactive: "الكود هذا ما عادش نشيط. قول للحريف يضغط «استعمل الكادو» مرة أخرى.",
     },
     toasts: {
-      loyaltyCardSaved: "كارط الوفاء تسجّلت",
+      loyaltyCardSaved: "كارط الفيدليتي تسجّلت",
       cardDesignSaved: "تصميم الكارط تسجّل",
       rewardActivated: "الكادو تفعّل",
       rewardPaused: "الكادو توقّف",

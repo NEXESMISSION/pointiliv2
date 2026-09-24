@@ -54,7 +54,7 @@ try {
        <div style="display:flex;align-items:center;gap:40px">${MARK(200)}
          <span style="font-size:150px;font-weight:800;letter-spacing:-0.03em">Pointili</span></div>
        <p style="font-family:'IBM Plex Sans Arabic',Inter,sans-serif;font-size:56px;font-weight:600;opacity:.92" dir="rtl">
-         كارط الوفاء متاع محلك، في تليفون الحريف</p>
+         كارط الفيدليتي متاع محلك، في تليفون الحريف</p>
        <p style="font-size:44px;font-weight:600;opacity:.72">Carte de fidélité digitale · Tunisie</p>
      </div></div>`,
     1640, 664, "cover.png",

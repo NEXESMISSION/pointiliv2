@@ -83,7 +83,7 @@ export const scan = ns({
     titles: {
       stamp: "خوذ التامبون متاعك",
       camera: "سكاني كود QR",
-      join: "خوذ كارط الوفاء",
+      join: "خوذ كارط الفيدليتي",
     },
     checking: {
       title: "قاعدين نشوفو التامبون متاعك…",

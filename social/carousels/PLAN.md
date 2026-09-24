@@ -42,7 +42,7 @@ Le prix vient **après** la valeur (8e) : montré trop tôt, « 120 د.ت » arr
 |---|---|
 | Mots d'arabe standard / saoudien (يمكنك، العملاء، تطبيق، مجاناً، هدية، بطاقة) | تنجم، الحرفاء، أبليكاسيون، بلاش، كادو، كارط |
 | Algérien / marocain (واش، بزاف، راني، دابا، بغيت، ديال) | شنوّة، برشا، توّا، نحب، متاع |
-| Deux noms pour la carte (كارط الفيدليتي / كارط الوفاء) | **كارط الوفاء** partout (c'est le mot de l'app). « الفيدليتي » une seule fois, en C1, pour faire le lien. |
+| Deux noms pour la carte (كارط الفيدليتي / كارط الوفاء) | **كارط الفيدليتي** partout, dans l'app comme dans les posts (règle du client, 24 sept. 2026 : « الوفاء » ne s'écrit plus nulle part). |
 | Parenthèse « (المربّع اللي تسكانيه بالتليفون) » : lourde | Supprimée — la slide **montre** le QR. |
 | « نومرو » et « نيميرو » mélangés (post 1) | « نومرو », comme dans l'app. |
 
@@ -112,7 +112,7 @@ Légende : `hook` `photo` `screen` `text` `cta` · entre crochets : photo ou éc
 
 ### C1 · شنوّة Pointili؟ — 7 slides
 1. `hook` [P1] **حرفاءك يجيو مرّة… وما يرجعوش؟** — هاو كيفاش تخلّيهم يرجعولك ←
-2. `text` **Pointili = كارط الوفاء، أما في التليفون** — كيما كارط الفيدليتي متاع الكرتون، أما ما تتنساش وما تضيعش
+2. `text` **Pointili = كارط الفيدليتي، أما في التليفون** — كيما الكارط متاع الكرتون، أما ما تتنساش وما تضيعش
 3. `screen` [QR du comptoir] **في الكونتوار، كود يتبدّل وحدو** — الحريف يسكانيه بكاميرا التليفون
 4. `screen` [tampon ajouté] **وياخو طابع في ثانية** — في التليفون متاعو، بلا أبليكاسيون
 5. `photo` [P2] **كمّل الطوابع؟ ياخو كادو** — قهوة بلاش، حلاقة بلاش… إنت تختار

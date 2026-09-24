@@ -106,7 +106,7 @@ export const customer = ns({
   tn: {
     scanQr: "سكاني كود QR",
     howItWorks: "كيفاش يخدم Pointili",
-    noCards: "مازال ما عندك كارط وفاء",
+    noCards: "مازال ما عندك كارط فيدليتي",
 
     home: {
       title: "الرئيسية",
@@ -121,12 +121,12 @@ export const customer = ns({
 
     cards: {
       title: "الكارطات متاعي",
-      count: p({ one: "كارط وفاء واحدة", other: "{n} كارطات وفاء" }),
+      count: p({ one: "كارط فيدليتي واحدة", other: "{n} كارطات فيدليتي" }),
       emptyBody: "الكارط متاعك تبان هوني بعد أول تامبون في محل Pointili.",
     },
 
     card: {
-      title: "كارط الوفاء",
+      title: "كارط الفيدليتي",
       addedTitle: "تزادت الكارط",
       addedBody: "كي تخلّص، سكاني الكود اللي في الإيكران متاع الكونتوار باش تاخو أول تامبون.",
       unlockedTitle: "الكادو تحلّ!",
@@ -197,7 +197,7 @@ export const customer = ns({
     },
 
     loyaltyCard: {
-      aria: "كارط الوفاء متاع {business}: {done} من {total} تامبونات",
+      aria: "كارط الفيدليتي متاع {business}: {done} من {total} تامبونات",
       ariaReward: "، الكادو {reward}",
       ready: "حاضر 🎉",
       toGo: "مازال {n}",

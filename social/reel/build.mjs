@@ -48,7 +48,7 @@ const CARDS = [
   { file: "03", screen: "customer-home-after.png", cap: "الكارط تتعمّر في تليفونو", sub: "بلا أبليكاسيون، بلا كرتون", tone: "dark" },
   { file: "04", screen: "card-unlocked.png", cap: "كمّل؟ الكادو يتحلّ", sub: "وهو يعرف علاش يرجع", tone: "light" },
   { file: "05", screen: "reward-code.png", cap: "يورّي الكود عندك", sub: "وإنت تأكّد، وخلاص", tone: "dark" },
-  { file: "06", type: "end", cap: "كارط الوفاء في تليفون الحريف", url: "pointili.online" },
+  { file: "06", type: "end", cap: "كارط الفيدليتي في تليفون الحريف", url: "pointili.online" },
 ];
 
 /** The cards, animated, one clip each — the same renderer the kit uses. */

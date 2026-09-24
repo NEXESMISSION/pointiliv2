@@ -34,7 +34,7 @@ export const CARDS = [
   { file: "03 - card fills", screen: "customer-home-after.png", cap: "الكارط تتعمّر في تليفونو", sub: "بلا أبليكاسيون، بلا كرتون", tone: "dark" },
   { file: "04 - reward unlocked", screen: "card-unlocked.png", cap: "كمّل؟ الكادو يتحلّ", sub: "وهو يعرف علاش يرجع", tone: "light" },
   { file: "05 - code at the counter", screen: "reward-code.png", cap: "يورّي الكود عندك", sub: "وإنت تأكّد، وخلاص", tone: "dark" },
-  { file: "06 - end card", type: "end", cap: "كارط الوفاء في تليفون الحريف", url: "pointili.online" },
+  { file: "06 - end card", type: "end", cap: "كارط الفيدليتي في تليفون الحريف", url: "pointili.online" },
   { file: "07 - the full card", screen: "customer-card-7.png", cap: "الكارط الكاملة", sub: "كل تامبون وين وصل", tone: "light", extra: true },
   { file: "08 - you set the rules", screen: "owner-loyalty.png", cap: "إنت تختار", sub: "قدّاش تامبون، وشنوّة الكادو", tone: "dark", extra: true },
   { file: "09 - who came back", screen: "owner-dashboard.png", cap: "تعرف شكون رجع", sub: "وقدّاش مرّة", tone: "light", extra: true },
