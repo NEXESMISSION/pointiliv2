@@ -4,7 +4,7 @@ import { siteUrl } from "@/lib/url";
 
 /** Structured data so search engines understand what Pointili is and what it costs. */
 export async function JsonLd() {
-  const { t, fill } = await getI18n();
+  const { t } = await getI18n();
   const url = siteUrl();
   const data = {
     "@context": "https://schema.org",
@@ -27,7 +27,7 @@ export async function JsonLd() {
         publisher: { "@id": `${url}/#org` },
         offers: ([PLANS.six_month, PLANS.yearly] as const).map((p) => ({
           "@type": "Offer",
-          name: fill(t.marketing.plans.offerName, { plan: t.data.plans[p.id] }),
+          name: t.data.plans[p.id],
           price: p.price,
           priceCurrency: "TND",
         })),

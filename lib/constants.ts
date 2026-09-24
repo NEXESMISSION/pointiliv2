@@ -71,3 +71,6 @@ export const COOLDOWN_OPTIONS = [
 
 export const QR_ROTATE_BEFORE_MS = 15_000;
 export const QR_POLL_MS = 900;
+
+/** The page every customer is asked to follow, and the inbox the site falls back to. */
+export const INSTAGRAM_HANDLE = "pointili.online";

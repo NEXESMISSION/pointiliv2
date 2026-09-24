@@ -19,8 +19,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     ...pair("", 1, "weekly"),
-    ...pair("/how-it-works", 0.8, "monthly"),
-    ...pair("/pricing", 0.8, "monthly"),
     { url: `${base}/register`, lastModified: now, changeFrequency: "yearly", priority: 0.6 },
     { url: `${base}/customer/register`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
   ];

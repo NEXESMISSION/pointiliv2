@@ -6,18 +6,12 @@ import { Card } from "@/components/ui/Card";
 import { requireMerchant } from "@/lib/session";
 import { PLANS } from "@/lib/constants";
 import { getI18n } from "@/lib/i18n/server";
+import { supportWhatsApp } from "@/lib/whatsapp";
 import { formatLongDate, formatTND } from "@/lib/format";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return { title: t.ops.billing.title };
-}
-
-/** Digits only, country code first — what wa.me expects. */
-function whatsappNumber(): string | null {
-  const raw = process.env.SUPPORT_WHATSAPP || process.env.ADMIN_PHONES?.split(",")[0] || "";
-  const digits = raw.replace(/\D/g, "");
-  return digits.length >= 8 ? digits : null;
 }
 
 /**
@@ -31,7 +25,7 @@ export default async function BillingPage() {
   const s = ctx.subscription;
   const w = t.ops.billing;
   const plan = (s?.plan ?? "none") as keyof typeof t.data.plans;
-  const number = whatsappNumber();
+  const number = supportWhatsApp();
   const message = fill(w.whatsappMessage, { shop: ctx.business.name });
 
   return (
