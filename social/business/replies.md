@@ -23,18 +23,27 @@ El ma3loumet elli n7ebbou, bel tartib elli yjiw bih wa7adhom, **mouch lkol fi me
 
 ---
 
-## 1 · El style
+## 1 · El style, w el standard mta3 el logha
 
-1. **9sir.** Sath wala zouz. Ken twila, n9assmouha 3la zouz messages.
+**El test 9bal kol message:** ken tounsi 7a9i9i y7eb yekteb el message hedha fi WhatsApp, yektebha haka? Ken le, n3awdou.
+**El tartib kif nkhayrou bin zouz versions:** klem tounsi tabi3i → wodhou7 → rythme mta3 el klem → 9sar → el objectif commercial. 3omrna ma ndhay3ou el klem el tabi3i bech el message ykoun a9sar wala «professionnel».
+
+1. **9sir, ama b rythme mta3 el klem.** Sath wala zouz. Ken twila, n9assmouha 3la zouz messages. 9sir ma ya3nich télégraphique: `QR. tampon. cadeau.` le, `el client yscan-i el QR, yekhou tampon, w kif ykammel yekhou el cadeau` ey.
 2. **Inseni.** Nekteb kif Saif fi WhatsApp, mouch kif société. `3aslema, ana Saif` w mouch `Bonjour ! Merci pour votre intérêt`.
 3. **Kol message 3andou khedma wa7da.** Sou2el → réponse. Intérêt → zone. Zone → wa9t. Wa9t → confirmation. Ma na3mlouch kol chay fi message wa7ed.
 4. **Njewbou 3al sou2el barka.** Sa2el 3al prix, yekhou el prix w nsaktou. Ma nzidouch avantages ma talabhomch.
 5. **Sou2el ken y9addem el conversation.** Ken el réponse kemlet, el message yekmel bla sou2el.
 6. **Ma nbi3ouch fi kol message.** Ba3d el réponse, el next step sghira, w ken famma logique barka.
-7. **Ton:** ey, le, bahi, mrigel, 3aychek, inchallah, tawa, ghodwa, el sbe7, el 3chiya, nji, nwarrik, n7ott lek, nrakkeb lek, ab3athli, n3aytlek, kif ma yse3dek. Ma nest3amlouch: bzef, wech, sa7it, fos7a.
-8. **Arabizi:** 3 = ع · 7 = ح · 9 = ق · kh wala 5 = خ · ch = ش · dh = ذ/ض · th = ث · el / fel / lel / bel · mte3i / mte3ek / mta3ou.
-9. **Bla bullet points, bla titres, minuscules, virgule wa7da.** «Pointili» marra wa7da w khlas. Emoji wa7ed maximum, w ghaleb el wa9t 7atta wa7ed.
-10. **Nafs el jomla ma tji ch l zouz nes.** El exemples louta amthila, mouch scripts.
+7. **Tounsi mnattou9, mouch maktoub.** Kelmetna: ey, le, bahi, mrigel, 3aychek, inchallah, tawa, ghodwa, el sbe7, el 3chiya, nji, nwarrik, nchouflek, n7ott lek, nrakkeb lek, ab3athli, n3aytlek, kif ma yse3dek, mte3ek, mta3ou, lel, fel, bel. Ma nzidouch kelma 3la khater mawjouda fi lahja okhra.
+8. **7atta contamination.** Mouch marocain wala algérien (bzef, wech, sa7it, dial, raho), mouch libi, mouch khaliji wala masri wala chami, mouch fos7a. Kelma mafhouma fi tounes mouch bedharoura tounsia.
+9. **El français wa9t elli el tounsi ysta3mlou.** message, local, application, téléphone, QR, démo, installation, cash, virement, comptoir: ybqaw. Ama mouch français formel w mouch franglais bla sabab.
+10. **Ma nterjmouch.** 7atta jomla men el français, l'anglais wala el fos7a kelma b kelma. Nefhmou el fekra, w n9oulouha kif el tounsi y9oulha.
+11. **Ma nekhtar3ouch kelmet.** Ken mouch m2akkdin kelma tounsia, kelma asghar w akid mouch kelma 3arbiya 3achwa2iya, wala nbaddlou el jomla.
+12. **Arabizi kif el tounsi yekteb:** 3 = ع · 7 = ح · 9 = ق · kh wala 5 = خ · ch = ش · dh = ذ/ض · th = ث · el / fel / lel / bel · mte3i / mte3ek / mta3ou. El nota9 el tabi3i ahem men orthographe wa7da «rasmia», ma famech wa7da.
+13. **Bla bullet points, bla titres, minuscules, virgule wa7da.** «Pointili» marra wa7da w khlas. Emoji wa7ed maximum, w ghaleb el wa9t 7atta wa7ed. 7atta slogan, 7atta 7ames masnou3, 7atta wa3d mkabber.
+14. **Nafs el jomla ma tji ch l zouz nes.** El exemples louta amthila, mouch scripts.
+
+**El 5 tests el lekhrin, 9bal ma teb3ath:** tounsi y9oulha? tounsi yektebha fi WhatsApp? famma kelma marocaine, algérienne, libya, khalijia, masria, chamia wala fos7a? tbén mterjma wala script? ken n7iw el contexte, tab9a conversation tounsia 3adia? Wa7ed ghalet → n3awdou.
 
 ---
 
@@ -105,7 +114,7 @@ Wa9t → STATE 4. «nchouf» → §5 follow-up.
 ### STATE 4 · Démo
 **Objectif:** nconfirmiw el visite: nhar, wa9t, esm el local.
 
-- `bahi, el khmis el sbe7 9rib men el 10. esm el local bidhabt bech nal9ah?`
+- `bahi, el khmis el sbe7 3al 10 hakka. esm el local bidhabt bech nal9ah?`
 - nhar 9bel: `3aslema, ghodwa el sbe7 nji kima 9olna?`
 - ken t2ajjel: `bahi, 9oli nhar ekher yse3dek`. Marra wa7da. Ken t2ajjel marrtin → §5.
 
@@ -133,7 +142,7 @@ Khallas w el QR 7ell → STATE 6.
 **Objectif:** el résultats, el renouvellement, w esm local ekher.
 
 - referral, kif ykoun far7an: `t3raf mol local hné tnajem t3ajbou? 3atini esmou w n3addi 3lih`
-- renouvellement (chhar 5 lel 6 chhour, chhar 11 lel 3am): `[esm], el 6 chhour ykammlou nhar [date]. hal modda: [n] client rj3oulek w [n] cadeau. njaddedou 3am b 120?`
+- renouvellement (chhar 5 lel 6 chhour, chhar 11 lel 3am): `[esm], el 6 chhour ykammlou nhar [date]. fel modda hedhi: [n] client rj3oulek w [n] cadeau. njaddedou 3am b 120?`
 - tampons habtou: zyara fi 3 ayem, mouch message.
 
 ---
@@ -145,9 +154,9 @@ Kol wa7da réponse w nsaktou. El next step yji fi message ekher ken yelzem.
 - **prix** → `120 dt fel 3am, ya3ni 10 dt fel chhar. wala 80 dt l 6 chhour. cash wala D17`
 - **chnowa dekhel?** → `carte tampons lel clients bla limite, el QR fel comptoir, compte mta3 el local, w l'installation na3melha ana`
 - **el client lezmou ysobb application?** → `le, 7atta application. camera téléphonou, numro w mot de passe marra wa7da, w yabda`
-- **ghali** → `10 dt fel chhar bark. ken carte wa7da tjiblek client yarja3 marra zeyda fel chhar, 9riba tkoun khlasetha. enti a3raf`
+- **ghali** → `10 dt fel chhar barka. ken carte wa7da tjiblek client yarja3 marra zeyda fel chhar, 9riba tkoun khlasetha. enti a3raf`
 - **ma 3andich tablette** → `ay téléphone 9dim m3a chargeur yekhdem. ken ma 3andekch, nchouflek 7all`
-- **ynajem 7ad yghech?** → `el code yetbaddel ba3d kol scan w kol code yekhdem marra. w el cadeau enti elli tconfirmih`
+- **ynajem 7ad yghech?** → `el code yetbaddel ba3d kol scan, w kol code yekhdem marra wa7da barka. w el cadeau enti elli tconfirmih`
 - **w ken ye9ta3 l'internet?** → `ey yelzemha internet. kif yarja3, el code yarja3 wa7dou`
 - **chnowa na3ti cadeau?** → café `9ahwa bleche ba3d 10, hedha elli yekhdem el akther` · coiffeur `7la9a bleche ba3d 8` · boulangerie `croissant wala baguette ba3d 10` · w dima `enti tekhtar, w tbaddel wa9t ma t7eb`
 - **nbaddel ba3d?** → `ey. w elli 9a3din ylemmou ma yekhsrou chay`
@@ -155,11 +164,11 @@ Kol wa7da réponse w nsaktou. El next step yji fi message ekher ken yelzem.
 - **nchouf / nfakker** → `bahi, khoudh ra7tek. ken t7eb nji nwarrik, ana hné`
 - **win entouma?** → `ana fi [zone], nji l 3andek. ma famech bureau, l'installation fel local`
 - **kifech nkhalles?** → `cash nhar l'installation, wala D17 wala virement`
-- **3andi cartes carton** → `el carton yekhdem 7atta ynsséha fel dar. hedhi fi téléphonou dima m3ah, w enti tchouf chkoun yarja3`
+- **3andi cartes carton** → `el carton yekhdem 7atta yensaha fel dar. hedhi fi téléphonou dima m3ah, w enti tchouf chkoun yarja3`
 - **3andi barcha clients** → `bahi mrigel. ken nhar t7eb tchouf chkoun fihom yarja3 kol nhar, ana hné`
 - **3andi zouz locaux** → `kol local QR w compte mte3ou, 120 lel wa7ed. nrakkebhom fi nafs el nhar`
 - **arnaque / n'importe quoi** → `haha le. nji nwarrik fel comptoir mte3ek w enti t9arrer, ma tkhalles chay 9bal ma tchouf`
-- **ab3athli plus d'infos** → `el 7keya fi jomla: QR fel comptoir, el client yscan-i, tampon, w cadeau kif ykammel. pointili.online fih el explication. w ken t7eb nji nwarrik`
+- **ab3athli plus d'infos** → `el 7keya sahla: el client yscan-i el QR fel comptoir, yekhou tampon, w kif ykammel yekhou cadeau. el site pointili.online fih el explication, w ken t7eb nji nwarrik fel local`
 - **bel français formel** → français 9sir w insen: `bonjour, oui c'est une carte tampons dans le téléphone du client, sans application. 120 dt par an. je passe vous montrer au comptoir si vous voulez, vous êtes où?`
 
 ---
@@ -188,7 +197,7 @@ Kol wa7da réponse w nsaktou. El next step yji fi message ekher ken yelzem.
 - famma kelma commerciale zeyda?
 - famma claim mouch fel liste «confirmed»?
 - famma sou2el ma yelzemch?
-- famma kelma mouch tounsia, wala fos7a?
+- famma kelma mouch tounsia: marocaine, algérienne, fos7a, wala mterjma?
 - nafs el phrase b7al el message elli 9bal?
 - el next step wadh7a, wala el message ykammel bla next step w hedha behi?
 
