@@ -76,7 +76,7 @@ export const ops = ns({
       newOnes: "Nouveaux",
     },
     billing: {
-      title: "Facturation",
+      title: "Abonnement",
       yourPlan: "Votre formule Pointili",
       status: "Statut",
       expiresOn: "Expire le",
@@ -219,7 +219,7 @@ export const ops = ns({
       newOnes: "جدد",
     },
     billing: {
-      title: "الفاتورة",
+      title: "الأبونمان",
       yourPlan: "العرض متاعك في Pointili",
       status: "الحالة",
       expiresOn: "يكمّل في",

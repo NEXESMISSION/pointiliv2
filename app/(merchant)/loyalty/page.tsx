@@ -14,10 +14,10 @@ export async function generateMetadata() {
   return { title: t.nav.merchant.card };
 }
 
-export default async function LoyaltyPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+export default async function LoyaltyPage({ searchParams }: { searchParams: Promise<{ welcome?: string; from?: string }> }) {
   const [ctx, { t, count, fill }] = await Promise.all([requireMerchant("/loyalty"), getI18n()]);
   const card = ctx.card;
-  const [{ welcome }, impact] = await Promise.all([searchParams, card ? rpc<CardImpact>("merchant_card_impact") : Promise.resolve(null)]);
+  const [{ from }, impact] = await Promise.all([searchParams, card ? rpc<CardImpact>("merchant_card_impact") : Promise.resolve(null)]);
   const category = ctx.business.category as keyof typeof CATEGORIES;
   const isOwner = ctx.member_role === "owner";
   const icon = card?.icon ?? CATEGORIES[category]?.icon ?? "coffee";
@@ -31,9 +31,10 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
         subtitle={impact && impact.customers > 0 ? fill(t.merchant.loyalty.live, { customers: count(t.common.customersCount, impact.customers) }) : undefined}
       />
 
-      {welcome && !card && (
+      {/* Sent here by the QR screen: say why, once. A first visit needs no banner, the title says it all. */}
+      {from === "qr" && !card && (
         <Alert tone="info" className="mb-3">
-          {t.merchant.loyalty.welcome}
+          {t.merchant.loyalty.needCardForQr}
         </Alert>
       )}
 

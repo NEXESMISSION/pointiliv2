@@ -7,12 +7,11 @@ import type { FormState } from "@/app/actions/types";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { Alert } from "@/components/ui/Alert";
 import { Card } from "@/components/ui/Card";
-import { Field, Input, Select, Textarea } from "@/components/ui/Field";
+import { Field, Input, Textarea } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import { ToastOnResult } from "@/components/ui/Toast";
 import { useT } from "@/components/i18n/Provider";
-import { COOLDOWN_OPTIONS } from "@/lib/constants";
 import { useFormAction } from "@/lib/use-form-action";
 import type { CardDesign } from "@/lib/card-design";
 import type { CardImpact } from "@/lib/types";
@@ -31,15 +30,14 @@ type Initial = {
 type Business = { name: string; logo_url: string | null; cover_url: string | null; category: string };
 
 const STAMP_PICKS = [6, 8, 10, 12];
-/** The three answers that cover almost every shop; the rest live under "More options". */
+/** The three answers that cover almost every shop. */
 const WAIT_PICKS = [0, 60, 1440];
-/** How long a card lives once it is opened. 0 = it never dies. */
-const VALID_PICKS = [0, 15, 30, 60, 90, 180, 365];
 
 /**
- * Two questions: how many stamps, and what they get. The reward wording, the
- * wait between stamps and the fine print live under "More options", so a new
- * owner can finish their card in ten seconds.
+ * Three questions: how many stamps, what they get, how often. A line under
+ * the reward and an exact number live under "More options"; the card's
+ * lifetime is kept as it is (the value survives, the control is gone), so a
+ * new owner can finish their card in ten seconds.
  */
 export function LoyaltyCardForm({ initial, business, design, isNew, disabled, impact }: { initial: Initial; business: Business; design: CardDesign; isNew: boolean; disabled?: boolean; impact: CardImpact | null }) {
   const { state, submit, pending } = useFormAction<FormState>(saveLoyaltyCard, null);
@@ -51,7 +49,6 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
   const [reward, setReward] = useState(initial.reward_name || ideas[0]!);
   const [rewardDesc, setRewardDesc] = useState(initial.reward_description);
   const [cooldown, setCooldown] = useState(String(initial.cooldown_minutes));
-  const [validDays, setValidDays] = useState(String(initial.valid_days));
   const [ask, setAsk] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const confirmed = useRef(false);
@@ -78,9 +75,6 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
     if (minutes === 1440) return c.daily;
     return fill(c.custom, { n: minutes });
   };
-  const cooldownValues = COOLDOWN_OPTIONS.some((o) => o.value === initial.cooldown_minutes)
-    ? COOLDOWN_OPTIONS.map((o) => o.value as number)
-    : [...COOLDOWN_OPTIONS.map((o) => o.value as number), initial.cooldown_minutes];
 
   const impactMessages = (
     <>
@@ -203,10 +197,9 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
                     </button>
                   ))}
                 </div>
-                <p className="mt-0.5 text-xs leading-snug text-muted">{w.waitHint}</p>
                 {!WAIT_PICKS.includes(Number(cooldown)) && <p className="mt-1.5 text-xs font-medium text-brand-600">{cooldownLabel(Number(cooldown))}</p>}
                 <input type="hidden" name="cooldown_minutes" value={cooldown} />
-                <input type="hidden" name="valid_days" value={validDays} />
+                <input type="hidden" name="valid_days" value={initial.valid_days} />
               </div>
             </Card>
 
@@ -225,28 +218,9 @@ export function LoyaltyCardForm({ initial, business, design, isNew, disabled, im
                 <Field label={w.rewardLine} htmlFor="reward_description">
                   <Textarea id="reward_description" name="reward_description" value={rewardDesc} onChange={(e) => setRewardDesc(e.target.value)} placeholder={w.rewardLinePlaceholder} maxLength={200} rows={2} />
                 </Field>
-                <Field label={w.cooldownLabel} htmlFor="cooldown_minutes" hint={w.cooldownHint}>
-                  <Select id="cooldown_minutes" value={cooldown} onChange={(e) => setCooldown(e.target.value)}>
-                    {cooldownValues.map((v) => (
-                      <option key={v} value={v}>
-                        {cooldownLabel(v)}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label={w.validLabel} htmlFor="valid_days" hint={w.validHint}>
-                  <Select id="valid_days" value={validDays} onChange={(e) => setValidDays(e.target.value)}>
-                    {[...new Set([...VALID_PICKS, initial.valid_days])].sort((a, b) => a - b).map((v) => (
-                      <option key={v} value={v}>
-                        {v === 0 ? w.validNever : count(t.formats.days, v)}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
                 <Field label={w.otherNumber} htmlFor="stamps_exact">
                   <Input id="stamps_exact" type="number" min={2} max={30} value={stamps} onChange={(e) => setStamps(Math.min(30, Math.max(2, Number(e.target.value) || 2)))} className="tabular" />
                 </Field>
-                <p className="text-xs leading-relaxed text-muted">{w.fairPrint}</p>
               </div>
             </details>
           </fieldset>
