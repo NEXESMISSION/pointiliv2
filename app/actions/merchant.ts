@@ -26,32 +26,37 @@ async function call(fn: string, args: Record<string, unknown>): Promise<RpcResul
   return data as RpcResult;
 }
 
-export async function saveLoyaltyCard(_: FormState, fd: FormData): Promise<FormState> {
-  const { t, msg } = await getI18n();
-  const values = Object.fromEntries(["name", "description", "stamps_required", "reward_name", "reward_description", "color", "icon", "cooldown_minutes", "valid_days"].map((k) => [k, str(fd, k)]));
-  const res = await call("save_loyalty_card", {
-    p_name: values.name,
-    p_description: values.description,
-    p_stamps_required: int(fd, "stamps_required"),
-    p_reward_name: values.reward_name,
-    p_reward_description: values.reward_description,
-    p_color: values.color,
-    p_icon: values.icon,
-    p_cooldown_minutes: int(fd, "cooldown_minutes"),
-    p_valid_days: int(fd, "valid_days") || 0,
-  });
-  if (!res.ok) return { ok: false, error: msg(res.error), values, at: now() };
-  revalidatePath("/", "layout");
-  if (res.created) redirect("/loyalty/design?welcome=1");
-  return { ok: true, message: t.ops.toasts.loyaltyCardSaved, values, at: now() };
-}
+export type CardInput = {
+  name: string;
+  description: string;
+  stamps_required: number;
+  reward_name: string;
+  reward_description: string;
+  color: string;
+  cooldown_minutes: number;
+  valid_days: number;
+  design: CardDesign;
+};
 
-/** The owner's own card look. The database validates every field (clean_card_design). */
-export async function saveCardDesign(input: { design: CardDesign; description: string }): Promise<{ ok: boolean; message: string }> {
+/** The whole card in one save: what it gives, then how it looks. Both RPCs validate; the first one creates the card when there is none. */
+export async function saveCard(input: CardInput): Promise<{ ok: boolean; message: string; created: boolean }> {
   const { t, msg } = await getI18n();
-  const res = await call("save_card_design", { p_description: input.description, p_design: input.design });
+  const res = await call("save_loyalty_card", {
+    p_name: input.name,
+    p_description: input.description,
+    p_stamps_required: input.stamps_required,
+    p_reward_name: input.reward_name,
+    p_reward_description: input.reward_description,
+    p_color: input.color,
+    p_icon: input.design.icon,
+    p_cooldown_minutes: input.cooldown_minutes,
+    p_valid_days: input.valid_days || 0,
+  });
+  if (!res.ok) return { ok: false, message: msg(res.error), created: false };
+  const look = await call("save_card_design", { p_description: input.description, p_design: input.design });
   revalidatePath("/", "layout");
-  return { ok: res.ok, message: res.ok ? t.ops.toasts.cardDesignSaved : msg(res.error) };
+  if (!look.ok) return { ok: false, message: msg(look.error), created: !!res.created };
+  return { ok: true, message: t.ops.toasts.loyaltyCardSaved, created: !!res.created };
 }
 
 export async function saveReward(_: FormState, fd: FormData): Promise<FormState> {

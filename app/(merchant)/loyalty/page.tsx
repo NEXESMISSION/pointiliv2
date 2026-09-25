@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Palette } from "lucide-react";
 import { TopBar } from "@/components/nav/TopBar";
 import { Alert } from "@/components/ui/Alert";
-import { LoyaltyCardForm } from "@/components/merchant/LoyaltyCardForm";
+import { BrandingEditor } from "@/components/merchant/BrandingEditor";
+import { CardStudio } from "@/components/merchant/CardStudio";
 import { requireMerchant, rpc } from "@/lib/session";
 import { CATEGORIES } from "@/lib/constants";
 import { resolveDesign } from "@/lib/card-design";
@@ -14,6 +14,7 @@ export async function generateMetadata() {
   return { title: t.nav.merchant.card };
 }
 
+/** One page for the whole card: creating it, changing it, and how it looks. */
 export default async function LoyaltyPage({ searchParams }: { searchParams: Promise<{ welcome?: string; from?: string }> }) {
   const [ctx, { t, count, fill }] = await Promise.all([requireMerchant("/loyalty"), getI18n()]);
   const card = ctx.card;
@@ -21,7 +22,8 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
   const category = ctx.business.category as keyof typeof CATEGORIES;
   const isOwner = ctx.member_role === "owner";
   const icon = card?.icon ?? CATEGORIES[category]?.icon ?? "coffee";
-  const color = card?.color ?? "emerald";
+  const color = card?.color ?? "indigo";
+  const design = resolveDesign(card?.design, { color, icon });
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -44,9 +46,9 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
         </Alert>
       )}
 
-      <LoyaltyCardForm
+      <CardStudio
         business={{ name: ctx.business.name, logo_url: ctx.business.logo_url, cover_url: ctx.business.cover_url, category: ctx.business.category }}
-        design={resolveDesign(card?.design, { color, icon })}
+        design={design}
         disabled={!isOwner}
         isNew={!card}
         impact={impact}
@@ -57,19 +59,16 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
           reward_name: card?.reward?.name ?? "",
           reward_description: card?.reward?.description ?? "",
           color,
-          icon,
           cooldown_minutes: card?.cooldown_minutes ?? 60,
           valid_days: card?.valid_days ?? 0,
         }}
+        branding={<BrandingEditor bare logo={ctx.business.logo_url} cover={ctx.business.cover_url} icon={icon} color={color} disabled={!isOwner} />}
       />
 
-      {card && (
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] font-semibold text-brand-600">
-          <Link href="/loyalty/design" className="inline-flex items-center gap-1.5">
-            <Palette className="size-4" /> {t.merchant.loyalty.changeLook}
-          </Link>
-          {isOwner && <Link href="/rewards">{t.merchant.loyalty.addBigger}</Link>}
-        </div>
+      {card && isOwner && (
+        <p className="mt-3 text-center text-[13px] font-semibold text-brand-600">
+          <Link href="/rewards">{t.merchant.loyalty.addBigger}</Link>
+        </p>
       )}
     </div>
   );
