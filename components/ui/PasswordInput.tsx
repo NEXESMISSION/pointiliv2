@@ -8,8 +8,11 @@ import { useT } from "@/components/i18n/Provider";
 export function PasswordInput({ name = "password", id, autoComplete = "current-password", placeholder = "••••••••", invalid, minLength }: { name?: string; id?: string; autoComplete?: string; placeholder?: string; invalid?: boolean; minLength?: number }) {
   const [show, setShow] = useState(false);
   const { t } = useT();
+  // The field is LTR (passwords are), so the wrapper must be too: otherwise, on
+  // the Tunisian pages, "end" puts the eye on the left while the input pads its
+  // right, and the first characters typed sit under the button.
   return (
-    <div className="relative">
+    <div className="relative" dir="ltr">
       <input
         id={id ?? name}
         name={name}
