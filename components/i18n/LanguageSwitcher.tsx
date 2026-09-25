@@ -62,8 +62,8 @@ export function LanguageRow() {
   const pathname = usePathname();
   const other = LOCALES.find((l) => l !== locale)!;
   return (
-    <button type="button" onClick={() => apply(other, pathname)} className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-canvas/60">
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-canvas text-body">
+    <button type="button" onClick={() => apply(other, pathname)} className="flex min-h-12 w-full items-center gap-3 px-4 py-2 text-start transition-colors hover:bg-canvas/60">
+      <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-canvas text-body">
         <Languages className="size-[18px]" />
       </span>
       <span className="min-w-0 flex-1">

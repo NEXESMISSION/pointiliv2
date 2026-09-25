@@ -1,69 +1,86 @@
 import type { Metadata } from "next";
-import { KeyRound } from "lucide-react";
+import Image from "next/image";
+import { ImageIcon, KeyRound, MessageCircle, Store, UserRound } from "lucide-react";
 import { TopBar } from "@/components/nav/TopBar";
-import { Card, Divided, ListRow, SectionTitle } from "@/components/ui/Card";
-import { BusinessForm } from "@/components/merchant/SettingsForms";
-import { BrandingEditor } from "@/components/merchant/BrandingEditor";
-import { NameForm } from "@/components/customer/NameForm";
+import { SubscriptionBadge } from "@/components/ui/Badge";
+import { Card, Divided, ListRow } from "@/components/ui/Card";
 import { LanguageRow } from "@/components/i18n/LanguageSwitcher";
 import { requireMerchant } from "@/lib/session";
 import { getI18n } from "@/lib/i18n/server";
-import { formatPhone } from "@/lib/phone";
+import { whatsappNumber } from "@/lib/support";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return { title: t.ops.settings.title };
 }
 
+/**
+ * One screen, no scrolling inside anything. The shop and the plan are the two
+ * things an owner opens this page to check, so they are the first thing on it;
+ * everything that needs typing lives one tap away on a screen of its own.
+ */
 export default async function SettingsPage() {
-  const { t } = await getI18n();
+  const { t, count, fill } = await getI18n();
   const ctx = await requireMerchant("/settings");
-  const isOwner = ctx.member_role === "owner";
   const b = ctx.business;
+  const s = ctx.subscription;
   const w = t.ops.settings;
+  const plans = t.data.plans as Record<string, string>;
+  const categories = t.data.categories as Record<string, string>;
+
+  const number = whatsappNumber();
+  const message = fill(t.ops.billing.whatsappMessage, { shop: b.name });
 
   return (
-    <div className="mx-auto w-full max-w-md space-y-3">
+    <div className="mx-auto w-full max-w-md space-y-2.5">
       <TopBar title={w.title} large back="/more" />
 
-      <section>
-        <SectionTitle>{w.yourShop}</SectionTitle>
-        {/* the shop form is the long part: it scrolls inside its own card, so the rest of the page stays put */}
-        <Card className="max-h-[19rem] overflow-y-auto p-3.5">
-          <BrandingEditor bare logo={b.logo_url} cover={b.cover_url} icon={ctx.card?.icon} color={ctx.card?.color} disabled={!isOwner} />
-          <div className="my-3.5 h-px bg-line" />
-          <BusinessForm business={b} disabled={!isOwner} />
-        </Card>
-      </section>
+      {/* the shop, and what it is paying — the two answers this page exists for */}
+      <Card className="p-3.5">
+        <div className="flex items-center gap-3">
+          {b.logo_url ? (
+            <Image src={b.logo_url} alt="" width={52} height={52} className="size-13 shrink-0 rounded-2xl object-cover" unoptimized />
+          ) : (
+            <span className="grid size-13 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+              <Store className="size-6" />
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[17px] font-bold text-ink">{b.name}</p>
+            <p className="truncate text-[13px] text-muted">{categories[b.category] ?? categories.other}</p>
+          </div>
+        </div>
 
-      <section>
-        <SectionTitle>{w.you}</SectionTitle>
-        <Card className="space-y-3 p-3.5">
-          {/* relative: the form's sr-only label is absolute, and without this it stretches the page */}
-          <div className="relative">
-            <p className="mb-1.5 text-[13px] font-medium text-body">{t.common.yourName}</p>
-            <NameForm defaultValue={ctx.user.full_name ?? ""} />
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-2xl bg-canvas px-3 py-2.5">
+          <div className="min-w-0">
+            <p className="text-[13px] text-muted">{t.ops.billing.title}</p>
+            <p className="truncate text-[15px] font-semibold text-ink">{plans[s?.plan ?? "none"] ?? plans.none}</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-[13px]">
-            <div>
-              <p className="text-muted">{w.loginPhone}</p>
-              <p className="font-medium text-ink tabular">
-                <span dir="ltr" className="inline-block">{formatPhone(ctx.user.phone) || "—"}</span>
-              </p>
-            </div>
-            <div>
-              <p className="text-muted">{w.email}</p>
-              <p className="truncate font-medium text-ink">
-                <span dir="ltr" className="inline-block">{ctx.user.email || "—"}</span>
-              </p>
-            </div>
+          <div className="flex shrink-0 flex-col items-end gap-0.5">
+            <SubscriptionBadge status={s?.status} plan={s?.plan} />
+            {s?.open && <span className="text-[12px] text-muted tabular">{count(t.formats.daysLeft, s.days_left)}</span>}
           </div>
-        </Card>
-        <Divided className="mt-2.5">
-          <ListRow href="/settings/password" icon={<KeyRound className="size-5" />} title={w.changePassword} />
-          <LanguageRow />
-        </Divided>
-      </section>
+        </div>
+
+        {number && (
+          <a
+            href={`https://wa.me/${number}?text=${encodeURIComponent(message)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2.5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] text-[15px] font-semibold text-white transition active:scale-[0.99]"
+          >
+            <MessageCircle className="size-[18px]" /> {t.ops.billing.whatsapp}
+          </a>
+        )}
+      </Card>
+
+      <Divided>
+        <ListRow href="/settings/shop" icon={<Store className="size-5" />} title={w.shopInfo} subtitle={b.phone || w.shopInfoHint} />
+        <ListRow href="/settings/branding" icon={<ImageIcon className="size-5" />} title={w.branding} subtitle={w.brandingHint} />
+        <ListRow href="/settings/you" icon={<UserRound className="size-5" />} title={w.account} subtitle={ctx.user.full_name || undefined} />
+        <ListRow href="/settings/password" icon={<KeyRound className="size-5" />} title={w.changePassword} />
+        <LanguageRow />
+      </Divided>
     </div>
   );
 }

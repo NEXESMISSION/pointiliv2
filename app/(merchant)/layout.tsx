@@ -41,11 +41,11 @@ export default async function MerchantLayout({ children }: { children: React.Rea
         {suspended ? (
           <Banner tone="danger">{t.merchant.banner.suspended}</Banner>
         ) : sub && !sub.open ? (
-          <Banner tone="danger" href="/billing" cta={t.merchant.banner.renew}>
+          <Banner tone="danger" href="/settings" cta={t.merchant.banner.renew}>
             {t.merchant.banner.expired}
           </Banner>
         ) : sub?.status === "expiring_soon" ? (
-          <Banner tone="warning" href="/billing" cta={sub.plan === "trial" ? t.merchant.banner.choosePlan : t.merchant.banner.renew}>
+          <Banner tone="warning" href="/settings" cta={sub.plan === "trial" ? t.merchant.banner.choosePlan : t.merchant.banner.renew}>
             {fill(sub.plan === "trial" ? t.merchant.banner.trialEnds : t.merchant.banner.planEnds, {
               date: formatLongDate(sub.expires_at, locale),
               left: count(t.formats.daysLeft, sub.days_left),

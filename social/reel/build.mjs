@@ -20,7 +20,7 @@
  */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { readFile, mkdir, rm } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -28,11 +28,9 @@ import { openStage, renderClip } from "./motion.mjs";
 
 const run = promisify(execFile);
 const DIR = import.meta.dirname;
-const SCREENS = path.join(DIR, "..", "carousels", "screens");
 const WORK = path.join(DIR, ".work");
 const SRC = process.argv[2] || path.join(os.homedir(), "Desktop", "Untitled.mp4");
 const OUT = process.argv[3] || path.join(os.homedir(), "Desktop", "Pointili reel.mp4");
-const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const FF = process.env.FFMPEG || "ffmpeg";
 
 /** Where the picture dies and where it comes back — measured, not guessed. */

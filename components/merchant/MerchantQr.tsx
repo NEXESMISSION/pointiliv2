@@ -248,7 +248,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
                 <div>
                   <p className="text-lg font-bold">{msg(error)}</p>
                   {error === "subscription_expired" && (
-                    <Link href="/billing" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
+                    <Link href="/settings" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
                       {w.renewPlan}
                     </Link>
                   )}

@@ -1,4 +1,4 @@
-import { Activity, CreditCard, Gift, LogOut, Receipt, Settings, Users } from "lucide-react";
+import { Activity, CreditCard, Gift, LogOut, Settings, Users } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Divided, ListRow } from "@/components/ui/Card";
@@ -30,8 +30,7 @@ export default async function MorePage() {
           subtitle={card ? `${count(t.common.stampsCount, card.stamps_required)} · ${card.reward?.name ?? ""}` : t.merchant.more.cardNone}
         />
         <ListRow href="/activity" icon={<Activity className="size-5" />} title={t.nav.merchant.activity} />
-        <ListRow href="/billing" icon={<Receipt className="size-5" />} title={t.nav.merchant.billing} subtitle={plans[ctx.subscription?.plan ?? ""] ?? t.data.plans.none} />
-        <ListRow href="/settings" icon={<Settings className="size-5" />} title={t.nav.merchant.settings} subtitle={t.merchant.more.settingsHint} />
+        <ListRow href="/settings" icon={<Settings className="size-5" />} title={t.nav.merchant.settings} subtitle={plans[ctx.subscription?.plan ?? ""] ?? t.merchant.more.settingsHint} />
       </Divided>
 
       <form action={logout} className="mt-4">
