@@ -487,12 +487,29 @@
     return new fabric.Path("M 0 40 L 300 40 M 260 10 L 300 40 L 260 70", Object.assign(base, { fill: null, stroke: C.teal, strokeWidth: 12, strokeLineCap: "round", strokeLineJoin: "round", name: "Arrow" }, o));
   }
   function addObject(o, select = true) { canvas.add(o); if (o.kind === "text") fitTextWidth(o); if (select) canvas.setActiveObject(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }
-  $("imgFile").onchange = (e) => {
-    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  /** A picture becomes a layer: from the file picker, from a paste, or dropped on the canvas. */
+  function addImageFile(f, at = null, name = null) {
+    if (!f || !/^image\//.test(f.type)) return false;
     const rd = new FileReader();
-    rd.onload = () => fabric.Image.fromURL(rd.result, (img) => { img.set({ id: uid(), kind: "image", name: f.name.replace(/\.[^.]+$/, ""), left: W / 2, top: H / 2 }); img.scaleToWidth(Math.min(W * 0.45, img.width)); addObject(img); toast("Image added. Drag, scale, rotate; order it in Layers."); });
-    rd.readAsDataURL(f);
-  };
+    rd.onload = () => fabric.Image.fromURL(rd.result, (img) => {
+      // each new picture lands a little lower-right than the last, so two pastes never hide each other
+      const k = at ? 0 : canvas.getObjects().filter((o) => o.kind === "image").length % 8;
+      img.set({ id: uid(), kind: "image", name: name || (f.name || "image").replace(/\.[^.]+$/, ""), left: at ? at.x : W / 2 + k * 40, top: at ? at.y : H / 2 + k * 40 });
+      img.scaleToWidth(Math.min(W * 0.6, img.width), true); addObject(img); toast("Image added as a layer. Drag, scale, rotate; order it in Layers.");
+    });
+    rd.readAsDataURL(f); return true;
+  }
+  $("imgFile").onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; addImageFile(f); };
+  // Ctrl+V with a picture on the clipboard (a screenshot, a copied image) pastes it as a layer;
+  // with nothing but our own copied object, it pastes that.
+  document.addEventListener("paste", (e) => {
+    const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || (canvas.getActiveObject() && canvas.getActiveObject().isEditing);
+    if (typing) return;
+    const items = [...((e.clipboardData && e.clipboardData.items) || [])];
+    const pic = items.find((i) => i.kind === "file" && /^image\//.test(i.type));
+    if (pic) { e.preventDefault(); addImageFile(pic.getAsFile(), null, "pasted image"); return; }
+    if (clip) { e.preventDefault(); clip.clone((c) => { c.set({ id: uid(), left: clip.left + 30, top: clip.top + 30, forText: null }); if (c.kind === "text") hydrateText(c); addObject(c); }, CUSTOM); }
+  });
   $("addMenu").onchange = (e) => {
     const v = e.target.value; e.target.value = ""; if (!v) return;
     if (v === "image") return $("imgFile").click();
@@ -865,8 +882,11 @@
   area.addEventListener("dragleave", () => area.classList.remove("drop"));
   area.addEventListener("drop", (e) => {
     e.preventDefault(); area.classList.remove("drop");
-    const id = e.dataTransfer.getData("text/plain"); if (!id) return;
     const r = area.getBoundingClientRect(); const at = fabric.util.transformPoint(new fabric.Point(e.clientX - r.left, e.clientY - r.top), fabric.util.invertTransform(canvas.viewportTransform));
+    // a picture dragged in from the desktop or a folder
+    const files = [...(e.dataTransfer.files || [])].filter((f) => /^image\//.test(f.type));
+    if (files.length) { files.forEach((f, i) => addImageFile(f, { x: at.x + i * 40, y: at.y + i * 40 })); return; }
+    const id = e.dataTransfer.getData("text/plain"); if (!id) return;
     if (id.startsWith("piece:")) { const item = PIECE_INDEX.get(id.slice(6)); if (item) placePiece(item, at); return; }
     const entry = STYLE_INDEX.get(id) || GROUPS.find((g) => g.id === "mine").styles.find((s) => s.id === id);
     if (entry && entry.data) return loadStyle(entry, at);
@@ -915,7 +935,7 @@
     if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeActive(); }
     else if (meta && e.key.toLowerCase() === "d") { e.preventDefault(); duplicate(a); }
     else if (meta && e.key.toLowerCase() === "c") { a.clone((c) => { clip = c; }, CUSTOM); }
-    else if (meta && e.key.toLowerCase() === "v") { if (clip) clip.clone((c) => { c.set({ id: uid(), left: clip.left + 30, top: clip.top + 30, forText: null }); if (c.kind === "text") hydrateText(c); addObject(c); }, CUSTOM); }
+    // Ctrl+V is handled by the paste event, which also sees pictures on the clipboard
     else if (e.key.startsWith("Arrow")) {
       e.preventDefault(); const d = e.shiftKey ? 10 : 1;
       if (e.key === "ArrowLeft") a.set({ left: a.left - d }); if (e.key === "ArrowRight") a.set({ left: a.left + d }); if (e.key === "ArrowUp") a.set({ top: a.top - d }); if (e.key === "ArrowDown") a.set({ top: a.top + d });
