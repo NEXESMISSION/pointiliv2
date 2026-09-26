@@ -30,6 +30,14 @@
   .btn.icon { width: 26px; padding: 0; display: inline-grid; place-items: center; }
   .btn[aria-pressed="true"] { background: #EAEAEA; border-color: #cfcfcf; }
   .btn:disabled { opacity: 0.4; cursor: default; }
+  .alignHead { display: flex; justify-content: space-between; align-items: center; margin: 0 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .alignHead .sw { display: flex; gap: 2px; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .alignHead .sw button { height: 20px; padding: 0 8px; font-size: 11px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; color: var(--muted); }
+  .alignHead .sw button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .align { display: flex; gap: 3px; align-items: center; margin-bottom: 12px; }
+  .align .sep { width: 1px; height: 16px; background: var(--line); margin: 0 3px; }
+  .align .btn.icon { width: 30px; height: 28px; color: var(--body); }
+  .align .btn.icon:hover { color: var(--violet); border-color: #CFC4F5; background: #F5F1FF; }
   select.btn { padding-inline-end: 6px; }
   main { display: grid; grid-template-columns: 372px 1fr 300px; min-height: 0; }
   .left { background: var(--panel); border-inline-end: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
@@ -455,8 +463,12 @@
   }
   const syncPaper = (p) => syncPaperIn(canvas, p);
   const papersOf = (t) => canvas.getObjects().filter((o) => o.kind === "paper" && o.forText === t.id);
-  const syncPapersOf = (t) => papersOf(t).forEach(syncPaper);
-  const syncAllPapers = () => canvas.getObjects().filter((o) => o.kind === "paper" && o.forText).forEach(syncPaper);
+  // accents (an underline) attached to a text keep their offset from it, taken the first time the text is about to move
+  const followersOf = (t) => canvas.getObjects().filter((o) => o.forText === t.id && o.kind !== "paper");
+  const captureFollowers = (t) => followersOf(t).forEach((b) => { if (b.dx == null || b.dy == null) { b.dx = b.left - t.left; b.dy = b.top - t.top; } });
+  const syncPapersOf = (t) => { papersOf(t).forEach(syncPaper); followersOf(t).forEach((b) => { if (b.dx != null && b.dy != null) { b.set({ left: t.left + b.dx, top: t.top + b.dy }); b.setCoords(); } }); };
+  const syncAllPapers = () => canvas.getObjects().filter((o) => o.kind === "text").forEach(syncPapersOf);
+  canvas.on("before:transform", (e) => { const t = e.transform && e.transform.target; if (t && t.kind === "text") captureFollowers(t); });
   function attachPaper(t, preset) { const p = makePaper(preset); p.forText = t.id; p.name = `Paper · ${t.text.slice(0, 12)}`; canvas.add(p); syncPaper(p); return p; }
 
   // ── brushes: hand-drawn accents ─────────────────────────────────────────
@@ -928,7 +940,7 @@
     const bx = best(cands.x, [o.left, br.left, br.left + br.width]); if (bx) { o.set({ left: o.left + (bx.c - bx.p) }); guides.push({ x: bx.c }); }
     const by = best(cands.y, [o.top, br.top, br.top + br.height]); if (by) { o.set({ top: o.top + (by.c - by.p) }); guides.push({ y: by.c }); }
     if (o.kind === "text") syncPapersOf(o);
-    if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; } }
+    else if (o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; } }
   });
   // Guides are drawn on the main context, which Fabric clears on every frame. They used to go on
   // the top (selection) context, which Fabric clears only when it drew something there itself, so
@@ -996,6 +1008,77 @@
   }
   function duplicate(o) { if (o) canvas.setActiveObject(o); pasteObjects(selectionJson(), 30); }
 
+  // ── alignment ───────────────────────────────────────────────────────────
+  // One thing aligns to the artboard; several align to each other, or to the artboard by the
+  // switch. A text moves as one piece with its papers and accents, and that piece's outline is
+  // what gets aligned, so the paper meets the edge, not the letters inside it.
+  let alignTo = "each";
+  const rectOf = (o) => { const b = o.getBoundingRect(true, true); return { l: b.left, t: b.top, r: b.left + b.width, b: b.top + b.height }; };
+  const union = (rs) => ({ l: Math.min(...rs.map((r) => r.l)), t: Math.min(...rs.map((r) => r.t)), r: Math.max(...rs.map((r) => r.r)), b: Math.max(...rs.map((r) => r.b)) });
+  function alignUnits(picked) {
+    const ids = new Set(picked.map((o) => o.id));
+    return picked.filter((o) => !(o.forText && ids.has(o.forText)))   // a piece whose text is picked moves with the text
+      .map((o) => ({ lead: o, rect: union((o.kind === "text" ? [o, ...attachedTo(o)] : [o]).map(rectOf)) }));
+  }
+  function moveUnit(u, dx, dy) {
+    const o = u.lead; if (!dx && !dy) return;
+    if (o.kind === "text") captureFollowers(o);
+    o.set({ left: o.left + dx, top: o.top + dy }); o.setCoords();
+    if (o.kind === "text") syncPapersOf(o); else if (o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; } }
+  }
+  function align(how) {
+    const active = canvas.getActiveObject(); if (!active) return;
+    const picked = canvas.getActiveObjects(); const multi = active.type === "activeSelection";
+    if (multi) canvas.discardActiveObject();   // so every object reports artboard coordinates
+    const units = alignUnits(picked);
+    const box = multi && alignTo === "each" && units.length > 1 ? union(units.map((u) => u.rect)) : { l: 0, t: 0, r: W, b: H };
+    if (how === "hspace" || how === "vspace") {
+      const h = how === "hspace"; const us = units.slice().sort((a, b) => (h ? a.rect.l - b.rect.l : a.rect.t - b.rect.t));
+      if (us.length > 2) {
+        const size = (u) => (h ? u.rect.r - u.rect.l : u.rect.b - u.rect.t);
+        const first = us[0].rect, last = us[us.length - 1].rect;
+        const gap = ((h ? last.r - first.l : last.b - first.t) - us.reduce((s, u) => s + size(u), 0)) / (us.length - 1);
+        let pos = h ? first.l : first.t;
+        us.forEach((u) => { const d = pos - (h ? u.rect.l : u.rect.t); moveUnit(u, h ? d : 0, h ? 0 : d); pos += size(u) + gap; });
+      }
+    } else {
+      units.forEach((u) => {
+        const r = u.rect;
+        const dx = how === "left" ? box.l - r.l : how === "hcenter" ? (box.l + box.r - r.l - r.r) / 2 : how === "right" ? box.r - r.r : 0;
+        const dy = how === "top" ? box.t - r.t : how === "vcenter" ? (box.t + box.b - r.t - r.b) / 2 : how === "bottom" ? box.b - r.b : 0;
+        moveUnit(u, dx, dy);
+      });
+    }
+    if (multi) canvas.setActiveObject(new fabric.ActiveSelection(picked, { canvas }));
+    canvas.requestRenderAll(); renderProps(); snapshot();
+  }
+  const ALIGN_ICONS = {
+    left: '<path d="M2.5 2v12"/><rect x="4.5" y="3.5" width="9" height="3.5" rx="1" fill="currentColor" stroke="none"/><rect x="4.5" y="9" width="5.5" height="3.5" rx="1" fill="currentColor" stroke="none"/>',
+    hcenter: '<path d="M8 2v12"/><rect x="3" y="3.5" width="10" height="3.5" rx="1" fill="currentColor" stroke="none"/><rect x="5" y="9" width="6" height="3.5" rx="1" fill="currentColor" stroke="none"/>',
+    right: '<path d="M13.5 2v12"/><rect x="2.5" y="3.5" width="9" height="3.5" rx="1" fill="currentColor" stroke="none"/><rect x="6" y="9" width="5.5" height="3.5" rx="1" fill="currentColor" stroke="none"/>',
+    top: '<path d="M2 2.5h12"/><rect x="3.5" y="4.5" width="3.5" height="9" rx="1" fill="currentColor" stroke="none"/><rect x="9" y="4.5" width="3.5" height="5.5" rx="1" fill="currentColor" stroke="none"/>',
+    vcenter: '<path d="M2 8h12"/><rect x="3.5" y="3" width="3.5" height="10" rx="1" fill="currentColor" stroke="none"/><rect x="9" y="5" width="3.5" height="6" rx="1" fill="currentColor" stroke="none"/>',
+    bottom: '<path d="M2 13.5h12"/><rect x="3.5" y="2.5" width="3.5" height="9" rx="1" fill="currentColor" stroke="none"/><rect x="9" y="6" width="3.5" height="5.5" rx="1" fill="currentColor" stroke="none"/>',
+    hspace: '<rect x="2" y="3" width="3" height="10" rx="1" fill="currentColor" stroke="none"/><rect x="6.5" y="3" width="3" height="10" rx="1" fill="currentColor" stroke="none"/><rect x="11" y="3" width="3" height="10" rx="1" fill="currentColor" stroke="none"/>',
+    vspace: '<rect x="3" y="2" width="10" height="3" rx="1" fill="currentColor" stroke="none"/><rect x="3" y="6.5" width="10" height="3" rx="1" fill="currentColor" stroke="none"/><rect x="3" y="11" width="10" height="3" rx="1" fill="currentColor" stroke="none"/>',
+  };
+  function alignBar() {
+    const active = canvas.getActiveObject(); const multi = !!active && active.type === "activeSelection";
+    const n = multi ? alignUnits(canvas.getActiveObjects()).length : 1;
+    const wrap = document.createElement("div");
+    const head = document.createElement("div"); head.className = "alignHead"; head.append(Object.assign(document.createElement("span"), { textContent: n > 1 ? "Align" : "Align to artboard" }));
+    if (n > 1) {
+      const sw = document.createElement("span"); sw.className = "sw";
+      [["each", "to each other"], ["board", "to artboard"]].forEach(([v, txt]) => { const b = document.createElement("button"); b.textContent = txt; b.setAttribute("aria-pressed", String(alignTo === v)); b.onclick = () => { alignTo = v; renderProps(); }; sw.append(b); });
+      head.append(sw);
+    }
+    const ico = (how, title) => { const b = document.createElement("button"); b.className = "btn sm icon"; b.title = title; b.dataset.align = how; b.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">${ALIGN_ICONS[how]}</svg>`; b.onclick = () => align(how); return b; };
+    const sep = () => { const s = document.createElement("span"); s.className = "sep"; return s; };
+    const row = grid("align", ico("left", "Align left"), ico("hcenter", "Align centre"), ico("right", "Align right"), sep(), ico("top", "Align top"), ico("vcenter", "Align middle"), ico("bottom", "Align bottom"));
+    if (n > 2) row.append(sep(), ico("hspace", "Same spacing across"), ico("vspace", "Same spacing down"));
+    wrap.append(head, row); return wrap;
+  }
+
   document.addEventListener("keydown", (e) => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || (canvas.getActiveObject() && canvas.getActiveObject().isEditing);
     const meta = e.ctrlKey || e.metaKey;
@@ -1012,8 +1095,9 @@
     else if (meta && e.key.toLowerCase() === "x") { e.preventDefault(); copySelection(true); }
     else if (e.key.startsWith("Arrow")) {
       e.preventDefault(); const d = e.shiftKey ? 10 : 1;
+      if (a.kind === "text") captureFollowers(a);
       if (e.key === "ArrowLeft") a.set({ left: a.left - d }); if (e.key === "ArrowRight") a.set({ left: a.left + d }); if (e.key === "ArrowUp") a.set({ top: a.top - d }); if (e.key === "ArrowDown") a.set({ top: a.top + d });
-      a.setCoords(); if (a.kind === "text") syncPapersOf(a); if (a.kind === "paper" && a.forText) { const t = byId(a.forText); if (t) { a.dx = a.left - t.left; a.dy = a.top - t.top; } } canvas.requestRenderAll(); snapshotSoon();
+      a.setCoords(); if (a.kind === "text") syncPapersOf(a); else if (a.forText) { const t = byId(a.forText); if (t) { a.dx = a.left - t.left; a.dy = a.top - t.top; } } canvas.requestRenderAll(); snapshotSoon();
     }
   });
   function removeActive() { const sel = canvas.getActiveObjects(); canvas.discardActiveObject(); sel.forEach((o) => { if (o.kind === "text") papersOf(o).forEach((p) => canvas.remove(p)); canvas.remove(o); }); canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot(); }
@@ -1085,12 +1169,12 @@
     const o = canvas.getActiveObject();
     const actions = () => {
       const w = document.createElement("div");
-      w.append(grid("row", btn("Copy", () => copySelection()), btn("Duplicate", () => duplicate()), btn("Delete", removeActive)));
+      w.append(alignBar(), grid("row", btn("Copy", () => copySelection()), btn("Duplicate", () => duplicate()), btn("Delete", removeActive)));
       const h = document.createElement("p"); h.className = "hint"; h.textContent = "Ctrl+C / Ctrl+V copy and paste (a picture or a sentence from anywhere pastes too) · Ctrl+D duplicate · Alt+drag moves without snapping · arrows nudge, Shift for 10.";
       w.append(h); return w;
     };
     if (!o || o.type === "activeSelection") { box.innerHTML = `<div class="empty">${o ? "Several objects. Move, scale, rotate, copy or delete them together." : "Select something on the canvas, or click a card."}</div>`; if (o) box.append(actions()); renderLayers(); return; }
-    const apply = (patch, after) => { o.set(patch); o.setCoords(); if (o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; o.rotDelta = o.angle - t.angle; } } canvas.requestRenderAll(); after && after(); snapshotSoon(); };
+    const apply = (patch, after) => { if (o.kind === "text") captureFollowers(o); o.set(patch); o.setCoords(); if (o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } else if (o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; o.rotDelta = o.angle - t.angle; } } canvas.requestRenderAll(); after && after(); snapshotSoon(); };
     if (o.kind === "text") {
       const ta = document.createElement("textarea"); ta.className = "ar"; ta.rows = 2; ta.value = o.text; ta.oninput = () => { o.set({ text: ta.value }); fitTextWidth(o); syncPapersOf(o); canvas.requestRenderAll(); renderLayers(); snapshotSoon(); };
       const fam = FONTS.find((f) => f.family === o.fontFamily) || FONTS[0];
