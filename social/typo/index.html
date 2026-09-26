@@ -158,7 +158,12 @@
           <div id="lines" style="margin-top:6px"></div>
           <button class="btn sm" id="btnAddLine">+ line</button>
         </details>
-        <p class="hint" style="margin:8px 0 0">Click a card to build it. Drag a card onto the canvas to add it where you drop it.</p>
+        <div class="row" style="margin-top:8px">
+          <button class="btn sm fix" id="modeDesigns" aria-pressed="true" title="Whole compositions of the sentence">Designs</button>
+          <button class="btn sm fix" id="modePieces" aria-pressed="false" title="One thing at a time: a styled word, an accent, a shape">Pieces</button>
+          <input type="text" id="pieceText" class="ar" placeholder="الكلمة متاع القطع" title="The word the pieces use" style="display:none;height:26px" />
+          <span class="hint" id="modeHint">Click builds the sentence. Drag adds it where you drop.</span>
+        </div>
       </div>
       <div class="groups" id="groupChips"></div>
       <div class="gallery" id="gallery"></div>
@@ -689,11 +694,111 @@
     canvas.requestRenderAll(); renderLayers(); snapshot(); toast("Words updated, design kept");
   };
 
-  // ── the gallery: every group renders its own cards, lazily ──────────────
+  // ── pieces: one thing at a time, in a style ─────────────────────────────
+  // A piece is a single element: a word in a look (with its paper or accent),
+  // one accent, one shape. Dropped alone, it joins whatever is on the canvas.
+  const wordPiece = (id, name, font, w, c, extra) => Object.assign({ id, name, kind: "word", font, w, c, s: 1.2 }, extra || {});
+  const PIECES = [
+    { id: "words", name: "Words", hint: "one word, one look", styles: [
+      wordPiece("wViolet", "Violet chip", "IBM Plex Sans Arabic", 700, C.white, { paper: "chipViolet", chipShadow: true }),
+      wordPiece("wInk", "Ink chip", "IBM Plex Sans Arabic", 700, C.white, { paper: "chipInk", chipShadow: true }),
+      wordPiece("wBlack", "Black chip", "IBM Plex Sans Arabic", 700, C.white, { paper: "chipBlack", chipShadow: true }),
+      wordPiece("wGreen", "Green chip", "IBM Plex Sans Arabic", 700, C.white, { paper: "chipGreen", chipShadow: true }),
+      wordPiece("wPill", "White pill", "Cairo", 800, C.navy, { paper: "pill", chipShadow: true }),
+      wordPiece("wPillV", "Violet pill", "Cairo", 800, C.white, { paper: "pillViolet", chipShadow: true }),
+      wordPiece("wPaperOff", "Off-white paper", "Tajawal", 800, C.navy, { paper: "p1" }),
+      wordPiece("wPaperWhite", "White paper hero", "Tajawal", 900, C.navy, { paper: "p4", s: 1.5, over: { padX: 40, padY: 4 }, accent: { preset: "underline", color: C.teal, thickness: 18, wobble: 6, w: 0.95, dy: 0.66, r: -4 } }),
+      wordPiece("wPaperNavy", "Navy paper", "Tajawal", 800, C.off, { paper: "navy" }),
+      wordPiece("wPaperTeal", "Teal paper", "Alexandria", 900, C.navy, { paper: "teal" }),
+      wordPiece("wPaperGold", "Gold paper", "Tajawal", 900, C.navy, { paper: "gold" }),
+      wordPiece("wPaperViolet", "Violet paper", "Tajawal", 800, C.white, { paper: "violet" }),
+      wordPiece("wPaperLilac", "Lilac paper", "Tajawal", 800, C.deep, { paper: "lilac" }),
+      wordPiece("wTorn", "Torn paper", "Tajawal", 800, C.navy, { paper: "torn", paperShadow: true }),
+      wordPiece("wBold", "Plain bold", "Cairo", 900, C.white, { shadow: true, s: 1.4 }),
+      wordPiece("wThin", "Thin", "IBM Plex Sans Arabic", 300, C.off, { shadow: true }),
+      wordPiece("wOutline", "Outline", "Cairo", 900, C.white, { stroke: C.navy, strokeWidth: 12, shadow: true, s: 1.4 }),
+      wordPiece("wOutlineV", "Violet outline", "Cairo", 900, C.white, { stroke: C.violet, strokeWidth: 10, shadow: true, s: 1.4 }),
+      wordPiece("wTeal", "Teal word", "Tajawal", 900, C.teal, { shadow: true, s: 1.3 }),
+      wordPiece("wGold", "Gold word", "Tajawal", 900, C.gold, { shadow: true, s: 1.3 }),
+      wordPiece("wVioletWord", "Violet word", "Cairo", 900, "#B9A2FF", { shadow: true, s: 1.3 }),
+      wordPiece("wMarker", "Marker word", "Tajawal", 900, C.white, { shadow: true, s: 1.3, accent: { preset: "marker", color: C.violet, thickness: 70, wobble: 4, w: 1.05, dy: 0.06, r: -2, behind: true } }),
+      wordPiece("wUnderlined", "Underlined", "Cairo", 800, C.white, { shadow: true, s: 1.3, accent: { preset: "underline", color: C.teal, thickness: 16, wobble: 6, w: 0.95, dy: 0.66, r: -3 } }),
+      wordPiece("wCircled", "Circled", "Tajawal", 800, C.white, { shadow: true, s: 1.2, accent: { preset: "circle", color: C.gold, thickness: 9, wobble: 6, w: 1.3, dy: 0, r: -4, behind: true } }),
+    ] },
+    { id: "accents", name: "Accents", hint: "brush marks", styles: [
+      { id: "aUnderline", name: "Underline · teal", kind: "brush", preset: "underline", color: C.teal, thickness: 18 },
+      { id: "aUnderlineV", name: "Underline · violet", kind: "brush", preset: "underline", color: C.violet, thickness: 18 },
+      { id: "aUnderlineG", name: "Underline · gold", kind: "brush", preset: "underline", color: C.gold, thickness: 18 },
+      { id: "aUnderlineW", name: "Underline · white", kind: "brush", preset: "underline", color: C.white, thickness: 16 },
+      { id: "aDouble", name: "Double · teal", kind: "brush", preset: "double", color: C.teal, thickness: 12 },
+      { id: "aTicks", name: "Marks · teal", kind: "brush", preset: "ticks", color: C.teal, thickness: 14 },
+      { id: "aTicksG", name: "Marks · gold", kind: "brush", preset: "ticks", color: C.gold, thickness: 14 },
+      { id: "aScribble", name: "Scribble · teal", kind: "brush", preset: "scribble", color: C.teal, thickness: 10 },
+      { id: "aCircle", name: "Circle · gold", kind: "brush", preset: "circle", color: C.gold, thickness: 9 },
+      { id: "aCircleT", name: "Circle · teal", kind: "brush", preset: "circle", color: C.teal, thickness: 9 },
+      { id: "aMarker", name: "Marker · teal", kind: "brush", preset: "marker", color: C.teal, thickness: 60 },
+      { id: "aMarkerV", name: "Marker · violet", kind: "brush", preset: "marker", color: C.violet, thickness: 60 },
+      { id: "aMarkerG", name: "Marker · gold", kind: "brush", preset: "marker", color: C.gold, thickness: 60 },
+    ] },
+    { id: "shapes", name: "Shapes", hint: "paper, chips, arrows", styles: [
+      { id: "sPaper", name: "Paper piece", kind: "paper", preset: "p1" }, { id: "sTorn", name: "Torn paper", kind: "paper", preset: "torn" },
+      { id: "sNavy", name: "Navy paper", kind: "paper", preset: "navy" }, { id: "sTeal", name: "Teal paper", kind: "paper", preset: "teal" },
+      { id: "sChipV", name: "Violet chip", kind: "paper", preset: "chipViolet" }, { id: "sChipI", name: "Ink chip", kind: "paper", preset: "chipInk" },
+      { id: "sPill", name: "White pill", kind: "paper", preset: "pill" }, { id: "sArrow", name: "Arrow · teal", kind: "shape", shape: "arrow", color: C.teal },
+      { id: "sArrowV", name: "Arrow · violet", kind: "shape", shape: "arrow", color: C.violet }, { id: "sDisc", name: "Disc · gold", kind: "shape", shape: "circle", color: C.gold },
+      { id: "sRect", name: "Rectangle · navy", kind: "shape", shape: "rect", color: C.navy },
+    ] },
+  ];
+  const PIECE_INDEX = new Map(); PIECES.forEach((g) => g.styles.forEach((s) => PIECE_INDEX.set(s.id, s)));
+  function pieceWord() { const v = $("pieceText").value.trim(); if (v) return v; const l = currentLines(); const hero = l.find((x) => x.role === "hero"); return (hero || l[0] || { text: "طبعة" }).text; }
+  /** One piece into any canvas, centred at (x, y); returns its objects (the main one first). */
+  function composePiece(target, w, h, item, text, x = w / 2, y = h / 2) {
+    const k = w / 1080, base = w * 0.1; const out = [];
+    if (item.kind === "word") {
+      const t = makeText(text, { role: "hero", fontFamily: item.font, fontWeight: item.w, fontSize: base * (item.s || 1.2), fill: item.c, stroke: item.stroke || null, strokeWidth: item.strokeWidth ? item.strokeWidth * k : 0, paintFirst: item.stroke ? "stroke" : "fill", shadow: item.shadow ? shadow(w) : null, textShadow: !!item.shadow, width: w * 0.95, left: x, top: y });
+      target.add(t); fitTextWidth(t, w * 0.96); t.set({ left: x, top: y }); t.setCoords(); out.push(t);
+      if (item.paper) {
+        const over = Object.assign({}, item.over || {}); ["padX", "padY"].forEach((key) => { if (over[key] != null) over[key] *= k; });
+        const p = makePaper(item.paper, { presetOverride: over, seed: Math.floor(Math.random() * 1e9) });
+        p.padX *= over.padX != null ? 1 : k; p.padY *= over.padY != null ? 1 : k; p.radius = Math.round(p.radius * k); if (p.type === "rect") p.set({ rx: p.radius, ry: p.radius });
+        p.forText = t.id; p.name = `Paper · ${text.slice(0, 12)}`; if (item.paperShadow) p.shadow = softShadow(); if (item.chipShadow) p.shadow = chipShadow();
+        target.add(p); target.moveTo(p, target.getObjects().indexOf(t)); syncPaperIn(target, p); out.push(p);
+      }
+      if (item.accent) {
+        const a = item.accent; const b = makeBrush(a.preset, { brush: { thickness: a.thickness * k, wobble: a.wobble, seed: Math.floor(Math.random() * 1e9) }, fill: a.color });
+        b.scaleToWidth(Math.max(20, t.getScaledWidth() * a.w)); b.set({ left: t.left + (a.dx || 0) * t.getScaledWidth(), top: t.top + (a.dy || 0) * t.getScaledHeight(), angle: a.r || 0 }); b.setCoords(); target.add(b);
+        if (a.behind) target.moveTo(b, Math.max(0, target.getObjects().indexOf(out[out.length - 1]))); out.push(b);
+      }
+    } else if (item.kind === "brush") {
+      const b = makeBrush(item.preset, { brush: { thickness: item.thickness * k, wobble: 5, seed: Math.floor(Math.random() * 1e9) }, fill: item.color }); b.scaleToWidth(w * 0.55); b.set({ left: x, top: y }); b.setCoords(); target.add(b); out.push(b);
+    } else if (item.kind === "paper") {
+      const p = makePaper(item.preset); const pw = w * 0.6, ph = w * 0.2; if (p.type === "rect") p.set({ width: pw, height: ph }); else p.set({ scaleX: pw / p.width, scaleY: ph / p.height }); p.set({ left: x, top: y, angle: PAPERS[item.preset].rot || 0, name: item.name }); p.setCoords(); target.add(p); out.push(p);
+    } else if (item.kind === "shape") {
+      const sh = makeShape(item.shape, item.shape === "arrow" ? { stroke: item.color, strokeWidth: 12 * k } : { fill: item.color }); if (item.shape === "arrow") sh.scaleToWidth(w * 0.3); else if (item.shape === "circle") sh.set({ radius: w * 0.12 }); else sh.set({ width: w * 0.5, height: w * 0.16 }); sh.set({ left: x, top: y }); sh.setCoords(); target.add(sh); out.push(sh);
+    }
+    return out;
+  }
+  function placePiece(item, at = null) {
+    const objs = composePiece(canvas, W, H, item, pieceWord(), at ? at.x : W / 2, at ? at.y : H / 2);
+    if (objs.length) canvas.setActiveObject(objs[0]);
+    canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot();
+  }
+
+  // ── the gallery: designs or pieces; every group renders its own cards, lazily ──
+  let mode = "designs";
   const cards = new Map();
+  const collection = () => (mode === "designs" ? GROUPS : PIECES);
+  function setMode(m) {
+    mode = m; $("modeDesigns").setAttribute("aria-pressed", String(m === "designs")); $("modePieces").setAttribute("aria-pressed", String(m === "pieces"));
+    $("pieceText").style.display = m === "pieces" ? "" : "none"; if (m === "pieces" && !$("pieceText").value) $("pieceText").placeholder = pieceWord();
+    $("modeHint").textContent = m === "designs" ? "Click builds the sentence. Drag adds it where you drop." : "Click or drag adds one piece; the word above is what it says.";
+    renderGallery();
+  }
+  $("modeDesigns").onclick = () => setMode("designs"); $("modePieces").onclick = () => setMode("pieces");
+  $("pieceText").addEventListener("input", () => galleryDirty());
   function renderGallery() {
-    const g = $("gallery"); g.innerHTML = ""; $("groupChips").innerHTML = "";
-    GROUPS.forEach((group) => {
+    const g = $("gallery"); g.innerHTML = ""; $("groupChips").innerHTML = ""; cards.clear();
+    collection().forEach((group) => {
       const chip = document.createElement("button"); chip.textContent = group.name; chip.onclick = () => { document.querySelector(`[data-group="${group.id}"]`).scrollIntoView({ behavior: "smooth", block: "start" }); }; $("groupChips").appendChild(chip);
       const sec = document.createElement("section"); sec.className = "group"; sec.dataset.group = group.id;
       sec.innerHTML = `<h3>${group.name} <span>${group.hint}</span></h3>`;
@@ -704,32 +809,32 @@
     observeGroups();
   }
   function cardFor(style, group) {
-    const card = document.createElement("button"); card.className = "card"; card.draggable = true; card.dataset.style = style.id; card.setAttribute("aria-pressed", String(style.id === currentStyle));
+    const piece = mode === "pieces";
+    const card = document.createElement("button"); card.className = "card"; card.draggable = true; card.dataset.style = style.id; card.setAttribute("aria-pressed", String(!piece && style.id === currentStyle));
     const pv = document.createElement("div"); pv.className = "pv"; const el = document.createElement("canvas"); pv.appendChild(el);
     const nm = document.createElement("div"); nm.className = "nm"; nm.innerHTML = `<span>${style.name}</span>`;
-    const add = document.createElement("button"); add.className = "add"; add.title = "Add to the canvas (keeps what is there)"; add.textContent = "+"; add.onclick = (e) => { e.stopPropagation(); build(style.id, Number($("shuffle").value), { x: W / 2, y: H / 2 }); }; nm.appendChild(add);
+    if (!piece) { const add = document.createElement("button"); add.className = "add"; add.title = "Add to the canvas (keeps what is there)"; add.textContent = "+"; add.onclick = (e) => { e.stopPropagation(); build(style.id, Number($("shuffle").value), { x: W / 2, y: H / 2 }); }; nm.appendChild(add); }
     card.append(pv, nm);
     if (group.id === "mine") { const del = document.createElement("button"); del.className = "del"; del.textContent = "✕"; del.title = "Delete this style"; del.onclick = (e) => { e.stopPropagation(); group.styles = group.styles.filter((s) => s !== style); writeList(KEY_T, group.styles.map((s) => ({ name: s.name, data: s.data }))); renderGallery(); }; card.appendChild(del); }
-    card.onclick = () => (style.data ? loadStyle(style) : build(style.id));
-    card.ondragstart = (e) => { e.dataTransfer.setData("text/plain", style.id); e.dataTransfer.effectAllowed = "copy"; };
+    card.onclick = () => (piece ? placePiece(style) : style.data ? loadStyle(style) : build(style.id));
+    card.ondragstart = (e) => { e.dataTransfer.setData("text/plain", (piece ? "piece:" : "") + style.id); e.dataTransfer.effectAllowed = "copy"; };
     cards.set(style.id, { card, el, style, group, dirty: true, sc: null });
     return card;
   }
-  /** Draws every card of one group with the current lines. Each group is its own render, so a change re-draws only what is on screen. */
+  /** Draws every card of one group with the current words. Each group is its own render, so a change re-draws only what is on screen. */
   function renderGroup(groupId) {
-    const group = GROUPS.find((g) => g.id === groupId); if (!group) return;
-    const k = 0.12, cw = Math.round(W * k), ch = Math.round(H * k); const lns = currentLines();
+    const group = collection().find((g) => g.id === groupId); if (!group) return;
+    const piece = mode === "pieces"; const k = piece ? 0.18 : 0.12, cw = Math.round(W * k), ch = Math.round((piece ? W * 0.62 : H) * k); const lns = currentLines(); const word = pieceWord();
     group.styles.forEach((style) => {
       const c = cards.get(style.id); if (!c || !c.dirty) return;
       if (!c.sc) c.sc = new fabric.StaticCanvas(c.el, { backgroundColor: null, renderOnAddRemove: false });
       c.sc.setDimensions({ width: cw, height: ch }); c.card.querySelector(".pv").style.height = `${ch}px`;
-      c.sc.clear(); c.sc.backgroundColor = null;
-      if (style.data) {
-        // a saved style: its own objects, with the new words in order
-        const { W: sw, H: sh, json } = JSON.parse(style.data);
-        c.sc.setZoom(cw / sw);
+      c.sc.clear(); c.sc.backgroundColor = null; c.sc.setZoom(1);
+      if (piece) { composePiece(c.sc, cw, ch, style, word); c.sc.renderAll(); }
+      else if (style.data) {
+        const { W: sw, json } = JSON.parse(style.data); c.sc.setZoom(cw / sw);
         c.sc.loadFromJSON(json, () => { const texts = c.sc.getObjects().filter((o) => o.kind === "text"); lns.forEach((l, i) => { if (texts[i]) { texts[i].set({ text: l.text }); fitTextWidth(texts[i], sw); } }); c.sc.getObjects().filter((o) => o.kind === "paper" && o.forText).forEach((p) => syncPaperIn(c.sc, p)); c.sc.renderAll(); });
-      } else { c.sc.setZoom(1); if (lns.length) compose(c.sc, cw, ch, lns, style, 0); c.sc.renderAll(); }
+      } else { if (lns.length) compose(c.sc, cw, ch, lns, style, 0); c.sc.renderAll(); }
       c.dirty = false;
     });
   }
@@ -738,21 +843,22 @@
     if (io) io.disconnect();
     io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) fontsReady.then(() => renderGroup(en.target.dataset.group)); }), { root: $("gallery"), rootMargin: "200px 0px" });
     document.querySelectorAll(".group").forEach((s) => io.observe(s));
-    const chips = [...$("groupChips").children];
-    const spy = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) chips.forEach((ch, i) => ch.setAttribute("aria-current", String(GROUPS[i].id === en.target.dataset.group))); }), { root: $("gallery"), threshold: 0.4 });
+    const chips = [...$("groupChips").children]; const coll = collection();
+    const spy = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) chips.forEach((ch, i) => ch.setAttribute("aria-current", String(coll[i].id === en.target.dataset.group))); }), { root: $("gallery"), threshold: 0.4 });
     document.querySelectorAll(".group").forEach((s) => spy.observe(s));
   }
   let galleryTimer = null;
   function galleryDirty() { cards.forEach((c) => { c.dirty = true; }); clearTimeout(galleryTimer); galleryTimer = setTimeout(() => { document.querySelectorAll(".group").forEach((s) => { const r = s.getBoundingClientRect(), g = $("gallery").getBoundingClientRect(); if (r.bottom > g.top - 200 && r.top < g.bottom + 200) fontsReady.then(() => renderGroup(s.dataset.group)); }); }, 350); }
-  function markCards() { cards.forEach((c, id) => c.card.setAttribute("aria-pressed", String(id === currentStyle))); }
+  function markCards() { cards.forEach((c, id) => c.card.setAttribute("aria-pressed", String(mode === "designs" && id === currentStyle))); }
 
-  // drop a card on the canvas: the composition lands where the cursor is
+  // drop a card on the canvas: it lands where the cursor is
   area.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; area.classList.add("drop"); });
   area.addEventListener("dragleave", () => area.classList.remove("drop"));
   area.addEventListener("drop", (e) => {
     e.preventDefault(); area.classList.remove("drop");
     const id = e.dataTransfer.getData("text/plain"); if (!id) return;
     const r = area.getBoundingClientRect(); const at = fabric.util.transformPoint(new fabric.Point(e.clientX - r.left, e.clientY - r.top), fabric.util.invertTransform(canvas.viewportTransform));
+    if (id.startsWith("piece:")) { const item = PIECE_INDEX.get(id.slice(6)); if (item) placePiece(item, at); return; }
     const entry = STYLE_INDEX.get(id) || GROUPS.find((g) => g.id === "mine").styles.find((s) => s.id === id);
     if (entry && entry.data) return loadStyle(entry, at);
     build(id, Number($("shuffle").value), at);
@@ -1025,8 +1131,8 @@
   sizeCanvas(1080, 1920);
   lines = autoLines($("sentence").value); renderLines();
   loadMine(); renderGallery();
-  fontsReady.then(() => { build("paperEditorial", 0); stack.length = 0; snapshot(); galleryDirty(); });
-  window.__typo = { canvas, build, compose, renderGroup, autoLines, get lines() { return lines; }, GROUPS, LAYOUTS, PAPERS };
+  snapshot(); fontsReady.then(() => galleryDirty());
+  window.__typo = { canvas, build, compose, renderGroup, placePiece, setMode, autoLines, get lines() { return lines; }, GROUPS, PIECES, LAYOUTS, PAPERS };
 })();
 </script>
 </body>
