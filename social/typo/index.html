@@ -907,10 +907,13 @@
     if (o.kind === "text") syncPapersOf(o);
     if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; } }
   });
-  canvas.on("after:render", () => {
-    if (exporting) return;
+  // Guides are drawn on the main context, which Fabric clears on every frame. They used to go on
+  // the top (selection) context, which Fabric clears only when it drew something there itself, so
+  // every wheel step left one more copy behind: the smeared staircase of Reels bars and buttons.
+  canvas.on("after:render", ({ ctx } = {}) => {
+    if (exporting || !ctx) return;
     const which = $("overlaySel").value; if (!guides.length && !which) return;
-    const ctx = canvas.getSelectionContext(); const r = canvas.getRetinaScaling(); const z = zoom();
+    const r = canvas.getRetinaScaling(); const z = zoom();
     ctx.save(); ctx.setTransform(r, 0, 0, r, 0, 0); ctx.transform(...canvas.viewportTransform);
     ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
     if (which) { ctx.globalAlpha = 0.9; drawOverlay(ctx, which); ctx.globalAlpha = 1; }
