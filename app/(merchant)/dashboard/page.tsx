@@ -34,8 +34,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const stats = [
     { label: t.merchant.home.statCustomers, value: formatNumber(d.customers, locale), href: "/customers" },
-    { label: t.merchant.home.statStampsToday, value: formatNumber(d.stamps_today, locale), href: "/activity?range=today" },
-    { label: t.merchant.home.statRewards, value: formatNumber(d.rewards_redeemed, locale), href: "/activity?range=month" },
+    { label: t.merchant.home.statStampsToday, value: formatNumber(d.stamps_today, locale), href: "/customers" },
+    { label: t.merchant.home.statRewards, value: formatNumber(d.rewards_redeemed, locale), href: "/customers" },
   ];
 
   return (
