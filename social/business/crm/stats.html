@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>الأرقام · Pointili CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="crm.css" />
+<style>
+  /* كل رقم هوني محسوب من التحكايات روحهم. حتّى رقم ما هو مكتوب بيد. */
+  .funnel { display: grid; gap: 7px; margin-bottom: 8px; }
+  .lvl { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px;
+         display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; position: relative; overflow: hidden; }
+  .lvl .bar { position: absolute; inset-inline-start: 0; top: 0; bottom: 0; background: var(--brand-soft); z-index: 0; }
+  .lvl.zero .bar { background: var(--hot-soft); }
+  .lvl > * { position: relative; z-index: 1; }
+  .lvl .n { font: 700 24px Inter, sans-serif; color: var(--ink); min-width: 46px; }
+  .lvl.zero .n { color: var(--hot); }
+  .lvl .t { font-weight: 600; color: var(--ink); font-size: 14.5px; }
+  .lvl .t span { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+  .lvl .pc { font: 600 13px Inter, sans-serif; color: var(--muted); }
+  .lvl .pc.bad { color: var(--hot); }
+
+  .says { background: var(--hot-soft); border: 1px solid var(--hot-line); border-radius: 14px;
+          padding: 15px 17px; margin: 22px 0; }
+  .says h3 { margin: 0 0 6px; font-size: 15px; color: var(--hot); }
+  .says p { margin: 0 0 8px; font-size: 14px; color: var(--ink); }
+  .says p:last-child { margin: 0; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .st { background: var(--sheet); border: 1px solid var(--line); border-radius: 13px; padding: 13px 15px; }
+  .st b { display: block; font: 700 22px Inter, sans-serif; color: var(--ink); }
+  .st span { font-size: 12.5px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; background: var(--sheet); border: 1px solid var(--line);
+          border-radius: 13px; overflow: hidden; }
+  th, td { text-align: start; padding: 9px 13px; font-size: 13.5px; border-bottom: 1px solid var(--line); }
+  th { background: var(--soft); color: var(--muted); font-size: 12px; font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  td b { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="brand">Pointili CRM</span>
+  <span class="links"></span>
+</nav>
+
+<div class="page">
+  <h1 class="big">الأرقام</h1>
+  <p class="lede" id="lede"></p>
+
+  <h2 class="sec">القمع <em>من الإشهار للكلينت</em></h2>
+  <div class="funnel" id="funnel"></div>
+
+  <div class="says" id="says"></div>
+
+  <h2 class="sec">وين واقفين</h2>
+  <div class="cards" id="cards"></div>
+
+  <h2 class="sec">حسب القناة</h2>
+  <div id="chan"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="crm.js"></script>
+<script>
+"use strict";
+const rows = all();
+const n = rows.length;
+const spoke = rows.filter((l) => l.spoke).length;
+const shop = rows.filter((l) => l.business).length;
+const phone = rows.filter((l) => l.phone).length;
+const warmer = rows.filter((l) => ["interested", "demo", "installed", "waiting"].includes(l.stage)).length;
+const demo = rows.filter((l) => ["demo", "installed"].includes(l.stage)).length;
+const client = rows.filter((l) => l.stage === "installed").length;
+
+$("lede").textContent =
+  `كل رقم هوني محسوب من التحكايات روحهم، موش مكتوب بيد. الحملة ${CRM.campaign.name}، بدات ${CRM.campaign.started}.`;
+
+const LVL = [
+  [n, "جاوبو الإشهار", "دخلو للبوات"],
+  [spoke, "حكاو بيدهم", "كتبو حاجة موش من أسئلة الإشهار الجاهزة"],
+  [shop, "قالو شنوة اللوكال", "نعرفو نبيعولهم شنوة"],
+  [warmer, "مهتمين ولا مواعيد", "طلبو حاجة بروحهم"],
+  [demo, "ديمو متفق", "نهار وساعة"],
+  [client, "كلينت خلّص", "فلوس"],
+];
+$("funnel").innerHTML = LVL.map(([v, t, s], i) => {
+  const prev = i ? LVL[i - 1][0] : v;
+  const pc = prev ? Math.round((v / prev) * 100) : 0;
+  return `<div class="lvl ${v ? "" : "zero"}">
+      <span class="bar" style="width:${n ? (v / n) * 100 : 0}%"></span>
+      <span class="n">${v}</span>
+      <span class="t">${t}<span>${s}</span></span>
+      <span class="pc ${i && pc < 50 ? "bad" : ""}">${i ? pc + "٪ من اللي قبلو" : "الكل"}</span>
+    </div>`;
+}).join("");
+
+$("says").innerHTML = `
+  <h3>شنوة تقول الأرقام</h3>
+  <p>الإشهار يخدم: ${n} واحد دخلو فيومين. الرسالة الأولى تخدم: ${spoke} حكاو بيدهم. والتأهيل يخدم: ${shop} قالو شنوة اللوكال متاعهم.</p>
+  <p><b>اللي ما يخدمش هو طلبة الموعد.</b> ${warmer} مهتمين و<b>${demo}</b> موعد. هاذي موش مشكلة إشهار ولا مشكلة سوم — هاذي حاجة وحدة: ما تتطلبش نهار وساعة.</p>
+  <p>و${n - spoke} واحد دقّو على سؤال جاهز وسكتو. معناها السؤال الجاهز يجيب ضغطات، موش تحكايات.</p>`;
+
+$("cards").innerHTML = [
+  [rows.filter((l) => l.turn === "us" && l.stage !== "lost").length, "دورك انت"],
+  [rows.filter((l) => l.due).length, "عندهم موعد"],
+  [phone, "عطاونا نمرتهم"],
+  [rows.filter((l) => l.unread).length, "تحكايات ما تقراوش"],
+  [rows.filter((l) => l.stage === "lost").length, "مشاو"],
+  [rows.filter((l) => l.heat === "hot").length, "سخان"],
+].map(([v, t]) => `<div class="st"><b>${v}</b><span>${t}</span></div>`).join("");
+
+const chans = {};
+for (const l of rows) {
+  const c = (chans[l.channel] ||= { n: 0, spoke: 0, shop: 0 });
+  c.n++; if (l.spoke) c.spoke++; if (l.business) c.shop++;
+}
+$("chan").innerHTML = `<table>
+  <tr><th>القناة</th><th>وصلونا</th><th>حكاو بيدهم</th><th>قالو اللوكال</th></tr>
+  ${Object.entries(chans).map(([k, c]) =>
+    `<tr><td><b>${CHAR[k]}</b></td><td>${c.n}</td><td>${c.spoke}</td><td>${c.shop}</td></tr>`).join("")}
+</table>`;
+
+drawNav("stats.html");
+</script>
+</body>
+</html>

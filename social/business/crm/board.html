@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>اللوحة · Pointili CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="crm.css" />
+<style>
+  /* اللوحة ما فيها كان الناس اللي كتبو بيدهم. اللي دق على البوتون
+     وسكت ما عندوش بلاصة هوني — عندو صفحتو. */
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  main { flex: 1; min-height: 0; display: flex; }
+  .board { flex: 1; min-width: 0; display: flex; gap: 12px; padding: 14px 18px 20px; overflow-x: auto; }
+  .col { flex: 0 0 236px; display: flex; flex-direction: column; min-height: 0; }
+  .col.mt { flex: 0 0 150px; }
+  .col > h3 { margin: 0 0 3px; display: flex; align-items: center; gap: 7px; font: 600 13.5px var(--ar); color: var(--ink); }
+  .col > h3 b { background: var(--soft); border-radius: 999px; padding: 1px 8px; font: 600 11px Inter, sans-serif; }
+  .col > p { margin: 0 0 8px; font-size: 11px; color: var(--muted); min-height: 30px; }
+  .drop { flex: 1; min-height: 60px; overflow-y: auto; display: grid; gap: 8px; align-content: start;
+          border-radius: 12px; padding: 2px; }
+  .col.mt .drop { border: 1px dashed var(--line); }
+  .col.mt .drop::before { content: "زقّ واحد لهنا"; display: block; padding: 14px 8px; text-align: center;
+                          font-size: 11.5px; color: var(--muted); }
+  .drop.over { background: var(--brand-soft); box-shadow: 0 0 0 2px var(--brand) inset; }
+  .drop.over::before { content: none; }
+
+  .card { background: var(--sheet); border: 1px solid var(--line); border-radius: 13px; padding: 10px;
+          display: grid; gap: 7px; cursor: grab; text-align: start; width: 100%; color: inherit; }
+  .card:hover { border-color: var(--brand); }
+  .card[aria-selected="true"] { border-color: var(--brand); box-shadow: var(--shadow); }
+  .card.dragging { opacity: .4; }
+  .card .top { display: flex; align-items: center; gap: 9px; }
+  .card .nm { font-weight: 600; color: var(--ink); font-size: 13.5px; line-height: 1.3;
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .bz { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .nx { font-size: 12.5px; line-height: 1.5; color: var(--body);
+              display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .tags { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+
+  .panel { flex: 0 0 380px; background: var(--sheet); border-inline-start: 1px solid var(--line);
+           overflow-y: auto; padding: 16px 18px 40px; }
+  @media (max-width: 1180px) {
+    .panel { position: fixed; inset: 0 auto 0 0; width: min(420px, 100%); z-index: 20;
+             box-shadow: 20px 0 50px -30px rgba(20, 8, 60, .5); }
+  }
+  .panel .head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .panel .head .av { --tile: 52px; }
+  .panel h2 { margin: 0; font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
+  .panel .meta { font-size: 12px; color: var(--muted); }
+  .blk { background: var(--bg); border: 1px solid var(--line); border-radius: 13px; padding: 12px; margin-top: 12px; }
+  .blk h4 { margin: 0 0 8px; font: 600 11.5px var(--ar); color: var(--muted); }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .facts span { display: block; font-size: 11.5px; color: var(--muted); }
+  .facts b { font-size: 13.5px; color: var(--ink); font-weight: 600; }
+  .facts a { color: var(--brand); text-decoration: none; }
+  .moves { display: flex; flex-wrap: wrap; gap: 5px; }
+  .moves button { cursor: pointer; border-radius: 8px; padding: 6px 11px; font: 600 12px var(--ar);
+                  border: 1px solid var(--line); background: var(--sheet); color: var(--body); }
+  .moves button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .heats button[aria-pressed="true"] { background: var(--hot); border-color: var(--hot); color: #fff; }
+  textarea { font-size: 13.5px; width: 100%; min-height: 66px; resize: vertical; padding: 8px 10px;
+             border-radius: 9px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); }
+  .thread { display: grid; gap: 6px; }
+  .msg { max-width: 86%; padding: 7px 11px; border-radius: 13px; font-size: 13px; line-height: 1.5; }
+  .msg.them { background: var(--soft); color: var(--ink); border-end-end-radius: 4px; justify-self: end; }
+  .msg.us { background: var(--brand); color: #fff; border-end-start-radius: 4px; justify-self: start; }
+  .msg.ev { background: transparent; border: 1px dashed var(--line); color: var(--muted);
+            justify-self: center; max-width: 100%; font-size: 12px; text-align: center; }
+  .saved { font-size: 11.5px; color: var(--good); font-weight: 600; min-height: 15px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="brand">Pointili CRM</span>
+  <span class="links"></span>
+  <span class="end">
+    <input type="text" id="q" class="ghost" style="width:200px;font-weight:400" placeholder="لوّج على اسم، لوكال، زون…" />
+    <button type="button" class="ghost" id="hot" aria-pressed="false">السخان برك</button>
+  </span>
+</nav>
+
+<main>
+  <div class="board" id="board"></div>
+  <aside class="panel" id="panel"></aside>
+</main>
+
+<script src="data.js"></script>
+<script src="crm.js"></script>
+<script>
+"use strict";
+let selected = new URLSearchParams(location.search).get("id");
+let onlyHot = false, dragging = null;
+
+function matches(l) {
+  const q = $("q").value.trim().toLowerCase();
+  if (onlyHot && l.heat !== "hot") return false;
+  if (!q) return true;
+  return [l.name, l.business, l.zone, l.phone, l.next, l.note]
+    .filter(Boolean).join(" ").toLowerCase().includes(q);
+}
+
+function cardHTML(l) {
+  return `<div class="card" draggable="true" data-id="${l.id}" aria-selected="${selected === l.id}">
+      <span class="top">
+        ${avHTML(l)}
+        <span style="min-width:0">
+          <span class="nm ${lat(l.name)}" dir="auto">${esc(l.name)}</span>
+          <span class="bz">${esc(l.business || "اللوكال مازال ما تقالش")}</span>
+        </span>
+      </span>
+      <span class="tags">
+        <span class="dot ${l.heat}"></span>
+        <span class="tag ch">${CH[l.channel]}</span>
+        ${l.turn === "us" ? `<span class="tag d1">دورك</span>` : ""}
+        ${l.due === "today" ? `<span class="tag d1">اليوم</span>` : ""}
+        ${l.due === "tomorrow" ? `<span class="tag d2">غدوة</span>` : ""}
+        ${l.phone ? `<span class="tag ok">☎</span>` : ""}
+      </span>
+      ${l.next ? `<span class="nx">${esc(l.next)}</span>` : ""}
+    </div>`;
+}
+
+function drawBoard() {
+  const rows = all().filter((l) => l.spoke || l.unread).filter(matches);
+  $("board").innerHTML = CRM.stages.map((s) => {
+    const mine = rows.filter((l) => l.stage === s.id).sort(byWeight);
+    return `<section class="col ${mine.length ? "" : "mt"}">
+        <h3>${s.label} <b>${mine.length}</b></h3>
+        <p>${s.hint}</p>
+        <div class="drop" data-stage="${s.id}">${mine.map(cardHTML).join("")}</div>
+      </section>`;
+  }).join("");
+
+  for (const d of $("board").querySelectorAll(".drop")) {
+    d.addEventListener("dragover", (e) => { e.preventDefault(); d.classList.add("over"); });
+    d.addEventListener("dragleave", () => d.classList.remove("over"));
+    d.addEventListener("drop", (e) => {
+      e.preventDefault(); d.classList.remove("over");
+      if (dragging) set(dragging, "stage", d.dataset.stage, draw);
+    });
+  }
+  for (const c of $("board").querySelectorAll(".card")) {
+    c.addEventListener("click", () => { selected = c.dataset.id; draw(); });
+    c.addEventListener("dragstart", () => { dragging = c.dataset.id; c.classList.add("dragging"); });
+    c.addEventListener("dragend", () => { dragging = null; c.classList.remove("dragging"); });
+  }
+}
+
+function drawPanel() {
+  const l = one(selected);
+  if (!l) { $("panel").innerHTML = `<p class="empty">اختار واحد من اللوحة.</p>`; return; }
+  $("panel").innerHTML = `
+    <div class="head">
+      ${avHTML(l)}
+      <div><h2 class="${lat(l.name)}" dir="auto">${esc(l.name)}</h2>
+        <div class="meta">${CHAR[l.channel]} · أول مرة <bdi dir="ltr" class="lat">${l.first}</bdi> · آخر مرة <bdi dir="ltr" class="lat">${l.last}</bdi></div></div>
+    </div>
+
+    <div class="blk"><h4>الخطوة الجاية</h4>
+      <textarea id="nx">${esc(l.next || "")}</textarea><p class="saved" id="saved"></p></div>
+
+    <div class="blk"><h4>دور شكون</h4>
+      <div class="moves" id="tn">
+        <button type="button" data-t="us" aria-pressed="${l.turn === "us"}">دوري أنا</button>
+        <button type="button" data-t="them" aria-pressed="${l.turn === "them"}">دورو هو</button>
+      </div>
+      <h4 style="margin-top:12px">المرحلة</h4>
+      <div class="moves" id="mv">${CRM.stages.map((s) => `<button type="button" data-s="${s.id}" aria-pressed="${s.id === l.stage}">${s.label}</button>`).join("")}</div>
+      <h4 style="margin-top:12px">السخانة</h4>
+      <div class="moves heats" id="ht">${["hot", "warm", "cold"].map((h) => `<button type="button" data-h="${h}" aria-pressed="${h === l.heat}">${HEAT[h]}</button>`).join("")}</div>
+      <h4 style="margin-top:12px">وقتاش نلوحقو</h4>
+      <div class="moves" id="dz">
+        <button type="button" data-d="today" aria-pressed="${l.due === "today"}">اليوم</button>
+        <button type="button" data-d="tomorrow" aria-pressed="${l.due === "tomorrow"}">غدوة</button>
+        <button type="button" data-d="" aria-pressed="${!l.due}">ما فماش</button>
+      </div>
+    </div>
+
+    <div class="blk"><h4>شكون هو</h4>
+      <div class="facts">
+        <div><span>اللوكال</span><b>${esc(l.business || "—")}</b></div>
+        <div><span>الزون</span><b>${esc(l.zone || "—")}</b></div>
+        <div><span>التلفون</span><b class="lat">${l.phone ? `<a href="tel:+216${l.phone}">${esc(l.phone)}</a>` : "—"}</b></div>
+        <div><span>حكى بيدو</span><b>${l.spoke ? "إيه" : "لا، دق على البوتون برك"}</b></div>
+      </div>
+      ${l.note ? `<p style="margin:10px 0 0;font-size:13px">${esc(l.note)}</p>` : ""}
+    </div>
+
+    <div class="blk"><h4>${l.unread ? "آخر سطر يبان فالبوات" : "شنوة تقال"}</h4>
+      <div class="thread">${(l.said || []).map((m) => `<span class="msg ${m.who} ${m.who === "ev" ? "" : lat(m.text)}" dir="auto">${esc(m.text)}</span>`).join("")}</div>
+      ${l.unread ? `<p style="margin:10px 0 0;font-size:12px;color:var(--muted)">التحكاية هاذي عمرها ما تحلّت — حلّها فمسنجر وقول لكلود شنوة فيها.</p>` : ""}
+    </div>`;
+
+  $("nx").addEventListener("input", (e) => {
+    edits[l.id] = { ...(edits[l.id] || {}), next: e.target.value };
+    persist();
+    $("saved").textContent = "تسجّل في هالكمبيوتر";
+    drawBoard();
+  });
+  for (const b of $("tn").children) b.addEventListener("click", () => set(l.id, "turn", b.dataset.t, draw));
+  for (const b of $("mv").children) b.addEventListener("click", () => set(l.id, "stage", b.dataset.s, draw));
+  for (const b of $("ht").children) b.addEventListener("click", () => set(l.id, "heat", b.dataset.h, draw));
+  for (const b of $("dz").children) b.addEventListener("click", () => set(l.id, "due", b.dataset.d || null, draw));
+}
+
+function draw() { drawBoard(); drawPanel(); drawNav("board.html"); }
+
+$("q").addEventListener("input", drawBoard);
+$("hot").addEventListener("click", () => {
+  onlyHot = !onlyHot;
+  $("hot").setAttribute("aria-pressed", String(onlyHot));
+  drawBoard();
+});
+
+if (!selected) selected = (all().filter((l) => l.spoke).sort(byWeight)[0] || {}).id;
+draw();
+</script>
+</body>
+</html>

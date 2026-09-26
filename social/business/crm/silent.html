@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ساكت · Pointili CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="crm.css" />
+<style>
+  /* الناس اللي دقّو على سؤال من الإشهار وما كتبو حتّى كلمة.
+     موش ليدز — هاذوما ضغطة زر. بلاصتهم هوني موش فاللوحة. */
+  .nudge { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px;
+           padding: 14px 16px; margin-bottom: 18px; display: grid; gap: 9px; }
+  .nudge b { color: var(--ink); font-size: 14px; }
+  .nudge .line {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 11px; padding: 11px 13px;
+    cursor: pointer; direction: ltr; text-align: left; font-family: Inter, system-ui, sans-serif;
+    font-size: 14px; line-height: 1.6; color: var(--ink); white-space: pre-wrap; width: 100%;
+  }
+  .nudge .line:hover { border-color: var(--brand); }
+  .nudge .line.done { border-color: var(--good-line); background: var(--good-soft); }
+  .nudge small { color: var(--muted); font-size: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: 9px; }
+  .one { background: var(--sheet); border: 1px solid var(--line); border-radius: 13px; padding: 10px 11px;
+         display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .one:hover { border-color: var(--brand); }
+  .one .av { --tile: 38px; }
+  .one .nm { font-weight: 600; color: var(--ink); font-size: 13.5px; overflow: hidden;
+             text-overflow: ellipsis; white-space: nowrap; }
+  .one .sub { font-size: 11.5px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="brand">Pointili CRM</span>
+  <span class="links"></span>
+</nav>
+
+<div class="page">
+  <h1 class="big">ساكت</h1>
+  <p class="lede" id="lede"></p>
+
+  <div class="nudge">
+    <b>كان تحب تحرّكهم، سطر واحد وبرك</b>
+    <button type="button" class="line" id="nudge">mazeltou mohtam ? ken ey, najmou nabdew b demo, tjarrbouha w tchouf kifech te5dem.</button>
+    <small>دوس عليه يتنسخ. دفعة وحدة برك لكل واحد — الثانية تولّي تسوّل. الردود الكل فـ<a href="replies.html">صفحة الردود</a>.</small>
+  </div>
+
+  <div id="page"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="crm.js"></script>
+<script>
+"use strict";
+
+function oneHTML(l) {
+  return `<a class="one" href="board.html?id=${encodeURIComponent(l.id)}">
+      ${avHTML(l)}
+      <span style="min-width:0">
+        <span class="nm ${lat(l.name)}" dir="auto">${esc(l.name)}</span>
+        <span class="sub">${CH[l.channel]} · ${dayWord(daysSince(l.last))}${l.business ? " · " + esc(l.business) : ""}</span>
+      </span>
+    </a>`;
+}
+
+const rows = all().filter((l) => !l.spoke && !l.unread && l.stage !== "lost").sort(byWeight);
+const byDay = {};
+for (const l of rows) (byDay[daysSince(l.last)] ||= []).push(l);
+
+$("lede").textContent =
+  `${rows.length} واحد دقّو على سؤال من الإشهار، خذاو الجواب، وما كتبو حتّى كلمة بيدهم. ` +
+  `ما حطّيناهمش فاللوحة على خاطر ضغطة زر ما تقول والو — كان دخّلناهم يغطّيو على الناس اللي حكاو بالفعل.`;
+
+$("page").innerHTML = Object.keys(byDay).sort((a, b) => a - b).map((d) =>
+  `<h2 class="sec coldc">${dayWord(Number(d))} <b>${byDay[d].length}</b></h2>
+   <div class="grid">${byDay[d].map(oneHTML).join("")}</div>`).join("")
+  || `<p class="empty">ما فماش حتّى واحد هوني.</p>`;
+
+$("nudge").addEventListener("click", async (e) => {
+  const b = e.currentTarget;
+  try { await navigator.clipboard.writeText(b.textContent.trim()); b.classList.add("done"); }
+  catch {
+    const r = document.createRange(); r.selectNodeContents(b);
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  setTimeout(() => b.classList.remove("done"), 1500);
+});
+
+drawNav("silent.html");
+</script>
+</body>
+</html>
