@@ -31,3 +31,6 @@ scratch/
 # rendered carousels (re-made with social/carousels/render.mjs) and scratch reviews
 social/carousels/out/
 social/carousels/review/
+
+# the CRM holds real customers' names, numbers and DMs — it never goes in a repo
+/social/business/crm/
