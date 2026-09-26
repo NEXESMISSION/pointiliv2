@@ -95,7 +95,7 @@ async function main() {
   await sharp(path.join(DIR, "icon.svg"), { density: 384 }).resize(512, 512).png().toFile(path.join(APP, "icon.png"));
   await buildIco(path.join(APP, "icon.png"), path.join(APP, "icon.ico"));
 
-  const url = pathToFileURL(path.join(DIR, "index.html")).href;
+  const url = pathToFileURL(path.join(DIR, "index.html")).href + "#app";   // the hash tells the page it is the app window: watch the file
   const args = `--app="${url}" --window-size=1500,940 --user-data-dir="${path.join(APP, "profile")}" --allow-file-access-from-files --no-first-run --no-default-browser-check`;
   const exe = browser.replace(/\//g, "\\");
   for (const link of [LINK, START]) {
