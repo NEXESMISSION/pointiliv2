@@ -28,10 +28,16 @@ export const getContext = cache(async (): Promise<SessionContext | null> => {
  * opens straight on its counter QR — that is what the phone is picked up for —
  * unless there is no card yet, and then the home screen walks them through it.
  */
-export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card"> | null): string {
+export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card" | "systems"> | null): string {
   if (!ctx) return "/";
   if (ctx.user.role === "admin") return "/admin";
-  if (ctx.business) return ctx.card ? "/qr" : "/dashboard";
+  if (ctx.business) {
+    // Two systems is a question worth asking; one is not, so the lobby only
+    // exists for the owner who bought both.
+    if (ctx.systems?.both) return "/lobby";
+    if (ctx.systems?.memberships) return "/members";
+    return ctx.card ? "/qr" : "/dashboard";
+  }
   return "/customer";
 }
 

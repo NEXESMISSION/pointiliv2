@@ -43,6 +43,8 @@ export type SessionContext = {
     design: Partial<CardDesign> | null;
     reward: { id: string; name: string; description: string | null } | null;
   } | null;
+  /** Which systems this business bought. Null when there is no business. */
+  systems: { loyalty: boolean; memberships: boolean; both: boolean; members: number; plans: number } | null;
   subscription: SubscriptionState | null;
 };
 

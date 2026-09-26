@@ -3,6 +3,17 @@ import { ns, p } from "../dict";
 /** The shop owner's screens: home, the QR, the card, the rewards, the poster. */
 export const merchant = ns({
   fr: {
+    lobby: {
+      title: "Vos deux systèmes",
+      loyalty: "Fidélité",
+      loyaltyText: "Des tampons, un cadeau quand la carte est pleine",
+      loyaltyAlt: "Une carte à tampons dans un téléphone",
+      abonili: "Abonili",
+      aboniliText: "Des abonnements : qui peut entrer aujourd'hui",
+      aboniliAlt: "Un membre qui passe la porte d'une salle",
+      members: "abonnés",
+      open: "Ouvrir",
+    },
     banner: {
       suspended: "Votre commerce est suspendu. Contactez l'assistance Pointili.",
       expired: "Votre abonnement Pointili a expiré. Votre QR est en pause ; vos clients gardent leurs tampons.",
@@ -30,6 +41,20 @@ export const merchant = ns({
       cardNone: "Pas encore créée",
       counterQrHint: "À imprimer pour votre comptoir",
       settingsHint: "Commerce, logo, mot de passe",
+    },
+    people: {
+      title: "Clients",
+      today: "Aujourd'hui · {stamps} · {rewards}",
+      rewardsCount: p({ one: "{n} cadeau offert", other: "{n} cadeaux offerts" }),
+      search: "Chercher un nom ou un numéro",
+      groups: { today: "Aujourd'hui", week: "Cette semaine", earlier: "Avant" },
+      never: "Pas encore venu",
+      ready: "Cadeau prêt",
+      anon: "Client #{code}",
+      emptyTitle: "Personne pour l'instant.",
+      emptyBody: "Ouvrez le code au comptoir et laissez le premier client le scanner.",
+      openQr: "Afficher le code",
+      noMatch: "Personne ne ressemble à « {q} ».",
     },
     loyalty: {
       createTitle: "Créez votre carte",
@@ -220,6 +245,17 @@ export const merchant = ns({
     },
   },
   tn: {
+    lobby: {
+      title: "عندك زوز systèmes",
+      loyalty: "الفيدليتي",
+      loyaltyText: "تامبونات، و كادو كي تعمّر الكارط",
+      loyaltyAlt: "كارط تامبونات في تليفون",
+      abonili: "Abonili",
+      aboniliText: "الأبونمانات: شكون ينجّم يدخل اليوم",
+      aboniliAlt: "واحد داخل لصالة",
+      members: "abonnés",
+      open: "حلّ",
+    },
     banner: {
       suspended: "المحل متاعك موقّف. اتصل بـ Pointili.",
       expired: "الاشتراك متاعك في Pointili فات وقتو. الكود متاعك موقّف، والحرفاء يخلّيو التامبونات متاعهم.",
@@ -247,6 +283,20 @@ export const merchant = ns({
       cardNone: "مازال ما تعملتش",
       counterQrHint: "طبّعو وحطّو في الكونتوار",
       settingsHint: "المحل، اللوغو، كلمة السر",
+    },
+    people: {
+      title: "الحرفاء",
+      today: "اليوم · {stamps} · {rewards}",
+      rewardsCount: p({ one: "كادو واحد تعطى", other: "{n} كوادو تعطاو" }),
+      search: "لوّج بالاسم ولا بالنومرو",
+      groups: { today: "اليوم", week: "هالجمعة", earlier: "قبل" },
+      never: "مازال ما جاش",
+      ready: "كادو جاهز",
+      anon: "حريف #{code}",
+      emptyTitle: "مازال ما فمّا حد.",
+      emptyBody: "حلّ الكود في الكونتوار وخلّي أوّل حريف يسكانيه.",
+      openQr: "ورّي الكود",
+      noMatch: "ما فمّا حد يشبه «{q}».",
     },
     loyalty: {
       createTitle: "اعمل الكارط متاعك",
