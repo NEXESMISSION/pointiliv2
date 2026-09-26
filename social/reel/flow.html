@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@500;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* One continuous piece: the customer's screens, then the shop's, in one phone.
+   * Nothing animates on its own: flow.mjs calls seek(t) and every element is placed
+   * for that exact instant, so a frame renders the same way every time. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+  body { position: relative; font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; color: #17141F; }
+  .bg { position: absolute; inset: 0; }
+  .bg.dark { background: linear-gradient(165deg, #6535E0 0%, #4A24B5 58%, #33167F 100%); }
+  .bg.light { background: linear-gradient(165deg, #FBFAFF 0%, #F0EBFF 100%); }
+  .waves { position: absolute; inset: -6%; opacity: 0.16; background-image:
+      radial-gradient(60% 40% at 15% 12%, #fff 0%, transparent 60%),
+      radial-gradient(50% 35% at 88% 82%, #fff 0%, transparent 62%); }
+  .bg.light .waves { opacity: 0.55; background-image:
+      radial-gradient(55% 38% at 12% 10%, #E6DCFF 0%, transparent 62%),
+      radial-gradient(52% 36% at 90% 84%, #EFE7FF 0%, transparent 64%); }
+  body.alpha .bg { display: none; }
+
+  .card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #fff; }
+  .logo { width: 200px; height: 200px; border-radius: 56px; background: #fff; display: grid; place-items: center; box-shadow: 0 40px 90px -30px rgba(10,4,40,0.6); }
+  .logo svg { width: 124px; height: auto; display: block; }
+  .card h1 { margin-top: 44px; font-family: Inter, sans-serif; font-size: 108px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+  .card p { margin-top: 28px; padding: 0 110px; font-size: 54px; font-weight: 700; line-height: 1.32; }
+  .card .url { margin-top: 30px; font-family: Inter, sans-serif; font-size: 46px; font-weight: 600; opacity: 0.92; letter-spacing: -0.01em; }
+  .card .line { margin-top: 34px; padding: 0 90px; font-size: 40px; font-weight: 500; opacity: 0.88; line-height: 1.4; }
+
+  .chip { position: absolute; top: 132px; left: 0; right: 0; text-align: center; }
+  .chip .who { display: inline-block; padding: 12px 36px; border-radius: 999px; font-size: 42px; font-weight: 700; background: #17141F; color: #fff; }
+  .dark-tone .chip .who { background: #fff; color: #4A24B5; }
+  .chip .how { margin-top: 18px; font-size: 36px; font-weight: 500; color: #17141F; opacity: 0.78; }
+  .dark-tone .chip .how { color: #fff; }
+
+  .phone { position: absolute; left: 50%; top: 318px; width: 560px; margin-left: -280px; padding: 15.7px; border-radius: 78px;
+           background: #0c0c14; box-shadow: 0 60px 120px -40px rgba(12,4,50,0.75), 0 0 0 2px #2a2a36 inset; transform-origin: 50% 50%; }
+  .phone::before { content: ""; position: absolute; right: -5px; top: 24%; width: 5px; height: 11%; border-radius: 0 4px 4px 0; background: #0c0c14; }
+  .phone::after { content: ""; position: absolute; left: -5px; top: 19%; width: 5px; height: 7%; border-radius: 4px 0 0 4px; background: #0c0c14; box-shadow: 0 112px 0 #0c0c14; }
+  .glass { position: relative; border-radius: 63px; overflow: hidden; background: #fff; aspect-ratio: 1170 / 2673; direction: ltr; }
+  .glass img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; will-change: transform, opacity; }
+  .island { position: absolute; top: 12.6px; left: 50%; transform: translateX(-50%); width: 125px; height: 38px; border-radius: 20px; background: #0c0c14; }
+  .sheen { position: absolute; inset: -40% -120%; background: linear-gradient(74deg, transparent 38%, rgba(255,255,255,0.42) 50%, transparent 62%); }
+
+  .cap { position: absolute; left: 0; right: 0; top: 1610px; padding: 0 70px; text-align: center; font-size: 64px; font-weight: 700; line-height: 1.25; color: #17141F; }
+  .dark-tone .cap { color: #fff; text-shadow: 0 6px 30px rgba(10,4,40,0.45); }
+  .cap .num { display: inline-grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; background: #6535E0; color: #fff;
+              font: 700 32px Inter, sans-serif; vertical-align: middle; margin-inline-end: 20px; position: relative; top: -6px; }
+  .dark-tone .cap .num { background: #fff; color: #4A24B5; }
+
+  .mark { position: absolute; left: 0; right: 0; bottom: 64px; display: flex; align-items: center; justify-content: center; gap: 18px;
+          font-family: Inter, sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.01em; color: #17141F; }
+  .dark-tone .mark { color: #fff; }
+  .mark .dot { width: 54px; height: 54px; border-radius: 16px; background: #fff; display: grid; place-items: center; box-shadow: 0 6px 18px -8px rgba(10,4,40,0.5); }
+  .mark svg { width: 34px; height: auto; display: block; }
+
+  /* on footage: white words with a shadow, whatever the shot behind */
+  body.alpha .cap, body.alpha .chip .how, body.alpha .mark { color: #fff; text-shadow: 0 4px 26px rgba(0,0,0,0.5); }
+  body.alpha .chip .who { background: #fff; color: #4A24B5; }
+  body.alpha .cap .num { background: #fff; color: #4A24B5; }
+</style>
+</head>
+<body class="dark-tone">
+<div class="bg dark"><div class="waves"></div></div>
+<div class="bg light" id="bgLight"><div class="waves"></div></div>
+<div id="root"></div>
+<script>
+  const MARK = '<svg viewBox="0 0 96 70"><defs> <linearGradient id="pdb" x1="0" y1="0" x2="0.2" y2="1"><stop offset="0" stop-color="#7244EC"/><stop offset="1" stop-color="#4F28C6"/></linearGradient> <linearGradient id="pdf" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#7143E6"/><stop offset="1" stop-color="#5029C5"/></linearGradient> <mask id="pdm"><rect width="96" height="70" fill="#fff"/><rect x="-2" y="14" width="86" height="58" rx="10" fill="#000"/></mask> </defs> <rect x="16" y="5" width="72" height="50" rx="7" transform="rotate(8 52 30)" fill="url(#pdb)" fill-opacity="1" mask="url(#pdm)"/> <rect x="1" y="17" width="80" height="52" rx="8" fill="url(#pdf)"/> <path d="M41 29C42.2 38.6 44.4 41.2 56 43 44.4 44.8 42.2 47.4 41 57 39.8 47.4 37.6 44.8 26 43 37.6 41.2 39.8 38.6 41 29Z" fill="#FFFFFF"/></svg>';
+
+  // three copies of the mark on one page: each needs its own gradient and mask ids, or a hidden copy starves the others
+  const mark = (n) => MARK.replace(/pd(b|f|m)/g, (m) => m + n);
+
+  // ── the piece, beat by beat ──────────────────────────────────────────────
+  const HOLD = 2.0, LAST = 2.4, TRANS = 0.5;
+  const SECTIONS = [
+    { id: "client", who: "الحريف", how: "كيفاش يلمّ التامبونات", tone: "light", enter: 2.6, first: 3.2, beats: [
+      ["client-1-scan-first-time", "يسكاني الكود، التامبون محجوز"],
+      ["client-2-first-stamp", "كونت بنومرو التليفون، وخلاص"],
+      ["client-4-home-card", "الكارط في تليفونو، بلا أبليكاسيون"],
+      ["client-5-card-detail", "يشوف قداش باقيلو للكادو"],
+      ["client-6-card-full-reward", "عمرت؟ الكادو جاهز"],
+    ] },
+    { id: "shop", who: "المحل", how: "كيفاش يعطي التامبونات", tone: "dark", enter: 16.2, first: 16.7, beats: [
+      ["shop-1-home", "زر واحد: ورّي الكود"],
+      ["shop-2-qr", "الكود يتبدّل وحدو، ما يتصوّرش"],
+      ["shop-3-customers", "كل حريف، كل تامبون، مكتوب"],
+      ["shop-4-redeem", "يجيب الكود، تعطي الكادو"],
+    ] },
+  ];
+  const BEATS = [];
+  for (const s of SECTIONS) s.beats.forEach(([screen, cap], i) => {
+    const start = s.first + i * (HOLD + TRANS); const last = i === s.beats.length - 1;
+    BEATS.push({ screen, cap, n: i + 1, section: s, start, end: start + (last ? LAST : HOLD), first: i === 0 });
+  });
+  const INTRO_END = 2.6, SWITCH = 15.6, OUTRO = 26.6;
+  window.DURATION = 30;
+  window.SAMPLE = [0.9, 2.45, 3.1, 4.4, 5.45, 9.2, 14.6, 15.9, 16.5, 17.8, 22.5, 26.9, 28.8];
+
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+  const E = {
+    out: (p) => 1 - Math.pow(1 - p, 3),
+    in: (p) => p * p * p,
+    inOut: (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    back: (p) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); },
+  };
+  const $ = (id) => document.getElementById(id);
+  const rise = (el, pIn, pOut, dy = 34) => { const o = E.out(pIn) * (1 - pOut); el.style.opacity = o; el.style.transform = `translateY(${(1 - E.out(pIn)) * dy - pOut * 22}px)`; };
+
+  window.setup = async (screens) => {
+    const imgs = BEATS.map((b, k) => `<img data-k="${k}" src="${screens[b.screen]}" />`).join("");
+    $("root").innerHTML = `
+      <div class="card" id="intro"><div class="logo" id="iLogo">${mark(1)}</div><h1 id="iH1">Pointili</h1><p id="iP">كارط الفيدليتي<br>في تليفون الحريف</p></div>
+      <div class="chip" id="chip"><div class="who" id="who"></div><div class="how" id="how"></div></div>
+      <div class="phone" id="phone"><div class="glass">${imgs}<div class="sheen" id="sheen"></div><div class="island"></div></div></div>
+      <div class="cap" id="cap"></div>
+      <div class="mark" id="mark"><span class="dot">${mark(2)}</span> Pointili</div>
+      <div class="card" id="outro"><div class="logo" id="oLogo">${mark(3)}</div><h1 id="oH1">Pointili</h1><p id="oP">الحريف يسكاني،<br>التامبون يتسجّل، الكادو يوصل</p><div class="url" id="oUrl">pointili.online</div></div>`;
+    await Promise.all([...document.querySelectorAll("img")].map((im) => im.complete ? null : new Promise((r) => { im.onload = r; im.onerror = r; })));
+    await document.fonts.ready;
+  };
+
+  window.seek = (t) => {
+    // tone and background
+    const light = seg(t, 2.25, 2.85) * (1 - seg(t, SWITCH + 0.05, SWITCH + 0.65));
+    $("bgLight").style.opacity = light;
+    document.body.classList.toggle("dark-tone", light < 0.5); document.body.classList.toggle("light-tone", light >= 0.5);
+
+    // intro
+    const iOut = seg(t, 2.1, INTRO_END); const intro = $("intro"); intro.style.display = t < INTRO_END ? "" : "none";
+    if (t < INTRO_END) {
+      intro.style.opacity = 1 - iOut; intro.style.transform = `scale(${1 + iOut * 0.05}) translateY(${-iOut * 40}px)`;
+      const lp = E.back(seg(t, 0.1, 0.8)); $("iLogo").style.transform = `scale(${lp})`; $("iLogo").style.opacity = seg(t, 0.1, 0.3);
+      rise($("iH1"), seg(t, 0.35, 0.95), 0); rise($("iP"), seg(t, 0.6, 1.2), 0);
+    }
+
+    // section chip: which section, and how far in or out
+    const sec = t < SWITCH + 0.35 ? SECTIONS[0] : SECTIONS[1];
+    $("who").textContent = sec.who; $("how").textContent = sec.how;
+    const chipIn = sec === SECTIONS[0] ? seg(t, 2.7, 3.2) : seg(t, SWITCH + 0.5, SWITCH + 1.0);
+    const chipOut = sec === SECTIONS[0] ? seg(t, SWITCH, SWITCH + 0.35) : seg(t, OUTRO, OUTRO + 0.35);
+    rise($("chip"), chipIn, chipOut, 28);
+    rise($("mark"), seg(t, 3.2, 3.8), seg(t, OUTRO, OUTRO + 0.35), 20);
+
+    // the phone: in from below, out to the left, back from the right, away at the end; never quite still
+    let x = 0, y = 0, rot = 0, op = 1;
+    if (t < 3.7) { const p = E.back(seg(t, INTRO_END, 3.7)); y = (1 - p) * 1500; rot = (1 - p) * 7; }
+    if (t >= SWITCH && t < SWITCH + 0.6) { const p = E.in(seg(t, SWITCH, SWITCH + 0.6)); x = -p * 1500; rot = -p * 9; }
+    else if (t >= SWITCH + 0.6 && t < SWITCH + 1.3) { const p = E.back(seg(t, SWITCH + 0.6, SWITCH + 1.3)); x = (1 - p) * 1500; rot = (1 - p) * 9; }
+    if (t >= OUTRO) { const p = E.in(seg(t, OUTRO, OUTRO + 0.7)); y = p * 1700; rot = p * 5; op = 1 - p; }
+    y += Math.sin(t * 1.3) * 6; rot += Math.sin(t * 0.9) * 0.8;
+    const phone = $("phone"); phone.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`; phone.style.opacity = op;
+
+    // the screens: the first of a section is there when the phone arrives; the others push in from the right
+    document.querySelectorAll(".glass img").forEach((im) => {
+      const k = Number(im.dataset.k); const b = BEATS[k]; const next = BEATS[k + 1];
+      const from = b.first ? b.section.enter : b.start - TRANS; const until = next ? next.start : Infinity;
+      const on = t >= from && t < until; im.style.display = on ? "" : "none"; if (!on) return;
+      let tx = 0, sc = 1, o = 1;
+      if (!b.first && t < b.start) { const p = E.inOut(seg(t, b.start - TRANS, b.start)); tx = (1 - p) * 100; sc = 1.03 - 0.03 * p; }
+      if (next && !next.first && t >= next.start - TRANS) { const p = E.inOut(seg(t, next.start - TRANS, next.start)); tx = -p * 28; o = 1 - p * 0.55; }
+      im.style.transform = `translateX(${tx}%) scale(${sc})`; im.style.opacity = o;
+    });
+    // one light across the glass as each screen settles
+    const sheen = $("sheen"); let sOn = false;
+    for (const b of BEATS) { const a = b.start + (b.first ? 0.45 : 0.15); if (t >= a && t < a + 0.9) { const p = seg(t, a, a + 0.9); sheen.style.transform = `translateX(${-60 + p * 120}%)`; sOn = true; break; } }
+    sheen.style.opacity = sOn ? 1 : 0;
+
+    // the caption of the beat we are in
+    const cap = $("cap"); const b = BEATS.find((b) => t >= b.start - 0.15 && t < b.end + 0.3);
+    if (b) { cap.innerHTML = `<span class="num">${b.n}</span>${b.cap}`; rise(cap, seg(t, b.start - 0.15, b.start + 0.35), seg(t, b.end, b.end + 0.3)); cap.style.display = ""; }
+    else cap.style.display = "none";
+
+    // outro
+    const outro = $("outro"); outro.style.display = t >= OUTRO + 0.3 ? "" : "none";
+    if (t >= OUTRO + 0.3) {
+      const lp = E.back(seg(t, OUTRO + 0.4, OUTRO + 1.1)); $("oLogo").style.transform = `scale(${lp})`; $("oLogo").style.opacity = seg(t, OUTRO + 0.4, OUTRO + 0.6);
+      rise($("oH1"), seg(t, OUTRO + 0.6, OUTRO + 1.2), 0); rise($("oP"), seg(t, OUTRO + 0.85, OUTRO + 1.45), 0); rise($("oUrl"), seg(t, OUTRO + 1.1, OUTRO + 1.7), 0);
+    }
+    return t;
+  };
+</script>
+</body>
+</html>

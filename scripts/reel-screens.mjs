@@ -5,7 +5,7 @@
 //   node --env-file=.env.local scripts/reel-screens.mjs             capture everything, then frame
 //   ONLY=frames node --env-file=.env.local scripts/reel-screens.mjs  frame and board what is on disk
 //   ONLY=redeem node --env-file=.env.local scripts/reel-screens.mjs  just the shop's redeem screen, from the customer's pending code
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "playwright-core";
 import { createClient } from "@supabase/supabase-js";
@@ -13,8 +13,8 @@ import { createClient } from "@supabase/supabase-js";
 const BASE = process.env.SHOTS_BASE || "http://localhost:3000";
 const HOST = new URL(BASE).host.replace(/[^a-z0-9]+/gi, "-");
 const ONLY = process.env.ONLY || "";
-const OUT = "social/reel/screens"; const RAW = join(OUT, "raw");
-mkdirSync(RAW, { recursive: true });
+const OUT = "social/reel/screens"; const RAW = join(OUT, "raw"); const SCREEN = join(OUT, "screen");
+mkdirSync(RAW, { recursive: true }); mkdirSync(SCREEN, { recursive: true });
 const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, locale: "ar-TN" };
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -138,6 +138,7 @@ await framePage.setContent(FRAME, { waitUntil: "load" }); await framePage.evalua
 const composed = {};
 for (const name of onDisk) {
   composed[name] = await framePage.evaluate(({ src, S }) => window.__compose(src, S), { src: dataUrl(join(RAW, `${name}.png`)), S: STRIP });
+  writeFileSync(join(SCREEN, `${name}.png`), Buffer.from(composed[name].split(",")[1], "base64"));   // the screen with its status bar, for the animation
   await framePage.evaluate((src) => { document.body.innerHTML = `<div class="phone" id="p"><img class="screen" src="${src}"><div class="island"></div></div>`; }, composed[name]);
   await framePage.waitForTimeout(150);
   await framePage.locator("#p").screenshot({ path: join(OUT, `${name}.png`), omitBackground: true });
