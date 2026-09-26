@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Plus, Search, UserPlus } from "lucide-react";
 import { Segmented, TopBar } from "@/components/nav/TopBar";
 import { Card } from "@/components/ui/Card";
+import { HowItWorks } from "@/components/merchant/HowItWorks";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkButton } from "@/components/ui/Button";
@@ -67,13 +68,38 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
       />
 
       {list.total === 0 && !q ? (
-        <EmptyState icon={<UserPlus className="size-8" />} title={w.emptyTitle} action={<LinkButton href="/members/new" block>{w.add}</LinkButton>}>
-          {w.emptyBody}
-        </EmptyState>
+        <>
+          <EmptyState icon={<UserPlus className="size-8" />} title={w.emptyTitle} action={<LinkButton href="/members/new" block>{w.add}</LinkButton>}>
+            {w.emptyBody}
+          </EmptyState>
+          <div className="mt-3">
+            <HowItWorks
+              open
+              title={w.howTitle}
+              steps={[
+                { t: w.how1, h: w.how1Hint },
+                { t: w.how2, h: w.how2Hint },
+                { t: w.how3, h: w.how3Hint },
+              ]}
+            />
+          </div>
+        </>
       ) : (
         <>
           <div className="mb-3">
             <Segmented active={filter} items={FILTERS.map((f) => ({ key: f, href: href(f), label: w.filters[f] }))} />
+          </div>
+
+          <div className="mb-3">
+            <HowItWorks
+              open={false}
+              title={w.howTitle}
+              steps={[
+                { t: w.how1, h: w.how1Hint },
+                { t: w.how2, h: w.how2Hint },
+                { t: w.how3, h: w.how3Hint },
+              ]}
+            />
           </div>
 
           <form action="/members" className="relative mb-3">

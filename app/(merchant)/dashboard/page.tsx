@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, CreditCard, Gift, QrCode, Ticket } from "lucide-react";
 import { BusinessAvatar } from "@/components/CardIcon";
+import { HowItWorks } from "@/components/merchant/HowItWorks";
 import { Alert } from "@/components/ui/Alert";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -79,9 +80,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <span className="text-xl font-semibold leading-tight">{t.nav.merchant.showQr}</span>
             <span className="text-[13px] text-white/70">{t.merchant.home.qrHint}</span>
           </Link>
-          <LinkButton href="/redeem?scan=1" variant="outline" size="lg" block icon={<Gift className="size-5" />}>
-            {t.merchant.home.giveReward}
-          </LinkButton>
+          {/* A button whose name is a verb still has to say WHEN to press it. */}
+          <Link
+            href="/redeem?scan=1"
+            className="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 shadow-card transition-colors hover:bg-canvas/60"
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-canvas text-body">
+              <Gift className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-semibold text-ink">{t.merchant.home.giveReward}</span>
+              <span className="block truncate text-[13px] text-muted">{t.merchant.home.giveRewardHint}</span>
+            </span>
+            <ChevronRight className="rtl:-scale-x-100 size-4 shrink-0 text-faint" />
+          </Link>
         </div>
       )}
 
@@ -91,6 +103,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <span className="flex-1 text-sm font-semibold">{count(t.merchant.home.waiting, d.pending_redemptions)}</span>
           <ChevronRight className="rtl:-scale-x-100 size-4" />
         </Link>
+      )}
+
+      {ctx.card && (
+        <HowItWorks
+          open={d.customers === 0}
+          title={t.merchant.home.howTitle}
+          steps={[
+            { t: t.merchant.home.how1, h: t.merchant.home.how1Hint },
+            { t: t.merchant.home.how2, h: t.merchant.home.how2Hint },
+            { t: t.merchant.home.how3, h: t.merchant.home.how3Hint },
+          ]}
+        />
       )}
 
       <section className="grid grid-cols-3 gap-2.5">
