@@ -28,6 +28,7 @@ export const auth = ns({
     register: {
       title: "Créer votre compte",
       subtitle: "Rejoignez Pointili et commencez à collecter des tampons !",
+      namePlaceholder: "Sarah Ben Ali",
       submit: "Créer mon compte",
       submitting: "Création de votre compte…",
       scanNotice: "Créez votre compte et prenez votre tampon — 20 secondes.",
@@ -79,6 +80,7 @@ export const auth = ns({
     },
 
     errors: {
+      nameRequired: "Entrez votre nom.",
       invalidPhone: "Entrez un numéro tunisien valide (8 chiffres).",
       passwordShort: "Utilisez au moins 8 caractères.",
       passwordLong: "Utilisez au maximum 72 caractères.",
@@ -128,6 +130,7 @@ export const auth = ns({
     register: {
       title: "اعمل كونت",
       subtitle: "ابدا مع Pointili ولمّ التامبونات متاعك!",
+      namePlaceholder: "سارة بن علي",
       submit: "اعمل الكونت",
       submitting: "قاعد يعمل الكونت متاعك…",
       scanNotice: "اعمل كونت وخوذ التامبون — 20 ثانية برك.",
@@ -179,6 +182,7 @@ export const auth = ns({
     },
 
     errors: {
+      nameRequired: "اكتب اسمك.",
       invalidPhone: "اكتب نومرو تونسي صحيح (8 أرقام).",
       passwordShort: "استعمل على الأقل 8 حروف.",
       passwordLong: "استعمل 72 حرف على الأكثر.",

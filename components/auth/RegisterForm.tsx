@@ -4,7 +4,7 @@ import Link from "next/link";
 import { registerCustomer } from "@/app/actions/auth";
 import type { FormState } from "@/app/actions/types";
 import { Alert } from "@/components/ui/Alert";
-import { Field } from "@/components/ui/Field";
+import { Field, Input } from "@/components/ui/Field";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { SubmitButton } from "@/components/ui/Button";
@@ -21,8 +21,23 @@ export function RegisterForm({ next }: { next?: string }) {
       {next && <input type="hidden" name="next" value={next} />}
       {state?.error && <Alert>{state.error}</Alert>}
 
+      {/* The owner's customer list is a list of PEOPLE or a list of numbers,
+          and that is decided here. One word, first, before anything that looks
+          like admin. */}
+      <Field label={t.common.yourName} htmlFor="full_name" error={f.full_name}>
+        <Input
+          id="full_name"
+          name="full_name"
+          placeholder={t.auth.register.namePlaceholder}
+          required
+          maxLength={80}
+          autoComplete="name"
+          autoFocus
+          aria-invalid={!!f.full_name || undefined}
+        />
+      </Field>
       <Field label={t.common.phoneNumber} htmlFor="phone" error={f.phone}>
-        <PhoneInput invalid={!!f.phone} autoFocus />
+        <PhoneInput invalid={!!f.phone} />
       </Field>
       <Field label={t.common.password} htmlFor="password" error={f.password} hint={t.auth.passwordHint}>
         <PasswordInput autoComplete="new-password" invalid={!!f.password} minLength={8} />

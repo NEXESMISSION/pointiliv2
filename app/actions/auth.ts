@@ -39,10 +39,14 @@ function passwordProblem(e: AuthErrors, password: string, confirm?: string): Rec
 // ── customer registration ─────────────────────────────────────────────────
 export async function registerCustomer(_: FormState, fd: FormData): Promise<FormState> {
   const { t, msg } = await getI18n();
-  const values = { phone: str(fd, "phone") };
+  const values = { phone: str(fd, "phone"), full_name: str(fd, "full_name") };
   const next = safeNext(fd.get("next"), "/customer");
   const phone = normalizePhone(values.phone);
   const password = String(fd.get("password") ?? "");
+  const fullName = values.full_name.trim().slice(0, 80);
+  // Checked in the order the eye meets the fields, so the first complaint is
+  // about the first box.
+  if (fullName.length < 2) return { fields: { full_name: t.auth.errors.nameRequired }, values, at: now() };
   if (!phone) return { fields: { phone: t.auth.errors.invalidPhone }, values, at: now() };
   const pw = passwordProblem(t.auth.errors, password, String(fd.get("confirm") ?? ""));
   if (pw) return { fields: pw, values, at: now() };
@@ -56,7 +60,9 @@ export async function registerCustomer(_: FormState, fd: FormData): Promise<Form
     email: phoneAuthEmail(phone),
     password,
     email_confirm: true,
-    app_metadata: { phone },
+    // handle_new_user() reads these: app_metadata is the only place a browser
+    // cannot write, which is why the name travels here and not in a column.
+    app_metadata: { phone, full_name: fullName },
   });
   const supabase = await createClient();
   if (error) {
@@ -64,7 +70,14 @@ export async function registerCustomer(_: FormState, fd: FormData): Promise<Form
       // A sign-up that died halfway leaves the account behind. If this password
       // opens it, finish the job instead of sending the person to a dead end.
       const { error: resume } = await supabase.auth.signInWithPassword({ email: phoneAuthEmail(phone), password });
-      if (!resume) redirect(next);
+      if (!resume) {
+        // An account made before the name was asked for, or a sign-up that died
+        // before the trigger ran: take the name now that it has been typed.
+        // supabase returns errors rather than throwing them; a name that fails
+        // to save must not cost this person the sign-in they just completed.
+        await supabase.rpc("update_my_profile", { p_full_name: fullName });
+        redirect(next);
+      }
       return { fields: { phone: t.auth.errors.phoneTaken }, values, at: now() };
     }
     console.error("[register]", error.message);
