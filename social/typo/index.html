@@ -169,7 +169,7 @@
     <button class="btn dark" id="btnCopy">Copy PNG</button>
     <div class="menu" id="projectsMenu"></div>
     <div class="menu" id="exportMenu">
-      <button class="item" data-export="all"><span>Download PNG · everything</span><span class="sub">one file</span></button>
+      <button class="item" data-export="all"><span>Download PNG · everything</span><span class="sub">one file · Ctrl+`</span></button>
       <button class="item" data-export="selected"><span>Download PNG · selected layers</span><span class="sub">what is selected, as one file</span></button>
       <button class="item" data-export="groups"><span>Download ZIP · one PNG per word</span><span class="sub">a word with its paper and accents</span></button>
       <button class="item" data-export="layers"><span>Download ZIP · one PNG per layer</span><span class="sub">every object on its own</span></button>
@@ -1105,6 +1105,8 @@
     if (meta && e.key.toLowerCase() === "y" && !typing) { e.preventDefault(); redo(); return; }
     if (typing) return;
     if (e.key === "Escape" && $("preview").classList.contains("on")) return exitPreview();
+    // Ctrl+` downloads everything as one PNG, selection or not
+    if (meta && (e.code === "Backquote" || e.key === "`")) { e.preventDefault(); exportAs("all"); return; }
     // Ctrl+V: the paste event does the work; if the browser fires none (empty clipboard), paste our own copy
     if (meta && e.key.toLowerCase() === "v") { clearTimeout(pendingPaste); pendingPaste = setTimeout(() => { pendingPaste = null; if (clip) pasteObjects(clip); }, 200); return; }
     const a = canvas.getActiveObject(); if (!a) return;
