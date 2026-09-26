@@ -3,6 +3,21 @@ import { ns } from "../dict";
 /** Error codes returned by the database functions → words a person reads. */
 export const errors = ns({
   fr: {
+    // abonili
+    invalid_phone: "Entrez un numéro tunisien valide (8 chiffres).",
+    plan_not_found: "Choisissez une formule.",
+    invalid_limit: "Une formule doit avoir une durée, des séances, ou les deux.",
+    invalid_duration: "Durée : entre 1 et 1095 jours.",
+    invalid_sessions: "Séances : entre 1 et 500.",
+    invalid_price: "Entrez un prix valide.",
+    invalid_days: "Choisissez entre 1 et 365 jours.",
+    no_end_date: "Cette formule n'a pas de date de fin.",
+    no_membership: "Cette personne n'a pas d'abonnement ici.",
+    membership_expired: "Cet abonnement est fini.",
+    membership_used_up: "Les séances de cet abonnement sont finies.",
+    membership_cancelled: "Cet abonnement a été annulé.",
+    already_checked_in: "Déjà entré aujourd'hui.",
+    no_system: "Gardez au moins un système activé.",
     // scanning
     invalid: "Ce QR code n'est pas valide.",
     expired: "Ce QR code a expiré. Scannez celui affiché maintenant.",
@@ -43,6 +58,21 @@ export const errors = ns({
     network: "Une erreur est survenue. Réessayez.",
   },
   tn: {
+    // abonili
+    invalid_phone: "اكتب نومرو تونسي صحيح (8 أرقام).",
+    plan_not_found: "اختار formule.",
+    invalid_limit: "الformule لازمها مدّة، ولا séances، ولا الزوز.",
+    invalid_duration: "المدّة: من 1 لـ1095 يوم.",
+    invalid_sessions: "الséances: من 1 لـ500.",
+    invalid_price: "اكتب تسعيرة صحيحة.",
+    invalid_days: "اختار من 1 لـ365 يوم.",
+    no_end_date: "الformule هاذي ما عندهاش تاريخ تسالي.",
+    no_membership: "هالواحد ما عندوش abonnement هوني.",
+    membership_expired: "الabonnement سالى.",
+    membership_used_up: "الséances كملو.",
+    membership_cancelled: "الabonnement تلغى.",
+    already_checked_in: "دخل اليوم قبل.",
+    no_system: "خلّي على الأقل système واحد يخدم.",
     invalid: "الكود هذا موش صحيح.",
     expired: "الكود هذا فات وقتو. سكاني الكود اللي ظاهر توّا.",
     already_used: "الكود هذا تستعمل. سكاني الكود اللي ظاهر توّا في الإيكران.",

@@ -17,6 +17,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible print:bg-white">
       <MerchantSideNav
+        systems={ctx.systems}
         header={
           <div className="space-y-5">
             <Logo size={22} className="px-1" />
@@ -56,7 +57,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
           <div className="app-center mx-auto w-full max-w-3xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-8 lg:pt-6 print:!p-0">{children}</div>
         </main>
       </div>
-      <MerchantNav />
+      <MerchantNav systems={ctx.systems} />
     </div>
   );
 }

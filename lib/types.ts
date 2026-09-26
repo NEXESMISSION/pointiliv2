@@ -157,3 +157,44 @@ export type MerchantCustomerRow = {
   reward_ready: boolean;
   target?: number;
 };
+
+/* ── Abonili ───────────────────────────────────────────────────────────── */
+
+export type MembershipPlan = {
+  id: string;
+  name: string;
+  price: number;
+  /** null = the formule has no end date, only séances */
+  duration_days: number | null;
+  /** null = unlimited visits inside the period */
+  sessions: number | null;
+  active: boolean;
+  members: number;
+};
+
+export type MembershipStatus = "active" | "expiring_soon" | "expired" | "used_up" | "cancelled";
+
+/** membership_view(): what the roster and the door both read. */
+export type MembershipRow = {
+  id: string;
+  code: number;
+  phone: string;
+  phone_masked: string | null;
+  full_name: string | null;
+  photo_url: string | null;
+  plan_id: string | null;
+  /** frozen at the sale, so renaming a formule never rewrites what was sold */
+  plan_name: string;
+  starts_at: string;
+  ends_at: string | null;
+  sessions_left: number | null;
+  status: MembershipStatus;
+  days_left: number | null;
+  /** false until that phone signs in for the first time */
+  linked: boolean;
+  last_checkin_at: string | null;
+  checkins: number;
+};
+
+export type MembershipsPage = { total: number; counts: Record<string, number> | null; items: MembershipRow[] };
+export type MembershipDetail = { ok: true; membership: MembershipRow; history: { at: string }[] };
