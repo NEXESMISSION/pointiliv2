@@ -23,6 +23,14 @@ export const scan = ns({
       viewCard: "Voir la carte",
       follow: "Suivre {shop} sur Instagram",
     },
+    checkin: {
+      title: "Entrez !",
+      unit: "entrée",
+      daysLeft: "Il vous reste {n} jours",
+      sessionsLeft: "Il vous reste {n} séances",
+      noEnd: "Abonnement valide",
+      done: "Fermer",
+    },
     needsAccount: {
       title: "Tampon réservé",
       body: "Un compte, et il est à vous.",
@@ -33,6 +41,13 @@ export const scan = ns({
       firstTime: "Votre numéro, c'est tout.",
     },
     error: {
+      door: {
+        already_checked_in: "Déjà entré aujourd'hui",
+        membership_expired: "Abonnement fini",
+        membership_used_up: "Séances finies",
+        membership_cancelled: "Abonnement annulé",
+        no_membership: "Pas d'abonnement ici",
+      },
       missed: "Tampon manqué",
       missedBody: "Le code a changé. Rescannez.",
       alreadyStamped: "Tampon déjà pris",
@@ -96,6 +111,14 @@ export const scan = ns({
       viewCard: "شوف الكارط",
       follow: "تابع {shop} على إنستغرام",
     },
+    checkin: {
+      title: "ادخل!",
+      unit: "دخلة",
+      daysLeft: "باقيلك {n} يوم",
+      sessionsLeft: "باقيلك {n} séances",
+      noEnd: "الabonnement متاعك valide",
+      done: "سكّر",
+    },
     needsAccount: {
       title: "حجزنالك التامبون",
       body: "لازمك كونت باش تلمّو",
@@ -106,6 +129,13 @@ export const scan = ns({
       firstTime: "بنومرو التليفون وخلاص",
     },
     error: {
+      door: {
+        already_checked_in: "دخلت اليوم قبل",
+        membership_expired: "الabonnement كمّل",
+        membership_used_up: "الséances كملو",
+        membership_cancelled: "الabonnement تلغى",
+        no_membership: "ما عندكش abonnement هوني",
+      },
       missed: "التامبون فات",
       missedBody: "الكود تبدّل. عاود سكاني.",
       alreadyStamped: "التامبون تاخذ قبل",

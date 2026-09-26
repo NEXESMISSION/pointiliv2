@@ -6,10 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getContext } from "@/lib/session";
 import { TOKEN_RE } from "@/lib/url";
-import type { StampResult } from "@/lib/types";
+import type { CheckinResult, StampResult } from "@/lib/types";
 
 export type ScanOutcome =
   | { kind: "stamped"; result: Extract<StampResult, { ok: true }> }
+  | { kind: "checkin"; result: Extract<CheckinResult, { ok: true }> }
   | { kind: "error"; code: string; result?: StampResult }
   | { kind: "auth"; businessName: string | null };
 
@@ -17,7 +18,9 @@ const CLAIM_COOKIE = "pd_claim";
 
 /**
  * The whole scan, server-side:
- *  · signed in  → collect_stamp (atomic, replay-proof) and return the card.
+ *  · signed in  → scan_token, which is the DATABASE deciding what this code
+ *    means at this business: a stamp for a customer, an entry for a member of
+ *    a salle. The phone never has to know which system it is holding.
  *  · signed out → reserve the token for THIS browser (httpOnly claim cookie) so
  *    the stamp survives registration, then ask the person to sign up / log in.
  * Invoked by the scan page with POST (never on GET), so link previews and
@@ -36,17 +39,21 @@ export async function processScan(token: string): Promise<ScanOutcome> {
   const ctx = await getContext();
   if (ctx) {
     const supabase = await createClient();
-    const { data, error } = await supabase.rpc("collect_stamp", { p_token: token, p_claim: claim });
+    const { data, error } = await supabase.rpc("scan_token", { p_token: token, p_claim: claim });
     if (error || !data) {
-      console.error("[scan] collect_stamp", error?.message);
+      console.error("[scan] scan_token", error?.message);
       return { kind: "error", code: "network" };
     }
-    const result = data as StampResult;
+    const result = data as StampResult | CheckinResult;
     if (claim && result.ok !== undefined && !(result.ok === false && result.error === "rate_limited")) {
       jar.delete(CLAIM_COOKIE);
     }
-    if (result.ok) return { kind: "stamped", result };
-    return { kind: "error", code: result.error, result };
+    if (result.ok && "kind" in result && result.kind === "checkin") return { kind: "checkin", result };
+    if (result.ok) return { kind: "stamped", result: result as Extract<StampResult, { ok: true }> };
+    /* A membership refusal (finished, séances used up, already in today) carries
+       its own sentence through msg(); it has no card to paint, so no result. */
+    if ("kind" in result || !("business" in result)) return { kind: "error", code: result.error };
+    return { kind: "error", code: result.error, result: result as StampResult };
   }
 
   const newClaim = claim ?? randomBytes(32).toString("base64url");

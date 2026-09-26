@@ -52,7 +52,7 @@ const speed = {
  *  · open it on as many phones or tablets as you like — each one shows its own code
  *  · the screen is kept awake (Wake Lock) and recovers from network drops by itself
  */
-export function MerchantQr({ businessName, logo, icon, color }: { businessName: string; logo: string | null; icon: string; color: string }) {
+export function MerchantQr({ businessName, logo, icon, color, abonili = false }: { businessName: string; logo: string | null; icon: string; color: string; abonili?: boolean }) {
   const [token, setToken] = useState<Token | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
@@ -121,8 +121,14 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
           return;
         }
         if (!res.ok) throw new Error("state");
-        const s = (await res.json()) as { consumed: boolean; expired: boolean; found: boolean; open: boolean; stamps: { id: string; code: number }[] };
-        const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
+        const s = (await res.json()) as {
+          consumed: boolean; expired: boolean; found: boolean; open: boolean;
+          stamps: { id: string; code: number }[];
+          checkins?: { id: string; code: number }[];
+        };
+        // the same screen, reporting whichever of the two this shop is running
+        const landed = abonili ? (s.checkins ?? []) : s.stamps;
+        const fresh = landed.filter((x) => !seen.current.has(x.id));
         if (fresh.length) {
           fresh.forEach((x) => seen.current.add(x.id));
           // A catch-up after a locked screen or an offline stretch is not a party: the server hands back up to
@@ -147,7 +153,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
     } finally {
       busy.current = false;
     }
-  }, [fast, rotate, router]);
+  }, [abonili, fast, rotate, router]);
 
   useEffect(() => {
     const first = setTimeout(tick, 0);
@@ -203,7 +209,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
       {latest && <ScreenWash key={latest.id} accent={c.accent} delay={latest.delay} />}
 
       <header className="relative z-10 flex items-center gap-2 px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6">
-        <BackButton fallback="/dashboard" className="size-11" />
+        <BackButton fallback={abonili ? "/members" : "/dashboard"} className="size-11" />
         <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
           <BusinessAvatar logo={logo} icon={icon} color={color} size={30} rounded="rounded-full" />
           <p className="truncate text-lg font-semibold">{businessName}</p>
@@ -230,9 +236,9 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
 
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <h1 className="text-center text-[clamp(1.6rem,4.5vh,3rem)] font-bold leading-tight tracking-tight">
-          {w.headline1}
+          {abonili ? w.headlineCheckin1 : w.headline1}
           <br />
-          {w.headline2}
+          {abonili ? w.headlineCheckin2 : w.headline2}
         </h1>
 
         {/* The party happens BEHIND the card: the code on top never moves, dims or gets covered, so it stays scannable throughout. */}
@@ -252,7 +258,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
                       {w.renewPlan}
                     </Link>
                   )}
-                  {error === "no_card" && (
+                  {error === "no_card" && !abonili && (
                     <Link href="/loyalty" className="mt-4 inline-block rounded-2xl bg-brand-600 px-5 py-3 font-semibold text-white">
                       {w.createCard}
                     </Link>
@@ -278,11 +284,11 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
         <div className="mt-[3vh] flex h-14 items-center">
           {latest ? (
             <div key={latest.id} className="flex animate-pop items-center gap-2 rounded-full bg-success-500 px-7 py-3.5 text-xl font-extrabold text-white shadow-[0_12px_30px_-8px_rgb(34_197_94/0.5)]" role="status" aria-live="polite">
-              <Check className="size-6" strokeWidth={3} /> {w.stampFlash} ·{" "}
+              <Check className="size-6" strokeWidth={3} /> {abonili ? w.checkinFlash : w.stampFlash} ·{" "}
               <span dir="ltr">#{latest.code}</span>
             </div>
           ) : (
-            <div className="rounded-full bg-success-500 px-8 py-3 text-xl font-extrabold tracking-wide text-white">{w.stampFlash}</div>
+            <div className="rounded-full bg-success-500 px-8 py-3 text-xl font-extrabold tracking-wide text-white">{abonili ? w.checkinFlash : w.stampFlash}</div>
           )}
         </div>
 

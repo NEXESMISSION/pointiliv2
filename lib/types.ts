@@ -198,3 +198,8 @@ export type MembershipRow = {
 
 export type MembershipsPage = { total: number; counts: Record<string, number> | null; items: MembershipRow[] };
 export type MembershipDetail = { ok: true; membership: MembershipRow; history: { at: string }[] };
+
+/** membership_checkin() / scan_token(): the door's answer, not a card's. */
+export type CheckinResult =
+  | { ok: true; kind: "checkin"; membership: MembershipRow; business: { name: string; logo_url: string | null } }
+  | { ok: false; error: string; membership?: MembershipRow; business?: { name: string } };
