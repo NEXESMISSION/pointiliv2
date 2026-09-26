@@ -366,8 +366,8 @@
       dash: (d) => ctx.setLineDash(d),
       rect: (x, y, w, h, color) => { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(x * W, y * H, w * W, h * H); },
       band: (x, y, w, h, text) => { ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(x * W, y * H, w * W, h * H); ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.font = "500 26px Inter, sans-serif"; ctx.textAlign = "left"; ctx.fillText(text, x * W + 24, y * H + h * H / 2 + 9); },
-      pill: (x, y, w, h) => { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.beginPath(); ctx.roundRect(x * W - w * W / 2, y * H - h * H / 2, w * W, h * H, 40); ctx.fill(); },
-      dot: (x, y, r, text) => { ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.beginPath(); ctx.arc(x * W, y * H, r * W, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.font = "500 22px Inter, sans-serif"; ctx.textAlign = "center"; ctx.fillText(text, x * W, y * H + r * W + 26); },
+      pill: (x, y, w, h) => { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.strokeStyle = "rgba(0,0,0,0.4)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(x * W - w * W / 2, y * H - h * H / 2, w * W, h * H, 40); ctx.fill(); ctx.stroke(); },
+      dot: (x, y, r, text) => { ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x * W, y * H, r * W, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.font = "500 22px Inter, sans-serif"; ctx.textAlign = "center"; ctx.fillText(text, x * W, y * H + r * W + 26); },
       tag: (x, y, text) => { ctx.fillStyle = C.teal; ctx.font = "500 24px Inter, sans-serif"; ctx.textAlign = "left"; ctx.fillText(text, x * W + 10, y * H + 32); },
     };
     draw(g); ctx.setLineDash([]);
