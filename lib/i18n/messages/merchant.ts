@@ -63,6 +63,7 @@ export const merchant = ns({
     },
     lobby: {
       title: "Vos deux systèmes",
+      switch: "Changer de système",
       loyalty: "Fidélité",
       loyaltyText: "Des tampons, un cadeau quand la carte est pleine",
       loyaltyAlt: "Une carte à tampons dans un téléphone",
@@ -363,6 +364,7 @@ export const merchant = ns({
     },
     lobby: {
       title: "عندك زوز systèmes",
+      switch: "بدّل الsystème",
       loyalty: "الفيدليتي",
       loyaltyText: "تامبونات، و كادو كي تعمّر الكارط",
       loyaltyAlt: "كارط تامبونات في تليفون",

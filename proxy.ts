@@ -11,6 +11,7 @@ import {
   splitLocalePath,
   type Locale,
 } from "@/lib/i18n/config";
+import { SYSTEM_COOKIE, SYSTEM_HEADER, isSystem, systemForPath } from "@/lib/systems";
 
 /**
  * Two jobs before the page renders:
@@ -39,12 +40,20 @@ export async function proxy(request: NextRequest) {
     return redirect;
   }
 
+  /* Which of the two systems this page belongs to. A shared page (the QR, the
+     settings) says nothing, and then the last door wins — otherwise the menu
+     would rearrange itself under the owner halfway through a task. */
+  const cookieSystem = request.cookies.get(SYSTEM_COOKIE)?.value;
+  const system = systemForPath(pathname) ?? (isSystem(cookieSystem) ? cookieSystem : null);
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(LOCALE_HEADER, locale);
+  if (system) requestHeaders.set(SYSTEM_HEADER, system);
 
   const fresh = () => {
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     if (cookieLocale !== locale) res.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: LOCALE_MAX_AGE, sameSite: "lax" });
+    if (system && cookieSystem !== system) res.cookies.set(SYSTEM_COOKIE, system, { path: "/", maxAge: LOCALE_MAX_AGE, sameSite: "lax" });
     return res;
   };
 

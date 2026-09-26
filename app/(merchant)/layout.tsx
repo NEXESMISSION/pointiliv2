@@ -3,14 +3,14 @@ import { logout } from "@/app/actions/auth";
 import { MerchantNav, MerchantSideNav } from "@/components/merchant/MerchantNav";
 import { BusinessAvatar } from "@/components/CardIcon";
 import { Logo } from "@/components/Logo";
-import { requireMerchant } from "@/lib/session";
+import { currentSystem, requireMerchant } from "@/lib/session";
 import { formatLongDate } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 
 export const metadata = { robots: { index: false, follow: false } };
 
 export default async function MerchantLayout({ children }: { children: React.ReactNode }) {
-  const [ctx, { t, locale, count, fill }] = await Promise.all([requireMerchant(), getI18n()]);
+  const [ctx, { t, locale, count, fill }, system] = await Promise.all([requireMerchant(), getI18n(), currentSystem()]);
   const sub = ctx.subscription;
   const suspended = ctx.business.status === "suspended";
 
@@ -18,6 +18,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
     <div className="flex h-dvh flex-col overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible print:bg-white">
       <MerchantSideNav
         systems={ctx.systems}
+        system={system}
         header={
           <div className="space-y-5">
             <Logo size={22} className="px-1" />
@@ -57,7 +58,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
           <div className="app-center mx-auto w-full max-w-3xl px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] bottom-nav-space lg:px-8 lg:pb-8 lg:pt-6 print:!p-0">{children}</div>
         </main>
       </div>
-      <MerchantNav systems={ctx.systems} />
+      <MerchantNav systems={ctx.systems} system={system} />
     </div>
   );
 }

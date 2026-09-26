@@ -1,7 +1,9 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { cookies, headers } from "next/headers";
 import { createClient, hasSessionCookie } from "@/lib/supabase/server";
+import { SYSTEM_COOKIE, SYSTEM_HEADER, isSystem, type SystemKey } from "@/lib/systems";
 import type { Role, SessionContext } from "@/lib/types";
 
 const TRANSIENT = /fetch failed|network|ECONNRESET|ETIMEDOUT|timeout|502|503|504/i;
@@ -40,6 +42,19 @@ export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card" |
   }
   return "/customer";
 }
+
+/**
+ * The door this render is behind. proxy.ts puts it on the request, so the very
+ * first page of a system already knows — the cookie it also sets only matters
+ * later, on the pages that serve both.
+ */
+export const currentSystem = cache(async (): Promise<SystemKey | null> => {
+  const h = await headers();
+  const fromHeader = h.get(SYSTEM_HEADER);
+  if (isSystem(fromHeader)) return fromHeader;
+  const c = (await cookies()).get(SYSTEM_COOKIE)?.value;
+  return isSystem(c) ? c : null;
+});
 
 export async function requireUser(next = "/customer"): Promise<SessionContext> {
   const ctx = await getContext();
