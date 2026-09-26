@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="crm.css" />
+<link rel="stylesheet" href="crm.css?v=2" />
 <style>
   /* كل رقم هوني محسوب من التحكايات روحهم. حتّى رقم ما هو مكتوب بيد. */
   .funnel { display: grid; gap: 7px; margin-bottom: 8px; }
@@ -29,7 +29,7 @@
   .says p { margin: 0 0 8px; font-size: 14px; color: var(--ink); }
   .says p:last-child { margin: 0; }
 
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); gap: 10px; }
   .st { background: var(--sheet); border: 1px solid var(--line); border-radius: 13px; padding: 13px 15px; }
   .st b { display: block; font: 700 22px Inter, sans-serif; color: var(--ink); }
   .st span { font-size: 12.5px; color: var(--muted); }
@@ -65,7 +65,7 @@
 </div>
 
 <script src="data.js"></script>
-<script src="crm.js"></script>
+<script src="crm.js?v=2"></script>
 <script>
 "use strict";
 const rows = all();

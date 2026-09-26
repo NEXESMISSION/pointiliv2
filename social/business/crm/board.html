@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="crm.css" />
+<link rel="stylesheet" href="crm.css?v=2" />
 <style>
   /* اللوحة ما فيها كان الناس اللي كتبو بيدهم. اللي دق على البوتون
      وسكت ما عندوش بلاصة هوني — عندو صفحتو. */
@@ -78,8 +78,8 @@
 <nav class="nav">
   <span class="brand">Pointili CRM</span>
   <span class="links"></span>
-  <span class="end">
-    <input type="text" id="q" class="ghost" style="width:200px;font-weight:400" placeholder="لوّج على اسم، لوكال، زون…" />
+  <span class="end" style="flex-wrap:wrap;min-width:0">
+    <input type="text" id="q" class="ghost" style="flex:1 1 150px;min-width:0;max-width:220px;font-weight:400" placeholder="لوّج على اسم، لوكال، زون…" />
     <button type="button" class="ghost" id="hot" aria-pressed="false">السخان برك</button>
   </span>
 </nav>
@@ -90,7 +90,7 @@
 </main>
 
 <script src="data.js"></script>
-<script src="crm.js"></script>
+<script src="crm.js?v=2"></script>
 <script>
 "use strict";
 let selected = new URLSearchParams(location.search).get("id");
