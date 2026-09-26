@@ -74,8 +74,9 @@ $s.Save()
   console.log(`start menu  ${START}`);
   console.log(`window      ${path.basename(browser)} in app mode, own profile, own icon`);
   if (!process.argv.includes("--no-open")) {
-    // open it through the shortcut, so the taskbar shows the same icon it will show from now on
-    spawn("powershell.exe", ["-NoProfile", "-Command", `Start-Process -FilePath ${q(LINK)}`], { detached: true, stdio: "ignore" }).unref();
+    // open it the way the shortcut does (same browser, same arguments, same profile)
+    const argList = [`--app=${url}`, "--window-size=1500,940", `--user-data-dir=${path.join(APP, "profile")}`, "--no-first-run", "--no-default-browser-check"];
+    await run("powershell.exe", ["-NoProfile", "-Command", `Start-Process -FilePath ${q(browser.replace(/\//g, "\\"))} -ArgumentList @(${argList.map((a) => q(a)).join(", ")})`]);
     console.log(`opened      the app window`);
   }
   console.log(`\nTo pin it: while the window is open, right-click its icon in the taskbar → Pin to taskbar.`);
