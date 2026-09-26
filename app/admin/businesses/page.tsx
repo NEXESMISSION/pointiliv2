@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Store, Users } from "lucide-react";
+import { ChevronRight, Plus, Store, Users } from "lucide-react";
 import { BusinessStatusBadge, SearchForm, categoryIcon, qs, type AdminBusinessRow } from "@/components/admin/shared";
 import { BusinessAvatar } from "@/components/CardIcon";
 import { Segmented, TopBar } from "@/components/nav/TopBar";
@@ -36,6 +36,15 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
         title={w.title}
         subtitle={q || filter !== "all" ? count(w.found, items.length) : fill(w.inTotal, { n: formatNumber(items.length, locale) })}
         large
+        action={
+          <Link
+            href="/admin/businesses/new"
+            aria-label={t.admin.newBusiness.title}
+            className="grid size-9 place-items-center rounded-xl bg-brand-600 text-white shadow-brand transition active:scale-95"
+          >
+            <Plus className="size-5" />
+          </Link>
+        }
       />
 
       <SearchForm action="/admin/businesses" q={q} placeholder={w.searchPlaceholder} hidden={{ filter: filter === "all" ? undefined : filter }} />

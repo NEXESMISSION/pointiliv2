@@ -62,6 +62,9 @@ export type AdminBusinessRow = {
   owner: { name: string | null; phone: string | null; email: string | null };
   customers: number;
   stamps: number;
+  /** which systems this shop is allowed to run */
+  loyalty?: boolean;
+  memberships?: boolean;
   subscription: SubscriptionState;
 };
 
@@ -89,6 +92,7 @@ export type AdminBusinessDetail = {
   card: { name: string; stamps_required: number; active: boolean; cooldown_minutes: number } | null;
   rewards: { name: string; stamps_required: number; active: boolean }[];
   stats: { customers: number; stamps: number; stamps_today: number; redemptions: number; last_stamp_at: string | null };
+  systems: { loyalty: boolean; memberships: boolean; members: number; plans: number } | null;
   subscription: SubscriptionState;
   subscriptions: { id: string; plan: string; price: number | null; starts_at: string; expires_at: string; status: string }[];
   payments: AdminPaymentLite[];
