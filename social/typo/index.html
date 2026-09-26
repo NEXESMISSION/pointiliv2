@@ -40,7 +40,7 @@
   .align .btn.icon { width: 30px; height: 28px; color: var(--body); }
   .align .btn.icon:hover { color: var(--violet); border-color: #CFC4F5; background: #F5F1FF; }
   select.btn { padding-inline-end: 6px; }
-  main { display: grid; grid-template-columns: 372px 1fr 300px; min-height: 0; }
+  main { display: grid; grid-template-columns: 372px 1fr 300px 236px; min-height: 0; }
   .left { background: var(--panel); border-inline-end: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
   .left .top { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
   .left .groups { display: flex; gap: 4px; padding: 8px 12px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: none; }
@@ -75,9 +75,11 @@
   .stage .area.space { cursor: grab; }
   .area canvas { display: block; }
   .stage-bar { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px; z-index: 2; }
-  .right { background: var(--panel); border-inline-start: 1px solid var(--line); display: grid; grid-template-rows: 1fr auto; min-height: 0; }
-  .panel { padding: 12px; overflow-y: auto; min-height: 0; }
-  .layersbox { border-top: 1px solid var(--line); max-height: 36vh; overflow-y: auto; padding: 10px 12px; }
+  .right { background: var(--panel); border-inline-start: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .panel { padding: 12px; overflow-y: auto; min-height: 0; flex: 1; }
+  .layersCol { background: var(--panel); border-inline-start: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .layersHead { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 12px 6px; }
+  .layersHead h3 { margin: 0; }
   h3 { margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .block { padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
   .block:last-child { border-bottom: 0; }
@@ -99,16 +101,29 @@
   .line-item input, .line-item select { height: 28px; }
   details.lines { margin-top: 8px; }
   details.lines summary { cursor: pointer; font-size: 11.5px; color: var(--muted); user-select: none; }
-  .layers { list-style: none; margin: 0; padding: 0; }
-  .layers li { display: flex; align-items: center; gap: 3px; padding: 2px 4px; border-radius: 6px; cursor: pointer; }
+  .layers { list-style: none; margin: 0; padding: 0 8px 12px; overflow-y: auto; flex: 1; min-height: 0; }
+  .layers li { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 4px 0 2px; border-radius: 6px; cursor: pointer; user-select: none; }
   .layers li:hover { background: var(--field); }
-  .layers li.on { background: #EFEFEF; }
-  .layers li .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; direction: rtl; text-align: start; }
+  .layers li.on { background: #EFE9FF; }
+  .layers li.child { height: 26px; padding-inline-start: 24px; }
+  .layers li.child .nm { font-size: 11.5px; color: var(--body); }
+  .layers li.hidden .nm, .layers li.hidden .t { opacity: .4; }
+  .layers li .chev { width: 16px; height: 16px; flex: 0 0 16px; display: grid; place-items: center; color: var(--muted); font-size: 10px; border-radius: 4px; transition: transform .12s; }
+  .layers li .chev.open { transform: rotate(90deg); }
+  .layers li .chev:hover { background: var(--line); color: var(--ink); }
+  .layers li .t { width: 18px; height: 18px; flex: 0 0 18px; display: grid; place-items: center; font-size: 10px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+  .layers li.on .t { border-color: #CFC4F5; color: var(--violet); }
+  .layers li .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; direction: rtl; text-align: start; }
   .layers li .nm.ltr { direction: ltr; }
-  .layers li .t { font-size: 10px; color: var(--muted); flex: 0 0 18px; }
-  .layers li button { border: 0; background: none; width: 20px; height: 20px; border-radius: 5px; color: var(--muted); font-size: 11px; padding: 0; }
-  .layers li button:hover { background: var(--line); color: var(--ink); }
-  .layers li button.off { opacity: .35; }
+  .layers li .ctl { display: flex; gap: 1px; }
+  .layers li .ctl button { border: 0; background: none; width: 22px; height: 22px; border-radius: 5px; color: var(--muted); padding: 0; display: grid; place-items: center; visibility: hidden; }
+  .layers li:hover .ctl button, .layers li.on .ctl button, .layers li .ctl button.keep { visibility: visible; }
+  .layers li .ctl button:hover { background: var(--line); color: var(--ink); }
+  .layers li .ctl button.keep { color: var(--ink); }
+  .layers li.dragging { opacity: .45; }
+  .layers li.over-top { box-shadow: inset 0 2px 0 var(--violet); }
+  .layers li.over-bottom { box-shadow: inset 0 -2px 0 var(--violet); }
+  .layers li.empty { height: auto; padding: 8px 6px; color: var(--muted); font-size: 12px; cursor: default; white-space: normal; line-height: 1.4; }
   .hint { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
   .warn { color: #9A5B00; font-size: 11.5px; }
   .empty { color: var(--muted); font-size: 12.5px; padding: 20px 8px; text-align: center; }
@@ -130,7 +145,7 @@
   .preview .stagep { display: grid; place-items: center; overflow: auto; padding: 20px; }
   .preview .shot { position: relative; background: #000; box-shadow: 0 30px 80px -30px rgba(0,0,0,.9); }
   .preview .shot img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  @media (max-width: 1000px) { main { grid-template-columns: 1fr; grid-template-rows: 40vh 1fr auto; } }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; grid-template-rows: 40vh 1fr auto auto; } }
 </style>
 </head>
 <body>
@@ -233,7 +248,10 @@
 
     <aside class="right">
       <div class="panel" id="props"><div class="empty">Select something on the canvas, or click a card.</div></div>
-      <div class="layersbox"><h3>Layers</h3><ul class="layers" id="layers"></ul></div>
+    </aside>
+    <aside class="layersCol">
+      <div class="layersHead"><h3>Layers</h3><span class="hint" id="layersCount"></span></div>
+      <ul class="layers" id="layers"></ul>
     </aside>
   </main>
 </div>
@@ -910,7 +928,7 @@
   function markCards() { cards.forEach((c, id) => c.card.setAttribute("aria-pressed", String(mode === "designs" && id === currentStyle))); }
 
   // drop a card on the canvas: it lands where the cursor is
-  area.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; area.classList.add("drop"); });
+  area.addEventListener("dragover", (e) => { if ([...e.dataTransfer.types].includes("application/x-typo-layer")) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; area.classList.add("drop"); });
   area.addEventListener("dragleave", () => area.classList.remove("drop"));
   area.addEventListener("drop", (e) => {
     e.preventDefault(); area.classList.remove("drop");
@@ -1094,6 +1112,11 @@
     else if (meta && e.key.toLowerCase() === "d") { e.preventDefault(); duplicate(); }
     else if (meta && e.key.toLowerCase() === "c") { e.preventDefault(); copySelection(); }
     else if (meta && e.key.toLowerCase() === "x") { e.preventDefault(); copySelection(true); }
+    else if (meta && (e.key === "]" || e.key === "[")) {
+      e.preventDefault(); const up = e.key === "]";
+      canvas.getActiveObjects().forEach((x) => { if (e.shiftKey) { up ? canvas.bringToFront(x) : canvas.sendToBack(x); } else { up ? canvas.bringForward(x) : canvas.sendBackwards(x); } });
+      canvas.requestRenderAll(); renderLayers(); snapshot();
+    }
     else if (e.key.startsWith("Arrow")) {
       e.preventDefault(); const d = e.shiftKey ? 10 : 1;
       if (a.kind === "text") captureFollowers(a);
@@ -1119,24 +1142,77 @@
 
   // ── layers ──────────────────────────────────────────────────────────────
   const label = (o) => o.kind === "text" ? o.text.replace(/\n/g, " ") : (o.name || o.type);
+  // ── layers: a word and what hangs on it is one row; open it to see the pieces ──────────
+  const openGroups = new Set();
+  const KIND_GLYPH = { text: "T", paper: "▭", brush: "~", shape: "◆", image: "▣" };
+  const pieceName = (o) => (o.kind === "paper" ? "Paper" : o.kind === "brush" ? (o.name || "Accent") : label(o));
+  function layerTree() {
+    const objs = canvas.getObjects(); const idx = new Map(objs.map((o, i) => [o, i]));
+    const groups = objs.filter((o) => o.kind === "text").map((t) => ({ group: true, lead: t, members: [t, ...objs.filter((o) => o.forText === t.id)] }));
+    const grouped = new Set(groups.flatMap((g) => g.members));
+    const items = [...groups, ...objs.filter((o) => !grouped.has(o)).map((o) => ({ group: false, lead: o, members: [o] }))];
+    items.forEach((it) => { it.top = Math.max(...it.members.map((m) => idx.get(m))); });
+    return items.sort((a, b) => b.top - a.top);   // top-most first, the way the stack reads
+  }
+  /** Moves a row (all its members, in their own order) above or below another row in the stack. */
+  function reorderLayers(from, to, above) {
+    const objs = canvas.getObjects().slice(); const moving = new Set(from.members);
+    const rest = objs.filter((o) => !moving.has(o)); const block = objs.filter((o) => moving.has(o));
+    const pos = to.members.map((m) => rest.indexOf(m)); const at = above ? Math.max(...pos) + 1 : Math.min(...pos);
+    rest.splice(at, 0, ...block); rest.forEach((o, i) => canvas.moveTo(o, i));
+    canvas.requestRenderAll(); renderLayers(); snapshot();
+  }
+  function pickLayer(o, e) {
+    if (o.locked) return;
+    if (e && (e.ctrlKey || e.metaKey || e.shiftKey)) {   // add to, or take out of, the selection
+      const cur = canvas.getActiveObjects(); const next = cur.includes(o) ? cur.filter((x) => x !== o) : [...cur, o];
+      canvas.discardActiveObject(); if (next.length === 1) canvas.setActiveObject(next[0]); else if (next.length > 1) canvas.setActiveObject(new fabric.ActiveSelection(next, { canvas }));
+    } else canvas.setActiveObject(o);
+    canvas.requestRenderAll(); renderProps();
+  }
+  const setVisible = (members, on) => { members.forEach((m) => m.set({ visible: on })); canvas.requestRenderAll(); renderLayers(); snapshot(); };
+  const setLocked = (members, on) => { members.forEach((m) => { m.locked = on; m.set({ selectable: !on, evented: !on }); }); if (on) canvas.discardActiveObject(); canvas.requestRenderAll(); renderProps(); };
+  const removeMembers = (members) => { canvas.discardActiveObject(); members.forEach((m) => canvas.remove(m)); canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot(); };
+  const LAYER_ICONS = {
+    eye: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>',
+    eyeOff: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 2l12 12M6.6 6.6a2 2 0 0 0 2.8 2.8M4.7 4.7C2.6 6 1.5 8 1.5 8s2.5 4.5 6.5 4.5c1.2 0 2.2-.4 3.1-.9M6.9 3.7c.4-.1.7-.2 1.1-.2 4 0 6.5 4.5 6.5 4.5s-.6 1.1-1.7 2.2"/></svg>',
+    lock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>',
+    unlock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 5.8-1"/></svg>',
+    x: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+  };
   function renderLayers() {
     const ul = $("layers"); ul.innerHTML = "";
-    const objs = canvas.getObjects().slice().reverse(); const active = canvas.getActiveObject();
-    if (!objs.length) { ul.innerHTML = '<li class="empty">Nothing yet.</li>'; return; }
-    objs.forEach((o) => {
-      const li = document.createElement("li"); if (o === active) li.classList.add("on");
-      const t = document.createElement("span"); t.className = "t"; t.textContent = { text: "T", paper: "▭", brush: "〰", shape: "◆", image: "🖼" }[o.kind] || "◆";
-      const nm = document.createElement("span"); nm.className = "nm" + (o.kind === "text" ? "" : " ltr"); nm.textContent = label(o); nm.onclick = () => { if (o.locked) return; canvas.setActiveObject(o); canvas.requestRenderAll(); renderLayers(); renderProps(); };
-      const mk = (txt, title, fn, off) => { const b = document.createElement("button"); b.textContent = txt; b.title = title; if (off) b.classList.add("off"); b.onclick = (e) => { e.stopPropagation(); fn(); }; return b; };
-      li.append(t, nm,
-        mk("▲", "Bring forward", () => { canvas.bringForward(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }),
-        mk("▼", "Send backward", () => { canvas.sendBackwards(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }),
-        mk("⧉", "Duplicate", () => duplicate(o)),
-        mk("👁", o.visible ? "Hide" : "Show", () => { o.set({ visible: !o.visible }); if (o.kind === "text") syncPapersOf(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }, !o.visible),
-        mk("🔒", o.locked ? "Unlock" : "Lock", () => { o.locked = !o.locked; o.set({ selectable: !o.locked, evented: !o.locked }); canvas.discardActiveObject(); canvas.requestRenderAll(); renderLayers(); }, !o.locked),
-        mk("✕", "Delete", () => { if (o.kind === "text") papersOf(o).forEach((p) => canvas.remove(p)); canvas.remove(o); canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot(); }),
-      );
-      ul.appendChild(li);
+    const tree = layerTree(); const selected = new Set(canvas.getActiveObjects());
+    $("layersCount").textContent = tree.length ? `${tree.length} ${tree.length === 1 ? "layer" : "layers"}` : "";
+    if (!tree.length) { ul.innerHTML = '<li class="empty">Nothing yet. Click a card, or paste a picture or a sentence.</li>'; return; }
+    tree.forEach((it) => { if (it.group && it.members.some((m, i) => i > 0 && selected.has(m))) openGroups.add(it.lead.id); });   // a piece picked on the canvas opens its word
+    const ctl = (glyph, title, fn, keep) => { const b = document.createElement("button"); b.innerHTML = glyph; b.title = title; if (keep) b.classList.add("keep"); b.onclick = (e) => { e.stopPropagation(); fn(); }; return b; };
+    const row = (o, members, it, child) => {
+      const hidden = members.every((m) => !m.visible), locked = members.every((m) => m.locked);
+      const li = document.createElement("li"); li.className = (child ? "child" : "") + (selected.has(o) ? " on" : "") + (hidden ? " hidden" : "");
+      const chev = document.createElement("span"); chev.className = "chev";
+      if (it.group && !child && it.members.length > 1) { chev.textContent = "▸"; chev.title = "Pieces"; if (openGroups.has(o.id)) chev.classList.add("open"); chev.onclick = (e) => { e.stopPropagation(); openGroups.has(o.id) ? openGroups.delete(o.id) : openGroups.add(o.id); renderLayers(); }; }
+      const t = document.createElement("span"); t.className = "t"; t.textContent = KIND_GLYPH[o.kind] || "◆";
+      const nm = document.createElement("span"); nm.className = "nm" + (o.kind === "text" ? "" : " ltr"); nm.textContent = child ? pieceName(o) : label(o); nm.title = nm.textContent;
+      const c = document.createElement("span"); c.className = "ctl";
+      c.append(ctl(hidden ? LAYER_ICONS.eyeOff : LAYER_ICONS.eye, hidden ? "Show" : "Hide", () => setVisible(members, hidden), hidden),
+        ctl(locked ? LAYER_ICONS.lock : LAYER_ICONS.unlock, locked ? "Unlock" : "Lock", () => setLocked(members, !locked), locked),
+        ctl(LAYER_ICONS.x, "Delete", () => removeMembers(members)));
+      li.append(chev, t, nm, c); li.onclick = (e) => pickLayer(o, e);
+      if (!child) {   // rows are dragged to reorder the stack; a word takes its pieces along
+        li.draggable = true;
+        li.ondragstart = (e) => { e.dataTransfer.setData("application/x-typo-layer", String(tree.indexOf(it))); e.dataTransfer.effectAllowed = "move"; li.classList.add("dragging"); };
+        li.ondragend = () => li.classList.remove("dragging");
+        li.ondragover = (e) => { if (![...e.dataTransfer.types].includes("application/x-typo-layer")) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; const r = li.getBoundingClientRect(); const above = e.clientY < r.top + r.height / 2; li.classList.toggle("over-top", above); li.classList.toggle("over-bottom", !above); };
+        li.ondragleave = () => li.classList.remove("over-top", "over-bottom");
+        li.ondrop = (e) => { e.preventDefault(); e.stopPropagation(); const above = li.classList.contains("over-top"); li.classList.remove("over-top", "over-bottom"); const from = tree[Number(e.dataTransfer.getData("application/x-typo-layer"))]; if (from && from !== it) reorderLayers(from, it, above); };
+      }
+      return li;
+    };
+    const order = canvas.getObjects();
+    tree.forEach((it) => {
+      ul.append(row(it.lead, it.members, it, false));
+      if (it.group && openGroups.has(it.lead.id)) it.members.slice(1).sort((a, b) => order.indexOf(b) - order.indexOf(a)).forEach((m) => ul.append(row(m, [m], it, true)));
     });
   }
 
@@ -1170,7 +1246,7 @@
     const o = canvas.getActiveObject();
     // align + copy/duplicate/delete sit at the top, where the eye goes; the shortcut hint at the foot
     const actions = () => { const w = document.createElement("div"); w.className = "actions"; w.append(alignBar(), grid("row", btn("Copy", () => copySelection()), btn("Duplicate", () => duplicate()), btn("Delete", removeActive))); return w; };
-    const shortcuts = () => { const h = document.createElement("p"); h.className = "hint"; h.textContent = "Ctrl+C / Ctrl+V copy and paste (a picture or a sentence from anywhere pastes too) · Ctrl+D duplicate · Alt+drag moves without snapping · arrows nudge, Shift for 10."; return h; };
+    const shortcuts = () => { const h = document.createElement("p"); h.className = "hint"; h.textContent = "Ctrl+C / Ctrl+V copy and paste (a picture or a sentence from anywhere pastes too) · Ctrl+D duplicate · Alt+drag moves without snapping · arrows nudge, Shift for 10 · Ctrl+] / Ctrl+[ forward / backward · drag rows in Layers to reorder, Ctrl+click to pick several."; return h; };
     if (!o || o.type === "activeSelection") { box.innerHTML = `<div class="empty">${o ? "Several objects. Move, scale, rotate, copy or delete them together." : "Select something on the canvas, or click a card."}</div>`; if (o) box.append(actions(), shortcuts()); renderLayers(); return; }
     const apply = (patch, after) => { if (o.kind === "text") captureFollowers(o); o.set(patch); o.setCoords(); if (o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } else if (o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; o.rotDelta = o.angle - t.angle; } } canvas.requestRenderAll(); after && after(); snapshotSoon(); };
     if (o.kind === "text") {
