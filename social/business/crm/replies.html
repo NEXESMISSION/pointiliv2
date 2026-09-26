@@ -163,13 +163,22 @@ const PACKS = [
 ];
 
 const $ = (id) => document.getElementById(id);
-const fill = (s) => s.replace(/\{name\}/g, ($("name").value.trim() || "").trim());
+/** With no name typed, drop the placeholder AND the comma that was propping
+    it up, so a line never reads "3slema , Pointili card". */
+const NAMED = /\{name\}/g;
+const NAME_COMMA = /\s*\{name\}\s*,\s*/g;
+const NAME_BARE = /\s*\{name\}\s*/g;
+function fill(s) {
+  const n = $("name").value.trim();
+  if (n) return s.replace(NAMED, n);
+  return s.replace(NAME_COMMA, " ").replace(NAME_BARE, " ").trim();
+}
 
 function draw() {
   const q = $("q").value.trim().toLowerCase();
   let n = 0;
   $("main").innerHTML = PACKS.map((p) => {
-      const hits = p.s.filter(([lab, txt]) => !q || (lab + " " + txt).toLowerCase().includes(q));
+      const hits = p.s.filter(([lab, txt]) => !q || (p.t + " " + p.hint + " " + lab + " " + txt).toLowerCase().includes(q));
       n += hits.length;
       if (!hits.length) return "";
       return `<section><h2>${p.t} <em>${p.hint}</em></h2><div class="grid">${hits
