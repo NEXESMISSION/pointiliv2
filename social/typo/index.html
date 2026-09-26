@@ -58,13 +58,12 @@
   .tools .sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
   .tools label { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
   .tools input[type="range"] { width: 70px; accent-color: var(--ink); }
-  .stage .area { display: grid; place-items: center; padding: 28px; min-height: 0; overflow: auto; }
-  .frame { position: relative; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 24px 60px -30px rgba(0,0,0,.35); background-color: #fff; background-image: linear-gradient(45deg, var(--checker) 25%, transparent 25%), linear-gradient(-45deg, var(--checker) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--checker) 75%), linear-gradient(-45deg, transparent 75%, var(--checker) 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0; }
-  .frame.drop { outline: 3px dashed var(--teal); outline-offset: -3px; }
-  .frame canvas { display: block; }
-  .safe { position: absolute; inset: 0; pointer-events: none; display: none; }
-  .safe.on { display: block; }
-  .safe > div { position: absolute; border: 1px dashed rgba(23,183,189,.9); left: 6%; right: 6%; top: 13%; bottom: 20%; border-radius: 6px; }
+  /* The workspace: the artboard floats in grey, the wheel zooms at the cursor, the middle button pans. */
+  .stage .area { position: relative; min-height: 0; overflow: hidden; background: #DCDCDC; }
+  .stage .area.drop { box-shadow: inset 0 0 0 3px var(--teal); }
+  .stage .area.panning { cursor: grabbing; }
+  .stage .area.space { cursor: grab; }
+  .area canvas { display: block; }
   .stage-bar { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px; z-index: 2; }
   .right { background: var(--panel); border-inline-start: 1px solid var(--line); display: grid; grid-template-rows: 1fr auto; min-height: 0; }
   .panel { padding: 12px; overflow-y: auto; min-height: 0; }
@@ -176,6 +175,7 @@
         <select class="btn sm" id="addMenu" style="width:auto">
           <option value="">+ Add…</option>
           <option value="text">Text</option>
+          <option value="image">Image / logo…</option>
           <option value="paper">Paper piece</option>
           <option value="chip">Chip</option>
           <option value="brush:underline">Brush underline</option>
@@ -189,20 +189,22 @@
           <option value="shape:circle">Disc</option>
         </select>
         <span class="sep"></span>
-        <button class="btn sm" id="btnSafe" aria-pressed="false">Safe area</button>
-        <select id="zoomSel" class="btn sm" style="width:auto"><option value="fit">Fit</option><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select>
+        <select id="overlaySel" class="btn sm" style="width:auto" title="Where the app's own buttons and captions will sit. Never exported.">
+          <option value="">Guides: none</option>
+          <option value="safe">Safe area</option>
+          <option value="tiktok">TikTok UI</option>
+          <option value="reels">Instagram Reels UI</option>
+          <option value="shorts">YouTube Shorts UI</option>
+        </select>
+        <select id="zoomSel" class="btn sm" style="width:auto"><option value="fit">Fit</option><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="2">200%</option></select>
         <button class="btn sm" id="btnSaveStyle" title="Keep this canvas as a card in the Mine group">Save as style</button>
       </div>
-      <div class="area" id="area">
-        <div class="frame" id="frame">
-          <canvas id="c"></canvas>
-          <div class="safe" id="safe"><div></div></div>
-        </div>
-      </div>
+      <div class="area" id="area"><canvas id="c"></canvas></div>
       <div class="stage-bar">
         <button class="btn sm" id="zoomOut">−</button>
         <button class="btn sm" id="zoomFit">Fit</button>
         <button class="btn sm" id="zoomIn">+</button>
+        <span class="hint" style="align-self:center;padding:0 6px" id="zoomLabel">100%</span>
       </div>
     </section>
 
@@ -219,6 +221,7 @@
 </div>
 <input type="file" id="loadFile" accept="application/json" hidden />
 <input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2" hidden />
+<input type="file" id="imgFile" accept="image/*" hidden />
 
 <script>
 (() => {
@@ -272,26 +275,58 @@
   const CUSTOM = ["id", "kind", "name", "role", "forText", "padX", "padY", "dx", "dy", "rotDelta", "deform", "seed", "radius", "brush", "locked", "selectable", "evented", "hasControls", "fromTemplate", "textShadow", "group"];
 
   // ── canvas ──────────────────────────────────────────────────────────────
-  let W = 1080, H = 1920, zoom = 1, fit = true;
-  const canvas = new fabric.Canvas("c", { preserveObjectStacking: true, backgroundColor: null, selectionColor: "rgba(23,183,189,.12)", selectionBorderColor: C.teal, selectionLineWidth: 1, stopContextMenu: true });
+  // The artboard is W×H at the world origin; the canvas element fills the
+  // workspace and a viewport transform does the zooming and panning, the way
+  // Figma does it. Nothing is ever resized or clipped: the wheel zooms at the
+  // cursor, the middle button (or space + drag) pans, Fit brings it back.
+  let W = 1080, H = 1920, exporting = false;
+  const zoom = () => canvas.getZoom();
+  const canvas = new fabric.Canvas("c", { preserveObjectStacking: true, backgroundColor: null, selectionColor: "rgba(23,183,189,.12)", selectionBorderColor: C.teal, selectionLineWidth: 1, stopContextMenu: true, fireMiddleClick: true });
   fabric.Object.prototype.set({ transparentCorners: false, cornerColor: "#111", cornerStrokeColor: "#fff", cornerSize: 9, cornerStyle: "circle", borderColor: C.teal, padding: 4, originX: "center", originY: "center", snapAngle: 15, snapThreshold: 3 });
   fabric.Object.prototype.toObject = ((orig) => function (extra) { return orig.call(this, CUSTOM.concat(extra || [])); })(fabric.Object.prototype.toObject);
+  const area = $("area");
+  const checker = (() => { const c = document.createElement("canvas"); c.width = c.height = 20; const x = c.getContext("2d"); x.fillStyle = "#FFFFFF"; x.fillRect(0, 0, 20, 20); x.fillStyle = "#E6E6E6"; x.fillRect(0, 0, 10, 10); x.fillRect(10, 10, 10, 10); return c; })();
 
-  function sizeCanvas(w, h) { W = w; H = h; canvas.setDimensions({ width: W, height: H }); layoutZoom(); }
-  function layoutZoom() {
-    const area = $("area");
-    if (fit) zoom = Math.min((area.clientWidth - 56) / W, (area.clientHeight - 56) / H, 1.5);
-    canvas.setDimensions({ width: `${Math.round(W * zoom)}px`, height: `${Math.round(H * zoom)}px` }, { cssOnly: true });
-    $("frame").style.width = `${Math.round(W * zoom)}px`; $("frame").style.height = `${Math.round(H * zoom)}px`;
-    canvas.calcOffset();
+  function resizeHost() { canvas.setDimensions({ width: area.clientWidth, height: area.clientHeight }); canvas.requestRenderAll(); }
+  function zoomFit() {
+    resizeHost();
+    const z = clamp(Math.min((area.clientWidth - 80) / W, (area.clientHeight - 80) / H), 0.02, 8);
+    canvas.setViewportTransform([z, 0, 0, z, (area.clientWidth - W * z) / 2, (area.clientHeight - H * z) / 2]);
+    zoomChanged();
   }
-  window.addEventListener("resize", layoutZoom);
-  $("zoomFit").onclick = () => { fit = true; $("zoomSel").value = "fit"; layoutZoom(); };
-  $("zoomIn").onclick = () => { fit = false; zoom = clamp(zoom * 1.2, 0.1, 3); layoutZoom(); };
-  $("zoomOut").onclick = () => { fit = false; zoom = clamp(zoom / 1.2, 0.1, 3); layoutZoom(); };
-  $("zoomSel").onchange = (e) => { if (e.target.value === "fit") fit = true; else { fit = false; zoom = Number(e.target.value); } layoutZoom(); };
-  $("area").addEventListener("wheel", (e) => { if (!e.ctrlKey) return; e.preventDefault(); fit = false; zoom = clamp(zoom * (e.deltaY < 0 ? 1.1 : 0.9), 0.1, 3); layoutZoom(); }, { passive: false });
-  $("btnSafe").onclick = () => { const on = $("btnSafe").getAttribute("aria-pressed") !== "true"; $("btnSafe").setAttribute("aria-pressed", String(on)); $("safe").classList.toggle("on", on); };
+  function zoomAt(point, z) { canvas.zoomToPoint(point, clamp(z, 0.02, 8)); zoomChanged(); }
+  function zoomCentered(z) { const v = canvas.viewportTransform; zoomAt(new fabric.Point(v[4] + W * zoom() / 2, v[5] + H * zoom() / 2), z); }
+  function zoomChanged() { $("zoomLabel").textContent = `${Math.round(zoom() * 100)}%`; canvas.requestRenderAll(); }
+  function sizeCanvas(w, h) { W = w; H = h; zoomFit(); }
+  window.addEventListener("resize", () => { resizeHost(); canvas.requestRenderAll(); });
+  $("zoomFit").onclick = () => { $("zoomSel").value = "fit"; zoomFit(); };
+  $("zoomIn").onclick = () => zoomCentered(zoom() * 1.2);
+  $("zoomOut").onclick = () => zoomCentered(zoom() / 1.2);
+  $("zoomSel").onchange = (e) => { if (e.target.value === "fit") zoomFit(); else zoomCentered(Number(e.target.value)); };
+  canvas.on("mouse:wheel", (opt) => {
+    const e = opt.e; e.preventDefault(); e.stopPropagation();
+    if (e.shiftKey) { canvas.relativePan(new fabric.Point(-e.deltaY, 0)); canvas.requestRenderAll(); return; }
+    const factor = e.ctrlKey ? 1.04 : 1.1; // trackpad pinch arrives as ctrl+wheel in small steps
+    zoomAt(new fabric.Point(e.offsetX, e.offsetY), zoom() * (e.deltaY < 0 ? factor : 1 / factor));
+  });
+  // panning: middle button, or hold space and drag
+  let panning = null, spaceDown = false;
+  area.addEventListener("mousedown", (e) => { if (e.button === 1) e.preventDefault(); });
+  area.addEventListener("auxclick", (e) => { if (e.button === 1) e.preventDefault(); });
+  document.addEventListener("keydown", (e) => { if (e.code === "Space" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !(canvas.getActiveObject() && canvas.getActiveObject().isEditing)) { if (!spaceDown) { spaceDown = true; canvas.selection = false; canvas.defaultCursor = "grab"; area.classList.add("space"); } e.preventDefault(); } });
+  document.addEventListener("keyup", (e) => { if (e.code === "Space") { spaceDown = false; canvas.selection = true; canvas.defaultCursor = "default"; area.classList.remove("space"); } });
+  canvas.on("mouse:down:before", (opt) => { const e = opt.e; if (e.button === 1 || (spaceDown && e.button === 0)) { panning = { x: e.clientX, y: e.clientY }; canvas.discardActiveObject(); canvas.selection = false; area.classList.add("panning"); } });
+  canvas.on("mouse:move", (opt) => { if (!panning) return; const e = opt.e; canvas.relativePan(new fabric.Point(e.clientX - panning.x, e.clientY - panning.y)); panning = { x: e.clientX, y: e.clientY }; });
+  canvas.on("mouse:up", () => { if (panning) { panning = null; canvas.selection = !spaceDown; area.classList.remove("panning"); canvas.setViewportTransform(canvas.viewportTransform); } });
+  // the workspace behind everything: grey, then the artboard on its checkerboard
+  canvas.on("before:render", ({ ctx }) => {
+    if (exporting) return;
+    const v = canvas.viewportTransform, z = zoom();
+    ctx.save(); ctx.fillStyle = "#DCDCDC"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.shadowColor = "rgba(0,0,0,0.35)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 12; ctx.fillStyle = "#fff"; ctx.fillRect(v[4], v[5], W * z, H * z);
+    ctx.shadowColor = "transparent"; ctx.fillStyle = ctx.createPattern(checker, "repeat"); ctx.fillRect(v[4], v[5], W * z, H * z);
+    ctx.restore();
+  });
   $("canvasSize").onchange = (e) => {
     let v = e.target.value;
     if (v === "custom") v = prompt("Width × height, in pixels", `${W}x${H}`) || `${W}x${H}`;
@@ -300,6 +335,44 @@
     if (![...e.target.options].some((o) => o.value === `${W}x${H}`)) { const o = document.createElement("option"); o.value = `${W}x${H}`; o.textContent = `${W} × ${H}`; e.target.insertBefore(o, e.target.lastElementChild); }
     e.target.value = `${W}x${H}`; snapshot(); galleryDirty();
   };
+
+  // ── guides: the platform's own chrome, drawn over the artboard, never exported ──
+  const OVERLAYS = {
+    safe: (g) => { g.dash([10, 8]); g.rect(0.06, 0.13, 0.88, 0.67, C.teal); g.tag(0.06, 0.13, "safe area"); },
+    tiktok: (g) => {
+      g.dash([]); g.band(0, 0, 1, 0.075, "top bar · Following · For You"); g.pill(0.5, 0.045, 0.34, 0.03);
+      [0.55, 0.63, 0.7, 0.77, 0.84].forEach((y, i) => g.dot(0.915, y, 0.04, i === 0 ? "avatar" : ["like", "comments", "bookmark", "share"][i - 1]));
+      g.dot(0.915, 0.92, 0.045, "sound");
+      g.band(0.04, 0.8, 0.7, 0.11, "@name · caption · #hashtags"); g.band(0, 0.935, 1, 0.065, "bottom bar");
+      g.rect(0.06, 0.11, 0.78, 0.66, C.teal); g.tag(0.06, 0.11, "keep the words here");
+    },
+    reels: (g) => {
+      g.dash([]); g.band(0, 0, 1, 0.07, "Reels · camera");
+      [0.6, 0.68, 0.76, 0.84].forEach((y, i) => g.dot(0.915, y, 0.04, ["like", "comments", "share", "more"][i]));
+      g.dot(0.915, 0.915, 0.035, "audio");
+      g.band(0.04, 0.79, 0.72, 0.12, "@name · caption · audio"); g.band(0, 0.93, 1, 0.07, "bottom bar");
+      g.rect(0.06, 0.1, 0.78, 0.66, C.teal); g.tag(0.06, 0.1, "keep the words here");
+    },
+    shorts: (g) => {
+      g.dash([]); g.band(0, 0, 1, 0.07, "Shorts · search · more");
+      [0.5, 0.58, 0.66, 0.74, 0.82].forEach((y, i) => g.dot(0.915, y, 0.04, ["like", "dislike", "comments", "share", "remix"][i]));
+      g.band(0.04, 0.83, 0.72, 0.09, "@name · title"); g.band(0, 0.925, 1, 0.075, "bottom bar");
+      g.rect(0.06, 0.1, 0.78, 0.7, C.teal); g.tag(0.06, 0.1, "keep the words here");
+    },
+  };
+  function drawOverlay(ctx, which) {
+    const draw = OVERLAYS[which]; if (!draw) return;
+    const g = {
+      dash: (d) => ctx.setLineDash(d),
+      rect: (x, y, w, h, color) => { ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(x * W, y * H, w * W, h * H); },
+      band: (x, y, w, h, text) => { ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(x * W, y * H, w * W, h * H); ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.font = "500 26px Inter, sans-serif"; ctx.textAlign = "left"; ctx.fillText(text, x * W + 24, y * H + h * H / 2 + 9); },
+      pill: (x, y, w, h) => { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.beginPath(); ctx.roundRect(x * W - w * W / 2, y * H - h * H / 2, w * W, h * H, 40); ctx.fill(); },
+      dot: (x, y, r, text) => { ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.beginPath(); ctx.arc(x * W, y * H, r * W, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,0.9)"; ctx.font = "500 22px Inter, sans-serif"; ctx.textAlign = "center"; ctx.fillText(text, x * W, y * H + r * W + 26); },
+      tag: (x, y, text) => { ctx.fillStyle = C.teal; ctx.font = "500 24px Inter, sans-serif"; ctx.textAlign = "left"; ctx.fillText(text, x * W + 10, y * H + 32); },
+    };
+    draw(g); ctx.setLineDash([]);
+  }
+  $("overlaySel").onchange = () => canvas.requestRenderAll();
 
   // ── fonts ───────────────────────────────────────────────────────────────
   const fontsReady = Promise.all(FONTS.flatMap((f) => f.weights.map((w) => document.fonts.load(`${w} 40px "${f.family}"`, "تحدد قداش").catch(() => null))));
@@ -400,8 +473,15 @@
     return new fabric.Path("M 0 40 L 300 40 M 260 10 L 300 40 L 260 70", Object.assign(base, { fill: null, stroke: C.teal, strokeWidth: 12, strokeLineCap: "round", strokeLineJoin: "round", name: "Arrow" }, o));
   }
   function addObject(o, select = true) { canvas.add(o); if (o.kind === "text") fitTextWidth(o); if (select) canvas.setActiveObject(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }
+  $("imgFile").onchange = (e) => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => fabric.Image.fromURL(rd.result, (img) => { img.set({ id: uid(), kind: "image", name: f.name.replace(/\.[^.]+$/, ""), left: W / 2, top: H / 2 }); img.scaleToWidth(Math.min(W * 0.45, img.width)); addObject(img); toast("Image added. Drag, scale, rotate; order it in Layers."); });
+    rd.readAsDataURL(f);
+  };
   $("addMenu").onchange = (e) => {
     const v = e.target.value; e.target.value = ""; if (!v) return;
+    if (v === "image") return $("imgFile").click();
     if (v === "text") addObject(makeText("نص جديد", { fontSize: 110 }));
     else if (v === "paper") { const p = makePaper("p1"); p.set({ scaleX: 4.6, scaleY: 1.6 }); addObject(p); }
     else if (v === "chip") { const p = makePaper("chipViolet"); p.set({ width: 460, height: 120 }); addObject(p); }
@@ -667,13 +747,12 @@
   function markCards() { cards.forEach((c, id) => c.card.setAttribute("aria-pressed", String(id === currentStyle))); }
 
   // drop a card on the canvas: the composition lands where the cursor is
-  const frame = $("frame");
-  frame.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; frame.classList.add("drop"); });
-  frame.addEventListener("dragleave", () => frame.classList.remove("drop"));
-  frame.addEventListener("drop", (e) => {
-    e.preventDefault(); frame.classList.remove("drop");
+  area.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; area.classList.add("drop"); });
+  area.addEventListener("dragleave", () => area.classList.remove("drop"));
+  area.addEventListener("drop", (e) => {
+    e.preventDefault(); area.classList.remove("drop");
     const id = e.dataTransfer.getData("text/plain"); if (!id) return;
-    const r = frame.getBoundingClientRect(); const at = { x: (e.clientX - r.left) / zoom, y: (e.clientY - r.top) / zoom };
+    const r = area.getBoundingClientRect(); const at = fabric.util.transformPoint(new fabric.Point(e.clientX - r.left, e.clientY - r.top), fabric.util.invertTransform(canvas.viewportTransform));
     const entry = STYLE_INDEX.get(id) || GROUPS.find((g) => g.id === "mine").styles.find((s) => s.id === id);
     if (entry && entry.data) return loadStyle(entry, at);
     build(id, Number($("shuffle").value), at);
@@ -693,7 +772,16 @@
     if (o.kind === "text") syncPapersOf(o);
     if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; } }
   });
-  canvas.on("after:render", () => { if (!guides.length) return; const ctx = canvas.getSelectionContext(); ctx.save(); ctx.strokeStyle = C.teal; ctx.lineWidth = 1 / zoom; ctx.setLineDash([6 / zoom, 4 / zoom]); guides.forEach((g) => { ctx.beginPath(); if (g.x != null) { ctx.moveTo(g.x, 0); ctx.lineTo(g.x, H); } else { ctx.moveTo(0, g.y); ctx.lineTo(W, g.y); } ctx.stroke(); }); ctx.restore(); });
+  canvas.on("after:render", () => {
+    if (exporting) return;
+    const which = $("overlaySel").value; if (!guides.length && !which) return;
+    const ctx = canvas.getSelectionContext(); const r = canvas.getRetinaScaling(); const z = zoom();
+    ctx.save(); ctx.setTransform(r, 0, 0, r, 0, 0); ctx.transform(...canvas.viewportTransform);
+    ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+    if (which) { ctx.globalAlpha = 0.9; drawOverlay(ctx, which); ctx.globalAlpha = 1; }
+    if (guides.length) { ctx.strokeStyle = C.teal; ctx.lineWidth = 1 / z; ctx.setLineDash([6 / z, 4 / z]); guides.forEach((g) => { ctx.beginPath(); if (g.x != null) { ctx.moveTo(g.x, 0); ctx.lineTo(g.x, H); } else { ctx.moveTo(0, g.y); ctx.lineTo(W, g.y); } ctx.stroke(); }); }
+    ctx.restore();
+  });
   canvas.on("object:scaling", (e) => { const o = e.target; if (o.kind === "text") syncPapersOf(o); if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.padX = clamp((o.getScaledWidth() - t.getScaledWidth()) / 2, -t.getScaledWidth() * 0.45, 400); o.padY = clamp((o.getScaledHeight() - t.getScaledHeight()) / 2, -t.getScaledHeight() * 0.45, 400); } } });
   canvas.on("object:rotating", (e) => { const o = e.target; if (e.e && e.e.shiftKey) o.set({ angle: Math.round(o.angle / 15) * 15 }); if (o.kind === "text") syncPapersOf(o); if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) o.rotDelta = o.angle - t.angle; } });
   canvas.on("object:modified", (e) => { guides = []; const o = e.target; if (o && o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } syncAllPapers(); canvas.requestRenderAll(); renderProps(); snapshot(); });
@@ -750,7 +838,7 @@
     if (!objs.length) { ul.innerHTML = '<li class="empty">Nothing yet.</li>'; return; }
     objs.forEach((o) => {
       const li = document.createElement("li"); if (o === active) li.classList.add("on");
-      const t = document.createElement("span"); t.className = "t"; t.textContent = { text: "T", paper: "▭", brush: "〰", shape: "◆" }[o.kind] || "◆";
+      const t = document.createElement("span"); t.className = "t"; t.textContent = { text: "T", paper: "▭", brush: "〰", shape: "◆", image: "🖼" }[o.kind] || "◆";
       const nm = document.createElement("span"); nm.className = "nm" + (o.kind === "text" ? "" : " ltr"); nm.textContent = label(o); nm.onclick = () => { if (o.locked) return; canvas.setActiveObject(o); canvas.requestRenderAll(); renderLayers(); renderProps(); };
       const mk = (txt, title, fn, off) => { const b = document.createElement("button"); b.textContent = txt; b.title = title; if (off) b.classList.add("off"); b.onclick = (e) => { e.stopPropagation(); fn(); }; return b; };
       li.append(t, nm,
@@ -831,6 +919,11 @@
         grid("grid2", field("Thickness", range(b.thickness, 2, 120, 1, (v) => regen({ thickness: v }))), field("Wobble", range(b.wobble, 0, 20, 0.5, (v) => regen({ wobble: v })))),
         grid("grid2", field("Width", num(Math.round(o.getScaledWidth()), 10, 3000, 1, (v) => { o.scaleToWidth(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })), field("Height", num(Math.round(o.getScaledHeight()), 4, 3000, 1, (v) => { o.scaleToHeight(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); }))),
         btn("Redraw", () => regen({ seed: Math.floor(Math.random() * 1e9) }))), transformBlock(o, apply));
+    } else if (o.kind === "image") {
+      box.append(block(o.name || "Image",
+        grid("grid2", field("Width", num(Math.round(o.getScaledWidth()), 2, 6000, 1, (v) => { o.scaleToWidth(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })), field("Height", num(Math.round(o.getScaledHeight()), 2, 6000, 1, (v) => { o.scaleToHeight(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); }))),
+        grid("row", btn("Fit width", () => { o.scaleToWidth(W); o.set({ left: W / 2 }); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); }), btn("Flip ↔", () => apply({ flipX: !o.flipX })), btn("Flip ↕", () => apply({ flipY: !o.flipY }))),
+        check("Soft shadow", !!o.shadow, (on) => apply({ shadow: on ? shadow(W) : null }))), transformBlock(o, apply));
     } else {
       const isLine = !!o.stroke && (o.fill == null || o.fill === "");
       box.append(block(o.name || o.type, isLine ? field("Stroke colour", color(o.stroke, (v) => apply({ stroke: v }))) : field("Fill", color(o.fill, (v) => apply({ fill: v }))),
@@ -856,10 +949,12 @@
 
   // ── export ──────────────────────────────────────────────────────────────
   function renderExport(scale) {
+    // the artboard only, at `scale` pixels per artboard pixel, whatever the viewport shows
     const bg = canvas.backgroundImage; const active = canvas.getActiveObject();
-    canvas.backgroundImage = null; canvas.discardActiveObject(); guides = []; canvas.renderAll();
-    const el = canvas.toCanvasElement(scale);
-    canvas.backgroundImage = bg; if (active) canvas.setActiveObject(active); canvas.renderAll(); return el;
+    canvas.backgroundImage = null; canvas.discardActiveObject(); guides = []; exporting = true; canvas.renderAll();
+    const v = canvas.viewportTransform, z = zoom();
+    const el = canvas.toCanvasElement(scale / z, { left: v[4], top: v[5], width: W * z, height: H * z });
+    exporting = false; canvas.backgroundImage = bg; if (active) canvas.setActiveObject(active); canvas.renderAll(); return el;
   }
   const blobOf = (el) => new Promise((r) => el.toBlob(r, "image/png"));
   const download = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
