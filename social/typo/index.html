@@ -35,6 +35,7 @@
   .alignHead .sw button { height: 20px; padding: 0 8px; font-size: 11px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; color: var(--muted); }
   .alignHead .sw button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
   .align { display: flex; gap: 3px; align-items: center; margin-bottom: 12px; }
+  .actions { padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
   .align .sep { width: 1px; height: 16px; background: var(--line); margin: 0 3px; }
   .align .btn.icon { width: 30px; height: 28px; color: var(--body); }
   .align .btn.icon:hover { color: var(--violet); border-color: #CFC4F5; background: #F5F1FF; }
@@ -1167,13 +1168,10 @@
   function renderProps() {
     const box = $("props"); box.innerHTML = "";
     const o = canvas.getActiveObject();
-    const actions = () => {
-      const w = document.createElement("div");
-      w.append(alignBar(), grid("row", btn("Copy", () => copySelection()), btn("Duplicate", () => duplicate()), btn("Delete", removeActive)));
-      const h = document.createElement("p"); h.className = "hint"; h.textContent = "Ctrl+C / Ctrl+V copy and paste (a picture or a sentence from anywhere pastes too) · Ctrl+D duplicate · Alt+drag moves without snapping · arrows nudge, Shift for 10.";
-      w.append(h); return w;
-    };
-    if (!o || o.type === "activeSelection") { box.innerHTML = `<div class="empty">${o ? "Several objects. Move, scale, rotate, copy or delete them together." : "Select something on the canvas, or click a card."}</div>`; if (o) box.append(actions()); renderLayers(); return; }
+    // align + copy/duplicate/delete sit at the top, where the eye goes; the shortcut hint at the foot
+    const actions = () => { const w = document.createElement("div"); w.className = "actions"; w.append(alignBar(), grid("row", btn("Copy", () => copySelection()), btn("Duplicate", () => duplicate()), btn("Delete", removeActive))); return w; };
+    const shortcuts = () => { const h = document.createElement("p"); h.className = "hint"; h.textContent = "Ctrl+C / Ctrl+V copy and paste (a picture or a sentence from anywhere pastes too) · Ctrl+D duplicate · Alt+drag moves without snapping · arrows nudge, Shift for 10."; return h; };
+    if (!o || o.type === "activeSelection") { box.innerHTML = `<div class="empty">${o ? "Several objects. Move, scale, rotate, copy or delete them together." : "Select something on the canvas, or click a card."}</div>`; if (o) box.append(actions(), shortcuts()); renderLayers(); return; }
     const apply = (patch, after) => { if (o.kind === "text") captureFollowers(o); o.set(patch); o.setCoords(); if (o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } else if (o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; o.rotDelta = o.angle - t.angle; } } canvas.requestRenderAll(); after && after(); snapshotSoon(); };
     if (o.kind === "text") {
       const ta = document.createElement("textarea"); ta.className = "ar"; ta.rows = 2; ta.value = o.text; ta.oninput = () => { o.set({ text: ta.value }); fitTextWidth(o); syncPapersOf(o); canvas.requestRenderAll(); renderLayers(); snapshotSoon(); };
@@ -1223,7 +1221,7 @@
         isLine ? field("Stroke width", num(o.strokeWidth, 1, 200, 1, (v) => apply({ strokeWidth: v }))) : field("Corner radius", num(o.rx || 0, 0, 400, 1, (v) => apply({ rx: v, ry: v }))),
         grid("grid2", field("Width", num(Math.round(o.getScaledWidth()), 2, 4000, 1, (v) => { o.scaleToWidth(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })), field("Height", num(Math.round(o.getScaledHeight()), 2, 4000, 1, (v) => { o.scaleToHeight(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })))), transformBlock(o, apply));
     }
-    box.append(actions()); renderLayers();
+    box.prepend(actions()); box.append(shortcuts()); renderLayers();
   }
 
   // ── reference frame ─────────────────────────────────────────────────────
