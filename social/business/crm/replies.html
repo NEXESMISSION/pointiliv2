@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pointili Replies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Your own sentences, the ones you already type. Click one, it is on the
+     clipboard, paste it in Messenger. Nothing here is a new voice. */
+  :root {
+    --bg: #F5F3FA; --sheet: #FFF; --ink: #17141F; --body: #4B4660; --muted: #7E7894;
+    --line: #E5E0F2; --soft: #F1EDFA;
+    --brand: #6535E0; --brand-soft: #EFE9FF;
+    --good: #15803D; --good-soft: #E7F6EC;
+    --warn: #8A6508; --warn-soft: #FCF4E0;
+    --shadow: 0 10px 28px -20px rgba(28,12,76,.45);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--body); font: 14px/1.55 Inter, system-ui, sans-serif;
+         -webkit-font-smoothing: antialiased; padding-inline: 18px; padding-block: 0 60px; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: 16px 12px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
+  .sub { font-size: 12px; color: var(--muted); }
+  .grow { margin-left: auto; }
+  input {
+    font: inherit; font-size: 13.5px; padding: 8px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--sheet); color: var(--ink);
+  }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  #name { width: 170px; }
+  #q { width: 210px; }
+  a.link { color: var(--brand); text-decoration: none; font-weight: 600; font-size: 13px; }
+
+  h2 { margin: 24px 0 10px; font: 600 11px Inter, sans-serif; letter-spacing: .1em;
+       text-transform: uppercase; color: var(--muted); }
+  h2 em { font-style: normal; color: var(--brand); text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 500; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+  .snip {
+    position: relative; text-align: left; font: inherit; cursor: pointer; width: 100%;
+    background: var(--sheet); border: 1px solid var(--line); border-radius: 13px; padding: 12px 13px;
+    display: grid; gap: 7px; color: var(--ink);
+  }
+  .snip:hover { border-color: var(--brand); box-shadow: var(--shadow); }
+  .snip.copied { border-color: var(--good); background: var(--good-soft); }
+  .snip .txt { font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+  .snip .lab { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .snip .lab b { color: var(--brand); font-weight: 600; }
+  .snip.copied .lab b { color: var(--good); }
+
+  .warn { background: var(--warn-soft); border: 1px solid #EFDCA8; border-radius: 12px;
+          padding: 11px 14px; font-size: 13px; color: var(--ink); margin-top: 14px; display: grid; gap: 4px; }
+  .warn b { color: var(--warn); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .never { font-size: 13px; color: var(--body); }
+  .never s { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="row">
+    <div><h1>Replies</h1><div class="sub" id="sub"></div></div>
+    <span class="grow"></span>
+    <input type="text" id="name" placeholder="Esmou (optional)" />
+    <input type="text" id="q" placeholder="Search…" />
+    <a class="link" href="index.html">← CRM</a>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="warn">
+  <b>Never, whatever they ask</b>
+  <div class="never">
+    <s>«tjarrab b bilech»</s> — no free trial ·
+    <s>«10 dt fel chhar»</s> alone, as if a monthly plan existed ·
+    <s>«bech tzid X client»</s> — never promise a result ·
+    <s>«na3tik téléphone b prix el achat»</s> ·
+    <s>«ken 3andek zouz locaux na3mlek remise»</s>
+  </div>
+</div>
+
+</div>
+
+<script>
+"use strict";
+const PACKS = [
+  {
+    t: "Awel réponse", hint: "the first line, when they land from the ad",
+    s: [
+      ["opener", "3slema {name}, Pointili card fi téléphone mta3 el client, bla application.\nEkhtar sou2el wala ektiblna chnowa local mta3ek, w njewbouk fi d9aye9."],
+      ["short opener", "3slema {name} 👋 chnowa local mte3ek ? 9ahwa, boutique wala salon ?"],
+      ["they only said hi", "mar7ba bik {name} 🙌 chnowa local mte3ek ?"],
+    ],
+  },
+  {
+    t: "El prix", hint: "one answer, always the same numbers",
+    s: [
+      ["the price", "120 dt fel 3am, ya3ni 10 dt fel chhar. wala 80 dt l 6 chhour.\ncash wala D17."],
+      ["price + what is in it", "120 dt fel 3am wala 80 dt l 6 chhour.\nel clients mte3ek lkol yesta3mlouha, w kol chay dakhel fel prix. tkhalles b virement, D17 wala cash."],
+      ["«ghali»", "nafham. ama 7seb m3aya: client wa7ed yerja3 mara zeyda fel chhar, 3malt el 10 dt.\nel be9i kol rib7."],
+    ],
+  },
+  {
+    t: "Ma lezmouch application", hint: "the question everybody asks second",
+    s: [
+      ["no app", "le, ma lezmouch ysobb 7atta application.\nyscan-i el QR b camera mta3 téléphone, yda5el numro mta3ou w yabda direct. el tampon yodhher fi la7ditha."],
+      ["first time only", "just awel mara y7il compte b numero mte3o. ba3d hakka yscani w khlass."],
+      ["the QR", "el QR yetbaddel wa7dou kol mara, w mayenjamch ye5dem zouz mrat. 7atou 3al comptoir fi tablette wala téléphone."],
+    ],
+  },
+  {
+    t: "Bech na3ref chkoun houwa", hint: "this is where most of them go quiet — keep it concrete",
+    s: [
+      ["what shop", "chnowa local mte3ek ? 9ahwa, boutique, salon wala restaurant ?"],
+      ["what shop + zone", "chnowa local mte3ek w fi ana zone ? bech nchouf kifech n5edmou."],
+      ["the shop's name", "esm el local mte3ek chnowa ?"],
+      ["do they get it", "inti fehim el system de fidelite ?"],
+    ],
+  },
+  {
+    t: "Bech na3mlou demo", hint: "every conversation is trying to land here",
+    s: [
+      ["ask for a time", "wada7. ken t7ib 5alili nmrouk w 9oli wa9tech yse3dik, nkalmik w nzid nfahmik kol chay."],
+      ["offer the demo", "najmou nabdew b demo fel local mte3ek. tchouf el 7keya b 3aynik w ba3d t9arrar.\nchnowa a7san nhar lik ?"],
+      ["they said yes", "bahi 👌 ken mrigel n7iloulik compte w nubdew.\n9oli nhar w se3a w nkoun 3andek."],
+      ["confirm it", "mrigel. {name}, nhar … 3al … fel local. njib m3aya kol chay w nrakkbouha fi rob3 se3a."],
+    ],
+  },
+  {
+    t: "Relance", hint: "one line, and only one — a second nudge reads as begging",
+    s: [
+      ["still interested", "mazeltou mohtam ? ken ey, najmou nabdew b demo, tjarrbouha w tchouf kifech te5dem."],
+      ["missed the call", "mt7asaltich alik. 9oli wa9tech yse3dik w n3ayytlek."],
+      ["gentle, days later", "3slema {name}, ken el wa9t ma ye5demch tawa 3adi. n3ayytlek ba3d chwaya."],
+    ],
+  },
+  {
+    t: "Ki y9oulek le", hint: "answer short, do not argue, leave the door open",
+    s: [
+      ["«nfakker»", "bahi, khoudh ra7tek 👌"],
+      ["«3andi déjà 7keya»", "bahi. w tekhdem m3ak ? ken el 7keya 3al warka, el farq eli 3andna houwa eli ma tetlefch w tchouf chkoun rja3lek."],
+      ["«ma3andich wa9t»", "el installation rob3 se3a w ana eli na3melha. enti ma ta3mel walou."],
+      ["«ba3d chwaya»", "wada7, 9oli wa9tech w n3ayytlek. ma nkharbtch 3lik."],
+    ],
+  },
+  {
+    t: "Ba3ed ma yebda", hint: "the client you already have is the cheapest one to keep",
+    s: [
+      ["day 0", "mabrouk 🎉 el compte 7adher. ay sou2al ekteb w njewbek."],
+      ["day 3", "kifech mechya m3akom ? 9addech client tsajjel ?"],
+      ["Monday numbers", "{name}, hedhi ar9am el semana: … client jded, … tampon, … cadeau.\nchnowa rayek ?"],
+      ["referral", "ken ta3ref 7ata wa7ed fi nafs el zone yenjem yesta5demha, 3arrafni bih 🙏"],
+    ],
+  },
+];
+
+const $ = (id) => document.getElementById(id);
+const fill = (s) => s.replace(/\{name\}/g, ($("name").value.trim() || "").trim());
+
+function draw() {
+  const q = $("q").value.trim().toLowerCase();
+  let n = 0;
+  $("main").innerHTML = PACKS.map((p) => {
+      const hits = p.s.filter(([lab, txt]) => !q || (lab + " " + txt).toLowerCase().includes(q));
+      n += hits.length;
+      if (!hits.length) return "";
+      return `<section><h2>${p.t} <em>${p.hint}</em></h2><div class="grid">${hits
+        .map(([lab, txt]) => `<button type="button" class="snip" data-t="${encodeURIComponent(txt)}">
+             <span class="txt">${fill(txt).replace(/\n/g, "<br>")}</span>
+             <span class="lab"><b>copy</b> · ${lab}</span>
+           </button>`)
+        .join("")}</div></section>`;
+    }).join("");
+  $("sub").textContent = `${n} ready lines · click one, it is on the clipboard`;
+
+  for (const b of document.querySelectorAll(".snip")) {
+    b.addEventListener("click", async () => {
+      const text = fill(decodeURIComponent(b.dataset.t));
+      let ok = false;
+      try { await navigator.clipboard.writeText(text); ok = true; }
+      catch {
+        // file:// without permission: the old way still works
+        const ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.append(ta); ta.select();
+        try { ok = document.execCommand("copy"); } catch {}
+        ta.remove();
+      }
+      b.classList.toggle("copied", ok);
+      b.querySelector(".lab b").textContent = ok ? "copied ✓" : "select it by hand";
+      setTimeout(() => { b.classList.remove("copied"); b.querySelector(".lab b").textContent = "copy"; }, 1600);
+    });
+  }
+}
+
+$("q").addEventListener("input", draw);
+$("name").addEventListener("input", draw);
+draw();
+</script>
+</body>
+</html>
