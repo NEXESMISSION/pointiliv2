@@ -286,7 +286,7 @@
     pill: { color: C.white, rot: 0, padX: 44, padY: 18, radius: 999 },
     pillViolet: { color: C.violet, rot: 0, padX: 44, padY: 18, radius: 999 },
   };
-  const CUSTOM = ["id", "kind", "name", "role", "forText", "padX", "padY", "dx", "dy", "rotDelta", "deform", "seed", "radius", "brush", "locked", "selectable", "evented", "hasControls", "fromTemplate", "textShadow", "group"];
+  const CUSTOM = ["id", "kind", "name", "role", "forText", "padX", "padY", "dx", "dy", "rotDelta", "deform", "seed", "radius", "brush", "locked", "selectable", "evented", "hasControls", "fromTemplate", "textShadow", "userWidth"];   // never "group": inside a multi-selection that is Fabric's selection object, and JSON of it loops
 
   // ── canvas ──────────────────────────────────────────────────────────────
   // The artboard is W×H at the world origin; the canvas element fills the
@@ -329,6 +329,8 @@
   area.addEventListener("auxclick", (e) => { if (e.button === 1) e.preventDefault(); });
   document.addEventListener("keydown", (e) => { if (e.code === "Space" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !(canvas.getActiveObject() && canvas.getActiveObject().isEditing)) { if (!spaceDown) { spaceDown = true; canvas.selection = false; canvas.defaultCursor = "grab"; area.classList.add("space"); } e.preventDefault(); } });
   document.addEventListener("keyup", (e) => { if (e.code === "Space") { spaceDown = false; canvas.selection = true; canvas.defaultCursor = "default"; area.classList.remove("space"); } });
+  // the window loses focus with Space held (Alt+Tab): forget the pan, or every drag would pan for good
+  window.addEventListener("blur", () => { spaceDown = false; panning = null; canvas.selection = true; canvas.defaultCursor = "default"; area.classList.remove("space", "panning"); });
   canvas.on("mouse:down:before", (opt) => { const e = opt.e; if (e.button === 1 || (spaceDown && e.button === 0)) { panning = { x: e.clientX, y: e.clientY }; canvas.discardActiveObject(); canvas.selection = false; area.classList.add("panning"); } });
   canvas.on("mouse:move", (opt) => { if (!panning) return; const e = opt.e; canvas.relativePan(new fabric.Point(e.clientX - panning.x, e.clientY - panning.y)); panning = { x: e.clientX, y: e.clientY }; });
   canvas.on("mouse:up", () => { if (panning) { panning = null; canvas.selection = !spaceDown; area.classList.remove("panning"); canvas.setViewportTransform(canvas.viewportTransform); } });
@@ -408,12 +410,23 @@
     t.off("changed"); t.off("editing:exited");
     t.on("changed", () => { fitTextWidth(t); syncPapersOf(t); renderLayers(); });
     t.on("editing:exited", () => { fitTextWidth(t); syncPapersOf(t); snapshot(); });
+    if (t.__fitWidth == null) t.__fitWidth = t.width;
     return t;
   }
+  /**
+   * The box hugs its text. Its cap is the artboard (96%) until the user drags a side handle:
+   * from then on their width is the cap, so stretching wider puts two lines back on one,
+   * narrowing wraps on purpose, and typing never snaps the box back to the artboard.
+   */
   function fitTextWidth(t, maxW) {
-    const longest = Math.max(...t.textLines.map((_, i) => t.getLineWidth(i)));
-    if (isFinite(longest) && longest > 0) t.set({ width: Math.min(maxW || W * 0.96, longest + 6) });
-    t.setCoords();
+    const cap = maxW || t.userWidth || W * 0.96;
+    const widest = () => Math.max(...t.textLines.map((_, i) => t.getLineWidth(i)));
+    t.set({ width: 1e6 }); t.initDimensions(); const natural = widest();    // one line per hard break
+    if (isFinite(natural) && natural > 0) {
+      t.set({ width: Math.min(cap, natural + 6) }); t.initDimensions();       // wrap at the cap…
+      t.set({ width: widest() + 6 }); t.initDimensions();                    // …then hug the wrapped lines: same wrap, no slack
+    } else { t.set({ width: Math.min(cap, W * 0.96) }); t.initDimensions(); }
+    t.__fitWidth = t.width; t.setCoords();
   }
   const byId = (id) => canvas.getObjects().find((o) => o.id === id);
 
@@ -503,12 +516,18 @@
   // Ctrl+V with a picture on the clipboard (a screenshot, a copied image) pastes it as a layer;
   // with nothing but our own copied object, it pastes that.
   document.addEventListener("paste", (e) => {
+    clearTimeout(pendingPaste); pendingPaste = null;
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || (canvas.getActiveObject() && canvas.getActiveObject().isEditing);
     if (typing) return;
     const items = [...((e.clipboardData && e.clipboardData.items) || [])];
     const pic = items.find((i) => i.kind === "file" && /^image\//.test(i.type));
     if (pic) { e.preventDefault(); addImageFile(pic.getAsFile(), null, "pasted image"); return; }
-    if (clip) { e.preventDefault(); clip.clone((c) => { c.set({ id: uid(), left: clip.left + 30, top: clip.top + 30, forText: null }); if (c.kind === "text") hydrateText(c); addObject(c); }, CUSTOM); }
+    const text = (e.clipboardData && e.clipboardData.getData("text/plain")) || "";
+    e.preventDefault();
+    if (text.startsWith(MARK)) { try { return pasteObjects(JSON.parse(text.slice(MARK.length))); } catch { /* not ours after all */ } }
+    if (clip && (!clipOnSystem || !text.trim())) return pasteObjects(clip);   // our copy is the latest thing copied
+    if (text.trim()) return addObject(makeText(text.trim(), { fontSize: 110 }));   // a sentence from WhatsApp, Notes, anywhere
+    if (clip) pasteObjects(clip);
   });
   $("addMenu").onchange = (e) => {
     const v = e.target.value; e.target.value = ""; if (!v) return;
@@ -897,13 +916,17 @@
   let guides = [];
   canvas.on("selection:created", renderProps); canvas.on("selection:updated", renderProps); canvas.on("selection:cleared", renderProps);
   canvas.on("object:moving", (e) => {
-    const o = e.target; guides = []; if (o.type === "activeSelection") return;
-    const others = canvas.getObjects().filter((x) => x !== o && x.visible && !(o.kind === "text" && x.kind === "paper" && x.forText === o.id) && !(o.kind === "paper" && x.id === o.forText));
-    const cands = { x: [W / 2], y: [H / 2] };
+    const o = e.target; guides = []; if (o.type === "activeSelection" || (e.e && e.e.altKey)) return;   // Alt: move freely
+    // snap to the artboard and to the free things only: papers and accents hug their text anyway,
+    // and a duplicate is not glued to what it came from
+    const others = canvas.getObjects().filter((x) => x !== o && x.visible && !x.forText && x.id !== o.forText);
+    const cands = { x: [W / 2, 0, W], y: [H / 2, 0, H] };
     others.forEach((x) => { const b = x.getBoundingRect(true, true); cands.x.push(x.left, b.left, b.left + b.width); cands.y.push(x.top, b.top, b.top + b.height); });
-    const br = o.getBoundingRect(true, true); const T = 8;
-    for (const cx of cands.x) { if (Math.abs(o.left - cx) < T) { o.set({ left: cx }); guides.push({ x: cx }); break; } if (Math.abs(br.left - cx) < T) { o.set({ left: o.left + (cx - br.left) }); guides.push({ x: cx }); break; } if (Math.abs(br.left + br.width - cx) < T) { o.set({ left: o.left + (cx - br.left - br.width) }); guides.push({ x: cx }); break; } }
-    for (const cy of cands.y) { if (Math.abs(o.top - cy) < T) { o.set({ top: cy }); guides.push({ y: cy }); break; } if (Math.abs(br.top - cy) < T) { o.set({ top: o.top + (cy - br.top) }); guides.push({ y: cy }); break; } if (Math.abs(br.top + br.height - cy) < T) { o.set({ top: o.top + (cy - br.top - br.height) }); guides.push({ y: cy }); break; } }
+    const br = o.getBoundingRect(true, true); const T = 6 / zoom();   // six screen pixels, whatever the zoom
+    // the closest line wins, whether it meets the centre or an edge of what is moving
+    const best = (vals, edges) => { let b = null; for (const c of vals) for (const p of edges) { const d = Math.abs(p - c); if (d < T && (!b || d < b.d)) b = { d, c, p }; } return b; };
+    const bx = best(cands.x, [o.left, br.left, br.left + br.width]); if (bx) { o.set({ left: o.left + (bx.c - bx.p) }); guides.push({ x: bx.c }); }
+    const by = best(cands.y, [o.top, br.top, br.top + br.height]); if (by) { o.set({ top: o.top + (by.c - by.p) }); guides.push({ y: by.c }); }
     if (o.kind === "text") syncPapersOf(o);
     if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; } }
   });
@@ -922,11 +945,57 @@
   });
   canvas.on("object:scaling", (e) => { const o = e.target; if (o.kind === "text") syncPapersOf(o); if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.padX = clamp((o.getScaledWidth() - t.getScaledWidth()) / 2, -t.getScaledWidth() * 0.45, 400); o.padY = clamp((o.getScaledHeight() - t.getScaledHeight()) / 2, -t.getScaledHeight() * 0.45, 400); } } });
   canvas.on("object:rotating", (e) => { const o = e.target; if (e.e && e.e.shiftKey) o.set({ angle: Math.round(o.angle / 15) * 15 }); if (o.kind === "text") syncPapersOf(o); if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) o.rotDelta = o.angle - t.angle; } });
-  canvas.on("object:modified", (e) => { guides = []; const o = e.target; if (o && o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } syncAllPapers(); canvas.requestRenderAll(); renderProps(); snapshot(); });
+  canvas.on("object:resizing", (e) => { if (e.target && e.target.kind === "text") syncPapersOf(e.target); });   // side handles: the paper follows live
+  canvas.on("object:modified", (e) => {
+    guides = []; const o = e.target;
+    if (o && o.kind === "text") {
+      if (o.__fitWidth != null && Math.abs(o.width - o.__fitWidth) > 1) o.userWidth = o.width;   // a side handle was dragged: that width is the new cap
+      fitTextWidth(o); syncPapersOf(o);
+    }
+    syncAllPapers(); canvas.requestRenderAll(); renderProps(); snapshot();
+  });
   canvas.on("mouse:up", () => { guides = []; canvas.requestRenderAll(); });
   canvas.on("mouse:dblclick", (e) => { const o = e.target; if (o && o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { canvas.setActiveObject(t); canvas.requestRenderAll(); } } });
 
-  let clip = null;
+  // ── copy, paste, duplicate ──────────────────────────────────────────────
+  // What is copied is the selection plus the papers and accents attached to its texts, as JSON:
+  // to our own clipboard and, marked, to the system clipboard, so Ctrl+V works in a second window
+  // too. Ctrl+V with a picture on the clipboard pastes the picture, with plain text a new text.
+  const MARK = "pointili-typo/objects:";
+  let clip = null, clipOnSystem = false, pendingPaste = null;
+  const attachedTo = (t) => canvas.getObjects().filter((o) => o.forText === t.id);
+  function selectionJson() {
+    const active = canvas.getActiveObject(); if (!active) return null;
+    const picked = canvas.getActiveObjects();
+    if (active.type === "activeSelection") canvas.discardActiveObject();   // so every object reports artboard coordinates
+    const set = new Set(picked); picked.forEach((o) => { if (o.kind === "text") attachedTo(o).forEach((p) => set.add(p)); });
+    const json = canvas.getObjects().filter((o) => set.has(o)).map((o) => o.toObject());
+    if (active.type === "activeSelection") { canvas.setActiveObject(new fabric.ActiveSelection(picked, { canvas })); canvas.requestRenderAll(); }
+    return json;
+  }
+  function copySelection(cut = false) {
+    const json = selectionJson(); if (!json) return;
+    clip = json; clipOnSystem = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(MARK + JSON.stringify(json)).then(() => { clipOnSystem = true; }).catch(() => {});
+    if (cut) removeActive(); else toast(`Copied ${json.length === 1 ? "one layer" : json.length + " layers"}. Ctrl+V pastes it, Ctrl+D duplicates.`);
+  }
+  function pasteObjects(json, offset = 30) {
+    if (!json || !json.length) return;
+    fabric.util.enlivenObjects(json, (objs) => {
+      const ids = {}; objs.forEach((o) => { ids[o.id] = uid(); });
+      objs.forEach((o) => {
+        o.set({ id: ids[o.id], left: o.left + offset, top: o.top + offset, forText: o.forText ? ids[o.forText] || null : null });
+        if (o.kind === "text") hydrateText(o); if (o.kind === "brush" && o.brush) o.brush = Object.assign({}, o.brush);
+        canvas.add(o);
+      });
+      objs.forEach((o) => { if (o.kind === "paper" && o.forText) syncPaper(o); });
+      const free = objs.filter((o) => !o.forText); canvas.discardActiveObject();
+      if (free.length === 1) canvas.setActiveObject(free[0]); else if (free.length > 1) canvas.setActiveObject(new fabric.ActiveSelection(free, { canvas }));
+      canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot();
+    });
+  }
+  function duplicate(o) { if (o) canvas.setActiveObject(o); pasteObjects(selectionJson(), 30); }
+
   document.addEventListener("keydown", (e) => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || (canvas.getActiveObject() && canvas.getActiveObject().isEditing);
     const meta = e.ctrlKey || e.metaKey;
@@ -934,11 +1003,13 @@
     if (meta && e.key.toLowerCase() === "y" && !typing) { e.preventDefault(); redo(); return; }
     if (typing) return;
     if (e.key === "Escape" && $("preview").classList.contains("on")) return exitPreview();
+    // Ctrl+V: the paste event does the work; if the browser fires none (empty clipboard), paste our own copy
+    if (meta && e.key.toLowerCase() === "v") { clearTimeout(pendingPaste); pendingPaste = setTimeout(() => { pendingPaste = null; if (clip) pasteObjects(clip); }, 200); return; }
     const a = canvas.getActiveObject(); if (!a) return;
     if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeActive(); }
-    else if (meta && e.key.toLowerCase() === "d") { e.preventDefault(); duplicate(a); }
-    else if (meta && e.key.toLowerCase() === "c") { a.clone((c) => { clip = c; }, CUSTOM); }
-    // Ctrl+V is handled by the paste event, which also sees pictures on the clipboard
+    else if (meta && e.key.toLowerCase() === "d") { e.preventDefault(); duplicate(); }
+    else if (meta && e.key.toLowerCase() === "c") { e.preventDefault(); copySelection(); }
+    else if (meta && e.key.toLowerCase() === "x") { e.preventDefault(); copySelection(true); }
     else if (e.key.startsWith("Arrow")) {
       e.preventDefault(); const d = e.shiftKey ? 10 : 1;
       if (e.key === "ArrowLeft") a.set({ left: a.left - d }); if (e.key === "ArrowRight") a.set({ left: a.left + d }); if (e.key === "ArrowUp") a.set({ top: a.top - d }); if (e.key === "ArrowDown") a.set({ top: a.top + d });
@@ -946,13 +1017,6 @@
     }
   });
   function removeActive() { const sel = canvas.getActiveObjects(); canvas.discardActiveObject(); sel.forEach((o) => { if (o.kind === "text") papersOf(o).forEach((p) => canvas.remove(p)); canvas.remove(o); }); canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot(); }
-  function duplicate(o) {
-    o.clone((c) => {
-      c.set({ id: uid(), left: o.left + 30, top: o.top + 30 });
-      if (c.kind === "text") { hydrateText(c); canvas.add(c); papersOf(o).forEach((p) => p.clone((pc) => { pc.set({ id: uid(), forText: c.id }); canvas.add(pc); syncPaper(pc); }, CUSTOM)); canvas.setActiveObject(c); canvas.requestRenderAll(); renderLayers(); snapshot(); }
-      else { c.forText = null; if (c.kind === "brush") c.brush = Object.assign({}, o.brush); addObject(c); }
-    }, CUSTOM);
-  }
 
   // ── undo / redo ─────────────────────────────────────────────────────────
   const stack = [], redoStack = []; let restoring = false, snapTimer = null;
@@ -1019,7 +1083,13 @@
   function renderProps() {
     const box = $("props"); box.innerHTML = "";
     const o = canvas.getActiveObject();
-    if (!o || o.type === "activeSelection") { box.innerHTML = `<div class="empty">${o ? "Several objects. Move, scale, rotate or delete them together." : "Select something on the canvas, or click a card."}</div>`; renderLayers(); return; }
+    const actions = () => {
+      const w = document.createElement("div");
+      w.append(grid("row", btn("Copy", () => copySelection()), btn("Duplicate", () => duplicate()), btn("Delete", removeActive)));
+      const h = document.createElement("p"); h.className = "hint"; h.textContent = "Ctrl+C / Ctrl+V copy and paste (a picture or a sentence from anywhere pastes too) · Ctrl+D duplicate · Alt+drag moves without snapping · arrows nudge, Shift for 10.";
+      w.append(h); return w;
+    };
+    if (!o || o.type === "activeSelection") { box.innerHTML = `<div class="empty">${o ? "Several objects. Move, scale, rotate, copy or delete them together." : "Select something on the canvas, or click a card."}</div>`; if (o) box.append(actions()); renderLayers(); return; }
     const apply = (patch, after) => { o.set(patch); o.setCoords(); if (o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; o.rotDelta = o.angle - t.angle; } } canvas.requestRenderAll(); after && after(); snapshotSoon(); };
     if (o.kind === "text") {
       const ta = document.createElement("textarea"); ta.className = "ar"; ta.rows = 2; ta.value = o.text; ta.oninput = () => { o.set({ text: ta.value }); fitTextWidth(o); syncPapersOf(o); canvas.requestRenderAll(); renderLayers(); snapshotSoon(); };
@@ -1040,6 +1110,7 @@
           grid("grid2", field("Stroke", color(o.stroke || "#111111", (v) => apply({ stroke: v, strokeWidth: o.strokeWidth || 6, paintFirst: "stroke" }))), field("Stroke width", num(o.strokeWidth || 0, 0, 60, 1, (v) => apply({ strokeWidth: v, stroke: v ? (o.stroke || "#111111") : null, paintFirst: "stroke" })))),
           check("Soft shadow (over video)", !!o.shadow, (on) => apply({ shadow: on ? shadow(W) : null }))),
         block("Paper", paperCtl), transformBlock(o, apply));
+      const h = document.createElement("p"); h.className = "hint"; h.textContent = "Side handles: wider puts the words on one line, narrower wraps them. Corners scale the whole thing."; box.append(h);
     } else if (o.kind === "paper") {
       const linked = o.forText && byId(o.forText);
       box.append(
@@ -1068,7 +1139,7 @@
         isLine ? field("Stroke width", num(o.strokeWidth, 1, 200, 1, (v) => apply({ strokeWidth: v }))) : field("Corner radius", num(o.rx || 0, 0, 400, 1, (v) => apply({ rx: v, ry: v }))),
         grid("grid2", field("Width", num(Math.round(o.getScaledWidth()), 2, 4000, 1, (v) => { o.scaleToWidth(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })), field("Height", num(Math.round(o.getScaledHeight()), 2, 4000, 1, (v) => { o.scaleToHeight(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })))), transformBlock(o, apply));
     }
-    box.append(btn("Delete", removeActive)); renderLayers();
+    box.append(actions()); renderLayers();
   }
 
   // ── reference frame ─────────────────────────────────────────────────────
