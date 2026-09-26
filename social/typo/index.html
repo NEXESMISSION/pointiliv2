@@ -1137,7 +1137,7 @@
     restoring = true; const { W: w, H: h, json } = JSON.parse(s);
     if (w !== W || h !== H) sizeCanvas(w, h);
     const bg = canvas.backgroundImage;
-    canvas.loadFromJSON(json, () => { canvas.backgroundImage = bg; canvas.getObjects().forEach((o) => { if (o.kind === "text") hydrateText(o); }); syncAllPapers(); canvas.requestRenderAll(); renderLayers(); renderProps(); restoring = false; cb && cb(); });
+    canvas.loadFromJSON(json, () => { canvas.backgroundImage = bg || canvas.backgroundImage; canvas.getObjects().forEach((o) => { if (o.kind === "text") hydrateText(o); }); syncAllPapers(); canvas.requestRenderAll(); renderLayers(); renderProps(); restoring = false; cb && cb(); });
   }
   function undo() { if (stack.length < 2) return; redoStack.push(stack.pop()); restore(stack[stack.length - 1]); }
   function redo() { if (!redoStack.length) return; const s = redoStack.pop(); stack.push(s); restore(s); }
@@ -1451,6 +1451,39 @@
   lines = autoLines($("sentence").value); renderLines();
   loadMine(); renderGallery();
   snapshot(); fontsReady.then(() => galleryDirty());
+
+  // ── the app keeps itself fresh ───────────────────────────────────────────
+  // A reload puts the work aside and picks it up again (sessionStorage: this window only, so a
+  // fresh window still starts clean). Opened as the desktop app (a file: page with file access),
+  // it also watches its own file and reloads by itself when the file changes.
+  const RESUME = "typo:resume", UPDATED = "typo:updated";
+  const serializeFor = (withReference) => { const j = canvas.toJSON(CUSTOM); if (!withReference) delete j.backgroundImage; return JSON.stringify({ W, H, json: j }); };
+  function putAside() {
+    const pack = (ref) => JSON.stringify({ state: serializeFor(ref), overlay: $("overlaySel").value });
+    try { sessionStorage.setItem(RESUME, pack(true)); } catch { try { sessionStorage.setItem(RESUME, pack(false)); } catch { /* nothing to be done */ } }
+  }
+  window.addEventListener("beforeunload", putAside);
+  (function pickUp() {
+    let saved = null, updated = false;
+    try { saved = sessionStorage.getItem(RESUME); updated = sessionStorage.getItem(UPDATED) === "1"; sessionStorage.removeItem(RESUME); sessionStorage.removeItem(UPDATED); } catch { return; }
+    if (!saved) return;
+    try {
+      const { state, overlay } = JSON.parse(saved);
+      if (overlay != null) $("overlaySel").value = overlay;
+      restore(state, () => { snapshot(); toast(updated ? "Updated to the latest version. Your work is where you left it." : "Back where you left it."); });
+    } catch { /* a broken pack is not worth a crash */ }
+  })();
+  if (location.protocol === "file:") (function watchSelf() {
+    const read = (cb) => { try { const x = new XMLHttpRequest(); x.open("GET", location.href.split(/[?#]/)[0], true); x.onload = () => cb(x.responseText); x.onerror = () => cb(null); x.send(); } catch { cb(null); } };
+    read((first) => {
+      if (!first) return;   // no file access from files: nothing to watch
+      const timer = setInterval(() => read((now) => {
+        if (!now || now === first) return;
+        clearInterval(timer); try { sessionStorage.setItem(UPDATED, "1"); } catch { /* fine */ }
+        location.reload();
+      }), 2000);
+    });
+  })();
   window.__typo = { canvas, build, compose, renderGroup, placePiece, setMode, autoLines, get lines() { return lines; }, GROUPS, PIECES, LAYOUTS, PAPERS };
 })();
 </script>
