@@ -1,34 +1,36 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Pointili CRM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
-  /* A board, not a list. Every lead is a column position, so where the work is
-     stuck is the first thing you see and moving someone is one drag. */
+  /* لوحة، موش ليستة. كل واحد بلاصتو في عمود، فتشوف وين واقف الخدمة
+     من أول نظرة، ونقلة واحدة تحرّكو. */
   :root {
     --bg: #F5F3FA; --sheet: #FFF; --ink: #17141F; --body: #4B4660; --muted: #7E7894;
     --line: #E5E0F2; --soft: #F1EDFA;
     --brand: #6535E0; --brand-soft: #EFE9FF;
-    --hot: #C2410C; --hot-soft: #FFEFE4;
-    --warm: #8A6508; --warm-soft: #FCF4E0;
+    --hot: #C2410C; --hot-soft: #FFEFE4; --hot-line: #F3D6C3;
+    --warm: #8A6508; --warm-soft: #FCF4E0; --warm-line: #EFDCA8;
     --cold: #6E6884; --cold-soft: #EFEDF5;
     --good: #15803D; --good-soft: #E7F6EC;
     --shadow: 0 10px 28px -20px rgba(28, 12, 76, .45);
     --tile: 44px;
+    --ar: "IBM Plex Sans Arabic", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
-  body { margin: 0; background: var(--bg); color: var(--body); font: 14px/1.5 Inter, system-ui, sans-serif;
+  body { margin: 0; background: var(--bg); color: var(--body); font: 14px/1.6 var(--ar);
          -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; overflow: hidden; }
   [hidden] { display: none !important; }
-  .ar { font-family: "IBM Plex Sans Arabic", sans-serif; }
+  /* الحروف اللاتينية (الأسماء والرسايل بالعربي المكتوب باللاتين) */
+  .lat { font-family: Inter, system-ui, sans-serif; }
 
-  /* ── avatars out of one sprite ───────────────────────────────── */
+  /* ── الصور من سبرايت وحيد ────────────────────────────────────── */
   .av {
     width: var(--tile); height: var(--tile); border-radius: 50%; flex: none;
     background-image: url("avatars.jpg"); background-repeat: no-repeat;
@@ -36,95 +38,115 @@
     box-shadow: 0 0 0 1px rgba(23,20,31,.08) inset;
   }
 
-  /* ── top ─────────────────────────────────────────────────────── */
+  .av.ini { background-image: none; background: var(--tint); color: #fff;
+            display: grid; place-items: center; font-weight: 600;
+            font-size: calc(var(--tile) * .42); font-family: Inter, sans-serif; }
+
+  /* ── الشريط الفوقاني ─────────────────────────────────────────── */
   .bar { flex: none; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
          padding: 11px 18px; background: var(--sheet); border-bottom: 1px solid var(--line); }
-  .bar h1 { margin: 0; font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
-  .bar .sub { font-size: 11.5px; color: var(--muted); }
-  .grow { margin-left: auto; }
+  .bar h1 { margin: 0; font: 700 16px Inter, sans-serif; color: var(--ink); letter-spacing: -.02em; }
+  .bar .sub { font-size: 12px; color: var(--muted); }
+  .grow { margin-inline-start: auto; }
   .tabs { display: flex; gap: 4px; }
   .tabs button, .ghost {
-    font: 600 12.5px Inter, sans-serif; cursor: pointer; border-radius: 9px; padding: 6px 12px;
+    font: 600 12.5px var(--ar); cursor: pointer; border-radius: 9px; padding: 6px 12px;
     border: 1px solid var(--line); background: var(--sheet); color: var(--body);
   }
   .tabs button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
   .ghost:hover { border-color: var(--brand); }
-  #q { font: inherit; font-size: 13px; width: 190px; padding: 7px 11px; border-radius: 9px;
+  #q { font: inherit; font-size: 13px; width: 200px; padding: 7px 11px; border-radius: 9px;
        border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
   #q:focus-visible, .tabs button:focus-visible, .ghost:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
 
-  /* ── today strip ─────────────────────────────────────────────── */
+  /* ── شريط «اليوم وغدوة» ──────────────────────────────────────── */
   .today { flex: none; background: var(--sheet); border-bottom: 1px solid var(--line); padding: 10px 18px 12px; }
-  .today h2 { margin: 0 0 8px; font: 600 10.5px Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--hot); }
-  .strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+  .strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; align-items: stretch; }
+  .lbl { flex: none; align-self: center; white-space: nowrap; font: 600 11px var(--ar);
+         color: var(--hot); padding-inline-end: 2px; }
+  .lbl.tm { color: var(--warm); }
   .chip {
-    flex: none; display: flex; align-items: center; gap: 9px; cursor: pointer; text-align: left;
-    background: var(--hot-soft); border: 1px solid #F3D6C3; border-radius: 12px; padding: 7px 13px 7px 8px;
-    font: inherit; color: var(--ink); max-width: 320px;
+    flex: none; display: flex; align-items: center; gap: 9px; cursor: pointer; text-align: start;
+    background: var(--hot-soft); border: 1px solid var(--hot-line); border-radius: 12px;
+    padding: 7px 8px 7px 13px; font: inherit; color: var(--ink); max-width: 330px;
   }
+  .chip.tm { background: var(--warm-soft); border-color: var(--warm-line); }
   .chip:hover { border-color: var(--hot); }
+  .chip.tm:hover { border-color: var(--warm); }
   .chip .av { --tile: 32px; }
   .chip b { font-size: 13.5px; font-weight: 600; display: block; }
-  .chip span { font-size: 11.5px; color: var(--body); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 230px; }
+  .chip span { font-size: 11.5px; color: var(--body); display: block; overflow: hidden;
+               text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
 
-  /* ── board ───────────────────────────────────────────────────── */
+  /* ── اللوحة ──────────────────────────────────────────────────── */
   main { flex: 1; min-height: 0; display: flex; }
   .board { flex: 1; min-width: 0; display: flex; gap: 12px; padding: 14px 18px 20px; overflow-x: auto; }
   .col { flex: 0 0 258px; display: flex; flex-direction: column; min-height: 0; }
   .col > h3 {
-    margin: 0 0 8px; display: flex; align-items: center; gap: 7px;
-    font: 600 11px Inter, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    margin: 0 0 4px; display: flex; align-items: center; gap: 7px;
+    font: 600 13px var(--ar); color: var(--ink);
   }
-  .col > h3 b { background: var(--soft); color: var(--ink); border-radius: 999px; padding: 1px 7px; font-size: 11px; }
+  .col > h3 b { background: var(--soft); color: var(--ink); border-radius: 999px; padding: 1px 8px;
+                font: 600 11px Inter, sans-serif; }
+  .col > p { margin: 0 0 8px; font-size: 11px; color: var(--muted); }
   .drop { flex: 1; min-height: 60px; overflow-y: auto; display: grid; gap: 8px; align-content: start;
           border-radius: 12px; padding: 2px; }
   .drop.over { background: var(--brand-soft); box-shadow: 0 0 0 2px var(--brand) inset; }
 
   .card {
     background: var(--sheet); border: 1px solid var(--line); border-radius: 13px; padding: 10px;
-    display: grid; gap: 7px; cursor: grab; font: inherit; color: inherit; text-align: left; width: 100%;
+    display: grid; gap: 7px; cursor: grab; font: inherit; color: inherit; text-align: start; width: 100%;
   }
   .card:hover { border-color: var(--brand); }
   .card[aria-selected="true"] { border-color: var(--brand); box-shadow: var(--shadow); }
   .card.dragging { opacity: .4; }
   .card .who { display: flex; align-items: center; gap: 9px; }
-  .card .nm { font-weight: 600; color: var(--ink); font-size: 13.5px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .nm { font-weight: 600; color: var(--ink); font-size: 13.5px; line-height: 1.3;
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .card .bz { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .card .nx { font-size: 12px; color: var(--body); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .nx { font-size: 12.5px; color: var(--body); line-height: 1.5;
+              display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .tags { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
   .dot.hot { background: var(--hot); } .dot.warm { background: var(--warm); } .dot.cold { background: #BDB8CC; }
-  .tag { font: 600 10px Inter, sans-serif; letter-spacing: .04em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; }
-  .tag.ch { background: var(--soft); color: var(--muted); }
-  .tag.due { background: var(--hot-soft); color: var(--hot); }
+  .tag { font: 600 10.5px var(--ar); padding: 2px 8px; border-radius: 999px; }
+  .tag.ch { background: var(--soft); color: var(--muted); font-family: Inter, sans-serif; letter-spacing: .04em; }
+  .tag.d1 { background: var(--hot-soft); color: var(--hot); }
+  .tag.d2 { background: var(--warm-soft); color: var(--warm); }
   .tag.thin { background: var(--cold-soft); color: var(--cold); }
 
-  /* ── panel ───────────────────────────────────────────────────── */
-  .panel { flex: 0 0 388px; background: var(--sheet); border-left: 1px solid var(--line); overflow-y: auto; padding: 16px 18px 40px; }
-  @media (max-width: 1080px) { .panel { position: fixed; inset: 0 0 0 auto; width: min(420px, 100%); z-index: 20; box-shadow: -20px 0 50px -30px rgba(20,8,60,.5); } }
+  /* ── اللوحة الجانبية ─────────────────────────────────────────── */
+  .panel { flex: 0 0 388px; background: var(--sheet); border-inline-start: 1px solid var(--line);
+           overflow-y: auto; padding: 16px 18px 40px; }
+  @media (max-width: 1080px) {
+    .panel { position: fixed; inset: 0 auto 0 0; width: min(420px, 100%); z-index: 20;
+             box-shadow: 20px 0 50px -30px rgba(20,8,60,.5); }
+  }
   .panel .head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
   .panel .head .av { --tile: 52px; }
   .panel h2 { margin: 0; font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
   .panel .meta { font-size: 12px; color: var(--muted); }
   .blk { background: var(--bg); border: 1px solid var(--line); border-radius: 13px; padding: 12px; margin-top: 12px; }
-  .blk h4 { margin: 0 0 8px; font: 600 10px Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .blk h4 { margin: 0 0 8px; font: 600 11.5px var(--ar); color: var(--muted); }
   .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-  .facts span { display: block; font-size: 11px; color: var(--muted); }
+  .facts span { display: block; font-size: 11.5px; color: var(--muted); }
   .facts b { font-size: 13.5px; color: var(--ink); font-weight: 600; }
   .facts a { color: var(--brand); text-decoration: none; }
   .moves { display: flex; flex-wrap: wrap; gap: 5px; }
-  .moves button { font: 600 11.5px Inter, sans-serif; cursor: pointer; border-radius: 8px; padding: 6px 10px;
+  .moves button { font: 600 12px var(--ar); cursor: pointer; border-radius: 8px; padding: 6px 11px;
                   border: 1px solid var(--line); background: var(--sheet); color: var(--body); }
   .moves button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
   .heats button[aria-pressed="true"] { background: var(--hot); border-color: var(--hot); color: #fff; }
-  textarea { font: inherit; font-size: 13px; width: 100%; min-height: 62px; resize: vertical; padding: 8px 10px;
+  textarea { font: inherit; font-size: 13.5px; width: 100%; min-height: 66px; resize: vertical; padding: 8px 10px;
              border-radius: 9px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); }
   textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
   .thread { display: grid; gap: 6px; }
-  .msg { max-width: 86%; padding: 7px 11px; border-radius: 13px; font-size: 13px; line-height: 1.45; }
-  .msg.them { background: var(--soft); color: var(--ink); border-bottom-left-radius: 4px; justify-self: start; }
-  .msg.us { background: var(--brand); color: #fff; border-bottom-right-radius: 4px; justify-self: end; }
-  .saved { font-size: 11px; color: var(--good); font-weight: 600; min-height: 14px; }
+  .msg { max-width: 86%; padding: 7px 11px; border-radius: 13px; font-size: 13px; line-height: 1.5; }
+  .msg.them { background: var(--soft); color: var(--ink); border-end-end-radius: 4px; justify-self: end; }
+  .msg.us { background: var(--brand); color: #fff; border-end-start-radius: 4px; justify-self: start; }
+  .msg.ev { background: transparent; border: 1px dashed var(--line); color: var(--muted);
+            justify-self: center; max-width: 100%; font-size: 12px; text-align: center; }
+  .saved { font-size: 11.5px; color: var(--good); font-weight: 600; min-height: 15px; }
   .empty { color: var(--muted); font-size: 13px; padding: 30px 6px; text-align: center; }
 </style>
 </head>
@@ -133,23 +155,22 @@
 <div class="bar">
   <div><h1>Pointili CRM</h1><div class="sub" id="sub"></div></div>
   <div class="tabs" id="tabs">
-    <button type="button" data-v="board" aria-pressed="true">Board</button>
-    <button type="button" data-v="hot" aria-pressed="false">Hot only</button>
+    <button type="button" data-v="board" aria-pressed="true">الكل</button>
+    <button type="button" data-v="hot" aria-pressed="false">السخان برك</button>
   </div>
   <span class="grow"></span>
-  <input type="text" id="q" placeholder="Search name, shop, zone…" />
-  <a class="ghost" href="replies.html" style="text-decoration:none">Replies →</a>
-  <button type="button" class="ghost" id="reset" title="Undo every change you made here">Reset my edits</button>
+  <input type="text" id="q" placeholder="لوّج على اسم، لوكال، زون…" />
+  <a class="ghost" href="replies.html" style="text-decoration:none">الردود ←</a>
+  <button type="button" class="ghost" id="reset" title="يرجّع كل حاجة بدّلتها هوني">امسح تبديلاتي</button>
 </div>
 
 <div class="today" id="todayWrap">
-  <h2 id="todayH"></h2>
   <div class="strip" id="strip"></div>
 </div>
 
 <main>
   <div class="board" id="board"></div>
-  <aside class="panel" id="panel"><p class="empty">Pick a card.</p></aside>
+  <aside class="panel" id="panel"><p class="empty">اختار واحد من اللوحة.</p></aside>
 </main>
 
 <script src="data.js"></script>
@@ -158,6 +179,9 @@
 const KEY = "pointili-crm-v2";
 const $ = (id) => document.getElementById(id);
 const CH = { messenger: "FB", instagram: "IG", whatsapp: "WA" };
+const CHAR = { messenger: "مسنجر", instagram: "إنستغرام", whatsapp: "واتساب" };
+const HEAT = { hot: "سخون", warm: "دافي", cold: "بارد" };
+const DUE = { today: "اليوم", tomorrow: "غدوة" };
 
 let edits = {};
 try { edits = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch {}
@@ -166,12 +190,25 @@ const all = () => CRM.leads.map((l) => ({ ...l, ...(edits[l.id] || {}) }));
 
 let view = "board", selected = null, dragging = null;
 
-/** the tile for this lead inside avatars.jpg */
+/** البلاصة متاع الصورة في avatars.jpg */
 const avStyle = (i) => {
   const c = CRM.sprite.cols;
   return `background-position: calc(var(--tile) * -${i % c}) calc(var(--tile) * -${Math.floor(i / c)})`;
 };
-const isAr = (s) => /[؀-ۿ]/.test(s);
+/** الاسم مكتوب باللاتين ? يلزمو خط آخر */
+const lat = (s) => (/[؀-ۿ]/.test(s) ? "" : "lat");
+
+const TINTS = ["#6535E0", "#C2410C", "#15803D", "#0E7490", "#9D174D", "#8A6508"];
+/** اللي جاو بعد ما تصوّرت الصور ما عندهمش بلاصة فالسبرايت —
+    نورّيو أول حرف من اسمهم بلون ثابت، خير من وجه غالط. */
+function avHTML(l) {
+  if (l.av === null || l.av === undefined) {
+    const ch = [...(l.name || "?")].find((c) => /[^s]/.test(c)) || "?";
+    const tint = TINTS[[...l.id].reduce((a, c) => a + c.charCodeAt(0), 0) % TINTS.length];
+    return `<span class="av ini" style="--tint:${tint}" dir="auto">${ch}</span>`;
+  }
+  return `<span class="av" style="${avStyle(l.av)}"></span>`;
+}
 
 function matches(l) {
   const q = $("q").value.trim().toLowerCase();
@@ -183,18 +220,19 @@ function matches(l) {
 function cardHTML(l) {
   return `<div class="card" draggable="true" data-id="${l.id}" aria-selected="${selected === l.id}">
       <span class="who">
-        <span class="av" style="${avStyle(l.av)}"></span>
+        ${avHTML(l)}
         <span style="min-width:0">
-          <span class="nm ${isAr(l.name) ? "ar" : ""}">${l.name}</span>
-          <span class="bz">${l.business || (l.zone ? l.zone : "shop not said")}</span>
+          <span class="nm ${lat(l.name)}" dir="auto">${l.name}</span>
+          <span class="bz">${l.business || l.zone || "اللوكال مازال ما تقالش"}</span>
         </span>
       </span>
       <span class="tags">
         <span class="dot ${l.heat}"></span>
         <span class="tag ch">${CH[l.channel]}</span>
-        ${l.due ? `<span class="tag due">today</span>` : ""}
-        ${l.phone ? `<span class="tag due">☎</span>` : ""}
-        ${l.thin ? `<span class="tag thin">not read</span>` : ""}
+        ${l.due === "today" ? `<span class="tag d1">اليوم</span>` : ""}
+        ${l.due === "tomorrow" ? `<span class="tag d2">غدوة</span>` : ""}
+        ${l.phone ? `<span class="tag d1">☎</span>` : ""}
+        ${l.thin ? `<span class="tag thin">مازال ما تقراتش</span>` : ""}
       </span>
       ${l.next ? `<span class="nx">${l.next}</span>` : ""}
     </div>`;
@@ -207,7 +245,8 @@ function drawBoard() {
       const mine = rows.filter((l) => l.stage === s.id);
       return `<section class="col">
           <h3>${s.label} <b>${mine.length}</b></h3>
-          <div class="drop" data-stage="${s.id}">${mine.map(cardHTML).join("") || ""}</div>
+          <p>${s.hint}</p>
+          <div class="drop" data-stage="${s.id}">${mine.map(cardHTML).join("")}</div>
         </section>`;
     })
     .join("");
@@ -227,58 +266,70 @@ function drawBoard() {
   }
 }
 
+/** شريط واحد فيه خدمة اليوم وخدمة غدوة، كل وحدة بلونها */
 function drawToday() {
-  const due = all().filter((l) => l.due);
-  $("todayWrap").hidden = due.length === 0;
-  $("todayH").textContent = `${due.length} to do today`;
-  $("strip").innerHTML = due
-    .map((l) => `<button type="button" class="chip" data-id="${l.id}">
-        <span class="av" style="${avStyle(l.av)}"></span>
-        <span><b class="${isAr(l.name) ? "ar" : ""}">${l.name}</b><span>${l.next || ""}</span></span>
-      </button>`)
-    .join("");
-  for (const c of $("strip").children) c.addEventListener("click", () => { selected = c.dataset.id; draw(); });
+  const rows = all();
+  const t1 = rows.filter((l) => l.due === "today");
+  const t2 = rows.filter((l) => l.due === "tomorrow");
+  $("todayWrap").hidden = t1.length + t2.length === 0;
+
+  const chip = (l, cls) => `<button type="button" class="chip ${cls}" data-id="${l.id}">
+      ${avHTML(l)}
+      <span><b class="${lat(l.name)}" dir="auto">${l.name}</b><span>${l.next || ""}</span></span>
+    </button>`;
+
+  $("strip").innerHTML =
+    (t1.length ? `<span class="lbl">اليوم · ${t1.length}</span>` + t1.map((l) => chip(l, "")).join("") : "") +
+    (t2.length ? `<span class="lbl tm">غدوة · ${t2.length}</span>` + t2.map((l) => chip(l, "tm")).join("") : "");
+
+  for (const c of $("strip").querySelectorAll(".chip")) {
+    c.addEventListener("click", () => { selected = c.dataset.id; draw(); });
+  }
 }
 
 function drawPanel() {
   const l = all().find((x) => x.id === selected);
-  if (!l) { $("panel").innerHTML = `<p class="empty">Pick a card.</p>`; return; }
+  if (!l) { $("panel").innerHTML = `<p class="empty">اختار واحد من اللوحة.</p>`; return; }
   $("panel").innerHTML = `
     <div class="head">
-      <span class="av" style="${avStyle(l.av)}"></span>
-      <div><h2 class="${isAr(l.name) ? "ar" : ""}">${l.name}</h2>
-        <div class="meta">${CH[l.channel] === "FB" ? "Messenger" : "Instagram"} · first ${l.first} · last ${l.last}</div></div>
+      ${avHTML(l)}
+      <div><h2 class="${lat(l.name)}" dir="auto">${l.name}</h2>
+        <div class="meta">${CHAR[l.channel]} · أول مرة <bdi dir="ltr" class="lat">${l.first}</bdi> · آخر مرة <bdi dir="ltr" class="lat">${l.last}</bdi></div></div>
     </div>
 
-    <div class="blk"><h4>Next</h4><textarea id="nx">${l.next || ""}</textarea><p class="saved" id="saved"></p></div>
+    <div class="blk"><h4>الخطوة الجاية</h4><textarea id="nx">${l.next || ""}</textarea><p class="saved" id="saved"></p></div>
 
-    <div class="blk"><h4>Stage</h4>
+    <div class="blk"><h4>المرحلة</h4>
       <div class="moves" id="mv">${CRM.stages.map((s) => `<button type="button" data-s="${s.id}" aria-pressed="${s.id === l.stage}">${s.label}</button>`).join("")}</div>
-      <h4 style="margin-top:12px">Heat</h4>
-      <div class="moves heats" id="ht">${["hot", "warm", "cold"].map((h) => `<button type="button" data-h="${h}" aria-pressed="${h === l.heat}">${h}</button>`).join("")}</div>
-      <h4 style="margin-top:12px">Today</h4>
-      <div class="moves"><button type="button" id="dz" aria-pressed="${!!l.due}">${l.due ? "on the list" : "not today"}</button></div>
-    </div>
-
-    <div class="blk"><h4>Who</h4>
-      <div class="facts">
-        <div><span>Shop</span><b>${l.business || "—"}</b></div>
-        <div><span>Zone</span><b>${l.zone || "—"}</b></div>
-        <div><span>Phone</span><b>${l.phone ? `<a href="tel:+216${l.phone}">${l.phone}</a>` : "—"}</b></div>
-        <div><span>Source</span><b>the ad</b></div>
+      <h4 style="margin-top:12px">السخانة</h4>
+      <div class="moves heats" id="ht">${["hot", "warm", "cold"].map((h) => `<button type="button" data-h="${h}" aria-pressed="${h === l.heat}">${HEAT[h]}</button>`).join("")}</div>
+      <h4 style="margin-top:12px">وقتاش نلوحقو</h4>
+      <div class="moves" id="dz">
+        <button type="button" data-d="today" aria-pressed="${l.due === "today"}">اليوم</button>
+        <button type="button" data-d="tomorrow" aria-pressed="${l.due === "tomorrow"}">غدوة</button>
+        <button type="button" data-d="" aria-pressed="${!l.due}">ما فماش</button>
       </div>
-      ${l.note ? `<p style="margin:10px 0 0;font-size:12.5px">${l.note}</p>` : ""}
     </div>
 
-    <div class="blk"><h4>${l.thin ? "Last line in the inbox" : "What was said"}</h4>
-      <div class="thread">${(l.said || []).map((m) => `<span class="msg ${m.who}">${m.text}</span>`).join("")}</div>
-      ${l.thin ? `<p style="margin:10px 0 0;font-size:12px;color:var(--muted)">Only the list line — open it in Messenger and tell Claude what is in it.</p>` : ""}
+    <div class="blk"><h4>شكون هو</h4>
+      <div class="facts">
+        <div><span>اللوكال</span><b>${l.business || "—"}</b></div>
+        <div><span>الزون</span><b>${l.zone || "—"}</b></div>
+        <div><span>التلفون</span><b class="lat">${l.phone ? `<a href="tel:+216${l.phone}">${l.phone}</a>` : "—"}</b></div>
+        <div><span>منين جا</span><b>الإشهار</b></div>
+      </div>
+      ${l.note ? `<p style="margin:10px 0 0;font-size:13px">${l.note}</p>` : ""}
+    </div>
+
+    <div class="blk"><h4>${l.thin ? "آخر سطر فالبوات" : "شنوة تقال"}</h4>
+      <div class="thread">${(l.said || []).map((m) => `<span class="msg ${m.who} ${m.who === "ev" ? "" : lat(m.text)}" dir="auto">${m.text}</span>`).join("")}</div>
+      ${l.thin ? `<p style="margin:10px 0 0;font-size:12px;color:var(--muted)">هاذا برك السطر اللي يبان فالليستة — حلّ التحكاية فمسنجر وقول لكلود شنوة فيها.</p>` : ""}
     </div>`;
 
   $("nx").addEventListener("input", (e) => set(l.id, "next", e.target.value));
   for (const b of $("mv").children) b.addEventListener("click", () => set(l.id, "stage", b.dataset.s));
   for (const b of $("ht").children) b.addEventListener("click", () => set(l.id, "heat", b.dataset.h));
-  $("dz").addEventListener("click", () => set(l.id, "due", l.due ? null : "today"));
+  for (const b of $("dz").children) b.addEventListener("click", () => set(l.id, "due", b.dataset.d || null));
 }
 
 function set(id, key, val) {
@@ -287,14 +338,15 @@ function set(id, key, val) {
   const keep = document.activeElement?.id;
   draw();
   if (keep === "nx") { const el = $("nx"); if (el) { el.focus(); el.selectionStart = el.value.length; } }
-  if ($("saved")) $("saved").textContent = "Saved on this computer";
+  if ($("saved")) $("saved").textContent = "تسجّل في هالكمبيوتر";
 }
 
 function draw() {
   const rows = all();
+  const when = new Date(CRM.updated).toLocaleString("ar-TN", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   $("sub").textContent =
-    `${CRM.campaign.name} · ${rows.length} people · ${rows.filter((l) => l.business).length} told us their shop · ` +
-    `${rows.filter((l) => l.heat === "hot").length} hot · updated ${new Date(CRM.updated).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
+    `${rows.length} واحد · ${rows.filter((l) => l.business).length} قالولنا اللوكال متاعهم · ` +
+    `${rows.filter((l) => l.heat === "hot").length} سخان · آخر تحيين ${when}`;
   drawToday(); drawBoard(); drawPanel();
 }
 
@@ -307,7 +359,7 @@ for (const b of $("tabs").children) {
 }
 $("q").addEventListener("input", () => { drawBoard(); });
 $("reset").addEventListener("click", () => {
-  if (!confirm("Throw away every stage, heat and note you changed here?")) return;
+  if (!confirm("تحب تمسح كل مرحلة وسخانة وملاحظة بدّلتهم هوني ؟")) return;
   edits = {}; persist(); draw();
 });
 

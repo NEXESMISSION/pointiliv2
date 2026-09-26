@@ -1,11 +1,11 @@
-<title>Pointili Replies</title>
+<title>الردود</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 
 <style>
-  /* Sentences Saif already types, sorted by the moment they get typed in.
-     Built for a phone held in one hand between two Messenger threads. */
+  /* الجمل اللي تكتبهم انت، مرتّبين حسب اللحظة اللي تتكتب فيها.
+     معمولة لتلفون في يد وحدة بين زوز تحكايات فمسنجر. */
   :root {
     --bg: #F5F3FA;
     --sheet: #FFFFFF;
@@ -22,6 +22,7 @@
     --warn-soft: #FCF4E0;
     --warn-line: #EFDCA8;
     --shadow: 0 10px 28px -20px rgba(28, 12, 76, 0.45);
+    --ar: "IBM Plex Sans Arabic", system-ui, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -65,11 +66,12 @@
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--body);
-    font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.55;
+    font-family: var(--ar); font-size: 14px; line-height: 1.6;
     padding-inline: 16px; padding-block: 0 56px;
     -webkit-font-smoothing: antialiased;
   }
   .wrap { max-width: 1180px; margin: 0 auto; }
+  .lat { font-family: Inter, system-ui, sans-serif; }
 
   header {
     position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
@@ -77,83 +79,83 @@
     border-bottom: 1px solid var(--line); margin-bottom: 4px;
   }
   .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  h1 { margin: 0; font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
-  .sub { font-size: 12px; color: var(--muted); }
-  .grow { margin-left: auto; }
+  h1 { margin: 0; font-size: 20px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .sub { font-size: 12.5px; color: var(--muted); }
+  .grow { margin-inline-start: auto; }
   input {
     font: inherit; font-size: 14px; padding: 9px 12px; border-radius: 10px;
     border: 1px solid var(--line); background: var(--sheet); color: var(--ink); min-width: 0;
   }
   input::placeholder { color: var(--muted); }
   input:focus-visible, button:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
-  #name { flex: 1 1 140px; max-width: 190px; }
-  #q { flex: 1 1 150px; max-width: 220px; }
+  #name { flex: 1 1 130px; max-width: 180px; }
+  #q { flex: 1 1 140px; max-width: 210px; }
 
   h2 {
-    margin: 22px 0 9px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--muted); text-wrap: balance;
+    margin: 22px 0 9px; font-size: 15px; font-weight: 600; color: var(--ink);
+    display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap;
   }
-  h2 em {
-    font-style: normal; color: var(--brand); text-transform: none;
-    letter-spacing: 0; font-size: 12px; font-weight: 500;
-  }
+  h2 em { font-style: normal; color: var(--muted); font-size: 12.5px; font-weight: 400; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
   .snip {
-    text-align: left; font: inherit; cursor: pointer; width: 100%;
+    text-align: start; font: inherit; cursor: pointer; width: 100%;
     background: var(--sheet); border: 1px solid var(--line); border-radius: 13px;
-    padding: 12px 13px; display: grid; gap: 7px; color: var(--ink);
+    padding: 12px 13px; display: grid; gap: 8px; color: var(--ink);
     transition: border-color .12s, background .12s;
   }
   .snip:hover { border-color: var(--brand); box-shadow: var(--shadow); }
   .snip.done { border-color: var(--good-line); background: var(--good-soft); }
-  .snip .txt { font-size: 14px; line-height: 1.6; white-space: pre-wrap; user-select: text; }
-  .snip .lab { font-size: 11px; color: var(--muted); }
+  /* الجملة روحها باللاتين — تتقرا وتتنسخ كيما هي */
+  .snip .txt {
+    direction: ltr; text-align: left; font-family: Inter, system-ui, sans-serif;
+    font-size: 14px; line-height: 1.6; white-space: pre-wrap; user-select: text;
+  }
+  .snip .lab { font-size: 12px; color: var(--muted); }
   .snip .lab b { color: var(--brand); font-weight: 600; }
   .snip.done .lab b { color: var(--good); }
 
   .never {
     background: var(--warn-soft); border: 1px solid var(--warn-line); border-radius: 12px;
-    padding: 12px 14px; margin-top: 22px; display: grid; gap: 6px;
+    padding: 13px 15px; margin-top: 24px; display: grid; gap: 8px;
   }
-  .never b {
-    color: var(--warn); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
-  }
-  .never p { margin: 0; font-size: 13.5px; color: var(--body); }
+  .never b { color: var(--warn); font-size: 13px; font-weight: 600; }
+  .never ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 5px; }
+  .never li { font-size: 13.5px; color: var(--body); }
   .never s { color: var(--muted); }
 
-  footer { margin-top: 22px; font-size: 12px; color: var(--muted); }
+  footer { margin-top: 22px; font-size: 12.5px; color: var(--muted); }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
-<div class="wrap">
+<div class="wrap" dir="rtl" lang="ar">
 
 <header>
   <div class="row">
     <div>
-      <h1>Replies</h1>
-      <div class="sub" id="sub">28 ready lines · tap one, it is on the clipboard</div>
+      <h1>الردود</h1>
+      <div class="sub" id="sub">28 سطر حاضر · دوس على واحد يتنسخ</div>
     </div>
     <span class="grow"></span>
-    <input type="text" id="name" placeholder="Esmou" aria-label="His name" autocomplete="off" />
-    <input type="text" id="q" placeholder="Search…" aria-label="Search the replies" autocomplete="off" />
+    <input type="text" id="name" placeholder="اسمو" aria-label="اسم اللي تحكي معاه" autocomplete="off" />
+    <input type="text" id="q" placeholder="لوّج…" aria-label="لوّج فالردود" autocomplete="off" />
   </div>
 </header>
 
 <main id="main"></main>
 
 <div class="never">
-  <b>Never, whatever they ask</b>
-  <p>
-    <s>«tjarrab b bilech»</s> — no free trial ·
-    <s>«10 dt fel chhar»</s> on its own, as if a monthly plan existed ·
-    <s>«bech tzid X client»</s> — never promise a result ·
-    <s>«na3tik téléphone b prix el achat»</s> ·
-    <s>«ken 3andek zouz locaux na3mlek remise»</s>
-  </p>
+  <b>عمرك ما تقولها، مهما سألوك</b>
+  <ul>
+    <li><s class="lat">tjarrab b bilech</s> — ما فماش تجربة بالفاش</li>
+    <li><s class="lat">10 dt fel chhar</s> وحدو، كي لو كان فمّة أبونمون بالشهر</li>
+    <li><s class="lat">bech tzid X client</s> — عمرك ما توعد بنتيجة</li>
+    <li><s class="lat">na3tik téléphone b prix el achat</s></li>
+    <li><s class="lat">ken 3andek zouz locaux na3mlek remise</s></li>
+  </ul>
 </div>
 
-<footer>Every line here is one you already typed in the inbox, or the playbook's wording where the playbook is stricter.</footer>
+<footer>كل سطر هوني كتبتو انت بيدك فالبوات، ولا هو صياغة الپلايبوك كي تكون أدق.</footer>
 
 </div>
 
@@ -162,79 +164,80 @@
 
   const PACKS = [
     {
-      t: "Awel réponse", hint: "the first line, when they land from the ad",
+      t: "أول رد", hint: "أول سطر، كي يوصلك من الإشهار",
       s: [
-        ["opener", "3slema {name}, Pointili card fi téléphone mta3 el client, bla application.\nEkhtar sou2el wala ektiblna chnowa local mta3ek, w njewbouk fi d9aye9."],
-        ["short opener", "3slema {name} 👋 chnowa local mte3ek ? 9ahwa, boutique wala salon ?"],
-        ["they only said hi", "mar7ba bik {name} 🙌 chnowa local mte3ek ?"],
+        ["الرد الطويل", "3slema {name}, Pointili card fi téléphone mta3 el client, bla application.\nEkhtar sou2el wala ektiblna chnowa local mta3ek, w njewbouk fi d9aye9."],
+        ["رد قصير", "3slema {name} 👋 chnowa local mte3ek ? 9ahwa, boutique wala salon ?"],
+        ["قالك برك سلام", "mar7ba bik {name} 🙌 chnowa local mte3ek ?"],
       ],
     },
     {
-      t: "El prix", hint: "one answer, always the same numbers",
+      t: "السوم", hint: "جواب واحد، ونفس الأرقام ديما",
       s: [
-        ["the price", "120 dt fel 3am, ya3ni 10 dt fel chhar. wala 80 dt l 6 chhour.\ncash wala D17."],
-        ["price + what is in it", "120 dt fel 3am wala 80 dt l 6 chhour.\nel clients mte3ek lkol yesta3mlouha, w kol chay dakhel fel prix. tkhalles b virement, D17 wala cash."],
-        ["«ghali»", "nafham. ama 7seb m3aya: client wa7ed yerja3 mara zeyda fel chhar, 3malt el 10 dt.\nel be9i kol rib7."],
+        ["السوم", "120 dt fel 3am, ya3ni 10 dt fel chhar. wala 80 dt l 6 chhour.\ncash wala D17."],
+        ["السوم + شنوة داخل فيه", "120 dt fel 3am wala 80 dt l 6 chhour.\nel clients mte3ek lkol yesta3mlouha, w kol chay dakhel fel prix. tkhalles b virement, D17 wala cash."],
+        ["«غالي»", "nafham. ama 7seb m3aya: client wa7ed yerja3 mara zeyda fel chhar, 3malt el 10 dt.\nel be9i kol rib7."],
       ],
     },
     {
-      t: "Ma lezmouch application", hint: "the question everybody asks second",
+      t: "ما لزموش أبليكاسيون", hint: "السؤال اللي يسألوه الكل في الثاني",
       s: [
-        ["no app", "le, ma lezmouch ysobb 7atta application.\nyscan-i el QR b camera mta3 téléphone, yda5el numro mta3ou w yabda direct. el tampon yodhher fi la7ditha."],
-        ["first time only", "just awel mara y7il compte b numero mte3o. ba3d hakka yscani w khlass."],
-        ["the QR", "el QR yetbaddel wa7dou kol mara, w mayenjamch ye5dem zouz mrat. 7atou 3al comptoir fi tablette wala téléphone."],
+        ["ما فماش أبليكاسيون", "le, ma lezmouch ysobb 7atta application.\nyscan-i el QR b camera mta3 téléphone, yda5el numro mta3ou w yabda direct. el tampon yodhher fi la7ditha."],
+        ["كان أول مرة برك", "just awel mara y7il compte b numero mte3o. ba3d hakka yscani w khlass."],
+        ["الـ QR", "el QR yetbaddel wa7dou kol mara, w mayenjamch ye5dem zouz mrat. 7atou 3al comptoir fi tablette wala téléphone."],
       ],
     },
     {
-      t: "Bech na3ref chkoun houwa", hint: "this is where most of them go quiet — keep it concrete",
+      t: "باش نعرف شكون هو", hint: "هوني أغلبهم يسكتو — خلّي السؤال ملموس",
       s: [
-        ["what shop", "chnowa local mte3ek ? 9ahwa, boutique, salon wala restaurant ?"],
-        ["what shop + zone", "chnowa local mte3ek w fi ana zone ? bech nchouf kifech n5edmou."],
-        ["the shop's name", "esm el local mte3ek chnowa ?"],
-        ["do they get it", "inti fehim el system de fidelite ?"],
+        ["شنوة اللوكال", "chnowa local mte3ek ? 9ahwa, boutique, salon wala restaurant ?"],
+        ["اللوكال + الزون", "chnowa local mte3ek w fi ana zone ? bech nchouf kifech n5edmou."],
+        ["اسم اللوكال", "esm el local mte3ek chnowa ?"],
+        ["فاهم ولا لا", "inti fehim el system de fidelite ?"],
       ],
     },
     {
-      t: "Bech na3mlou demo", hint: "every conversation is trying to land here",
+      t: "باش نعملو ديمو", hint: "كل تحكاية تحب توصل لهوني",
       s: [
-        ["ask for a time", "wada7. ken t7ib 5alili nmrouk w 9oli wa9tech yse3dik, nkalmik w nzid nfahmik kol chay."],
-        ["offer the demo", "najmou nabdew b demo fel local mte3ek. tchouf el 7keya b 3aynik w ba3d t9arrar.\nchnowa a7san nhar lik ?"],
-        ["they said yes", "bahi 👌 ken mrigel n7iloulik compte w nubdew.\n9oli nhar w se3a w nkoun 3andek."],
-        ["confirm it", "mrigel. {name}, nhar … 3al … fel local. njib m3aya kol chay w nrakkbouha fi rob3 se3a."],
+        ["اطلب وقت للمكالمة", "wada7. ken t7ib 5alili nmrouk w 9oli wa9tech yse3dik, nkalmik w nzid nfahmik kol chay."],
+        ["اعرض الديمو", "najmou nabdew b demo fel local mte3ek. tchouf el 7keya b 3aynik w ba3d t9arrar.\nchnowa a7san nhar lik ?"],
+        ["قالك إيه", "bahi 👌 ken mrigel n7iloulik compte w nubdew.\n9oli nhar w se3a w nkoun 3andek."],
+        ["أكّد الموعد", "mrigel. {name}, nhar … 3al … fel local. njib m3aya kol chay w nrakkbouha fi rob3 se3a."],
       ],
     },
     {
-      t: "Relance", hint: "one line, and only one — a second nudge reads as begging",
+      t: "نرجعلو", hint: "سطر واحد وبرك — الثاني يولّي تسوّل",
       s: [
-        ["still interested", "mazeltou mohtam ? ken ey, najmou nabdew b demo, tjarrbouha w tchouf kifech te5dem."],
-        ["missed the call", "mt7asaltich alik. 9oli wa9tech yse3dik w n3ayytlek."],
-        ["gentle, days later", "3slema {name}, ken el wa9t ma ye5demch tawa 3adi. n3ayytlek ba3d chwaya."],
+        ["مازال مهتم ؟", "mazeltou mohtam ? ken ey, najmou nabdew b demo, tjarrbouha w tchouf kifech te5dem."],
+        ["ما تلاقيتش بيه", "mt7asaltich alik. 9oli wa9tech yse3dik w n3ayytlek."],
+        ["بالساهل، بعد أيام", "3slema {name}, ken el wa9t ma ye5demch tawa 3adi. n3ayytlek ba3d chwaya."],
       ],
     },
     {
-      t: "Ki y9oulek le", hint: "answer short, do not argue, leave the door open",
+      t: "كي يقولك لا", hint: "جاوب قصير، ما تتناقشش، خلّي الباب محلول",
       s: [
-        ["«nfakker»", "bahi, khoudh ra7tek 👌"],
-        ["«3andi déjà 7keya»", "bahi. w tekhdem m3ak ? ken el 7keya 3al warka, el farq eli 3andna houwa eli ma tetlefch w tchouf chkoun rja3lek."],
-        ["«ma3andich wa9t»", "el installation rob3 se3a w ana eli na3melha. enti ma ta3mel walou."],
-        ["«ba3d chwaya»", "wada7, 9oli wa9tech w n3ayytlek. ma nkharbtch 3lik."],
+        ["«نفكّر»", "bahi, khoudh ra7tek 👌"],
+        ["«عندي ديجا حكاية»", "bahi. w tekhdem m3ak ? ken el 7keya 3al warka, el farq eli 3andna houwa eli ma tetlefch w tchouf chkoun rja3lek."],
+        ["«ما عنديش وقت»", "el installation rob3 se3a w ana eli na3melha. enti ma ta3mel walou."],
+        ["«بعد شوية»", "wada7, 9oli wa9tech w n3ayytlek. ma nkharbtch 3lik."],
       ],
     },
     {
-      t: "Ba3ed ma yebda", hint: "the client you already have is the cheapest one to keep",
+      t: "بعد ما يبدا", hint: "الكلينت اللي عندك أرخص واحد باش تحافظ عليه",
       s: [
-        ["day 0", "mabrouk 🎉 el compte 7adher. ay sou2al ekteb w njewbek."],
-        ["day 3", "kifech mechya m3akom ? 9addech client tsajjel ?"],
-        ["Monday numbers", "{name}, hedhi ar9am el semana: … client jded, … tampon, … cadeau.\nchnowa rayek ?"],
-        ["referral", "ken ta3ref 7ata wa7ed fi nafs el zone yenjem yesta5demha, 3arrafni bih 🙏"],
+        ["نهار التركيب", "mabrouk 🎉 el compte 7adher. ay sou2al ekteb w njewbek."],
+        ["بعد 3 أيام", "kifech mechya m3akom ? 9addech client tsajjel ?"],
+        ["أرقام نهار الاثنين", "{name}, hedhi ar9am el semana: … client jded, … tampon, … cadeau.\nchnowa rayek ?"],
+        ["يعرّفك بواحد آخر", "ken ta3ref 7ata wa7ed fi nafs el zone yenjem yesta5demha, 3arrafni bih 🙏"],
       ],
     },
   ];
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
-  /** With no name typed, drop the placeholder AND the comma that was propping
-      it up, so a line never reads "3slema , Pointili card". */
+
+  /** كي تكون خانة الاسم فارغة، ننحّيو الفراغ والفاصلة اللي كانو معاه،
+      باش ما يطلعش سطر كيما «3slema , Pointili card». */
   const NAMED = /\{name\}/g;
   const NAME_COMMA = /\s*\{name\}\s*,\s*/g;
   const NAME_BARE = /\s*\{name\}\s*/g;
@@ -256,22 +259,20 @@
           <div class="grid">${hits.map(([lab, txt]) => `
             <button type="button" class="snip">
               <span class="txt">${esc(fill(txt))}</span>
-              <span class="lab"><b>copy</b> · ${esc(lab)}</span>
+              <span class="lab"><b>نسخ</b> · ${esc(lab)}</span>
             </button>`).join("")}</div>
         </section>`;
     }).join("");
 
-    $("sub").textContent = q
-      ? `${n} of 28 lines match`
-      : "28 ready lines · tap one, it is on the clipboard";
+    $("sub").textContent = q ? `${n} سطر من 28 يلقاو` : "28 سطر حاضر · دوس على واحد يتنسخ";
 
     for (const b of document.querySelectorAll(".snip")) {
       b.addEventListener("click", () => copy(b));
     }
   }
 
-  /** The clipboard is refused in some viewers, so the fallback selects the text
-      and says so — never a silent nothing. */
+  /** فمّة برامج يمنعو الـ clipboard، وقتها نعلّمو السطر بروحو
+      باش ينجم ينسخو بيدو — عمرنا ما نخلّيوه بلا خبر. */
   async function copy(btn) {
     const node = btn.querySelector(".txt");
     const tag = btn.querySelector(".lab b");
@@ -287,11 +288,11 @@
       sel.addRange(r);
     }
     btn.classList.toggle("done", ok);
-    tag.textContent = ok ? "copied ✓" : "selected — copy it";
+    tag.textContent = ok ? "تنسخ ✓" : "تعلّم — انسخو بيدك";
     clearTimeout(btn._t);
     btn._t = setTimeout(() => {
       btn.classList.remove("done");
-      tag.textContent = "copy";
+      tag.textContent = "نسخ";
     }, 1800);
   }
 
