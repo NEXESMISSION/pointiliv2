@@ -1191,7 +1191,7 @@
       const hidden = members.every((m) => !m.visible), locked = members.every((m) => m.locked);
       const li = document.createElement("li"); li.className = (child ? "child" : "") + (selected.has(o) ? " on" : "") + (hidden ? " hidden" : "");
       const chev = document.createElement("span"); chev.className = "chev";
-      if (it.group && !child && it.members.length > 1) { chev.textContent = "▸"; chev.title = "Pieces"; if (openGroups.has(o.id)) chev.classList.add("open"); chev.onclick = (e) => { e.stopPropagation(); openGroups.has(o.id) ? openGroups.delete(o.id) : openGroups.add(o.id); renderLayers(); }; }
+      if (it.group && !child && it.members.length > 1) { chev.innerHTML = '<svg width="8" height="10" viewBox="0 0 8 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1.5l4 3.5-4 3.5"/></svg>'; chev.title = "Pieces"; if (openGroups.has(o.id)) chev.classList.add("open"); chev.onclick = (e) => { e.stopPropagation(); openGroups.has(o.id) ? openGroups.delete(o.id) : openGroups.add(o.id); renderLayers(); }; }
       const t = document.createElement("span"); t.className = "t"; t.textContent = KIND_GLYPH[o.kind] || "◆";
       const nm = document.createElement("span"); nm.className = "nm" + (o.kind === "text" ? "" : " ltr"); nm.textContent = child ? pieceName(o) : label(o); nm.title = nm.textContent;
       const c = document.createElement("span"); c.className = "ctl";
