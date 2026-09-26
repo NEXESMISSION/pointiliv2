@@ -4,14 +4,35 @@
     {
       "name": "pointidi-dev",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["next", "dev"],
+      "runtimeArgs": [
+        "next",
+        "dev"
+      ],
       "autoPort": true
     },
     {
       "name": "business-docs",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "social/business"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--directory",
+        "social/business"
+      ],
       "port": 8765
+    },
+    {
+      "name": "typo",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8766",
+        "--directory",
+        "social/typo"
+      ],
+      "port": 8766
     }
   ]
 }
