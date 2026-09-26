@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Activity, CreditCard, Ellipsis, House, QrCode, Settings, Users } from "lucide-react";
+import { CreditCard, Ellipsis, House, QrCode, Settings, Users } from "lucide-react";
 import { BottomNav, SideNav, type NavItem } from "@/components/nav/Nav";
 import { useT } from "@/components/i18n/Provider";
 
@@ -12,7 +12,6 @@ export function MerchantSideNav({ header, footer }: { header: ReactNode; footer:
     { href: "/dashboard", label: t.nav.merchant.home, icon: House, exact: true },
     { href: "/qr", label: t.nav.merchant.showQr, icon: QrCode },
     { href: "/customers", label: t.nav.merchant.customers, icon: Users },
-    { href: "/activity", label: t.nav.merchant.activity, icon: Activity },
     { href: "/loyalty", label: t.nav.merchant.card, icon: CreditCard },
     { href: "/settings", label: t.nav.merchant.settings, icon: Settings },
   ];

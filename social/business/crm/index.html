@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pointili CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Every lead here came from one ad. The board is read in the morning and
+     worked through, so what is due today has to be the loudest thing on it. */
+  :root {
+    --bg: #F6F4FB;
+    --sheet: #FFFFFF;
+    --ink: #17141F;
+    --body: #4B4660;
+    --muted: #7B7590;
+    --line: #E4DFF1;
+    --line-soft: #EFEBF8;
+    --brand: #6535E0;
+    --brand-soft: #F0EAFF;
+    --hot: #C2410C;
+    --hot-soft: #FFF1E7;
+    --warm: #92700A;
+    --warm-soft: #FDF6E3;
+    --cold: #6B6680;
+    --cold-soft: #F1EFF6;
+    --green: #15803D;
+    --shadow: 0 14px 36px -24px rgba(30, 14, 80, 0.4);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--body);
+    font: 14px/1.55 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  [hidden] { display: none !important; }
+  .ar { font-family: "IBM Plex Sans Arabic", sans-serif; }
+
+  /* ── bar ─────────────────────────────────────────────────────── */
+  .bar {
+    flex: none; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 12px 20px; background: var(--sheet); border-bottom: 1px solid var(--line);
+  }
+  .bar h1 { margin: 0; font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+  .bar .sub { font-size: 12px; color: var(--muted); }
+  .bar .grow { margin-left: auto; }
+  .counts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .counts button {
+    font: 600 12px Inter, sans-serif; cursor: pointer; border-radius: 999px; padding: 5px 12px;
+    border: 1px solid var(--line); background: var(--sheet); color: var(--body);
+  }
+  .counts button b { color: var(--ink); }
+  .counts button[aria-pressed="true"] { background: var(--brand-soft); border-color: var(--brand); color: var(--brand); }
+  .counts button[aria-pressed="true"] b { color: var(--brand); }
+  #q {
+    font: inherit; font-size: 13px; width: 200px; padding: 7px 11px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  #q:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+  /* ── shell ───────────────────────────────────────────────────── */
+  main { flex: 1; display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); min-height: 0; }
+  @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } .detail { display: none; } }
+
+  .list { overflow-y: auto; border-right: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; align-content: start; }
+  .card {
+    width: 100%; text-align: left; background: var(--sheet); border: 1px solid var(--line);
+    border-radius: 14px; padding: 11px 13px; cursor: pointer; display: grid; gap: 5px;
+    font: inherit; color: inherit;
+  }
+  .card:hover { border-color: var(--brand); }
+  .card[aria-selected="true"] { border-color: var(--brand); box-shadow: var(--shadow); }
+  .card.due { border-left: 3px solid var(--hot); }
+  .card .top { display: flex; align-items: center; gap: 8px; }
+  .card .nm { font-weight: 600; color: var(--ink); font-size: 14.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .meta { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+  .card .nx { font-size: 12.5px; color: var(--body); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .pill {
+    font: 600 10.5px Inter, sans-serif; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .hot { background: var(--hot-soft); color: var(--hot); }
+  .warm { background: var(--warm-soft); color: var(--warm); }
+  .cold { background: var(--cold-soft); color: var(--cold); }
+  .stage { background: var(--brand-soft); color: var(--brand); }
+  .ch { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+  /* ── detail ──────────────────────────────────────────────────── */
+  .detail { overflow-y: auto; padding: 18px 22px 40px; }
+  .detail h2 { margin: 0 0 2px; font-size: 21px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+  .detail .who { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; color: var(--muted); font-size: 13px; }
+  .block { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+  .block h3 {
+    margin: 0 0 8px; font: 600 10.5px Inter, sans-serif; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .facts div span { display: block; font-size: 11.5px; color: var(--muted); }
+  .facts div b { font-size: 14px; color: var(--ink); font-weight: 600; }
+  .facts a { color: var(--brand); text-decoration: none; font-weight: 600; }
+
+  .thread { display: grid; gap: 7px; }
+  .msg { max-width: 82%; padding: 8px 12px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; }
+  .msg.them { background: var(--line-soft); color: var(--ink); border-bottom-left-radius: 5px; justify-self: start; }
+  .msg.us { background: var(--brand); color: #fff; border-bottom-right-radius: 5px; justify-self: end; }
+
+  label.f { display: grid; gap: 5px; font-size: 12px; color: var(--body); }
+  select, textarea {
+    font: inherit; font-size: 13px; width: 100%; padding: 8px 10px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  select:focus-visible, textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .saved { font-size: 11.5px; color: var(--green); font-weight: 600; min-height: 15px; }
+  .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div>
+    <h1>Pointili CRM</h1>
+    <div class="sub" id="head"></div>
+  </div>
+  <div class="counts" id="counts"></div>
+  <span class="grow"></span>
+  <input type="text" id="q" placeholder="Search name, shop, zone…" />
+</div>
+
+<main>
+  <div class="list" id="list"></div>
+  <div class="detail" id="detail"><p class="empty">Pick someone on the left.</p></div>
+</main>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+
+const KEY = "pointili-crm-edits-v1";
+const $ = (id) => document.getElementById(id);
+const CH = { messenger: "Messenger", instagram: "Instagram", whatsapp: "WhatsApp" };
+
+/** Your own edits live on top of the extracted data, so a refresh never eats them. */
+let edits = {};
+try { edits = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { edits = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(edits)); } catch {} };
+const merged = (l) => ({ ...l, ...(edits[l.id] || {}) });
+
+let filter = "due";
+let selected = null;
+
+const stageLabel = (id) => (CRM.stages.find((s) => s.id === id) || {}).label || id;
+const leads = () => CRM.leads.map(merged);
+
+function visible() {
+  const q = $("q").value.trim().toLowerCase();
+  return leads().filter((l) => {
+    if (filter === "due" && !l.due) return false;
+    if (filter !== "due" && filter !== "all" && l.stage !== filter) return false;
+    if (!q) return true;
+    return [l.name, l.business, l.zone, l.phone, l.note, l.next].filter(Boolean).join(" ").toLowerCase().includes(q);
+  });
+}
+
+function drawCounts() {
+  const all = leads();
+  const due = all.filter((l) => l.due).length;
+  const items = [
+    { id: "due", label: "Due today", n: due },
+    { id: "all", label: "Everyone", n: all.length },
+    ...CRM.stages.map((s) => ({ id: s.id, label: s.label, n: all.filter((l) => l.stage === s.id).length })),
+  ].filter((i) => i.n > 0 || i.id === "due" || i.id === "all");
+
+  $("counts").innerHTML = items
+    .map((i) => `<button type="button" data-f="${i.id}" aria-pressed="${filter === i.id}">${i.label} <b>${i.n}</b></button>`)
+    .join("");
+  for (const b of $("counts").children) {
+    b.addEventListener("click", () => { filter = b.dataset.f; draw(); });
+  }
+  const all2 = all.length;
+  const got = all.filter((l) => l.business).length;
+  $("head").textContent =
+    `${CRM.campaign.name} · ${all2} leads · ${got} told us what their shop is · updated ${new Date(CRM.updated).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
+}
+
+function drawList() {
+  const rows = visible();
+  if (!rows.length) {
+    $("list").innerHTML = `<p class="empty">Nothing here.</p>`;
+    return;
+  }
+  const order = { hot: 0, warm: 1, cold: 2 };
+  rows.sort((a, b) => (b.due ? 1 : 0) - (a.due ? 1 : 0) || order[a.heat] - order[b.heat] || a.name.localeCompare(b.name));
+  $("list").innerHTML = rows
+    .map((l) => `
+      <button type="button" class="card ${l.due ? "due" : ""}" data-id="${l.id}" aria-selected="${selected === l.id}">
+        <span class="top">
+          <span class="nm ${/[؀-ۿ]/.test(l.name) ? "ar" : ""}">${l.name}</span>
+          <span class="pill ${l.heat}">${l.heat}</span>
+        </span>
+        <span class="meta">
+          <span class="ch">${CH[l.channel]}</span>
+          <span class="pill stage">${stageLabel(l.stage)}</span>
+          ${l.business ? `<span>${l.business}</span>` : ""}
+          ${l.zone ? `<span>· ${l.zone}</span>` : ""}
+        </span>
+        ${l.next ? `<span class="nx">${l.next}</span>` : ""}
+      </button>`)
+    .join("");
+  for (const b of $("list").children) {
+    if (b.dataset.id) b.addEventListener("click", () => { selected = b.dataset.id; draw(); });
+  }
+}
+
+function drawDetail() {
+  const l = leads().find((x) => x.id === selected);
+  if (!l) { $("detail").innerHTML = `<p class="empty">Pick someone on the left.</p>`; return; }
+  const arabic = /[؀-ۿ]/.test(l.name) ? "ar" : "";
+
+  $("detail").innerHTML = `
+    <h2 class="${arabic}">${l.name}</h2>
+    <div class="who">
+      <span>${CH[l.channel]}</span>
+      <span class="pill ${l.heat}">${l.heat}</span>
+      <span class="pill stage">${stageLabel(l.stage)}</span>
+      <span>first ${l.first} · last ${l.last}</span>
+    </div>
+
+    <div class="block">
+      <h3>What to do</h3>
+      <p style="margin:0;color:var(--ink)">${l.next || "—"}</p>
+    </div>
+
+    <div class="block">
+      <h3>Who they are</h3>
+      <div class="facts">
+        <div><span>Shop</span><b>${l.business || "not said"}</b></div>
+        <div><span>Zone</span><b>${l.zone || "not said"}</b></div>
+        <div><span>Phone</span><b>${l.phone ? `<a href="tel:+216${l.phone}">${l.phone}</a>` : "not given"}</b></div>
+      </div>
+      ${l.note ? `<p style="margin:10px 0 0;font-size:13px">${l.note}</p>` : ""}
+    </div>
+
+    <div class="block">
+      <h3>Move it</h3>
+      <div class="row2">
+        <label class="f" for="st"><span>Stage</span>
+          <select id="st">${CRM.stages.map((s) => `<option value="${s.id}" ${s.id === l.stage ? "selected" : ""}>${s.label}</option>`).join("")}</select>
+        </label>
+        <label class="f" for="ht"><span>Heat</span>
+          <select id="ht">${["hot", "warm", "cold"].map((h) => `<option value="${h}" ${h === l.heat ? "selected" : ""}>${h}</option>`).join("")}</select>
+        </label>
+      </div>
+      <label class="f" for="nx" style="margin-top:10px"><span>Next action</span>
+        <textarea id="nx">${l.next || ""}</textarea>
+      </label>
+      <label class="f" for="dz" style="margin-top:10px">
+        <span><input type="checkbox" id="dz" ${l.due ? "checked" : ""} /> Due today</span>
+      </label>
+      <p class="saved" id="saved"></p>
+    </div>
+
+    <div class="block">
+      <h3>What was actually said</h3>
+      <div class="thread">
+        ${(l.said || []).map((m) => `<span class="msg ${m.who}">${m.text}</span>`).join("")}
+      </div>
+    </div>`;
+
+  const touch = (k, v) => {
+    edits[l.id] = { ...(edits[l.id] || {}), [k]: v };
+    save();
+    $("saved").textContent = "Saved on this computer.";
+    drawCounts(); drawList();
+  };
+  $("st").addEventListener("change", (e) => touch("stage", e.target.value));
+  $("ht").addEventListener("change", (e) => touch("heat", e.target.value));
+  $("nx").addEventListener("input", (e) => touch("next", e.target.value));
+  $("dz").addEventListener("change", (e) => touch("due", e.target.checked ? "today" : null));
+}
+
+function draw() { drawCounts(); drawList(); drawDetail(); }
+
+$("q").addEventListener("input", () => { drawList(); });
+selected = (CRM.leads.find((l) => l.due) || CRM.leads[0]).id;
+draw();
+</script>
+</body>
+</html>
