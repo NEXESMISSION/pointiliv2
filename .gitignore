@@ -32,5 +32,7 @@ scratch/
 social/carousels/out/
 social/carousels/review/
 
-# the CRM holds real customers' names, numbers and DMs — it never goes in a repo
-/social/business/crm/
+# the CRM app is code and belongs here; the data is real customers' names,
+# numbers, faces and private messages, and never goes in a public repo
+/social/business/crm/data.js
+/social/business/crm/avatars.jpg
