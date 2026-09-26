@@ -78,10 +78,27 @@
   .chip span { font-size: 11.5px; color: var(--body); display: block; overflow: hidden;
                text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
 
+  /* ── القمع: وين تتقطع الحكاية ─────────────────────────────────── */
+  .funnel { flex: none; display: flex; align-items: stretch; gap: 0; flex-wrap: wrap;
+            background: var(--sheet); border-bottom: 1px solid var(--line); padding: 9px 18px; }
+  .step { display: flex; align-items: baseline; gap: 6px; padding: 2px 14px 2px 0; }
+  .step b { font: 700 17px Inter, sans-serif; color: var(--ink); }
+  .step span { font-size: 11.5px; color: var(--muted); }
+  .step.zero b { color: var(--hot); }
+  .step + .step { border-inline-start: 1px solid var(--line); padding-inline-start: 14px; }
+  .break { flex: 1; min-width: 220px; align-self: center; text-align: end;
+           font-size: 12px; color: var(--hot); font-weight: 600; }
+
   /* ── اللوحة ──────────────────────────────────────────────────── */
   main { flex: 1; min-height: 0; display: flex; }
   .board { flex: 1; min-width: 0; display: flex; gap: 12px; padding: 14px 18px 20px; overflow-x: auto; }
-  .col { flex: 0 0 258px; display: flex; flex-direction: column; min-height: 0; }
+  .col { flex: 0 0 228px; display: flex; flex-direction: column; min-height: 0; }
+  .col.mt { flex: 0 0 148px; }
+  .col.mt .drop { border: 1px dashed var(--line); }
+  .col.mt .drop::before {
+    content: attr(data-empty); display: block; padding: 14px 10px; text-align: center;
+    font-size: 11.5px; color: var(--muted); line-height: 1.5;
+  }
   .col > h3 {
     margin: 0 0 4px; display: flex; align-items: center; gap: 7px;
     font: 600 13px var(--ar); color: var(--ink);
@@ -164,6 +181,8 @@
   <button type="button" class="ghost" id="reset" title="يرجّع كل حاجة بدّلتها هوني">امسح تبديلاتي</button>
 </div>
 
+<div class="funnel" id="funnel"></div>
+
 <div class="today" id="todayWrap">
   <div class="strip" id="strip"></div>
 </div>
@@ -217,6 +236,14 @@ function matches(l) {
   return [l.name, l.business, l.zone, l.phone, l.next, l.note].filter(Boolean).join(" ").toLowerCase().includes(q);
 }
 
+const RANK = { hot: 0, warm: 1, cold: 2 };
+/** ترتيب العمود: السخون قبل، اللي عندو موعد قبل، اللي عطاك نمرتو قبل،
+    واللي تحرّك من قريب قبل. هاذا الترتيب هو الخلاصة متاع كل شنوة قريناه. */
+function weight(l) {
+  const days = Math.max(0, (Date.now() - Date.parse(String(l.last).slice(0, 10))) / 864e5);
+  return RANK[l.heat] * 1000 - (l.due ? 300 : 0) - (l.phone ? 120 : 0) - (l.business ? 60 : 0) + days * 12;
+}
+
 function cardHTML(l) {
   return `<div class="card" draggable="true" data-id="${l.id}" aria-selected="${selected === l.id}">
       <span class="who">
@@ -242,11 +269,11 @@ function drawBoard() {
   const rows = all().filter(matches);
   $("board").innerHTML = CRM.stages
     .map((s) => {
-      const mine = rows.filter((l) => l.stage === s.id);
-      return `<section class="col">
+      const mine = rows.filter((l) => l.stage === s.id).sort((a, b) => weight(a) - weight(b));
+      return `<section class="col ${mine.length ? "" : "mt"}">
           <h3>${s.label} <b>${mine.length}</b></h3>
           <p>${s.hint}</p>
-          <div class="drop" data-stage="${s.id}">${mine.map(cardHTML).join("")}</div>
+          <div class="drop" data-stage="${s.id}" data-empty="${s.hint}">${mine.map(cardHTML).join("")}</div>
         </section>`;
     })
     .join("");
@@ -285,6 +312,30 @@ function drawToday() {
   for (const c of $("strip").querySelectorAll(".chip")) {
     c.addEventListener("click", () => { selected = c.dataset.id; draw(); });
   }
+}
+
+const CANNED = ["9addech tkellef Pointili ?", "El client lezmou ysobb application ?"];
+/** القمع. كل رقم منّو محسوب من التحكايات روحهم، موش مكتوب بيدي. */
+function drawFunnel() {
+  const rows = all();
+  const spoke = rows.filter((l) =>
+    (l.said || []).some((m) => m.who === "them" && !CANNED.includes(m.text.trim()))).length;
+  const shop = rows.filter((l) => l.business).length;
+  const warmer = rows.filter((l) => ["interested", "demo", "installed", "waiting"].includes(l.stage)).length;
+  const demo = rows.filter((l) => ["demo", "installed"].includes(l.stage)).length;
+  const client = rows.filter((l) => l.stage === "installed").length;
+
+  const steps = [
+    [rows.length, "جاوبو الإشهار"],
+    [spoke, "حكاو بالفعل"],
+    [shop, "قالو شنوة اللوكال"],
+    [warmer, "مهتمين"],
+    [demo, "ديمو متفق"],
+    [client, "كلينت خلّص"],
+  ];
+  $("funnel").innerHTML =
+    steps.map(([n, t]) => `<span class="step ${n ? "" : "zero"}"><b>${n}</b><span>${t}</span></span>`).join("") +
+    `<span class="break">أكبر تسريبة: من «مهتم» لـ«ديمو» — ${warmer} مهتمين و${demo} موعد.</span>`;
 }
 
 function drawPanel() {
@@ -347,7 +398,7 @@ function draw() {
   $("sub").textContent =
     `${rows.length} واحد · ${rows.filter((l) => l.business).length} قالولنا اللوكال متاعهم · ` +
     `${rows.filter((l) => l.heat === "hot").length} سخان · آخر تحيين ${when}`;
-  drawToday(); drawBoard(); drawPanel();
+  drawFunnel(); drawToday(); drawBoard(); drawPanel();
 }
 
 for (const b of $("tabs").children) {
