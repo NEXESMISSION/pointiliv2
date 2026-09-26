@@ -6,20 +6,20 @@
 <title>Pointili Typo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;600;700;800;900&family=Noto+Kufi+Arabic:wght@400;600;700;800;900&family=Readex+Pro:wght@400;500;600;700&family=Alexandria:wght@400;600;700;800;900&family=Almarai:wght@400;700;800&family=Changa:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800;900&family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800;900&family=Readex+Pro:wght@300;400;500;600;700&family=Alexandria:wght@300;400;500;600;700;800;900&family=Almarai:wght@300;400;700;800&family=Changa:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 <style>
-  /* The editor is boring on purpose: white, hairlines, one dark button. The typography is where the colour goes. */
-  :root { --bg: #F7F7F7; --panel: #FFFFFF; --ink: #111111; --body: #3A3A3A; --muted: #7A7A7A; --line: #E4E4E4; --field: #FAFAFA; --accent: #111111; --checker: #E9E9E9; }
+  /* The editor is quiet on purpose: white, hairlines, one dark button. The colour lives on the canvas. */
+  :root { --bg: #F4F4F4; --panel: #FFFFFF; --ink: #111111; --body: #3A3A3A; --muted: #7A7A7A; --line: #E4E4E4; --field: #FAFAFA; --checker: #E6E6E6; --teal: #17B7BD; }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body { background: var(--bg); color: var(--ink); font: 13px/1.45 Inter, system-ui, sans-serif; overflow: hidden; }
   button, input, select, textarea { font: inherit; color: inherit; }
   button { cursor: pointer; }
   .app { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
-  header { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line); }
-  header .logo { font-weight: 600; letter-spacing: -0.01em; margin-inline-end: 10px; }
-  header .logo b { display: inline-block; width: 18px; height: 14px; background: #6535E0; border-radius: 4px; vertical-align: -2px; margin-inline-end: 6px; }
+  header { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line); position: relative; }
+  header .logo { font-weight: 600; margin-inline-end: 8px; display: flex; align-items: center; gap: 7px; }
+  header .logo b { width: 18px; height: 14px; background: #6535E0; border-radius: 4px; }
   header .grow { flex: 1; }
   .btn { height: 30px; padding: 0 11px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; font-weight: 500; font-size: 12.5px; white-space: nowrap; }
   .btn:hover { background: var(--field); }
@@ -27,21 +27,24 @@
   .btn.dark:hover { background: #333; }
   .btn.sm { height: 26px; padding: 0 8px; font-size: 12px; }
   .btn.icon { width: 26px; padding: 0; display: inline-grid; place-items: center; }
+  .btn[aria-pressed="true"] { background: #EAEAEA; border-color: #cfcfcf; }
   .btn:disabled { opacity: 0.4; cursor: default; }
-  main { display: grid; grid-template-columns: 272px 1fr 292px; min-height: 0; }
+  select.btn { padding-inline-end: 6px; }
+  main { display: grid; grid-template-columns: 284px 1fr 300px; min-height: 0; }
   .side { background: var(--panel); border-inline-end: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
   .side.right { border-inline-end: 0; border-inline-start: 1px solid var(--line); }
   .tabs { display: flex; border-bottom: 1px solid var(--line); }
-  .tabs button { flex: 1; height: 38px; border: 0; background: none; color: var(--muted); font-weight: 500; font-size: 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs button { flex: 1; height: 38px; border: 0; background: none; color: var(--muted); font-weight: 500; font-size: 12px; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 0 4px; }
   .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
   .panel { padding: 12px; overflow-y: auto; min-height: 0; flex: 1; display: none; }
   .panel.on { display: block; }
-  .stage { position: relative; display: grid; place-items: center; overflow: auto; padding: 24px; }
+  .stage { position: relative; overflow: auto; display: grid; place-items: center; padding: 28px; }
   .frame { position: relative; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 24px 60px -30px rgba(0,0,0,.35); background-color: #fff; background-image: linear-gradient(45deg, var(--checker) 25%, transparent 25%), linear-gradient(-45deg, var(--checker) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--checker) 75%), linear-gradient(-45deg, transparent 75%, var(--checker) 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0; }
   .frame canvas { display: block; }
-  .guide { position: absolute; background: #17B7BD; pointer-events: none; display: none; }
-  .guide.v { top: 0; bottom: 0; width: 1px; }
-  .guide.h { left: 0; right: 0; height: 1px; }
+  .safe { position: absolute; inset: 0; pointer-events: none; display: none; }
+  .safe.on { display: block; }
+  .safe > div { position: absolute; border: 1px dashed rgba(23,183,189,.9); left: 6%; right: 6%; top: 13%; bottom: 20%; border-radius: 6px; }
+  .safe > div::after { content: "safe area"; position: absolute; top: 4px; left: 8px; font-size: 10px; color: var(--teal); font-family: Inter, sans-serif; }
   .stage-bar { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px; }
   h3 { margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .block { padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
@@ -50,7 +53,7 @@
   label.f > span { display: block; margin-bottom: 3px; color: var(--muted); font-size: 11.5px; }
   input[type="text"], input[type="number"], select, textarea { width: 100%; height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); }
   textarea { height: auto; padding: 7px 8px; resize: vertical; line-height: 1.5; }
-  textarea.ar, input.ar { direction: rtl; font-family: "Tajawal", "IBM Plex Sans Arabic", sans-serif; font-size: 15px; }
+  .ar { direction: rtl; font-family: "Tajawal", "IBM Plex Sans Arabic", sans-serif; font-size: 15px; }
   input[type="range"] { width: 100%; accent-color: var(--ink); }
   input[type="color"] { width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; }
   .row { display: flex; gap: 6px; align-items: center; }
@@ -61,33 +64,47 @@
   .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
   .swatches button { width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(0,0,0,.12); }
   .swatches button[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .line-item { display: grid; grid-template-columns: 1fr 96px 26px; gap: 6px; margin-bottom: 6px; align-items: center; }
-  .tpl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .tpl button { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 0; overflow: hidden; text-align: start; }
-  .tpl button:hover { border-color: #bbb; }
-  .tpl .pv { height: 74px; display: grid; place-items: center; font-family: Tajawal, sans-serif; font-weight: 800; font-size: 22px; direction: rtl; }
-  .tpl .nm { padding: 6px 8px; font-size: 12px; font-weight: 500; border-top: 1px solid var(--line); }
+  .line-item { display: grid; grid-template-columns: 1fr 84px 26px; gap: 6px; margin-bottom: 4px; align-items: center; }
+  .line-scale { display: grid; grid-template-columns: 1fr 44px; gap: 6px; align-items: center; margin: 0 0 8px; font-size: 11px; color: var(--muted); }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 0; overflow: hidden; text-align: start; cursor: pointer; }
+  .card:hover { border-color: #bbb; }
+  .card[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .card .pv { background: #2b2b2b; display: grid; place-items: center; height: 200px; overflow: hidden; }
+  .card .pv canvas { display: block; }
+  .card .nm { padding: 6px 8px; font-size: 12px; font-weight: 500; border-top: 1px solid var(--line); display: flex; justify-content: space-between; }
+  .card .nm span { color: var(--muted); font-weight: 400; font-size: 11px; }
   .elements { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .layers { list-style: none; margin: 0; padding: 0; }
-  .layers li { display: flex; align-items: center; gap: 4px; padding: 4px 4px; border-radius: 6px; cursor: pointer; }
+  .layers li { display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 6px; cursor: pointer; }
   .layers li:hover { background: var(--field); }
   .layers li.on { background: #EFEFEF; }
   .layers li .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; direction: rtl; text-align: start; }
   .layers li .nm.ltr { direction: ltr; }
-  .layers li .t { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; flex: 0 0 auto; }
+  .layers li .t { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; flex: 0 0 22px; }
   .layers li button { border: 0; background: none; width: 22px; height: 22px; border-radius: 5px; color: var(--muted); font-size: 12px; padding: 0; }
   .layers li button:hover { background: var(--line); color: var(--ink); }
   .layers li button.off { opacity: .35; }
   .hint { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
   .warn { color: #9A5B00; font-size: 11.5px; }
   .empty { color: var(--muted); font-size: 12.5px; padding: 24px 8px; text-align: center; }
-  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; }
   .toast.on { opacity: 1; }
-  .menu { position: absolute; top: 44px; right: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 30px -16px rgba(0,0,0,.35); min-width: 240px; padding: 6px; z-index: 5; display: none; }
+  .menu { position: absolute; top: 44px; right: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 30px -16px rgba(0,0,0,.35); min-width: 250px; padding: 6px; z-index: 5; display: none; }
   .menu.on { display: block; }
   .menu button.item { display: flex; width: 100%; justify-content: space-between; gap: 8px; border: 0; background: none; padding: 7px 8px; border-radius: 6px; text-align: start; }
   .menu button.item:hover { background: var(--field); }
   .menu .sub { font-size: 11px; color: var(--muted); }
+  .fontlist { border: 1px solid var(--line); border-radius: 6px; max-height: 260px; overflow-y: auto; background: var(--panel); }
+  .fontlist button { display: block; width: 100%; border: 0; background: none; text-align: end; direction: rtl; padding: 6px 10px; font-size: 20px; line-height: 1.3; border-bottom: 1px solid var(--line); }
+  .fontlist button small { display: block; direction: ltr; text-align: start; font: 10px Inter, sans-serif; color: var(--muted); letter-spacing: .04em; }
+  .fontlist button[aria-pressed="true"] { background: #EFEFEF; }
+  .preview { position: fixed; inset: 0; background: #1a1a1a; display: none; z-index: 20; grid-template-rows: 48px 1fr; }
+  .preview.on { display: grid; }
+  .preview .bar { display: flex; align-items: center; gap: 8px; padding: 0 12px; color: #ddd; background: #111; }
+  .preview .stagep { display: grid; place-items: center; overflow: auto; padding: 20px; }
+  .preview .shot { position: relative; background: #000; box-shadow: 0 30px 80px -30px rgba(0,0,0,.9); }
+  .preview .shot img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   @media (max-width: 900px) { main { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; } .side { max-height: 34vh; } }
 </style>
 </head>
@@ -98,7 +115,10 @@
     <button class="btn" id="btnNew">New</button>
     <button class="btn" id="btnSave">Save</button>
     <button class="btn" id="btnProjects">Projects ▾</button>
+    <button class="btn" id="btnPreview">Preview</button>
     <span class="grow"></span>
+    <select id="zoomSel" class="btn" style="width:auto"><option value="fit">Fit</option><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select>
+    <button class="btn" id="btnSafe" aria-pressed="false">Safe area</button>
     <select id="canvasSize" class="btn" style="width:auto">
       <option value="1080x1920">1080 × 1920 · 9:16</option>
       <option value="1080x1350">1080 × 1350 · 4:5</option>
@@ -106,11 +126,7 @@
       <option value="1920x1080">1920 × 1080 · 16:9</option>
       <option value="custom">Custom…</option>
     </select>
-    <select id="exportScale" class="btn" style="width:auto">
-      <option value="1">1×</option>
-      <option value="2" selected>2×</option>
-      <option value="3">3×</option>
-    </select>
+    <select id="exportScale" class="btn" style="width:auto"><option value="1">1×</option><option value="2" selected>2×</option><option value="3">3×</option></select>
     <button class="btn" id="btnDownload">Download PNG</button>
     <button class="btn dark" id="btnCopy">Copy PNG</button>
     <div class="menu" id="projectsMenu"></div>
@@ -120,7 +136,7 @@
     <aside class="side">
       <div class="tabs" role="tablist">
         <button role="tab" aria-selected="true" data-tab="text">Text</button>
-        <button role="tab" aria-selected="false" data-tab="templates">Templates</button>
+        <button role="tab" aria-selected="false" data-tab="templates">Styles</button>
         <button role="tab" aria-selected="false" data-tab="elements">Elements</button>
         <button role="tab" aria-selected="false" data-tab="background">Reference</button>
         <button role="tab" aria-selected="false" data-tab="layers">Layers</button>
@@ -136,55 +152,67 @@
           </div>
         </div>
         <div class="block">
-          <h3>Lines &amp; roles</h3>
+          <h3>Lines · role · scale</h3>
           <div id="lines"></div>
           <button class="btn sm" id="btnAddLine">+ line</button>
-          <p class="hint" style="margin:8px 0 0">Each line becomes its own object. The role decides its size in every template; HERO is the word people read first.</p>
+          <p class="hint" style="margin:8px 0 0">HERO is what the eye lands on. The scale is relative: 1.5 means a word and a half.</p>
         </div>
         <div class="block">
-          <h3>Apply</h3>
+          <h3>Build</h3>
           <div class="row">
             <select id="applyTemplate"></select>
             <button class="btn dark sm fix" id="btnApply">Build</button>
           </div>
-          <p class="hint" style="margin:8px 0 0">Builds the lines with the chosen template. Objects already on the canvas are replaced; shapes you added stay.</p>
+          <div class="row" style="margin-top:6px">
+            <button class="btn sm" id="btnUpdateWords" title="Keep every position, paper and accent; only the words change">Update words only</button>
+          </div>
+          <div class="row" style="margin-top:6px">
+            <span class="hint fix" style="padding-inline-end:4px">Shuffle</span>
+            <button class="btn sm" data-var="1">A</button><button class="btn sm" data-var="2">B</button><button class="btn sm" data-var="3">C</button><button class="btn sm" data-var="4">D</button>
+          </div>
+          <p class="hint" style="margin:8px 0 0">Build lays the words out with the style. Shuffle gives four controlled variations of the same style. Update words keeps the whole design and swaps the text: the series workflow.</p>
         </div>
       </div>
 
       <div class="panel" data-panel="templates">
-        <h3>Templates</h3>
-        <div class="tpl" id="templates"></div>
+        <h3>Styles, with your sentence</h3>
+        <div class="cards" id="templates"></div>
         <div class="block" style="margin-top:14px">
-          <h3>My templates</h3>
+          <h3>My styles</h3>
           <div id="myTemplates"></div>
-          <button class="btn sm" id="btnSaveTemplate" style="margin-top:6px">Save canvas as template</button>
+          <button class="btn sm" id="btnSaveTemplate" style="margin-top:6px">Save canvas as a style</button>
         </div>
       </div>
 
       <div class="panel" data-panel="elements">
-        <h3>Shapes</h3>
+        <h3>Accents</h3>
         <div class="elements">
+          <button class="btn" data-brush="underline">Brush underline</button>
+          <button class="btn" data-brush="double">Double underline</button>
+          <button class="btn" data-brush="ticks">Accent marks</button>
+          <button class="btn" data-brush="scribble">Scribble</button>
+          <button class="btn" data-brush="circle">Circle</button>
+          <button class="btn" data-brush="marker">Marker stroke</button>
+        </div>
+        <h3 style="margin-top:14px">Shapes</h3>
+        <div class="elements">
+          <button class="btn" data-shape="paper">Paper piece</button>
           <button class="btn" data-shape="rect">Rectangle</button>
-          <button class="btn" data-shape="rounded">Rounded</button>
           <button class="btn" data-shape="circle">Circle</button>
-          <button class="btn" data-shape="line">Line</button>
           <button class="btn" data-shape="arrow">Arrow</button>
-          <button class="btn" data-shape="underline">Underline</button>
-          <button class="btn" data-shape="scribble">Scribble</button>
-          <button class="btn" data-shape="stroke">Brush stroke</button>
           <button class="btn" data-shape="text">Text</button>
         </div>
-        <p class="hint" style="margin-top:10px">Everything is a vector you can move, rotate, recolour and reorder in Layers.</p>
+        <p class="hint" style="margin-top:10px">Accents are hand-drawn vectors: thickness and wobble regenerate the stroke. Everything moves, rotates and reorders.</p>
       </div>
 
       <div class="panel" data-panel="background">
         <h3>Reference frame</h3>
-        <p class="hint">A screenshot from the video, to place the words around the person. It is never in the export.</p>
+        <p class="hint">A screenshot from the video, to place the words around the person. Never in the export.</p>
         <input type="file" id="refFile" accept="image/*" style="margin:8px 0" />
         <label class="f"><span>Opacity</span><input type="range" id="refOpacity" min="0" max="100" value="100" /></label>
         <label class="f"><span>Blur</span><input type="range" id="refBlur" min="0" max="100" value="0" /></label>
         <div class="row">
-          <button class="btn sm" id="btnRefToggle">Hide reference</button>
+          <button class="btn sm" id="btnRefToggle">Hide</button>
           <button class="btn sm" id="btnRefRemove">Remove</button>
         </div>
       </div>
@@ -192,15 +220,14 @@
       <div class="panel" data-panel="layers">
         <h3>Layers</h3>
         <ul class="layers" id="layers"></ul>
-        <p class="hint" style="margin-top:10px">Top of the list is on top of the canvas. ▲▼ reorder · ⧉ duplicate · 👁 hide · 🔒 lock · ✕ delete. Delete, Ctrl+D, Ctrl+Z/Y, Ctrl+C/V and the arrow keys work on the canvas.</p>
+        <p class="hint" style="margin-top:10px">Top of the list is on top. ▲▼ reorder · ⧉ duplicate · 👁 hide · 🔒 lock · ✕ delete. Delete, Ctrl+D, Ctrl+Z/Y, Ctrl+C/V, arrows, Shift+arrows, Shift while rotating snaps to 15°.</p>
       </div>
     </aside>
 
     <section class="stage" id="stage">
       <div class="frame" id="frame">
         <canvas id="c"></canvas>
-        <div class="guide v" id="gv"></div>
-        <div class="guide h" id="gh"></div>
+        <div class="safe" id="safe"><div></div></div>
       </div>
       <div class="stage-bar">
         <button class="btn sm" id="zoomOut">−</button>
@@ -210,11 +237,15 @@
     </section>
 
     <aside class="side right">
-      <div class="panel on" id="props"><div class="empty">Select an object, or build the lines.</div></div>
+      <div class="panel on" id="props"><div class="empty">Select something, or build the lines.</div></div>
     </aside>
   </main>
 </div>
 <div class="toast" id="toast"></div>
+<div class="preview" id="preview">
+  <div class="bar"><strong>Preview</strong><span class="hint" style="color:#999">exactly what the PNG holds, over the reference</span><span style="flex:1"></span><button class="btn sm" id="btnPreviewRef" aria-pressed="true">Reference</button><button class="btn sm" id="btnPreviewExit">Exit</button></div>
+  <div class="stagep"><div class="shot" id="shot"><img id="shotRef" alt="" /><img id="shotPng" alt="" /></div></div>
+</div>
 <input type="file" id="loadFile" accept="application/json" hidden />
 <input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2" hidden />
 
@@ -224,131 +255,202 @@
   const $ = (id) => document.getElementById(id);
   const uid = () => Math.random().toString(36).slice(2, 9);
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+  const mulberry = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 
-  // ── the palette the brief asked for ────────────────────────────────────
-  const PALETTE = [["#F6F3EE", "Off white"], ["#FFFFFF", "White"], ["#12233F", "Navy"], ["#17B7BD", "Teal"], ["#111111", "Black"], ["#D8D2C8", "Warm grey"], ["#6535E0", "Violet"], ["#F5C451", "Gold"]];
+  // ── the language: a small palette, roles, papers, brushes ───────────────
+  const C = { navy: "#12233F", off: "#F6F3EE", white: "#FFFFFF", teal: "#17B7BD", black: "#111111", grey: "#D8D2C8", violet: "#6535E0", gold: "#F5C451", ink: "rgba(12,8,30,0.62)", green: "#17B65A", cream: "#FFFDF7", sand: "#F2EEE5" };
+  const PALETTE = [[C.navy, "Navy"], [C.off, "Off white"], [C.white, "White"], [C.teal, "Teal"], [C.black, "Black"], [C.grey, "Warm grey"], [C.violet, "Violet"], [C.gold, "Gold"], [C.green, "Green"]];
   const FONTS = [
-    { family: "Tajawal", weights: [400, 500, 700, 800, 900] },
-    { family: "Cairo", weights: [400, 600, 700, 800, 900] },
-    { family: "IBM Plex Sans Arabic", weights: [400, 500, 600, 700] },
-    { family: "Noto Sans Arabic", weights: [400, 600, 700, 800, 900] },
-    { family: "Noto Kufi Arabic", weights: [400, 600, 700, 800, 900] },
-    { family: "Readex Pro", weights: [400, 500, 600, 700] },
-    { family: "Alexandria", weights: [400, 600, 700, 800, 900] },
-    { family: "Almarai", weights: [400, 700, 800] },
-    { family: "Changa", weights: [400, 600, 700, 800] },
+    { family: "Tajawal", weights: [300, 400, 500, 700, 800, 900] },
+    { family: "Cairo", weights: [300, 400, 500, 600, 700, 800, 900] },
+    { family: "IBM Plex Sans Arabic", weights: [300, 400, 500, 600, 700] },
+    { family: "Noto Sans Arabic", weights: [300, 400, 500, 600, 700, 800, 900] },
+    { family: "Noto Kufi Arabic", weights: [300, 400, 500, 600, 700, 800, 900] },
+    { family: "Readex Pro", weights: [300, 400, 500, 600, 700] },
+    { family: "Alexandria", weights: [300, 400, 500, 600, 700, 800, 900] },
+    { family: "Almarai", weights: [300, 400, 700, 800] },
+    { family: "Changa", weights: [300, 400, 500, 600, 700, 800] },
   ];
   const ROLES = ["small", "medium", "headline", "hero", "accent"];
-  const CUSTOM = ["id", "kind", "name", "role", "paper", "forText", "locked", "selectable", "evented", "hasControls", "lockMovementX", "lockMovementY"];
+  const ROLE_SCALE = { small: 0.5, medium: 0.72, headline: 1, hero: 1.5, accent: 0.9 };
+  // Paper is cut, not drawn: each preset has its own tone, tilt, padding and how crooked its corners are.
+  const PAPERS = {
+    p1: { color: C.off, rot: -3, padX: 28, padY: 18, deform: 3 },
+    p2: { color: C.cream, rot: 2, padX: 24, padY: 12, deform: 2.5 },
+    p3: { color: C.sand, rot: -1, padX: 22, padY: 16, deform: 3.5 },
+    p4: { color: C.white, rot: 4, padX: 26, padY: 14, deform: 2 },
+    navy: { color: C.navy, rot: 1.5, padX: 30, padY: 14, deform: 2.5 },
+    teal: { color: C.teal, rot: -2, padX: 34, padY: 16, deform: 2 },
+    chipInk: { color: C.ink, rot: 0, padX: 40, padY: 16, radius: 24 },
+    chipViolet: { color: C.violet, rot: 0, padX: 40, padY: 16, radius: 24 },
+    chipBlack: { color: "#0C0814", rot: 0, padX: 28, padY: 12, radius: 16 },
+  };
+  const CUSTOM = ["id", "kind", "name", "role", "lineScale", "forText", "padX", "padY", "dx", "dy", "rotDelta", "deform", "seed", "radius", "brush", "locked", "selectable", "evented", "hasControls", "fromTemplate", "textShadow"];
 
   // ── canvas ──────────────────────────────────────────────────────────────
   let W = 1080, H = 1920, zoom = 1, fit = true;
-  const canvas = new fabric.Canvas("c", { preserveObjectStacking: true, backgroundColor: null, selectionColor: "rgba(23,183,189,.12)", selectionBorderColor: "#17B7BD", selectionLineWidth: 1 });
-  fabric.Object.prototype.set({ transparentCorners: false, cornerColor: "#111", cornerStrokeColor: "#fff", cornerSize: 9, borderColor: "#17B7BD", padding: 4, originX: "center", originY: "center" });
+  const canvas = new fabric.Canvas("c", { preserveObjectStacking: true, backgroundColor: null, selectionColor: "rgba(23,183,189,.12)", selectionBorderColor: C.teal, selectionLineWidth: 1, stopContextMenu: true, fireRightClick: false });
+  fabric.Object.prototype.set({ transparentCorners: false, cornerColor: "#111", cornerStrokeColor: "#fff", cornerSize: 9, cornerStyle: "circle", borderColor: C.teal, padding: 4, originX: "center", originY: "center", snapAngle: 15, snapThreshold: 3 });
   fabric.Object.prototype.toObject = ((orig) => function (extra) { return orig.call(this, CUSTOM.concat(extra || [])); })(fabric.Object.prototype.toObject);
+  const BASE = () => W * 0.1;
 
-  function sizeCanvas(w, h) {
-    W = w; H = h;
-    canvas.setDimensions({ width: W, height: H });
-    layoutZoom();
-  }
+  function sizeCanvas(w, h) { W = w; H = h; canvas.setDimensions({ width: W, height: H }); layoutZoom(); }
   function layoutZoom() {
     const stage = $("stage");
-    if (fit) zoom = Math.min((stage.clientWidth - 48) / W, (stage.clientHeight - 72) / H, 1.5);
+    if (fit) zoom = Math.min((stage.clientWidth - 56) / W, (stage.clientHeight - 80) / H, 1.5);
     canvas.setDimensions({ width: `${Math.round(W * zoom)}px`, height: `${Math.round(H * zoom)}px` }, { cssOnly: true });
-    $("frame").style.width = `${Math.round(W * zoom)}px`;
-    $("frame").style.height = `${Math.round(H * zoom)}px`;
+    $("frame").style.width = `${Math.round(W * zoom)}px`; $("frame").style.height = `${Math.round(H * zoom)}px`;
     canvas.calcOffset();
   }
   window.addEventListener("resize", layoutZoom);
-  $("zoomFit").onclick = () => { fit = true; layoutZoom(); };
+  $("zoomFit").onclick = () => { fit = true; $("zoomSel").value = "fit"; layoutZoom(); };
   $("zoomIn").onclick = () => { fit = false; zoom = clamp(zoom * 1.2, 0.1, 3); layoutZoom(); };
   $("zoomOut").onclick = () => { fit = false; zoom = clamp(zoom / 1.2, 0.1, 3); layoutZoom(); };
+  $("zoomSel").onchange = (e) => { if (e.target.value === "fit") fit = true; else { fit = false; zoom = Number(e.target.value); } layoutZoom(); };
+  $("stage").addEventListener("wheel", (e) => { if (!e.ctrlKey) return; e.preventDefault(); fit = false; zoom = clamp(zoom * (e.deltaY < 0 ? 1.1 : 0.9), 0.1, 3); layoutZoom(); }, { passive: false });
+  $("btnSafe").onclick = () => { const on = $("btnSafe").getAttribute("aria-pressed") !== "true"; $("btnSafe").setAttribute("aria-pressed", String(on)); $("safe").classList.toggle("on", on); };
   $("canvasSize").onchange = (e) => {
     let v = e.target.value;
-    if (v === "custom") { v = prompt("Width × height, in pixels", `${W}x${H}`) || `${W}x${H}`; }
+    if (v === "custom") v = prompt("Width × height, in pixels", `${W}x${H}`) || `${W}x${H}`;
     const [w, h] = v.toLowerCase().split(/[x×\s]+/).map(Number);
     if (w > 0 && h > 0) sizeCanvas(w, h);
     if (![...e.target.options].some((o) => o.value === `${W}x${H}`)) { const o = document.createElement("option"); o.value = `${W}x${H}`; o.textContent = `${W} × ${H}`; e.target.insertBefore(o, e.target.lastElementChild); }
-    e.target.value = `${W}x${H}`;
-    snapshot();
+    e.target.value = `${W}x${H}`; snapshot();
   };
 
-  // ── fonts: the canvas draws with whatever is loaded, so load first, then re-measure ──
+  // ── fonts ───────────────────────────────────────────────────────────────
   const fontsReady = Promise.all(FONTS.flatMap((f) => f.weights.map((w) => document.fonts.load(`${w} 40px "${f.family}"`, "تحدد قداش").catch(() => null))));
-  fontsReady.then(() => { fabric.util.clearFabricFontCache(); canvas.getObjects().forEach((o) => o.initDimensions && o.initDimensions()); syncAllPapers(); canvas.requestRenderAll(); });
+  function remeasureAll() { fabric.util.clearFabricFontCache(); canvas.getObjects().forEach((o) => { if (o.kind === "text") { o.initDimensions(); fitTextWidth(o); } }); syncAllPapers(); canvas.requestRenderAll(); }
+  fontsReady.then(remeasureAll);
   $("fontFile").onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     const family = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
-    const face = new FontFace(family, await file.arrayBuffer());
-    await face.load(); document.fonts.add(face);
-    FONTS.push({ family, weights: [400, 700] });
-    toast(`Font added: ${family}`); renderProps();
+    try { const face = new FontFace(family, await file.arrayBuffer()); await face.load(); document.fonts.add(face); FONTS.push({ family, weights: [400, 700] }); toast(`Font added: ${family}`); renderProps(); }
+    catch (err) { toast("That font could not be read"); }
   };
 
-  // ── objects ─────────────────────────────────────────────────────────────
+  // ── text ────────────────────────────────────────────────────────────────
   function makeText(text, o = {}) {
     const t = new fabric.Textbox(text, Object.assign({
-      id: uid(), kind: "text", role: o.role || "medium", direction: "rtl", textAlign: "center",
-      fontFamily: "Tajawal", fontWeight: 800, fontSize: 96, fill: "#F6F3EE", lineHeight: 1.05, charSpacing: 0,
-      width: Math.min(W * 0.9, 900), splitByGrapheme: false, editable: true,
-      paper: { on: false, color: "#F6F3EE", padX: 28, padY: 10, radius: 6 },
-      left: W / 2, top: H / 2, angle: 0,
+      id: uid(), kind: "text", role: "medium", lineScale: 1, direction: "rtl", textAlign: "center",
+      fontFamily: "Tajawal", fontWeight: 800, fontSize: 96, fill: C.off, lineHeight: 1.0, charSpacing: 0,
+      width: W * 0.95, splitByGrapheme: false, editable: true, left: W / 2, top: H / 2, angle: 0,
     }, o));
-    t.on("changed", () => { syncPaper(t); renderLayers(); });
-    t.on("editing:exited", () => { fitTextWidth(t); syncPaper(t); snapshot(); });
+    return hydrateText(t);
+  }
+  function hydrateText(t) {
+    t.off("changed"); t.off("editing:exited");
+    t.on("changed", () => { fitTextWidth(t); syncPapersOf(t); renderLayers(); });
+    t.on("editing:exited", () => { fitTextWidth(t); syncPapersOf(t); snapshot(); });
     return t;
   }
   function fitTextWidth(t) {
-    // a Textbox wraps at its width; keep it hugging the longest line so a paper block fits the words
     const longest = Math.max(...t.textLines.map((_, i) => t.getLineWidth(i)));
-    if (isFinite(longest) && longest > 0) t.set({ width: Math.min(W * 0.95, longest + 8) });
+    if (isFinite(longest) && longest > 0) t.set({ width: Math.min(W * 0.96, longest + 6) });
     t.setCoords();
   }
-  function paperOf(t) { return canvas.getObjects().find((o) => o.kind === "paper" && o.forText === t.id); }
-  function syncPaper(t) {
-    if (!t || t.kind !== "text") return;
-    let p = paperOf(t);
-    if (!t.paper || !t.paper.on) { if (p) canvas.remove(p); return; }
-    if (!p) {
-      p = new fabric.Rect({ id: uid(), kind: "paper", forText: t.id, selectable: false, evented: false, hasControls: false, excludeFromExport: false });
-      canvas.add(p);
-    }
-    const w = t.getScaledWidth() + 2 * t.paper.padX, h = t.getScaledHeight() + 2 * t.paper.padY;
-    p.set({ width: w, height: h, rx: t.paper.radius, ry: t.paper.radius, fill: t.paper.color, left: t.left, top: t.top, angle: t.angle, opacity: t.opacity, visible: t.visible, shadow: null });
-    p.setCoords();
-    // the paper sits right under its text
-    const idx = canvas.getObjects().indexOf(t);
-    canvas.moveTo(p, Math.max(0, idx - 1));
+  const byId = (id) => canvas.getObjects().find((o) => o.id === id);
+
+  // ── paper: a cut piece behind a text, with its own life ─────────────────
+  function paperPoints(deform, seed) {
+    const r = mulberry(seed); const d = deform;
+    const j = () => (r() - 0.5) * 2 * d;
+    return [{ x: 0 + j(), y: 0 + j() }, { x: 100 + j(), y: 0 + j() }, { x: 100 + j(), y: 100 + j() }, { x: 0 + j(), y: 100 + j() }];
   }
-  function syncAllPapers() { canvas.getObjects().filter((o) => o.kind === "text").forEach(syncPaper); }
+  function makePaper(preset, o = {}) {
+    const p = Object.assign({}, PAPERS[preset] || PAPERS.p1, o.presetOverride || {});
+    const seed = o.seed || Math.floor(Math.random() * 1e9);
+    const common = { id: uid(), kind: "paper", name: "Paper", padX: p.padX, padY: p.padY, dx: 0, dy: 0, rotDelta: p.rot, deform: p.radius ? 0 : p.deform, seed, radius: p.radius || 0, fill: p.color, stroke: null, forText: null };
+    const paper = p.radius
+      ? new fabric.Rect(Object.assign(common, { width: 100, height: 100, rx: p.radius, ry: p.radius }, o))
+      : new fabric.Polygon(paperPoints(p.deform, seed), Object.assign(common, o));
+    return paper;
+  }
+  function rebuildPaper(p) {
+    // deformation changed: same identity, new geometry
+    const idx = canvas.getObjects().indexOf(p);
+    const n = p.radius ? new fabric.Rect({ width: 100, height: 100, rx: p.radius, ry: p.radius }) : new fabric.Polygon(paperPoints(p.deform, p.seed));
+    n.set(pick(p, CUSTOM.concat(["fill", "opacity", "shadow", "left", "top", "angle", "visible"])));
+    canvas.remove(p); canvas.insertAt(n, idx, false);
+    return n;
+  }
+  const pick = (o, keys) => Object.fromEntries(keys.filter((k) => o[k] !== undefined).map((k) => [k, o[k]]));
+  function syncPaper(p) {
+    const t = p.forText && byId(p.forText);
+    if (!t) return;
+    const w = t.getScaledWidth() + 2 * p.padX, h = t.getScaledHeight() + 2 * p.padY;
+    if (p.type === "rect") p.set({ width: Math.max(4, w), height: Math.max(4, h), scaleX: 1, scaleY: 1 });
+    else p.set({ scaleX: Math.max(4, w) / p.width, scaleY: Math.max(4, h) / p.height });
+    p.set({ left: t.left + p.dx, top: t.top + p.dy, angle: t.angle + p.rotDelta, visible: t.visible });
+    p.setCoords();
+    const ti = canvas.getObjects().indexOf(t), pi = canvas.getObjects().indexOf(p);
+    if (pi > ti) canvas.moveTo(p, Math.max(0, ti - 1));
+  }
+  const papersOf = (t) => canvas.getObjects().filter((o) => o.kind === "paper" && o.forText === t.id);
+  function syncPapersOf(t) { papersOf(t).forEach(syncPaper); }
+  function syncAllPapers() { canvas.getObjects().filter((o) => o.kind === "paper" && o.forText).forEach(syncPaper); }
+  function attachPaper(t, preset) {
+    const p = makePaper(preset);
+    p.forText = t.id; p.name = `Paper · ${t.text.slice(0, 12)}`;
+    canvas.add(p); syncPaper(p);
+    return p;
+  }
+
+  // ── brushes: hand-drawn accents, generated, regenerable ─────────────────
+  function centerline(preset, r, wobble) {
+    const pts = []; const n = 28;
+    const wob = () => (r() - 0.5) * wobble * 2;
+    if (preset === "underline" || preset === "marker") for (let i = 0; i <= n; i++) { const u = i / n; pts.push([{ x: u * 600, y: 20 + Math.sin(u * Math.PI * 1.7 + r()) * (preset === "marker" ? 3 : 9) + wob() }]); }
+    if (preset === "double") { const a = [], b = []; for (let i = 0; i <= n; i++) { const u = i / n; a.push({ x: u * 600, y: 14 + Math.sin(u * Math.PI * 1.6) * 8 + wob() }); if (u > 0.12 && u < 0.92) b.push({ x: u * 600, y: 46 + Math.sin(u * Math.PI * 1.9 + 1) * 7 + wob() }); } return [a, b]; }
+    if (preset === "ticks") return [0, 1, 2].map((k) => { const cx = 40 + k * 60, tilt = (k - 1) * 0.35; return [0, 1, 2, 3].map((i) => ({ x: cx + i * 12 * Math.sin(tilt) + wob() * 0.4, y: 90 - i * 30 + wob() * 0.4 })); });
+    if (preset === "scribble" || preset === "circle") { const arc = preset === "scribble" ? Math.PI * 2.35 : Math.PI * 2.15; const rx = 300, ry = 110; for (let i = 0; i <= 60; i++) { const a = -0.6 + (i / 60) * arc; const k = 1 + (r() - 0.5) * 0.07 + (preset === "scribble" ? (i / 60) * 0.12 : 0); pts.push([{ x: 320 + Math.cos(a) * rx * k, y: 130 + Math.sin(a) * ry * k + wob() * 0.6 }]); } }
+    return pts.length ? [pts.map((p) => p[0])] : [[]];
+  }
+  function outline(poly, thick, r, taper) {
+    const L = [], R = [];
+    for (let i = 0; i < poly.length; i++) {
+      const p = poly[i], q = poly[Math.min(i + 1, poly.length - 1)], o = poly[Math.max(i - 1, 0)];
+      const dx = q.x - o.x, dy = q.y - o.y, len = Math.hypot(dx, dy) || 1; const nx = -dy / len, ny = dx / len;
+      const u = i / (poly.length - 1); const prof = taper ? Math.sin(Math.PI * (0.06 + u * 0.88)) : 1;
+      const w = thick * (0.55 + 0.45 * prof) * (1 + (r() - 0.5) * 0.3) / 2;
+      L.push({ x: p.x + nx * w, y: p.y + ny * w }); R.push({ x: p.x - nx * w, y: p.y - ny * w });
+    }
+    const pts = L.concat(R.reverse());
+    return `M ${pts.map((p) => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" L ")} Z`;
+  }
+  function brushPath(b) { const r = mulberry(b.seed); return centerline(b.preset, r, b.wobble).filter((l) => l.length > 1).map((l) => outline(l, b.thickness, r, b.preset !== "marker")).join(" "); }
+  function makeBrush(preset, o = {}) {
+    const brush = Object.assign({ preset, thickness: preset === "marker" ? 60 : preset === "ticks" ? 14 : 16, wobble: 5, seed: Math.floor(Math.random() * 1e9) }, o.brush || {});
+    const path = new fabric.Path(brushPath(brush), Object.assign({ id: uid(), kind: "brush", name: { underline: "Brush underline", double: "Double underline", ticks: "Accent marks", scribble: "Scribble", circle: "Circle", marker: "Marker stroke" }[preset], brush, fill: C.teal, stroke: null, left: W / 2, top: H / 2, opacity: preset === "marker" ? 0.85 : 1 }, o, { brush }));
+    return path;
+  }
+  function rebuildBrush(p) {
+    const idx = canvas.getObjects().indexOf(p);
+    const n = new fabric.Path(brushPath(p.brush));
+    n.set(pick(p, CUSTOM.concat(["fill", "opacity", "left", "top", "angle", "scaleX", "scaleY", "visible"]))); n.brush = Object.assign({}, p.brush);
+    canvas.remove(p); canvas.insertAt(n, idx, false); canvas.setActiveObject(n); return n;
+  }
 
   function makeShape(kind, o = {}) {
-    const base = { id: uid(), kind: "shape", left: W / 2, top: H / 2, fill: "#17B7BD", stroke: null, strokeWidth: 0 };
-    let s;
-    switch (kind) {
-      case "rect": s = new fabric.Rect(Object.assign(base, { width: 420, height: 160, name: "Rectangle" }, o)); break;
-      case "rounded": s = new fabric.Rect(Object.assign(base, { width: 420, height: 160, rx: 24, ry: 24, name: "Rounded" }, o)); break;
-      case "circle": s = new fabric.Circle(Object.assign(base, { radius: 110, name: "Circle" }, o)); break;
-      case "line": s = new fabric.Line([0, 0, 400, 0], Object.assign(base, { fill: null, stroke: "#17B7BD", strokeWidth: 10, strokeLineCap: "round", name: "Line" }, o)); break;
-      case "arrow": s = new fabric.Path("M 0 40 L 300 40 M 260 10 L 300 40 L 260 70", Object.assign(base, { fill: null, stroke: "#17B7BD", strokeWidth: 12, strokeLineCap: "round", strokeLineJoin: "round", name: "Arrow" }, o)); break;
-      case "underline": s = new fabric.Path("M 0 18 Q 90 -6 180 14 T 360 12 T 540 16", Object.assign(base, { fill: null, stroke: "#17B7BD", strokeWidth: 14, strokeLineCap: "round", name: "Underline" }, o)); break;
-      case "scribble": s = new fabric.Path("M 20 70 C 60 -10 420 -20 470 60 C 520 140 120 170 60 110 C 20 80 90 40 220 30", Object.assign(base, { fill: null, stroke: "#17B7BD", strokeWidth: 9, strokeLineCap: "round", name: "Scribble" }, o)); break;
-      case "stroke": s = new fabric.Path("M 0 30 Q 120 0 260 26 T 520 30", Object.assign(base, { fill: null, stroke: "#17B7BD", strokeWidth: 46, strokeLineCap: "round", opacity: 0.9, name: "Brush stroke" }, o)); break;
-    }
-    return s;
+    const base = { id: uid(), kind: "shape", left: W / 2, top: H / 2, fill: C.teal, stroke: null, strokeWidth: 0 };
+    if (kind === "rect") return new fabric.Rect(Object.assign(base, { width: 420, height: 160, rx: 6, ry: 6, name: "Rectangle" }, o));
+    if (kind === "circle") return new fabric.Circle(Object.assign(base, { radius: 110, name: "Circle" }, o));
+    if (kind === "arrow") return new fabric.Path("M 0 40 L 300 40 M 260 10 L 300 40 L 260 70", Object.assign(base, { fill: null, stroke: C.teal, strokeWidth: 12, strokeLineCap: "round", strokeLineJoin: "round", name: "Arrow" }, o));
+    return null;
   }
-
   function addObject(o, select = true) {
     canvas.add(o);
-    if (o.kind === "text") { fitTextWidth(o); syncPaper(o); }
-    if (select) { canvas.setActiveObject(o); }
+    if (o.kind === "text") { fitTextWidth(o); }
+    if (select) canvas.setActiveObject(o);
     canvas.requestRenderAll(); renderLayers(); snapshot();
   }
   document.querySelectorAll("[data-shape]").forEach((b) => b.onclick = () => {
-    if (b.dataset.shape === "text") addObject(makeText("نص جديد", { fontSize: 110 }));
-    else addObject(makeShape(b.dataset.shape));
+    const k = b.dataset.shape;
+    if (k === "text") addObject(makeText("نص جديد", { fontSize: 110 }));
+    else if (k === "paper") { const p = makePaper("p1"); p.set({ scaleX: 4.6, scaleY: 1.6 }); addObject(p); }
+    else addObject(makeShape(k));
   });
+  document.querySelectorAll("[data-brush]").forEach((b) => b.onclick = () => { const br = makeBrush(b.dataset.brush); br.scaleToWidth(W * 0.5); addObject(br); });
 
   // ── lines & roles ───────────────────────────────────────────────────────
   let lines = [];
@@ -361,180 +463,333 @@
     while (r.length < n) r.splice(r.length - 1, 0, "medium");
     return r;
   }
+  const letters = (w) => w.replace(/[ً-ْـ]/g, "").length;
   function autoLines(sentence) {
-    // Two words a line, except: a tiny word (من، في، لـ…) stands alone, and the
-    // word right after it stands alone too — that is the one the sentence leans
-    // on, so it becomes the hero. «تحدد قداش / من / طبعة / باش الكليون / ياخو الكادو».
     const words = sentence.trim().split(/\s+/).filter(Boolean);
     if (!words.length) return [];
-    const letters = (w) => w.replace(/[ً-ْـ]/g, "").length;
-    const out = [];
-    let afterTiny = false;
+    const out = []; let afterTiny = false;
     for (let i = 0; i < words.length; ) {
       const w = words[i], next = words[i + 1];
       if (letters(w) <= 2) { out.push(w); i += 1; afterTiny = true; continue; }
       if (afterTiny) { out.push(w); i += 1; afterTiny = false; continue; }
-      if (next && letters(next) > 2) { out.push(`${w} ${next}`); i += 2; }
-      else { out.push(w); i += 1; }
+      if (next && letters(next) > 2) { out.push(`${w} ${next}`); i += 2; } else { out.push(w); i += 1; }
     }
     const roles = autoRoles(out.length);
-    // the hero is the strongest word standing on its own; failing that, the longest line
     const singles = out.map((l, i) => ({ l, i })).filter(({ l, i }) => !l.includes(" ") && letters(l) > 2 && i > 0);
     const hero = singles.length ? singles.sort((a, b) => letters(b.l) - letters(a.l))[0].i : -1;
     if (hero >= 0) { const hi = roles.indexOf("hero"); if (hi >= 0) roles[hi] = "medium"; roles[hero] = "hero"; }
     out.forEach((l, i) => { if (!l.includes(" ") && letters(l) <= 2) roles[i] = "small"; });
-    return out.map((text, i) => ({ text, role: roles[i] }));
+    return out.map((text, i) => ({ text, role: roles[i], scale: 1 }));
   }
   function renderLines() {
     const box = $("lines"); box.innerHTML = "";
     lines.forEach((l, i) => {
       const row = document.createElement("div"); row.className = "line-item";
-      const inp = document.createElement("input"); inp.type = "text"; inp.className = "ar"; inp.value = l.text; inp.oninput = () => { l.text = inp.value; };
-      const sel = document.createElement("select"); ROLES.forEach((r) => { const o = document.createElement("option"); o.value = r; o.textContent = r.toUpperCase(); sel.appendChild(o); }); sel.value = l.role; sel.onchange = () => { l.role = sel.value; };
-      const del = document.createElement("button"); del.className = "btn sm icon"; del.textContent = "✕"; del.onclick = () => { lines.splice(i, 1); renderLines(); };
-      row.append(inp, sel, del); box.appendChild(row);
+      const inp = document.createElement("input"); inp.type = "text"; inp.className = "ar"; inp.value = l.text; inp.oninput = () => { l.text = inp.value; renderCardsSoon(); };
+      const sel = document.createElement("select"); ROLES.forEach((r) => { const o = document.createElement("option"); o.value = r; o.textContent = r.toUpperCase(); sel.appendChild(o); }); sel.value = l.role; sel.onchange = () => { l.role = sel.value; renderCardsSoon(); };
+      const del = document.createElement("button"); del.className = "btn sm icon"; del.textContent = "✕"; del.onclick = () => { lines.splice(i, 1); renderLines(); renderCardsSoon(); };
+      row.append(inp, sel, del);
+      const sc = document.createElement("div"); sc.className = "line-scale";
+      const rg = document.createElement("input"); rg.type = "range"; rg.min = 0.4; rg.max = 2; rg.step = 0.05; rg.value = l.scale ?? 1;
+      const val = document.createElement("span"); val.textContent = `${Number(rg.value).toFixed(2)}×`; val.style.textAlign = "end";
+      rg.oninput = () => { l.scale = Number(rg.value); val.textContent = `${l.scale.toFixed(2)}×`; renderCardsSoon(); };
+      sc.append(rg, val);
+      box.append(row, sc);
     });
   }
-  $("btnAutoLines").onclick = () => { lines = autoLines($("sentence").value); renderLines(); };
-  $("btnOneLinePerRow").onclick = () => { const rows = $("sentence").value.split(/\n+/).map((s) => s.trim()).filter(Boolean); const roles = autoRoles(rows.length); lines = rows.map((text, i) => ({ text, role: roles[i] })); renderLines(); };
-  $("btnAddLine").onclick = () => { lines.push({ text: "", role: "medium" }); renderLines(); };
+  $("btnAutoLines").onclick = () => { lines = autoLines($("sentence").value); renderLines(); renderCardsSoon(); };
+  $("btnOneLinePerRow").onclick = () => { const rows = $("sentence").value.split(/\n+/).map((s) => s.trim()).filter(Boolean); const roles = autoRoles(rows.length); lines = rows.map((text, i) => ({ text, role: roles[i], scale: 1 })); renderLines(); renderCardsSoon(); };
+  $("btnAddLine").onclick = () => { lines.push({ text: "", role: "medium", scale: 1 }); renderLines(); };
+  $("sentence").addEventListener("input", () => { renderCardsSoon(); });
 
-  // ── templates: a role → style map, and a stacking rule ──────────────────
-  const shadowDark = () => new fabric.Shadow({ color: "rgba(0,0,0,0.35)", blur: 18, offsetX: 0, offsetY: 6 });
+  // ── styles: compositions, not stacks ────────────────────────────────────
+  // Each role has a slot: where it sits (fractions of the canvas), how big
+  // (times the role scale), its weight, colour, paper and tilt. Accents hang
+  // off a role. Repeated roles stack under their slot.
+  const T = (o) => o;
   const TEMPLATES = {
-    editorial: {
-      name: "Editorial", swatch: { bg: "#3a3a3a", fg: "#F6F3EE" },
-      gap: 0.35, roles: {
-        small: { fontSize: 78, fontWeight: 400, fill: "#F6F3EE" }, medium: { fontSize: 100, fontWeight: 500, fill: "#F6F3EE" }, headline: { fontSize: 128, fontWeight: 700, fill: "#F6F3EE" },
-        hero: { fontSize: 196, fontWeight: 800, fill: "#F6F3EE", angle: -2 }, accent: { fontSize: 92, fontWeight: 700, fill: "#17B7BD" },
-      }, shadow: true,
-    },
-    paper: {
-      name: "Paper stack", swatch: { bg: "#12233F", fg: "#F6F3EE" },
-      gap: 0.55, roles: {
-        small: { fontSize: 84, fontWeight: 700, fill: "#12233F", paper: { on: true, color: "#F6F3EE", padX: 30, padY: 8, radius: 4 }, angle: -1.5 },
-        medium: { fontSize: 96, fontWeight: 700, fill: "#12233F", paper: { on: true, color: "#F6F3EE", padX: 30, padY: 8, radius: 4 }, angle: 1 },
-        headline: { fontSize: 120, fontWeight: 800, fill: "#12233F", paper: { on: true, color: "#FFFFFF", padX: 32, padY: 8, radius: 4 }, angle: -1 },
-        hero: { fontSize: 200, fontWeight: 900, fill: "#12233F", paper: { on: true, color: "#FFFFFF", padX: 40, padY: 4, radius: 6 }, angle: -4 },
-        accent: { fontSize: 92, fontWeight: 800, fill: "#F6F3EE", paper: { on: true, color: "#12233F", padX: 30, padY: 8, radius: 4 }, angle: 2 },
-      }, underlineHero: "#17B7BD",
-    },
-    bold: {
-      name: "Bold accent", swatch: { bg: "#3a3a3a", fg: "#17B7BD" },
-      gap: 0.3, roles: {
-        small: { fontSize: 84, fontWeight: 700, fill: "#F6F3EE" }, medium: { fontSize: 96, fontWeight: 700, fill: "#F6F3EE" }, headline: { fontSize: 130, fontWeight: 800, fill: "#F6F3EE" },
-        hero: { fontSize: 220, fontWeight: 900, fill: "#17B7BD" }, accent: { fontSize: 96, fontWeight: 800, fill: "#F5C451" },
-      }, shadow: true,
-    },
-    minimal: {
-      name: "Minimal editorial", swatch: { bg: "#3a3a3a", fg: "#F6F3EE" },
-      gap: 0.4, roles: {
-        small: { fontSize: 72, fontWeight: 400, fill: "#F6F3EE" }, medium: { fontSize: 84, fontWeight: 400, fill: "#F6F3EE" }, headline: { fontSize: 110, fontWeight: 500, fill: "#F6F3EE" },
-        hero: { fontSize: 160, fontWeight: 700, fill: "#F6F3EE" }, accent: { fontSize: 84, fontWeight: 400, fill: "#F6F3EE" },
-      }, shadow: true,
-    },
-    cyan: {
-      name: "Cyan accent", swatch: { bg: "#17B7BD", fg: "#12233F" },
-      gap: 0.5, roles: {
-        small: { fontSize: 84, fontWeight: 700, fill: "#F6F3EE", paper: { on: true, color: "#12233F", padX: 30, padY: 8, radius: 6 }, angle: -1 },
-        medium: { fontSize: 96, fontWeight: 700, fill: "#F6F3EE", paper: { on: true, color: "#12233F", padX: 30, padY: 8, radius: 6 }, angle: 1 },
-        headline: { fontSize: 120, fontWeight: 800, fill: "#F6F3EE", paper: { on: true, color: "#12233F", padX: 32, padY: 8, radius: 6 } },
-        hero: { fontSize: 200, fontWeight: 900, fill: "#12233F", paper: { on: true, color: "#17B7BD", padX: 40, padY: 4, radius: 8 }, angle: -3 },
-        accent: { fontSize: 92, fontWeight: 800, fill: "#12233F", paper: { on: true, color: "#F6F3EE", padX: 30, padY: 8, radius: 6 }, angle: 2 },
+    paperEditorial: T({
+      name: "Paper editorial", category: "Editorial", font: "Tajawal", shadow: false,
+      slots: {
+        small: { x: 0.56, y: 0.27, s: 1.05, w: 700, c: C.navy, paper: "p1", r: -2.5 },
+        medium: { x: 0.47, y: 0.585, s: 1, w: 700, c: C.navy, paper: "p3", r: 1.5 },
+        headline: { x: 0.5, y: 0.5, s: 1, w: 800, c: C.navy, paper: "p4", r: -1 },
+        hero: { x: 0.49, y: 0.455, s: 1.15, w: 900, c: C.navy, paper: "p4", r: -3.5 },
+        accent: { x: 0.53, y: 0.7, s: 1, w: 800, c: C.off, paper: "navy", r: 2 },
       },
-    },
-    hand: {
-      name: "Hand drawn", swatch: { bg: "#3a3a3a", fg: "#F5C451" },
-      gap: 0.4, roles: {
-        small: { fontSize: 80, fontWeight: 500, fill: "#F6F3EE" }, medium: { fontSize: 96, fontWeight: 700, fill: "#F6F3EE" }, headline: { fontSize: 126, fontWeight: 800, fill: "#F6F3EE" },
-        hero: { fontSize: 200, fontWeight: 900, fill: "#F6F3EE", angle: -3 }, accent: { fontSize: 92, fontWeight: 700, fill: "#F5C451", angle: 2 },
-      }, shadow: true, underlineHero: "#17B7BD", circleAccent: "#F5C451", arrow: true,
-    },
+      accents: [{ preset: "underline", role: "hero", color: C.teal, thickness: 18, wobble: 6, w: 0.95, dy: 0.66, r: -4 }],
+      heroOnTop: true,
+    }),
+    giantHero: T({
+      name: "Giant hero", category: "Bold", font: "Cairo", shadow: true,
+      slots: {
+        small: { x: 0.62, y: 0.3, s: 1, w: 500, c: C.off, r: -2 },
+        medium: { x: 0.5, y: 0.66, s: 1, w: 700, c: C.off, r: 1 },
+        headline: { x: 0.5, y: 0.34, s: 1, w: 700, c: C.off, r: 0 },
+        hero: { x: 0.5, y: 0.48, s: 1.32, w: 900, c: C.white, r: -2 },
+        accent: { x: 0.44, y: 0.76, s: 1, w: 800, c: C.teal, r: 2.5 },
+      },
+      accents: [{ preset: "ticks", role: "hero", color: C.teal, thickness: 16, wobble: 4, w: 0.16, dx: 0.55, dy: -0.55, r: 15 }],
+    }),
+    layeredPaper: T({
+      name: "Layered paper", category: "Paper", font: "Tajawal", shadow: false, paperShadow: true,
+      slots: {
+        small: { x: 0.6, y: 0.3, s: 1, w: 700, c: C.navy, paper: "p2", r: 4 },
+        medium: { x: 0.44, y: 0.6, s: 1.05, w: 700, c: C.navy, paper: "p1", r: -3 },
+        headline: { x: 0.5, y: 0.5, s: 1, w: 800, c: C.navy, paper: "p3", r: 2 },
+        hero: { x: 0.52, y: 0.45, s: 1.2, w: 900, c: C.white, paper: "navy", r: -4, paperOverride: { padX: 48, padY: 10 } },
+        accent: { x: 0.55, y: 0.72, s: 0.95, w: 800, c: C.navy, paper: "p4", r: -1.5 },
+      },
+      accents: [{ preset: "marker", role: "accent", color: C.teal, thickness: 54, wobble: 4, w: 1.05, dy: 0.05, r: -1.5, behind: true }],
+      heroOnTop: true,
+    }),
+    minimal: T({
+      name: "Minimal", category: "Minimal", font: "IBM Plex Sans Arabic", shadow: true,
+      slots: {
+        small: { x: 0.5, y: 0.34, s: 0.95, w: 300, c: C.off, r: 0 },
+        medium: { x: 0.5, y: 0.6, s: 1, w: 400, c: C.off, r: 0 },
+        headline: { x: 0.5, y: 0.5, s: 1, w: 500, c: C.off, r: 0 },
+        hero: { x: 0.5, y: 0.47, s: 1.1, w: 700, c: C.white, r: 0 },
+        accent: { x: 0.5, y: 0.69, s: 0.95, w: 500, c: C.off, r: 0 },
+      },
+      accents: [{ preset: "underline", role: "hero", color: C.teal, thickness: 10, wobble: 3, w: 0.55, dy: 0.62, r: 0 }],
+    }),
+    cyanBlock: T({
+      name: "Cyan block", category: "Cyan", font: "Alexandria", shadow: true,
+      slots: {
+        small: { x: 0.58, y: 0.3, s: 1, w: 600, c: C.white, r: -1.5 },
+        medium: { x: 0.46, y: 0.61, s: 1, w: 700, c: C.white, r: 1 },
+        headline: { x: 0.5, y: 0.5, s: 1, w: 800, c: C.white, r: 0 },
+        hero: { x: 0.5, y: 0.46, s: 1.18, w: 900, c: C.navy, paper: "teal", r: -2.5, paperOverride: { padX: 44, padY: 12 }, noShadow: true },
+        accent: { x: 0.54, y: 0.72, s: 1, w: 800, c: C.navy, paper: "p1", r: 2, noShadow: true },
+      },
+      accents: [],
+      heroOnTop: true,
+    }),
+    handDrawn: T({
+      name: "Hand drawn", category: "Hand drawn", font: "Tajawal", shadow: true,
+      slots: {
+        small: { x: 0.6, y: 0.29, s: 1, w: 500, c: C.off, r: -2 },
+        medium: { x: 0.47, y: 0.62, s: 1, w: 700, c: C.off, r: 1.5 },
+        headline: { x: 0.5, y: 0.5, s: 1, w: 800, c: C.off, r: 0 },
+        hero: { x: 0.5, y: 0.46, s: 1.2, w: 900, c: C.white, r: -3 },
+        accent: { x: 0.52, y: 0.74, s: 1, w: 700, c: C.gold, r: 2 },
+      },
+      accents: [
+        { preset: "underline", role: "hero", color: C.teal, thickness: 20, wobble: 8, w: 0.95, dy: 0.66, r: -3 },
+        { preset: "circle", role: "accent", color: C.gold, thickness: 9, wobble: 6, w: 1.3, dy: 0, r: -4, behind: true },
+        { preset: "ticks", role: "small", color: C.teal, thickness: 12, wobble: 5, w: 0.14, dx: -0.62, dy: -0.4, r: -20 },
+      ],
+    }),
+    pointiliHook: T({
+      name: "Pointili hook", category: "Pointili", font: "IBM Plex Sans Arabic", shadow: false, chipShadow: true,
+      slots: {
+        small: { x: 0.5, y: 0.4, s: 1.2, w: 700, c: C.white, paper: "chipInk", r: 0 },
+        medium: { x: 0.5, y: 0.5, s: 1.1, w: 700, c: C.white, paper: "chipInk", r: 0 },
+        headline: { x: 0.5, y: 0.5, s: 1, w: 700, c: C.white, paper: "chipInk", r: 0 },
+        hero: { x: 0.5, y: 0.5, s: 0.78, w: 700, c: C.white, paper: "chipViolet", r: 0 },
+        accent: { x: 0.5, y: 0.6, s: 1.1, w: 700, c: C.white, paper: "chipViolet", r: 0 },
+      },
+      accents: [], stack: true, gap: 14,
+    }),
+    pointiliStatement: T({
+      name: "Pointili statement", category: "Pointili", font: "Cairo", shadow: true,
+      slots: {
+        small: { x: 0.5, y: 0.36, s: 1.1, w: 700, c: C.white, r: 0 },
+        medium: { x: 0.5, y: 0.58, s: 1.05, w: 800, c: C.white, r: 0 },
+        headline: { x: 0.5, y: 0.5, s: 1, w: 900, c: C.white, r: 0 },
+        hero: { x: 0.5, y: 0.47, s: 1.05, w: 900, c: C.white, r: 0 },
+        accent: { x: 0.5, y: 0.68, s: 1, w: 800, c: "#9F7BFF", r: 0 },
+      },
+      accents: [], stack: true, gap: 6,
+    }),
+    pointiliLower: T({
+      name: "Pointili lower third", category: "Pointili", font: "IBM Plex Sans Arabic", shadow: false, chipShadow: true,
+      slots: {
+        small: { x: 0.72, y: 0.8, s: 0.9, w: 600, c: C.white, paper: "chipInk", r: 0 },
+        medium: { x: 0.72, y: 0.84, s: 0.7, w: 600, c: C.white, paper: "chipInk", r: 0 },
+        headline: { x: 0.72, y: 0.8, s: 0.6, w: 600, c: C.white, paper: "chipInk", r: 0 },
+        hero: { x: 0.72, y: 0.76, s: 0.45, w: 600, c: C.white, paper: "chipViolet", r: 0 },
+        accent: { x: 0.72, y: 0.84, s: 0.8, w: 600, c: C.white, paper: "chipInk", r: 0 },
+      },
+      accents: [], stack: true, gap: 8, alignRight: true,
+    }),
   };
-  const tplSelect = $("applyTemplate");
-  Object.entries(TEMPLATES).forEach(([k, t]) => { const o = document.createElement("option"); o.value = k; o.textContent = t.name; tplSelect.appendChild(o); });
-  tplSelect.value = "paper";
-  const tplGrid = $("templates");
-  Object.entries(TEMPLATES).forEach(([k, t]) => {
-    const b = document.createElement("button"); b.innerHTML = `<div class="pv" style="background:${t.swatch.bg};color:${t.swatch.fg}">طبعة</div><div class="nm">${t.name}</div>`;
-    b.onclick = () => { tplSelect.value = k; build(k); };
-    tplGrid.appendChild(b);
-  });
 
-  function build(key) {
-    const tpl = TEMPLATES[key]; if (!tpl) return;
+  /**
+   * Builds the lines with a style into any canvas. `variant` (1–4) shifts the
+   * slots a little, deterministically: the same composition with the words
+   * placed a touch differently, never a random scatter.
+   */
+  function compose(target, w, h, lns, key, variant = 0) {
+    const tpl = TEMPLATES[key]; if (!tpl) return [];
+    const r = mulberry(1000 + variant * 7919);
+    const jit = (amt) => (variant ? (r() - 0.5) * 2 * amt : 0);
+    const base = w * 0.1;
+    const made = [];
+    const stackY = {};
+    const used = {};
+    lns.forEach((l) => {
+      if (!l.text.trim()) return;
+      const slot = tpl.slots[l.role] || tpl.slots.medium;
+      const scale = ROLE_SCALE[l.role] * (slot.s || 1) * (l.scale ?? 1);
+      const fontSize = base * scale;
+      const t = makeText(l.text, { role: l.role, lineScale: l.scale ?? 1, fontFamily: tpl.font, fontWeight: slot.w, fontSize, fill: slot.c, angle: (slot.r || 0) + jit(1.6), lineHeight: 1, width: w * 0.95, shadow: tpl.shadow && !slot.noShadow ? new fabric.Shadow({ color: "rgba(0,0,0,0.35)", blur: 18 * (w / 1080), offsetX: 0, offsetY: 6 * (w / 1080) }) : null, textShadow: !!(tpl.shadow && !slot.noShadow) });
+      target.add(t); fitTextWidth(t);
+      const n = used[l.role] || 0; used[l.role] = n + 1;
+      let x = w * (slot.x + jit(0.035)), y = h * (slot.y + jit(0.012));
+      if (n > 0) { y = stackY[l.role] + t.getScaledHeight() * 0.62 + 12; x += (n % 2 ? -1 : 1) * w * 0.04; }
+      t.set({ left: x, top: y }); t.setCoords();
+      stackY[l.role] = y + t.getScaledHeight() * 0.5;
+      const rec = { t, slot, role: l.role, paper: null };
+      if (slot.paper) {
+        const p = makePaper(slot.paper, { presetOverride: slot.paperOverride, seed: Math.floor(r() * 1e9) });
+        p.forText = t.id; p.name = `Paper · ${l.text.slice(0, 12)}`; p.rotDelta = (PAPERS[slot.paper].rot || 0) + jit(1.2);
+        if (tpl.paperShadow) p.shadow = new fabric.Shadow({ color: "rgba(0,0,0,0.18)", blur: 12, offsetX: 2, offsetY: 5 });
+        if (tpl.chipShadow) p.shadow = new fabric.Shadow({ color: "rgba(8,4,24,0.55)", blur: 34, offsetX: 0, offsetY: 12 });
+        target.add(p); rec.paper = p;
+      }
+      made.push(rec);
+    });
+    if (tpl.stack) {
+      // the old Pointili captions: a centred stack of chips, in reading order
+      const gap = tpl.gap || 10;
+      const total = made.reduce((a, m) => a + m.t.getScaledHeight() + 2 * (m.paper ? m.paper.padY : 0), 0) + gap * (made.length - 1);
+      let y = h * (tpl.alignRight ? 0.78 : 0.5) - total / 2;
+      made.forEach((m) => { const hh = m.t.getScaledHeight() + 2 * (m.paper ? m.paper.padY : 0); const cx = tpl.alignRight ? w - 60 - (m.t.getScaledWidth() / 2 + (m.paper ? m.paper.padX : 0)) : w / 2; m.t.set({ left: cx, top: y + hh / 2 }); m.t.setCoords(); y += hh + gap; });
+    }
+    // papers under their text, hero above the rest, accents last
+    made.forEach((m) => { if (m.paper) { const o = target.getObjects(); const ti = o.indexOf(m.t), pi = o.indexOf(m.paper); if (pi > ti) target.moveTo(m.paper, ti); syncPaperIn(target, m.paper); } });
+    if (tpl.heroOnTop) { const hero = made.find((m) => m.role === "hero"); if (hero) { if (hero.paper) target.bringToFront(hero.paper); target.bringToFront(hero.t); } }
+    (tpl.accents || []).forEach((a) => {
+      const m = made.find((x) => x.role === a.role); if (!m) return;
+      const b = makeBrush(a.preset, { brush: { thickness: a.thickness * (w / 1080), wobble: a.wobble, seed: Math.floor(r() * 1e9) }, fill: a.color, fromTemplate: true });
+      b.scaleToWidth(Math.max(40, m.t.getScaledWidth() * a.w));
+      const th = m.t.getScaledHeight();
+      b.set({ left: m.t.left + (a.dx || 0) * m.t.getScaledWidth() + jit(w * 0.01), top: m.t.top + (a.dy || 0) * th + jit(h * 0.004), angle: (a.r || 0) + jit(2) });
+      b.setCoords(); target.add(b);
+      if (a.behind) target.moveTo(b, Math.max(0, target.getObjects().indexOf(m.paper || m.t)));
+    });
+    return made;
+  }
+  function syncPaperIn(target, p) {
+    const t = target.getObjects().find((o) => o.id === p.forText); if (!t) return;
+    const w = t.getScaledWidth() + 2 * p.padX, h = t.getScaledHeight() + 2 * p.padY;
+    if (p.type === "rect") p.set({ width: w, height: h }); else p.set({ scaleX: w / p.width, scaleY: h / p.height });
+    p.set({ left: t.left + p.dx, top: t.top + p.dy, angle: t.angle + p.rotDelta }); p.setCoords();
+  }
+
+  let currentTemplate = "paperEditorial", currentVariant = 0;
+  function build(key, variant = 0) {
     if (!lines.length) { lines = autoLines($("sentence").value); renderLines(); }
     if (!lines.length) return toast("Write a sentence first");
-    // replace the previous build, keep the user's own shapes
-    canvas.getObjects().filter((o) => o.kind === "text" || o.kind === "paper" || o.fromTemplate).forEach((o) => canvas.remove(o));
-    const objs = lines.map((l) => {
-      const st = tpl.roles[l.role] || tpl.roles.medium;
-      const t = makeText(l.text, { role: l.role, fontSize: st.fontSize, fontWeight: st.fontWeight, fill: st.fill, angle: st.angle || 0, paper: st.paper ? Object.assign({}, st.paper) : { on: false, color: "#F6F3EE", padX: 28, padY: 10, radius: 6 }, shadow: tpl.shadow ? shadowDark() : null, width: W * 0.95 });
-      canvas.add(t); fitTextWidth(t);
-      return t;
-    });
-    // stack from the upper third down, a little air between rows
-    const heights = objs.map((t) => t.getScaledHeight() + 2 * (t.paper.on ? t.paper.padY : 0));
-    const gap = 26 * tpl.gap + 14;
-    const total = heights.reduce((a, b) => a + b, 0) + gap * (objs.length - 1);
-    let y = Math.max(H * 0.14, H * 0.42 - total / 2);
-    objs.forEach((t, i) => { t.set({ left: W / 2, top: y + heights[i] / 2 }); t.setCoords(); y += heights[i] + gap; syncPaper(t); });
-    // extras the template asks for
-    const hero = objs.find((t) => t.role === "hero"), accent = objs.find((t) => t.role === "accent");
-    if (tpl.underlineHero && hero) { const u = makeShape("underline", { stroke: tpl.underlineHero, strokeWidth: 16, fromTemplate: true }); u.scaleToWidth(hero.getScaledWidth() * 0.9); u.set({ left: hero.left, top: hero.top + hero.getScaledHeight() / 2 + 14, angle: hero.angle }); canvas.add(u); }
-    if (tpl.circleAccent && accent) { const c = makeShape("scribble", { stroke: tpl.circleAccent, strokeWidth: 8, fromTemplate: true }); c.scaleToWidth(accent.getScaledWidth() * 1.25); c.set({ left: accent.left, top: accent.top, angle: accent.angle }); canvas.add(c); canvas.sendBackwards(c); }
-    if (tpl.arrow && hero) { const a = makeShape("arrow", { stroke: "#17B7BD", fromTemplate: true }); a.scaleToWidth(220); a.set({ left: W * 0.2, top: hero.top + 60, angle: -40 }); canvas.add(a); }
-    canvas.discardActiveObject(); canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot();
+    currentTemplate = key; currentVariant = variant; $("applyTemplate").value = key;
+    canvas.getObjects().filter((o) => o.kind === "text" || (o.kind === "paper" && o.forText) || o.fromTemplate).forEach((o) => canvas.remove(o));
+    compose(canvas, W, H, lines, key, variant);
+    canvas.discardActiveObject(); canvas.requestRenderAll(); renderLayers(); renderProps(); markCards(); snapshot();
   }
-  $("btnApply").onclick = () => build(tplSelect.value);
+  $("btnApply").onclick = () => build($("applyTemplate").value, 0);
+  document.querySelectorAll("[data-var]").forEach((b) => b.onclick = () => build($("applyTemplate").value, Number(b.dataset.var)));
+  $("btnUpdateWords").onclick = () => {
+    // the series workflow: same design, new words
+    const texts = canvas.getObjects().filter((o) => o.kind === "text");
+    if (!texts.length) return build($("applyTemplate").value, currentVariant);
+    if (!lines.length) lines = autoLines($("sentence").value);
+    if (lines.filter((l) => l.text.trim()).length !== texts.length) { toast(`The design has ${texts.length} words blocks; the lines have ${lines.length}. Building fresh.`); return build($("applyTemplate").value, currentVariant); }
+    lines.filter((l) => l.text.trim()).forEach((l, i) => { texts[i].set({ text: l.text }); fitTextWidth(texts[i]); syncPapersOf(texts[i]); });
+    canvas.requestRenderAll(); renderLayers(); snapshot(); toast("Words updated, design kept");
+  };
+  const tplSelect = $("applyTemplate");
+  Object.entries(TEMPLATES).forEach(([k, t]) => { const o = document.createElement("option"); o.value = k; o.textContent = `${t.name} · ${t.category}`; tplSelect.appendChild(o); });
 
-  // ── selection, snapping, keyboard ───────────────────────────────────────
+  // ── style cards: every style rendered with the real sentence ────────────
+  const cardCanvases = new Map();
+  function renderCards() {
+    const grid = $("templates");
+    const k = 0.12, cw = Math.round(W * k), ch = Math.round(H * k);
+    const lns = lines.length ? lines : autoLines($("sentence").value);
+    Object.entries(TEMPLATES).forEach(([key, tpl]) => {
+      let entry = cardCanvases.get(key);
+      if (!entry) {
+        const card = document.createElement("button"); card.className = "card"; card.setAttribute("aria-pressed", String(key === currentTemplate));
+        const pv = document.createElement("div"); pv.className = "pv"; const el = document.createElement("canvas"); pv.appendChild(el);
+        const nm = document.createElement("div"); nm.className = "nm"; nm.innerHTML = `${tpl.name}<span>${tpl.category}</span>`;
+        card.append(pv, nm); card.onclick = () => build(key, 0); grid.appendChild(card);
+        const sc = new fabric.StaticCanvas(el, { backgroundColor: null, renderOnAddRemove: false });
+        entry = { card, sc, pv }; cardCanvases.set(key, entry);
+      }
+      const { sc, pv } = entry;
+      sc.setDimensions({ width: cw, height: ch }); pv.style.height = `${ch}px`;
+      sc.clear(); sc.backgroundColor = null;
+      compose(sc, cw, ch, lns, key, 0);
+      sc.renderAll();
+    });
+    markCards();
+  }
+  let cardsTimer = null;
+  function renderCardsSoon() { clearTimeout(cardsTimer); cardsTimer = setTimeout(() => fontsReady.then(renderCards), 350); }
+  function markCards() { cardCanvases.forEach((e, key) => e.card.setAttribute("aria-pressed", String(key === currentTemplate))); }
+
+  // ── selection, snapping guides, keyboard ────────────────────────────────
+  let guides = [];
   canvas.on("selection:created", renderProps); canvas.on("selection:updated", renderProps); canvas.on("selection:cleared", renderProps);
   canvas.on("object:moving", (e) => {
-    const o = e.target; const g = { v: false, h: false };
-    if (Math.abs(o.left - W / 2) < 10) { o.set({ left: W / 2 }); g.v = true; }
-    if (Math.abs(o.top - H / 2) < 10) { o.set({ top: H / 2 }); g.h = true; }
-    $("gv").style.display = g.v ? "block" : "none"; $("gv").style.left = `${W / 2 * zoom}px`;
-    $("gh").style.display = g.h ? "block" : "none"; $("gh").style.top = `${H / 2 * zoom}px`;
-    if (o.kind === "text") syncPaper(o);
+    const o = e.target; guides = [];
+    if (o.type === "activeSelection") return;
+    const others = canvas.getObjects().filter((x) => x !== o && x.visible && !(o.kind === "text" && x.kind === "paper" && x.forText === o.id) && !(o.kind === "paper" && x.id === o.forText));
+    const cands = { x: [W / 2], y: [H / 2] };
+    others.forEach((x) => { const b = x.getBoundingRect(true, true); cands.x.push(x.left, b.left, b.left + b.width); cands.y.push(x.top, b.top, b.top + b.height); });
+    const br = o.getBoundingRect(true, true); const T = 8;
+    for (const cx of cands.x) { if (Math.abs(o.left - cx) < T) { o.set({ left: cx }); guides.push({ x: cx }); break; } if (Math.abs(br.left - cx) < T) { o.set({ left: o.left + (cx - br.left) }); guides.push({ x: cx }); break; } if (Math.abs(br.left + br.width - cx) < T) { o.set({ left: o.left + (cx - br.left - br.width) }); guides.push({ x: cx }); break; } }
+    for (const cy of cands.y) { if (Math.abs(o.top - cy) < T) { o.set({ top: cy }); guides.push({ y: cy }); break; } if (Math.abs(br.top - cy) < T) { o.set({ top: o.top + (cy - br.top) }); guides.push({ y: cy }); break; } if (Math.abs(br.top + br.height - cy) < T) { o.set({ top: o.top + (cy - br.top - br.height) }); guides.push({ y: cy }); break; } }
+    if (o.kind === "text") syncPapersOf(o);
+    if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; } }
   });
-  canvas.on("object:scaling", (e) => { if (e.target.kind === "text") syncPaper(e.target); });
-  canvas.on("object:rotating", (e) => { if (e.target.kind === "text") syncPaper(e.target); });
-  canvas.on("object:modified", (e) => { $("gv").style.display = "none"; $("gh").style.display = "none"; if (e.target && e.target.kind === "text") syncPaper(e.target); renderProps(); snapshot(); });
-  canvas.on("mouse:up", () => { $("gv").style.display = "none"; $("gh").style.display = "none"; });
+  canvas.on("after:render", () => {
+    if (!guides.length) return;
+    const ctx = canvas.getSelectionContext(); ctx.save(); ctx.strokeStyle = C.teal; ctx.lineWidth = 1 / zoom; ctx.setLineDash([6 / zoom, 4 / zoom]);
+    guides.forEach((g) => { ctx.beginPath(); if (g.x != null) { ctx.moveTo(g.x, 0); ctx.lineTo(g.x, H); } else { ctx.moveTo(0, g.y); ctx.lineTo(W, g.y); } ctx.stroke(); });
+    ctx.restore();
+  });
+  canvas.on("object:scaling", (e) => { const o = e.target; if (o.kind === "text") syncPapersOf(o); if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.padX = clamp((o.getScaledWidth() - t.getScaledWidth()) / 2, -t.getScaledWidth() * 0.45, 400); o.padY = clamp((o.getScaledHeight() - t.getScaledHeight()) / 2, -t.getScaledHeight() * 0.45, 400); } } });
+  canvas.on("object:rotating", (e) => { const o = e.target; if (e.e && e.e.shiftKey) o.set({ angle: Math.round(o.angle / 15) * 15 }); if (o.kind === "text") syncPapersOf(o); if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) o.rotDelta = o.angle - t.angle; } });
+  canvas.on("object:modified", (e) => { guides = []; const o = e.target; if (o && o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } syncAllPapers(); canvas.requestRenderAll(); renderProps(); snapshot(); });
+  canvas.on("mouse:up", () => { guides = []; canvas.requestRenderAll(); });
+  canvas.on("mouse:dblclick", (e) => { const o = e.target; if (o && o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { canvas.setActiveObject(t); canvas.requestRenderAll(); } } });
 
   let clip = null;
   document.addEventListener("keydown", (e) => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || (canvas.getActiveObject() && canvas.getActiveObject().isEditing);
     const meta = e.ctrlKey || e.metaKey;
-    if (meta && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
-    if (meta && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); return; }
+    if (meta && e.key.toLowerCase() === "z" && !typing) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (meta && e.key.toLowerCase() === "y" && !typing) { e.preventDefault(); redo(); return; }
     if (typing) return;
+    if (e.key === "Escape" && $("preview").classList.contains("on")) return exitPreview();
     const a = canvas.getActiveObject(); if (!a) return;
     if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeActive(); }
     else if (meta && e.key.toLowerCase() === "d") { e.preventDefault(); duplicate(a); }
     else if (meta && e.key.toLowerCase() === "c") { a.clone((c) => { clip = c; }, CUSTOM); }
-    else if (meta && e.key.toLowerCase() === "v") { if (clip) clip.clone((c) => { c.set({ id: uid(), left: clip.left + 30, top: clip.top + 30 }); if (c.kind === "text") c = rehydrateText(c); addObject(c); }, CUSTOM); }
+    else if (meta && e.key.toLowerCase() === "v") { if (clip) clip.clone((c) => { c.set({ id: uid(), left: clip.left + 30, top: clip.top + 30, forText: null }); if (c.kind === "text") hydrateText(c); addObject(c); }, CUSTOM); }
     else if (e.key.startsWith("Arrow")) {
       e.preventDefault(); const d = e.shiftKey ? 10 : 1;
       if (e.key === "ArrowLeft") a.set({ left: a.left - d }); if (e.key === "ArrowRight") a.set({ left: a.left + d }); if (e.key === "ArrowUp") a.set({ top: a.top - d }); if (e.key === "ArrowDown") a.set({ top: a.top + d });
-      a.setCoords(); if (a.kind === "text") syncPaper(a); canvas.requestRenderAll(); snapshotSoon();
+      a.setCoords(); if (a.kind === "text") syncPapersOf(a); if (a.kind === "paper" && a.forText) { const t = byId(a.forText); if (t) { a.dx = a.left - t.left; a.dy = a.top - t.top; } } canvas.requestRenderAll(); snapshotSoon();
     }
   });
   function removeActive() {
     const sel = canvas.getActiveObjects(); canvas.discardActiveObject();
-    sel.forEach((o) => { const p = o.kind === "text" && paperOf(o); if (p) canvas.remove(p); canvas.remove(o); });
+    sel.forEach((o) => { if (o.kind === "text") papersOf(o).forEach((p) => canvas.remove(p)); canvas.remove(o); });
     canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot();
   }
-  function rehydrateText(c) {
-    // a cloned Textbox keeps its look but not our listeners
-    c.on("changed", () => { syncPaper(c); renderLayers(); }); c.on("editing:exited", () => { fitTextWidth(c); syncPaper(c); snapshot(); });
-    if (c.paper) c.paper = Object.assign({}, c.paper);
-    return c;
+  function duplicate(o) {
+    o.clone((c) => {
+      c.set({ id: uid(), left: o.left + 30, top: o.top + 30 });
+      if (c.kind === "text") { hydrateText(c); canvas.add(c); papersOf(o).forEach((p) => p.clone((pc) => { pc.set({ id: uid(), forText: c.id }); canvas.add(pc); syncPaper(pc); }, CUSTOM)); canvas.setActiveObject(c); canvas.requestRenderAll(); renderLayers(); snapshot(); }
+      else { c.forText = null; if (c.kind === "brush") c.brush = Object.assign({}, o.brush); addObject(c); }
+    }, CUSTOM);
   }
-  function duplicate(o) { o.clone((c) => { c.set({ id: uid(), left: o.left + 30, top: o.top + 30 }); if (c.kind === "text") c = rehydrateText(c); addObject(c); }, CUSTOM); }
 
-  // ── undo / redo: whole-canvas snapshots, cheap at this size ────────────
+  // ── undo / redo ─────────────────────────────────────────────────────────
   const stack = [], redoStack = []; let restoring = false, snapTimer = null;
   function serialize() { return JSON.stringify({ W, H, json: canvas.toJSON(CUSTOM) }); }
   function snapshot() { if (restoring) return; const s = serialize(); if (stack[stack.length - 1] === s) return; stack.push(s); if (stack.length > 60) stack.shift(); redoStack.length = 0; }
@@ -545,7 +800,7 @@
     const bg = canvas.backgroundImage;
     canvas.loadFromJSON(json, () => {
       canvas.backgroundImage = bg;
-      canvas.getObjects().forEach((o) => { if (o.kind === "text") rehydrateText(o); if (o.kind === "paper") o.set({ selectable: false, evented: false, hasControls: false }); });
+      canvas.getObjects().forEach((o) => { if (o.kind === "text") hydrateText(o); });
       syncAllPapers(); canvas.requestRenderAll(); renderLayers(); renderProps(); restoring = false; cb && cb();
     });
   }
@@ -553,98 +808,134 @@
   function redo() { if (!redoStack.length) return; const s = redoStack.pop(); stack.push(s); restore(s); }
 
   // ── layers ──────────────────────────────────────────────────────────────
-  function label(o) { return o.kind === "text" ? o.text.replace(/\n/g, " ") : (o.name || o.type); }
+  const label = (o) => o.kind === "text" ? o.text.replace(/\n/g, " ") : (o.name || o.type);
   function renderLayers() {
     const ul = $("layers"); ul.innerHTML = "";
-    const objs = canvas.getObjects().filter((o) => o.kind !== "paper").slice().reverse();
+    const objs = canvas.getObjects().slice().reverse();
     const active = canvas.getActiveObject();
     if (!objs.length) { ul.innerHTML = '<li class="empty">Nothing yet.</li>'; return; }
     objs.forEach((o) => {
       const li = document.createElement("li"); if (o === active) li.classList.add("on");
-      const t = document.createElement("span"); t.className = "t"; t.textContent = o.kind === "text" ? "T" : "◆";
-      const nm = document.createElement("span"); nm.className = "nm" + (o.kind === "text" ? "" : " ltr"); nm.textContent = label(o); nm.onclick = () => { canvas.setActiveObject(o); canvas.requestRenderAll(); renderLayers(); renderProps(); };
+      const t = document.createElement("span"); t.className = "t"; t.textContent = { text: "T", paper: "▭", brush: "〰", shape: "◆" }[o.kind] || "◆";
+      const nm = document.createElement("span"); nm.className = "nm" + (o.kind === "text" ? "" : " ltr"); nm.textContent = label(o); nm.onclick = () => { if (o.locked) return; canvas.setActiveObject(o); canvas.requestRenderAll(); renderLayers(); renderProps(); };
       const mk = (txt, title, fn, off) => { const b = document.createElement("button"); b.textContent = txt; b.title = title; if (off) b.classList.add("off"); b.onclick = (e) => { e.stopPropagation(); fn(); }; return b; };
       li.append(t, nm,
-        mk("▲", "Bring forward", () => { canvas.bringForward(o); if (o.kind === "text") syncPaper(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }),
-        mk("▼", "Send backward", () => { canvas.sendBackwards(o); if (o.kind === "text") syncPaper(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }),
+        mk("▲", "Bring forward", () => { canvas.bringForward(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }),
+        mk("▼", "Send backward", () => { canvas.sendBackwards(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }),
         mk("⧉", "Duplicate", () => duplicate(o)),
-        mk("👁", o.visible ? "Hide" : "Show", () => { o.set({ visible: !o.visible }); if (o.kind === "text") syncPaper(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }, !o.visible),
+        mk("👁", o.visible ? "Hide" : "Show", () => { o.set({ visible: !o.visible }); if (o.kind === "text") syncPapersOf(o); canvas.requestRenderAll(); renderLayers(); snapshot(); }, !o.visible),
         mk("🔒", o.locked ? "Unlock" : "Lock", () => { o.locked = !o.locked; o.set({ selectable: !o.locked, evented: !o.locked }); canvas.discardActiveObject(); canvas.requestRenderAll(); renderLayers(); }, !o.locked),
-        mk("✕", "Delete", () => { const p = o.kind === "text" && paperOf(o); if (p) canvas.remove(p); canvas.remove(o); canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot(); }),
+        mk("✕", "Delete", () => { if (o.kind === "text") papersOf(o).forEach((p) => canvas.remove(p)); canvas.remove(o); canvas.requestRenderAll(); renderLayers(); renderProps(); snapshot(); }),
       );
       ul.appendChild(li);
     });
   }
 
-  // ── properties ──────────────────────────────────────────────────────────
-  function field(labelText, inputEl) { const l = document.createElement("label"); l.className = "f"; const s = document.createElement("span"); s.textContent = labelText; l.append(s, inputEl); return l; }
-  function num(value, min, max, step, on) { const i = document.createElement("input"); i.type = "number"; i.value = value; i.min = min; i.max = max; i.step = step; i.oninput = () => on(Number(i.value)); return i; }
-  function range(value, min, max, step, on) { const i = document.createElement("input"); i.type = "range"; i.value = value; i.min = min; i.max = max; i.step = step; i.oninput = () => on(Number(i.value)); return i; }
+  // ── properties: one panel per kind ──────────────────────────────────────
+  const field = (labelText, inputEl) => { const l = document.createElement("label"); l.className = "f"; const s = document.createElement("span"); s.textContent = labelText; l.append(s, inputEl); return l; };
+  const num = (value, min, max, step, on) => { const i = document.createElement("input"); i.type = "number"; i.value = value; i.min = min; i.max = max; i.step = step; i.oninput = () => on(Number(i.value)); return i; };
+  const range = (value, min, max, step, on) => { const i = document.createElement("input"); i.type = "range"; i.value = value; i.min = min; i.max = max; i.step = step; i.oninput = () => on(Number(i.value)); return i; };
+  const select = (options, value, on) => { const s = document.createElement("select"); options.forEach(([v, l]) => { const o = document.createElement("option"); o.value = v; o.textContent = l; s.appendChild(o); }); s.value = String(value); s.onchange = () => on(s.value); return s; };
+  const grid = (cls, ...kids) => { const d = document.createElement("div"); d.className = cls; d.append(...kids); return d; };
+  const block = (title, ...children) => { const d = document.createElement("div"); d.className = "block"; const h = document.createElement("h3"); h.textContent = title; d.append(h, ...children); return d; };
+  const check = (labelText, checked, on) => { const l = document.createElement("label"); l.className = "row"; l.style.marginBottom = "8px"; const c = document.createElement("input"); c.type = "checkbox"; c.checked = checked; c.className = "fix"; c.style.width = "auto"; c.onchange = () => on(c.checked); l.append(c, document.createTextNode(" " + labelText)); return l; };
   function color(value, on) {
     const wrap = document.createElement("div"); wrap.className = "row";
     const sw = document.createElement("div"); sw.className = "swatches";
-    PALETTE.forEach(([hex, name]) => { const b = document.createElement("button"); b.style.background = hex; b.title = name; b.setAttribute("aria-pressed", String((value || "").toUpperCase() === hex)); b.onclick = () => { on(hex); renderProps(); }; sw.appendChild(b); });
+    PALETTE.forEach(([hex, name]) => { const b = document.createElement("button"); b.style.background = hex; b.title = name; b.setAttribute("aria-pressed", String((value || "").toUpperCase() === hex.toUpperCase())); b.onclick = () => { on(hex); renderProps(); }; sw.appendChild(b); });
     const c = document.createElement("input"); c.type = "color"; c.value = /^#[0-9a-f]{6}$/i.test(value || "") ? value : "#111111"; c.className = "fix"; c.oninput = () => on(c.value);
     wrap.append(sw, c); return wrap;
   }
-  function select(options, value, on) { const s = document.createElement("select"); options.forEach(([v, l]) => { const o = document.createElement("option"); o.value = v; o.textContent = l; s.appendChild(o); }); s.value = String(value); s.onchange = () => on(s.value); return s; }
-  function block(title, ...children) { const d = document.createElement("div"); d.className = "block"; const h = document.createElement("h3"); h.textContent = title; d.append(h, ...children); return d; }
-
+  function fontPicker(o, after) {
+    const box = document.createElement("div"); box.className = "fontlist";
+    const sample = (o.text || "تحدد قداش").split("\n")[0].slice(0, 22);
+    FONTS.forEach((f) => { const b = document.createElement("button"); b.style.fontFamily = `"${f.family}"`; b.style.fontWeight = Math.min(o.fontWeight, Math.max(...f.weights)); b.setAttribute("aria-pressed", String(f.family === o.fontFamily)); b.innerHTML = `${sample}<small>${f.family}</small>`; b.onclick = () => { const w = f.weights.includes(o.fontWeight) ? o.fontWeight : f.weights.reduce((a, x) => Math.abs(x - o.fontWeight) < Math.abs(a - o.fontWeight) ? x : a); o.set({ fontFamily: f.family, fontWeight: w }); o.initDimensions(); after(); }; box.appendChild(b); });
+    return box;
+  }
+  function transformBlock(o, apply) {
+    return block("Transform",
+      grid("grid2", field("X", num(Math.round(o.left), -W, 2 * W, 1, (v) => apply({ left: v }))), field("Y", num(Math.round(o.top), -H, 2 * H, 1, (v) => apply({ top: v })))),
+      grid("grid2", field("Rotation", num(Math.round(o.angle * 10) / 10, -180, 180, 0.5, (v) => apply({ angle: v }))), field("Opacity", range(Math.round(o.opacity * 100), 0, 100, 1, (v) => apply({ opacity: v / 100 })))),
+    );
+  }
   function renderProps() {
     const box = $("props"); box.innerHTML = "";
     const o = canvas.getActiveObject();
-    if (!o || o.type === "activeSelection") { box.innerHTML = `<div class="empty">${o ? "Several objects selected. Move, scale or delete them together." : "Select an object, or build the lines."}</div>`; renderLayers(); return; }
-    const apply = (patch, after) => { o.set(patch); o.setCoords && o.setCoords(); if (o.kind === "text") { syncPaper(o); } canvas.requestRenderAll(); after && after(); snapshotSoon(); };
+    if (!o || o.type === "activeSelection") { box.innerHTML = `<div class="empty">${o ? "Several objects. Move, scale, rotate or delete them together." : "Select something, or build the lines."}</div>`; renderLayers(); return; }
+    const apply = (patch, after) => { o.set(patch); o.setCoords(); if (o.kind === "text") { fitTextWidth(o); syncPapersOf(o); } if (o.kind === "paper" && o.forText) { const t = byId(o.forText); if (t) { o.dx = o.left - t.left; o.dy = o.top - t.top; o.rotDelta = o.angle - t.angle; } } canvas.requestRenderAll(); after && after(); snapshotSoon(); };
 
     if (o.kind === "text") {
-      const ta = document.createElement("textarea"); ta.className = "ar"; ta.rows = 2; ta.value = o.text; ta.oninput = () => { o.set({ text: ta.value }); fitTextWidth(o); syncPaper(o); canvas.requestRenderAll(); renderLayers(); snapshotSoon(); };
-      const fontSel = select(FONTS.map((f) => [f.family, f.family]), o.fontFamily, (v) => { apply({ fontFamily: v }, () => { fitTextWidth(o); syncPaper(o); renderProps(); }); });
+      const ta = document.createElement("textarea"); ta.className = "ar"; ta.rows = 2; ta.value = o.text; ta.oninput = () => { o.set({ text: ta.value }); fitTextWidth(o); syncPapersOf(o); canvas.requestRenderAll(); renderLayers(); snapshotSoon(); };
       const fam = FONTS.find((f) => f.family === o.fontFamily) || FONTS[0];
-      const weightSel = select(fam.weights.map((w) => [w, String(w)]), o.fontWeight, (v) => apply({ fontWeight: Number(v) }, () => { fitTextWidth(o); syncPaper(o); }));
+      const weightSel = select(fam.weights.map((w) => [w, String(w)]), o.fontWeight, (v) => apply({ fontWeight: Number(v) }, () => { o.initDimensions(); fitTextWidth(o); syncPapersOf(o); }));
       const addFont = document.createElement("button"); addFont.className = "btn sm"; addFont.textContent = "Upload font…"; addFont.onclick = () => $("fontFile").click();
-      const roleSel = select(ROLES.map((r) => [r, r.toUpperCase()]), o.role || "medium", (v) => { o.role = v; renderLayers(); });
-      const spacing = num(o.charSpacing, -200, 800, 10, (v) => apply({ charSpacing: v }, () => { fitTextWidth(o); syncPaper(o); }));
-      const warn = document.createElement("p"); warn.className = "warn"; warn.textContent = "Letter spacing breaks Arabic joins in the browser's canvas. Keep it at 0 for Arabic."; warn.style.display = o.charSpacing ? "block" : "none";
-      const paperOn = document.createElement("input"); paperOn.type = "checkbox"; paperOn.checked = !!o.paper.on; paperOn.onchange = () => { o.paper.on = paperOn.checked; syncPaper(o); canvas.requestRenderAll(); renderProps(); snapshot(); };
-      const paperRow = document.createElement("label"); paperRow.className = "row"; paperRow.style.marginBottom = "8px"; paperRow.append(paperOn, document.createTextNode(" Paper block behind the text"));
-      const paperFields = document.createElement("div"); paperFields.style.display = o.paper.on ? "block" : "none";
-      paperFields.append(
-        field("Paper colour", color(o.paper.color, (v) => { o.paper.color = v; syncPaper(o); canvas.requestRenderAll(); snapshotSoon(); })),
-        (() => { const g = document.createElement("div"); g.className = "grid3"; g.append(field("Pad X", num(o.paper.padX, 0, 200, 2, (v) => { o.paper.padX = v; syncPaper(o); canvas.requestRenderAll(); snapshotSoon(); })), field("Pad Y", num(o.paper.padY, 0, 200, 2, (v) => { o.paper.padY = v; syncPaper(o); canvas.requestRenderAll(); snapshotSoon(); })), field("Radius", num(o.paper.radius, 0, 80, 1, (v) => { o.paper.radius = v; syncPaper(o); canvas.requestRenderAll(); snapshotSoon(); }))); return g; })(),
-      );
-      const shadowOn = document.createElement("input"); shadowOn.type = "checkbox"; shadowOn.checked = !!o.shadow; shadowOn.onchange = () => apply({ shadow: shadowOn.checked ? shadowDark() : null }, renderProps);
-      const shadowRow = document.createElement("label"); shadowRow.className = "row"; shadowRow.append(shadowOn, document.createTextNode(" Soft shadow (helps over video)"));
-      const g2 = document.createElement("div"); g2.className = "grid2";
-      g2.append(field("Size", num(Math.round(o.fontSize), 8, 600, 2, (v) => apply({ fontSize: v }, () => { fitTextWidth(o); syncPaper(o); }))), field("Line height", num(o.lineHeight, 0.6, 2.5, 0.05, (v) => apply({ lineHeight: v }, () => syncPaper(o)))));
-      const g3 = document.createElement("div"); g3.className = "grid2";
-      g3.append(field("Rotation", num(Math.round(o.angle), -180, 180, 1, (v) => apply({ angle: v }))), field("Opacity", range(Math.round(o.opacity * 100), 0, 100, 1, (v) => apply({ opacity: v / 100 }))));
-      const g4 = document.createElement("div"); g4.className = "grid2";
-      g4.append(field("Stroke", color(o.stroke || "#111111", (v) => apply({ stroke: v, strokeWidth: o.strokeWidth || 3 }))), field("Stroke width", num(o.strokeWidth || 0, 0, 40, 1, (v) => apply({ strokeWidth: v, stroke: v ? (o.stroke || "#111111") : null }))));
+      const spacing = num(o.charSpacing, -200, 800, 10, (v) => apply({ charSpacing: v }));
+      const warn = document.createElement("p"); warn.className = "warn"; warn.textContent = "Letter spacing splits Arabic joins in the canvas. Keep 0 for Arabic."; warn.style.display = o.charSpacing ? "block" : "none";
+      const papers = papersOf(o);
+      const paperCtl = document.createElement("div");
+      if (papers.length) {
+        papers.forEach((p) => { const b = document.createElement("button"); b.className = "btn sm"; b.textContent = `Edit paper (${p.fill.length > 7 ? "ink" : p.fill})`; b.style.marginRight = "6px"; b.onclick = () => { canvas.setActiveObject(p); canvas.requestRenderAll(); renderProps(); }; paperCtl.appendChild(b); });
+        const rm = document.createElement("button"); rm.className = "btn sm"; rm.textContent = "Remove paper"; rm.onclick = () => { papers.forEach((p) => canvas.remove(p)); canvas.requestRenderAll(); renderProps(); renderLayers(); snapshot(); }; paperCtl.appendChild(rm);
+      } else {
+        const sel = select(Object.keys(PAPERS).map((k) => [k, k.startsWith("chip") ? `Chip · ${k.slice(4)}` : `Paper · ${k}`]), "p1", () => {});
+        const add = document.createElement("button"); add.className = "btn sm dark fix"; add.textContent = "Add paper"; add.onclick = () => { attachPaper(o, sel.value); canvas.requestRenderAll(); renderProps(); renderLayers(); snapshot(); };
+        paperCtl.append(grid("row", sel, add));
+      }
       box.append(
-        block("Text", ta, field("Role", roleSel)),
-        block("Typography", field("Font", fontSel), (() => { const r = document.createElement("div"); r.className = "row"; r.append(field("Weight", weightSel), (() => { const w = document.createElement("div"); w.className = "fix"; w.append(addFont); return w; })()); return r; })(), g2, field("Letter spacing", spacing), warn, field("Align", select([["right", "Right"], ["center", "Center"], ["left", "Left"]], o.textAlign, (v) => apply({ textAlign: v })))),
-        block("Colour", field("Fill", color(o.fill, (v) => apply({ fill: v }))), g4, shadowRow),
-        block("Paper", paperRow, paperFields),
-        block("Transform", g3, (() => { const r = document.createElement("div"); r.className = "grid2"; r.append(field("X", num(Math.round(o.left), -W, 2 * W, 1, (v) => apply({ left: v }))), field("Y", num(Math.round(o.top), -H, 2 * H, 1, (v) => apply({ top: v })))); return r; })()),
+        block("Text", ta, field("Role", select(ROLES.map((r) => [r, r.toUpperCase()]), o.role || "medium", (v) => { o.role = v; renderLayers(); }))),
+        block("Typography", fontPicker(o, () => { fitTextWidth(o); syncPapersOf(o); canvas.requestRenderAll(); renderProps(); snapshotSoon(); }),
+          grid("row", field("Weight", weightSel), (() => { const w = document.createElement("div"); w.className = "fix"; w.append(addFont); return w; })()),
+          grid("grid2", field("Size", num(Math.round(o.fontSize), 8, 800, 2, (v) => apply({ fontSize: v }))), field("Line height", num(o.lineHeight, 0.6, 2.5, 0.05, (v) => apply({ lineHeight: v })))),
+          grid("grid2", field("Letter spacing", spacing), field("Align", select([["right", "Right"], ["center", "Center"], ["left", "Left"]], o.textAlign, (v) => apply({ textAlign: v })))), warn),
+        block("Colour", field("Fill", color(o.fill, (v) => apply({ fill: v }))),
+          grid("grid2", field("Stroke", color(o.stroke || "#111111", (v) => apply({ stroke: v, strokeWidth: o.strokeWidth || 3 }))), field("Stroke width", num(o.strokeWidth || 0, 0, 40, 1, (v) => apply({ strokeWidth: v, stroke: v ? (o.stroke || "#111111") : null })))),
+          check("Soft shadow (over video)", !!o.shadow, (on) => apply({ shadow: on ? new fabric.Shadow({ color: "rgba(0,0,0,0.35)", blur: 18, offsetX: 0, offsetY: 6 }) : null }))),
+        block("Paper", paperCtl),
+        transformBlock(o, apply),
+      );
+    } else if (o.kind === "paper") {
+      const linked = o.forText && byId(o.forText);
+      const toneSel = select(Object.entries(PAPERS).map(([k, p]) => [k, k]), "p1", (k) => apply({ fill: PAPERS[k].color }));
+      box.append(
+        block(linked ? `Paper · ${label(linked).slice(0, 16)}` : "Paper piece",
+          field("Colour", color(o.fill, (v) => apply({ fill: v }))),
+          linked ? grid("grid2", field("Pad X", num(Math.round(o.padX), -400, 400, 2, (v) => { o.padX = v; syncPaper(o); canvas.requestRenderAll(); snapshotSoon(); })), field("Pad Y", num(Math.round(o.padY), -400, 400, 2, (v) => { o.padY = v; syncPaper(o); canvas.requestRenderAll(); snapshotSoon(); }))) : grid("grid2", field("Width", num(Math.round(o.getScaledWidth()), 4, 4000, 1, (v) => { o.scaleToWidth(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })), field("Height", num(Math.round(o.getScaledHeight()), 4, 4000, 1, (v) => { o.scaleToHeight(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); }))),
+          o.type === "rect"
+            ? field("Corner radius", num(o.rx || 0, 0, 200, 1, (v) => apply({ rx: v, ry: v })))
+            : grid("grid2", field("Crooked corners", range(o.deform, 0, 10, 0.5, (v) => { o.deform = v; const n = rebuildPaper(o); syncPaper(n); canvas.setActiveObject(n); canvas.requestRenderAll(); snapshotSoon(); })), (() => { const b = document.createElement("button"); b.className = "btn sm"; b.textContent = "Re-cut"; b.style.alignSelf = "end"; b.onclick = () => { o.seed = Math.floor(Math.random() * 1e9); const n = rebuildPaper(o); syncPaper(n); canvas.setActiveObject(n); canvas.requestRenderAll(); renderProps(); snapshot(); }; return b; })()),
+          check("Shadow", !!o.shadow, (on) => apply({ shadow: on ? new fabric.Shadow({ color: "rgba(0,0,0,0.18)", blur: 12, offsetX: 2, offsetY: 5 }) : null })),
+          linked ? (() => { const b = document.createElement("button"); b.className = "btn sm"; b.textContent = "Detach from text"; b.onclick = () => { o.forText = null; o.name = "Paper piece"; renderProps(); snapshot(); }; return b; })() : document.createElement("span"),
+        ),
+        transformBlock(o, apply),
+      );
+      if (linked) { const h = document.createElement("p"); h.className = "hint"; h.textContent = "Linked: it follows its text. Drag it to offset, rotate it to tilt, scale it for padding. Double-click it to select the text."; box.append(h); }
+    } else if (o.kind === "brush") {
+      const b = o.brush;
+      const regen = (patch) => { Object.assign(o.brush, patch); const n = rebuildBrush(o); canvas.requestRenderAll(); renderProps(); snapshotSoon(); return n; };
+      box.append(
+        block(o.name || "Accent",
+          field("Colour", color(o.fill, (v) => apply({ fill: v }))),
+          grid("grid2", field("Thickness", range(b.thickness, 2, 120, 1, (v) => regen({ thickness: v }))), field("Wobble", range(b.wobble, 0, 20, 0.5, (v) => regen({ wobble: v })))),
+          grid("grid2", field("Width", num(Math.round(o.getScaledWidth()), 10, 3000, 1, (v) => { o.scaleToWidth(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })), field("Height", num(Math.round(o.getScaledHeight()), 4, 3000, 1, (v) => { o.scaleToHeight(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); }))),
+          (() => { const r = document.createElement("button"); r.className = "btn sm"; r.textContent = "Redraw"; r.onclick = () => regen({ seed: Math.floor(Math.random() * 1e9) }); return r; })(),
+        ),
+        transformBlock(o, apply),
       );
     } else {
       const isLine = !!o.stroke && (o.fill == null || o.fill === "");
-      const g = document.createElement("div"); g.className = "grid2";
-      g.append(field("Rotation", num(Math.round(o.angle), -180, 180, 1, (v) => apply({ angle: v }))), field("Opacity", range(Math.round(o.opacity * 100), 0, 100, 1, (v) => apply({ opacity: v / 100 }))));
-      const g2 = document.createElement("div"); g2.className = "grid2";
-      g2.append(field("Width", num(Math.round(o.getScaledWidth()), 2, 4000, 1, (v) => { o.scaleToWidth(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })), field("Height", num(Math.round(o.getScaledHeight()), 2, 4000, 1, (v) => { o.scaleToHeight(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })));
       box.append(
         block(o.name || o.type, isLine ? field("Stroke colour", color(o.stroke, (v) => apply({ stroke: v }))) : field("Fill", color(o.fill, (v) => apply({ fill: v }))),
-          isLine ? field("Stroke width", num(o.strokeWidth, 1, 200, 1, (v) => apply({ strokeWidth: v }))) : field("Corner radius", num(o.rx || 0, 0, 400, 1, (v) => apply({ rx: v, ry: v })))),
-        block("Transform", g, g2),
+          isLine ? field("Stroke width", num(o.strokeWidth, 1, 200, 1, (v) => apply({ strokeWidth: v }))) : field("Corner radius", num(o.rx || 0, 0, 400, 1, (v) => apply({ rx: v, ry: v }))),
+          grid("grid2", field("Width", num(Math.round(o.getScaledWidth()), 2, 4000, 1, (v) => { o.scaleToWidth(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })), field("Height", num(Math.round(o.getScaledHeight()), 2, 4000, 1, (v) => { o.scaleToHeight(v); o.setCoords(); canvas.requestRenderAll(); snapshotSoon(); })))),
+        transformBlock(o, apply),
       );
     }
-    const del = document.createElement("button"); del.className = "btn sm"; del.textContent = "Delete object"; del.onclick = removeActive; box.append(del);
+    const del = document.createElement("button"); del.className = "btn sm"; del.textContent = "Delete"; del.onclick = removeActive; box.append(del);
     renderLayers();
   }
 
   // ── reference frame ─────────────────────────────────────────────────────
-  const ref = { img: null, hidden: false };
+  const ref = { img: null, hidden: false, url: null };
   function applyRef() {
     if (!ref.img) { canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); return; }
     const img = ref.img; const s = Math.max(W / img.width, H / img.height);
@@ -653,88 +944,81 @@
     img.filters = blur ? [new fabric.Image.filters.Blur({ blur })] : []; img.applyFilters();
     canvas.setBackgroundImage(ref.hidden ? null : img, canvas.renderAll.bind(canvas));
   }
-  $("refFile").onchange = (e) => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f); fabric.Image.fromURL(url, (img) => { ref.img = img; ref.hidden = false; $("btnRefToggle").textContent = "Hide reference"; applyRef(); }); };
+  $("refFile").onchange = (e) => { const f = e.target.files[0]; if (!f) return; ref.url = URL.createObjectURL(f); fabric.Image.fromURL(ref.url, (img) => { ref.img = img; ref.hidden = false; $("btnRefToggle").textContent = "Hide"; applyRef(); }); };
   $("refOpacity").oninput = applyRef; $("refBlur").oninput = applyRef;
-  $("btnRefToggle").onclick = () => { ref.hidden = !ref.hidden; $("btnRefToggle").textContent = ref.hidden ? "Show reference" : "Hide reference"; applyRef(); };
-  $("btnRefRemove").onclick = () => { ref.img = null; applyRef(); };
+  $("btnRefToggle").onclick = () => { ref.hidden = !ref.hidden; $("btnRefToggle").textContent = ref.hidden ? "Show" : "Hide"; applyRef(); };
+  $("btnRefRemove").onclick = () => { ref.img = null; ref.url = null; applyRef(); };
 
-  // ── export: the same objects, without the reference, at 1× 2× 3× ───────
+  // ── export ──────────────────────────────────────────────────────────────
   function renderExport(scale) {
     const bg = canvas.backgroundImage; const active = canvas.getActiveObject();
-    canvas.backgroundImage = null; canvas.discardActiveObject(); canvas.renderAll();
+    canvas.backgroundImage = null; canvas.discardActiveObject(); guides = []; canvas.renderAll();
     const el = canvas.toCanvasElement(scale);
     canvas.backgroundImage = bg; if (active) canvas.setActiveObject(active); canvas.renderAll();
     return el;
   }
   const blobOf = (el) => new Promise((r) => el.toBlob(r, "image/png"));
+  async function download(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
   $("btnCopy").onclick = async () => {
-    try {
-      await fontsReady;
-      const blob = await blobOf(renderExport(Number($("exportScale").value)));
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      toast("PNG copied · transparent · paste it on the timeline");
-    } catch (err) { toast("Copy failed: " + err.message); }
-  };
-  $("btnDownload").onclick = async () => {
-    await fontsReady;
-    const scale = Number($("exportScale").value);
+    await fontsReady; const scale = Number($("exportScale").value);
     const blob = await blobOf(renderExport(scale));
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pointili-typo-${W * scale}x${H * scale}.png`; document.body.appendChild(a); a.click(); a.remove();
-    toast(`Downloading ${W * scale} × ${H * scale} PNG`);
+    try { if (!window.ClipboardItem) throw new Error("no clipboard images"); await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); toast("PNG copied to clipboard · transparent · paste it on the timeline"); }
+    catch (err) { await download(blob, `pointili-typo-${W * scale}x${H * scale}.png`); toast("Clipboard unavailable here: the PNG was downloaded instead"); }
   };
-  window.__typoExport = (scale) => renderExport(scale || 1); // for tests
+  $("btnDownload").onclick = async () => { await fontsReady; const scale = Number($("exportScale").value); await download(await blobOf(renderExport(scale)), `pointili-typo-${W * scale}x${H * scale}.png`); toast(`Downloading ${W * scale} × ${H * scale} PNG`); };
+  window.__typoExport = (scale) => renderExport(scale || 1);
 
-  // ── projects & templates (local) ────────────────────────────────────────
+  // ── preview: exactly the PNG, over the reference ────────────────────────
+  $("btnPreview").onclick = async () => {
+    await fontsReady;
+    const el = renderExport(1); $("shotPng").src = el.toDataURL("image/png");
+    $("shotRef").src = ref.url || ""; $("shotRef").style.display = ref.url ? "block" : "none";
+    const st = $("preview").querySelector(".stagep"); const s = Math.min((st.clientWidth - 40) / W, (st.clientHeight - 40) / H);
+    $("shot").style.width = `${W * s}px`; $("shot").style.height = `${H * s}px`;
+    $("preview").classList.add("on");
+  };
+  function exitPreview() { $("preview").classList.remove("on"); }
+  $("btnPreviewExit").onclick = exitPreview;
+  $("btnPreviewRef").onclick = () => { const on = $("btnPreviewRef").getAttribute("aria-pressed") !== "true"; $("btnPreviewRef").setAttribute("aria-pressed", String(on)); $("shotRef").style.visibility = on ? "visible" : "hidden"; };
+
+  // ── projects & my styles ────────────────────────────────────────────────
   const KEY_P = "pointili.typo.projects", KEY_T = "pointili.typo.templates";
   const readList = (k) => { try { return JSON.parse(localStorage.getItem(k) || "[]"); } catch { return []; } };
   const writeList = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { toast("Browser storage is full or blocked"); } };
   let projectName = "";
   $("btnSave").onclick = () => {
     const name = prompt("Project name", projectName || $("sentence").value.slice(0, 40) || "Untitled"); if (!name) return;
-    projectName = name;
-    const list = readList(KEY_P).filter((p) => p.name !== name);
-    list.unshift({ name, savedAt: Date.now(), sentence: $("sentence").value, lines, data: serialize() });
-    writeList(KEY_P, list); toast(`Saved “${name}”`);
+    projectName = name; const list = readList(KEY_P).filter((p) => p.name !== name);
+    list.unshift({ name, savedAt: Date.now(), sentence: $("sentence").value, lines, template: currentTemplate, data: serialize() }); writeList(KEY_P, list); toast(`Saved “${name}”`);
   };
   $("btnProjects").onclick = (e) => { e.stopPropagation(); renderProjectsMenu(); $("projectsMenu").classList.toggle("on"); };
   document.addEventListener("click", () => $("projectsMenu").classList.remove("on"));
+  function openProject(p) { projectName = p.name || ""; $("sentence").value = p.sentence || ""; lines = p.lines || []; currentTemplate = p.template || currentTemplate; renderLines(); restore(p.data, () => { stack.length = 0; snapshot(); renderCardsSoon(); }); }
   function renderProjectsMenu() {
     const m = $("projectsMenu"); m.innerHTML = "";
     const list = readList(KEY_P);
-    if (!list.length) { m.innerHTML = '<div class="empty">No saved projects.</div>'; }
-    list.forEach((p) => {
-      const b = document.createElement("button"); b.className = "item"; b.innerHTML = `<span>${p.name}</span><span class="sub">${new Date(p.savedAt).toLocaleDateString()}</span>`;
-      b.onclick = () => { projectName = p.name; $("sentence").value = p.sentence || ""; lines = p.lines || []; renderLines(); restore(p.data, () => { stack.length = 0; snapshot(); }); toast(`Opened “${p.name}”`); };
-      m.appendChild(b);
-    });
+    if (!list.length) m.innerHTML = '<div class="empty">No saved projects.</div>';
+    list.forEach((p) => { const b = document.createElement("button"); b.className = "item"; b.innerHTML = `<span>${p.name}</span><span class="sub">${new Date(p.savedAt).toLocaleDateString()}</span>`; b.onclick = () => { openProject(p); toast(`Opened “${p.name}”`); }; m.appendChild(b); });
     const hr = document.createElement("div"); hr.style.borderTop = "1px solid var(--line)"; hr.style.margin = "6px 0"; m.appendChild(hr);
-    const exp = document.createElement("button"); exp.className = "item"; exp.textContent = "Save project as file (.json)…"; exp.onclick = () => { const blob = new Blob([JSON.stringify({ name: projectName, sentence: $("sentence").value, lines, data: serialize() })], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${projectName || "pointili-typo"}.json`; a.click(); };
+    const exp = document.createElement("button"); exp.className = "item"; exp.textContent = "Save project as file (.json)…"; exp.onclick = () => download(new Blob([JSON.stringify({ name: projectName, sentence: $("sentence").value, lines, template: currentTemplate, data: serialize() })], { type: "application/json" }), `${projectName || "pointili-typo"}.json`);
     const imp = document.createElement("button"); imp.className = "item"; imp.textContent = "Open project file…"; imp.onclick = () => $("loadFile").click();
     m.append(exp, imp);
   }
-  $("loadFile").onchange = async (e) => { const f = e.target.files[0]; if (!f) return; try { const p = JSON.parse(await f.text()); projectName = p.name || ""; $("sentence").value = p.sentence || ""; lines = p.lines || []; renderLines(); restore(p.data, () => { stack.length = 0; snapshot(); }); toast("Project opened"); } catch { toast("Not a Pointili Typo file"); } };
+  $("loadFile").onchange = async (e) => { const f = e.target.files[0]; if (!f) return; try { openProject(JSON.parse(await f.text())); toast("Project opened"); } catch { toast("Not a Pointili Typo file"); } };
   $("btnNew").onclick = () => { if (!confirm("Clear the canvas?")) return; canvas.clear(); canvas.backgroundColor = null; projectName = ""; applyRef(); renderLayers(); renderProps(); snapshot(); };
 
   function renderMyTemplates() {
     const box = $("myTemplates"); box.innerHTML = "";
     const list = readList(KEY_T);
-    if (!list.length) { box.innerHTML = '<p class="hint">Build something you like, then save it here. Next time: open it, change the words, export.</p>'; return; }
+    if (!list.length) { box.innerHTML = '<p class="hint">Build something you like, save it here. Next time: open it, change the words, copy.</p>'; return; }
     list.forEach((t) => {
       const row = document.createElement("div"); row.className = "row"; row.style.marginBottom = "6px";
-      const b = document.createElement("button"); b.className = "btn sm"; b.textContent = t.name; b.onclick = () => applyMyTemplate(t);
+      const b = document.createElement("button"); b.className = "btn sm"; b.textContent = t.name; b.onclick = () => restore(t.data, () => { const texts = canvas.getObjects().filter((o) => o.kind === "text"); if (lines.length) lines.filter((l) => l.text.trim()).forEach((l, i) => { if (texts[i]) { texts[i].set({ text: l.text }); fitTextWidth(texts[i]); syncPapersOf(texts[i]); } }); canvas.requestRenderAll(); renderLayers(); snapshot(); });
       const d = document.createElement("button"); d.className = "btn sm icon fix"; d.textContent = "✕"; d.onclick = () => { writeList(KEY_T, readList(KEY_T).filter((x) => x.name !== t.name)); renderMyTemplates(); };
       row.append(b, d); box.appendChild(row);
     });
   }
-  $("btnSaveTemplate").onclick = () => { const name = prompt("Template name", "My template"); if (!name) return; const list = readList(KEY_T).filter((t) => t.name !== name); list.unshift({ name, data: serialize() }); writeList(KEY_T, list); renderMyTemplates(); toast(`Template “${name}” saved`); };
-  function applyMyTemplate(t) {
-    // the saved objects come back; if lines are written, they replace the texts in order
-    restore(t.data, () => {
-      const texts = canvas.getObjects().filter((o) => o.kind === "text");
-      if (lines.length) lines.forEach((l, i) => { if (texts[i]) { texts[i].set({ text: l.text }); fitTextWidth(texts[i]); syncPaper(texts[i]); } });
-      canvas.requestRenderAll(); renderLayers(); snapshot();
-    });
-  }
+  $("btnSaveTemplate").onclick = () => { const name = prompt("Style name", "My style"); if (!name) return; const list = readList(KEY_T).filter((t) => t.name !== name); list.unshift({ name, data: serialize() }); writeList(KEY_T, list); renderMyTemplates(); toast(`Style “${name}” saved`); };
   renderMyTemplates();
 
   // ── chrome ──────────────────────────────────────────────────────────────
@@ -742,15 +1026,17 @@
     document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
     document.querySelectorAll(".side:not(.right) .panel").forEach((p) => p.classList.toggle("on", p.dataset.panel === b.dataset.tab));
     if (b.dataset.tab === "layers") renderLayers();
+    if (b.dataset.tab === "templates") fontsReady.then(renderCards);
   });
   let toastTimer;
-  function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), 2400); }
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), 2600); }
 
-  // ── start: the brief's sentence, split, in the paper stack ─────────────
+  // ── start ───────────────────────────────────────────────────────────────
   sizeCanvas(1080, 1920);
   lines = autoLines($("sentence").value); renderLines();
-  fontsReady.then(() => { build("paper"); stack.length = 0; snapshot(); });
-  window.__typo = { canvas, build, autoLines, get lines() { return lines; }, TEMPLATES };
+  tplSelect.value = "paperEditorial";
+  fontsReady.then(() => { build("paperEditorial", 0); stack.length = 0; snapshot(); renderCards(); });
+  window.__typo = { canvas, build, compose, autoLines, get lines() { return lines; }, TEMPLATES, PAPERS };
 })();
 </script>
 </body>
