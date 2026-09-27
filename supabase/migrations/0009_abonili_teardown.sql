@@ -125,8 +125,8 @@ drop table if exists public.membership_plans cascade;
 
 -- the log lines that described them: every one points at a row that is gone
 delete from public.activity_logs
-where type in (checkin, membership_added, membership_renewed, membership_extended,
-               membership_cancelled, systems_changed);
+where type in ('checkin', 'membership_added', 'membership_renewed', 'membership_extended',
+               'membership_cancelled', 'systems_changed');
 
 -- ── 4. the two flags that made one business two products ───────────────────
 alter table public.businesses drop column if exists memberships_enabled;
