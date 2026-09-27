@@ -1,8 +1,9 @@
-import { Activity, LogOut, Server, Users } from "lucide-react";
+import { Activity, DoorOpen, LogOut, Server, Users } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Divided, ListRow } from "@/components/ui/Card";
 import { getI18n } from "@/lib/i18n/server";
+import { abI18n } from "@/lib/abonili/i18n";
 
 export async function generateMetadata() {
   const { t } = await getI18n();
@@ -10,13 +11,15 @@ export async function generateMetadata() {
 }
 
 export default async function AdminMorePage() {
-  const { t } = await getI18n();
+  const { t, locale } = await getI18n();
   const w = t.admin.more;
+  const { a: abonili } = abI18n(locale);
 
   return (
     <div className="animate-fade space-y-5">
       <TopBar back="/admin" title={t.nav.admin.more} large />
       <Divided>
+        <ListRow href="/admin/abonili" icon={<DoorOpen className="size-5" />} title="Abonili" subtitle={abonili.admin.subtitle} />
         <ListRow href="/admin/customers" icon={<Users className="size-5" />} title={t.nav.admin.customers} subtitle={w.customersSub} />
         <ListRow href="/admin/activity" icon={<Activity className="size-5" />} title={t.nav.admin.activity} subtitle={w.activitySub} />
         <ListRow href="/admin/system" icon={<Server className="size-5" />} title={t.nav.admin.system} subtitle={w.systemSub} />

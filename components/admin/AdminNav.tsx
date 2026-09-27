@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Activity, CreditCard, Ellipsis, LayoutDashboard, Receipt, Server, Store, Users } from "lucide-react";
+import { Activity, CreditCard, DoorOpen, Ellipsis, LayoutDashboard, Receipt, Server, Store, Users } from "lucide-react";
 import { BottomNav, SideNav, type NavItem } from "@/components/nav/Nav";
 import { useT } from "@/components/i18n/Provider";
 import { Logo } from "@/components/Logo";
@@ -16,6 +16,8 @@ export function AdminSideNav({ footer }: { footer?: ReactNode }) {
     { href: "/admin/subscriptions", label: t.admin.subscriptions.title, icon: CreditCard },
     { href: "/admin/payments", label: n.payments, icon: Receipt },
     { href: "/admin/customers", label: n.customers, icon: Users },
+    // the second product, managed from the same console but nothing else shared
+    { href: "/admin/abonili", label: "Abonili", icon: DoorOpen },
     { href: "/admin/activity", label: n.activity, icon: Activity },
     { href: "/admin/system", label: n.system, icon: Server },
   ];
