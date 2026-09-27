@@ -1,13 +1,22 @@
--- Pointili — the console can open a shop. Re-runnable.
+-- Pointili — only the founder opens a shop. Re-runnable.
 --
 -- Accounts are made by hand, at the door, by the founder: he takes the money,
--- installs the QR and leaves the owner able to sign in. Until now the console
--- could only look at what already existed — a business could only be born from
--- create_business(), which acts on auth.uid() and therefore only ever makes one
--- for the person clicking. So the founder had to sign up AS the shop.
+-- installs the QR, sets the plan and leaves the owner able to sign in. Owners
+-- never sign up, never open a shop and never choose or pay for a plan by
+-- themselves — the console does all of it.
 --
--- The auth user itself is still created by the server (service role, the only
--- key allowed to mint one); this takes it from there.
+-- The auth user itself is created by the server (service role, the only key
+-- allowed to mint one); admin_create_business takes it from there.
+
+-- ── the owner's own doors, closed ──────────────────────────────────────────
+-- create_business let any signed-in account open a shop for itself, and
+-- request_plan / cancel_plan_request let an owner file his own plan purchase.
+-- Removing the /register page was not enough: these answered straight from the
+-- API. They are no longer defined in 0002; this removes them from any database
+-- created before that.
+drop function if exists public.create_business(text, text, text, text, text);
+drop function if exists public.request_plan(text, text);
+drop function if exists public.cancel_plan_request(uuid);
 
 -- ── admin_business: one shop, everything the console shows about it ────────
 create or replace function public.admin_business(p_id uuid) returns jsonb

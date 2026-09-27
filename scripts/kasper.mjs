@@ -13,6 +13,7 @@ import { randomBytes } from "node:crypto";
 import { chromium } from "playwright-core";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
+import { openShop } from "./sql.mjs";
 
 const BASE = process.env.KASPER_BASE || "https://pointidi.vercel.app";
 const DIGITS = process.env.KASPER_PHONE || "20000020";
@@ -52,7 +53,9 @@ await call("update_my_profile", { p_full_name: "Kasper" });
 // ── the shop and its card ──────────────────────────────────────────────────
 const ctx = await call("session_context");
 if (!ctx.business) {
-  await call("create_business", { p_name: "Kasper", p_category: "cafe", p_owner_name: "Kasper", p_phone: null, p_email: null });
+  // owners never open a shop themselves; the founder does, from the console
+  const opened = await openShop(signedIn.data.user.id, "Kasper", "cafe", "Kasper");
+  if (!opened?.ok) throw new Error(`admin_create_business: ${opened?.error}`);
   console.log("  business created");
 }
 await call("save_loyalty_card", {

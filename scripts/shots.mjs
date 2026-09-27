@@ -67,7 +67,7 @@ try {
   const pub = await french(await browser.newContext(phone));
   const p = await pub.newPage();
   await shot(p, "01-landing", "/", { noBack: true });
-  for (const [n, path] of [["02-how", "/how-it-works"], ["03-pricing", "/pricing"], ["04-customer-login", "/customer/login"], ["05-customer-register", "/customer/register"], ["06-forgot", "/customer/forgot-password"], ["07-business-login", "/login"], ["08-business-register", "/register"]]) {
+  for (const [n, path] of [["02-how", "/how-it-works"], ["03-pricing", "/pricing"], ["04-customer-login", "/customer/login"], ["05-customer-register", "/customer/register"], ["06-forgot", "/customer/forgot-password"], ["07-business-login", "/login"]]) {
     await shot(p, n, path);
   }
 
@@ -98,7 +98,7 @@ try {
   console.log("tunisian");
   const tnCtx = await browser.newContext({ ...phone, locale: "ar-TN" });
   const tp = await tnCtx.newPage();
-  for (const [n, path] of [["60-tn-landing", "/"], ["61-tn-how", "/how-it-works"], ["62-tn-pricing", "/pricing"], ["63-tn-customer-login", "/customer/login"], ["64-tn-business-register", "/register"]]) {
+  for (const [n, path] of [["60-tn-landing", "/"], ["61-tn-how", "/how-it-works"], ["62-tn-pricing", "/pricing"], ["63-tn-customer-login", "/customer/login"], ["64-tn-business-login", "/login"]]) {
     await shot(tp, n, path, { noBack: n === "60-tn-landing" });
   }
   const rtl = await tp.evaluate(() => document.documentElement.dir + "/" + document.documentElement.lang);

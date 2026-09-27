@@ -11,12 +11,16 @@ import { SubmitButton, LinkButton } from "@/components/ui/Button";
 import { useT } from "@/components/i18n/Provider";
 import { useFormAction } from "@/lib/use-form-action";
 
-export function LoginForm({ portal, next }: { portal: "customer" | "business"; next?: string }) {
+/**
+ * `contactHref` (shop login only): where an owner without an account reaches
+ * Pointili. Shops are never opened from this screen — Pointili opens them.
+ */
+export function LoginForm({ portal, next, contactHref }: { portal: "customer" | "business"; next?: string; contactHref?: string | null }) {
   const { t } = useT();
   // Submitting without a form reset: a wrong password keeps the number and the password on screen.
   const { state, onSubmit, pending } = useFormAction<FormState>(login, null);
   const f = state?.fields ?? {};
-  const registerHref = portal === "business" ? "/register" : `/customer/register${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+  const registerHref = `/customer/register${next ? `?next=${encodeURIComponent(next)}` : ""}`;
 
   return (
     <form onSubmit={onSubmit} className="space-y-3.5" noValidate>
@@ -45,13 +49,26 @@ export function LoginForm({ portal, next }: { portal: "customer" | "business"; n
         {t.auth.login.submit}
       </SubmitButton>
 
-      <div className="flex items-center gap-3 text-xs text-faint">
-        <span className="h-px flex-1 bg-line" /> {t.auth.or} <span className="h-px flex-1 bg-line" />
-      </div>
+      {portal === "business" ? (
+        <div className="space-y-2.5 rounded-2xl bg-canvas p-3.5 text-center">
+          <p className="text-sm text-muted">{t.auth.login.ownersByPointili}</p>
+          {contactHref && (
+            <LinkButton href={contactHref} target="_blank" rel="noopener noreferrer" variant="outline" block>
+              {t.auth.login.contactPointili}
+            </LinkButton>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-3 text-xs text-faint">
+            <span className="h-px flex-1 bg-line" /> {t.auth.or} <span className="h-px flex-1 bg-line" />
+          </div>
 
-      <LinkButton href={registerHref} variant="outline" block>
-        {portal === "business" ? t.auth.login.createBusiness : t.auth.login.createAccount}
-      </LinkButton>
+          <LinkButton href={registerHref} variant="outline" block>
+            {t.auth.login.createAccount}
+          </LinkButton>
+        </>
+      )}
     </form>
   );
 }

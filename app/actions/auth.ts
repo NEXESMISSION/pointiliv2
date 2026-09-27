@@ -11,7 +11,7 @@ import { clientIp, safeNext } from "@/lib/url";
 import { allow } from "@/lib/limit";
 import { getI18n } from "@/lib/i18n/server";
 import { sendResetCode } from "@/lib/sms";
-import { getContext, homeFor } from "@/lib/session";
+import { homeFor } from "@/lib/session";
 import type { SessionContext } from "@/lib/types";
 import type { FormState } from "./types";
 
@@ -124,8 +124,13 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   }
 
   const ctx = await contextOf(supabase);
+  // The shop login only opens shops. Owners never create one here — Pointili
+  // opens every shop from the console — so an account without one (usually a
+  // customer at the wrong door) is told so instead of being sent anywhere.
+  if (portal === "business" && ctx && !ctx.business && ctx.user.role !== "admin") {
+    return { error: t.auth.errors.noShop, values, at: now() };
+  }
   let dest = homeFor(ctx);
-  if (portal === "business" && ctx && !ctx.business && ctx.user.role !== "admin") dest = "/register";
   if (typeof nextRaw === "string" && nextRaw) dest = safeNext(nextRaw, dest);
   redirect(dest);
 }
@@ -239,76 +244,4 @@ export async function updateName(_: FormState, fd: FormData): Promise<FormState>
   const { data, error } = await supabase.rpc("update_my_profile", { p_full_name: str(fd, "full_name") });
   if (error || !(data as { ok: boolean })?.ok) return { ok: false, message: msg("network"), at: now() };
   return { ok: true, message: t.common.saved, at: now() };
-}
-
-// ── merchant registration ─────────────────────────────────────────────────
-export async function registerBusiness(_: FormState, fd: FormData): Promise<FormState> {
-  const { t, msg } = await getI18n();
-  const values = {
-    business_name: str(fd, "business_name"),
-    full_name: str(fd, "full_name"),
-    phone: str(fd, "phone"),
-    email: str(fd, "email").toLowerCase(),
-    category: str(fd, "category") || "cafe",
-  };
-  const fields: Record<string, string> = {};
-  if (values.business_name.length < 2 || values.business_name.length > 60) fields.business_name = t.auth.errors.businessName;
-  if (values.full_name.length < 2) fields.full_name = t.auth.errors.yourName;
-  if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(values.email)) fields.email = t.auth.errors.invalidEmail;
-
-  const existing = await getContext();
-  const supabase = await createClient();
-
-  if (!existing) {
-    const phone = normalizePhone(values.phone);
-    if (!phone) fields.phone = t.auth.errors.invalidPhone;
-    const password = String(fd.get("password") ?? "");
-    const pw = passwordProblem(t.auth.errors, password);
-    if (pw) Object.assign(fields, pw);
-    if (Object.keys(fields).length) return { fields, values, at: now() };
-
-    if (!(await allow(`register:ip:${await ip()}`, 10, 3600))) return { error: msg("rate_limited"), values, at: now() };
-
-    const admin = createAdminClient();
-    if (values.email) {
-      const { data: taken } = await admin.rpc("auth_lookup", { p_identifier: values.email });
-      if (taken) return { fields: { email: t.auth.errors.emailTaken }, values, at: now() };
-    }
-    const { error } = await admin.auth.admin.createUser({
-      email: phoneAuthEmail(phone!),
-      password,
-      email_confirm: true,
-      app_metadata: { phone, full_name: values.full_name, contact_email: values.email || null },
-    });
-    if (error) {
-      if (!/already|registered|exists|duplicate|unique/i.test(error.message)) {
-        console.error("[register-business]", error.message);
-        return { error: msg("network"), values, at: now() };
-      }
-      // The account exists — often a sign-up that died before the business was
-      // created. If this password opens it, carry on and finish the business.
-      const { error: resume } = await supabase.auth.signInWithPassword({ email: phoneAuthEmail(phone!), password });
-      // `data: "login"` tells the form to offer a sign-in link beside the message.
-      if (resume) return { error: t.auth.errors.phoneTakenBusiness, data: "login", values, at: now() };
-    } else {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email: phoneAuthEmail(phone!), password });
-      if (signInError) return { error: msg("network"), values, at: now() };
-    }
-  } else if (Object.keys(fields).length) {
-    return { fields, values, at: now() };
-  }
-
-  const { data, error } = await supabase.rpc("create_business", {
-    p_name: values.business_name,
-    p_category: values.category,
-    p_owner_name: values.full_name,
-    p_phone: null,
-    p_email: values.email || null,
-  });
-  const res = data as { ok: boolean; error?: string } | null;
-  if (error || !res?.ok) {
-    if (res?.error === "already_has_business") redirect("/dashboard");
-    return { error: msg(res?.error ?? "network"), values, at: now() };
-  }
-  redirect("/loyalty?welcome=1");
 }

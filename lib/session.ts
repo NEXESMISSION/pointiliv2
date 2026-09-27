@@ -44,7 +44,8 @@ export async function requireUser(next = "/customer"): Promise<SessionContext> {
 export async function requireMerchant(next = "/dashboard"): Promise<SessionContext & { business: NonNullable<SessionContext["business"]> }> {
   const ctx = await getContext();
   if (!ctx) redirect(`/login?next=${encodeURIComponent(next)}`);
-  if (!ctx.business) redirect("/register");
+  // no shop on this account: shops are opened by Pointili, never from here
+  if (!ctx.business) redirect(homeFor(ctx));
   return ctx as SessionContext & { business: NonNullable<SessionContext["business"]> };
 }
 

@@ -9,7 +9,7 @@
  */
 import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
-import { runSql } from "./sql.mjs";
+import { asFounder, runSql } from "./sql.mjs";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -51,13 +51,17 @@ const rpc = async (who, fn, args) => {
 };
 
 async function main() {
-  section("1 · Merchant creates account and business");
+  section("1 · Pointili opens the shop — owners never sign up");
   const merchant = await makeUser("merchant");
-  const biz = await rpc(merchant, "create_business", { p_name: "E2E Café", p_category: "cafe", p_owner_name: "Test Owner", p_phone: null, p_email: null });
-  check("create_business ok", biz.data?.ok, biz);
-  created.businesses.push(biz.data?.business_id);
-  const again = await rpc(merchant, "create_business", { p_name: "Second", p_category: "cafe", p_owner_name: "x" });
-  check("a second business is refused", again.data?.error === "already_has_business", again.data);
+  const selfOpen = await rpc(merchant, "create_business", { p_name: "Sneaky", p_category: "cafe", p_owner_name: "x", p_phone: null, p_email: null });
+  check("an owner cannot open a shop himself (create_business is gone)", !!selfOpen.error, selfOpen.data);
+  const notFounder = await rpc(merchant, "admin_create_business", { p_owner: merchant.id, p_name: "Sneaky", p_category: "cafe", p_owner_name: "x" });
+  check("only the founder can call admin_create_business", !!notFounder.error, notFounder.data);
+  const biz = await asFounder(`select public.admin_create_business('${merchant.id}', 'E2E Café', 'cafe', 'Test Owner') as r`);
+  check("the founder opens the shop from the console", biz?.ok, biz);
+  created.businesses.push(biz?.business_id);
+  const again = await asFounder(`select public.admin_create_business('${merchant.id}', 'Second', 'cafe', 'x') as r`);
+  check("a second shop on the same account is refused", again?.error === "already_has_business", again);
   const noCardMint = await rpc(merchant, "mint_qr_token", {});
   check("QR refuses before a loyalty card exists", noCardMint.data?.error === "no_card", noCardMint.data);
 
@@ -259,14 +263,12 @@ async function main() {
   await runSql(`update public.subscriptions set expires_at = now() - interval '1 minute', starts_at = now() - interval '31 days' where business_id = '${created.businesses[0]}'`);
   const paused = await rpc(merchant, "mint_qr_token", {});
   check("mint refused: subscription_expired", paused.data?.error === "subscription_expired", paused.data);
-  const plan = await rpc(merchant, "request_plan", { p_plan: "yearly", p_method: "bank_transfer" });
-  check("merchant requests Yearly → pending payment 120 TND", plan.data?.ok && Number(plan.data.amount) === 120 && /^PTD-/.test(plan.data.payment_reference), plan.data);
-  const cantConfirm = await rpc(merchant, "admin_confirm_payment", { p_id: plan.data.id });
-  check("merchant cannot confirm their own payment", !!cantConfirm.error);
-  // confirm as admin via SQL session emulation
-  const adminRow = await runSql(`select id from public.profiles where role = 'admin' limit 1`);
-  const conf = await runSql(`select set_config('request.jwt.claims', '{"sub":"${adminRow[0].id}","role":"authenticated"}', true); select public.admin_confirm_payment('${plan.data.id}') as r;`);
-  check("admin confirms payment", conf?.[0]?.r?.ok === true, conf);
+  const selfPlan = await rpc(merchant, "request_plan", { p_plan: "yearly", p_method: "bank_transfer" });
+  check("an owner cannot choose or file a plan himself (request_plan is gone)", !!selfPlan.error, selfPlan.data);
+  const selfGrant = await rpc(merchant, "admin_grant_plan", { p_business: created.businesses[0], p_plan: "yearly", p_method: "cash" });
+  check("an owner cannot grant himself a plan", !!selfGrant.error);
+  const grant = await asFounder(`select public.admin_grant_plan('${created.businesses[0]}', 'yearly', 'cash') as r`);
+  check("the founder takes the payment and activates Yearly", grant?.ok === true, grant);
   const bill = await rpc(merchant, "merchant_billing", {});
   check("subscription active on Yearly again, ~1 year left", bill.data?.subscription?.open && bill.data.subscription.plan === "yearly" && bill.data.subscription.days_left >= 364, bill.data?.subscription);
   const back = await rpc(merchant, "mint_qr_token", {});

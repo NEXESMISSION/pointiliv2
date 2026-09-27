@@ -5,6 +5,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { getI18n } from "@/lib/i18n/server";
 import { getContext, homeFor } from "@/lib/session";
 import { safeNext } from "@/lib/url";
+import { whatsappNumber } from "@/lib/support";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -17,11 +18,12 @@ export default async function BusinessLogin({ searchParams }: { searchParams: Pr
   const ctx = await getContext();
   if (ctx && (ctx.business || ctx.user.role === "admin")) redirect(next ?? homeFor(ctx));
   const { t } = await getI18n();
+  const contact = whatsappNumber();
 
   return (
     <AuthShell>
       <AuthHeading title={t.auth.login.businessTitle} subtitle={t.auth.login.businessSubtitle} />
-      <LoginForm portal="business" next={next} />
+      <LoginForm portal="business" next={next} contactHref={contact ? `https://wa.me/${contact}` : null} />
     </AuthShell>
   );
 }

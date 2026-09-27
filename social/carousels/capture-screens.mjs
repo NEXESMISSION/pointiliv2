@@ -13,7 +13,7 @@ import { mkdirSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { chromium } from "playwright-core";
 import { createClient } from "@supabase/supabase-js";
-import { runSql } from "../../scripts/sql.mjs";
+import { openShop, runSql } from "../../scripts/sql.mjs";
 
 const BASE = process.env.CAPTURE_BASE || "https://pointidi.vercel.app";
 const OUT = process.argv.includes("--desktop") ? "social/carousels/screens-desktop" : "social/carousels/screens";
@@ -57,8 +57,10 @@ const customer = await ensureUser(CUSTOMER);
 
 const ctx = await call(owner, "session_context");
 if (!ctx.business) {
-  const res = await call(owner, "create_business", { p_name: "Café Yasmine", p_category: "cafe", p_owner_name: OWNER.name, p_phone: null, p_email: null });
-  if (!res.ok) throw new Error(`create_business: ${res.error}`);
+  // owners never open a shop themselves; the founder does, from the console
+  const { data: me } = await owner.client.auth.getUser();
+  const res = await openShop(me.user.id, "Café Yasmine", "cafe", OWNER.name);
+  if (!res?.ok) throw new Error(`admin_create_business: ${res?.error}`);
 }
 const saved = await call(owner, "save_loyalty_card", {
   p_name: "Café Yasmine",
@@ -155,8 +157,6 @@ try {
   const pp = await pub.newPage();
   await pp.goto(BASE + "/customer/register", { waitUntil: "load", timeout: 90000 });
   await snap(pp, "customer-register");
-  await pp.goto(BASE + "/register", { waitUntil: "load", timeout: 90000 });
-  await snap(pp, "business-register");
   await pub.close();
 
   console.log("owner");

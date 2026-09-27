@@ -9,7 +9,7 @@
 import { appendFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
-import "./sql.mjs"; // loads .env.local
+import { openShop } from "./sql.mjs"; // also loads .env.local
 
 const PHONE = "+21620000001";
 const EMAIL = "21620000001@phone.pointidi.app";
@@ -39,7 +39,9 @@ if (signErr) throw signErr;
 
 const { data: ctx } = await merchant.rpc("session_context");
 if (!ctx.business) {
-  await merchant.rpc("create_business", { p_name: "Café Bonheur", p_category: "cafe", p_owner_name: "Sarah Demo", p_phone: null, p_email: null });
+  // owners never open a shop themselves; the founder does, from the console
+  const { data: me } = await merchant.auth.getUser();
+  await openShop(me.user.id, "Café Bonheur", "cafe", "Sarah Demo");
   log("created business Café Bonheur");
 }
 if (!ctx.card) {

@@ -19,7 +19,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     ...pair("", 1, "weekly"),
-    { url: `${base}/register`, lastModified: now, changeFrequency: "yearly", priority: 0.6 },
     { url: `${base}/customer/register`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
   ];
 }

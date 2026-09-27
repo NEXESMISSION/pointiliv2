@@ -93,8 +93,7 @@ grant execute on function
   public.redemption_status(uuid),
   public.cancel_redemption(uuid),
   public.update_my_profile(text),
-  public.session_context(),
-  public.create_business(text, text, text, text, text)
+  public.session_context()
 to authenticated;
 
 -- merchant (each function checks membership itself)
@@ -116,9 +115,7 @@ grant execute on function
   public.merchant_redeem_direct(uuid, uuid),
   public.merchant_analytics(int),
   public.update_business(text, text, text, text),
-  public.merchant_billing(),
-  public.request_plan(text, text),
-  public.cancel_plan_request(uuid)
+  public.merchant_billing()
 to authenticated;
 
 -- admin (each function calls require_admin())

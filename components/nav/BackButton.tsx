@@ -16,7 +16,6 @@ import { useT } from "@/components/i18n/Provider";
 const KEY = "pd_trail";
 const TRANSIENT = [
   /^\/login$/,
-  /^\/register$/,
   /^\/customer\/(login|register|forgot-password|scan)$/,
   /^\/scan\//,
   /^\/join\//,

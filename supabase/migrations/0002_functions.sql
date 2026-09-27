@@ -688,39 +688,6 @@ end $$;
 
 -- ═══ merchant ══════════════════════════════════════════════════════════════
 
-create or replace function public.create_business(p_name text, p_category text, p_owner_name text,
-                                                  p_phone text default null, p_email text default null) returns jsonb
-language plpgsql security definer set search_path = '' as $$
-declare v_uid uuid := auth.uid(); v_id uuid; v_name text := trim(coalesce(p_name, ''));
-begin
-  if v_uid is null then return public.err('not_authenticated'); end if;
-  if not public.rate_limit_hit('create_business:' || v_uid, 5, 3600) then return public.err('rate_limited'); end if;
-  if exists (select 1 from public.business_members where user_id = v_uid) then return public.err('already_has_business'); end if;
-  if char_length(v_name) < 2 or char_length(v_name) > 60 then return public.err('invalid_name'); end if;
-
-  insert into public.businesses (name, category, phone, owner_id)
-  values (v_name, coalesce(nullif(p_category, ''), 'cafe'),
-          coalesce(nullif(p_phone, ''), (select phone from public.profiles where id = v_uid)), v_uid)
-  returning id into v_id;
-
-  insert into public.business_members (business_id, user_id, role) values (v_id, v_uid, 'owner');
-
-  update public.profiles
-  set role = case when role = 'admin' then 'admin' else 'merchant' end,
-      full_name = coalesce(nullif(trim(left(p_owner_name, 80)), ''), full_name),
-      email = coalesce(nullif(lower(trim(p_email)), ''), email)
-  where id = v_uid;
-
-  -- "Start free": 30 days before a paid plan is needed
-  insert into public.subscriptions (business_id, plan, price, starts_at, expires_at)
-  values (v_id, 'trial', 0, now(), now() + interval '30 days');
-
-  insert into public.activity_logs (business_id, actor_id, type, data)
-  values (v_id, v_uid, 'business_created', jsonb_build_object('name', v_name));
-
-  return jsonb_build_object('ok', true, 'business_id', v_id);
-end $$;
-
 -- Everything a merchant screen's layout needs, in one round trip.
 create or replace function public.session_context() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
@@ -1143,43 +1110,6 @@ begin
                                                               'created_at', created_at, 'confirmed_at', confirmed_at) order by created_at desc)
                           from public.payments where business_id = v_biz), '[]'::jsonb)
   );
-end $$;
-
--- Merchant chooses a plan: a pending payment with a reference to quote when paying.
--- Pointili confirms it from the admin panel, which activates the period.
-create or replace function public.request_plan(p_plan text, p_method text) returns jsonb
-language plpgsql security definer set search_path = '' as $$
-declare v_biz uuid := public.require_business(true); v_ref text; v_i int := 0; v_id uuid;
-begin
-  if p_plan not in ('six_month', 'yearly') then return public.err('invalid_plan'); end if;
-  if p_method not in ('bank_transfer', 'cash', 'd17', 'other') then p_method := 'bank_transfer'; end if;
-  if not public.rate_limit_hit('plan_req:' || v_biz, 10, 3600) then return public.err('rate_limited'); end if;
-
-  update public.payments set status = 'cancelled' where business_id = v_biz and status = 'pending';
-
-  loop
-    v_i := v_i + 1;
-    v_ref := 'PTD-' || upper(encode(extensions.gen_random_bytes(3), 'hex'));
-    exit when not exists (select 1 from public.payments where payment_reference = v_ref);
-    if v_i > 20 then raise exception 'reference_space_exhausted'; end if;
-  end loop;
-
-  insert into public.payments (business_id, plan, amount, method, payment_reference)
-  values (v_biz, p_plan, public.plan_price(p_plan), p_method, v_ref)
-  returning id into v_id;
-
-  insert into public.activity_logs (business_id, actor_id, type, data)
-  values (v_biz, auth.uid(), 'payment_requested', jsonb_build_object('plan', p_plan, 'reference', v_ref));
-
-  return jsonb_build_object('ok', true, 'id', v_id, 'payment_reference', v_ref, 'amount', public.plan_price(p_plan), 'plan', p_plan);
-end $$;
-
-create or replace function public.cancel_plan_request(p_id uuid) returns jsonb
-language plpgsql security definer set search_path = '' as $$
-declare v_biz uuid := public.require_business(true);
-begin
-  update public.payments set status = 'cancelled' where id = p_id and business_id = v_biz and status = 'pending';
-  return jsonb_build_object('ok', found);
 end $$;
 
 -- ═══ admin ═════════════════════════════════════════════════════════════════

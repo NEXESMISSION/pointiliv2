@@ -30,12 +30,12 @@ npm run dev                    # http://localhost:3100
 - **Customer:** `/customer/register`, `/customer/login`, `/customer/forgot-password`, `/customer` (home), `/customer/cards/:id`, `/customer/rewards`, `/customer/rewards/use/:id`, `/customer/profile`, `/customer/scan`
 - **Scan link (what the QR encodes):** `/scan/:token`
 - **Counter QR link (printed, never changes):** `/join/:code`
-- **Merchant:** `/register`, `/login`, `/dashboard`, `/qr`, `/counter-qr`, `/loyalty`, `/rewards`, `/customers`, `/customers/:id`, `/redeem`, `/activity`, `/analytics`, `/billing`, `/settings`
+- **Merchant:** `/login`, `/dashboard`, `/qr`, `/counter-qr`, `/loyalty`, `/rewards`, `/customers`, `/customers/:id`, `/redeem`, `/activity`, `/analytics`, `/billing`, `/settings`
 - **Admin:** `/admin`, `/admin/businesses`, `/admin/subscriptions`, `/admin/payments`, `/admin/customers`, `/admin/activity`, `/admin/system`
 
 ## How it works
 
-**Accounts.** Everyone signs in with a Tunisian phone number + password (merchants and admins may also use their email). Supabase Auth stores the password; the auth identity of a phone account is a synthetic address `216XXXXXXXX@phone.pointidi.app`, because Supabase's phone provider would need an SMS provider just to create accounts. Public sign-up through the Auth API is **disabled** — accounts are created only by the server (validated number, rate-limited).
+**Accounts.** Everyone signs in with a Tunisian phone number + password (merchants and admins may also use their email). Supabase Auth stores the password; the auth identity of a phone account is a synthetic address `216XXXXXXXX@phone.pointidi.app`, because Supabase's phone provider would need an SMS provider just to create accounts. Public sign-up through the Auth API is **disabled** — accounts are created only by the server (validated number, rate-limited). **Owners never sign up:** Pointili opens every shop from the admin console (`/admin/businesses/new` → `admin_create_business`) and sets its plan (`admin_grant_plan`); there is no `/register`, and the database has no function an owner could call to open a shop or buy a plan himself. Customers still register themselves at `/customer/register`.
 
 **The QR.** `/qr` mints a single-use token (`mint_qr_token`: 24 random bytes, only the SHA-256 is stored, 60 s life). The screen polls every 2 s and rotates as soon as the token is used or 15 s before it expires; each stamp flashes "+1 STAMP · #code". A Wake Lock keeps the screen on.
 

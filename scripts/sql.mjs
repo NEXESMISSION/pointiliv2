@@ -36,6 +36,31 @@ export function runSql(query) {
   return management("/database/query", { method: "POST", body: { query } });
 }
 
+/** A string as a SQL literal. */
+export const sqlText = (s) => `'${String(s ?? "").replace(/'/g, "''")}'`;
+
+/**
+ * Run SQL as the founder — the first admin account — the way the console does:
+ * the admin's identity on the session, then an admin_* function. Owners never
+ * open a shop or take a plan themselves; scripts that need one come through here.
+ * Returns the `r` column of the last statement.
+ */
+let founderId = null;
+export async function asFounder(sql) {
+  if (!founderId) {
+    const rows = await runSql(`select id from public.profiles where role = 'admin' limit 1`);
+    founderId = rows?.[0]?.id;
+    if (!founderId) throw new Error("no admin account to act as the founder");
+  }
+  const out = await runSql(`select set_config('request.jwt.claims', '{"sub":"${founderId}","role":"authenticated"}', true); ${sql}`);
+  return out?.[0]?.r;
+}
+
+/** Open a shop for an existing account, as the founder does from the console. */
+export function openShop(ownerId, name, category = "cafe", ownerName = "") {
+  return asFounder(`select public.admin_create_business(${sqlText(ownerId)}::uuid, ${sqlText(name)}, ${sqlText(category)}, ${sqlText(ownerName)}) as r`);
+}
+
 if ((process.argv[1] || "").endsWith("sql.mjs")) {
   const args = process.argv.slice(2);
   const query = args[0] === "--file" ? readFileSync(args[1], "utf8") : args.join(" ");
