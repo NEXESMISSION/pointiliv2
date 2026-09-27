@@ -38,8 +38,6 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   // Everything except top-level page loads is left entirely to the browser.
   if (request.method !== "GET" || request.mode !== "navigate") return;
-  // Abonili is another product: Pointili's offline page has nothing to say there.
-  if (new URL(request.url).pathname.startsWith("/abonili")) return;
 
   event.respondWith(
     (async () => {

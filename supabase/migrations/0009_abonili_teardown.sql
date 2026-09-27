@@ -1,13 +1,12 @@
--- Pointili — take the first Abonili back out. Re-runnable.
+-- Pointili — no Abonili, anywhere. Re-runnable.
 --
--- The first Abonili (0006, 0007) lived INSIDE the Pointili shop: two flags on
--- businesses, one shared scan_token that guessed at the door which product the
--- phone meant, a counter screen that polled for both, a session that described
--- both. The owner saw one app with two menus, and that was the complaint.
---
--- Abonili is rebuilt from nothing in 0010, in its own schema, with its own
--- door. So everything the first one wove into Pointili comes out here, and the
--- three shared functions go back to knowing about stamps only.
+-- Abonili (a membership product for gyms) was tried twice and cancelled on
+-- 2026-09-27. The first version (0006, 0007) lived inside the Pointili shop:
+-- two flags on businesses, a shared scan_token, a counter screen and a session
+-- that described both. The second (0010, 0011) had its own `abonili` schema
+-- and public.ab_* functions. Neither exists any more; this file makes sure no
+-- database carries anything of them, and puts the three shared functions back
+-- to knowing about stamps only.
 --
 -- Order matters: the shared functions are rewritten BEFORE the tables and
 -- columns they used to read are dropped, so there is never a moment where
@@ -131,6 +130,34 @@ where type in ('checkin', 'membership_added', 'membership_renewed', 'membership_
 -- ── 4. the two flags that made one business two products ───────────────────
 alter table public.businesses drop column if exists memberships_enabled;
 alter table public.businesses drop column if exists loyalty_enabled;
+
+-- ── 5. the second Abonili: its schema, its functions, and the unfinished ────
+--       console controls that leaned on it
+drop schema if exists abonili cascade;
+
+do $$
+declare r record;
+begin
+  for r in
+    select p.oid::regprocedure as sig
+    from pg_proc p
+    where p.pronamespace = 'public'::regnamespace
+      and p.proname in (
+        'ab_context', 'ab_update_club', 'ab_plans', 'ab_save_plan', 'ab_members', 'ab_member', 'ab_add_member',
+        'ab_update_member', 'ab_renew', 'ab_add_days', 'ab_cancel_period', 'ab_door', 'ab_checkin', 'ab_today',
+        'ab_money', 'ab_card', 'ab_admin_clubs', 'ab_admin_create_club', 'ab_admin_set_club', 'ab_admin_set_club_plan',
+        'admin_set_plan', 'admin_update_subscription', 'admin_extend_subscription', 'admin_end_subscription',
+        'admin_record_payment', 'admin_update_business', 'tunis_day_start', 'tunis_day_end')
+  loop
+    execute format('drop function if exists %s cascade', r.sig);
+  end loop;
+end $$;
+
+-- the plans go back to the three Pointili sells
+alter table public.subscriptions drop constraint if exists subscriptions_plan_check;
+alter table public.subscriptions add constraint subscriptions_plan_check check (plan in ('trial', 'six_month', 'yearly'));
+alter table public.payments drop constraint if exists payments_plan_check;
+alter table public.payments add constraint payments_plan_check check (plan in ('six_month', 'yearly'));
 
 -- nothing here may be reachable by anon (0003's tripwire, re-run)
 do $$

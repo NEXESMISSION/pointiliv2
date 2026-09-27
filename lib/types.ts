@@ -155,4 +155,3 @@ export type MerchantCustomerRow = {
   reward_ready: boolean;
   target?: number;
 };
-

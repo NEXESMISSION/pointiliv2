@@ -8,10 +8,6 @@
 --
 -- The auth user itself is still created by the server (service role, the only
 -- key allowed to mint one); this takes it from there.
---
--- A business here is a Pointili shop and nothing else. Abonili is its own
--- product with its own tables (0010) and its own console page; nothing in this
--- file knows it exists.
 
 -- ── admin_business: one shop, everything the console shows about it ────────
 create or replace function public.admin_business(p_id uuid) returns jsonb

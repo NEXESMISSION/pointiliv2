@@ -11,8 +11,7 @@
     "migrate": "node scripts/migrate.mjs",
     "sql": "node scripts/sql.mjs",
     "icons": "node scripts/icons.mjs",
-    "test:e2e": "node scripts/e2e.mjs",
-    "test:abonili": "node --env-file=.env.local scripts/test-abonili.mjs"
+    "test:e2e": "node scripts/e2e.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
