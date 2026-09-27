@@ -1,4 +1,4 @@
--- Pointili — the console can open a shop and switch its systems. Re-runnable.
+-- Pointili — the console can open a shop. Re-runnable.
 --
 -- Accounts are made by hand, at the door, by the founder: he takes the money,
 -- installs the QR and leaves the owner able to sign in. Until now the console
@@ -8,8 +8,12 @@
 --
 -- The auth user itself is still created by the server (service role, the only
 -- key allowed to mint one); this takes it from there.
+--
+-- A business here is a Pointili shop and nothing else. Abonili is its own
+-- product with its own tables (0010) and its own console page; nothing in this
+-- file knows it exists.
 
--- ── admin_business: say which systems the shop has ─────────────────────────
+-- ── admin_business: one shop, everything the console shows about it ────────
 create or replace function public.admin_business(p_id uuid) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 begin
@@ -19,11 +23,6 @@ begin
       'id', b.id, 'name', b.name, 'category', b.category, 'status', b.status, 'phone', b.phone, 'address', b.address,
       'logo_url', b.logo_url, 'created_at', b.created_at,
       'owner', jsonb_build_object('id', p.id, 'name', p.full_name, 'phone', p.phone, 'email', p.email),
-      'systems', jsonb_build_object(
-        'loyalty', b.loyalty_enabled,
-        'memberships', b.memberships_enabled,
-        'members', (select count(*) from public.memberships m where m.business_id = b.id and m.status = 'active'),
-        'plans', (select count(*) from public.membership_plans mp where mp.business_id = b.id and mp.active)),
       'card', (select jsonb_build_object('name', k.name, 'stamps_required', k.stamps_required, 'active', k.active,
                                          'cooldown_minutes', k.cooldown_minutes)
                from public.loyalty_cards k where k.business_id = b.id),
@@ -49,9 +48,9 @@ begin
   );
 end $$;
 
--- ── admin_businesses: the roster, with the two flags added ────────────────
--- Copied from 0002 as it stands (its filters and owner.email are what the list
--- page reads) and given the only two fields it was missing.
+-- ── admin_businesses: the roster ───────────────────────────────────────────
+-- Copied from 0002 as it stands; its filters and owner.email are what the list
+-- page reads.
 create or replace function public.admin_businesses(p_filter text default 'all', p_search text default null) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare v_like text := '%' || replace(replace(coalesce(trim(p_search), ''), '%', ''), '_', '') || '%';
@@ -62,7 +61,6 @@ begin
       select b.created_at, jsonb_build_object(
         'id', b.id, 'name', b.name, 'category', b.category, 'status', b.status, 'logo_url', b.logo_url,
         'created_at', b.created_at, 'owner', jsonb_build_object('name', p.full_name, 'phone', p.phone, 'email', p.email),
-        'loyalty', b.loyalty_enabled, 'memberships', b.memberships_enabled,
         'customers', (select count(*) from public.customers c where c.business_id = b.id),
         'stamps', (select count(*) from public.stamps s where s.business_id = b.id),
         'subscription', st.state
@@ -84,10 +82,11 @@ end $$;
 
 -- ── open a shop for somebody else ──────────────────────────────────────────
 -- The profile already exists (the server made the auth user a moment ago);
--- this hands it a business, a 30-day window to work in, and its systems.
+-- this hands it a business and a 30-day window to work in.
+drop function if exists public.admin_create_business(uuid, text, text, text, boolean, boolean);
+
 create or replace function public.admin_create_business(
-  p_owner uuid, p_name text, p_category text, p_owner_name text,
-  p_loyalty boolean default true, p_memberships boolean default false
+  p_owner uuid, p_name text, p_category text, p_owner_name text
 ) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare v_id uuid; v_name text := trim(coalesce(p_name, ''));
@@ -96,13 +95,10 @@ begin
   if char_length(v_name) < 2 or char_length(v_name) > 60 then return public.err('invalid_name'); end if;
   if not exists (select 1 from public.profiles where id = p_owner) then return public.err('not_found'); end if;
   if exists (select 1 from public.business_members where user_id = p_owner) then return public.err('already_has_business'); end if;
-  -- a shop with no system is a shop that cannot do anything
-  if not coalesce(p_loyalty, false) and not coalesce(p_memberships, false) then return public.err('no_system'); end if;
 
-  insert into public.businesses (name, category, owner_id, phone, loyalty_enabled, memberships_enabled)
+  insert into public.businesses (name, category, owner_id, phone)
   values (v_name, coalesce(nullif(p_category, ''), 'cafe'), p_owner,
-          (select phone from public.profiles where id = p_owner),
-          coalesce(p_loyalty, true), coalesce(p_memberships, false))
+          (select phone from public.profiles where id = p_owner))
   returning id into v_id;
 
   insert into public.business_members (business_id, user_id, role) values (v_id, p_owner, 'owner');
@@ -116,15 +112,13 @@ begin
   values (v_id, 'trial', 0, now(), now() + interval '30 days');
 
   insert into public.activity_logs (business_id, actor_id, type, data)
-  values (v_id, auth.uid(), 'business_created',
-          jsonb_build_object('name', v_name, 'by_admin', true,
-                             'loyalty', coalesce(p_loyalty, true), 'memberships', coalesce(p_memberships, false)));
+  values (v_id, auth.uid(), 'business_created', jsonb_build_object('name', v_name, 'by_admin', true));
 
   return jsonb_build_object('ok', true, 'business_id', v_id);
 end $$;
 
 grant execute on function
-  public.admin_create_business(uuid, text, text, text, boolean, boolean)
+  public.admin_create_business(uuid, text, text, text)
 to authenticated;
 
 -- nothing added here may be reachable by anon (0003's tripwire, re-run)

@@ -12,7 +12,7 @@ import { UseRewardButton } from "@/components/customer/UseRewardButton";
 import { useT } from "@/components/i18n/Provider";
 import { resolveDesign } from "@/lib/card-design";
 import { formatTime } from "@/lib/format";
-import type { CheckinResult, StampResult } from "@/lib/types";
+import type { StampResult } from "@/lib/types";
 
 export function Checking() {
   const { t } = useT();
@@ -92,10 +92,7 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
   );
 }
 
-const ERROR_ICON: Record<string, typeof X> = {
-  expired: Clock, already_used: QrCode, too_soon: Clock, network: WifiOff,
-  already_checked_in: Clock, membership_expired: Clock, membership_used_up: Clock,
-};
+const ERROR_ICON: Record<string, typeof X> = { expired: Clock, already_used: QrCode, too_soon: Clock, network: WifiOff };
 
 export function ScanError({ code, result, onRetry }: { code: string; result?: StampResult; onRetry?: () => void }) {
   const { t, locale, fill, msg } = useT();
@@ -104,10 +101,7 @@ export function ScanError({ code, result, onRetry }: { code: string; result?: St
   const customerId = result && "customer" in result ? result.customer?.id : undefined;
   // A code that expired, was used or never existed: they missed it, nothing more to explain.
   const missed = code === "expired" || code === "already_used" || code === "invalid" || code === "not_found";
-  /* Abonili's refusals are about a DOOR, not a card: "التامبون ما تزادش" in
-     front of a gym member is the wrong sentence entirely. */
-  const door = (t.scan.error.door as Record<string, string>)[code];
-  const soft = missed || code === "too_soon" || code === "already_processed" || code === "already_checked_in";
+  const soft = missed || code === "too_soon" || code === "already_processed";
   const nextAt = result && "next_at" in result ? result.next_at : undefined;
 
   return (
@@ -117,7 +111,7 @@ export function ScanError({ code, result, onRetry }: { code: string; result?: St
         <Icon className="size-9" />
       </div>
       <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">
-        {door ?? (missed ? t.scan.error.missed : code === "already_processed" ? t.scan.error.alreadyStamped : code === "too_soon" ? t.scan.error.tooSoon : code === "network" ? t.scan.error.network : t.scan.error.generic)}
+        {missed ? t.scan.error.missed : code === "already_processed" ? t.scan.error.alreadyStamped : code === "too_soon" ? t.scan.error.tooSoon : code === "network" ? t.scan.error.network : t.scan.error.generic}
       </h1>
       {name && <p className="mt-1 font-semibold text-body">{name}</p>}
       <p className="mx-auto mt-3 max-w-xs text-[15px] leading-relaxed text-muted">{missed ? t.scan.error.missedBody : msg(code)}</p>
@@ -141,47 +135,6 @@ export function ScanError({ code, result, onRetry }: { code: string; result?: St
         )}
         <LinkButton href="/customer" variant="ghost" block>
           {t.scan.goToCards}
-        </LinkButton>
-      </div>
-    </div>
-  );
-}
-
-/**
- * THE DOOR SAID YES.
- *
- * A member scanning the counter QR is not collecting anything — they are being
- * let in — so this screen answers the only question they have, in one line, and
- * the one the owner glancing over their shoulder has: how much is left.
- */
-export function CheckinSuccess({ result }: { result: Extract<CheckinResult, { ok: true }> }) {
-  const { t, fill } = useT();
-  const w = t.scan.checkin;
-  const m = result.membership;
-  const left =
-    m.sessions_left !== null
-      ? fill(w.sessionsLeft, { n: m.sessions_left })
-      : m.days_left !== null
-        ? fill(w.daysLeft, { n: m.days_left })
-        : w.noEnd;
-
-  return (
-    <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden text-center">
-      <Confetti count={28} />
-      <StampDrop label={w.unit} tone="success" size={96} />
-      <h1 className="animate-rise text-2xl font-extrabold tracking-tight text-ink" style={{ animationDelay: `${IMPACT_MS + 100}ms` }}>
-        {w.title}
-      </h1>
-      <p className="mt-1 animate-rise text-[15px] font-semibold text-body" style={{ animationDelay: `${IMPACT_MS + 160}ms` }}>
-        {result.business.name}
-      </p>
-      <p className="mt-4 animate-rise text-[17px] text-body" style={{ animationDelay: `${IMPACT_MS + 240}ms` }}>
-        {left}
-      </p>
-
-      <div className="w-full animate-rise pt-8" style={{ animationDelay: `${IMPACT_MS + 320}ms` }}>
-        <LinkButton href="/customer" variant="outline" block>
-          {w.done}
         </LinkButton>
       </div>
     </div>

@@ -52,17 +52,11 @@ export async function runCleanup() {
   return call("admin_cleanup", {}, t.admin.results.cleanupDone);
 }
 
-/** Which systems this shop is allowed to run. At least one, or it can do nothing. */
-export async function setSystems(businessId: string, loyalty: boolean, memberships: boolean) {
-  const { t } = await getI18n();
-  return call("admin_set_systems", { p_business: businessId, p_loyalty: loyalty, p_memberships: memberships }, t.admin.results.systemsSaved);
-}
-
 /**
  * Open a shop for somebody, at their counter, in one step: the auth user (only
- * the service role may mint one), then the business, its 30-day window and its
- * systems. The password is generated here and shown ONCE — there is no e-mail
- * to send it to and the owner is standing right there.
+ * the service role may mint one), then the business and its 30-day window. The
+ * password is generated here and shown ONCE — there is no e-mail to send it to
+ * and the owner is standing right there.
  *
  * THE TRAP: if the business insert fails the auth user is already made, and an
  * account with no shop cannot be created again (the phone is taken). So a
@@ -75,12 +69,9 @@ export async function createBusinessAccount(fd: FormData): Promise<Result> {
   const name = String(fd.get("name") ?? "").trim();
   const ownerName = String(fd.get("owner_name") ?? "").trim();
   const category = String(fd.get("category") ?? "cafe");
-  const loyalty = fd.get("loyalty") === "on" || fd.get("loyalty") === "true";
-  const memberships = fd.get("memberships") === "on" || fd.get("memberships") === "true";
 
   if (!phone) return { ok: false, message: msg("invalid_phone"), at: Date.now() };
   if (name.length < 2) return { ok: false, message: msg("invalid_name"), at: Date.now() };
-  if (!loyalty && !memberships) return { ok: false, message: msg("no_system"), at: Date.now() };
 
   const password = "Pointili-" + randomBytes(4).toString("hex");
   const admin = createAdminClient();
@@ -101,8 +92,6 @@ export async function createBusinessAccount(fd: FormData): Promise<Result> {
     p_name: name,
     p_category: category,
     p_owner_name: ownerName,
-    p_loyalty: loyalty,
-    p_memberships: memberships,
   });
   const res = data as { ok: boolean; error?: string } | null;
   if (rpcError || !res?.ok) {

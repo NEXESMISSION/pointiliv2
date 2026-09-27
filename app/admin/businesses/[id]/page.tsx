@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { CalendarDays, Clock, Gift, Mail, MapPin, Phone, Stamp, Tag, Users } from "lucide-react";
 import { BusinessStatusButton, CancelSubscriptionButton, GrantPlanButton, PaymentActions } from "@/components/admin/AdminActions";
 import { PaymentBadge, categoryIcon, isPast, type AdminBusinessDetail } from "@/components/admin/shared";
-import { SystemsCard } from "@/components/admin/SystemsCard";
 import { BusinessAvatar } from "@/components/CardIcon";
 import { TopBar } from "@/components/nav/TopBar";
 import { Badge, SubscriptionBadge } from "@/components/ui/Badge";
@@ -213,17 +212,6 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
               {sub.status === "expiring_soon" && <p className="mt-2 rounded-xl bg-warning-50 px-3 py-1.5 text-[13px] font-medium text-warning-700">{w.renewalSoon}</p>}
               {!sub.open && <p className="mt-2 rounded-xl bg-danger-50 px-3 py-1.5 text-[13px] font-medium text-danger-600">{w.qrPaused}</p>}
             </Card>
-          </section>
-
-          <section>
-            <SectionTitle>{t.admin.systems.title}</SectionTitle>
-            <SystemsCard
-              businessId={b.id}
-              loyalty={b.systems?.loyalty ?? true}
-              memberships={b.systems?.memberships ?? false}
-              members={b.systems?.members ?? 0}
-              plans={b.systems?.plans ?? 0}
-            />
           </section>
 
           <section>

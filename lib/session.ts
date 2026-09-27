@@ -1,9 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { cookies, headers } from "next/headers";
 import { createClient, hasSessionCookie } from "@/lib/supabase/server";
-import { SYSTEM_COOKIE, SYSTEM_HEADER, isSystem, type SystemKey } from "@/lib/systems";
 import type { Role, SessionContext } from "@/lib/types";
 
 const TRANSIENT = /fetch failed|network|ECONNRESET|ETIMEDOUT|timeout|502|503|504/i;
@@ -30,31 +28,12 @@ export const getContext = cache(async (): Promise<SessionContext | null> => {
  * opens straight on its counter QR — that is what the phone is picked up for —
  * unless there is no card yet, and then the home screen walks them through it.
  */
-export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card" | "systems"> | null): string {
+export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card"> | null): string {
   if (!ctx) return "/";
   if (ctx.user.role === "admin") return "/admin";
-  if (ctx.business) {
-    // Two systems is a question worth asking; one is not, so the lobby only
-    // exists for the owner who bought both.
-    if (ctx.systems?.both) return "/lobby";
-    if (ctx.systems?.memberships) return "/members";
-    return ctx.card ? "/qr" : "/dashboard";
-  }
+  if (ctx.business) return ctx.card ? "/qr" : "/dashboard";
   return "/customer";
 }
-
-/**
- * The door this render is behind. proxy.ts puts it on the request, so the very
- * first page of a system already knows — the cookie it also sets only matters
- * later, on the pages that serve both.
- */
-export const currentSystem = cache(async (): Promise<SystemKey | null> => {
-  const h = await headers();
-  const fromHeader = h.get(SYSTEM_HEADER);
-  if (isSystem(fromHeader)) return fromHeader;
-  const c = (await cookies()).get(SYSTEM_COOKIE)?.value;
-  return isSystem(c) ? c : null;
-});
 
 export async function requireUser(next = "/customer"): Promise<SessionContext> {
   const ctx = await getContext();

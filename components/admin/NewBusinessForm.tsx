@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Copy, CreditCard, DoorOpen } from "lucide-react";
+import { Copy } from "lucide-react";
 import { createBusinessAccount } from "@/app/actions/admin";
 import { useT } from "@/components/i18n/Provider";
 import { Alert } from "@/components/ui/Alert";
@@ -30,15 +30,12 @@ export function NewBusinessForm() {
   const [pending, setPending] = useState(false);
   const [made, setMade] = useState<Made | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [systems, setSystems] = useState({ loyalty: true, memberships: false });
   const categories = t.data.categories as Record<string, string>;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const fd = new FormData(form);
-    fd.set("loyalty", String(systems.loyalty));
-    fd.set("memberships", String(systems.memberships));
     setPending(true);
     setError(null);
     const r = await createBusinessAccount(fd);
@@ -113,30 +110,6 @@ export function NewBusinessForm() {
         <Field label={w.phone} htmlFor="phone" hint={w.phoneHint}>
           <PhoneInput />
         </Field>
-
-        <fieldset className="space-y-2">
-          <legend className="mb-1.5 text-[13px] font-medium text-body">{w.systems}</legend>
-          {[
-            { key: "loyalty" as const, icon: CreditCard, label: t.admin.systems.loyalty, hint: t.admin.systems.loyaltyHint },
-            { key: "memberships" as const, icon: DoorOpen, label: t.admin.systems.abonili, hint: t.admin.systems.aboniliHint },
-          ].map((s) => (
-            <label key={s.key} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition-colors ${systems[s.key] ? "border-brand-300 bg-brand-50/50" : "border-line bg-white"}`}>
-              <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${systems[s.key] ? "bg-brand-100 text-brand-700" : "bg-canvas text-muted"}`}>
-                <s.icon className="size-[18px]" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold text-ink">{s.label}</span>
-                <span className="block text-[12.5px] leading-snug text-muted">{s.hint}</span>
-              </span>
-              <input
-                type="checkbox"
-                className="size-5 accent-brand-600"
-                checked={systems[s.key]}
-                onChange={(e) => setSystems((p) => ({ ...p, [s.key]: e.target.checked }))}
-              />
-            </label>
-          ))}
-        </fieldset>
 
         <SubmitButton pending={pending} pendingText={w.creating}>
           {w.create}

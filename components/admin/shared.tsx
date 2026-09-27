@@ -13,10 +13,6 @@ import {
   Ticket,
   X,
   type LucideIcon,
-CalendarPlus,
-  DoorOpen,
-  Layers,
-  UserPlus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { CATEGORIES } from "@/lib/constants";
@@ -62,9 +58,6 @@ export type AdminBusinessRow = {
   owner: { name: string | null; phone: string | null; email: string | null };
   customers: number;
   stamps: number;
-  /** which systems this shop is allowed to run */
-  loyalty?: boolean;
-  memberships?: boolean;
   subscription: SubscriptionState;
 };
 
@@ -92,7 +85,6 @@ export type AdminBusinessDetail = {
   card: { name: string; stamps_required: number; active: boolean; cooldown_minutes: number } | null;
   rewards: { name: string; stamps_required: number; active: boolean }[];
   stats: { customers: number; stamps: number; stamps_today: number; redemptions: number; last_stamp_at: string | null };
-  systems: { loyalty: boolean; memberships: boolean; members: number; plans: number } | null;
   subscription: SubscriptionState;
   subscriptions: { id: string; plan: string; price: number | null; starts_at: string; expires_at: string; status: string }[];
   payments: AdminPaymentLite[];
@@ -157,12 +149,6 @@ const ACTIVITY_ICON: Record<string, { icon: LucideIcon; tone: string }> = {
   card_created: { icon: CreditCard, tone: "bg-brand-50 text-brand-600" },
   card_updated: { icon: CreditCard, tone: "bg-canvas text-body" },
   reward_created: { icon: Ticket, tone: "bg-brand-50 text-brand-600" },
-  checkin: { icon: DoorOpen, tone: "bg-success-50 text-success-600" },
-  membership_added: { icon: UserPlus, tone: "bg-brand-50 text-brand-600" },
-  membership_renewed: { icon: BadgeCheck, tone: "bg-success-50 text-success-600" },
-  membership_extended: { icon: CalendarPlus, tone: "bg-warning-50 text-warning-700" },
-  membership_cancelled: { icon: X, tone: "bg-danger-50 text-danger-600" },
-  systems_changed: { icon: Layers, tone: "bg-canvas text-body" },
 };
 
 export function ActivityIcon({ type }: { type: string }) {
