@@ -109,6 +109,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
   const unlockNow = lowered ? tally((r) => r.balance >= stamps && r.balance < r.target) : 0;
   const renamed = !isNew && !!initial.reward_name && v.reward_name.trim() !== initial.reward_name && (impact?.customers ?? 0) > 0;
   const needsConfirm = keepGoal > 0 || unlockNow > 0 || renamed;
+  const levelsOn = v.levels.length > 0;
   const levelsValid = levelsOk(v.levels, stamps);
   const setLevel = (i: number, p: Partial<LevelDraft>) => patch({ levels: v.levels.map((l, k) => (k === i ? { ...l, ...p } : l)) });
 
@@ -218,18 +219,27 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
               )}
             </Section>
 
-            {/* levels: gifts on the road before the goal — taking one costs no stamps */}
-            <Section label={w.levelsLabel} hint={w.levelsHint}>
-              {v.levels.length === 0 ? (
+            {/* levels: gifts on the road before the goal — taking one costs no stamps.
+                One switch turns the whole thing on or off; the rows only show when it is on. */}
+            <div className="p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink">{w.levelsLabel}</p>
+                  <p className="mt-0.5 text-xs leading-snug text-muted">{levelsOn ? w.levelsHint : w.levelsExample}</p>
+                </div>
                 <button
                   type="button"
-                  onClick={() => patch({ levels: suggestLevels(stamps, ideas.filter((x) => x !== v.reward_name).slice(0, 2)) })}
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand-300 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
+                  role="switch"
+                  aria-checked={levelsOn}
+                  aria-label={w.levelsLabel}
+                  onClick={() => patch({ levels: levelsOn ? [] : suggestLevels(stamps, ideas.filter((x) => x !== v.reward_name).slice(0, 2)) })}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${levelsOn ? "bg-brand-600" : "bg-line"}`}
                 >
-                  <Plus className="size-4" /> {w.levelsOn}
+                  <span className={`absolute top-0.5 size-6 rounded-full bg-white shadow-card transition-all ${levelsOn ? "end-0.5" : "start-0.5"}`} />
                 </button>
-              ) : (
-                <div className="space-y-2">
+              </div>
+              {levelsOn && (
+                <div className="mt-3 space-y-2">
                   {v.levels.map((l, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700" aria-hidden>
@@ -279,7 +289,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
                   {!levelsValid && <p className="text-xs font-medium text-danger-600">{fill(w.levelsInvalid, { n: stamps })}</p>}
                 </div>
               )}
-            </Section>
+            </div>
 
             <Section label={w.waitQuestion}>
               <div className="grid grid-cols-3 gap-2">
