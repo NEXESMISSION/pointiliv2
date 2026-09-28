@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { CreditCard } from "lucide-react";
-import { PaymentActions } from "@/components/admin/AdminActions";
+import { CreditCard, Receipt } from "lucide-react";
 import { BusinessStatusBadge, type AdminSubscriptionRow } from "@/components/admin/shared";
 import { Segmented, TopBar } from "@/components/nav/TopBar";
 import { SubscriptionBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { formatDate, formatTND, timeAgo } from "@/lib/format";
+import { formatDate, timeAgo } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { formatPhone } from "@/lib/phone";
 import { rpc } from "@/lib/session";
@@ -30,7 +29,19 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
 
   return (
     <div className="animate-fade space-y-2.5">
-      <TopBar back="/admin" title={w.title} subtitle={count(w.count, items.length)} large />
+      {/* one place for money: the plans here, what was paid one tap away */}
+      <TopBar
+        back="/admin"
+        title={w.title}
+        subtitle={count(w.count, items.length)}
+        large
+        action={
+          <Link href="/admin/payments" className="flex h-9 items-center gap-1.5 rounded-full bg-white px-3 text-[13px] font-semibold text-ink ring-1 ring-inset ring-line hover:bg-canvas">
+            <Receipt className="size-4 text-muted" />
+            {t.nav.admin.payments}
+          </Link>
+        }
+      />
       <Segmented
         active={filter}
         items={KEYS.map((key) => ({ key, label: filterLabel[key]!, href: key === "all" ? "/admin/subscriptions" : `/admin/subscriptions?filter=${key}` }))}
@@ -78,28 +89,6 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
                     )}
                   </div>
 
-                  {row.pending_payment && (
-                    <div className="flex items-center gap-2 rounded-xl bg-warning-50 p-2 lg:w-auto">
-                      <div className="min-w-0 flex-1 text-sm">
-                        <p className="font-semibold text-warning-700">
-                          {fill(w.pending, {
-                            amount: formatTND(row.pending_payment.amount, locale),
-                            plan: planName(row.pending_payment.plan, row.pending_payment.plan),
-                          })}
-                        </p>
-                        <p className="font-mono text-xs text-body">
-                          <span dir="ltr">{row.pending_payment.payment_reference}</span>
-                        </p>
-                      </div>
-                      <PaymentActions
-                        id={row.pending_payment.id}
-                        businessName={row.business_name}
-                        planLabel={planName(row.pending_payment.plan, row.pending_payment.plan)}
-                        amount={row.pending_payment.amount}
-                        confirmOnly
-                      />
-                    </div>
-                  )}
                 </div>
               </Card>
             );

@@ -14,11 +14,12 @@ export async function generateMetadata() {
   return { title: t.admin.payments.title };
 }
 
-const KEYS = ["pending", "paid", "failed", "cancelled", "all"] as const;
+// every payment is the founder's own record now: all of them first
+const KEYS = ["all", "paid", "pending", "failed", "cancelled"] as const;
 
 export default async function PaymentsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
-  const status = (KEYS as readonly string[]).includes(sp.status ?? "") ? sp.status! : "pending";
+  const status = (KEYS as readonly string[]).includes(sp.status ?? "") ? sp.status! : "all";
   const { total_paid, items } = await rpc<AdminPayments>("admin_payments", { p_status: status === "all" ? null : status });
   const { t, locale, count, fill } = await getI18n();
   const w = t.admin.payments;
@@ -37,7 +38,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="animate-fade space-y-2.5">
-      <TopBar back="/admin" title={w.title} subtitle={subtitle} large />
+      <TopBar back="/admin/subscriptions" title={w.title} subtitle={subtitle} large />
 
       <div className="flex items-center justify-center gap-2.5 rounded-2xl bg-success-50 p-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-success-600">
@@ -49,7 +50,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
-      <Segmented active={status} items={KEYS.map((key) => ({ key, label: filterLabel[key]!, href: `/admin/payments?status=${key}` }))} />
+      <Segmented active={status} items={KEYS.map((key) => ({ key, label: filterLabel[key]!, href: key === "all" ? "/admin/payments" : `/admin/payments?status=${key}` }))} />
 
       {items.length === 0 ? (
         <EmptyState icon={<Receipt className="size-8" />} title={status === "pending" ? w.emptyPendingTitle : w.emptyTitle}>

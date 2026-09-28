@@ -374,6 +374,71 @@ async function main() {
   check("the stamp screen knows where to send them", fStamp.data?.business?.instagram === "e2e.cafe", fStamp.data?.business);
   const igOff = await rpc(merchant, "update_business", { ...shop, p_instagram: "" });
   check("clearing the field removes it", igOff.data?.ok && (await rpc(merchant, "session_context", {})).data.business.instagram === null, igOff.data);
+
+  section("Levels: gifts on the way to the goal");
+  const levelCard = (levels, goal = 10) =>
+    rpc(merchant, "save_loyalty_card", {
+      p_name: "E2E Loyalty", p_description: "", p_stamps_required: goal, p_reward_name: "Free Coffee",
+      p_reward_description: "", p_color: "emerald", p_icon: "coffee", p_cooldown_minutes: 0, p_valid_days: 0, p_levels: levels,
+    });
+  const tooFar = await levelCard([{ name: "Too far", stamps: 10 }]);
+  check("a level must sit below the goal", tooFar.data?.error === "invalid_levels", tooFar.data);
+  const twins = await levelCard([{ name: "Cookie", stamps: 3 }, { name: "Muffin", stamps: 3 }]);
+  check("two levels on the same number are refused", twins.data?.error === "invalid_levels", twins.data);
+  const laddered = await levelCard([{ name: "Croissant", stamps: 3 }, { name: "Orange juice", stamps: 6 }]);
+  const lctx = await rpc(merchant, "session_context", {});
+  check("owner sets two levels (3, 6) on a 10-stamp card", laddered.data?.ok && lctx.data?.card?.levels?.map((l) => l.stamps).join(",") === "3,6", lctx.data?.card?.levels);
+
+  const climber = await makeUser("climber");
+  let cl;
+  for (let i = 0; i < 3; i++) cl = await stampAs(climber);
+  const lvl1 = cl.data?.newly_unlocked?.[0];
+  check("the 3rd stamp unlocks level 1", cl.data?.customer?.balance === 3 && lvl1?.name === "Croissant" && lvl1?.level === true, cl.data?.newly_unlocked);
+  const l1req = await rpc(climber, "request_redemption", { p_reward_id: lvl1?.id });
+  const l1conf = await rpc(merchant, "merchant_confirm_redemption", { p_id: l1req.data?.id });
+  check("the shop hands level 1 over: no stamp spent", l1req.data?.ok && l1conf.data?.ok && l1conf.data.redemption.stamps_spent === 0, { req: l1req.error?.message ?? l1req.data, conf: l1conf.error?.message ?? l1conf.data });
+  const afterL1 = await rpc(climber, "customer_card", { p_customer_id: cl.data.customer.id });
+  const l1row = afterL1.data?.rewards?.find((r) => r.name === "Croissant");
+  check("the card keeps its 3 stamps and shows level 1 as taken", afterL1.data?.customer?.balance === 3 && l1row?.claimed === true && l1row?.unlocked === false, { balance: afterL1.data?.customer?.balance, l1row });
+  const twice = await rpc(climber, "request_redemption", { p_reward_id: lvl1?.id });
+  check("level 1 cannot be taken twice on one card", twice.data?.error === "already_claimed", twice.data);
+  check("the next gift is level 2, three stamps away", afterL1.data?.next_reward?.name === "Orange juice" && afterL1.data.next_reward.remaining === 3, afterL1.data?.next_reward);
+
+  for (let i = 0; i < 7; i++) cl = await stampAs(climber);
+  const atGoal = await rpc(climber, "customer_card", { p_customer_id: cl.data.customer.id });
+  const waiting = (atGoal.data?.rewards ?? []).filter((r) => r.unlocked).map((r) => r.name).sort().join(",");
+  check("at 10: level 2 and the goal are both waiting", atGoal.data?.customer?.balance === 10 && waiting === "Free Coffee,Orange juice", waiting);
+  const goal = atGoal.data.rewards.find((r) => r.is_primary);
+  const direct = await rpc(merchant, "merchant_redeem_direct", { p_customer_id: cl.data.customer.id, p_reward_id: goal.id });
+  check("the goal spends its 10 stamps", direct.data?.ok && direct.data.redemption.stamps_spent === 10, direct.data?.redemption);
+  const nextCard = await rpc(climber, "customer_card", { p_customer_id: cl.data.customer.id });
+  check("a new card: zero stamps, every level open again", nextCard.data?.customer?.balance === 0 && nextCard.data.rewards.every((r) => !r.claimed), nextCard.data?.rewards);
+  const cleared = await levelCard([]);
+  check("owner takes the levels off", cleared.data?.ok && (await rpc(merchant, "session_context", {})).data?.card?.levels?.length === 0, cleared.data);
+
+  section("The owner's welcome: only what the founder could not know");
+  const pre = await rpc(merchant, "session_context", {});
+  check("a shop the founder opened starts not set up", pre.data?.business?.onboarded_at === null, pre.data?.business?.onboarded_at);
+  const welcome = await rpc(merchant, "finish_welcome", { p_address: "Rue de Marseille, Tunis", p_instagram: "@e2e.cafe" });
+  const post = await rpc(merchant, "session_context", {});
+  check("finishing the welcome marks it done, with the address", welcome.data?.ok && !!post.data?.business?.onboarded_at && post.data.business.address === "Rue de Marseille, Tunis", post.data?.business);
+  const custWelcome = await rpc(customer, "finish_welcome", { p_address: "x", p_instagram: null });
+  check("a customer cannot call the owner's welcome", !!custWelcome.error, custWelcome.data);
+
+  section("The founder's hand on a subscription");
+  const until = new Date(Date.now() + 45 * 86400000).toISOString();
+  const setSub = await asFounder(`select public.admin_set_subscription('${created.businesses[0]}', 'six_month', '${until}'::timestamptz, 55, 'd17') as r`);
+  const bill45 = await rpc(merchant, "merchant_billing", {});
+  check("the founder sets 6 months until a date he picks", setSub?.ok && bill45.data?.subscription?.plan === "six_month" && Math.abs(bill45.data.subscription.days_left - 45) <= 1, bill45.data?.subscription);
+  const paid = await runSql(`select amount::float as amount, method from public.payments where subscription_id = '${setSub?.subscription_id}'`);
+  check("his price is recorded as a payment", paid[0]?.amount === 55 && paid[0]?.method === "d17", paid);
+  const ext = await asFounder(`select public.admin_extend_subscription('${created.businesses[0]}', 30) as r`);
+  const bill75 = await rpc(merchant, "merchant_billing", {});
+  check("+30 days moves the end by a month", ext?.ok && Math.abs(bill75.data?.subscription?.days_left - 75) <= 1, bill75.data?.subscription);
+  const selfSet = await rpc(merchant, "admin_set_subscription", { p_business: created.businesses[0], p_plan: "yearly", p_expires_at: until, p_price: 0, p_method: "cash" });
+  check("an owner cannot set his own subscription", !!selfSet.error, selfSet.data);
+  const past = await asFounder(`select public.admin_set_subscription('${created.businesses[0]}', 'yearly', now() - interval '1 day', 0, 'cash') as r`);
+  check("an end date in the past is refused", past?.error === "invalid_date", past);
 }
 
 try {

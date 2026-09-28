@@ -1,4 +1,4 @@
-import { Activity, ChartLine, LogOut, Server, Users } from "lucide-react";
+import { Activity, LogOut, Receipt, Server, Users } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Divided, ListRow } from "@/components/ui/Card";
@@ -17,7 +17,7 @@ export default async function AdminMorePage() {
     <div className="animate-fade space-y-5">
       <TopBar back="/admin" title={t.nav.admin.more} large />
       <Divided>
-        <ListRow href="/admin/traffic" icon={<ChartLine className="size-5" />} title={t.nav.admin.traffic} subtitle={w.trafficSub} />
+        <ListRow href="/admin/payments" icon={<Receipt className="size-5" />} title={t.nav.admin.payments} subtitle={w.paymentsSub} />
         <ListRow href="/admin/customers" icon={<Users className="size-5" />} title={t.nav.admin.customers} subtitle={w.customersSub} />
         <ListRow href="/admin/activity" icon={<Activity className="size-5" />} title={t.nav.admin.activity} subtitle={w.activitySub} />
         <ListRow href="/admin/system" icon={<Server className="size-5" />} title={t.nav.admin.system} subtitle={w.systemSub} />

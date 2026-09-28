@@ -33,6 +33,11 @@ export const errors = ns({
     cancelled: "Cette demande a été annulée.",
     // billing
     invalid_plan: "Choisissez une formule.",
+    invalid_date: "Choisissez une date de fin à partir de demain.",
+    invalid_price: "Ce prix n'est pas valide.",
+    invalid_days: "Ce nombre de jours n'est pas valide.",
+    invalid_levels: "Chaque niveau a besoin d'un cadeau et d'un nombre de tampons plus petit que l'objectif, sans doublon.",
+    already_claimed: "Ce cadeau a déjà été pris sur cette carte.",
     already_paid: "Ce paiement est déjà confirmé.",
     not_pending: "Ce paiement n'est plus en attente.",
     // auth
@@ -69,6 +74,11 @@ export const errors = ns({
     already_redeemed: "الكادو هذا تعطى قبل.",
     cancelled: "الطلب هذا تلغى.",
     invalid_plan: "اختار عرض.",
+    invalid_date: "اختار نهار من غدوة ولقدّام.",
+    invalid_price: "السوم هذا موش صحيح.",
+    invalid_days: "عدد النهارات هذا موش صحيح.",
+    invalid_levels: "كل مستوى يلزمو كادو وعدد تامبونات أقل من الهدف، ومن غير تكرار.",
+    already_claimed: "الكادو هذا تاخذ من قبل على الكارط هذي.",
     already_paid: "الدفعة هذي مأكّدة قبل.",
     not_pending: "الدفعة هذي ما عادهاش في الانتظار.",
     rate_limited: "جرّبت برشا مرّات. استنى شوية وعاود جرّب.",

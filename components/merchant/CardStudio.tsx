@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
-import { Check, Heart, ImageIcon, Star } from "lucide-react";
+import { Check, Gift, Heart, ImageIcon, Plus, Star, X } from "lucide-react";
 import { saveCard } from "@/app/actions/merchant";
 import { CardIcon } from "@/components/CardIcon";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
@@ -17,6 +17,9 @@ import { CARD_ICONS } from "@/lib/constants";
 import { isLight, patternImage, PATTERNS, shade, surface, SWATCHES, TEMPLATE_IDS, TEMPLATES, type CardDesign, type StampStyle, type TemplateId } from "@/lib/card-design";
 import type { CardImpact } from "@/lib/types";
 
+/** A gift on the way to the goal; id is kept so a renamed level keeps its history. */
+export type LevelDraft = { id?: string; name: string; stamps: number };
+
 export type CardValues = {
   name: string;
   description: string;
@@ -26,10 +29,24 @@ export type CardValues = {
   color: string;
   cooldown_minutes: number;
   valid_days: number;
+  levels: LevelDraft[];
 };
 type Business = { name: string; logo_url: string | null; cover_url: string | null; category: string };
 
-const STAMP_PICKS = [6, 8, 10, 12];
+const STAMP_PICKS = [6, 8, 10, 12, 20];
+const MAX_LEVELS = 3;
+
+/** Two gifts on the way, at about a third and a half of the goal: 6 and 10 on a card of 20. */
+function suggestLevels(goal: number, names: string[]): LevelDraft[] {
+  const marks = [...new Set([Math.max(1, Math.round(goal * 0.3)), Math.round(goal * 0.5)])].filter((n) => n >= 1 && n < goal);
+  return marks.map((stamps, i) => ({ name: names[i] ?? "", stamps }));
+}
+
+/** What is wrong with the levels, if anything: a gift with no name, a number at or past the goal, two on one number. */
+function levelsOk(levels: LevelDraft[], goal: number): boolean {
+  const nums = levels.map((l) => l.stamps);
+  return levels.every((l) => l.name.trim().length >= 2 && Number.isInteger(l.stamps) && l.stamps >= 1 && l.stamps < goal) && new Set(nums).size === nums.length;
+}
 const WAIT_PICKS = [0, 60, 1440];
 const VALID_PICKS = [0, 30, 90, 180, 365];
 const STAMP_ORDER: StampStyle[] = ["icon", "logo", "check", "heart", "star"];
@@ -92,6 +109,8 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
   const unlockNow = lowered ? tally((r) => r.balance >= stamps && r.balance < r.target) : 0;
   const renamed = !isNew && !!initial.reward_name && v.reward_name.trim() !== initial.reward_name && (impact?.customers ?? 0) > 0;
   const needsConfirm = keepGoal > 0 || unlockNow > 0 || renamed;
+  const levelsValid = levelsOk(v.levels, stamps);
+  const setLevel = (i: number, p: Partial<LevelDraft>) => patch({ levels: v.levels.map((l, k) => (k === i ? { ...l, ...p } : l)) });
 
   const impactMessages = (
     <>
@@ -121,7 +140,8 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
       }
       toast(res.message, "success");
       if (res.created) {
-        router.push("/dashboard?ready=1");
+        // the last step of the owner's welcome: his card, ready, and the QR one tap away
+        router.push("/welcome/ready");
         return;
       }
       setSaved({ v, d });
@@ -131,7 +151,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
 
   const accentChoices = Array.from(new Set(["#FFFFFF", brand, "#F5C451", "#111827", shade(brand, 0.35), "#E11D48", "#0E9F6E"].map((c) => c.toUpperCase())));
   const bgChoices = Array.from(new Set([brand, shade(brand, 0.3), ...SWATCHES].map((c) => c.toUpperCase())));
-  const cardProps = { design: d, business, subtitle: v.description, total: stamps, rewardName: v.reward_name };
+  const cardProps = { design: d, business, subtitle: v.description, total: stamps, rewardName: v.reward_name, levels: v.levels.map((l) => l.stamps) };
   const validChoices = [...new Set([...VALID_PICKS, initial.valid_days])].sort((a, b) => a - b);
 
   return (
@@ -158,7 +178,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
           {/* what the card gives */}
           <Card className="divide-y divide-line">
             <Section label={w.stampsQuestion} hint={w.stampsHint}>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-6 gap-1.5">
                 {STAMP_PICKS.map((n) => (
                   <Pick key={n} active={!custom && stamps === n} onClick={() => { setCustom(false); patch({ stamps_required: n }); }}>
                     {n}
@@ -195,6 +215,69 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
                 <Alert tone="warning" className="mt-3">
                   <ul className="list-none">{impactMessages}</ul>
                 </Alert>
+              )}
+            </Section>
+
+            {/* levels: gifts on the road before the goal — taking one costs no stamps */}
+            <Section label={w.levelsLabel} hint={w.levelsHint}>
+              {v.levels.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => patch({ levels: suggestLevels(stamps, ideas.filter((x) => x !== v.reward_name).slice(0, 2)) })}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand-300 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
+                >
+                  <Plus className="size-4" /> {w.levelsOn}
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  {v.levels.map((l, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700" aria-hidden>
+                        <Gift className="size-4" />
+                      </span>
+                      {/* inputs fill their box: the boxes carry the widths */}
+                      <div className="w-16 shrink-0">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          dir="ltr"
+                          min={1}
+                          max={stamps - 1}
+                          value={Number.isFinite(l.stamps) ? l.stamps : ""}
+                          onChange={(e) => setLevel(i, { stamps: Math.round(Number(e.target.value)) })}
+                          className="px-1 text-center tabular"
+                          aria-label={w.levelStamps}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <Input value={l.name} onChange={(e) => setLevel(i, { name: e.target.value })} placeholder={w.levelName} maxLength={60} aria-label={w.levelName} />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => patch({ levels: v.levels.filter((_, k) => k !== i) })}
+                        aria-label={w.removeLevel}
+                        className="grid size-10 shrink-0 place-items-center rounded-xl text-muted hover:bg-canvas hover:text-danger-600"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {/* the road ends at the goal: shown, not edited here */}
+                  <div className="flex items-center gap-2 rounded-xl bg-canvas px-2 py-1.5">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-600 text-white" aria-hidden>
+                      <Gift className="size-4" />
+                    </span>
+                    <span className="w-16 shrink-0 text-center text-sm font-bold text-ink tabular">{stamps}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{v.reward_name || w.theReward}</span>
+                    <span className="shrink-0 pe-1 text-xs text-muted">{w.goalRow}</span>
+                  </div>
+                  {v.levels.length < MAX_LEVELS && (
+                    <button type="button" onClick={() => patch({ levels: [...v.levels, { name: "", stamps: Math.max(1, Math.min(stamps - 1, (v.levels.at(-1)?.stamps ?? 0) + 2)) }] })} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-brand-700 hover:bg-brand-50">
+                      <Plus className="size-4" /> {w.addLevel}
+                    </button>
+                  )}
+                  {!levelsValid && <p className="text-xs font-medium text-danger-600">{fill(w.levelsInvalid, { n: stamps })}</p>}
+                </div>
               )}
             </Section>
 
@@ -321,7 +404,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
         <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 mt-3 lg:bottom-4">
           <div className="flex items-center gap-3 rounded-2xl bg-ink/95 p-1.5 ps-3 text-white shadow-lift backdrop-blur">
             <p className="min-w-0 flex-1 truncate text-[13px]">{isNew ? w.oneButton : dirty ? ds.unsaved : ds.allSaved}</p>
-            <Button size="md" loading={saving} disabled={!dirty} onClick={save}>
+            <Button size="md" loading={saving} disabled={!dirty || !levelsValid} onClick={save}>
               {isNew ? t.merchant.home.createCta : t.common.save}
             </Button>
           </div>

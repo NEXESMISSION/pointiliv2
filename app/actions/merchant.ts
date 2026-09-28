@@ -11,7 +11,6 @@ import type { CardDesign } from "@/lib/card-design";
 import type { FormState } from "./types";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
-const int = (fd: FormData, k: string) => Number.parseInt(String(fd.get(k) ?? ""), 10);
 const now = () => Date.now();
 
 type RpcResult = { ok: boolean; error?: string; [k: string]: unknown };
@@ -35,6 +34,7 @@ export type CardInput = {
   color: string;
   cooldown_minutes: number;
   valid_days: number;
+  levels?: { id?: string; name: string; stamps: number }[];
   design: CardDesign;
 };
 
@@ -51,35 +51,14 @@ export async function saveCard(input: CardInput): Promise<{ ok: boolean; message
     p_icon: input.design.icon,
     p_cooldown_minutes: input.cooldown_minutes,
     p_valid_days: input.valid_days || 0,
+    // the gifts on the way to the goal, replacing whatever levels were there
+    p_levels: (input.levels ?? []).map((l) => ({ id: l.id ?? null, name: l.name.trim(), stamps: l.stamps })),
   });
   if (!res.ok) return { ok: false, message: msg(res.error), created: false };
   const look = await call("save_card_design", { p_description: input.description, p_design: input.design });
   revalidatePath("/", "layout");
   if (!look.ok) return { ok: false, message: msg(look.error), created: !!res.created };
   return { ok: true, message: t.ops.toasts.loyaltyCardSaved, created: !!res.created };
-}
-
-export async function saveReward(_: FormState, fd: FormData): Promise<FormState> {
-  const { msg } = await getI18n();
-  const id = str(fd, "id") || null;
-  const values = { name: str(fd, "name"), description: str(fd, "description"), stamps_required: str(fd, "stamps_required") };
-  const res = await call("save_reward", {
-    p_id: id,
-    p_name: values.name,
-    p_description: values.description,
-    p_stamps_required: int(fd, "stamps_required"),
-    p_active: fd.get("active") === null ? true : fd.get("active") === "on" || fd.get("active") === "true",
-  });
-  if (!res.ok) return { ok: false, error: msg(res.error), values, at: now() };
-  revalidatePath("/rewards");
-  redirect("/rewards");
-}
-
-export async function setRewardActive(id: string, active: boolean, reward: { name: string; description: string | null; stamps_required: number }) {
-  const { t, msg } = await getI18n();
-  const res = await call("save_reward", { p_id: id, p_name: reward.name, p_description: reward.description ?? "", p_stamps_required: reward.stamps_required, p_active: active });
-  revalidatePath("/rewards");
-  return { ok: res.ok, message: res.ok ? (active ? t.ops.toasts.rewardActivated : t.ops.toasts.rewardPaused) : msg(res.error), at: now() };
 }
 
 export async function updateBusiness(_: FormState, fd: FormData): Promise<FormState> {
@@ -94,6 +73,21 @@ export async function updateBusiness(_: FormState, fd: FormData): Promise<FormSt
   if (!res.ok) return { ok: false, message: msg(res.error), at: now() };
   revalidatePath("/", "layout");
   return { ok: true, message: t.ops.toasts.businessSaved, at: now() };
+}
+
+/**
+ * The owner's first screen: where the shop is and its Instagram (the logo
+ * uploads by itself). All of it may stay empty — saving is what marks the
+ * welcome done — and the next stop is the card.
+ */
+export async function finishWelcome(_: FormState, fd: FormData): Promise<FormState> {
+  const { msg } = await getI18n();
+  const values = { address: str(fd, "address"), instagram: str(fd, "instagram") };
+  const res = await call("finish_welcome", { p_address: values.address, p_instagram: values.instagram });
+  if (!res.ok) return { ok: false, error: msg(res.error), fields: res.error === "invalid_instagram" ? { instagram: msg(res.error) } : undefined, values, at: now() };
+  revalidatePath("/", "layout");
+  const ctx = await getContext();
+  redirect(ctx?.card ? "/welcome/ready" : "/loyalty?welcome=1");
 }
 
 const IMAGE_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };

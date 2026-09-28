@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { CalendarDays, Clock, Gift, Mail, MapPin, Phone, Stamp, Tag, Users } from "lucide-react";
-import { BusinessStatusButton, CancelSubscriptionButton, GrantPlanButton, PaymentActions } from "@/components/admin/AdminActions";
+import { BusinessStatusButton, CancelSubscriptionButton, ExtendSubscriptionButton, ManageSubscription, PaymentActions } from "@/components/admin/AdminActions";
 import { PaymentBadge, categoryIcon, isPast, type AdminBusinessDetail } from "@/components/admin/shared";
 import { BusinessAvatar } from "@/components/CardIcon";
 import { TopBar } from "@/components/nav/TopBar";
@@ -217,7 +217,8 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
           <section>
             <SectionTitle>{w.actions}</SectionTitle>
             <Card className="space-y-2 p-3">
-              <GrantPlanButton businessId={b.id} businessName={b.name} />
+              <ManageSubscription businessId={b.id} businessName={b.name} />
+              <ExtendSubscriptionButton businessId={b.id} />
               <BusinessStatusButton id={b.id} name={b.name} status={b.status} />
             </Card>
           </section>

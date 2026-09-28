@@ -38,7 +38,7 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
     <>
       <TopBar title={business.name} subtitle={[category, business.address].filter(Boolean).join(" · ")} back="/customer/cards" />
 
-      <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} rewardName={primary?.name} />
+      <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} levels={card?.levels} rewardName={primary?.name} />
 
       {customer.expires_at && <CardDeadline expiresAt={customer.expires_at} className="mx-auto mt-2 w-fit" />}
 
@@ -60,6 +60,7 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
                 <p className="mt-0.5 text-xs font-semibold text-success-600">{t.customer.card.unlockedTitle}</p>
                 <p className="mt-0.5 text-xl font-extrabold uppercase tracking-tight text-ink">{r.name}</p>
                 {r.description && <p className="mx-auto mt-1 max-w-xs text-[13px] text-muted">{r.description}</p>}
+                {r.level && <p className="mx-auto mt-1 max-w-xs text-[13px] font-medium text-brand-700">{t.customer.card.levelKeeps}</p>}
                 <p className="mx-auto mt-1.5 max-w-xs text-xs text-muted">{t.customer.card.showAtCounter}</p>
                 <div className="mt-3">
                   <UseRewardButton rewardId={r.id} pendingId={r.pending?.id} />
@@ -92,10 +93,13 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
                   <span className="grid size-9 place-items-center rounded-xl bg-canvas text-body">{r.unlocked ? <Sparkles className="size-5 text-success-600" /> : <Gift className="size-5" />}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-ink">{r.name}</p>
-                    <p className="text-sm text-muted tabular">{count(t.common.stampsCount, r.stamps_required)}</p>
+                    <p className="text-sm text-muted tabular">
+                      {count(t.common.stampsCount, r.stamps_required)}
+                      {r.level ? ` · ${t.customer.card.levelTag}` : r.is_primary && rewards.some((x) => x.level) ? ` · ${t.customer.card.goalTag}` : ""}
+                    </p>
                   </div>
-                  <span className={`text-sm font-semibold tabular ${r.unlocked ? "text-success-600" : "text-muted"}`}>
-                    {r.unlocked ? t.customer.card.ready : fill(t.customer.card.toGo, { n: r.stamps_required - customer.balance })}
+                  <span className={`text-sm font-semibold tabular ${r.unlocked ? "text-success-600" : r.claimed ? "text-brand-600" : "text-muted"}`}>
+                    {r.claimed ? t.customer.card.taken : r.unlocked ? t.customer.card.ready : fill(t.customer.card.toGo, { n: r.stamps_required - customer.balance })}
                   </span>
                 </div>
               ))}

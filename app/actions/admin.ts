@@ -27,9 +27,19 @@ export async function setBusinessStatus(id: string, status: "active" | "suspende
   return call("admin_set_business_status", { p_id: id, p_status: status }, status === "active" ? r.businessActivated : r.businessSuspended);
 }
 
-export async function grantPlan(businessId: string, plan: "six_month" | "yearly", method: string) {
+/** Any plan until any date, at any price — the founder's own words for what a shop has. */
+export async function setSubscription(businessId: string, plan: "trial" | "six_month" | "yearly", expiresAt: string, price: number | null, method: string) {
   const { t } = await getI18n();
-  return call("admin_grant_plan", { p_business: businessId, p_plan: plan, p_method: method }, t.admin.results.planActivated);
+  return call(
+    "admin_set_subscription",
+    { p_business: businessId, p_plan: plan, p_expires_at: expiresAt, p_price: price, p_method: method },
+    t.admin.results.planActivated,
+  );
+}
+
+export async function extendSubscription(businessId: string, days: number) {
+  const { t } = await getI18n();
+  return call("admin_extend_subscription", { p_business: businessId, p_days: days }, t.admin.results.extended);
 }
 
 export async function cancelSubscription(id: string) {
@@ -54,9 +64,10 @@ export async function runCleanup() {
 
 /**
  * Open a shop for somebody, at their counter, in one step: the auth user (only
- * the service role may mint one), then the business and its 30-day window. The
- * password is generated here and shown ONCE — there is no e-mail to send it to
- * and the owner is standing right there.
+ * the service role may mint one) with the password the founder typed, then the
+ * business with its 30-day trial — or, when he picked a paid plan, that plan
+ * from today, paid in cash at the install. There is no e-mail to send anything
+ * to: the founder reads the phone and password to the owner, who is right there.
  *
  * THE TRAP: if the business insert fails the auth user is already made, and an
  * account with no shop cannot be created again (the phone is taken). So a
@@ -69,11 +80,12 @@ export async function createBusinessAccount(fd: FormData): Promise<Result> {
   const name = String(fd.get("name") ?? "").trim();
   const ownerName = String(fd.get("owner_name") ?? "").trim();
   const category = String(fd.get("category") ?? "cafe");
+  const password = String(fd.get("password") ?? "");
+  const plan = String(fd.get("plan") ?? "trial");
 
-  if (!phone) return { ok: false, message: msg("invalid_phone"), at: Date.now() };
   if (name.length < 2) return { ok: false, message: msg("invalid_name"), at: Date.now() };
-
-  const password = "Pointili-" + randomBytes(4).toString("hex");
+  if (!phone) return { ok: false, message: msg("invalid_phone"), at: Date.now() };
+  if (password.length < 8 || password.length > 72) return { ok: false, message: t.auth.errors.passwordShort, at: Date.now() };
   const admin = createAdminClient();
   const { data: created, error } = await admin.auth.admin.createUser({
     email: phoneAuthEmail(phone),
@@ -98,6 +110,20 @@ export async function createBusinessAccount(fd: FormData): Promise<Result> {
     // do not leave an account behind that can never be given a shop
     await admin.auth.admin.deleteUser(created.user.id);
     return { ok: false, message: msg(res?.error ?? "network"), at: Date.now() };
+  }
+
+  // a paid plan starts today; the trial the shop was born with ends with it
+  if (plan === "six_month" || plan === "yearly") {
+    const until = new Date();
+    until.setMonth(until.getMonth() + (plan === "yearly" ? 12 : 6));
+    const { data: sub } = await supabase.rpc("admin_set_subscription", {
+      p_business: (res as { business_id?: string }).business_id,
+      p_plan: plan,
+      p_expires_at: until.toISOString(),
+      p_price: null,
+      p_method: "cash",
+    });
+    if (!(sub as { ok?: boolean } | null)?.ok) console.error("[create business] plan", sub);
   }
 
   revalidatePath("/admin", "layout");

@@ -30,7 +30,7 @@ npm run dev                    # http://localhost:3100
 - **Customer:** `/customer/register`, `/customer/login`, `/customer/forgot-password`, `/customer` (home), `/customer/cards/:id`, `/customer/rewards`, `/customer/rewards/use/:id`, `/customer/profile`, `/customer/scan`
 - **Scan link (what the QR encodes):** `/scan/:token`
 - **Counter QR link (printed, never changes):** `/join/:code`
-- **Merchant:** `/login`, `/dashboard`, `/qr`, `/counter-qr`, `/loyalty`, `/rewards`, `/customers`, `/customers/:id`, `/redeem`, `/activity`, `/analytics`, `/billing`, `/settings`
+- **Merchant:** `/login`, `/welcome` (first sign-in) → `/loyalty?welcome=1` → `/welcome/ready`, `/dashboard`, `/qr`, `/counter-qr`, `/loyalty`, `/customers`, `/customers/:id`, `/redeem`, `/activity`, `/analytics`, `/billing`, `/settings`
 - **Admin:** `/admin`, `/admin/businesses`, `/admin/subscriptions`, `/admin/payments`, `/admin/customers`, `/admin/activity`, `/admin/traffic` (+ `/admin/traffic/visit/[session]`, `/admin/traffic/clicks`), `/admin/system`
 
 ## How it works
@@ -47,6 +47,8 @@ npm run dev                    # http://localhost:3100
 
 **Rewards.** Unlocked when balance ≥ reward stamps. The customer taps "Use reward" → a 6-digit code (15 min) → the merchant confirms at the counter (`/redeem`, live list) or from the customer page. Stamps are deducted only on merchant confirmation, under a lock, so a reward can't be redeemed twice or remotely.
 
+**Levels.** A card can carry gifts on the way to its goal — say 6 → a cappuccino, 10 → a croissant, 20 → breakfast — set on the card itself (`save_loyalty_card(p_levels)`, up to four, each below the goal). Taking a level costs no stamps and is allowed once per card (`customers.levels_claimed`); the goal spends its stamps and opens the levels again; an expired card starts over with them (0012_card_levels.sql). Every screen marks the levels on the stamp grid, and a taken one reads "taken".
+
 **Changing the card later is fair.** Each customer's card remembers the goal it started with (`customers.card_target`). Raising the stamps required never takes a reward away from someone mid-card — they finish at their old goal and the next card uses the new one. Lowering it helps everyone immediately (`reward_cost` = the lower of the two). Extra stamps past a full card carry over. The loyalty page shows who a change affects (`merchant_card_impact`) and asks for confirmation before saving.
 
 **Card design.** Owners design their own card at `/loyalty/design`: a style (Bold, Classic, Soft, Midnight, Photo, Minimal) built from their main colour, then background colour/gradient/pattern, stamp look (icon, their logo, check, heart, star) and colour, light/dark text, cover photo as background, and a short line under the name — with a live preview. Stored as `loyalty_cards.design`, validated by `clean_card_design()` (SQL) and `resolveDesign()` (`lib/card-design.ts`), rendered everywhere by `components/LoyaltyCardVisual.tsx`. New owners land in the designer right after creating their card.
@@ -57,7 +59,9 @@ npm run dev                    # http://localhost:3100
 
 **Branding.** Owners upload a logo and a cover photo (loyalty page or settings). The browser crops and compresses them (logo 512², cover 1600×700, WebP/JPEG) before upload; they appear on customers' cards and behind the QR screen.
 
-**Billing.** New businesses get a 30-day trial. Plans: 6 Months 80 TND, Yearly 120 TND. The merchant requests a plan (pending payment with a `PTD-XXXXXX` reference); an admin confirms the payment, which adds the period after any time still covered. An expired subscription pauses the QR; customers keep their stamps.
+**Billing.** The founder sets every plan: at creation (30-day trial, 6 Months 80 TND or Yearly 120 TND, with the password he agrees with the owner), then from the shop page — any plan until any date at any price (`admin_set_subscription`: the running period ends, the new one starts today, a price above 0 is recorded as a payment) or +30 days (`admin_extend_subscription`). Payments are a history under Subscriptions. An expired subscription pauses the QR; customers keep their stamps.
+
+**The owner's first sign-in.** A shop the founder opens starts with `onboarded_at` null: the owner lands on `/welcome` (what the founder set is shown, never asked again; he adds his logo, address and Instagram — `finish_welcome`), then makes his card, then `/welcome/ready` sends him to the QR.
 
 ## Security model
 

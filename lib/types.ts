@@ -29,6 +29,8 @@ export type SessionContext = {
     status: "active" | "suspended";
     created_at: string;
     join_code: string;
+    /** null until the owner has been through the welcome (0011) */
+    onboarded_at: string | null;
   } | null;
   card: {
     id: string;
@@ -42,13 +44,17 @@ export type SessionContext = {
     active: boolean;
     design: Partial<CardDesign> | null;
     reward: { id: string; name: string; description: string | null } | null;
+    /** gifts on the way to the goal: taking one costs no stamps (0012) */
+    levels: CardLevel[];
   } | null;
   subscription: SubscriptionState | null;
 };
 
+export type CardLevel = { id: string; name: string; stamps: number };
+
 export type BusinessMini = { id?: string; name: string; logo_url: string | null; cover_url?: string | null; category: string; address?: string | null; instagram?: string | null; status?: string };
 /** stamps_required is THIS customer's goal (see reward_cost in SQL); card_stamps_required is today's setting. */
-export type CardStyle = { id?: string; name?: string; description?: string | null; stamps_required: number; card_stamps_required?: number; color: string; icon: string; cooldown_minutes?: number; valid_days?: number; active?: boolean; design?: Partial<CardDesign> | null };
+export type CardStyle = { id?: string; name?: string; description?: string | null; stamps_required: number; levels?: number[]; card_stamps_required?: number; color: string; icon: string; cooldown_minutes?: number; valid_days?: number; active?: boolean; design?: Partial<CardDesign> | null };
 
 /** merchant_card_impact(): customers mid-card grouped by (their goal, their stamps). */
 export type CardImpact = {
@@ -64,6 +70,10 @@ export type RewardItem = {
   description: string | null;
   stamps_required: number;
   is_primary: boolean;
+  /** a gift on the way to the goal: taking it costs no stamps */
+  level?: boolean;
+  /** a level already taken on this card */
+  claimed?: boolean;
   unlocked: boolean;
   pending: { id: string; code: string; expires_at: string } | null;
 };
@@ -84,7 +94,7 @@ export type CardPayload = {
   card: CardStyle | null;
   rewards: RewardItem[];
   next_reward: { id: string; name: string; stamps_required: number; remaining: number } | null;
-  newly_unlocked: { id: string; name: string; stamps_required: number }[];
+  newly_unlocked: { id: string; name: string; stamps_required: number; level?: boolean }[];
 };
 
 export type HistoryItem = { type: "stamp" | "reward_redeemed"; at: string; reward_name?: string };

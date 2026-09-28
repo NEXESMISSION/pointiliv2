@@ -51,7 +51,7 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
       </h1>
 
       <div className="mt-4 w-full animate-rise text-start" style={after(180)}>
-        <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} rewardName={primary?.name} animateIndex={Math.min(customer.balance, total) - 1} />
+        <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} levels={card?.levels} rewardName={primary?.name} animateIndex={Math.min(customer.balance, total) - 1} />
       </div>
 
       {!unlocked && customer.expires_at && <CardDeadline expiresAt={customer.expires_at} className="mt-2 animate-rise" />}
@@ -64,6 +64,7 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
           <p className="mt-1 text-sm font-semibold text-success-600">{t.scan.success.unlocked}</p>
           <p className="mt-0.5 text-xl font-extrabold uppercase tracking-tight text-ink">{unlocked.name}</p>
           <p className="text-[13px] text-muted">{business.name}</p>
+          {unlocked.level && <p className="mt-1 text-[13px] font-medium text-brand-700">{t.customer.card.levelKeeps}</p>}
           <div className="mt-3">
             <UseRewardButton rewardId={unlocked.id} />
           </div>

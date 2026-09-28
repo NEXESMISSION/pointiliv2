@@ -25,13 +25,19 @@ export const getContext = cache(async (): Promise<SessionContext | null> => {
 
 /**
  * Where someone lands after signing in or opening the installed app. A shop
- * opens straight on its counter QR — that is what the phone is picked up for —
- * unless there is no card yet, and then the home screen walks them through it.
+ * opens straight on its counter QR — that is what the phone is picked up for.
+ * An owner who has not been through the welcome yet goes there first, then to
+ * making his card; staff never see either, they wait for the owner.
  */
-export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card"> | null): string {
+export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card" | "member_role"> | null): string {
   if (!ctx) return "/";
   if (ctx.user.role === "admin") return "/admin";
-  if (ctx.business) return ctx.card ? "/qr" : "/dashboard";
+  if (ctx.business) {
+    const owner = ctx.member_role === "owner";
+    if (owner && !ctx.business.onboarded_at) return "/welcome";
+    if (ctx.card) return "/qr";
+    return owner ? "/loyalty?welcome=1" : "/dashboard";
+  }
   return "/customer";
 }
 

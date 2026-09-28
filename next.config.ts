@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
     return [
       { source: "/tn", destination: "/", permanent: true },
       { source: "/tn/:path*", destination: "/:path*", permanent: true },
+      // extra rewards became levels on the card itself (0012)
+      { source: "/rewards", destination: "/loyalty", permanent: false },
+      { source: "/rewards/:path*", destination: "/loyalty", permanent: false },
     ];
   },
   async headers() {

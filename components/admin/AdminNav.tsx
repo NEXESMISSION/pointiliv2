@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Activity, ChartLine, CreditCard, Ellipsis, LayoutDashboard, Receipt, Server, Store, Users } from "lucide-react";
+import { Activity, ChartLine, CreditCard, Ellipsis, LayoutDashboard, Server, Store, Users } from "lucide-react";
 import { BottomNav, SideNav, type NavItem } from "@/components/nav/Nav";
 import { useT } from "@/components/i18n/Provider";
 import { Logo } from "@/components/Logo";
@@ -14,7 +14,6 @@ export function AdminSideNav({ footer }: { footer?: ReactNode }) {
     { href: "/admin", label: n.dashboard, icon: LayoutDashboard, exact: true },
     { href: "/admin/businesses", label: n.businesses, icon: Store },
     { href: "/admin/subscriptions", label: t.admin.subscriptions.title, icon: CreditCard },
-    { href: "/admin/payments", label: n.payments, icon: Receipt },
     { href: "/admin/customers", label: n.customers, icon: Users },
     { href: "/admin/activity", label: n.activity, icon: Activity },
     { href: "/admin/traffic", label: n.traffic, icon: ChartLine },
@@ -42,7 +41,7 @@ export function AdminBottomNav() {
     { href: "/admin", label: n.dashboard, icon: LayoutDashboard, exact: true },
     { href: "/admin/businesses", label: n.businesses, icon: Store },
     { href: "/admin/subscriptions", label: n.plans, icon: CreditCard },
-    { href: "/admin/payments", label: n.payments, icon: Receipt },
+    { href: "/admin/traffic", label: n.traffic, icon: ChartLine },
     { href: "/admin/more", label: n.more, icon: Ellipsis },
   ];
   return <BottomNav items={bottom} />;

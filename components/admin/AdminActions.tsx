@@ -2,22 +2,23 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Ban, Banknote, Check, CirclePlay, Copy, KeyRound, Trash2, X } from "lucide-react";
+import { Ban, Banknote, CalendarPlus, Check, CirclePlay, Copy, KeyRound, Trash2, X } from "lucide-react";
 import {
   cancelSubscription,
   confirmPayment,
-  grantPlan,
+  extendSubscription,
   rejectPayment,
   resetUserPassword,
   runCleanup,
   setBusinessStatus,
+  setSubscription,
 } from "@/app/actions/admin";
 import { useT } from "@/components/i18n/Provider";
 import { Button } from "@/components/ui/Button";
-import { Field, Select } from "@/components/ui/Field";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { PAYMENT_METHODS, PLANS, type PaidPlan } from "@/lib/constants";
+import { PAYMENT_METHODS, PLANS } from "@/lib/constants";
 import { formatTND } from "@/lib/format";
 
 type Result = { ok: boolean; message: string; at: number; secret?: string };
@@ -78,29 +79,53 @@ export function BusinessStatusButton({ id, name, status }: { id: string; name: s
   );
 }
 
-/* ── Record a payment & activate a plan ────────────────────────────────────── */
+/* ── The founder sets a shop's subscription by hand ─────────────────────────── */
 
-const MONTHS: Record<PaidPlan, number> = { six_month: 6, yearly: 12 };
+type AnyPlan = "trial" | "six_month" | "yearly";
+const PLAN_ORDER: AnyPlan[] = ["trial", "six_month", "yearly"];
 
-export function GrantPlanButton({ businessId, businessName }: { businessId: string; businessName: string }) {
+/** "YYYY-MM-DD", in Tunis, for today plus a plan's length. */
+function defaultEnd(plan: AnyPlan): string {
+  const d = new Date();
+  if (plan === "trial") d.setDate(d.getDate() + 30);
+  else d.setMonth(d.getMonth() + (plan === "yearly" ? 12 : 6));
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Tunis" }).format(d);
+}
+
+/**
+ * Everything about a shop's plan in one sheet: which plan, until which day,
+ * what it paid and how. The founder says it; the database records it (a paid
+ * amount becomes a payment) and the shop's QR follows.
+ */
+export function ManageSubscription({ businessId, businessName }: { businessId: string; businessName: string }) {
   const [open, setOpen] = useState(false);
-  const [plan, setPlan] = useState<PaidPlan>("yearly");
+  const [plan, setPlan] = useState<AnyPlan>("yearly");
+  const [until, setUntil] = useState(() => defaultEnd("yearly"));
+  const [price, setPrice] = useState<string>(String(PLANS.yearly.price));
   const [method, setMethod] = useState<string>("cash");
   const { loading, run } = useAction();
-  const { t, locale, fill } = useT();
+  const { t, fill } = useT();
   const w = t.admin.actions;
   const plans = t.data.plans as Record<string, string>;
   const methods = t.data.payments as Record<string, string>;
+  const paid = plan !== "trial" && Number(price) > 0;
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Tunis" }).format(new Date());
+
+  const pick = (p: AnyPlan) => {
+    setPlan(p);
+    setUntil(defaultEnd(p));
+    setPrice(p === "trial" ? "0" : String(PLANS[p].price));
+  };
 
   return (
     <>
       <Button variant="primary" size="md" block icon={<Banknote className="size-5" />} onClick={() => setOpen(true)}>
-        {w.recordPayment}
+        {w.manageSub}
       </Button>
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title={w.recordPaymentTitle}
+        title={fill(w.manageSubTitle, { name: businessName })}
         footer={
           <>
             <Button variant="outline" size="md" onClick={() => setOpen(false)} className="sm:w-auto">
@@ -112,53 +137,65 @@ export function GrantPlanButton({ businessId, businessName }: { businessId: stri
               loading={loading}
               className="sm:w-auto"
               onClick={async () => {
-                const r = await run(() => grantPlan(businessId, plan, method));
+                // the chosen day counts to its end, Tunis time
+                const r = await run(() => setSubscription(businessId, plan, `${until}T23:59:00+01:00`, plan === "trial" ? 0 : Number(price) || 0, method));
                 if (r?.ok) setOpen(false);
               }}
             >
-              {fill(w.activatePlan, { plan: plans[plan] ?? plan })}
+              {t.common.save}
             </Button>
           </>
         }
       >
-        <div className="space-y-4">
-          <p className="text-sm text-muted">
-            {w.recordPaymentBefore}
-            <span className="font-semibold text-ink">{businessName}</span>
-            {w.recordPaymentAfter}
-          </p>
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={w.planAria}>
-            {(Object.keys(PLANS) as PaidPlan[]).map((id) => {
-              const p = PLANS[id];
-              const active = plan === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setPlan(id)}
-                  className={`min-h-20 rounded-2xl border-2 p-3 text-start transition ${active ? "border-brand-600 bg-brand-50" : "border-line bg-white hover:bg-canvas"}`}
-                >
-                  <span className="block text-sm font-semibold text-ink">{plans[id] ?? id}</span>
-                  <span className="block text-xl font-bold text-ink tabular">{formatTND(p.price, locale)}</span>
-                  <span className="block text-xs text-muted">{fill(t.formats.perMonth, { price: Math.round((p.price / MONTHS[id]) * 10) / 10 })}</span>
-                </button>
-              );
-            })}
+        <div className="space-y-3.5">
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={w.planAria}>
+            {PLAN_ORDER.map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={plan === id}
+                onClick={() => pick(id)}
+                className={`h-11 rounded-xl border-2 text-sm font-semibold transition ${plan === id ? "border-brand-600 bg-brand-50 text-brand-700" : "border-line bg-white text-body hover:bg-canvas"}`}
+              >
+                {plans[id] ?? id}
+              </button>
+            ))}
           </div>
-          <Field label={w.paymentMethod} htmlFor="grant-method">
-            <Select id="grant-method" value={method} onChange={(e) => setMethod(e.target.value)}>
-              {Object.keys(PAYMENT_METHODS).map((k) => (
-                <option key={k} value={k}>
-                  {methods[k] ?? k}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Field label={w.until} htmlFor="sub-until">
+              <Input id="sub-until" type="date" dir="ltr" value={until} min={today} onChange={(e) => setUntil(e.target.value)} />
+            </Field>
+            <Field label={w.pricePaid} htmlFor="sub-price">
+              <Input id="sub-price" type="number" inputMode="decimal" min={0} step="1" dir="ltr" value={plan === "trial" ? "0" : price} disabled={plan === "trial"} onChange={(e) => setPrice(e.target.value)} />
+            </Field>
+          </div>
+          {paid && (
+            <Field label={w.paymentMethod} htmlFor="sub-method">
+              <Select id="sub-method" value={method} onChange={(e) => setMethod(e.target.value)}>
+                {Object.keys(PAYMENT_METHODS).map((k) => (
+                  <option key={k} value={k}>
+                    {methods[k] ?? k}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
+          <p className="text-xs leading-snug text-muted">{w.manageSubHint}</p>
         </div>
       </Modal>
     </>
+  );
+}
+
+/** One tap: thirty more days on whatever the shop has now. */
+export function ExtendSubscriptionButton({ businessId }: { businessId: string }) {
+  const { loading, run } = useAction();
+  const { t } = useT();
+  return (
+    <Button variant="outline" size="md" block loading={loading} icon={<CalendarPlus className="size-5" />} onClick={() => run(() => extendSubscription(businessId, 30))}>
+      {t.admin.actions.extend30}
+    </Button>
   );
 }
 

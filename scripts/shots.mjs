@@ -145,7 +145,7 @@ try {
   console.log("  ✓ card design saved");
   await shot(mp, "11b-design", null);
 
-  for (const [n, path] of [["10-dashboard", "/dashboard"], ["11-loyalty", "/loyalty"], ["12-rewards", "/rewards"], ["13-reward-new", "/rewards/new"], ["14-customers", "/customers"], ["15-activity", "/activity?range=month"], ["16-analytics", "/analytics"], ["17-billing", "/billing"], ["18-settings", "/settings"], ["19-more", "/more"], ["20-redeem", "/redeem"]]) {
+  for (const [n, path] of [["10-dashboard", "/dashboard"], ["11-loyalty", "/loyalty"], ["14-customers", "/customers"], ["15-activity", "/activity?range=month"], ["16-analytics", "/analytics"], ["17-billing", "/billing"], ["18-settings", "/settings"], ["19-more", "/more"], ["20-redeem", "/redeem"]]) {
     await shot(mp, n, path);
   }
   await mp.goto(BASE + "/qr", { waitUntil: "domcontentloaded" });

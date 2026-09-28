@@ -14,6 +14,8 @@ type Props = {
   /** stamps this customer needs */
   total: number;
   rewardName?: string | null;
+  /** stamp numbers where a level gift waits on the way to the goal */
+  levels?: number[];
   /** tile = customer home list; full = card page, previews */
   size?: "tile" | "full";
   animateIndex?: number;
@@ -21,14 +23,15 @@ type Props = {
 };
 
 /** The loyalty card, in the owner's own design. One component for every place a card appears. */
-export function LoyaltyCardVisual({ design, business, subtitle, filled, total, rewardName, size = "full", animateIndex, className = "" }: Props) {
+export function LoyaltyCardVisual({ design, business, subtitle, filled, total, rewardName, levels = [], size = "full", animateIndex, className = "" }: Props) {
   const { t, fill } = useT();
   const s = surface(design, !!business.cover_url);
   const tile = size === "tile";
   const done = Math.min(filled, total);
   const complete = filled >= total;
   const extras = Math.max(0, filled - total);
-  const cols = tile ? Math.min(total, 10) : total <= 5 ? total : total <= 10 ? 5 : total <= 12 ? 6 : total <= 20 ? 5 : 6;
+  // a long card (levels make 20 common) lies in two rows of ten, not four fat rows of five
+  const cols = tile ? Math.min(total, 10) : total <= 5 ? total : total <= 10 ? 5 : total <= 12 ? 6 : total <= 16 ? 8 : 10;
 
   return (
     <div
@@ -76,6 +79,8 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
           {Array.from({ length: total }, (_, i) => {
             const on = i < done;
             const last = i === total - 1;
+            // a level: a gift on the road, drawn on its own stamp
+            const level = !last && levels.includes(i + 1);
             if (on) {
               return (
                 <span
@@ -83,17 +88,21 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
                   className={`grid aspect-square place-items-center overflow-hidden rounded-full ${i === animateIndex ? "animate-stamp" : ""}`}
                   style={{ background: design.accent, color: s.onAccent, boxShadow: "0 2px 6px rgba(0,0,0,0.14)" }}
                 >
-                  <StampMark design={design} logo={business.logo_url} tile={tile} last={last} />
+                  <StampMark design={design} logo={business.logo_url} tile={tile} gift={last || level} />
                 </span>
               );
             }
             return (
               <span
                 key={i}
-                className="grid aspect-square place-items-center rounded-full border-2 border-dashed"
-                style={{ borderColor: s.emptyBorder, background: s.emptyFill, color: s.emptyBorder }}
+                className={`grid aspect-square place-items-center rounded-full border-2 ${level ? "border-solid" : "border-dashed"}`}
+                style={{ borderColor: level ? design.accent : s.emptyBorder, background: s.emptyFill, color: level ? design.accent : s.emptyBorder }}
               >
-                {last ? <Gift className={tile ? "size-[52%]" : "size-[44%]"} /> : !tile && design.stamp === "icon" ? <CardIcon name={design.icon} className="size-[40%]" /> : null}
+                {last || level ? (
+                  <Gift className={tile ? "size-[52%]" : last ? "size-[44%]" : "size-[40%]"} />
+                ) : !tile && design.stamp === "icon" ? (
+                  <CardIcon name={design.icon} className="size-[40%]" />
+                ) : null}
               </span>
             );
           })}
@@ -114,9 +123,9 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
   );
 }
 
-function StampMark({ design, logo, tile, last }: { design: CardDesign; logo: string | null; tile: boolean; last: boolean }) {
+function StampMark({ design, logo, tile, gift }: { design: CardDesign; logo: string | null; tile: boolean; gift: boolean }) {
   const cls = tile ? "size-[56%]" : "size-[50%]";
-  if (last) return <Gift className={cls} strokeWidth={2.4} />;
+  if (gift) return <Gift className={cls} strokeWidth={2.4} />;
   switch (design.stamp) {
     case "logo":
       // eslint-disable-next-line @next/next/no-img-element
