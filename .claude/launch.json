@@ -33,6 +33,18 @@
         "social/typo"
       ],
       "port": 8766
+    },
+    {
+      "name": "mockups",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8767",
+        "--directory",
+        "mockups"
+      ],
+      "port": 8767
     }
   ]
 }
