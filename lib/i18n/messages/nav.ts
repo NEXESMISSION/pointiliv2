@@ -26,6 +26,7 @@ export const nav = ns({
       customers: "Clients",
       activity: "Activité",
       system: "Système",
+      traffic: "Trafic",
       more: "Plus",
     },
     site: {
@@ -67,6 +68,7 @@ export const nav = ns({
       customers: "الحرفاء",
       activity: "الحركة",
       system: "النظام",
+      traffic: "الترافيك",
       more: "أكثر",
     },
     site: {

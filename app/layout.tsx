@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { NavTracker } from "@/components/nav/BackButton";
+import { Beacon } from "@/components/analytics/Beacon";
 import { I18nProvider } from "@/components/i18n/Provider";
 import { DIR, HTML_LANG, OG_LOCALE, localePath } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </I18nProvider>
         <ServiceWorker />
         <NavTracker />
+        <Beacon />
       </body>
     </html>
   );

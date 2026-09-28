@@ -49,6 +49,8 @@ function write(trail: string[]) {
 export function NavTracker() {
   const pathname = usePathname();
   useEffect(() => {
+    // a page shown inside the console's click map shares this tab's storage
+    if (window.top !== window.self) return;
     let trail = read();
     if (trail[trail.length - 1] === pathname) return;
     if (ROOTS.has(pathname)) trail = [pathname];

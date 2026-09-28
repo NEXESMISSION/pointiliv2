@@ -3,6 +3,7 @@
 import { randomBytes, randomInt } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -12,6 +13,7 @@ import { allow } from "@/lib/limit";
 import { getI18n } from "@/lib/i18n/server";
 import { sendResetCode } from "@/lib/sms";
 import { homeFor } from "@/lib/session";
+import { recordAuthEvent } from "@/lib/analytics/server";
 import type { SessionContext } from "@/lib/types";
 import type { FormState } from "./types";
 
@@ -25,6 +27,14 @@ async function ip() {
 async function contextOf(supabase: SupabaseClient): Promise<SessionContext | null> {
   const { data } = await supabase.rpc("session_context");
   return (data as SessionContext) ?? null;
+}
+
+/** The console's traffic page counts sign-ins and sign-ups; written after the response, never in its way. */
+async function track(kind: "login" | "signup", userId: string | undefined, path: string) {
+  if (!userId) return;
+  const jar = await cookies();
+  const h = await headers();
+  after(() => recordAuthEvent(kind, userId, path, jar, h));
 }
 
 type AuthErrors = Awaited<ReturnType<typeof getI18n>>["t"]["auth"]["errors"];
@@ -69,8 +79,9 @@ export async function registerCustomer(_: FormState, fd: FormData): Promise<Form
     if (/already|registered|exists|duplicate|unique/i.test(error.message)) {
       // A sign-up that died halfway leaves the account behind. If this password
       // opens it, finish the job instead of sending the person to a dead end.
-      const { error: resume } = await supabase.auth.signInWithPassword({ email: phoneAuthEmail(phone), password });
+      const { data: resumed, error: resume } = await supabase.auth.signInWithPassword({ email: phoneAuthEmail(phone), password });
       if (!resume) {
+        await track("login", resumed.user?.id, "/customer/register");
         // An account made before the name was asked for, or a sign-up that died
         // before the trigger ran: take the name now that it has been typed.
         // supabase returns errors rather than throwing them; a name that fails
@@ -84,7 +95,8 @@ export async function registerCustomer(_: FormState, fd: FormData): Promise<Form
     return { error: msg("network"), values, at: now() };
   }
 
-  const { error: signInError } = await supabase.auth.signInWithPassword({ email: phoneAuthEmail(phone), password });
+  const { data: signedIn, error: signInError } = await supabase.auth.signInWithPassword({ email: phoneAuthEmail(phone), password });
+  await track("signup", signedIn?.user?.id, "/customer/register");
   if (signInError) {
     console.error("[register] sign-in", signInError.message);
     redirect(`/customer/login?next=${encodeURIComponent(next)}`);
@@ -118,10 +130,11 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
+  const { data: signed, error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
   if (error) {
     return { error: isEmail ? t.auth.errors.wrongEmail : t.auth.errors.wrongPhone, values, at: now() };
   }
+  await track("login", signed.user?.id, portal === "business" ? "/login" : "/customer/login");
 
   const ctx = await contextOf(supabase);
   // The shop login only opens shops. Owners never create one here — Pointili

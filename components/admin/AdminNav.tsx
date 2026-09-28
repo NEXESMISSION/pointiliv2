@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Activity, CreditCard, Ellipsis, LayoutDashboard, Receipt, Server, Store, Users } from "lucide-react";
+import { Activity, ChartLine, CreditCard, Ellipsis, LayoutDashboard, Receipt, Server, Store, Users } from "lucide-react";
 import { BottomNav, SideNav, type NavItem } from "@/components/nav/Nav";
 import { useT } from "@/components/i18n/Provider";
 import { Logo } from "@/components/Logo";
@@ -17,6 +17,7 @@ export function AdminSideNav({ footer }: { footer?: ReactNode }) {
     { href: "/admin/payments", label: n.payments, icon: Receipt },
     { href: "/admin/customers", label: n.customers, icon: Users },
     { href: "/admin/activity", label: n.activity, icon: Activity },
+    { href: "/admin/traffic", label: n.traffic, icon: ChartLine },
     { href: "/admin/system", label: n.system, icon: Server },
   ];
 

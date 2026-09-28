@@ -105,5 +105,6 @@ function needsRefresh(request: NextRequest): boolean {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|api/qr|sw\\.js|manifest\\.webmanifest|.*\\.(?:png|svg|ico|jpg|jpeg|webp|html|txt|js)$).*)"],
+  // api/ev: analytics batches, often sent while a page closes — never the request that refreshes a session
+  matcher: ["/((?!_next/static|_next/image|api/qr|api/ev|sw\\.js|manifest\\.webmanifest|.*\\.(?:png|svg|ico|jpg|jpeg|webp|html|txt|js)$).*)"],
 };

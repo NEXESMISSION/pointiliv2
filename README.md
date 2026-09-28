@@ -31,7 +31,7 @@ npm run dev                    # http://localhost:3100
 - **Scan link (what the QR encodes):** `/scan/:token`
 - **Counter QR link (printed, never changes):** `/join/:code`
 - **Merchant:** `/login`, `/dashboard`, `/qr`, `/counter-qr`, `/loyalty`, `/rewards`, `/customers`, `/customers/:id`, `/redeem`, `/activity`, `/analytics`, `/billing`, `/settings`
-- **Admin:** `/admin`, `/admin/businesses`, `/admin/subscriptions`, `/admin/payments`, `/admin/customers`, `/admin/activity`, `/admin/system`
+- **Admin:** `/admin`, `/admin/businesses`, `/admin/subscriptions`, `/admin/payments`, `/admin/customers`, `/admin/activity`, `/admin/traffic` (+ `/admin/traffic/visit/[session]`, `/admin/traffic/clicks`), `/admin/system`
 
 ## How it works
 
@@ -50,6 +50,8 @@ npm run dev                    # http://localhost:3100
 **Changing the card later is fair.** Each customer's card remembers the goal it started with (`customers.card_target`). Raising the stamps required never takes a reward away from someone mid-card — they finish at their old goal and the next card uses the new one. Lowering it helps everyone immediately (`reward_cost` = the lower of the two). Extra stamps past a full card carry over. The loyalty page shows who a change affects (`merchant_card_impact`) and asks for confirmation before saving.
 
 **Card design.** Owners design their own card at `/loyalty/design`: a style (Bold, Classic, Soft, Midnight, Photo, Minimal) built from their main colour, then background colour/gradient/pattern, stamp look (icon, their logo, check, heart, star) and colour, light/dark text, cover photo as background, and a short line under the name — with a live preview. Stored as `loyalty_cards.design`, validated by `clean_card_design()` (SQL) and `resolveDesign()` (`lib/card-design.ts`), rendered everywhere by `components/LoyaltyCardVisual.tsx`. New owners land in the designer right after creating their card.
+
+**Traffic (first-party analytics).** `components/analytics/Beacon.tsx`, mounted in the root layout, records page views, engaged time (only while the page is on screen and touched in the last 3 minutes) and taps — as a share of the width plus the page y — and sends them in batches to `app/api/ev` (never through `proxy.ts`, so a batch sent while a page closes can never be the request that rotates a session). The route verifies the auth cookie to attach the account, adds the country/city Vercel gives it and the device read from the user-agent, and writes `public.analytics_events` with the service key; sign-ins and customer sign-ups are recorded by `app/actions/auth.ts`. No third-party script, no IP address, no query string, and dynamic segments (`/scan/:token`, `/join/:code`, ids) collapsed; a field tap records its name, never its value. The console is not tracked. `/admin/traffic` (tabs: summary, visitors with live-now, weekday × hour heatmap of visits and of stamps, sources, pages) and the click map read it only through the `admin_traffic*` functions (`require_admin`); by default they leave out robots, localhost/preview traffic and any browser ever signed in as an admin — "with my visits" includes them.
 
 **Navigation & forms.** Every screen except the three home screens (`/customer`, `/dashboard`, `/admin`) has a back button that returns within the visit or to the parent page (`components/nav/BackButton.tsx`; sign-in screens and processed scans are skipped). Server-action forms submit through `lib/use-form-action.ts`, so a failed sign-up or login never clears what was typed.
 
