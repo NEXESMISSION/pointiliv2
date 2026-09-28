@@ -36,6 +36,12 @@
     flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
     eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
     logout: '<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
+    // filled twins, for a tab that is selected
+    homef: '<path d="M3 10.2a2 2 0 0 1 .7-1.52l7-6a2 2 0 0 1 2.6 0l7 6a2 2 0 0 1 .7 1.52V19a2 2 0 0 1-2 2h-3.5v-6a1 1 0 0 0-1-1h-3.6a1 1 0 0 0-1 1v6H5a2 2 0 0 1-2-2z" fill="currentColor" stroke="none"/>',
+    userf: '<circle cx="12" cy="7.5" r="4.5" fill="currentColor" stroke="none"/><path d="M3.5 20.2C3.5 16.4 7.3 13.5 12 13.5s8.5 2.9 8.5 6.7a.8.8 0 0 1-.8.8H4.3a.8.8 0 0 1-.8-.8z" fill="currentColor" stroke="none"/>',
+    qrf: '<rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor" stroke="none"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor" stroke="none"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor" stroke="none"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3v2M14 19v2h2" fill="currentColor" stroke="none"/>',
+    chartf: '<rect x="3" y="12" width="4.5" height="9" rx="1.5" fill="currentColor" stroke="none"/><rect x="9.75" y="4" width="4.5" height="17" rx="1.5" fill="currentColor" stroke="none"/><rect x="16.5" y="8" width="4.5" height="13" rx="1.5" fill="currentColor" stroke="none"/>',
+    usersf: '<circle cx="9" cy="7.5" r="4" fill="currentColor" stroke="none"/><path d="M1.5 20c0-3.3 3.4-6 7.5-6s7.5 2.7 7.5 6a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z" fill="currentColor" stroke="none"/><path d="M16 3.3a4 4 0 0 1 0 8.4M18.5 14.6c2.3.9 4 2.8 4 5.4" stroke-width="2"/>',
     wand: '<path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>',
   };
   const sprite = Object.entries(P)

@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="ar-TN" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f3f9" />
+    <title>جرّب الأبليكاسيون · Pointili</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/app.css" />
+    <link rel="stylesheet" href="assets/r2.css" />
+    <style>
+      /* the stage around the phone, and the controls that are not part of the app */
+      .stage {
+        display: flex;
+        justify-content: center;
+        padding: 10px 16px 60px;
+      }
+      .ctrl {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 0 auto 14px;
+      }
+      .ctrl button {
+        font: inherit;
+        font-weight: 600;
+        font-size: 14px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 999px;
+        padding: 8px 14px;
+        cursor: pointer;
+      }
+      .ctrl button.on {
+        background: #0f0e17;
+        color: #fff;
+        border-color: #0f0e17;
+      }
+      /* on a real phone the bezel goes: the prototype is the whole screen, like an installed app */
+      @media (max-width: 520px) {
+        body {
+          background: #000;
+        }
+        .board-head,
+        .ctrl {
+          display: none;
+        }
+        .stage {
+          padding: 0;
+        }
+        .phone {
+          width: 100vw;
+          height: 100dvh;
+          border-radius: 0;
+          padding: 0;
+          box-shadow: none;
+        }
+        .screen {
+          border-radius: 0;
+        }
+      }
+
+      /* views: pages that slide like a native app (in Arabic, the next page comes from the left) */
+      #app .view {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.25, 1), opacity 0.35s;
+        will-change: transform;
+      }
+      #app .view.off {
+        transform: translateX(-100%);
+      }
+      #app .view.under {
+        transform: translateX(28%);
+        opacity: 0.6;
+      }
+      #app .view.fade {
+        opacity: 0;
+        pointer-events: none;
+      }
+      /* the big title folds into a small blurred bar when the page scrolls */
+      .mini {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 92px;
+        padding-top: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 16px;
+        background: var(--glass);
+        -webkit-backdrop-filter: saturate(180%) blur(18px);
+        backdrop-filter: saturate(180%) blur(18px);
+        box-shadow: 0 1px 0 var(--hair);
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity 0.25s, transform 0.25s;
+        z-index: 20;
+        pointer-events: none;
+      }
+      .mini.show {
+        opacity: 1;
+        transform: none;
+      }
+      .navbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 16px 10px;
+      }
+      .navbar h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 600;
+        flex: 1;
+        text-align: center;
+      }
+      .scanframe {
+        position: relative;
+        height: 300px;
+        border-radius: 26px;
+        background: radial-gradient(circle at 50% 45%, #3a3450, #0f0d15 72%);
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+      }
+      .scanframe .box {
+        width: 190px;
+        height: 190px;
+        border-radius: 26px;
+        border: 3px solid rgba(255, 255, 255, 0.92);
+        position: relative;
+      }
+      .scanframe .laser {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        height: 3px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, transparent, var(--brand-2), transparent);
+        box-shadow: 0 0 16px var(--brand-2);
+        animation: laser 2s ease-in-out infinite;
+      }
+      @keyframes laser {
+        0%,
+        100% {
+          top: 14px;
+        }
+        50% {
+          top: 170px;
+        }
+      }
+      .road2 .stop2 {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .road2 .knot2 {
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .road2 .knot2 img {
+        width: 36px;
+        height: 36px;
+      }
+      .road2 .card2 {
+        flex: 1;
+        background: var(--surface);
+        border-radius: 20px;
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+      }
+      .kpi {
+        background: var(--surface);
+        border-radius: 22px;
+        padding: 14px 12px;
+        box-shadow: var(--shadow);
+        text-align: center;
+      }
+      .kpi img {
+        width: 34px;
+        height: 34px;
+        margin: 0 auto 4px;
+      }
+      .kpi b {
+        display: block;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      #tabbar {
+        transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.25, 1);
+      }
+      .kpi span {
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="board-head">
+      <div>
+        <h1>7 · جرّب الأبليكاسيون</h1>
+        <p>نزّل على كل شي: الكارطات، <b>السكان</b> في الوسط، الكادو، الكونت. في التليفون يتحلّ في الإيكران الكل كيف أبليكاسيون حقيقية.</p>
+      </div>
+      <nav class="board-nav">
+        <a href="index.html">المنيو</a>
+        <a href="6-look.html">الشكل</a>
+        <a href="7-app.html" class="on">جرّب الأبليكاسيون</a>
+      </nav>
+    </header>
+    <div class="ctrl">
+      <button data-role="client" class="on">الحريف</button>
+      <button data-role="owner">مولى المحل</button>
+      <span style="width: 12px"></span>
+      <button data-theme="" class="on">A · Lilac</button>
+      <button data-theme="night">B · Night</button>
+      <button data-theme="sunny">C · Sunny</button>
+    </div>
+
+    <div class="stage">
+      <div class="phone">
+        <div class="screen r2" id="app">
+          <!-- ═══ the customer: lobby ═══ -->
+          <section class="view" id="home" data-role="client">
+            <div class="mini" id="homeMini">سامي</div>
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="body" id="homeBody">
+              <div class="head">
+                <div class="me press" data-go="me">س</div>
+                <div class="gbtn press" data-toast="bell"><svg class="i"><use href="#i-bell" /></svg><span class="badge"></span></div>
+              </div>
+              <div class="lt">
+                <small>صباح الخير <img class="e3d" src="assets/3d/wave.png" alt="" style="width: 20px; height: 20px" /></small>
+                <h1>سامي</h1>
+              </div>
+              <div class="ready press" data-open="reward">
+                <img class="e3d floaty" src="assets/3d/juice.png" alt="" />
+                <b>عندك كادو يستنّى فيك</b>
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">عصير بلاش · Pâtisserie Hédi</span>
+                <div class="go">خوذو <svg class="i" style="width: 16px; height: 16px"><use href="#i-next" /></svg></div>
+              </div>
+              <div class="h2">الكارطات متاعي <a href="#">الكل</a></div>
+              <div class="stack" id="stack"></div>
+              <div class="h2">محلات بحذاك <a href="#">الكل</a></div>
+              <div class="rail">
+                <div class="shop press"><div class="pic"><img class="e3d" src="assets/3d/pizza.png" alt="" /></div><b>Pizzeria Roma</b><span>200 م · بيتزا</span></div>
+                <div class="shop press"><div class="pic"><img class="e3d" src="assets/3d/cake.png" alt="" /></div><b>Délices</b><span>450 م · حلويات</span></div>
+                <div class="shop press"><div class="pic"><img class="e3d" src="assets/3d/burger.png" alt="" /></div><b>Burger Box</b><span>700 م · ماكلة</span></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══ the customer: one card ═══ -->
+          <section class="view off" id="card" data-role="client">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar">
+              <div class="gbtn press" data-back><svg class="i"><use href="#i-back" /></svg></div>
+              <h2 id="cardTitle"></h2>
+              <div style="width: 42px"></div>
+            </div>
+            <div class="body" id="cardBody"></div>
+          </section>
+
+          <!-- ═══ the customer: account ═══ -->
+          <section class="view fade" id="me" data-role="client">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="body">
+              <div class="lt"><small>سامي بن صالح</small><h1>الكونت</h1></div>
+              <div class="group" style="margin-top: 12px">
+                <div class="item press"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/phone.png" alt="" /></div><div class="t">النومرو<small class="num">+216 94 277 512</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+                <div class="item press"><div class="ic" style="background: var(--gold-soft)"><img class="e3d" src="assets/3d/trophy.png" alt="" /></div><div class="t">الكوادو اللي خذيتهم<small>5 كوادو من 3 محلات</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+              </div>
+              <div class="h2" style="font-size: 15px; color: var(--ink-2)">الريڤلاج</div>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/bell.png" alt="" /></div><div class="t">النوتيفيكاسيون<small>كي يولّي عندك كادو</small></div><div class="sw" data-sw></div></div>
+                <div class="item"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/star.png" alt="" /></div><div class="t">الإيكران الكحل<small>يتبدّل وحدو بالليل</small></div><div class="sw off" id="darkSw"></div></div>
+                <div class="item press"><div class="ic" style="background: var(--mint-soft)"><img class="e3d" src="assets/3d/pin.png" alt="" /></div><div class="t">اللغة</div><span style="color: var(--ink-2)">تونسي</span><svg class="i chev"><use href="#i-next" /></svg></div>
+              </div>
+              <div class="group" style="margin-top: 14px"><div class="item press" style="color: var(--coral); justify-content: center; font-weight: 600">اخرج من الكونت</div></div>
+            </div>
+          </section>
+
+          <!-- ═══ the shop owner: home ═══ -->
+          <section class="view fade" id="ohome" data-role="owner">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="body">
+              <div class="head">
+                <div class="me" style="background: linear-gradient(145deg, #9b7bff, #6c47ff)"><img class="e3d" src="assets/3d/coffee.png" alt="" style="width: 28px; height: 28px" /></div>
+                <div class="gbtn press"><svg class="i"><use href="#i-settings" /></svg></div>
+              </div>
+              <div class="lt"><small>صباح الخير حمدي <img class="e3d" src="assets/3d/wave.png" alt="" style="width: 20px; height: 20px" /></small><h1>Café Yasmine</h1></div>
+              <div style="margin: 14px 20px 0">
+                <div class="pass violet press" data-open="qr" style="display: flex; align-items: center; gap: 16px; min-height: 0; padding: 20px">
+                  <div style="width: 70px; height: 70px; border-radius: 22px; background: rgba(255, 255, 255, 0.18); display: grid; place-items: center; position: relative; z-index: 1"><svg class="i" style="width: 38px; height: 38px"><use href="#i-qr" /></svg></div>
+                  <div style="position: relative; z-index: 1"><div style="font-size: 22px; font-weight: 700">ورّي الكود</div><div style="opacity: 0.8; font-size: 13.5px">الحريف يسكاني وياخو تامبونو</div></div>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 20px 0">
+                <div class="kpi press" style="text-align: start" data-toast="give"><img class="e3d" src="assets/3d/gift.png" alt="" style="margin: 0" /><b style="font-size: 16px; margin-top: 6px">اعطي كادو</b><span>سكاني تليفون الحريف</span></div>
+                <div class="kpi press" style="text-align: start"><img class="e3d" src="assets/3d/people.png" alt="" style="margin: 0" /><b style="font-size: 16px; margin-top: 6px">الحرفاء</b><span class="num">128</span></div>
+              </div>
+              <div class="h2">اليوم</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 20px">
+                <div class="kpi"><img class="e3d" src="assets/3d/fire.png" alt="" /><b class="num" id="todayCount">23</b><span>تامبون</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/sparkles.png" alt="" /><b class="num">4</b><span>حرفاء جدد</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/party.png" alt="" /><b class="num">2</b><span>كوادو</span></div>
+              </div>
+              <div class="h2">توّا</div>
+              <div class="group" id="feed">
+                <div class="item"><div class="me" style="width: 38px; height: 38px; font-size: 14px; box-shadow: none">س</div><div class="t">سامي خذا تامبون<small><span class="num">7/10</span> · 10:32</small></div></div>
+                <div class="item"><div class="me" style="width: 38px; height: 38px; font-size: 14px; box-shadow: none; background: linear-gradient(145deg, #7fd6ff, #2e90fa)">ل</div><div class="t">ليلى خذات قهوة بلاش 🎁<small>10:10</small></div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══ the shop owner: the counter QR, full screen ═══ -->
+          <section class="view fade" id="qr" data-role="owner" style="background: linear-gradient(170deg, #9b7bff 0%, #6c47ff 45%, #3a1db0 100%); color: #fff">
+            <div class="sb" style="color: #fff"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn press" data-back style="background: rgba(255, 255, 255, 0.18); color: #fff; box-shadow: none"><svg class="i"><use href="#i-x" /></svg></div><h2 style="color: #fff">Café Yasmine</h2><div style="width: 42px"></div></div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 24px 30px; text-align: center">
+              <img class="e3d floaty" src="assets/3d/coffee.png" alt="" style="width: 60px; height: 60px" />
+              <h1 style="margin: 8px 0 0; font-size: 24px">سكاني وخوذ تامبونك</h1>
+              <div class="press" id="qrCard" style="margin-top: 18px; width: 250px; background: #fff; border-radius: 32px; padding: 18px; box-shadow: 0 30px 60px -20px rgba(10, 0, 60, 0.6)"><canvas class="qr" id="qrCanvas" data-seed="counter-1" data-ink="#2a1470"></canvas></div>
+              <p style="margin: 14px 0 0; opacity: 0.8; font-size: 13.5px">الكود يتبدّل كل ما حريف يسكاني</p>
+              <div class="b" id="simScan" style="margin-top: auto; width: 100%; background: rgba(255, 255, 255, 0.16); color: #fff">(تجربة) حريف سكاني الكود</div>
+            </div>
+          </section>
+
+          <div class="scrim" id="scrim"></div>
+
+          <!-- the scanner -->
+          <div class="sheet" id="scanSheet">
+            <div class="grab"></div>
+            <h3 style="margin: 0 0 4px; font-size: 20px">سكاني الكود</h3>
+            <p style="margin: 0 0 14px; color: var(--ink-2); font-size: 14px">حطّ الكاميرا على الكود اللي في الكاسة</p>
+            <div class="scanframe"><div class="box"><div class="laser"></div></div></div>
+            <div class="b pri" id="doScan" style="margin-top: 16px">(تجربة) سكاني</div>
+          </div>
+
+          <!-- a stamp, landing -->
+          <div class="sheet" id="doneSheet" style="text-align: center">
+            <div class="grab"></div>
+            <div id="doneBadge" style="width: 108px; height: 108px; margin: 6px auto 0; border-radius: 34px; display: grid; place-items: center; background: linear-gradient(150deg, var(--brand-2), var(--brand)); color: #fff; box-shadow: 0 20px 40px -12px var(--brand)">
+              <span class="num" style="font-size: 42px; font-weight: 700">+1</span>
+            </div>
+            <h3 style="margin: 16px 0 2px; font-size: 24px">تامبون جديد!</h3>
+            <p style="margin: 0; color: var(--ink-2)">Café Yasmine</p>
+            <div id="doneLine" style="margin: 16px 0 0; padding: 14px; border-radius: 20px; background: var(--brand-soft); color: var(--brand); font-weight: 600"></div>
+            <div class="b pri" data-close style="margin-top: 16px">باهي</div>
+          </div>
+
+          <!-- a gift, shown at the till -->
+          <div class="sheet" id="rewardSheet" style="text-align: center; background: linear-gradient(170deg, #ffa183 0%, #ff6b4a 45%, #d93f22 100%); color: #fff">
+            <div class="grab" style="background: rgba(255, 255, 255, 0.4)"></div>
+            <img class="e3d" src="assets/3d/juice.png" alt="" style="width: 64px; height: 64px; margin: 0 auto" />
+            <h3 style="margin: 8px 0 0; font-size: 24px">عصير بلاش</h3>
+            <p style="margin: 2px 0 0; opacity: 0.85">ورّي الإيكران هذا للكاسة</p>
+            <div style="margin: 16px auto 0; width: 230px; background: #fff; border-radius: 28px; padding: 14px">
+              <canvas class="qr" data-seed="reward-482913"></canvas>
+              <div class="num" style="color: #0f0e17; font-size: 28px; font-weight: 700; letter-spacing: 0.12em; margin-top: 6px">482 913</div>
+            </div>
+            <p style="margin: 14px 0 0; font-weight: 600">مازال <span class="num" id="countdown">15:00</span></p>
+            <div class="b" data-close style="margin-top: 14px; background: rgba(255, 255, 255, 0.18); color: #fff">سكّر</div>
+          </div>
+
+          <div class="toast" id="toast"><img class="e3d" id="toastIcon" src="assets/3d/party.png" alt="" /><span id="toastText"></span></div>
+          <div class="confetti2" id="confetti"></div>
+
+          <nav class="tabbar" id="tabbar">
+            <div class="tab on press" data-tab="home"><svg class="i"><use href="#i-homef" /></svg><span>الدار</span></div>
+            <div class="scanbtn" id="scanBtn"><svg class="i"><use href="#i-scan" /></svg></div>
+            <div class="tab press" data-tab="me"><svg class="i"><use href="#i-user" /></svg><span>الكونت</span></div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/icons.js"></script>
+    <script>
+      const $ = (s, r = document) => r.querySelector(s);
+      const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+      const app = $("#app");
+      const state = { role: "client", tab: "home", yasmine: 7, today: 23 };
+
+      // ── the wallet: three passes, the newest in front ───────────────────
+      const passes = [
+        { id: "nour", kind: "gold", icon: "scissors", name: "Salon Nour", sub: "نقاط", big: () => "240" },
+        { id: "hedi", kind: "coral", icon: "croissant", name: "Pâtisserie Hédi", sub: "كارط بالمستويات", big: () => '12<small>/20</small>' },
+        { id: "yasmine", kind: "violet", icon: "coffee", name: "Café Yasmine", sub: "كارط تامبونات", big: () => `${state.yasmine}<small>/10</small>` },
+      ];
+      function dots(n, total = 10, five = false) {
+        let h = `<div class="dots${five ? " five" : ""}">`;
+        for (let i = 1; i <= total; i++) h += `<i class="${i <= n ? "on" : i === total ? "gift" : ""}">${five && i <= n ? '<img class="e3d" src="assets/3d/coffee.png" alt="">' : ""}${five && i === total && i > n ? '<img class="e3d" src="assets/3d/gift.png" alt="" style="width:60%;height:60%;filter:grayscale(.2) brightness(1.5)">' : ""}</i>`;
+        return h + "</div>";
+      }
+      function renderStack() {
+        $("#stack").innerHTML = passes
+          .map((p) => {
+            const front = p.id === "yasmine";
+            const left = 10 - state.yasmine;
+            return `<div class="pass ${p.kind} press" data-pass="${p.id}">
+              <div class="top"><div class="logo"><img class="e3d" src="assets/3d/${p.icon}.png" alt=""></div>
+              <div class="n">${p.name}<small>${p.sub}</small></div><div class="big num">${p.big()}</div></div>
+              ${front ? dots(state.yasmine) + `<div class="line"><span>${left > 0 ? `مازالولك ${left} وتاخو قهوة بلاش` : "القهوة البلاش متاعك حاضرة!"}</span><img class="e3d" src="assets/3d/coffee.png" alt=""></div>` : ""}
+            </div>`;
+          })
+          .join("");
+      }
+
+      // ── one card, three kinds ─────────────────────────────────────────
+      function cardPage(id) {
+        const p = passes.find((x) => x.id === id);
+        $("#cardTitle").textContent = p.name;
+        let h = `<div style="margin: 6px 20px 0"><div class="pass ${p.kind}" style="min-height: 0"><div class="top"><div class="logo"><img class="e3d" src="assets/3d/${p.icon}.png" alt=""></div><div class="n">${p.name}<small>${p.sub}</small></div><div class="big num">${p.big()}</div></div>`;
+        if (id === "yasmine") {
+          h += dots(state.yasmine, 10, true) + `<div class="line"><span>قهوة بلاش</span><span class="num">${state.yasmine}/10</span></div></div></div>`;
+          h += `<div class="h2">شنوّة صار</div><div class="group">
+            <div class="item"><div class="ic" style="background: var(--mint-soft); color: var(--mint)"><b class="num">+1</b></div><div class="t">تامبون<small>اليوم · 10:32</small></div></div>
+            <div class="item"><div class="ic" style="background: var(--mint-soft); color: var(--mint)"><b class="num">+1</b></div><div class="t">تامبون<small>البارح · 18:05</small></div></div>
+            <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/gift.png" alt=""></div><div class="t">قهوة بلاش · خذيتها<small>12 سبتمبر</small></div></div></div>`;
+        } else if (id === "hedi") {
+          h += `<div class="meter"><b style="width: 60%"></b></div><div class="line"><span>المستوى 2 من 3</span></div></div></div>
+            <div class="h2">المستويات</div><div class="road2" style="margin: 0 20px">
+            <div class="stop2"><div class="knot2" style="background: var(--mint-soft)"><img class="e3d" src="assets/3d/croissant.png" alt=""></div><div class="card2"><b>6 تامبونات · كرواسون بلاش</b><div style="color: var(--mint); font-size: 13px; font-weight: 600">✓ خذيتو</div></div></div>
+            <div class="stop2"><div class="knot2" style="background: var(--coral-soft)"><img class="e3d floaty" src="assets/3d/juice.png" alt=""></div><div class="card2" style="box-shadow: 0 0 0 2px var(--coral), var(--shadow)"><b>10 تامبونات · عصير بلاش</b><div style="color: var(--ink-2); font-size: 13px">حاضر! والتامبونات متاعك يبقاو</div><div class="b coral press" data-open="reward" style="height: 40px; font-size: 14px; margin-top: 8px">خوذ العصير</div></div></div>
+            <div class="stop2"><div class="knot2" style="background: var(--surface-2); filter: grayscale(0.6); opacity: 0.8"><img class="e3d" src="assets/3d/trophy.png" alt=""></div><div class="card2"><b>20 تامبون · فطور بلاش</b><div style="color: var(--ink-2); font-size: 13px">مازالولك 8</div></div></div></div>`;
+        } else {
+          h += `<div class="meter"><b style="width: 80%"></b></div><div class="line"><span>مازالولك 60 نقطة على مشط + سشوار</span></div></div></div>
+            <div class="h2">عوّض النقاط متاعك</div><div class="group">
+            <div class="item"><div class="ic" style="background: var(--gold-soft)"><img class="e3d" src="assets/3d/ticket.png" alt=""></div><div class="t">ريميز 10 د<small><span class="num">100</span> نقطة</small></div><div class="b gold press" style="height: 38px; padding: 0 16px; font-size: 14px">عوّض</div></div>
+            <div class="item"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/scissors.png" alt=""></div><div class="t">مشط + سشوار<small><span class="num">240/300</span></small></div><span style="color: var(--ink-3); font-size: 13px">مازالو 60</span></div>
+            <div class="item"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/gem.png" alt=""></div><div class="t">كولور بلاش<small><span class="num">240/500</span></small></div><span style="color: var(--ink-3); font-size: 13px">مازالو 260</span></div></div>`;
+        }
+        $("#cardBody").innerHTML = h;
+      }
+
+      // ── navigation: push, pop, tabs, sheets ─────────────────────────────
+      function push(id) {
+        $("#home").classList.add("under");
+        $("#" + id).classList.remove("off");
+        $("#tabbar").style.transform = "translateY(140%)";
+      }
+      function pop() {
+        $("#home").classList.remove("under");
+        $("#card").classList.add("off");
+        $("#tabbar").style.transform = "";
+      }
+      function showTab(tab) {
+        state.tab = tab;
+        $("#home").classList.toggle("fade", tab !== "home");
+        $("#me").classList.toggle("fade", tab !== "me");
+        $$(".tab[data-tab]").forEach((t) => {
+          const on = t.dataset.tab === tab;
+          t.classList.toggle("on", on);
+          const base = t.dataset.tab === "home" ? "home" : "user";
+          t.querySelector("use").setAttribute("href", `#i-${base}${on ? "f" : ""}`);
+        });
+      }
+      let openSheet = null;
+      function sheet(id) {
+        if (openSheet) $("#" + openSheet).classList.remove("open");
+        openSheet = id;
+        app.classList.toggle("sheet-open", !!id);
+        if (id) $("#" + id).classList.add("open");
+      }
+      function toast(text, icon = "party") {
+        $("#toastText").textContent = text;
+        $("#toastIcon").src = `assets/3d/${icon}.png`;
+        $("#toast").classList.add("show");
+        clearTimeout(toast.t);
+        toast.t = setTimeout(() => $("#toast").classList.remove("show"), 2300);
+      }
+      function confetti() {
+        const box = $("#confetti");
+        box.innerHTML = "";
+        const colours = ["#9b7bff", "#ff6b4a", "#ffb21e", "#12b76a", "#2e90fa", "#f472b6"];
+        for (let k = 0; k < 44; k++) {
+          const i = document.createElement("i");
+          i.style.left = Math.random() * 100 + "%";
+          i.style.background = colours[k % colours.length];
+          i.style.animationDelay = Math.random() * 0.4 + "s";
+          i.style.transform = `rotate(${Math.random() * 180}deg)`;
+          box.appendChild(i);
+        }
+        setTimeout(() => (box.innerHTML = ""), 2600);
+      }
+      function buzz(ms) {
+        try {
+          navigator.vibrate?.(ms);
+        } catch {}
+      }
+
+      // the customer scans: +1 lands, the card in the wallet moves too
+      function stampLands() {
+        state.yasmine = Math.min(10, state.yasmine + 1);
+        const left = 10 - state.yasmine;
+        $("#doneLine").textContent = left > 0 ? `مازالولك ${left} وتاخو قهوة بلاش ☕` : "القهوة البلاش متاعك حاضرة! ☕";
+        sheet("doneSheet");
+        const badge = $("#doneBadge");
+        badge.classList.remove("drop");
+        void badge.offsetWidth;
+        badge.classList.add("drop");
+        confetti();
+        buzz([30, 40, 60]);
+        renderStack();
+      }
+
+      // ── wiring ──────────────────────────────────────────────────────────
+      app.addEventListener("click", (e) => {
+        const t = e.target.closest("[data-pass],[data-back],[data-tab],[data-open],[data-close],[data-toast],[data-go],#scanBtn,#doScan,#simScan,#scrim,[data-sw],#darkSw");
+        if (!t) return;
+        if (t.dataset.pass) {
+          cardPage(t.dataset.pass);
+          push("card");
+        } else if ("back" in t.dataset) {
+          if (state.role === "owner") ownerHome();
+          else pop();
+        } else if (t.dataset.tab) showTab(t.dataset.tab);
+        else if (t.dataset.go === "me") showTab("me");
+        else if (t.dataset.open === "reward") {
+          sheet("rewardSheet");
+          startCountdown();
+        } else if (t.dataset.open === "qr") ownerQr();
+        else if ("close" in t.dataset || t.id === "scrim") sheet(null);
+        else if (t.dataset.toast === "bell") toast("ما عندك حتى جديد، كل شي لاباس", "bell");
+        else if (t.dataset.toast === "give") toast("الكاميرا تتحلّ باش تسكاني كادو الحريف", "gift");
+        else if (t.id === "scanBtn") (state.role === "owner" ? ownerQr() : sheet("scanSheet"));
+        else if (t.id === "doScan") {
+          sheet(null);
+          setTimeout(stampLands, 380);
+        } else if (t.id === "simScan") {
+          state.today += 1;
+          $("#todayCount").textContent = state.today;
+          toast("سامي خذا تامبون · 8/10", "coffee");
+          buzz(40);
+          const qr = $("#qrCard");
+          qr.classList.remove("pop");
+          void qr.offsetWidth;
+          qr.classList.add("pop");
+        } else if ("sw" in t.dataset) t.classList.toggle("off");
+        else if (t.id === "darkSw") {
+          t.classList.toggle("off");
+          setTheme(t.classList.contains("off") ? "" : "night");
+        }
+      });
+
+      let timer = null;
+      function startCountdown() {
+        let s = 15 * 60;
+        clearInterval(timer);
+        const tick = () => {
+          $("#countdown").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+          s = Math.max(0, s - 1);
+        };
+        tick();
+        timer = setInterval(tick, 1000);
+      }
+
+      // the big title folds into a small bar as the lobby scrolls
+      $("#homeBody").addEventListener("scroll", (e) => $("#homeMini").classList.toggle("show", e.target.scrollTop > 70));
+
+      // ── the owner ─────────────────────────────────────────────────────
+      function ownerHome() {
+        $("#qr").classList.add("fade");
+        $("#ohome").classList.remove("fade");
+        $("#tabbar").style.transform = "";
+      }
+      function ownerQr() {
+        $("#qr").classList.remove("fade");
+        $("#tabbar").style.transform = "translateY(140%)";
+      }
+      function setRole(role) {
+        state.role = role;
+        sheet(null);
+        $$(".view").forEach((v) => v.classList.add("fade"));
+        $("#card").classList.add("off");
+        $("#home").classList.remove("under");
+        if (role === "client") {
+          $("#card").classList.remove("fade");
+          showTab("home");
+          $("#tabbar").style.transform = "";
+          $("#tabbar").innerHTML = `<div class="tab on press" data-tab="home"><svg class="i"><use href="#i-homef"/></svg><span>الدار</span></div><div class="scanbtn" id="scanBtn"><svg class="i"><use href="#i-scan"/></svg></div><div class="tab press" data-tab="me"><svg class="i"><use href="#i-user"/></svg><span>الكونت</span></div>`;
+        } else {
+          ownerHome();
+          $("#tabbar").innerHTML = `<div class="tab on press"><svg class="i"><use href="#i-homef"/></svg><span>الدار</span></div><div class="scanbtn" id="scanBtn"><svg class="i"><use href="#i-qr"/></svg></div><div class="tab press"><svg class="i"><use href="#i-chart"/></svg><span>الأرقام</span></div>`;
+        }
+        $$(".ctrl [data-role]").forEach((b) => b.classList.toggle("on", b.dataset.role === role));
+      }
+      function setTheme(t) {
+        app.classList.remove("night", "sunny");
+        if (t) app.classList.add(t);
+        $("#darkSw").classList.toggle("off", t !== "night");
+        $$(".ctrl [data-theme]").forEach((b) => b.classList.toggle("on", b.dataset.theme === t));
+      }
+      $$(".ctrl [data-role]").forEach((b) => b.addEventListener("click", () => setRole(b.dataset.role)));
+      $$(".ctrl [data-theme]").forEach((b) => b.addEventListener("click", () => setTheme(b.dataset.theme)));
+
+      renderStack();
+      setRole(new URLSearchParams(location.search).get("role") === "owner" ? "owner" : "client");
+      setTheme(new URLSearchParams(location.search).get("theme") || "");
+    </script>
+  </body>
+</html>
