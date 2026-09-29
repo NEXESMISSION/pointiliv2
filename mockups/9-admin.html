@@ -1,0 +1,1708 @@
+<!doctype html>
+<html lang="ar-TN" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f3f9" />
+    <title>الأدمين · Pointili</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/app.css" />
+    <link rel="stylesheet" href="assets/r2.css" />
+    <style>
+      body {
+        font-family: "Readex Pro", "IBM Plex Sans Arabic", sans-serif;
+      }
+      /* the stage around the phone, and the controls that are not part of the app */
+      .stage {
+        display: flex;
+        justify-content: center;
+        padding: 10px 16px 60px;
+      }
+      .ctrl {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 0 auto 14px;
+        padding: 0 16px;
+      }
+      .ctrl button {
+        font: inherit;
+        font-weight: 600;
+        font-size: 14px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 999px;
+        padding: 8px 14px;
+        cursor: pointer;
+      }
+      .ctrl button.on {
+        background: #0f0e17;
+        color: #fff;
+        border-color: #0f0e17;
+      }
+      @media (max-width: 520px) {
+        body {
+          background: #000;
+        }
+        .board-head,
+        .ctrl {
+          display: none;
+        }
+        .stage {
+          padding: 0;
+        }
+        .phone {
+          width: 100vw;
+          height: 100dvh;
+          border-radius: 0;
+          padding: 0;
+          box-shadow: none;
+        }
+        .screen {
+          border-radius: 0;
+        }
+      }
+
+      /* views: tabs fade, pages slide in from the left, the new-shop flow rises from the bottom */
+      #app .view {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.25, 1), opacity 0.35s;
+        will-change: transform;
+      }
+      #app .view.off {
+        transform: translateX(-100%);
+      }
+      #app .view.under {
+        transform: translateX(28%);
+        opacity: 0.6;
+      }
+      #app .view.fade {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #app .view.down {
+        transform: translateY(105%);
+      }
+      #app #wizard {
+        z-index: 35;
+      }
+      #tabbar {
+        transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.25, 1);
+      }
+      .r2 input {
+        user-select: text;
+        -webkit-user-select: text;
+      }
+
+      /* ── shared pieces ── */
+      .r2 .navbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 16px 10px;
+      }
+      .r2 .navbar h2 {
+        margin: 0;
+        flex: 1;
+        text-align: center;
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .r2 .chip {
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 4px 10px;
+        white-space: nowrap;
+      }
+      .r2 .chip.mint {
+        background: var(--mint-soft);
+        color: var(--mint);
+      }
+      .r2 .chip.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+      .r2 .chip.brand {
+        background: var(--brand-soft);
+        color: var(--brand);
+      }
+      .r2 .chip.grey {
+        background: var(--surface-2);
+        color: var(--ink-2);
+      }
+      .r2 .mini-b {
+        height: 34px;
+        padding: 0 12px;
+        font-size: 13.5px;
+        border-radius: 12px;
+      }
+      .r2 .kpis3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 12px 20px 0;
+      }
+      .r2 .kpi {
+        background: var(--surface);
+        border-radius: 22px;
+        padding: 14px 10px 12px;
+        box-shadow: var(--shadow);
+        text-align: center;
+      }
+      .r2 .kpi img {
+        width: 32px;
+        height: 32px;
+        margin: 0 auto 4px;
+      }
+      .r2 .kpi b {
+        display: block;
+        font-size: 21px;
+        font-weight: 700;
+      }
+      .r2 .kpi span {
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+      .r2 .act {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        min-height: 0;
+        padding: 18px;
+      }
+      .r2 .act .bigic {
+        width: 60px;
+        height: 60px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.18);
+        display: grid;
+        place-items: center;
+        position: relative;
+        z-index: 1;
+        flex-shrink: 0;
+      }
+      .r2 .act .bigic .i {
+        width: 30px;
+        height: 30px;
+      }
+      .r2 .act .tx {
+        position: relative;
+        z-index: 1;
+      }
+      .r2 .act .tx b {
+        display: block;
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .r2 .act .tx span {
+        opacity: 0.82;
+        font-size: 13.5px;
+      }
+      .r2 .lbl {
+        margin: 14px 2px 7px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ink-2);
+      }
+      .r2 .in {
+        width: 100%;
+        height: 50px;
+        border-radius: 16px;
+        border: 0;
+        background: var(--surface);
+        box-shadow: var(--shadow), inset 0 0 0 1px var(--hair);
+        padding: 0 14px;
+        font: inherit;
+        font-size: 15.5px;
+        color: var(--ink);
+        outline: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .r2 input.in:focus,
+      .r2 .in:focus-within {
+        box-shadow: var(--shadow), inset 0 0 0 2px var(--brand);
+      }
+      .r2 .in input {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        outline: none;
+      }
+      .r2 .in .pre {
+        color: var(--ink-3);
+      }
+      .r2 .in .dice {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: var(--brand-soft);
+        color: var(--brand);
+        flex-shrink: 0;
+      }
+      .r2 .seg2 {
+        display: flex;
+        gap: 4px;
+        background: var(--surface-2);
+        padding: 4px;
+        border-radius: 15px;
+        box-shadow: inset 0 0 0 1px var(--hair);
+      }
+      .r2 .seg2 > span {
+        flex: 1;
+        height: 40px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        white-space: nowrap;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        color: var(--ink-2);
+      }
+      .r2 .seg2 > span.on {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: var(--shadow);
+        font-weight: 600;
+      }
+      .r2 .twocol {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .r2 .sheet h3 {
+        margin: 0;
+        font-size: 21px;
+      }
+      .r2 .sheet .sp {
+        margin: 2px 0 12px;
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+      .r2 .sheet .group {
+        margin: 0;
+        box-shadow: none;
+        background: var(--surface-2);
+      }
+
+      /* ── home ── */
+      .r2 .money {
+        margin: 0 20px;
+        background: var(--surface);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+        display: flex;
+        gap: 14px;
+        align-items: flex-end;
+      }
+      .r2 .money small {
+        color: var(--ink-2);
+        font-size: 13px;
+      }
+      .r2 .money .v {
+        display: block;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.1;
+        margin: 2px 0 8px;
+      }
+      .r2 .bars {
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 76px;
+        direction: ltr;
+      }
+      .r2 .bars i {
+        flex: 1;
+        border-radius: 4px 4px 2px 2px;
+        background: var(--brand-soft);
+      }
+      .r2 .bars i.on {
+        background: var(--brand);
+      }
+      .r2 .bars.tall {
+        height: 120px;
+      }
+      .r2 .months {
+        display: flex;
+        gap: 6px;
+        direction: ltr;
+        margin-top: 6px;
+      }
+      .r2 .months span {
+        flex: 1;
+        text-align: center;
+        font-size: 11px;
+        color: var(--ink-3);
+      }
+
+      /* ── shops ── */
+      .r2 .search {
+        margin: 10px 20px 0;
+        height: 46px;
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 14px;
+        color: var(--ink-3);
+        font-size: 14.5px;
+      }
+      .r2 .filters {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 12px 20px 14px;
+        scrollbar-width: none;
+      }
+      .r2 .filters::-webkit-scrollbar {
+        display: none;
+      }
+      .r2 .filters span {
+        white-space: nowrap;
+        height: 36px;
+        border-radius: 999px;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        font-size: 13.5px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .r2 .filters span.on {
+        background: var(--ink);
+        color: var(--bg);
+      }
+      .r2 .filters b {
+        font-weight: 600;
+        opacity: 0.6;
+      }
+
+      /* ── one shop ── */
+      .r2 .cover {
+        height: 178px;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .r2 .cover .sb {
+        color: #fff;
+      }
+      .r2 .cover .gbtn {
+        position: absolute;
+        z-index: 2;
+        top: 50px;
+        right: 16px;
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+        box-shadow: none;
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+      }
+      .r2 .cover .art {
+        position: absolute;
+        left: 22px;
+        bottom: -14px;
+        width: 132px;
+        height: 132px;
+        transform: rotate(-10deg);
+      }
+      .r2 .cover::after {
+        content: "";
+        pointer-events: none;
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        right: -80px;
+        bottom: -150px;
+        border-radius: 50%;
+        border: 34px solid rgba(255, 255, 255, 0.08);
+      }
+      .r2 .shophead {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin: 0 20px;
+        padding-top: 10px;
+        position: relative;
+        z-index: 2;
+      }
+      .r2 .shophead .lg {
+        width: 74px;
+        height: 74px;
+        border-radius: 24px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        display: grid;
+        place-items: center;
+        border: 4px solid var(--bg);
+        flex-shrink: 0;
+        margin-top: -46px;
+      }
+      .r2 .shophead .lg img {
+        width: 46px;
+        height: 46px;
+      }
+      .r2 .shophead h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.2;
+      }
+      .r2 .shophead small {
+        color: var(--ink-2);
+        font-size: 13px;
+      }
+      .r2 .subc {
+        margin: 12px 20px 0;
+        background: var(--surface);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+      .r2 .subc .r1 {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .r2 .subc .d {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-top: 6px;
+      }
+      .r2 .subc .d b {
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .r2 .subc .d span {
+        color: var(--ink-2);
+        font-size: 13.5px;
+      }
+      .r2 .track {
+        height: 8px;
+        border-radius: 99px;
+        background: var(--surface-2);
+        margin-top: 12px;
+        overflow: hidden;
+      }
+      .r2 .track b {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        background: var(--mint);
+      }
+      .r2 .subc .btns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .r2 .subc .btns .b {
+        height: 44px;
+        font-size: 14.5px;
+      }
+      .r2 .closel {
+        text-align: center;
+        color: var(--ink-3);
+        font-size: 13.5px;
+        font-weight: 500;
+        padding: 12px 0 0;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+
+      /* ── the new-shop flow ── */
+      .r2 .wtop {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 16px 6px;
+      }
+      .r2 .prog {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 5px;
+      }
+      .r2 .prog i {
+        height: 5px;
+        border-radius: 9px;
+        background: var(--hair);
+        transition: background 0.3s;
+      }
+      .r2 .prog i.on {
+        background: var(--brand);
+      }
+      .r2 .stepno {
+        font-size: 13px;
+        color: var(--ink-3);
+        min-width: 30px;
+        text-align: center;
+      }
+      .r2 .wbody {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px 20px 12px;
+        scrollbar-width: none;
+      }
+      .r2 .wbody::-webkit-scrollbar {
+        display: none;
+      }
+      .r2 .wt {
+        margin: 6px 0 2px;
+        font-size: 26px;
+        font-weight: 700;
+      }
+      .r2 .ws {
+        margin: 0 0 4px;
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+      .r2 .wfoot {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 10px;
+        padding: 10px 20px 22px;
+      }
+      .r2 .cats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .r2 .cat {
+        background: var(--surface);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 10px 2px 8px;
+        text-align: center;
+        font-size: 12.5px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .r2 .cat img {
+        width: 34px;
+        height: 34px;
+        margin: 0 auto 4px;
+      }
+      .r2 .cat.on {
+        box-shadow: 0 0 0 2px var(--brand), var(--shadow);
+        background: var(--brand-soft);
+        color: var(--brand);
+      }
+      .r2 .plans {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .r2 .plan {
+        position: relative;
+        background: var(--surface);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+        cursor: pointer;
+      }
+      .r2 .plan b {
+        display: block;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .r2 .plan .p {
+        font-size: 26px;
+        font-weight: 700;
+      }
+      .r2 .plan em {
+        position: absolute;
+        top: -10px;
+        inset-inline-start: 12px;
+        font-style: normal;
+        font-size: 11.5px;
+        font-weight: 600;
+        background: var(--mint);
+        color: #fff;
+        border-radius: 999px;
+        padding: 2px 9px;
+      }
+      .r2 .plan.on {
+        box-shadow: 0 0 0 2px var(--brand), var(--shadow);
+      }
+      .r2 .sumline {
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: var(--brand-soft);
+        color: var(--brand);
+        font-size: 14px;
+      }
+      .r2 .sysopt {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        background: var(--surface);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        padding: 14px;
+        margin-top: 10px;
+        cursor: pointer;
+      }
+      .r2 .sysopt .sq {
+        width: 50px;
+        height: 50px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .r2 .sysopt .sq img {
+        width: 32px;
+        height: 32px;
+      }
+      .r2 .sysopt .tx {
+        flex: 1;
+        min-width: 0;
+      }
+      .r2 .sysopt b {
+        display: block;
+        font-size: 16px;
+      }
+      .r2 .sysopt span {
+        display: block;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      .r2 .sysopt em {
+        display: inline-block;
+        margin-top: 5px;
+        font-style: normal;
+        font-size: 11.5px;
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 2px 9px;
+        background: var(--mint-soft);
+        color: var(--mint);
+      }
+      .r2 .sysopt .tick {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2px solid var(--hair);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        color: transparent;
+      }
+      .r2 .sysopt .tick .i {
+        width: 16px;
+        height: 16px;
+        stroke-width: 3;
+      }
+      .r2 .sysopt.on {
+        box-shadow: 0 0 0 2px var(--brand), var(--shadow);
+      }
+      .r2 .sysopt.on .tick {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: #fff;
+      }
+      .r2 .skip {
+        text-align: center;
+        color: var(--brand);
+        font-weight: 600;
+        font-size: 14.5px;
+        padding: 14px 8px 4px;
+        cursor: pointer;
+      }
+      .r2 .goalchips {
+        display: flex;
+        gap: 8px;
+      }
+      .r2 .goalchips span {
+        flex: 1;
+        height: 46px;
+        border-radius: 15px;
+        display: grid;
+        place-items: center;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .r2 .goalchips span.on {
+        background: var(--brand);
+        color: #fff;
+        box-shadow: 0 10px 20px -8px var(--brand);
+      }
+      .r2 .sugg {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .r2 .sugg span {
+        font-size: 12.5px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--hair);
+        color: var(--ink-2);
+        cursor: pointer;
+      }
+      .r2 .lvl {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        padding: 8px 12px 8px 8px;
+        margin-bottom: 8px;
+      }
+      .r2 .lvl .k {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        background: var(--coral-soft);
+        color: var(--coral);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .r2 .lvl.goal .k {
+        background: var(--coral);
+        color: #fff;
+      }
+      .r2 .lvl .t {
+        flex: 1;
+        font-weight: 500;
+      }
+      .r2 .lvl .t small {
+        display: block;
+        font-size: 12px;
+        color: var(--ink-3);
+        font-weight: 400;
+      }
+      .r2 .addrow {
+        height: 44px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        background: var(--brand-soft);
+        color: var(--brand);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .r2 .upl {
+        height: 76px;
+        border-radius: 18px;
+        border: 2px dashed var(--ink-3);
+        opacity: 0.8;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        color: var(--ink-2);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .r2 .colors {
+        display: flex;
+        gap: 12px;
+        padding: 2px 4px;
+      }
+      .r2 .colors span {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .r2 .colors span.on {
+        box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--ink);
+      }
+      .r2 .marks {
+        display: flex;
+        gap: 8px;
+      }
+      .r2 .marks span {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .r2 .marks img {
+        width: 30px;
+        height: 30px;
+      }
+      .r2 .marks span.on {
+        box-shadow: 0 0 0 2px var(--brand), var(--shadow);
+      }
+      .r2 .cred {
+        background: var(--surface);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-top: 14px;
+      }
+      .r2 .cred .r {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+      }
+      .r2 .cred .r + .r {
+        box-shadow: inset 0 1px 0 var(--hair);
+      }
+      .r2 .cred .r span {
+        color: var(--ink-2);
+        font-size: 13.5px;
+        flex: 1;
+      }
+      .r2 .cred .r b {
+        font-size: 18px;
+      }
+      .r2 .cred .r .i {
+        color: var(--brand);
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+      .r2 .hint {
+        margin: 8px 2px 0;
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+
+      /* ── inside a shop, as the founder ── */
+      .r2 .asbar {
+        margin: 0 12px 4px;
+        background: #0f0e17;
+        color: #fff;
+        border-radius: 16px;
+        padding: 9px 10px 9px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13.5px;
+      }
+      .r2 .asbar span {
+        flex: 1;
+      }
+      .r2 .asbar .asx {
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .r2.night .asbar {
+        background: #fff;
+        color: #0f0e17;
+      }
+      .r2.night .asbar .asx {
+        background: rgba(0, 0, 0, 0.08);
+      }
+      #tabbar.five {
+        grid-template-columns: 1fr 1fr 76px 1fr 1fr;
+      }
+      #tabbar.five .scanbtn {
+        width: 58px;
+        height: 58px;
+        border-radius: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="board-head">
+      <div>
+        <h1>9 · الأدمين (جديد)</h1>
+        <p>هوني تحلّ كل محل بيدك: المحل، المولى وكلمة السر، الأبونمان، السيستام، الكارط والشكل. <b>المولى ما يعملش كونت وحدو</b>: يدخل بالتليفون وكلمة السر اللي تعطيهولو. الحرفاء برك يعملو كونت. نزّل على كل شي.</p>
+      </div>
+      <nav class="board-nav">
+        <a href="index.html">المنيو</a>
+        <a href="6-look.html">الشكل</a>
+        <a href="7-app.html">جرّب الأبليكاسيون</a>
+        <a href="8-change.html">تبديل الكارط</a>
+        <a href="9-admin.html" class="on">الأدمين</a>
+      </nav>
+    </header>
+    <div class="ctrl">
+      <button data-jump="home" class="on">الدار</button>
+      <button data-jump="wizard">حلّ محل جديد</button>
+      <button data-jump="shop">محل</button>
+      <button data-jump="actas">ادخل كمحل</button>
+      <span style="width: 12px"></span>
+      <button data-theme="" class="on">A · Lilac</button>
+      <button data-theme="night">B · Night</button>
+      <button data-theme="sunny">C · Sunny</button>
+    </div>
+
+    <div class="stage">
+      <div class="phone">
+        <div class="screen r2" id="app">
+          <!-- ═══ home ═══ -->
+          <section class="view" id="home">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="body">
+              <div class="head">
+                <div class="me" style="background: linear-gradient(145deg, #9b7bff, #6c47ff); font-family: Inter, sans-serif">P</div>
+                <div class="gbtn press" data-toast="bell"><svg class="i"><use href="#i-bell" /></svg><span class="badge"></span></div>
+              </div>
+              <div class="lt"><small>صباح الخير <img class="e3d" src="assets/3d/wave.png" alt="" style="width: 20px; height: 20px" /></small><h1>الأدمين</h1></div>
+              <div style="margin: 14px 20px 0">
+                <div class="pass violet act press" data-go="wizard">
+                  <div class="bigic"><svg class="i"><use href="#i-plus" /></svg></div>
+                  <div class="tx"><b>حلّ محل جديد</b><span>المحل، المولى، الكارط: في 5 دقايق</span></div>
+                </div>
+              </div>
+              <div class="kpis3">
+                <div class="kpi"><img class="e3d" src="assets/3d/shop.png" alt="" /><b class="num">12</b><span>محل يخدم</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/people.png" alt="" /><b class="num">1,284</b><span>حريف</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/fire.png" alt="" /><b class="num">86</b><span>سكان اليوم</span></div>
+              </div>
+              <div class="h2">الفلوس <a href="#" data-tab="money">الكل</a></div>
+              <div class="money press" data-tab="money">
+                <div>
+                  <small>دخلو هالشهر</small>
+                  <b class="v"><span class="num">520</span> د</b>
+                  <span class="chip mint">3 محلات جداد</span>
+                </div>
+                <div class="bars" aria-label="الفلوس في 6 شهور">
+                  <i style="height: 38%" title="أفريل · 200 د"></i><i style="height: 54%" title="ماي · 280 د"></i><i style="height: 69%" title="جوان · 360 د"></i><i style="height: 46%" title="جويلية · 240 د"></i><i style="height: 85%" title="أوت · 440 د"></i><i class="on" style="height: 100%" title="سبتمبر · 520 د"></i>
+                </div>
+              </div>
+              <div class="h2">ما تنساش</div>
+              <div class="group">
+                <div class="item press" data-shop="nour"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/hourglass.png" alt="" /></div><div class="t">Salon Nour<small>الأبونمان يوفى بعد 3 أيام</small></div><div class="b sec mini-b">جدّد</div></div>
+                <div class="item press" data-shop="box"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/gift.png" alt="" /></div><div class="t">Burger Box<small>الكارط مازالت ما تعملتش</small></div><div class="b sec mini-b">كمّلها</div></div>
+                <div class="item press" data-shop="delices"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/phone.png" alt="" /></div><div class="t">Délices<small>حتى حد ما سكاني من 7 أيام</small></div><div class="b sec mini-b">كلّمهم</div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══ shops ═══ -->
+          <section class="view fade" id="shops">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="body">
+              <div class="lt"><small>12 يخدمو · 1 موقوف</small><h1>المحلات</h1></div>
+              <div class="search press" data-toast="search"><svg class="i"><use href="#i-search" /></svg><span>لوّج على محل، مولى ولا تليفون…</span></div>
+              <div class="filters" id="filters">
+                <span class="on" data-f="all">الكل <b class="num">14</b></span><span data-f="soon">يوفى قريب <b class="num">2</b></span><span data-f="setup">ما كمّلش <b class="num">1</b></span><span data-f="stopped">موقوف <b class="num">1</b></span>
+              </div>
+              <div class="group" id="shopList"></div>
+            </div>
+          </section>
+
+          <!-- ═══ money ═══ -->
+          <section class="view fade" id="money">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="body">
+              <div class="lt"><small>سبتمبر 2026</small><h1>الفلوس</h1></div>
+              <div class="subc" style="margin-top: 14px">
+                <div class="r1"><span style="color: var(--ink-2); font-size: 13.5px">دخلو هالشهر</span><span class="chip mint"><span class="num">+18%</span> على أوت</span></div>
+                <div class="d"><b><span class="num">520</span> د</b><span>من 5 خلاصات</span></div>
+                <div class="bars tall" style="margin-top: 14px" aria-label="الفلوس في 6 شهور">
+                  <i style="height: 38%" title="أفريل · 200 د"></i><i style="height: 54%" title="ماي · 280 د"></i><i style="height: 69%" title="جوان · 360 د"></i><i style="height: 46%" title="جويلية · 240 د"></i><i style="height: 85%" title="أوت · 440 د"></i><i class="on" style="height: 100%" title="سبتمبر · 520 د"></i>
+                </div>
+                <div class="months"><span>أفريل</span><span>ماي</span><span>جوان</span><span>جويلية</span><span>أوت</span><span style="color: var(--brand); font-weight: 600">سبتمبر</span></div>
+              </div>
+              <div class="h2">يوفاو قريب</div>
+              <div class="group">
+                <div class="item press" data-shop="nour"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/scissors.png" alt="" /></div><div class="t">Salon Nour<small>بعد 3 أيام · 6 شهور · 80 د</small></div><div class="b sec mini-b">جدّد</div></div>
+                <div class="item press" data-shop="hedi"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/croissant.png" alt="" /></div><div class="t">Pâtisserie Hédi<small>بعد 41 يوم · 6 شهور · 80 د</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+              </div>
+              <div class="h2">آخر الخلاصات</div>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--mint-soft)"><img class="e3d" src="assets/3d/moneybag.png" alt="" /></div><div class="t">Café Yasmine<small>عام · كاش · اليوم</small></div><b><span class="num">120</span> د</b></div>
+                <div class="item"><div class="ic" style="background: var(--mint-soft)"><img class="e3d" src="assets/3d/moneybag.png" alt="" /></div><div class="t">Délices<small>عام · D17 · 12 سبتمبر</small></div><b><span class="num">120</span> د</b></div>
+                <div class="item"><div class="ic" style="background: var(--mint-soft)"><img class="e3d" src="assets/3d/moneybag.png" alt="" /></div><div class="t">Burger Box<small>6 شهور · فيرمون · 3 سبتمبر</small></div><b><span class="num">80</span> د</b></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══ traffic ═══ -->
+          <section class="view fade" id="traffic">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="body">
+              <div class="lt"><small>اليوم</small><h1>الترافيك</h1></div>
+              <div class="kpis3">
+                <div class="kpi"><img class="e3d" src="assets/3d/people.png" alt="" /><b class="num">342</b><span>زيارة</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/fire.png" alt="" /><b class="num">86</b><span>سكان</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/sparkles.png" alt="" /><b class="num">9</b><span>كونت جديد</span></div>
+              </div>
+              <div class="h2">وقتاش يجيو</div>
+              <div class="subc" style="margin-top: 0">
+                <div class="bars tall" aria-label="الزيارات حسب الساعة">
+                  <i style="height: 12%" title="8h"></i><i style="height: 36%" title="9h"></i><i style="height: 44%" title="10h"></i><i style="height: 30%" title="11h"></i><i style="height: 52%" title="12h"></i><i style="height: 64%" title="13h"></i><i style="height: 40%" title="14h"></i><i style="height: 26%" title="15h"></i><i style="height: 34%" title="16h"></i><i style="height: 58%" title="17h"></i><i class="on" style="height: 100%" title="18h"></i><i style="height: 72%" title="19h"></i><i style="height: 46%" title="20h"></i><i style="height: 20%" title="21h"></i>
+                </div>
+                <div class="months"><span>8h</span><span>11h</span><span>14h</span><span>17h</span><span style="color: var(--brand); font-weight: 600">18h</span><span>21h</span></div>
+              </div>
+              <div class="h2">منين يجيو</div>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--brand-soft)"><svg class="i" style="color: var(--brand)"><use href="#i-qr" /></svg></div><div class="t">الكود على الكونتوار</div><b class="num">41%</b></div>
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/phone.png" alt="" /></div><div class="t">Instagram</div><b class="num">33%</b></div>
+                <div class="item"><div class="ic" style="background: var(--surface-2)"><svg class="i"><use href="#i-search" /></svg></div><div class="t">Google</div><b class="num">14%</b></div>
+                <div class="item press" data-toast="traffic"><div class="ic" style="background: var(--surface-2)"><svg class="i"><use href="#i-eye" /></svg></div><div class="t">كل الترافيك<small>الزيارات، الكليكات والخريطة</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══ one shop ═══ -->
+          <section class="view off" id="shop">
+            <div class="body" style="padding-bottom: 30px">
+              <div class="cover" id="shopCover">
+                <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+                <div class="gbtn press" data-back><svg class="i"><use href="#i-back" /></svg></div>
+                <img class="e3d art" id="shopArt" src="assets/3d/coffee.png" alt="" />
+              </div>
+              <div class="shophead">
+                <div class="lg"><img class="e3d" id="shopLogo" src="assets/3d/coffee.png" alt="" /></div>
+                <div style="flex: 1; min-width: 0"><h1 id="shopName">Café Yasmine</h1><small id="shopSub">قهوة · المرسى</small></div>
+                <div id="shopState" style="padding-top: 4px"></div>
+              </div>
+              <div style="margin: 14px 20px 0">
+                <div class="pass violet act press" data-act="actas">
+                  <div class="bigic"><svg class="i"><use href="#i-store" /></svg></div>
+                  <div class="tx"><b>ادخل كمحل</b><span>كل شي كيف المولى، بيدك</span></div>
+                </div>
+              </div>
+              <div class="subc">
+                <div class="r1"><b>الأبونمان</b><span class="chip brand" id="subPlanChip">عام</span></div>
+                <div class="d"><span id="subLeft">مازال</span><b class="num" id="subDays">312</b><span id="subUntil">يوم · لين 7 أوت 2027</span></div>
+                <div class="track"><b id="subTrack" style="width: 85%"></b></div>
+                <div class="btns"><div class="b sec press" data-sheet="subSheet">سيّر</div><div class="b sec press" data-act="plus30">+30 يوم</div></div>
+              </div>
+              <div class="kpis3">
+                <div class="kpi"><b class="num" id="kCust">128</b><span>حريف</span></div>
+                <div class="kpi"><b class="num" id="kToday">23</b><span>سكان اليوم</span></div>
+                <div class="kpi"><b class="num" id="kGifts">41</b><span>كادو</span></div>
+              </div>
+              <div class="h2">الكارط</div>
+              <div class="group">
+                <div class="item press" data-act="actas"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" id="cardIcon" src="assets/3d/coffee.png" alt="" /></div><div class="t" id="cardLine">كارط تامبونات<small>10 تامبونات = قهوة بلاش</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+              </div>
+              <div class="h2">المولى والدخول</div>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--surface-2)"><svg class="i"><use href="#i-user" /></svg></div><div class="t" id="ownerLine">حمدي الطرابلسي<small class="num">+216 22 345 678</small></div><div class="gbtn press" data-toast="call" style="width: 38px; height: 38px; box-shadow: none; background: var(--mint-soft); color: var(--mint)"><svg class="i" style="width: 18px; height: 18px"><use href="#i-phone" /></svg></div></div>
+                <div class="item press" data-sheet="pwSheet"><div class="ic" style="background: var(--surface-2)"><svg class="i"><use href="#i-key" /></svg></div><div class="t">بدّل كلمة السر<small>تعطيها بيدك ولا تبعثها</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+                <div class="item press" data-toast="logout"><div class="ic" style="background: var(--surface-2)"><svg class="i"><use href="#i-logout" /></svg></div><div class="t">سكّر الدخول من التليفونات الكل<small>كان يضيع تليفون</small></div></div>
+              </div>
+              <div class="group" style="margin-top: 12px">
+                <div class="item press" data-sheet="stopSheet" id="stopRow"><div class="ic" style="background: var(--coral-soft); color: var(--coral)"><svg class="i"><use href="#i-pause" /></svg></div><div class="t" style="color: var(--coral)">وقّف المحل<small>الحرفاء ما يخسرو حتى شي</small></div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══ inside a shop, as the founder ═══ -->
+          <section class="view fade" id="actas">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="asbar"><svg class="i" style="width: 18px; height: 18px"><use href="#i-eye" /></svg><span>راك في <b id="asName">Café Yasmine</b> كأدمين</span><div class="asx press" data-act="exitas">اخرج</div></div>
+            <div class="body">
+              <div class="lt" style="padding-top: 6px"><small>كل شي كيف المولى</small><h1 id="asTitle">Café Yasmine</h1></div>
+              <div style="margin: 12px 20px 0">
+                <div class="pass violet act press" data-toast="qr">
+                  <div class="bigic"><svg class="i"><use href="#i-qr" /></svg></div>
+                  <div class="tx"><b>ورّي الكود</b><span>الحريف يسكاني وياخو تامبونو</span></div>
+                </div>
+              </div>
+              <div class="h2">المحل</div>
+              <div class="group">
+                <div class="item press" data-toast="k1"><div class="ic" style="background: var(--brand-soft)"><svg class="i" style="color: var(--brand)"><use href="#i-palette" /></svg></div><div class="t">الكارط متاعي<small>الشكل، الكادو، المستويات، السيستام</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+                <div class="item press" data-toast="logo"><div class="ic" style="background: var(--coral-soft)"><svg class="i" style="color: var(--coral)"><use href="#i-image" /></svg></div><div class="t">اللوغو والتصويرة<small>مازال ما فمّاش لوغو</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+                <div class="item press" data-toast="team"><div class="ic" style="background: var(--mint-soft)"><svg class="i" style="color: var(--mint)"><use href="#i-users" /></svg></div><div class="t">الخدّامة<small>زيد خدّام يعطي التامبونات</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+              </div>
+              <div class="h2">اليوم</div>
+              <div class="kpis3" style="margin-top: 0">
+                <div class="kpi"><img class="e3d" src="assets/3d/fire.png" alt="" /><b class="num">23</b><span>تامبون</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/sparkles.png" alt="" /><b class="num">4</b><span>حرفاء جدد</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/party.png" alt="" /><b class="num">2</b><span>كوادو</span></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ═══ a new shop, step by step ═══ -->
+          <section class="view down" id="wizard">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="wtop">
+              <div class="gbtn press" data-wiz="close"><svg class="i"><use href="#i-x" /></svg></div>
+              <div class="prog" id="prog"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <span class="stepno num" id="stepNo">1/6</span>
+            </div>
+            <div class="wbody" id="wbody"></div>
+            <div class="wfoot" id="wfoot">
+              <div class="b ter press" data-wiz="back" id="wBack">رجوع</div>
+              <div class="b pri press" data-wiz="next" id="wNext">كمّل</div>
+            </div>
+          </section>
+
+          <div class="scrim" id="scrim"></div>
+
+          <!-- the subscription, by hand -->
+          <div class="sheet" id="subSheet">
+            <div class="grab"></div>
+            <h3>الأبونمان</h3>
+            <p class="sp" id="subShop">Café Yasmine</p>
+            <div class="seg2" data-seg><span data-v="six">6 شهور · <span class="num">80</span> د</span><span class="on" data-v="year">عام · <span class="num">120</span> د</span></div>
+            <div class="twocol" style="margin-top: 4px">
+              <div><div class="lbl">لين وقتاش</div><div class="in"><svg class="i" style="color: var(--ink-3)"><use href="#i-calendar" /></svg><span class="num">07/08/2028</span></div></div>
+              <div><div class="lbl">قدّاش خلّص</div><div class="in"><span class="num">120</span><span class="pre">د</span></div></div>
+            </div>
+            <div class="lbl">كيفاش خلّص؟</div>
+            <div class="seg2" data-seg><span class="on">كاش</span><span>D17</span><span>فيرمون</span></div>
+            <div class="b pri press" data-act="savesub" style="margin-top: 16px">سجّل</div>
+          </div>
+
+          <!-- a new password for the owner -->
+          <div class="sheet" id="pwSheet">
+            <div class="grab"></div>
+            <h3>كلمة سر جديدة</h3>
+            <p class="sp">من توّا ما تخدم كان الجديدة.</p>
+            <div class="in"><input class="num" id="newPw" value="yasm7302" dir="ltr" aria-label="كلمة السر" /><div class="dice press" data-act="dice2" aria-label="اختار بالزهر"><svg class="i"><use href="#i-dice" /></svg></div></div>
+            <div class="b pri press" data-act="savepw" style="margin-top: 14px"><svg class="i"><use href="#i-send" /></svg>سجّل وابعثها</div>
+          </div>
+
+          <!-- stopping a shop: nobody loses anything -->
+          <div class="sheet" id="stopSheet">
+            <div class="grab"></div>
+            <h3 id="stopTitle">نوقّفو Café Yasmine؟</h3>
+            <p class="sp">تنجم ترجّعو يخدم وقت ما تحب.</p>
+            <div class="group">
+              <div class="item"><div class="ic" style="background: var(--mint-soft); color: var(--mint)"><svg class="i"><use href="#i-check" /></svg></div><div class="t">الحرفاء يشوفو كارطاتهم وكوادوهم<small>ما يخسرو حتى شي</small></div></div>
+              <div class="item"><div class="ic" style="background: var(--coral-soft); color: var(--coral)"><svg class="i"><use href="#i-pause" /></svg></div><div class="t">ما عادش ينجمو يسكانيو<small>لين ترجّعو يخدم</small></div></div>
+              <div class="item"><div class="ic" style="background: var(--brand-soft); color: var(--brand)"><svg class="i"><use href="#i-clock" /></svg></div><div class="t">الوقت يتجمّد<small>الكارطات والكوادو ما يوفاوش</small></div></div>
+            </div>
+            <div class="b coral press" data-act="stop" style="margin-top: 14px">وقّف المحل</div>
+            <div class="closel press" data-act="close">سكّر المحل نهائيًا</div>
+          </div>
+
+          <div class="toast" id="toast"><img class="e3d" id="toastIcon" src="assets/3d/party.png" alt="" /><span id="toastText"></span></div>
+          <div class="confetti2" id="confetti"></div>
+          <nav class="tabbar five" id="tabbar"></nav>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/icons.js"></script>
+    <script>
+      const $ = (s, r = document) => r.querySelector(s);
+      const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+      const app = $("#app");
+      const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+      // colours a shop can give its card: [main, light, deep]
+      const COLORS = [
+        ["#6c47ff", "#9b7bff", "#4a2ad6"],
+        ["#ff6b4a", "#ffa183", "#e0452a"],
+        ["#0891b2", "#3fd0e6", "#0b6380"],
+        ["#1f1b2e", "#3b3453", "#0f0d17"],
+        ["#e0457b", "#f59ab8", "#b8285a"],
+        ["#16a34a", "#4ade80", "#0f7a36"],
+      ];
+      const grad = (k) => `linear-gradient(145deg, ${COLORS[k][1]} 0%, ${COLORS[k][0]} 50%, ${COLORS[k][2]} 100%)`;
+
+      const SHOPS = [
+        { id: "yasmine", name: "Café Yasmine", cat: "قهوة", icon: "coffee", city: "المرسى", sys: "كارط تامبونات", card: "10 تامبونات = قهوة بلاش", tint: 0, days: 312, until: "7 أوت 2027", plan: "عام", owner: "حمدي الطرابلسي", first: "حمدي", phone: "+216 22 345 678", cust: 128, today: 23, gifts: 41, state: "ok" },
+        { id: "hedi", name: "Pâtisserie Hédi", cat: "حلويات", icon: "croissant", city: "حلق الوادي", sys: "كارط بالمستويات", card: "6 · 10 · 20 = فطور بلاش", tint: 1, days: 41, until: "9 نوفمبر 2026", plan: "6 شهور", owner: "الهادي بن عمر", first: "الهادي", phone: "+216 98 410 225", cust: 86, today: 12, gifts: 19, state: "ok" },
+        { id: "nour", name: "Salon Nour", cat: "كوافور", icon: "scissors", city: "المنار", sys: "نقاط", card: "كل دينار = نقطة", tint: 2, days: 3, until: "2 أكتوبر 2026", plan: "6 شهور", owner: "نور الهدى", first: "نور الهدى", phone: "+216 50 778 301", cust: 64, today: 7, gifts: 11, state: "ok" },
+        { id: "box", name: "Burger Box", cat: "ريستو", icon: "burger", city: "العوينة", sys: "", card: "الكارط مازالت ما تعملتش", tint: 3, days: 170, until: "18 مارس 2027", plan: "6 شهور", owner: "أيمن الصيد", first: "أيمن", phone: "+216 23 119 874", cust: 0, today: 0, gifts: 0, state: "setup" },
+        { id: "delices", name: "Délices", cat: "حلويات", icon: "cake", city: "أريانة", sys: "كارط تامبونات", card: "8 تامبونات = قطعة بلاش", tint: 4, days: 220, until: "7 ماي 2027", plan: "عام", owner: "سنية الماجري", first: "سنية", phone: "+216 29 604 512", cust: 41, today: 0, gifts: 6, state: "ok" },
+        { id: "roma", name: "Pizzeria Roma", cat: "بيتزا", icon: "pizza", city: "باردو", sys: "كارط تامبونات", card: "10 تامبونات = بيتزا بلاش", tint: 0, days: 0, until: "", plan: "6 شهور", owner: "كريم الجلاصي", first: "كريم", phone: "+216 55 320 990", cust: 57, today: 0, gifts: 9, state: "stopped" },
+      ];
+
+      const S = { tab: "home", shop: "yasmine", filter: "all", step: 1, skip: false, from: "shop", w: null };
+      const fresh = () => ({ name: "Café Nesma", cat: "coffee", city: "المرسى", owner: "رمزي العيّاري", phone: "55 123 456", pw: "nesm4821", plan: "year", paid: "كاش", sys: "stamps", goal: 10, reward: "قهوة بلاش", levels: [[6, "كرواسون بلاش"], [10, "عصير بلاش"]], lgoal: 20, lreward: "فطور بلاش", rate: 1, color: 0, colorTouched: false, mark: "coffee" });
+
+      // ── the shops list ──────────────────────────────────────────────────
+      function chipFor(s) {
+        if (s.state === "stopped") return '<span class="chip grey">موقوف</span>';
+        if (s.state === "setup") return '<span class="chip brand">ما كمّلش</span>';
+        if (s.days <= 10) return `<span class="chip coral">${s.days} أيام</span>`;
+        return `<span class="chip mint">${s.days} يوم</span>`;
+      }
+      function renderShops() {
+        const keep = (s) => S.filter === "all" || (S.filter === "soon" ? s.state === "ok" && s.days <= 60 : s.state === S.filter);
+        $("#shopList").innerHTML = SHOPS.filter(keep)
+          .map((s) => `<div class="item press" data-shop="${s.id}"><div class="ic" style="background: ${COLORS[s.tint][0]}22"><img class="e3d" src="assets/3d/${s.icon}.png" alt=""></div><div class="t">${esc(s.name)}<small>${s.cat} · ${s.city}${s.sys ? " · " + s.sys : ""}</small></div>${chipFor(s)}</div>`)
+          .join("");
+        $$("#filters span").forEach((f) => f.classList.toggle("on", f.dataset.f === S.filter));
+      }
+
+      // ── one shop ────────────────────────────────────────────────────────
+      function openShop(id) {
+        const s = SHOPS.find((x) => x.id === id);
+        S.shop = id;
+        $("#shopCover").style.background = grad(s.tint);
+        $("#shopArt").src = $("#shopLogo").src = $("#cardIcon").src = `assets/3d/${s.icon}.png`;
+        $("#shopName").textContent = s.name;
+        $("#shopSub").textContent = `${s.cat} · ${s.city}`;
+        $("#shopState").innerHTML = s.state === "stopped" ? chipFor(s) : s.state === "setup" ? chipFor(s) : '<span class="chip mint">يخدم</span>';
+        $("#subPlanChip").textContent = s.plan;
+        $("#subLeft").textContent = s.state === "stopped" ? "" : "مازال";
+        $("#subDays").textContent = s.state === "stopped" ? "" : s.days;
+        $("#subUntil").textContent = s.state === "stopped" ? "المحل موقوف" : `${s.days <= 10 ? "أيام" : "يوم"} · لين ${s.until}`;
+        $("#subTrack").style.width = Math.max(2, Math.min(100, (s.days / 365) * 100)) + "%";
+        $("#subTrack").style.background = s.days <= 10 ? "var(--coral)" : "var(--mint)";
+        $("#kCust").textContent = s.cust;
+        $("#kToday").textContent = s.today;
+        $("#kGifts").textContent = s.gifts;
+        $("#cardLine").innerHTML = s.sys ? `${s.sys}<small>${s.card}</small>` : `الكارط مازالت ما تعملتش<small>ادخل كمحل واعملها، ولا خلّي المولى</small>`;
+        $("#ownerLine").innerHTML = `${esc(s.owner)}<small class="num">${s.phone}</small>`;
+        $("#subShop").textContent = s.name;
+        $("#stopTitle").textContent = `نوقّفو ${s.name}؟`;
+        $("#stopRow").innerHTML =
+          s.state === "stopped"
+            ? '<div class="ic" style="background: var(--mint-soft); color: var(--mint)"><svg class="i"><use href="#i-check"/></svg></div><div class="t" style="color: var(--mint)">رجّع المحل يخدم<small>كل شي يرجع كيف ما كان</small></div>'
+            : '<div class="ic" style="background: var(--coral-soft); color: var(--coral)"><svg class="i"><use href="#i-pause"/></svg></div><div class="t" style="color: var(--coral)">وقّف المحل<small>الحرفاء ما يخسرو حتى شي</small></div>';
+        $("#stopRow").dataset.sheet = s.state === "stopped" ? "" : "stopSheet";
+        $("#stopRow").dataset.act = s.state === "stopped" ? "resume" : "";
+        $("#shop .body").scrollTop = 0;
+        push();
+      }
+
+      // ── the new-shop flow ───────────────────────────────────────────────
+      const CATS = [["coffee", "قهوة"], ["bread", "مخبزة"], ["cake", "حلويات"], ["scissors", "كوافور"], ["gem", "بيوتي"], ["burger", "ريستو"], ["pizza", "بيتزا"], ["shop", "حانوت"]];
+      const REC = { coffee: "stamps", bread: "stamps", cake: "levels", scissors: "points", gem: "points", burger: "levels", pizza: "stamps", shop: "points" };
+      const SYS = {
+        stamps: { name: "كارط تامبونات", line: "كل مرّة تامبون. 10 تامبونات = كادو.", icon: "coffee", tint: 0 },
+        levels: { name: "كارط بالمستويات", line: "كوادو صغار في الثنية: 6 · 10 · 20", icon: "trophy", tint: 1 },
+        points: { name: "نقاط", line: "كل دينار = نقطة. يبدّلوهم بكوادو.", icon: "coin", tint: 2 },
+      };
+      const RATES = [[0.5, "500 مليم"], [1, "1 د"], [2, "2 د"], [5, "5 د"]];
+      const rateText = (r) => (r === 1 ? "كل دينار = نقطة" : `كل ${RATES.find((x) => x[0] === r)[1]} = نقطة`);
+      const catName = (id) => CATS.find((c) => c[0] === id)[1];
+
+      function dotsHtml(n) {
+        let h = '<div class="dots">';
+        for (let i = 1; i <= n; i++) h += `<i class="${i === n ? "gift" : ""}"></i>`;
+        return h + "</div>";
+      }
+      function preview() {
+        const w = S.w;
+        let big, body;
+        if (w.sys === "points") {
+          big = "0";
+          body = `<div class="meter"><b style="width: 6%"></b></div><div class="line"><span>${rateText(w.rate)}</span></div>`;
+        } else if (w.sys === "levels") {
+          big = `0<small>/${w.lgoal}</small>`;
+          body = `<div class="meter"><b style="width: 4%"></b></div><div class="line"><span>كوادو في ${w.levels.map((l) => l[0]).join(" · ")} · ${w.lgoal}</span></div>`;
+        } else {
+          big = `0<small>/${w.goal}</small>`;
+          body = dotsHtml(w.goal) + `<div class="line"><span>${w.goal} تامبونات = ${esc(w.reward)}</span></div>`;
+        }
+        return `<div class="pass" style="background: ${grad(w.color)}; min-height: 0; box-shadow: 0 18px 40px -16px ${COLORS[w.color][0]}"><div class="top"><div class="logo"><img class="e3d" src="assets/3d/${w.mark}.png" alt=""></div><div class="n">${esc(w.name)}<small>${SYS[w.sys].name}</small></div><div class="big num">${big}</div></div>${body}</div>`;
+      }
+
+      const STEP = {
+        1: () => `<h1 class="wt">المحل</h1><p class="ws">شنوّة اسمو، وشنوّة يبيع؟</p>
+          <div class="lbl">اسم المحل</div><input class="in" data-f="name" value="${esc(S.w.name)}">
+          <div class="lbl">النوع</div>
+          <div class="cats">${CATS.map(([id, n]) => `<div class="cat press${S.w.cat === id ? " on" : ""}" data-cat="${id}"><img class="e3d" src="assets/3d/${id}.png" alt="">${n}</div>`).join("")}</div>
+          <div class="lbl">المدينة</div><input class="in" data-f="city" value="${esc(S.w.city)}">`,
+        2: () => `<h1 class="wt">المولى</h1><p class="ws">يدخل بالتليفون وكلمة السر هاذوما. ما يعملش كونت وحدو.</p>
+          <div class="lbl">اسمو</div><input class="in" data-f="owner" value="${esc(S.w.owner)}">
+          <div class="lbl">التليفون</div><div class="in" dir="ltr"><span class="pre num">+216</span><input class="num" data-f="phone" value="${esc(S.w.phone)}" inputmode="tel"></div>
+          <div class="lbl">كلمة السر</div><div class="in"><input class="num" data-f="pw" value="${esc(S.w.pw)}" dir="ltr"><div class="dice press" data-wiz="dice" aria-label="اختار بالزهر"><svg class="i"><use href="#i-dice"/></svg></div></div>
+          <p class="hint">4 حروف و4 أرقام: ساهلة تتقرا وتتكتب في التليفون.</p>`,
+        3: () => `<h1 class="wt">الأبونمان</h1><p class="ws">قدّاش من وقت، وكيفاش خلّص؟</p>
+          <div class="plans">
+            <div class="plan press${S.w.plan === "six" ? " on" : ""}" data-plan="six"><b>6 شهور</b><span class="p num">80</span> د</div>
+            <div class="plan press${S.w.plan === "year" ? " on" : ""}" data-plan="year"><em>أحسن سوم</em><b>عام</b><span class="p num">120</span> د</div>
+          </div>
+          <div class="lbl">خلّص؟</div>
+          <div class="seg2">${["كاش", "D17", "فيرمون", "مازال"].map((m) => `<span class="${S.w.paid === m ? "on" : ""}" data-paid="${m}">${m}</span>`).join("")}</div>
+          <div class="sumline"><svg class="i"><use href="#i-calendar"/></svg><span>من اليوم لين <b>${S.w.plan === "year" ? "29 سبتمبر 2027" : "29 مارس 2027"}</b>${S.w.paid === "مازال" ? " · نفكّروك بالخلاص" : ""}</span></div>`,
+        4: () => `<h1 class="wt">السيستام</h1><p class="ws">كيفاش الحرفاء متاع ${esc(S.w.name)} يربحو؟</p>
+          ${Object.entries(SYS)
+            .map(([id, s]) => `<div class="sysopt press${S.w.sys === id ? " on" : ""}" data-sys="${id}"><div class="sq" style="background: ${COLORS[s.tint][0]}1f"><img class="e3d" src="assets/3d/${s.icon}.png" alt=""></div><div class="tx"><b>${s.name}</b><span>${s.line}</span>${REC[S.w.cat] === id ? `<em>ننصحو بيه لـ«${catName(S.w.cat)}»</em>` : ""}</div><div class="tick"><svg class="i"><use href="#i-check"/></svg></div></div>`)
+            .join("")}
+          <div class="skip press" data-wiz="skip">خلّي المولى يختار وحدو</div>`,
+        5: () => {
+          const w = S.w;
+          let h = `<h1 class="wt">الكارط</h1><div style="margin: 10px 0 0">${preview()}</div>`;
+          if (w.sys === "stamps") {
+            h += `<div class="lbl">قدّاش من تامبون؟</div><div class="goalchips">${[6, 8, 10, 12, 15].map((g) => `<span class="num${w.goal === g ? " on" : ""}" data-goal="${g}">${g}</span>`).join("")}</div>
+              <div class="lbl">الكادو</div><input class="in" data-f="reward" value="${esc(w.reward)}">
+              <div class="sugg">${["قهوة بلاش", "كرواسون بلاش", "عصير بلاش", "ريميز 5 د"].map((x) => `<span data-sugg="${x}">${x}</span>`).join("")}</div>`;
+          } else if (w.sys === "levels") {
+            h += `<div class="lbl">الكوادو في الثنية</div>
+              ${w.levels.map((l) => `<div class="lvl"><div class="k num">${l[0]}</div><div class="t">${esc(l[1])}<small>مستوى · التامبونات يبقاو</small></div></div>`).join("")}
+              <div class="lvl goal"><div class="k num">${w.lgoal}</div><div class="t">${esc(w.lreward)}<small>الكادو الكبير · الكارط تعاود من الأول</small></div></div>
+              ${w.levels.length < 3 ? '<div class="addrow press" data-wiz="addlevel"><svg class="i" style="width:18px;height:18px"><use href="#i-plus"/></svg>زيد مستوى</div>' : ""}`;
+          } else {
+            h += `<div class="lbl">كل قدّاش = نقطة؟</div><div class="seg2">${RATES.map(([r, n]) => `<span class="${w.rate === r ? "on" : ""}" data-rate="${r}">${n}</span>`).join("")}</div>
+              <div class="lbl">الكوادو بالنقاط</div>
+              <div class="group" style="margin: 0">${[[50, "قهوة بلاش"], [150, "فطور بلاش"], [300, "ريميز 20 د"]].map(([p, n]) => `<div class="item"><span class="chip brand num">${p}</span><div class="t">${n}</div><svg class="i chev"><use href="#i-next"/></svg></div>`).join("")}</div>`;
+          }
+          return h;
+        },
+        6: () => {
+          const w = S.w;
+          return `<h1 class="wt">الشكل</h1><div style="margin: 10px 0 0">${preview()}</div>
+            <div class="twocol" style="margin-top: 14px">
+              <div class="upl press" data-toast="logo"><svg class="i"><use href="#i-image"/></svg>زيد اللوغو</div>
+              <div class="upl press" data-toast="cover"><svg class="i"><use href="#i-image"/></svg>التصويرة متاع الفوق</div>
+            </div>
+            <div class="lbl">اللون</div>
+            <div class="colors">${COLORS.map((c, k) => `<span class="${w.color === k ? "on" : ""}" data-color="${k}" style="background: ${grad(k)}"></span>`).join("")}</div>
+            <div class="lbl">علامة التامبون</div>
+            <div class="marks">${["coffee", "croissant", "cake", "pizza", "scissors", "star", "gem"].map((m) => `<span class="${w.mark === m ? "on" : ""}" data-mark="${m}"><img class="e3d" src="assets/3d/${m}.png" alt=""></span>`).join("")}</div>`;
+        },
+        7: () => {
+          const w = S.w;
+          return `<div style="text-align: center; padding-top: 18px"><img class="e3d pop" src="assets/3d/party.png" alt="" style="width: 72px; height: 72px; margin: 0 auto"></div>
+            <h1 class="wt" style="text-align: center">${esc(w.name)} حاضر!</h1>
+            <p class="ws" style="text-align: center">${S.skip ? "المولى يختار السيستام والكارط أول ما يدخل." : "هاذوما باش يدخل بيهم المولى:"}</p>
+            <div class="cred">
+              <div class="r"><span>التليفون</span><b class="num">+216 ${esc(w.phone)}</b><svg class="i press" data-toast="copy"><use href="#i-copy"/></svg></div>
+              <div class="r"><span>كلمة السر</span><b class="num">${esc(w.pw)}</b><svg class="i press" data-toast="copy"><use href="#i-copy"/></svg></div>
+            </div>
+            <div class="b pri press" data-toast="share" style="margin-top: 14px"><svg class="i"><use href="#i-send"/></svg>ابعثهم للمولى على الواتساب</div>
+            <div class="twocol" style="margin-top: 10px">
+              <div class="b sec press" data-toast="print" style="font-size: 14.5px"><svg class="i"><use href="#i-printer"/></svg>اطبع الأفيش</div>
+              <div class="b sec press" data-act="actasNew" style="font-size: 14.5px"><svg class="i"><use href="#i-store"/></svg>ادخل كمحل</div>
+            </div>
+            <div class="b ter press" data-wiz="finish">رجوع للمحلات</div>`;
+        },
+      };
+
+      function renderWizard() {
+        const n = S.step;
+        $$("#prog i").forEach((i, k) => i.classList.toggle("on", k < Math.min(n, 6)));
+        $("#stepNo").textContent = n <= 6 ? `${n}/6` : "";
+        $("#wfoot").style.display = n <= 6 ? "" : "none";
+        $("#wBack").style.display = n === 1 ? "none" : "";
+        $("#wfoot").style.gridTemplateColumns = n === 1 ? "1fr" : "";
+        $("#wNext").textContent = n === 6 ? "حلّ المحل" : "كمّل";
+        $("#wbody").innerHTML = STEP[n]();
+        $("#wbody").scrollTop = 0;
+        if (n === 7) {
+          confetti();
+          buzz([30, 40, 60]);
+        }
+      }
+      function openWizard() {
+        S.w = fresh();
+        S.step = 1;
+        S.skip = false;
+        renderWizard();
+        $("#wizard").classList.remove("down");
+        hideBar(true);
+      }
+      function closeWizard() {
+        $("#wizard").classList.add("down");
+        hideBar(!$("#shop").classList.contains("off"));
+      }
+      function addNewShop() {
+        const w = S.w;
+        const id = "new" + Date.now();
+        SHOPS.unshift({ id, name: w.name, cat: catName(w.cat), icon: w.cat, city: w.city, sys: S.skip ? "" : SYS[w.sys].name, card: S.skip ? "" : w.sys === "stamps" ? `${w.goal} تامبونات = ${w.reward}` : w.sys === "levels" ? `${w.levels.map((l) => l[0]).join(" · ")} · ${w.lgoal} = ${w.lreward}` : rateText(w.rate), tint: w.color, days: w.plan === "year" ? 365 : 182, until: w.plan === "year" ? "29 سبتمبر 2027" : "29 مارس 2027", plan: w.plan === "year" ? "عام" : "6 شهور", owner: w.owner, first: w.owner.split(" ")[0], phone: "+216 " + w.phone, cust: 0, today: 0, gifts: 0, state: S.skip ? "setup" : "ok" });
+        renderShops();
+        return id;
+      }
+
+      // ── navigation ──────────────────────────────────────────────────────
+      const TABS = ["home", "shops", "money", "traffic"];
+      function hideBar(h) {
+        $("#tabbar").style.transform = h ? "translateY(140%)" : "";
+      }
+      function adminTabs() {
+        const bar = $("#tabbar");
+        bar.className = "tabbar five";
+        bar.innerHTML = [["home", "home", "الدار"], ["shops", "store", "المحلات"], null, ["money", "wallet", "الفلوس"], ["traffic", "chart", "الترافيك"]]
+          .map((t) => (t ? `<div class="tab press" data-tab="${t[0]}" data-ico="${t[1]}"><svg class="i"><use href="#i-${t[1]}"/></svg><span>${t[2]}</span></div>` : '<div class="scanbtn press" data-go="wizard" aria-label="حلّ محل جديد"><svg class="i"><use href="#i-plus"/></svg></div>'))
+          .join("");
+        paintTabs();
+      }
+      function ownerTabs() {
+        const bar = $("#tabbar");
+        bar.className = "tabbar";
+        bar.innerHTML = '<div class="tab on"><svg class="i"><use href="#i-homef"/></svg><span>الدار</span></div><div class="scanbtn press" data-toast="qr"><svg class="i"><use href="#i-qr"/></svg></div><div class="tab"><svg class="i"><use href="#i-chart"/></svg><span>الأرقام</span></div>';
+      }
+      function paintTabs() {
+        $$("#tabbar .tab[data-tab]").forEach((t) => {
+          const on = t.dataset.tab === S.tab;
+          t.classList.toggle("on", on);
+          t.querySelector("use").setAttribute("href", `#i-${t.dataset.ico}${on ? "f" : ""}`);
+        });
+      }
+      function showTab(tab) {
+        S.tab = tab;
+        TABS.forEach((t) => $("#" + t).classList.toggle("fade", t !== tab));
+        paintTabs();
+      }
+      function push() {
+        $("#" + S.tab).classList.add("under");
+        $("#shop").classList.remove("off");
+        hideBar(true);
+      }
+      function pop() {
+        $("#" + S.tab).classList.remove("under");
+        $("#shop").classList.add("off");
+        hideBar(false);
+      }
+      function actAs(id) {
+        const s = SHOPS.find((x) => x.id === id);
+        $("#asName").textContent = $("#asTitle").textContent = s.name;
+        $("#actas").classList.remove("fade");
+        ownerTabs();
+        hideBar(false);
+      }
+      function exitAs() {
+        $("#actas").classList.add("fade");
+        adminTabs();
+        if (S.from === "wizard") {
+          $("#wizard").classList.add("down");
+          openShop(S.shop);
+        } else hideBar(true);
+        S.from = "shop";
+      }
+      let openSheet = null;
+      function sheet(id) {
+        if (openSheet) $("#" + openSheet).classList.remove("open");
+        openSheet = id || null;
+        app.classList.toggle("sheet-open", !!id);
+        if (id) $("#" + id).classList.add("open");
+      }
+      function toast(text, icon = "party") {
+        $("#toastText").textContent = text;
+        $("#toastIcon").src = `assets/3d/${icon}.png`;
+        $("#toast").classList.add("show");
+        clearTimeout(toast.t);
+        toast.t = setTimeout(() => $("#toast").classList.remove("show"), 2300);
+      }
+      function confetti() {
+        const box = $("#confetti");
+        box.innerHTML = "";
+        const colours = ["#9b7bff", "#ff6b4a", "#22c4dd", "#12b76a", "#2e90fa", "#f472b6"];
+        for (let k = 0; k < 44; k++) {
+          const i = document.createElement("i");
+          i.style.left = Math.random() * 100 + "%";
+          i.style.background = colours[k % colours.length];
+          i.style.animationDelay = Math.random() * 0.4 + "s";
+          box.appendChild(i);
+        }
+        setTimeout(() => (box.innerHTML = ""), 2600);
+      }
+      function buzz(ms) {
+        try {
+          navigator.vibrate?.(ms);
+        } catch {}
+      }
+      const pw = () => {
+        const a = "abcdefghjkmnpqrstuvwxyz";
+        let s = "";
+        for (let i = 0; i < 4; i++) s += a[Math.floor(Math.random() * a.length)];
+        return s + String(Math.floor(1000 + Math.random() * 9000));
+      };
+
+      const TOASTS = {
+        bell: ["2 أبونمانات يوفاو هالجمعة", "hourglass"],
+        search: ["اكتب اسم المحل، اسم المولى ولا التليفون", "shop"],
+        traffic: ["تتحلّ صفحة الترافيك الكاملة", "chart"],
+        call: ["نكلّمو المولى…", "phone"],
+        logout: ["سكّرنا الدخول من التليفونات الكل", "phone"],
+        qr: ["الكود يتحلّ في الإيكران الكل", "phone"],
+        k1: ["«الكارط متاعي»: شوف الإيكران 8", "gift"],
+        logo: ["اختار اللوغو من التليفون", "sparkles"],
+        cover: ["اختار تصويرة من التليفون", "sparkles"],
+        team: ["الخدّام يعطي التامبونات، وما يبدّلش الكارط", "people"],
+        copy: ["تنسخ", "sparkles"],
+        share: ["يتحلّ الواتساب والمساج حاضر", "phone"],
+        print: ["الأفيش حاضر للطبع (A5)", "ticket"],
+      };
+
+      // ── wiring ──────────────────────────────────────────────────────────
+      app.addEventListener("click", (e) => {
+        const t = e.target.closest("[data-tab],[data-go],[data-shop],[data-back],[data-act],[data-sheet],[data-toast],[data-wiz],[data-cat],[data-plan],[data-paid],[data-sys],[data-goal],[data-sugg],[data-rate],[data-color],[data-mark],[data-f],[data-v],#scrim,.seg2 span,#filters span");
+        if (!t) return;
+        const d = t.dataset;
+        if (t.id === "scrim") return sheet(null);
+        if (t.closest("#filters")) {
+          S.filter = d.f;
+          return renderShops();
+        }
+        if (t.closest("[data-seg]")) {
+          $$("span", t.parentElement).forEach((x) => x.classList.toggle("on", x === t.closest("[data-seg] > span")));
+          return;
+        }
+        if (d.tab) {
+          e.preventDefault();
+          return showTab(d.tab);
+        }
+        if (d.go === "wizard") return openWizard();
+        if (d.shop) return openShop(d.shop);
+        if ("back" in d) return pop();
+        if (d.sheet) return sheet(d.sheet);
+        if (d.toast) {
+          const [msg, icon] = TOASTS[d.toast];
+          return toast(msg, icon);
+        }
+        if (d.act) {
+          const s = SHOPS.find((x) => x.id === S.shop);
+          switch (d.act) {
+            case "actas":
+              S.from = "shop";
+              return actAs(S.shop);
+            case "actasNew":
+              S.from = "wizard";
+              S.shop = addNewShop();
+              S.w = null;
+              $("#wizard").classList.add("down");
+              return actAs(S.shop);
+            case "exitas":
+              return exitAs();
+            case "plus30":
+              s.days += 30;
+              openShop(s.id);
+              return toast("زدنا 30 يوم", "hourglass");
+            case "savesub":
+              sheet(null);
+              return toast("تسجّل: الأبونمان والخلاص", "moneybag");
+            case "dice2":
+              $("#newPw").value = pw();
+              return;
+            case "savepw":
+              sheet(null);
+              return toast("كلمة السر تبدّلت وتبعثت", "phone");
+            case "stop":
+              s.state = "stopped";
+              sheet(null);
+              renderShops();
+              openShop(s.id);
+              return toast("المحل توقّف: الوقت تجمّد", "hourglass");
+            case "resume":
+              s.state = "ok";
+              renderShops();
+              openShop(s.id);
+              return toast("المحل رجع يخدم", "party");
+            case "close":
+              sheet(null);
+              return toast("يولّي «سكّر»: ما يتفسخ حتى شي", "shop");
+          }
+        }
+        if (d.wiz) {
+          switch (d.wiz) {
+            case "close":
+              return closeWizard();
+            case "back":
+              S.step = Math.max(1, S.step - 1);
+              return renderWizard();
+            case "next":
+              S.step = Math.min(7, S.step + 1);
+              return renderWizard();
+            case "skip":
+              S.skip = true;
+              S.step = 7;
+              return renderWizard();
+            case "dice":
+              S.w.pw = pw();
+              return renderWizard();
+            case "addlevel":
+              S.w.levels.push([15, "قهوة بلاش"]);
+              return renderWizard();
+            case "finish":
+              addNewShop();
+              closeWizard();
+              showTab("shops");
+              return toast(`${S.w.name} تزاد للمحلات`, "shop");
+          }
+        }
+        const w = S.w;
+        if (!w) return;
+        if (d.cat) w.cat = d.cat;
+        else if (d.plan) w.plan = d.plan;
+        else if (d.paid) w.paid = d.paid;
+        else if (d.sys) {
+          w.sys = d.sys;
+          if (!w.colorTouched) w.color = SYS[d.sys].tint;
+        } else if (d.goal) w.goal = Number(d.goal);
+        else if (d.sugg) w.reward = d.sugg;
+        else if (d.rate) w.rate = Number(d.rate);
+        else if (d.color) {
+          w.color = Number(d.color);
+          w.colorTouched = true;
+        } else if (d.mark) w.mark = d.mark;
+        else return;
+        renderWizard();
+      });
+      // typing in the flow keeps the preview honest
+      app.addEventListener("input", (e) => {
+        const f = e.target.dataset.f;
+        if (f && S.w) S.w[f] = e.target.value;
+      });
+
+      function setTheme(t) {
+        app.classList.remove("night", "sunny");
+        if (t) app.classList.add(t);
+        $$(".ctrl [data-theme]").forEach((b) => b.classList.toggle("on", b.dataset.theme === t));
+      }
+      function reset() {
+        sheet(null);
+        $("#wizard").classList.add("down");
+        $("#actas").classList.add("fade");
+        $("#shop").classList.add("off");
+        TABS.forEach((t) => $("#" + t).classList.remove("under"));
+        adminTabs();
+        showTab("home");
+        hideBar(false);
+      }
+      function jump(where) {
+        reset();
+        if (where === "wizard") openWizard();
+        else if (where === "shop") openShop("yasmine");
+        else if (where === "actas") {
+          openShop("yasmine");
+          actAs("yasmine");
+        }
+        $$(".ctrl [data-jump]").forEach((b) => b.classList.toggle("on", b.dataset.jump === where));
+      }
+      $$(".ctrl [data-jump]").forEach((b) => b.addEventListener("click", () => jump(b.dataset.jump)));
+      $$(".ctrl [data-theme]").forEach((b) => b.addEventListener("click", () => setTheme(b.dataset.theme)));
+
+      renderShops();
+      const q = new URLSearchParams(location.search);
+      setTheme(q.get("theme") || "");
+      jump(q.get("view") || "home");
+    </script>
+  </body>
+</html>

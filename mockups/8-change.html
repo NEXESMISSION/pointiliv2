@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="ar-TN" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تبديل الكارط · Pointili mockups</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/app.css" />
+    <link rel="stylesheet" href="assets/r2.css" />
+    <style>
+      body {
+        font-family: "Readex Pro", "IBM Plex Sans Arabic", sans-serif;
+      }
+      /* ── inside the phones ── */
+      .r2 .navbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 16px 10px;
+      }
+      .r2 .navbar h2 {
+        margin: 0;
+        flex: 1;
+        text-align: center;
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .r2 .chip {
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 4px 10px;
+        white-space: nowrap;
+      }
+      .r2 .chip.mint {
+        background: var(--mint-soft);
+        color: var(--mint);
+      }
+      .r2 .lbl {
+        margin: 16px 2px 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink-2);
+      }
+      .r2 .chips {
+        display: flex;
+        gap: 8px;
+      }
+      .r2 .chips span {
+        flex: 1;
+        height: 48px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        font-weight: 600;
+        font-size: 17px;
+      }
+      .r2 .chips span.on {
+        background: var(--brand);
+        color: #fff;
+        box-shadow: 0 10px 20px -8px var(--brand);
+      }
+      .r2 .fld {
+        height: 52px;
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        font-weight: 500;
+      }
+      .r2 .sheet .group {
+        margin: 0;
+        box-shadow: none;
+        background: var(--surface-2);
+      }
+      .r2 .sheet h3 {
+        margin: 0;
+        font-size: 21px;
+      }
+      .r2 .sheet .sp {
+        margin: 2px 0 14px;
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+      .r2 .banner {
+        margin: 2px 20px 0;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 14px;
+        border-radius: 20px;
+        background: var(--brand-soft);
+      }
+      .r2 .banner img {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+      }
+      .r2 .banner b {
+        display: block;
+        font-size: 15px;
+      }
+      .r2 .banner div > span {
+        display: block;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      .r2 .swap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin: 6px 0 4px;
+      }
+      .r2 .mini {
+        width: 118px;
+        border-radius: 20px;
+        padding: 12px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-pass);
+      }
+      .r2 .mini img {
+        width: 30px;
+        height: 30px;
+      }
+      .r2 .mini b {
+        display: block;
+        margin-top: 6px;
+        font-size: 24px;
+        line-height: 1.1;
+      }
+      .r2 .mini small {
+        font-size: 12px;
+        opacity: 0.85;
+      }
+      .r2 .mini.violet {
+        background: var(--pass-violet);
+      }
+      .r2 .mini.sea {
+        background: var(--pass-sea);
+      }
+      .r2 .stepper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 58px;
+        border-radius: 18px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        padding: 0 8px;
+      }
+      .r2 .stepper span {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: var(--surface-2);
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .r2 .stepper b {
+        font-size: 24px;
+      }
+      .r2 .calc {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: var(--sea-soft);
+        color: var(--sea-ink);
+        font-size: 13.5px;
+        text-align: center;
+      }
+      .r2 .note {
+        margin: 10px 20px 0;
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+      .r2 .warn {
+        margin: 0 20px;
+        display: flex;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 20px;
+        background: var(--coral-soft);
+      }
+      .r2 .warn > .i {
+        color: var(--coral);
+        flex-shrink: 0;
+      }
+      .r2 .warn b {
+        display: block;
+      }
+      .r2 .warn span {
+        display: block;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      .r2 .mini-b {
+        height: 34px;
+        padding: 0 12px;
+        font-size: 13.5px;
+        border-radius: 12px;
+      }
+
+      /* ── the four rules ── */
+      .rules {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 16px 24px 4px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+      }
+      .rule {
+        background: #fff;
+        border-radius: 24px;
+        padding: 18px 18px 16px;
+        box-shadow: 0 16px 40px -24px rgba(22, 19, 31, 0.3);
+      }
+      .rule .n {
+        display: inline-grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        background: #6c47ff;
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        font-weight: 700;
+      }
+      .rule h3 {
+        margin: 10px 0 4px;
+        font-size: 19px;
+      }
+      .rule p {
+        margin: 0;
+        color: #5f5b72;
+        font-size: 14px;
+      }
+
+      /* ── every case and its fix ── */
+      .cases {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 8px 24px 60px;
+      }
+      .cases h3 {
+        margin: 26px 4px 10px;
+        font-size: 18px;
+      }
+      .cases table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 16px 40px -28px rgba(22, 19, 31, 0.35);
+        font-size: 14px;
+      }
+      .cases th {
+        text-align: start;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #9d99b0;
+        padding: 12px 14px 8px;
+        background: #faf9fd;
+      }
+      .cases td {
+        padding: 12px 14px;
+        vertical-align: top;
+        border-top: 1px solid #f0eef6;
+        color: #3d3a4b;
+      }
+      .cases td:first-child {
+        font-weight: 600;
+        color: #0f0e17;
+        width: 26%;
+      }
+      .cases td:nth-child(2) {
+        width: 22%;
+        color: #7c7890;
+      }
+      .cases td:last-child {
+        width: 13%;
+      }
+      .st {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 3px 10px;
+        white-space: nowrap;
+      }
+      .st.ok {
+        background: #e5f8ee;
+        color: #0a8a4f;
+      }
+      .st.part {
+        background: #e0f5f9;
+        color: #0b5f75;
+      }
+      .st.new {
+        background: #efeaff;
+        color: #4a2ad6;
+      }
+      .st.bug {
+        background: #ffede8;
+        color: #c2391c;
+      }
+      .st.rule {
+        background: #0f0e17;
+        color: #fff;
+      }
+      .st small {
+        display: block;
+        font-weight: 400;
+        opacity: 0.85;
+        white-space: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="board-head">
+      <div>
+        <h1>8 · كي المحل يبدّل الكارط</h1>
+        <p><b>الكونفيغ يصير مرّة وحدة</b>: أول دخلة، ولا كي نحلّو المحل من الأدمين. من بعد، كل تبديل يصير من «الكارط متاعي»: تشوف شنوّة باش يصير للحرفاء <b>قبل ما تسجّل</b>، وتنجم ترجّع. تحت تلقى القواعد، الإيكرانات، وكل حالة بحلّها.</p>
+      </div>
+      <nav class="board-nav">
+        <a href="index.html">المنيو</a>
+        <a href="6-look.html">الشكل</a>
+        <a href="7-app.html">جرّب الأبليكاسيون</a>
+        <a href="8-change.html" class="on">تبديل الكارط</a>
+        <a href="9-admin.html">الأدمين</a>
+      </nav>
+    </header>
+
+    <section class="rules">
+      <div class="rule"><span class="n">1</span><h3>الوعد وعد</h3><p>الكارط اللي بدا فيها الحريف تكمّل بشروطها، إلا كان التبديل في صالحو: وقتها يتطبّق عليه توّا.</p></div>
+      <div class="rule"><span class="n">2</span><h3>الكادو اللي ربحتو متاعك</h3><p>كي يوصل الحريف لكادو، يتسجّل باسمو وبتاريخو. حتى تبديل ما ينحّيهولو.</p></div>
+      <div class="rule"><span class="n">3</span><h3>كارط وحدة، كود واحد</h3><p>المحل يخدم بكارط وحدة في نفس الوقت. الكود اللي على الكونتوار متاع المحل موش متاع الكارط: عمرو ما يتبدّل.</p></div>
+      <div class="rule"><span class="n">4</span><h3>تشوف قبل، ترجّع بعد</h3><p>قبل ما تسجّل، تشوف بالأرقام شنوّة باش يصير. من بعد تنجم ترجّع، وكل تبديل يتسجّل باسم اللي عملو.</p></div>
+    </section>
+
+    <main class="row">
+      <!-- K1 · the owner's card page, after the first setup -->
+      <section class="shot">
+        <h2><span class="tag">K1</span> الكارط متاعي (مولى المحل)</h2>
+        <div class="phone">
+          <div class="screen r2">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>الكارط متاعي</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding-bottom: 20px">
+              <div style="margin: 4px 20px 0">
+                <div class="pass violet" style="min-height: 0">
+                  <div class="top"><div class="logo"><img class="e3d" src="assets/3d/coffee.png" alt="" /></div><div class="n">Café Yasmine<small>كارط تامبونات</small></div><div class="big num">10</div></div>
+                  <div class="line"><span>10 تامبونات = قهوة بلاش</span><img class="e3d" src="assets/3d/coffee.png" alt="" /></div>
+                </div>
+              </div>
+              <div class="h2">شنوّة تحب تبدّل؟</div>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--brand-soft)"><svg class="i" style="color: var(--brand)"><use href="#i-palette" /></svg></div><div class="t">الشكل، اللون واللوغو<small>يتبدّل عند الكل توّا</small></div><span class="chip mint">توّا</span></div>
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/gift.png" alt="" /></div><div class="t">الكادو وقدّاش من تامبون<small>اللي بداو يكمّلو كيف ما وعدتهم</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/trophy.png" alt="" /></div><div class="t">المستويات<small>كوادو صغار في الثنية</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+                <div class="item"><div class="ic" style="background: var(--sea-soft)"><img class="e3d" src="assets/3d/coin.png" alt="" /></div><div class="t">بدّل السيستام<small>كان تبدّل للنقاط: نحسبولهم اللي عندهم</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+                <div class="item"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/party.png" alt="" /></div><div class="t">كارط جديدة<small>موسم جديد ولا عرض جديد</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+              </div>
+              <div class="group" style="margin-top: 12px">
+                <div class="item"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/hourglass.png" alt="" /></div><div class="t">التبديلات القدم<small>شكون بدّل، وقتاش، وتنجم ترجّع تبديلة</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>الكونفيغ (4 إيكرانات) يصير مرّة وحدة. من بعد، كل شي يتبدّل من هوني.</li>
+          <li>تحت كل سطر مكتوب شنوّة يصير للحرفاء: ما فمّاش مفاجآت.</li>
+          <li>الخدّامة ما ينجموش يبدّلو الكارط: المولى والأدمين برك.</li>
+        </ul>
+      </section>
+
+      <!-- K2 · a change against the customer: the promise holds -->
+      <section class="shot">
+        <h2><span class="tag">K2</span> يطلّع الهدف: من 10 لـ12</h2>
+        <div class="phone">
+          <div class="screen r2 sheet-open">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>الكادو</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding: 0 20px 20px">
+              <div class="lbl">قدّاش من تامبون؟</div>
+              <div class="chips"><span class="num">6</span><span class="num">8</span><span class="num">10</span><span class="num on">12</span><span class="num">20</span></div>
+              <div class="lbl">الكادو</div>
+              <div class="fld">قهوة بلاش</div>
+            </div>
+            <div class="scrim"></div>
+            <div class="sheet open">
+              <div class="grab"></div>
+              <h3>قبل ما تسجّل</h3>
+              <p class="sp">تبدّل الهدف من <span class="num">10</span> لـ<span class="num">12</span> تامبون</p>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/people.png" alt="" /></div><div class="t"><span class="num">84</span> حريف بداو في كارطتهم<small>يكمّلوها على 10، كيف ما وعدتهم</small></div></div>
+                <div class="item"><div class="ic" style="background: var(--mint-soft)"><img class="e3d" src="assets/3d/sparkles.png" alt="" /></div><div class="t">الحرفاء الجداد<small>يبداو بـ12</small></div></div>
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/gift.png" alt="" /></div><div class="t"><span class="num">9</span> كوادو حاضرين<small>ما يتمسّوش</small></div></div>
+              </div>
+              <div class="b pri" style="margin-top: 14px">سجّل</div>
+              <div class="b ter" style="height: 44px">رجوع</div>
+            </div>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>كي التبديل موش في صالح الحريف، اللي بدا يكمّل كيف ما بدا، والجداد يبداو بالجديد.</li>
+          <li>الأرقام صحيحة: نحسبوها قبل ما تسجّل.</li>
+        </ul>
+      </section>
+
+      <!-- K3 · a change for the customer: it applies at once -->
+      <section class="shot">
+        <h2><span class="tag">K3</span> ينقّص الهدف: من 10 لـ8</h2>
+        <div class="phone">
+          <div class="screen r2 sheet-open">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>الكادو</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding: 0 20px 20px">
+              <div class="lbl">قدّاش من تامبون؟</div>
+              <div class="chips"><span class="num">6</span><span class="num on">8</span><span class="num">10</span><span class="num">12</span><span class="num">20</span></div>
+              <div class="lbl">الكادو</div>
+              <div class="fld">قهوة بلاش</div>
+            </div>
+            <div class="scrim"></div>
+            <div class="sheet open">
+              <div class="grab"></div>
+              <img class="e3d floaty" src="assets/3d/party.png" alt="" style="width: 56px; height: 56px; margin-bottom: 6px" />
+              <h3>خبر باهي للحرفاء</h3>
+              <p class="sp">تبدّل الهدف من <span class="num">10</span> لـ<span class="num">8</span> تامبونات</p>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/gift.png" alt="" /></div><div class="t"><span class="num">23</span> حريف عندهم 8 ولا أكثر<small>الكادو يولّي حاضر عندهم توّا</small></div></div>
+                <div class="item"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/people.png" alt="" /></div><div class="t"><span class="num">61</span> حريف في الثنية<small>يوصلو أسرع</small></div></div>
+                <div class="item"><div class="ic" style="background: var(--mint-soft)"><img class="e3d" src="assets/3d/bell.png" alt="" /></div><div class="t">نبعثولهم نوتيفيكاسيون<small>«القهوة البلاش متاعك حاضرة في Café Yasmine»</small></div></div>
+              </div>
+              <div class="b pri" style="margin-top: 14px">سجّل وفرّحهم</div>
+            </div>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>كي التبديل في صالح الحريف، يتطبّق على الكل توّا.</li>
+          <li>هاذا يكلّف المحل: نقولولو قدّاش من كادو باش يخرجو قبل ما يسجّل.</li>
+          <li>اللي وصل لكادو، يتسجّل باسمو: حتى تبديل من بعد ما ينحّيهولو.</li>
+        </ul>
+      </section>
+
+      <!-- K4 · another system: what the customers hold is converted, fairly -->
+      <section class="shot">
+        <h2><span class="tag">K4</span> بدّل السيستام: من تامبونات لنقاط</h2>
+        <div class="phone">
+          <div class="screen r2">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>من تامبونات لنقاط</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding: 0 20px 20px">
+              <div class="swap">
+                <div class="mini violet"><img class="e3d" src="assets/3d/coffee.png" alt="" /><b class="num">7/10</b><small>تامبونات</small></div>
+                <svg class="i" style="color: var(--ink-3)"><use href="#i-arrow" /></svg>
+                <div class="mini sea"><img class="e3d" src="assets/3d/coin.png" alt="" /><b class="num">70</b><small>نقطة</small></div>
+              </div>
+              <div class="lbl">القهوة البلاش قدّاش تسوى بالنقاط؟</div>
+              <div class="stepper"><span>−</span><b class="num">100</b><span>+</span></div>
+              <div class="calc">الكارط <span class="num">10</span> تامبونات = قهوة<br /><b>يعني كل تامبون = <span class="num">10</span> نقاط</b></div>
+              <div class="group" style="margin: 12px 0 0">
+                <div class="item"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/people.png" alt="" /></div><div class="t"><span class="num">128</span> حريف<small>حتى واحد ما يخسر: كل تامبون يتحسب</small></div></div>
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/gift.png" alt="" /></div><div class="t"><span class="num">9</span> كوادو حاضرين<small>يقعدو كيف ما هوما</small></div></div>
+                <div class="item"><div class="ic" style="background: var(--surface-2)"><svg class="i"><use href="#i-qr" /></svg></div><div class="t">الكود اللي على الكونتوار<small>ما يتبدّلش</small></div></div>
+              </div>
+              <div class="b pri" style="margin-top: 14px">بدّل للنقاط</div>
+            </div>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>ما فمّاش «نفسخو ونبداو من الصفر»: اللي عند الحريف يتحوّل بالحساب الصحيح، ونقرّبو ديما في صالحو.</li>
+          <li>القهوة = 100 نقطة، والكارط = 10 تامبونات: يعني التامبون = 10 نقاط.</li>
+          <li>والعكس (من نقاط لتامبونات): يا نحوّلوهم، يا يقعدو ينجمو يصرفوهم لين للنهار اللي تختاروه.</li>
+        </ul>
+      </section>
+
+      <!-- K5 · the customer, the day after -->
+      <section class="shot">
+        <h2><span class="tag">K5</span> الحريف بعد التبديل</h2>
+        <div class="phone">
+          <div class="screen r2">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>Café Yasmine</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding-bottom: 20px">
+              <div class="banner"><img class="e3d" src="assets/3d/sparkles.png" alt="" /><div><b>Café Yasmine بدّلت الكارط</b><span>السبعة تامبونات متاعك ولّاو <span class="num">70</span> نقطة. ما خسرت شي.</span></div></div>
+              <div style="margin: 12px 20px 0">
+                <div class="pass sea" style="min-height: 0">
+                  <div class="top"><div class="logo"><img class="e3d" src="assets/3d/coffee.png" alt="" /></div><div class="n">Café Yasmine<small>نقاط</small></div><div class="big num">70</div></div>
+                  <div class="meter"><b style="width: 70%"></b></div>
+                  <div class="line"><span>مازالولك 30 نقطة باش تربح قهوة بلاش</span></div>
+                </div>
+              </div>
+              <div class="h2">الكوادو متاعك</div>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/gift.png" alt="" /></div><div class="t">قهوة بلاش<small>من الكارط القديمة · لين 28 أكتوبر</small></div><div class="b coral mini-b">خوذها</div></div>
+              </div>
+              <div class="h2">الكارطات القدم</div>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/coffee.png" alt="" /></div><div class="t">كارط تامبونات · 10<small>سكّرت نهار 28 سبتمبر · 7 تامبونات ولّاو 70 نقطة</small></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>الحريف يفهم شنوّة صار في سطر واحد، ويطلعلو مرّة برك.</li>
+          <li>الكادو اللي ربحو قبل يقعد متاعو، بتاريخو.</li>
+          <li>الكارط القديمة تقعد في الهستوري متاعو.</li>
+        </ul>
+      </section>
+
+      <!-- K6 · every version is kept, any can come back -->
+      <section class="shot">
+        <h2><span class="tag">K6</span> التبديلات القدم</h2>
+        <div class="phone">
+          <div class="screen r2">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>التبديلات</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding-bottom: 20px">
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--sea-soft)"><img class="e3d" src="assets/3d/coin.png" alt="" /></div><div class="t">نقاط: 100 = قهوة<small>من 28 سبتمبر · حمدي</small></div><span class="chip mint">تخدم</span></div>
+                <div class="item"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/coffee.png" alt="" /></div><div class="t">12 تامبون = قهوة<small>12 لين 28 سبتمبر · حمدي</small></div><div class="b sec mini-b">رجّعها</div></div>
+                <div class="item"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/coffee.png" alt="" /></div><div class="t">10 تامبونات = قهوة<small>1 أوت لين 12 سبتمبر · الأدمين</small></div><div class="b sec mini-b">رجّعها</div></div>
+              </div>
+              <p class="note">«رجّعها» تعمل نسخة جديدة كيف القديمة، وتعدّي على نفس «قبل ما تسجّل».</p>
+              <div class="h2">زوز يبدّلو في نفس الوقت</div>
+              <div class="warn">
+                <svg class="i"><use href="#i-alert" /></svg>
+                <div><b>استنّى: الكارط تبدّلت توّا</b><span>Pointili (الأدمين) سجّل تبديل قبل دقيقة. شوف التبديل قبل ما تسجّل متاعك.</span><div class="b sec mini-b" style="margin-top: 10px; width: fit-content">شوف التبديل</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>كل نسخة تقعد محفوظة: الأرقام والهستوري ما يضيعوش.</li>
+          <li>كان الأدمين بدّل حاجة، تبان باسمو.</li>
+          <li>زوز يبدّلو في نفس الوقت؟ الثاني يشوف «الكارط تبدّلت توّا» قبل ما يسجّل، وما يمسحش خدمة الأول.</li>
+        </ul>
+      </section>
+    </main>
+
+    <header class="board-head" style="padding-top: 0">
+      <div>
+        <h1 style="font-size: 24px">كل حالة وحلّها</h1>
+        <p>كل سطر: شنوّة يصير، شنوّة المشكل، وكيفاش نحلّوه. العلامة تقول وين وصلنا: <span class="st ok">موجود</span> في الكود توّا، <span class="st part">نكمّلوه</span>: نصّو موجود، <span class="st new">نزيدوه</span> في الريماك، <span class="st bug">غلطة توّا</span>: نصلّحوها، ولا <span class="st rule">قرار</span> اخترناه.</p>
+      </div>
+    </header>
+
+    <section class="cases">
+      <h3>أ · تبديل في نفس الكارط</h3>
+      <table>
+        <tr><th>الحالة</th><th>المشكل</th><th>الحل</th><th>وين وصلنا</th></tr>
+        <tr><td>يطلّع قدّاش من تامبون (من 10 لـ12)</td><td>اللي بداو يحسّو روحهم تغشّو</td><td>اللي بداو يكمّلو على 10، والجداد على 12.</td><td><span class="st ok">موجود</span></td></tr>
+        <tr><td>ينقّص قدّاش من تامبون (من 10 لـ8)</td><td>ناس عندهم 8 ولا 9 وما يعرفوش</td><td>الكادو يولّي حاضر عندهم توّا، ونبعثولهم نوتيفيكاسيون.</td><td><span class="st part">نكمّلوه<small>النوتيفيكاسيون</small></span></td></tr>
+        <tr><td>يبدّل الكادو (من قهوة لكرواسون)</td><td>اللي بدا على القهوة يلقى حاجة أخرى</td><td>اللي بداو ياخذو اللي توعدو بيه، والجداد ياخذو الجديد. كان الجديد خير، المولى ينجم يعطيه للكل.</td><td><span class="st bug">غلطة توّا<small>يتبدّل عند الكل</small></span></td></tr>
+        <tr><td>يزيد مستوى (مثلا كادو في 5)</td><td>ناس فاتو 5 من قبل</td><td>يتحسب للي يوصلو لـ5 من توّا؛ اللي فاتو 5 ياخذوه في الكارط الجاية. نورّيو قدّاش من كادو باش يخرجو.</td><td><span class="st bug">غلطة توّا<small>ياخذوه الكل فرد مرّة</small></span></td></tr>
+        <tr><td>يأخّر مستوى (من 6 لـ8)</td><td>حريف عندو 7 كان يستنّى في الكادو</td><td>اللي بداو يقعد عندهم في 6.</td><td><span class="st bug">غلطة توّا</span></td></tr>
+        <tr><td>يقدّم مستوى (من 8 لـ6)</td><td>—</td><td>يتطبّق على الكل، واللي عندهم 6 ولا 7 ياخذوه توّا.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>ينحّي مستوى، ولا يطفي المستويات الكل</td><td>حريف وصل للمستوى وما خذاهش</td><td>اللي وصلو يقعدلهم الكادو؛ اللي في الثنية يكمّلو بالمستويات القدم؛ الجداد بلاش.</td><td><span class="st bug">غلطة توّا<small>الكادو يضيع</small></span></td></tr>
+        <tr><td>ينقّص مدّة الكارط (من 90 لـ30 يوم)</td><td>كارطات توفى قبل وقتها</td><td>يتطبّق على الكارطات الجديدة برك.</td><td><span class="st bug">غلطة توّا<small>تنقص للكل</small></span></td></tr>
+        <tr><td>يطوّل مدّة الكارط</td><td>—</td><td>يتطبّق على الكل.</td><td><span class="st ok">موجود</span></td></tr>
+        <tr><td>يبدّل الشكل، اللون، اللوغو ولا الاسم</td><td>—</td><td>يتبدّل عند الكل توّا: ما يمسّ حتى حق.</td><td><span class="st ok">موجود</span></td></tr>
+        <tr><td>يغلط في رقم (10 ولّاو 100)</td><td>الحرفاء يتصدمو</td><td>«قبل ما تسجّل» يورّيك الأرقام، و«رجّعها» ترجّع كل شي في دقيقة.</td><td><span class="st new">نزيدوه</span></td></tr>
+      </table>
+
+      <h3>ب · تبديل السيستام</h3>
+      <table>
+        <tr><th>الحالة</th><th>المشكل</th><th>الحل</th><th>وين وصلنا</th></tr>
+        <tr><td>من تامبونات لمستويات (ولا العكس)</td><td>—</td><td>هي نفس الكارط: الحالات متاع المستويات الفوق تتطبّق.</td><td><span class="st ok">موجود</span></td></tr>
+        <tr><td>من تامبونات لنقاط</td><td>التامبونات اللي في الثنية</td><td>يتحوّلو لنقاط بالحساب الصحيح (التامبون = سوم الكادو ÷ قدّاش من تامبون، ونقرّبو في صالح الحريف). الكوادو الحاضرين يقعدو.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>من نقاط لتامبونات</td><td>النقاط اللي عند الحرفاء</td><td>يا يتحوّلو لتامبونات (واللي فات الهدف يولّي عندو كادو حاضر)، يا يقعدو ينجمو يصرفوهم لين للنهار اللي يختارو مولى المحل.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>كود قديم على الإيكران وقت التبديل</td><td>حريف يسكاني كود ما عادش يخدم</td><td>الكودات القدم يتنحّاو وقت التبديل، والإيكران يتبدّل وحدو.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>الأفيش اللي على الكونتوار</td><td>مكتوب فيه «10 تامبونات»</td><td>الكود متاعو يقعد يخدم، ونفكّروك باش تطبع أفيش جديد.</td><td><span class="st new">نزيدوه</span></td></tr>
+      </table>
+
+      <h3>ج · كارط جديدة</h3>
+      <table>
+        <tr><th>الحالة</th><th>المشكل</th><th>الحل</th><th>وين وصلنا</th></tr>
+        <tr><td>موسم جديد ولا عرض جديد</td><td>الحرفاء اللي في الثنية</td><td>الجديدة تولّي هي اللي تخدم؛ واللي بداو يكمّلو بالقديمة (ولا تتحوّل كان السيستام تبدّل).</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>زوز كارطات في نفس الوقت</td><td>الكونتوار يتلخبط: أنهي كارط تاخو التامبون؟</td><td>لا: كارط وحدة تخدم في المحل. الكود متاع المحل موش متاع الكارط.</td><td><span class="st rule">قرار</span></td></tr>
+      </table>
+
+      <h3>د · الكوادو</h3>
+      <table>
+        <tr><th>الحالة</th><th>المشكل</th><th>الحل</th><th>وين وصلنا</th></tr>
+        <tr><td>حريف ورّى كود الكادو في الكاسة، والمولى بدّل في نفس الدقيقة</td><td>الكود ما يتقبلش</td><td>الكود وعد: يتقبل كيف ما هو طول الـ15 دقيقة متاعو.</td><td><span class="st bug">غلطة توّا<small>في المستويات</small></span></td></tr>
+        <tr><td>كادو حاضر ما خذاهش الحريف</td><td>يوفى والحريف ما يعرفش</td><td>كل كادو عندو تاريخ واضح، ونفكّرو الحريف 3 أيام قبل. المولى ينجم يطوّل المدّة.</td><td><span class="st new">نزيدوه</span></td></tr>
+      </table>
+
+      <h3>ه · المحل</h3>
+      <table>
+        <tr><th>الحالة</th><th>المشكل</th><th>الحل</th><th>وين وصلنا</th></tr>
+        <tr><td>المحل موقوف (الأبونمان وفى ولا الأدمين وقّف المحل)</td><td>الوقت يجري والكارطات توفى</td><td>الحريف يشوف كارطتو، أما ما عادش ينجم يسكاني، والوقت يتجمّد لين يرجع المحل يخدم.</td><td><span class="st bug">غلطة توّا<small>الوقت يجري</small></span></td></tr>
+        <tr><td>المحل سكّر نهائيًا</td><td>كان نفسخو المحل، الحرفاء يخسرو كل شي</td><td>عمرنا ما نفسخو محل: نحطّوه «سكّر»، والكارط تقعد في الهستوري متاع الحريف.</td><td><span class="st new">نزيدوه</span></td></tr>
+      </table>
+
+      <h3>و · حاجات تقنية</h3>
+      <table>
+        <tr><th>الحالة</th><th>المشكل</th><th>الحل</th><th>وين وصلنا</th></tr>
+        <tr><td>زوز يبدّلو في نفس الوقت (المولى والأدمين)</td><td>واحد يفسخ تبديل الآخر</td><td>كل كارط عندها رقم نسخة؛ الثاني يشوف «الكارط تبدّلت توّا» قبل ما يسجّل تبديلو.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>حريف يسكاني في نفس الثانية اللي يتسجّل فيها التبديل</td><td>التامبون يتحسب بالغلط</td><td>كل سكان يتحسب على نسخة وحدة واضحة، وفي عملية وحدة.</td><td><span class="st part">نكمّلوه</span></td></tr>
+        <tr><td>تليفون الحريف يورّي الكارط القديمة</td><td>يشوف أرقام قديمة</td><td>كل سكان يجيب الكارط الجديدة، والبانر «الكارط تبدّلت» يطلع مرّة وحدة.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>الأرقام متاع المحل بعد التبديل</td><td>الإحصائيات تتفرّق</td><td>كل تامبون وكل كادو مربوط بالنسخة: الأرقام تتجمع، وتنجم تقارن قبل وبعد.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>الأدمين يبدّل في بلاصة المولى</td><td>المولى ما يفهمش شكون بدّل</td><td>كل تبديل يتسجّل باسم اللي عملو، ويبان للمولى.</td><td><span class="st part">نكمّلوه</span></td></tr>
+      </table>
+
+      <h3>ز · النقاط</h3>
+      <table>
+        <tr><th>الحالة</th><th>المشكل</th><th>الحل</th><th>وين وصلنا</th></tr>
+        <tr><td>يبدّل «كل دينار = نقطة»</td><td>—</td><td>يتطبّق على الشراءات الجاية برك.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>يغلّي سوم الكادو في الليستة</td><td>حريف قاعد يلمّ باش ياخو الكادو هذاك</td><td>الزيادة تبدا بعد 14 يوم ونعلمو الحرفاء؛ التنقيص يتطبّق توّا.</td><td><span class="st new">نزيدوه</span></td></tr>
+        <tr><td>يشعل «النقاط يوفاو»</td><td>نقاط قديمة تطيح فرد مرّة</td><td>يتحسب من النهار اللي تشعل فيه، موش قبل.</td><td><span class="st new">نزيدوه</span></td></tr>
+      </table>
+    </section>
+    <script src="assets/icons.js"></script>
+  </body>
+</html>

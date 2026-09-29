@@ -208,6 +208,88 @@
         font-size: 12.5px;
         color: var(--ink-2);
       }
+      /* the points page: one big number, rewards you can swipe */
+      .pts {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-top: 10px;
+        position: relative;
+        z-index: 1;
+      }
+      .pts b {
+        font-size: 56px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+      .pts span {
+        font-size: 17px;
+        opacity: 0.85;
+      }
+      .rw {
+        min-width: 148px;
+        background: var(--surface);
+        border-radius: 22px;
+        padding: 12px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .rw .pic {
+        height: 72px;
+        border-radius: 16px;
+        background: var(--surface-2);
+        display: grid;
+        place-items: center;
+      }
+      .rw .pic img {
+        width: 48px;
+        height: 48px;
+      }
+      .rw b {
+        font-size: 14.5px;
+        font-weight: 600;
+      }
+      .rw.got {
+        box-shadow: 0 0 0 2px var(--sea), var(--shadow);
+      }
+      .rw.got .pic {
+        background: var(--sea-soft);
+      }
+      .rw .bar {
+        height: 6px;
+        border-radius: 9px;
+        background: var(--surface-2);
+        overflow: hidden;
+        margin-top: 4px;
+      }
+      .rw .bar i {
+        display: block;
+        height: 100%;
+        border-radius: 9px;
+        background: var(--sea);
+      }
+      .rw .muted {
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+      .chip-sea {
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 4px 10px;
+        width: fit-content;
+        background: var(--sea-soft);
+        color: var(--sea-ink);
+      }
+      .mini-b {
+        height: 34px;
+        padding: 0 12px;
+        font-size: 13.5px;
+        border-radius: 12px;
+      }
     </style>
   </head>
   <body>
@@ -220,6 +302,8 @@
         <a href="index.html">المنيو</a>
         <a href="6-look.html">الشكل</a>
         <a href="7-app.html" class="on">جرّب الأبليكاسيون</a>
+        <a href="8-change.html">تبديل الكارط</a>
+        <a href="9-admin.html">الأدمين</a>
       </nav>
     </header>
     <div class="ctrl">
@@ -282,7 +366,7 @@
               <div class="lt"><small>سامي بن صالح</small><h1>الكونت</h1></div>
               <div class="group" style="margin-top: 12px">
                 <div class="item press"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/phone.png" alt="" /></div><div class="t">النومرو<small class="num">+216 94 277 512</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
-                <div class="item press"><div class="ic" style="background: var(--gold-soft)"><img class="e3d" src="assets/3d/trophy.png" alt="" /></div><div class="t">الكوادو اللي خذيتهم<small>5 كوادو من 3 محلات</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
+                <div class="item press"><div class="ic" style="background: var(--brand-soft)"><img class="e3d" src="assets/3d/trophy.png" alt="" /></div><div class="t">الكوادو اللي خذيتهم<small>5 كوادو من 3 محلات</small></div><svg class="i chev"><use href="#i-next" /></svg></div>
               </div>
               <div class="h2" style="font-size: 15px; color: var(--ink-2)">الريڤلاج</div>
               <div class="group">
@@ -366,8 +450,8 @@
           <!-- a gift, shown at the till -->
           <div class="sheet" id="rewardSheet" style="text-align: center; background: linear-gradient(170deg, #ffa183 0%, #ff6b4a 45%, #d93f22 100%); color: #fff">
             <div class="grab" style="background: rgba(255, 255, 255, 0.4)"></div>
-            <img class="e3d" src="assets/3d/juice.png" alt="" style="width: 64px; height: 64px; margin: 0 auto" />
-            <h3 style="margin: 8px 0 0; font-size: 24px">عصير بلاش</h3>
+            <img class="e3d" id="rwIcon" src="assets/3d/juice.png" alt="" style="width: 64px; height: 64px; margin: 0 auto" />
+            <h3 id="rwTitle" style="margin: 8px 0 0; font-size: 24px">عصير بلاش</h3>
             <p style="margin: 2px 0 0; opacity: 0.85">ورّي الإيكران هذا للكاسة</p>
             <div style="margin: 16px auto 0; width: 230px; background: #fff; border-radius: 28px; padding: 14px">
               <canvas class="qr" data-seed="reward-482913"></canvas>
@@ -398,7 +482,7 @@
 
       // ── the wallet: three passes, the newest in front ───────────────────
       const passes = [
-        { id: "nour", kind: "gold", icon: "scissors", name: "Salon Nour", sub: "نقاط", big: () => "240" },
+        { id: "nour", kind: "sea", icon: "scissors", name: "Salon Nour", sub: "نقاط", big: () => "240" },
         { id: "hedi", kind: "coral", icon: "croissant", name: "Pâtisserie Hédi", sub: "كارط بالمستويات", big: () => '12<small>/20</small>' },
         { id: "yasmine", kind: "violet", icon: "coffee", name: "Café Yasmine", sub: "كارط تامبونات", big: () => `${state.yasmine}<small>/10</small>` },
       ];
@@ -425,7 +509,7 @@
       function cardPage(id) {
         const p = passes.find((x) => x.id === id);
         $("#cardTitle").textContent = p.name;
-        let h = `<div style="margin: 6px 20px 0"><div class="pass ${p.kind}" style="min-height: 0"><div class="top"><div class="logo"><img class="e3d" src="assets/3d/${p.icon}.png" alt=""></div><div class="n">${p.name}<small>${p.sub}</small></div><div class="big num">${p.big()}</div></div>`;
+        let h = `<div style="margin: 6px 20px 0"><div class="pass ${p.kind}" style="min-height: 0"><div class="top"><div class="logo"><img class="e3d" src="assets/3d/${p.icon}.png" alt=""></div><div class="n">${p.name}<small>${p.sub}</small></div>${id === "nour" ? "" : `<div class="big num">${p.big()}</div>`}</div>`;
         if (id === "yasmine") {
           h += dots(state.yasmine, 10, true) + `<div class="line"><span>قهوة بلاش</span><span class="num">${state.yasmine}/10</span></div></div></div>`;
           h += `<div class="h2">شنوّة صار</div><div class="group">
@@ -439,11 +523,14 @@
             <div class="stop2"><div class="knot2" style="background: var(--coral-soft)"><img class="e3d floaty" src="assets/3d/juice.png" alt=""></div><div class="card2" style="box-shadow: 0 0 0 2px var(--coral), var(--shadow)"><b>10 تامبونات · عصير بلاش</b><div style="color: var(--ink-2); font-size: 13px">حاضر! والتامبونات متاعك يبقاو</div><div class="b coral press" data-open="reward" style="height: 40px; font-size: 14px; margin-top: 8px">خوذ العصير</div></div></div>
             <div class="stop2"><div class="knot2" style="background: var(--surface-2); filter: grayscale(0.6); opacity: 0.8"><img class="e3d" src="assets/3d/trophy.png" alt=""></div><div class="card2"><b>20 تامبون · فطور بلاش</b><div style="color: var(--ink-2); font-size: 13px">مازالولك 8</div></div></div></div>`;
         } else {
-          h += `<div class="meter"><b style="width: 80%"></b></div><div class="line"><span>مازالولك 60 نقطة على مشط + سشوار</span></div></div></div>
-            <div class="h2">عوّض النقاط متاعك</div><div class="group">
-            <div class="item"><div class="ic" style="background: var(--gold-soft)"><img class="e3d" src="assets/3d/ticket.png" alt=""></div><div class="t">ريميز 10 د<small><span class="num">100</span> نقطة</small></div><div class="b gold press" style="height: 38px; padding: 0 16px; font-size: 14px">عوّض</div></div>
-            <div class="item"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/scissors.png" alt=""></div><div class="t">مشط + سشوار<small><span class="num">240/300</span></small></div><span style="color: var(--ink-3); font-size: 13px">مازالو 60</span></div>
-            <div class="item"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/gem.png" alt=""></div><div class="t">كولور بلاش<small><span class="num">240/500</span></small></div><span style="color: var(--ink-3); font-size: 13px">مازالو 260</span></div></div>`;
+          h += `<div class="pts"><b class="num">240</b><span>نقطة</span></div><div class="meter"><b style="width: 80%"></b></div><div class="line"><span>مازالولك 60 نقطة باش تربح مشط + سشوار</span></div></div></div>
+            <div class="h2">الكوادو</div><div class="rail">
+            <div class="rw got"><div class="pic"><img class="e3d" src="assets/3d/ticket.png" alt=""></div><b>ريميز 10 د</b><span class="chip-sea"><span class="num">100</span> نقطة</span><div class="b sea mini-b press" data-open="reward" data-reward="nour">خوذها</div></div>
+            <div class="rw"><div class="pic"><img class="e3d" src="assets/3d/scissors.png" alt=""></div><b>مشط + سشوار</b><div class="bar"><i style="width: 80%"></i></div><span class="muted"><span class="num">240/300</span></span></div>
+            <div class="rw"><div class="pic"><img class="e3d" src="assets/3d/gem.png" alt=""></div><b>كولور بلاش</b><div class="bar"><i style="width: 48%"></i></div><span class="muted"><span class="num">240/500</span></span></div></div>
+            <div class="h2">شنوّة صار</div><div class="group">
+            <div class="item"><div class="ic" style="background: var(--sea-soft); color: var(--sea-ink)"><b class="num" style="font-size: 13px">+35</b></div><div class="t">خلّصت 35 د<small>اليوم · 11:20</small></div></div>
+            <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/ticket.png" alt=""></div><div class="t">خذيت ريميز 10 د<small>12 سبتمبر · <span class="num">100</span> نقطة</small></div></div></div>`;
         }
         $("#cardBody").innerHTML = h;
       }
@@ -487,7 +574,7 @@
       function confetti() {
         const box = $("#confetti");
         box.innerHTML = "";
-        const colours = ["#9b7bff", "#ff6b4a", "#ffb21e", "#12b76a", "#2e90fa", "#f472b6"];
+        const colours = ["#9b7bff", "#ff6b4a", "#22c4dd", "#12b76a", "#2e90fa", "#f472b6"];
         for (let k = 0; k < 44; k++) {
           const i = document.createElement("i");
           i.style.left = Math.random() * 100 + "%";
@@ -531,10 +618,8 @@
           else pop();
         } else if (t.dataset.tab) showTab(t.dataset.tab);
         else if (t.dataset.go === "me") showTab("me");
-        else if (t.dataset.open === "reward") {
-          sheet("rewardSheet");
-          startCountdown();
-        } else if (t.dataset.open === "qr") ownerQr();
+        else if (t.dataset.open === "reward") openReward(t.dataset.reward || "hedi");
+        else if (t.dataset.open === "qr") ownerQr();
         else if ("close" in t.dataset || t.id === "scrim") sheet(null);
         else if (t.dataset.toast === "bell") toast("ما عندك حتى جديد، كل شي لاباس", "bell");
         else if (t.dataset.toast === "give") toast("الكاميرا تتحلّ باش تسكاني كادو الحريف", "gift");
@@ -557,6 +642,16 @@
           setTheme(t.classList.contains("off") ? "" : "night");
         }
       });
+
+      // a gift at the till wears the colour of its system
+      function openReward(which) {
+        const r = which === "nour" ? { icon: "ticket", title: "ريميز 10 د", bg: "linear-gradient(170deg, #3fd0e6 0%, #0891b2 45%, #0b5f75 100%)" } : { icon: "juice", title: "عصير بلاش", bg: "linear-gradient(170deg, #ffa183 0%, #ff6b4a 45%, #d93f22 100%)" };
+        $("#rwIcon").src = `assets/3d/${r.icon}.png`;
+        $("#rwTitle").textContent = r.title;
+        $("#rewardSheet").style.background = r.bg;
+        sheet("rewardSheet");
+        startCountdown();
+      }
 
       let timer = null;
       function startCountdown() {

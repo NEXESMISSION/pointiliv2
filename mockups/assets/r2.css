@@ -20,9 +20,9 @@
   --on-brand: #ffffff;
   --coral: #ff6b4a;
   --coral-soft: #ffede8;
-  --gold: #ffb21e;
-  --gold-soft: #fff4d8;
-  --gold-ink: #6e4600;
+  --sea: #0891b2;
+  --sea-soft: #e0f5f9;
+  --sea-ink: #0b5f75;
   --mint: #12b76a;
   --mint-soft: #e5f8ee;
   --glass: rgba(255, 255, 255, 0.72);
@@ -31,7 +31,7 @@
   --shadow-pass: 0 18px 40px -16px rgba(40, 20, 120, 0.45);
   --pass-violet: linear-gradient(145deg, #9b7bff 0%, #6c47ff 48%, #4a2ad6 100%);
   --pass-coral: linear-gradient(145deg, #ffa183 0%, #ff6b4a 52%, #e0452a 100%);
-  --pass-gold: linear-gradient(145deg, #2c2640 0%, #17141f 100%);
+  --pass-sea: linear-gradient(145deg, #3fd0e6 0%, #0891b2 52%, #0b6380 100%);
   --pass-mint: linear-gradient(145deg, #4ee0a2 0%, #12b76a 55%, #0a8a4f 100%);
 
   position: relative;
@@ -62,21 +62,21 @@
   --brand-deep: #6c47ff;
   --brand-soft: rgba(140, 107, 255, 0.16);
   --coral-soft: rgba(255, 107, 74, 0.16);
-  --gold-soft: rgba(255, 178, 30, 0.14);
-  --gold-ink: #ffc85c;
+  --sea-soft: rgba(34, 196, 221, 0.16);
+  --sea-ink: #6fdcef;
   --mint-soft: rgba(18, 183, 106, 0.16);
   --glass: rgba(26, 23, 36, 0.72);
   --glass-line: rgba(255, 255, 255, 0.08);
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 14px 34px -14px rgba(0, 0, 0, 0.6);
   --shadow-pass: 0 18px 44px -14px rgba(108, 71, 255, 0.55);
-  --pass-gold: linear-gradient(145deg, #ffd36b 0%, #ffb21e 55%, #e59400 100%);
+  --pass-sea: linear-gradient(145deg, #4fd8ec 0%, #0ea5c6 52%, #0b6f8c 100%);
 }
 
 /* C · Sunny — warm cream and tangerine, a café at 8 a.m. */
 .r2.sunny {
-  --bg: #fff6ec;
+  --bg: #fff5f1;
   --surface: #ffffff;
-  --surface-2: #fffaf4;
+  --surface-2: #fffaf8;
   --ink: #1d1a2b;
   --ink-2: #6b6275;
   --ink-3: #aaa1a9;
@@ -87,7 +87,7 @@
   --brand-soft: #ffe9df;
   --coral: #6c47ff;
   --coral-soft: #efeaff;
-  --glass: rgba(255, 250, 244, 0.78);
+  --glass: rgba(255, 250, 248, 0.78);
   --shadow: 0 1px 0 rgba(60, 30, 0, 0.03), 0 14px 34px -14px rgba(120, 60, 10, 0.22);
   --shadow-pass: 0 18px 40px -16px rgba(200, 80, 20, 0.45);
   --pass-violet: linear-gradient(145deg, #ff9a6b 0%, #ff6a3d 50%, #e04a1f 100%);
@@ -327,17 +327,8 @@
 .r2 .pass.coral {
   background: var(--pass-coral);
 }
-.r2 .pass.gold {
-  background: var(--pass-gold);
-}
-.r2 .pass.gold .big {
-  color: var(--gold);
-}
-.r2.night .pass.gold {
-  color: #2a1a00;
-}
-.r2.night .pass.gold .big {
-  color: #2a1a00;
+.r2 .pass.sea {
+  background: var(--pass-sea);
 }
 .r2 .pass .top {
   display: flex;
@@ -445,15 +436,6 @@
   height: 100%;
   border-radius: 99px;
   background: #fff;
-}
-.r2 .pass.gold .meter b {
-  background: var(--gold);
-}
-.r2.night .pass.gold .meter {
-  background: rgba(0, 0, 0, 0.16);
-}
-.r2.night .pass.gold .meter b {
-  background: #2a1a00;
 }
 
 /* ═══ chips of shops nearby ═════════════════════════════════════════════ */
@@ -646,10 +628,10 @@
   background: transparent;
   color: var(--ink-2);
 }
-.r2 .b.gold {
-  background: linear-gradient(150deg, #ffd36b, var(--gold));
-  color: #3d2600;
-  box-shadow: 0 12px 24px -10px var(--gold);
+.r2 .b.sea {
+  background: linear-gradient(150deg, #3fd0e6 -20%, var(--sea) 60%);
+  color: #fff;
+  box-shadow: 0 12px 24px -10px var(--sea);
 }
 .r2 .b.coral {
   background: linear-gradient(150deg, #ff9a7a, var(--coral));

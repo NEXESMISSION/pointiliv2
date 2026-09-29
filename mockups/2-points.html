@@ -6,14 +6,416 @@
     <title>النقاط · Pointili mockups</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="assets/app.css" />
+    <link rel="stylesheet" href="assets/r2.css" />
+    <style>
+      body {
+        font-family: "Readex Pro", "IBM Plex Sans Arabic", sans-serif;
+      }
+      .r2 .navbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 16px 10px;
+      }
+      .r2 .navbar h2 {
+        margin: 0;
+        flex: 1;
+        text-align: center;
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .r2 .chip {
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 999px;
+        padding: 4px 10px;
+        white-space: nowrap;
+        width: fit-content;
+      }
+      .r2 .chip.sea {
+        background: var(--sea-soft);
+        color: var(--sea-ink);
+      }
+      .r2 .mini-b {
+        height: 34px;
+        padding: 0 12px;
+        font-size: 13.5px;
+        border-radius: 12px;
+      }
+      .r2 .lbl {
+        margin: 16px 2px 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ink-2);
+      }
+      .r2 .seg2 {
+        display: flex;
+        gap: 4px;
+        background: var(--surface-2);
+        padding: 4px;
+        border-radius: 15px;
+        box-shadow: inset 0 0 0 1px var(--hair);
+      }
+      .r2 .seg2 > span {
+        flex: 1;
+        height: 40px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--ink-2);
+        white-space: nowrap;
+      }
+      .r2 .seg2 > span.on {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: var(--shadow);
+        font-weight: 600;
+      }
+      .r2 .sheet h3 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .r2 .sheet .sp {
+        margin: 2px 0 0;
+        color: var(--ink-2);
+        font-size: 14px;
+      }
+
+      /* the points pass: the number is the whole story */
+      .r2 .pts {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-top: 10px;
+        position: relative;
+        z-index: 1;
+      }
+      .r2 .pts b {
+        font-size: 58px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+      .r2 .pts span {
+        font-size: 17px;
+        opacity: 0.85;
+      }
+      /* rewards you can swipe */
+      .r2 .rw {
+        min-width: 148px;
+        background: var(--surface);
+        border-radius: 22px;
+        padding: 12px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .r2 .rw .pic {
+        height: 72px;
+        border-radius: 16px;
+        background: var(--surface-2);
+        display: grid;
+        place-items: center;
+      }
+      .r2 .rw .pic img {
+        width: 48px;
+        height: 48px;
+      }
+      .r2 .rw b {
+        font-size: 14.5px;
+        font-weight: 600;
+      }
+      .r2 .rw.got {
+        box-shadow: 0 0 0 2px var(--sea), var(--shadow);
+      }
+      .r2 .rw.got .pic {
+        background: var(--sea-soft);
+      }
+      .r2 .rw .bar {
+        height: 6px;
+        border-radius: 9px;
+        background: var(--surface-2);
+        overflow: hidden;
+        margin-top: 4px;
+      }
+      .r2 .rw .bar i {
+        display: block;
+        height: 100%;
+        border-radius: 9px;
+        background: var(--sea);
+      }
+      .r2 .rw .muted {
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+      .r2 .ic b.num {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      /* +35 */
+      .r2 .plus {
+        width: 104px;
+        height: 104px;
+        margin: 4px auto 0;
+        border-radius: 34px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: var(--pass-sea);
+        box-shadow: 0 20px 40px -12px var(--sea);
+      }
+      .r2 .plus span {
+        font-size: 40px;
+        font-weight: 700;
+      }
+      .r2 .unlock {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        text-align: start;
+        padding: 12px 14px;
+        border-radius: 20px;
+        background: var(--sea-soft);
+        margin-top: 16px;
+      }
+      .r2 .unlock img {
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+      }
+      .r2 .unlock b {
+        display: block;
+        font-size: 15px;
+      }
+      .r2 .unlock span {
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      /* the owner's keypad */
+      .r2 .q {
+        text-align: center;
+        color: var(--ink-2);
+        margin: 8px 0 0;
+        font-size: 15px;
+      }
+      .r2 .amount {
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        gap: 8px;
+        margin-top: 2px;
+      }
+      .r2 .amount b {
+        font-size: 66px;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+      .r2 .amount > span {
+        font-size: 26px;
+        color: var(--ink-3);
+        font-weight: 600;
+      }
+      .r2 .eq {
+        margin: 6px auto 0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px 6px 10px;
+        border-radius: 999px;
+        background: var(--sea-soft);
+        color: var(--sea-ink);
+        font-weight: 600;
+        font-size: 14px;
+        width: fit-content;
+      }
+      .r2 .eq img {
+        width: 22px;
+        height: 22px;
+      }
+      .r2 .quick {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin: 16px 0 14px;
+      }
+      .r2 .quick > span {
+        height: 36px;
+        padding: 0 16px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .r2 .keys {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        direction: ltr;
+      }
+      .r2 .keys span {
+        height: 56px;
+        border-radius: 18px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+        font-weight: 500;
+      }
+      .r2 .keys span.soft {
+        background: transparent;
+        box-shadow: none;
+        color: var(--ink-2);
+      }
+      /* the QR for one amount */
+      .r2 .qrcard {
+        margin-top: 16px;
+        width: 250px;
+        background: #fff;
+        border-radius: 32px;
+        padding: 18px 18px 14px;
+        box-shadow: 0 30px 60px -20px rgba(0, 40, 60, 0.6);
+      }
+      .r2 .qrcard canvas {
+        width: 100%;
+        display: block;
+      }
+      .r2 .qrfoot {
+        margin-top: 10px;
+        color: #0f0e17;
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .r2 .qrfoot b {
+        color: #0891b2;
+        font-size: 22px;
+      }
+      .r2 .waitpill {
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        font-size: 14px;
+      }
+      .r2 .live {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #7cffb2;
+        box-shadow: 0 0 0 4px rgba(124, 255, 178, 0.25);
+      }
+      /* the owner's home when the shop runs on points */
+      .r2 .act {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        min-height: 0;
+        padding: 18px;
+      }
+      .r2 .act .bigic {
+        width: 60px;
+        height: 60px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.18);
+        display: grid;
+        place-items: center;
+        position: relative;
+        z-index: 1;
+        flex-shrink: 0;
+      }
+      .r2 .act .bigic .i {
+        width: 30px;
+        height: 30px;
+      }
+      .r2 .act .tx {
+        position: relative;
+        z-index: 1;
+      }
+      .r2 .act .tx b {
+        display: block;
+        font-size: 21px;
+        font-weight: 700;
+      }
+      .r2 .act .tx span {
+        opacity: 0.85;
+        font-size: 13.5px;
+      }
+      .r2 .duo {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 12px 20px 0;
+      }
+      .r2 .kpis3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 0 20px;
+      }
+      .r2 .kpi {
+        background: var(--surface);
+        border-radius: 22px;
+        padding: 14px 10px 12px;
+        box-shadow: var(--shadow);
+        text-align: center;
+      }
+      .r2 .kpi img {
+        width: 32px;
+        height: 32px;
+        margin: 0 auto 4px;
+      }
+      .r2 .kpi b {
+        display: block;
+        font-size: 21px;
+        font-weight: 700;
+      }
+      .r2 .kpi span {
+        font-size: 12.5px;
+        color: var(--ink-2);
+      }
+      .r2 .duo .kpi {
+        text-align: start;
+      }
+      .r2 .duo .kpi img {
+        margin: 0;
+      }
+      .r2 .duo .kpi b {
+        font-size: 16px;
+        margin-top: 6px;
+      }
+      .r2 .ex {
+        margin: 10px 2px 0;
+        font-size: 13.5px;
+        color: var(--ink-2);
+      }
+      .r2 .code {
+        margin-top: 6px;
+        color: #0f0e17;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+      }
+    </style>
   </head>
   <body>
     <header class="board-head">
       <div>
         <h1>2 · النقاط (سيستام وحدو)</h1>
-        <p>للمحلات اللي الخلاص يتبدّل (كوافور، ريستو، حانوت): <b>كل دينار = نقطة</b>. مولى المحل يكتب قدّاش خلّص الحريف، الحريف يسكاني، والنقاط يتزادو. يبدّلهم بكوادو من ليستة يحضّرها مولى المحل.</p>
+        <p>للمحلات اللي الخلاص يتبدّل (كوافور، ريستو، حانوت): <b>كل دينار = نقطة</b>. مولى المحل يكتب قدّاش خلّص الحريف، الحريف يسكاني، والنقاط يتزادو. يبدّلهم بكوادو من ليستة يحضّرها المحل. نفس الشكل متاع الجولة 2.</p>
       </div>
       <nav class="board-nav">
         <a href="index.html">المنيو</a>
@@ -21,7 +423,8 @@
         <a href="2-points.html" class="on">النقاط</a>
         <a href="3-owner.html">مولى المحل</a>
         <a href="4-setup.html">الكونفيغ</a>
-        <a href="5-founder.html">الأدمين</a>
+        <a href="9-admin.html">الأدمين</a>
+        <a href="8-change.html">تبديل الكارط</a>
       </nav>
     </header>
 
@@ -30,208 +433,184 @@
       <section class="shot">
         <h2><span class="tag">P1</span> الحريف: النقاط متاعو</h2>
         <div class="phone">
-          <div class="screen">
-            <div class="status"><span class="latin">9:41</span><span class="dots"><span></span><span></span></span></div>
-            <div class="top">
-              <div class="iconbtn"><svg class="i"><use href="#i-back" /></svg></div>
-              <h3>Salon Nour<span class="sub">كوافور · المرسى</span></h3>
-            </div>
-            <div class="scroll" style="padding-bottom: 20px">
-              <div class="pad">
-                <div class="wallet w-ink" style="padding: 20px">
-                  <div class="head">
-                    <div class="logo" style="background: linear-gradient(140deg, #ffcf5c, #e5a019); color: #2a1d00"><svg class="i"><use href="#i-coins" /></svg></div>
-                    <div class="name">النقاط متاعي<small>كل دينار = نقطة</small></div>
-                  </div>
-                  <div style="position: relative; z-index: 1; margin-top: 14px; display: flex; align-items: baseline; gap: 8px">
-                    <span class="num" style="font-size: 52px; font-weight: 800; line-height: 1; color: #ffcf5c">240</span>
-                    <span style="font-weight: 700; opacity: 0.8">نقطة</span>
-                  </div>
-                  <div class="bar gold" style="margin-top: 14px; background: rgba(255, 255, 255, 0.14); position: relative; z-index: 1"><span style="width: 80%"></span></div>
-                  <div style="position: relative; z-index: 1; margin-top: 8px; font-size: 13px; opacity: 0.85">مازال <b class="num">60</b> نقطة على «مشط + سشوار»</div>
+          <div class="screen r2">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>Salon Nour</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding-bottom: 24px">
+              <div style="margin: 2px 20px 0">
+                <div class="pass sea" style="min-height: 0">
+                  <div class="top"><div class="logo"><img class="e3d" src="assets/3d/scissors.png" alt="" /></div><div class="n">Salon Nour<small>كل دينار = نقطة</small></div></div>
+                  <div class="pts"><b class="num">240</b><span>نقطة</span></div>
+                  <div class="meter"><b style="width: 80%"></b></div>
+                  <div class="line"><span>مازالولك 60 نقطة باش تربح مشط + سشوار</span></div>
                 </div>
               </div>
-
-              <div class="section-title">بدّل النقاط متاعك</div>
-              <div class="pad" style="display: grid; gap: 10px">
-                <div class="card" style="padding: 14px; display: flex; align-items: center; gap: 12px; border: 2px solid var(--points)">
-                  <div class="dot" style="background: var(--points-50); color: var(--points-dark)"><svg class="i"><use href="#i-ticket" /></svg></div>
-                  <div style="flex: 1"><div class="bold">ريميز 10 د</div><div class="muted small"><span class="num">100</span> نقطة</div></div>
-                  <div class="btn gold sm">بدّل</div>
-                </div>
-                <div class="card" style="padding: 14px; display: flex; align-items: center; gap: 12px">
-                  <div class="dot" style="background: var(--canvas); color: var(--muted)"><svg class="i"><use href="#i-sparkles" /></svg></div>
-                  <div style="flex: 1">
-                    <div class="bold">مشط + سشوار</div>
-                    <div class="bar gold" style="margin-top: 6px"><span style="width: 80%"></span></div>
-                    <div class="muted small" style="margin-top: 3px"><span class="num">240 / 300</span></div>
-                  </div>
-                  <span class="pill grey"><svg class="i" style="width: 13px"><use href="#i-lock" /></svg>60</span>
-                </div>
-                <div class="card" style="padding: 14px; display: flex; align-items: center; gap: 12px">
-                  <div class="dot" style="background: var(--canvas); color: var(--muted)"><svg class="i"><use href="#i-palette" /></svg></div>
-                  <div style="flex: 1">
-                    <div class="bold">كولور بلاش</div>
-                    <div class="bar gold" style="margin-top: 6px"><span style="width: 48%"></span></div>
-                    <div class="muted small" style="margin-top: 3px"><span class="num">240 / 500</span></div>
-                  </div>
-                  <span class="pill grey"><svg class="i" style="width: 13px"><use href="#i-lock" /></svg>260</span>
-                </div>
+              <div class="h2">الكوادو <a href="#">الكل</a></div>
+              <div class="rail">
+                <div class="rw got"><div class="pic"><img class="e3d" src="assets/3d/ticket.png" alt="" /></div><b>ريميز 10 د</b><span class="chip sea"><span class="num">100</span> نقطة</span><div class="b sea mini-b">خوذها</div></div>
+                <div class="rw"><div class="pic"><img class="e3d" src="assets/3d/scissors.png" alt="" /></div><b>مشط + سشوار</b><div class="bar"><i style="width: 80%"></i></div><span class="muted"><span class="num">240/300</span></span></div>
+                <div class="rw"><div class="pic"><img class="e3d" src="assets/3d/gem.png" alt="" /></div><b>كولور بلاش</b><div class="bar"><i style="width: 48%"></i></div><span class="muted"><span class="num">240/500</span></span></div>
               </div>
-
-              <div class="section-title">شنوّة صار</div>
-              <div class="pad">
-                <div class="card list">
-                  <div><div class="dot" style="background: var(--points-50); color: var(--points-dark)"><b class="num" style="font-size: 12px">+35</b></div><div class="grow"><div class="title">خلّصت <span class="num">35</span> د</div><div class="meta">اليوم · 11:20</div></div></div>
-                  <div><div class="dot" style="background: var(--level-50); color: var(--level)"><b class="num" style="font-size: 12px">−100</b></div><div class="grow"><div class="title">ريميز 10 د</div><div class="meta">20 سبتمبر</div></div></div>
-                </div>
+              <div class="h2">شنوّة صار</div>
+              <div class="group">
+                <div class="item"><div class="ic" style="background: var(--sea-soft); color: var(--sea-ink)"><b class="num">+35</b></div><div class="t">خلّصت 35 د<small>اليوم · 11:20</small></div></div>
+                <div class="item"><div class="ic" style="background: var(--coral-soft)"><img class="e3d" src="assets/3d/ticket.png" alt="" /></div><div class="t">خذيت ريميز 10 د<small>12 سبتمبر · <span class="num">100</span> نقطة</small></div></div>
+                <div class="item"><div class="ic" style="background: var(--sea-soft); color: var(--sea-ink)"><b class="num">+48</b></div><div class="t">خلّصت 48 د<small>3 سبتمبر</small></div></div>
               </div>
             </div>
           </div>
         </div>
         <ul class="notes">
-          <li>الرقم الكبير (240) هو كل شي: الحريف يفهم في ثانية.</li>
-          <li>الكوادو ليستة: اللي تنجم تاخذو يضوي، الباقي فيه قدّاش مازال.</li>
-          <li>لون ذهبي = نقاط (والبنفسجي = تامبونات، البرتقالي = مستويات).</li>
+          <li>الرقم الكبير هو كل شي: الحريف يفهم في ثانية قدّاش عندو.</li>
+          <li>الكوادو يتقلّبو بالصبع: اللي ينجم الحريف ياخوهم توّا يضويو.</li>
+          <li>كل حركة مكتوبة: قدّاش خلّص وشنوّة خذا.</li>
         </ul>
       </section>
 
-      <!-- P2 · right after a points scan -->
+      <!-- P2 · right after the scan -->
       <section class="shot">
         <h2><span class="tag">P2</span> الحريف: بعد ما يسكاني</h2>
         <div class="phone">
-          <div class="screen" style="background: linear-gradient(180deg, #fff7e6 0%, #fff 60%)">
-            <div class="confetti" data-n="30" data-seed="p2"></div>
-            <div class="status"><span class="latin">9:41</span><span class="dots"><span></span><span></span></span></div>
-            <div class="scroll" style="display: flex; flex-direction: column; padding: 10px 20px 22px">
-              <div style="margin: 18px auto 0; width: 116px; height: 116px; border-radius: 50%; background: linear-gradient(145deg, #ffcf5c, #e5a019); display: grid; place-items: center; color: #2a1d00; box-shadow: 0 18px 40px rgba(229, 160, 25, 0.4)">
-                <span class="num" style="font-size: 38px; font-weight: 800">+35</span>
+          <div class="screen r2 sheet-open">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>Salon Nour</h2><div style="width: 42px"></div></div>
+            <div style="margin: 2px 20px 0">
+              <div class="pass sea" style="min-height: 0">
+                <div class="top"><div class="logo"><img class="e3d" src="assets/3d/scissors.png" alt="" /></div><div class="n">Salon Nour<small>كل دينار = نقطة</small></div></div>
+                <div class="pts"><b class="num">240</b><span>نقطة</span></div>
+                <div class="meter"><b style="width: 80%"></b></div>
               </div>
-              <h2 class="center" style="margin: 18px 0 4px; font-size: 25px">35 نقطة جديدة! 🎉</h2>
-              <p class="center muted" style="margin: 0 0 18px">Salon Nour · خلّصت <span class="num">35</span> د</p>
-
-              <div class="wallet w-ink">
-                <div class="head">
-                  <div class="logo sm" style="background: linear-gradient(140deg, #ffcf5c, #e5a019); color: #2a1d00"><svg class="i"><use href="#i-coins" /></svg></div>
-                  <div class="name">النقاط متاعك<small>Salon Nour</small></div>
-                  <div class="count num" style="color: #ffcf5c">240</div>
-                </div>
-                <div class="bar gold" style="margin-top: 14px; background: rgba(255, 255, 255, 0.14); position: relative; z-index: 1"><span style="width: 80%"></span></div>
-                <div class="foot"><svg class="i" style="width: 16px"><use href="#i-sparkles" /></svg><span>مشط + سشوار</span><span>مازال 60</span></div>
-              </div>
-
-              <div class="card" style="margin-top: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; border: 2px solid var(--points)">
-                <div class="dot" style="background: var(--points-50); color: var(--points-dark)"><svg class="i"><use href="#i-ticket" /></svg></div>
-                <div style="flex: 1"><div class="bold">تنجم تبدّل توّا</div><div class="muted small">ريميز 10 د · <span class="num">100</span> نقطة</div></div>
-              </div>
-
-              <div style="margin-top: auto; display: grid; gap: 8px; padding-top: 16px">
-                <div class="btn dark">شوف النقاط</div>
-                <div class="btn ghost">كمّل</div>
-              </div>
+            </div>
+            <div class="scrim"></div>
+            <div class="confetti" data-n="24" data-seed="p2" style="z-index: 45; bottom: 55%"></div>
+            <div class="sheet open" style="text-align: center">
+              <div class="grab"></div>
+              <div class="plus"><span class="num">+35</span></div>
+              <h3 style="margin-top: 14px">35 نقطة جديدة!</h3>
+              <p class="sp">Salon Nour · خلّصت 35 د</p>
+              <div class="unlock"><img class="e3d" src="assets/3d/ticket.png" alt="" /><div><b>ريميز 10 د ولّات متاعك</b><span>عندك 240 نقطة: تنجم تاخوها توّا</span></div></div>
+              <div class="b sea" style="margin-top: 14px">خوذ الريميز</div>
+              <div class="b ter" style="height: 44px">باهي</div>
             </div>
           </div>
         </div>
         <ul class="notes">
-          <li>نفس الفرحة كيف التامبون، أما بالذهبي و«+35».</li>
-          <li>يورّي قدّاش خلّص: الحريف يتّيق في الحسبة.</li>
-          <li>كان عندو كادو يتبدّل، يقولولو توّا.</li>
+          <li>نفس الفرحة متاع التامبون، بالأزرق و«+35».</li>
+          <li>كان وصل لكادو، نقولولو توّا، وياخوه بنزلة وحدة.</li>
         </ul>
       </section>
 
-      <!-- P3 · the owner types what the customer paid -->
+      <!-- P3 · the owner types what was paid -->
       <section class="shot">
         <h2><span class="tag">P3</span> مولى المحل: قدّاش خلّص؟</h2>
         <div class="phone">
-          <div class="screen">
-            <div class="status"><span class="latin">9:41</span><span class="dots"><span></span><span></span></span></div>
-            <div class="top">
-              <div class="iconbtn"><svg class="i"><use href="#i-x" /></svg></div>
-              <h3>زيد نقاط<span class="sub">Salon Nour</span></h3>
-            </div>
-            <div class="scroll" style="display: flex; flex-direction: column; padding: 0 18px 18px">
-              <p class="center" style="margin: 12px 0 0; font-weight: 600; color: var(--body)">قدّاش خلّص الحريف؟</p>
-              <div class="center num" style="font-size: 54px; font-weight: 800; margin-top: 4px; letter-spacing: -0.02em">35.000 <span style="font-size: 22px; color: var(--muted)">DT</span></div>
-              <div class="center"><span class="pill gold" style="font-size: 14px; padding: 6px 14px">= <span class="num">35</span> نقطة</span></div>
-              <div class="keys" style="margin-top: 22px">
-                <div>1</div><div>2</div><div>3</div>
-                <div>4</div><div>5</div><div>6</div>
-                <div>7</div><div>8</div><div>9</div>
-                <div>.</div><div>0</div><div><svg class="i" style="width: 24px; height: 24px"><use href="#i-del" /></svg></div>
+          <div class="screen r2">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-x" /></svg></div><h2>زيد نقاط</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding: 0 20px 22px; display: flex; flex-direction: column">
+              <p class="q">قدّاش خلّص الحريف؟</p>
+              <div class="amount"><b class="num">35</b><span>د</span></div>
+              <div class="eq"><img class="e3d" src="assets/3d/coin.png" alt="" />= <span class="num">35</span> نقطة</div>
+              <div class="quick"><span><span class="num">10</span> د</span><span><span class="num">20</span> د</span><span><span class="num">50</span> د</span></div>
+              <div class="keys num">
+                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span class="soft">.</span><span>0</span><span class="soft"><svg class="i"><use href="#i-del" /></svg></span>
               </div>
-              <div class="btn gold" style="margin-top: auto"><svg class="i"><use href="#i-qr" /></svg>ورّي الكود للحريف</div>
+              <div class="b sea" style="margin-top: auto"><svg class="i"><use href="#i-qr" /></svg>ورّي الكود</div>
             </div>
           </div>
         </div>
         <ul class="notes">
           <li>مولى المحل يكتب المبلغ برك، والنقاط يتحسبو وحدهم.</li>
-          <li>أرقام كبار كيف الكاسة: يكتب بصبع واحد.</li>
-          <li>ما فمّاش ليستة حرفاء ولا بحث: الحريف هو اللي يسكاني.</li>
+          <li>أرقام كبار كيما في الكاسة، ومبالغ حاضرة: 10، 20، 50.</li>
         </ul>
       </section>
 
-      <!-- P4 · the owner shows the QR for that amount -->
+      <!-- P4 · the QR for that amount, full screen on the counter -->
       <section class="shot">
         <h2><span class="tag">P4</span> مولى المحل: الكود متاع المبلغ</h2>
         <div class="phone">
-          <div class="screen" style="background: linear-gradient(170deg, #ffcf5c 0%, #f0ad1f 45%, #c98700 100%); color: #2a1d00">
-            <div class="status"><span class="latin">9:41</span><span class="dots"><span></span><span></span></span></div>
-            <div class="scroll" style="padding: 8px 22px 22px; display: flex; flex-direction: column; align-items: center; text-align: center">
-              <div class="logo" style="background: #1f1a2e; margin-top: 6px">SN</div>
-              <h2 style="margin: 12px 0 0; font-size: 22px">سكاني وخوذ النقاط</h2>
-              <div style="margin-top: 16px; width: 250px; background: #fff; border-radius: 28px; padding: 16px; box-shadow: 0 22px 44px rgba(120, 70, 0, 0.3)">
-                <canvas class="qr" data-seed="points-35"></canvas>
-                <div style="margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px">
-                  <span class="num" style="font-size: 30px; font-weight: 800; color: var(--points-dark)">+35</span>
-                  <span class="bold" style="color: var(--ink)">نقطة</span>
-                </div>
-              </div>
-              <div class="pill" style="margin-top: 16px; background: rgba(255, 255, 255, 0.45)">⏳ يستنّى في الحريف يسكاني…</div>
-              <p class="small" style="margin: 10px 0 0; opacity: 0.8">الكود يخدم مرة برك، وبعد زوز دقايق يوفى</p>
-              <div style="margin-top: auto; width: 100%; display: grid; gap: 8px">
-                <div class="btn dark">بدّل المبلغ</div>
-              </div>
+          <div class="screen r2" style="background: linear-gradient(170deg, #3fd0e6 0%, #0891b2 45%, #0b5f75 100%); color: #fff">
+            <div class="sb" style="color: #fff"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn" style="background: rgba(255, 255, 255, 0.18); color: #fff; box-shadow: none"><svg class="i"><use href="#i-x" /></svg></div><h2 style="color: #fff">Salon Nour</h2><div style="width: 42px"></div></div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 4px 24px 26px; text-align: center">
+              <img class="e3d floaty" src="assets/3d/coin.png" alt="" style="width: 58px; height: 58px" />
+              <h1 style="margin: 8px 0 0; font-size: 24px">سكاني وخوذ <span class="num">35</span> نقطة</h1>
+              <div class="qrcard"><canvas class="qr" data-seed="points-35" data-ink="#063f4f"></canvas><div class="qrfoot"><b class="num">+35</b> نقطة · <span class="num">35</span> د</div></div>
+              <div class="waitpill"><span class="live"></span>يستنّى في الحريف · <span class="num">1:48</span></div>
+              <p style="margin: 10px 0 0; opacity: 0.8; font-size: 13.5px">الكود يخدم مرّة برك</p>
+              <div class="b" style="margin-top: auto; width: 100%; background: rgba(255, 255, 255, 0.16); color: #fff">بدّل المبلغ</div>
             </div>
           </div>
         </div>
         <ul class="notes">
-          <li>نفس الحركة متاع التامبون: الحريف يسكاني الكود متاع المحل.</li>
-          <li>كي يسكاني، الإيكران يولّي «✓ تزادو 35 نقطة لسامي».</li>
           <li>الكود مربوط بالمبلغ ويخدم مرّة برك: ما يتعاودش.</li>
+          <li>كي يسكاني، الإيكران يولّي «✓ سامي خذا 35 نقطة».</li>
         </ul>
       </section>
 
-      <!-- P5 · the owner sets the points up -->
+      <!-- P5 · the owner's home, for a shop on points -->
       <section class="shot">
-        <h2><span class="tag">P5</span> مولى المحل: ريڤلاج النقاط</h2>
+        <h2><span class="tag">P5</span> مولى المحل: الدار (محل نقاط)</h2>
         <div class="phone">
-          <div class="screen">
-            <div class="status"><span class="latin">9:41</span><span class="dots"><span></span><span></span></span></div>
-            <div class="top">
-              <div class="iconbtn"><svg class="i"><use href="#i-back" /></svg></div>
-              <h3>النقاط<span class="sub">كيفاش يربحو ويبدّلوهم</span></h3>
+          <div class="screen r2">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="body">
+              <div class="head">
+                <div class="me" style="background: linear-gradient(145deg, #3fd0e6, #0891b2)"><img class="e3d" src="assets/3d/scissors.png" alt="" style="width: 26px; height: 26px" /></div>
+                <div class="gbtn"><svg class="i"><use href="#i-settings" /></svg></div>
+              </div>
+              <div class="lt"><small>صباح الخير نور الهدى <img class="e3d" src="assets/3d/wave.png" alt="" style="width: 20px; height: 20px" /></small><h1>Salon Nour</h1></div>
+              <div style="margin: 14px 20px 0">
+                <div class="pass sea act">
+                  <div class="bigic"><svg class="i"><use href="#i-plus" /></svg></div>
+                  <div class="tx"><b>زيد نقاط</b><span>اكتب قدّاش خلّص الحريف</span></div>
+                </div>
+              </div>
+              <div class="duo">
+                <div class="kpi"><img class="e3d" src="assets/3d/gift.png" alt="" /><b>اعطي كادو</b><span>سكاني تليفون الحريف</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/people.png" alt="" /><b>الحرفاء</b><span class="num">64</span></div>
+              </div>
+              <div class="h2">اليوم</div>
+              <div class="kpis3">
+                <div class="kpi"><img class="e3d" src="assets/3d/coin.png" alt="" /><b class="num">412</b><span>نقطة</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/people.png" alt="" /><b class="num">18</b><span>حريف</span></div>
+                <div class="kpi"><img class="e3d" src="assets/3d/party.png" alt="" /><b class="num">3</b><span>كوادو</span></div>
+              </div>
             </div>
-            <div class="scroll" style="padding: 0 18px 18px">
-              <div class="card" style="padding: 16px">
-                <div class="bold">كل قدّاش = نقطة؟</div>
-                <div class="seg" style="margin-top: 10px"><div class="num">0.5 DT</div><div class="on num">1 DT</div><div class="num">2 DT</div><div class="num">5 DT</div></div>
-                <p class="muted small" style="margin: 10px 0 0">مثال: حريف خلّص <span class="num">20</span> د ياخو <b class="num">20</b> نقطة.</p>
-              </div>
+            <nav class="tabbar">
+              <div class="tab on"><svg class="i"><use href="#i-homef" /></svg><span>الدار</span></div>
+              <div class="scanbtn"><svg class="i"><use href="#i-plus" /></svg></div>
+              <div class="tab"><svg class="i"><use href="#i-chart" /></svg><span>الأرقام</span></div>
+            </nav>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>في محل النقاط، الزرّ الكبير يولّي «زيد نقاط» في بلاصة «ورّي الكود».</li>
+          <li>الأرقام متاع اليوم بالنقاط.</li>
+        </ul>
+      </section>
 
-              <div class="section-title" style="margin: 16px 2px 10px">الكوادو (بالنقاط)</div>
-              <div class="card list">
-                <div><span class="pill gold num">100</span><div class="grow"><div class="title">ريميز 10 د</div></div><svg class="i" style="color: var(--faint)"><use href="#i-next" /></svg></div>
-                <div><span class="pill gold num">300</span><div class="grow"><div class="title">مشط + سشوار</div></div><svg class="i" style="color: var(--faint)"><use href="#i-next" /></svg></div>
-                <div><span class="pill gold num">500</span><div class="grow"><div class="title">كولور بلاش</div></div><svg class="i" style="color: var(--faint)"><use href="#i-next" /></svg></div>
-                <div style="color: var(--violet); font-weight: 700"><svg class="i"><use href="#i-plus" /></svg>زيد كادو</div>
+      <!-- P6 · the owner sets the points up -->
+      <section class="shot">
+        <h2><span class="tag">P6</span> مولى المحل: ريڤلاج النقاط</h2>
+        <div class="phone">
+          <div class="screen r2">
+            <div class="sb"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn"><svg class="i"><use href="#i-back" /></svg></div><h2>النقاط</h2><div style="width: 42px"></div></div>
+            <div class="body" style="padding: 0 20px 20px">
+              <div class="lbl" style="margin-top: 6px">كل قدّاش = نقطة؟</div>
+              <div class="seg2"><span>500 مليم</span><span class="on"><span class="num">1</span>&nbsp;د</span><span><span class="num">2</span>&nbsp;د</span><span><span class="num">5</span>&nbsp;د</span></div>
+              <p class="ex">مثال: حريف خلّص <span class="num">20</span> د ياخو <b class="num">20</b> نقطة.</p>
+              <div class="lbl" style="display: flex; justify-content: space-between">الكوادو بالنقاط<span style="color: var(--brand)">+ زيد كادو</span></div>
+              <div class="group" style="margin: 0">
+                <div class="item"><div class="ic" style="background: var(--sea-soft)"><img class="e3d" src="assets/3d/ticket.png" alt="" /></div><div class="t">ريميز 10 د</div><span class="chip sea"><span class="num">100</span> نقطة</span></div>
+                <div class="item"><div class="ic" style="background: var(--sea-soft)"><img class="e3d" src="assets/3d/scissors.png" alt="" /></div><div class="t">مشط + سشوار</div><span class="chip sea"><span class="num">300</span> نقطة</span></div>
+                <div class="item"><div class="ic" style="background: var(--sea-soft)"><img class="e3d" src="assets/3d/gem.png" alt="" /></div><div class="t">كولور بلاش</div><span class="chip sea"><span class="num">500</span> نقطة</span></div>
               </div>
-
-              <div class="card" style="padding: 14px 16px; margin-top: 12px; display: flex; align-items: center; gap: 12px">
-                <div style="flex: 1"><div class="bold">النقاط يوفاو؟</div><div class="muted small">كان ما جاش 12 شهر</div></div>
-                <div class="switch off"></div>
+              <div class="group" style="margin: 12px 0 0">
+                <div class="item"><div class="ic" style="background: var(--surface-2)"><img class="e3d" src="assets/3d/hourglass.png" alt="" /></div><div class="t">النقاط يوفاو؟<small>كان الحريف ما جاش 12 شهر</small></div><div class="sw off"></div></div>
               </div>
-
-              <div class="btn primary" style="margin-top: 16px">سجّل</div>
+              <div class="b pri" style="margin-top: 16px">سجّل</div>
             </div>
           </div>
         </div>
@@ -239,6 +618,30 @@
           <li>زوز أسئلة برك: قدّاش النقطة، وشنوّة الكوادو.</li>
           <li>أمثلة حاضرين على حساب نوع المحل (كوافور، ريستو…).</li>
           <li>سيستام وحدو: المحل يختار تامبونات ولا نقاط.</li>
+        </ul>
+      </section>
+
+      <!-- P7 · the reward, at the till -->
+      <section class="shot">
+        <h2><span class="tag">P7</span> الحريف: الكادو في الكاسة</h2>
+        <div class="phone">
+          <div class="screen r2" style="background: linear-gradient(170deg, #3fd0e6 0%, #0891b2 45%, #0b5f75 100%); color: #fff">
+            <div class="sb" style="color: #fff"><span>9:41</span><span class="icons"><b></b><b></b></span></div>
+            <div class="navbar"><div class="gbtn" style="background: rgba(255, 255, 255, 0.18); color: #fff; box-shadow: none"><svg class="i"><use href="#i-x" /></svg></div><h2 style="color: #fff">Salon Nour</h2><div style="width: 42px"></div></div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; padding: 4px 24px 26px; text-align: center">
+              <img class="e3d floaty" src="assets/3d/ticket.png" alt="" style="width: 62px; height: 62px" />
+              <h1 style="margin: 8px 0 0; font-size: 26px">ريميز 10 د</h1>
+              <p style="margin: 2px 0 0; opacity: 0.85">ورّي الإيكران هذا للكاسة</p>
+              <div class="qrcard" style="width: 232px"><canvas class="qr" data-seed="reward-nour-482913" data-ink="#063f4f"></canvas><div class="code num">482 913</div></div>
+              <div class="waitpill">ينقصو <span class="num">100</span> نقطة · يقعدولك <span class="num">140</span></div>
+              <p style="margin: 10px 0 0; font-weight: 600">مازال <span class="num">14:52</span></p>
+              <div class="b" style="margin-top: auto; width: 100%; background: rgba(255, 255, 255, 0.16); color: #fff">سكّر</div>
+            </div>
+          </div>
+        </div>
+        <ul class="notes">
+          <li>الحريف يورّي الإيكران، ومولى المحل يسكاني ولا يكتب الكود.</li>
+          <li>النقاط ينقصو كي يتقبل الكادو، موش قبل.</li>
         </ul>
       </section>
     </main>

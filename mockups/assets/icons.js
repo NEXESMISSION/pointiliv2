@@ -43,6 +43,21 @@
     chartf: '<rect x="3" y="12" width="4.5" height="9" rx="1.5" fill="currentColor" stroke="none"/><rect x="9.75" y="4" width="4.5" height="17" rx="1.5" fill="currentColor" stroke="none"/><rect x="16.5" y="8" width="4.5" height="13" rx="1.5" fill="currentColor" stroke="none"/>',
     usersf: '<circle cx="9" cy="7.5" r="4" fill="currentColor" stroke="none"/><path d="M1.5 20c0-3.3 3.4-6 7.5-6s7.5 2.7 7.5 6a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z" fill="currentColor" stroke="none"/><path d="M16 3.3a4 4 0 0 1 0 8.4M18.5 14.6c2.3.9 4 2.8 4 5.4" stroke-width="2"/>',
     wand: '<path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>',
+    // round 2: the founder's console and the card changes
+    phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
+    copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+    printer: '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/>',
+    undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+    pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+    key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+    calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+    arrow: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+    alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    dice: '<rect width="18" height="18" x="3" y="3" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/>',
+    wallet: '<rect x="2.5" y="6" width="19" height="15" rx="3"/><path d="M18 6V5a2 2 0 0 0-2-2H6a2.5 2.5 0 0 0 0 5"/><circle cx="17" cy="13.5" r="1.5"/>',
+    walletf: '<path fill-rule="evenodd" d="M5.5 6h13a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-13a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3zm11.5 6a1.75 1.75 0 1 0 0 3.5 1.75 1.75 0 0 0 0-3.5z" fill="currentColor" stroke="none"/><path d="M6 3h10a2 2 0 0 1 2 2v.5H6a1.25 1.25 0 0 1 0-2.5z" fill="currentColor" stroke="none" opacity=".5"/>',
+    storef: '<path d="M2.6 6.2 6.41 2.59A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59l3.81 3.61A.5.5 0 0 1 21 7H3a.5.5 0 0 1-.4-.8z" fill="currentColor" stroke="none"/><path d="M4 10h16v10a2 2 0 0 1-2 2h-3v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4H6a2 2 0 0 1-2-2z" fill="currentColor" stroke="none"/>',
   };
   const sprite = Object.entries(P)
     .map(([k, v]) => `<symbol id="i-${k}" viewBox="0 0 24 24">${v}</symbol>`)
@@ -83,7 +98,7 @@
   // confetti: a handful of coloured strips, placed at random
   document.querySelectorAll(".confetti").forEach((box) => {
     const r = rng(box.dataset.seed || "confetti");
-    const colours = ["#8b5cf6", "#f2674f", "#e5a019", "#10b981", "#38bdf8", "#f472b6"];
+    const colours = ["#8b5cf6", "#f2674f", "#22c4dd", "#10b981", "#38bdf8", "#f472b6"];
     const n = Number(box.dataset.n || 28);
     for (let k = 0; k < n; k++) {
       const i = document.createElement("i");
