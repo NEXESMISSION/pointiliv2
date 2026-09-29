@@ -208,7 +208,7 @@ export const ops = ns({
       customer: "حريف",
     },
     analytics: {
-      title: "الإحصائيات",
+      title: "الأرقام",
       range: { d7: "7 أيام", d30: "30 يوم", m3: "3 شهور" },
       totalCustomers: "الحرفاء الكل",
       cameBack: "{n}% رجعوا",

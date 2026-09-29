@@ -198,12 +198,12 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
   const latest = flashes[flashes.length - 1];
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-surface text-ink">
-      <div className="pointer-events-none absolute inset-0 opacity-40" style={{ background: `radial-gradient(70% 50% at 50% 0%, ${c.accent}22, transparent 70%)` }} aria-hidden />
+    <div className="fixed inset-0 flex flex-col overflow-hidden text-white" style={{ background: "linear-gradient(170deg, #9b7bff 0%, #6c47ff 45%, #3a1db0 100%)" }}>
+      <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(70% 45% at 50% 0%, rgba(255,255,255,0.18), transparent 70%)" }} aria-hidden />
       {latest && <ScreenWash key={latest.id} accent={c.accent} delay={latest.delay} />}
 
       <header className="relative z-10 flex items-center gap-2 px-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6">
-        <BackButton fallback="/dashboard" className="size-11" />
+        <BackButton fallback="/dashboard" tone="dark" className="size-11" />
         <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
           <BusinessAvatar logo={logo} icon={icon} color={color} size={30} rounded="rounded-full" />
           <p className="truncate text-lg font-semibold">{businessName}</p>
@@ -211,7 +211,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
         <button
           type="button"
           onClick={toggleSpeed}
-          className={`grid size-11 place-items-center rounded-full transition ${fast ? "bg-brand-600 text-white" : "bg-ink/5 text-body hover:bg-ink/10"}`}
+          className={`press grid size-11 place-items-center rounded-full transition ${fast ? "bg-white text-brand-700" : "bg-white/15 text-white hover:bg-white/25"}`}
           aria-label={w.speed}
           aria-pressed={fast}
           title={w.speed}
@@ -221,7 +221,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
         <button
           type="button"
           onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {})}
-          className="grid size-11 place-items-center rounded-full bg-ink/5 text-body hover:bg-ink/10"
+          className="press grid size-11 place-items-center rounded-full bg-white/15 text-white hover:bg-white/25"
           aria-label={fullscreen ? w.exitFullscreen : w.fullscreen}
         >
           {fullscreen ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
@@ -240,7 +240,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
           {flashes.map((f) => (
             <StampBurst key={f.id} code={f.code} accent={c.accent} soft={c.soft} side={QR_SIDE} delay={f.delay} />
           ))}
-          <div className="absolute inset-0 rounded-[2rem] border border-ink/5 bg-surface p-[5%] shadow-[0_24px_60px_-28px_rgb(40_20_110/0.45)]">
+          <div className="absolute inset-0 rounded-[32px] bg-white p-[5%] text-ink shadow-[0_30px_60px_-20px_rgb(10_0_60/0.6)]">
             {token && !error ? (
               <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" data-qr="1" aria-label={w.qrAria} />
             ) : error ? (
@@ -282,16 +282,16 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
               <span dir="ltr">#{latest.code}</span>
             </div>
           ) : (
-            <div className="rounded-full bg-success-500 px-8 py-3 text-xl font-bold tracking-wide text-white">{w.stampFlash}</div>
+            <div className="rounded-full bg-white/15 px-7 py-3 text-lg font-semibold text-white">{w.stampFlash}</div>
           )}
         </div>
 
         <div className="mt-4 w-60">
-          <div className="h-1 overflow-hidden rounded-full bg-ink/10">
-            <div className="h-full rounded-full bg-brand-600/70 transition-[width] duration-500 ease-linear" style={{ width: `${token ? Math.min(100, (remaining / life) * 100) : 0}%` }} />
+          <div className="h-1 overflow-hidden rounded-full bg-white/20">
+            <div className="h-full rounded-full bg-white transition-[width] duration-500 ease-linear" style={{ width: `${token ? Math.min(100, (remaining / life) * 100) : 0}%` }} />
           </div>
-          <p className="mt-2 text-center text-sm text-muted">{fast ? w.speedFast : w.autoUpdates}</p>
-          <p className="mt-1 flex items-center justify-center gap-1.5 text-center text-xs text-muted">
+          <p className="mt-2 text-center text-sm text-white/80">{fast ? w.speedFast : w.autoUpdates}</p>
+          <p className="mt-1 flex items-center justify-center gap-1.5 text-center text-xs text-white/70">
             <Smartphone className="size-3.5" /> {w.multiDevice}
           </p>
         </div>
