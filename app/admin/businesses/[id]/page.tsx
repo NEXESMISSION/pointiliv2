@@ -160,7 +160,7 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
                     <li key={i} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
                       <Gift className="size-4 shrink-0" style={{ color }} />
                       <span className="min-w-0 flex-1 truncate text-ink">{r.name}</span>
-                      <span className="num shrink-0 text-xs text-muted">{fill(w.rewardStamps, { n: r.stamps_required })}</span>
+                      <span className="shrink-0 text-xs text-muted">{fill(w.rewardStamps, { n: r.stamps_required })}</span>
                       {!r.active && <Badge tone="neutral">{w.rewardOff}</Badge>}
                     </li>
                   ))}

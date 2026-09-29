@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ChevronRight, Plus, Store, Users } from "lucide-react";
+import { Plus, Store } from "lucide-react";
 import { BusinessStatusBadge, SearchForm, categoryIcon, qs, type AdminBusinessRow } from "@/components/admin/shared";
 import { BusinessAvatar } from "@/components/CardIcon";
-import { Segmented, TopBar } from "@/components/nav/TopBar";
+import { Segmented } from "@/components/nav/TopBar";
+import { Icon3D, category3D } from "@/components/ui/Icon3D";
 import { SubscriptionBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -28,24 +29,19 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
   const plans = t.data.plans as Record<string, string>;
   const planName = (plan: string | null | undefined, fallback: string) => (plan && plans[plan]) || fallback;
   const filterLabel: Record<string, string> = { all: t.admin.all, ...w.filters };
+  const categories = t.data.categories as Record<string, string>;
 
   return (
     <div className="animate-fade space-y-2.5">
-      <TopBar
-        back="/admin"
-        title={w.title}
-        subtitle={q || filter !== "all" ? count(w.found, items.length) : fill(w.inTotal, { n: formatNumber(items.length, locale) })}
-        large
-        action={
-          <Link
-            href="/admin/businesses/new"
-            aria-label={t.admin.newBusiness.title}
-            className="grid size-9 place-items-center rounded-xl bg-brand-600 text-white shadow-brand transition active:scale-95"
-          >
-            <Plus className="size-5" />
-          </Link>
-        }
-      />
+      <div className="flex items-end justify-between gap-3 px-0.5">
+        <div className="min-w-0">
+          <p className="truncate text-sm text-muted">{q || filter !== "all" ? count(w.found, items.length) : fill(w.inTotal, { n: formatNumber(items.length, locale) })}</p>
+          <h1 className="text-[30px] font-bold leading-tight text-ink">{w.title}</h1>
+        </div>
+        <Link href="/admin/businesses/new" aria-label={t.admin.newBusiness.title} className="press mb-1 grid size-[42px] shrink-0 place-items-center rounded-full bg-brand-600 text-white shadow-brand">
+          <Plus className="size-5" />
+        </Link>
+      </div>
 
       <SearchForm action="/admin/businesses" q={q} placeholder={w.searchPlaceholder} hidden={{ filter: filter === "all" ? undefined : filter }} />
       <Segmented
@@ -60,34 +56,36 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
       ) : (
         <>
           {/* Mobile: cards. The list is the only thing that scrolls, inside its own card. */}
-          <Card className="max-h-[calc(100dvh-21rem)] divide-y divide-line/80 overflow-y-auto overscroll-contain lg:hidden lg:max-h-none">
-            {items.map((b) => (
-              <Link key={b.id} href={`/admin/businesses/${b.id}`} className="flex items-start gap-2.5 px-3.5 py-2.5 transition hover:bg-canvas/70">
-                <BusinessAvatar logo={b.logo_url} icon={categoryIcon(b.category)} size={40} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">{b.name}</p>
-                    <ChevronRight className="rtl:-scale-x-100 size-4 shrink-0 text-faint" />
-                  </div>
-                  <p className="truncate text-[13px] text-muted">
-                    {b.owner.phone ? <span dir="ltr">{formatPhone(b.owner.phone)}</span> : (b.owner.email ?? "—")}
-                    {b.owner.name && ` · ${b.owner.name}`}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs font-semibold text-body">{planName(b.subscription.plan, t.data.plans.none)}</span>
-                    <SubscriptionBadge status={b.subscription.status} plan={b.subscription.plan} />
-                    <BusinessStatusBadge status={b.status} />
-                  </div>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <Users className="size-3.5" /> {formatNumber(b.customers, locale)}
+          <Card className="max-h-[calc(100dvh-21rem)] divide-y divide-line overflow-y-auto overscroll-contain lg:hidden">
+            {items.map((b) => {
+              const s = b.subscription;
+              const n = s.days_left;
+              const days = locale === "fr" ? `${n} j` : `${n} ${n >= 3 && n <= 10 ? "أيام" : "يوم"}`;
+              const chip =
+                b.status === "suspended"
+                  ? { cls: "bg-surface-2 text-muted", label: t.admin.business.suspended }
+                  : !s.open
+                    ? { cls: "bg-coral-50 text-coral-600", label: t.data.subscription.expired }
+                    : n <= 10
+                      ? { cls: "bg-coral-50 text-coral-600", label: days }
+                      : { cls: "bg-success-50 text-success-600", label: days };
+              return (
+                <Link key={b.id} href={`/admin/businesses/${b.id}`} className="flex items-center gap-3 px-4 py-3 transition hover:bg-surface-2/70">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-brand-100">
+                    <Icon3D name={category3D(b.category)} size={30} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold text-ink">{b.name}</span>
+                    <span className="block truncate text-[12.5px] text-muted">
+                      {categories[b.category] ?? b.category}
+                      {b.owner.phone ? " · " : ""}
+                      {b.owner.phone && <span className="num">{formatPhone(b.owner.phone)}</span>}
                     </span>
-                    <span>{fill(w.created, { date: formatDate(b.created_at, locale) })}</span>
-                    <span>{fill(w.expires, { date: formatDate(b.subscription.expires_at, locale) })}</span>
-                  </p>
-                </div>
-              </Link>
-            ))}
+                  </span>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${chip.cls}`}>{chip.label}</span>
+                </Link>
+              );
+            })}
           </Card>
 
           {/* Desktop: table */}
