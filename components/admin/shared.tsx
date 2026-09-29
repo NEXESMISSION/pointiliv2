@@ -46,6 +46,10 @@ export type AdminOverview = {
   revenue_month: number;
   pending_payments: number;
   recent: AdminActivity[];
+  /** the last six months, oldest first (0014) */
+  revenue_months: { m: string; amount: number }[];
+  /** shops that need the founder, most urgent first (0014) */
+  todo: { kind: "renew" | "no_card" | "quiet"; id: string; name: string; days?: number }[];
 };
 
 export type AdminBusinessRow = {

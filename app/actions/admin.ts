@@ -8,6 +8,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getI18n } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 import { normalizePhone, phoneAuthEmail } from "@/lib/phone";
+import { PLANS, type CardIconName } from "@/lib/constants";
+import { TEMPLATES, resolveDesign } from "@/lib/card-design";
+import { saveCard } from "@/app/actions/merchant";
 
 type Result = { ok: boolean; message: string; at: number; secret?: string };
 
@@ -74,61 +77,156 @@ export async function runCleanup() {
  * account with no shop cannot be created again (the phone is taken). So a
  * failure takes the user back out with it.
  */
-export async function createBusinessAccount(fd: FormData): Promise<Result> {
-  await requireAdmin();
-  const { t, msg } = await getI18n();
-  const phone = normalizePhone(String(fd.get("phone") ?? ""));
-  const name = String(fd.get("name") ?? "").trim();
-  const ownerName = String(fd.get("owner_name") ?? "").trim();
-  const category = String(fd.get("category") ?? "cafe");
-  const password = String(fd.get("password") ?? "");
-  const plan = String(fd.get("plan") ?? "trial");
+type MadeShop = { ok: true; businessId: string; userId: string; phone: string } | { ok: false; message: string };
 
-  if (name.length < 2) return { ok: false, message: msg("invalid_name"), at: Date.now() };
-  if (!phone) return { ok: false, message: msg("invalid_phone"), at: Date.now() };
-  if (password.length < 8 || password.length > 72) return { ok: false, message: t.auth.errors.passwordShort, at: Date.now() };
+/**
+ * The auth user (only the service role may mint one) with the password the
+ * founder typed, then the business with its 30-day trial.
+ *
+ * THE TRAP: if the business insert fails the auth user is already made, and an
+ * account with no shop cannot be created again (the phone is taken). So a
+ * failure takes the user back out with it.
+ */
+async function makeShop(input: { name: string; category: string; ownerName: string; phone: string; password: string }): Promise<MadeShop> {
+  const { t, msg } = await getI18n();
+  const phone = normalizePhone(input.phone);
+  const name = input.name.trim();
+  if (name.length < 2) return { ok: false, message: msg("invalid_name") };
+  if (!phone) return { ok: false, message: msg("invalid_phone") };
+  if (input.password.length < 8 || input.password.length > 72) return { ok: false, message: t.auth.errors.passwordShort };
   const admin = createAdminClient();
   const { data: created, error } = await admin.auth.admin.createUser({
     email: phoneAuthEmail(phone),
-    password,
+    password: input.password,
     email_confirm: true,
-    app_metadata: { phone, full_name: ownerName },
+    app_metadata: { phone, full_name: input.ownerName.trim() },
   });
   if (error || !created?.user) {
     const taken = /already|registered|exists|duplicate/i.test(error?.message ?? "");
-    return { ok: false, message: taken ? t.admin.results.phoneTaken : msg("network"), at: Date.now() };
+    return { ok: false, message: taken ? t.admin.results.phoneTaken : msg("network") };
   }
-
   const supabase = await createClient();
   const { data, error: rpcError } = await supabase.rpc("admin_create_business", {
     p_owner: created.user.id,
     p_name: name,
-    p_category: category,
-    p_owner_name: ownerName,
+    p_category: input.category,
+    p_owner_name: input.ownerName.trim(),
   });
-  const res = data as { ok: boolean; error?: string } | null;
-  if (rpcError || !res?.ok) {
+  const res = data as { ok: boolean; error?: string; business_id?: string } | null;
+  if (rpcError || !res?.ok || !res.business_id) {
     // do not leave an account behind that can never be given a shop
     await admin.auth.admin.deleteUser(created.user.id);
-    return { ok: false, message: msg(res?.error ?? "network"), at: Date.now() };
+    return { ok: false, message: msg(res?.error ?? "network") };
   }
+  return { ok: true, businessId: res.business_id, userId: created.user.id, phone };
+}
 
-  // a paid plan starts today; the trial the shop was born with ends with it
-  if (plan === "six_month" || plan === "yearly") {
-    const until = new Date();
-    until.setMonth(until.getMonth() + (plan === "yearly" ? 12 : 6));
-    const { data: sub } = await supabase.rpc("admin_set_subscription", {
-      p_business: (res as { business_id?: string }).business_id,
-      p_plan: plan,
-      p_expires_at: until.toISOString(),
-      p_price: null,
-      p_method: "cash",
-    });
-    if (!(sub as { ok?: boolean } | null)?.ok) console.error("[create business] plan", sub);
-  }
+/** A paid plan from today until 6 or 12 months on; the trial the shop was born with ends with it. */
+async function startPlan(businessId: string, plan: string, price: number | null, method: string) {
+  if (plan !== "six_month" && plan !== "yearly") return;
+  const until = new Date();
+  until.setMonth(until.getMonth() + (plan === "yearly" ? 12 : 6));
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("admin_set_subscription", { p_business: businessId, p_plan: plan, p_expires_at: until.toISOString(), p_price: price, p_method: method });
+  if (!(data as { ok?: boolean } | null)?.ok) console.error("[open shop] plan", data);
+}
 
+/**
+ * Open a shop for somebody, at their counter, in one step. There is no e-mail
+ * to send anything to: the founder reads the phone and password to the owner,
+ * who is right there.
+ */
+export async function createBusinessAccount(fd: FormData): Promise<Result> {
+  await requireAdmin();
+  const { t } = await getI18n();
+  const password = String(fd.get("password") ?? "");
+  const plan = String(fd.get("plan") ?? "trial");
+  const made = await makeShop({
+    name: String(fd.get("name") ?? ""),
+    category: String(fd.get("category") ?? "cafe"),
+    ownerName: String(fd.get("owner_name") ?? ""),
+    phone: String(fd.get("phone") ?? ""),
+    password,
+  });
+  if (!made.ok) return { ok: false, message: made.message, at: Date.now() };
+  await startPlan(made.businessId, plan, null, "cash");
   revalidatePath("/admin", "layout");
   return { ok: true, message: t.admin.results.businessCreated, secret: password, at: Date.now() };
+}
+
+export type NewShopInput = {
+  name: string;
+  category: string;
+  city: string;
+  ownerName: string;
+  phone: string;
+  password: string;
+  plan: "trial" | "six_month" | "yearly";
+  /** how it was paid today; "later" records no payment yet */
+  paid: "cash" | "d17" | "bank_transfer" | "later";
+  /** "skip": the owner chooses the card at the first sign-in (the welcome) */
+  system: "stamps" | "levels" | "skip";
+  goal: number;
+  reward: string;
+  levels: { name: string; stamps: number }[];
+  /** the card's colour (hex) and the mark on its stamps */
+  color: string;
+  icon: CardIconName;
+};
+
+/** The legacy colour name nearest to a hex, for the parts of the app that still read it. */
+function legacyColor(hex: string): string {
+  const h = hex.toLowerCase();
+  if (["#ff6b4a", "#ea580c"].includes(h)) return "orange";
+  if (["#0891b2", "#0284c7"].includes(h)) return "sky";
+  if (["#1f1b2e", "#334155", "#111827"].includes(h)) return "slate";
+  if (["#e0457b", "#e11d48", "#db2777"].includes(h)) return "rose";
+  if (["#16a34a", "#0e9f6e"].includes(h)) return "emerald";
+  if (["#d97706", "#6b4226"].includes(h)) return "amber";
+  return "violet";
+}
+
+/**
+ * The founder's six steps (board 9) in one go: the account and the shop, the
+ * subscription and today's payment, then the card — made from inside the shop
+ * («ادخل كمحل», 0013), so it goes through the very same checks as an owner's.
+ */
+export async function openShop(input: NewShopInput): Promise<{ ok: true; businessId: string; phone: string; password: string } | { ok: false; message: string }> {
+  await requireAdmin();
+  const { msg } = await getI18n();
+  const made = await makeShop(input);
+  if (!made.ok) return made;
+  const price = input.plan === "trial" || input.paid === "later" ? null : PLANS[input.plan].price;
+  await startPlan(made.businessId, input.plan, price, input.paid === "later" ? "cash" : input.paid);
+
+  const supabase = await createClient();
+  const inside = await supabase.rpc("admin_act_as", { p_business: made.businessId });
+  if (!(inside.data as { ok?: boolean } | null)?.ok) return { ok: false, message: msg("network") };
+  try {
+    if (input.city.trim()) {
+      await supabase.rpc("update_business", { p_name: input.name.trim(), p_category: input.category, p_phone: null, p_address: input.city.trim(), p_instagram: null });
+    }
+    if (input.system !== "skip") {
+      const design = resolveDesign({ ...TEMPLATES.bold.make(input.color), template: "bold", stamp: "icon", icon: input.icon });
+      const saved = await saveCard({
+        name: input.name.trim(),
+        description: "",
+        stamps_required: input.goal,
+        reward_name: input.reward.trim(),
+        reward_description: "",
+        color: legacyColor(input.color),
+        cooldown_minutes: 60,
+        valid_days: 0,
+        levels: input.system === "levels" ? input.levels : [],
+        design,
+      });
+      if (!saved.ok) return { ok: false, message: saved.message };
+    }
+  } finally {
+    await supabase.rpc("admin_stop_acting");
+  }
+  revalidatePath("/admin", "layout");
+  return { ok: true, businessId: made.businessId, phone: made.phone, password: input.password };
 }
 
 /** Support fallback when a customer cannot receive an SMS: a one-time temporary password, shown once. */
