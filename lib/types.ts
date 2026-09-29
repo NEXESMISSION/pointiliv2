@@ -17,6 +17,8 @@ export type SubscriptionState = {
 export type SessionContext = {
   user: { id: string; full_name: string | null; phone: string | null; email: string | null; role: Role; created_at: string };
   member_role: "owner" | "staff" | null;
+  /** the founder inside this shop («ادخل كمحل», 0013), with the owner's powers */
+  acting?: boolean;
   business: {
     id: string;
     name: string;

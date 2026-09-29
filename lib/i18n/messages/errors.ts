@@ -58,7 +58,7 @@ export const errors = ns({
     own_business: "ما تنجمش تاخو تامبونات في المحل متاعك.",
     card_inactive: "المحل هذا مازال ما عملش كارط الفيدليتي متاعو.",
     not_authenticated: "اعمل كونت Pointili باش تاخو التامبون متاعك.",
-    subscription_expired: "الاشتراك متاعك في Pointili فات وقتو.",
+    subscription_expired: "الأبونمان متاعك في Pointili وفى.",
     business_suspended: "المحل متاعك موقّف. اتصل بـ Pointili.",
     no_card: "اعمل كارط الفيدليتي متاعك قبل كل شي.",
     not_merchant: "الصفحة هذي للمحلات.",

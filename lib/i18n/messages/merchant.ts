@@ -3,6 +3,7 @@ import { ns, p } from "../dict";
 /** The shop owner's screens: home, the QR, the card, the rewards, the poster. */
 export const merchant = ns({
   fr: {
+    acting: { inside: "Vous êtes dans {name} en tant qu’admin", leave: "Sortir" },
     banner: {
       suspended: "Votre commerce est suspendu. Contactez l'assistance Pointili.",
       expired: "Votre abonnement Pointili a expiré. Votre QR est en pause ; vos clients gardent leurs tampons.",
@@ -274,9 +275,10 @@ export const merchant = ns({
     },
   },
   tn: {
+    acting: { inside: "راك في {name} كأدمين", leave: "اخرج" },
     banner: {
       suspended: "المحل متاعك موقّف. اتصل بـ Pointili.",
-      expired: "الاشتراك متاعك في Pointili فات وقتو. الكود متاعك موقّف، والحرفاء يخلّيو التامبونات متاعهم.",
+      expired: "الأبونمان متاعك في Pointili وفى. الكود متاعك موقّف، والحرفاء يخلّيو التامبونات متاعهم.",
       renew: "جدّد",
       choosePlan: "فعّل العرض",
       trialEnds: "الكونت متاعك يخدم حتى {date} ({left}). كلّمنا باش نفعّلو العرض.",

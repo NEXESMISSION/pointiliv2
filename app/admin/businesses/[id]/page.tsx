@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
-import { CalendarDays, Clock, Gift, Mail, MapPin, Phone, Stamp, Tag, Users } from "lucide-react";
-import { BusinessStatusButton, CancelSubscriptionButton, ExtendSubscriptionButton, ManageSubscription, PaymentActions } from "@/components/admin/AdminActions";
-import { PaymentBadge, categoryIcon, isPast, type AdminBusinessDetail } from "@/components/admin/shared";
-import { BusinessAvatar } from "@/components/CardIcon";
-import { TopBar } from "@/components/nav/TopBar";
+import { Gift, Phone, Store, Users } from "lucide-react";
+import { BusinessStatusButton, CancelSubscriptionButton, ExtendSubscriptionButton, ManageSubscription, PaymentActions, ResetPasswordButton } from "@/components/admin/AdminActions";
+import { actAsBusiness } from "@/app/actions/admin";
+import { PaymentBadge, isPast, type AdminBusinessDetail } from "@/components/admin/shared";
+import { BackButton } from "@/components/nav/BackButton";
+import { Icon3D, category3D } from "@/components/ui/Icon3D";
 import { Badge, SubscriptionBadge } from "@/components/ui/Badge";
 import { Card, SectionTitle } from "@/components/ui/Card";
-import { StatCard } from "@/components/ui/Stat";
-import { formatDate, formatDateTime, formatNumber, formatTND, timeAgo } from "@/lib/format";
+import { formatDate, formatDateTime, formatNumber, formatTND } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { formatPhone } from "@/lib/phone";
 import { rpc } from "@/lib/session";
@@ -56,195 +56,199 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
   const sub = b.subscription;
   const suspended = b.status === "suspended";
 
-  return (
-    <div className="animate-fade space-y-2.5">
-      <TopBar title={b.name} subtitle={category} back="/admin/businesses" />
+  const days = sub.open ? sub.days_left : 0;
+  const unit = locale === "fr" ? (days === 1 ? "jour" : "jours") : days >= 3 && days <= 10 ? "أيام" : "يوم";
+  const color = b.card ? "var(--color-brand-600)" : "var(--color-muted)";
 
-      {/* Stats — the four numbers stay in view; the rest scrolls under them */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <StatCard label={w.customers} value={formatNumber(b.stats.customers, locale)} icon={<Users className="size-5" />} tint="brand" />
-        <StatCard
-          label={w.stamps}
-          value={formatNumber(b.stats.stamps, locale)}
-          icon={<Stamp className="size-5" />}
-          tint="amber"
-          sub={fill(w.stampsTodaySub, { n: formatNumber(b.stats.stamps_today, locale) })}
-        />
-        <StatCard label={w.redemptions} value={formatNumber(b.stats.redemptions, locale)} icon={<Gift className="size-5" />} tint="rose" />
-        <StatCard label={w.lastStamp} value={<span className="text-base">{timeAgo(b.stats.last_stamp_at, locale)}</span>} icon={<Clock className="size-5" />} tint="green" />
+  return (
+    <div className="animate-fade space-y-4 pb-4">
+      {/* the cover: the shop's own colour, its category in 3D */}
+      <div className="relative -mx-4 -mt-[calc(0.75rem+env(safe-area-inset-top))] h-44 overflow-hidden rounded-b-[32px] bg-[linear-gradient(145deg,var(--color-brand-400)_0%,var(--color-brand-600)_50%,var(--color-brand-800)_100%)] lg:mx-0 lg:mt-0 lg:rounded-[32px]">
+        <span className="absolute -bottom-40 -end-20 size-72 rounded-full border-[34px] border-white/10" aria-hidden />
+        <div className="absolute start-4 top-[calc(0.75rem+env(safe-area-inset-top))] lg:top-4">
+          <BackButton fallback="/admin/businesses" tone="dark" />
+        </div>
+        <span className="absolute -bottom-4 end-6" aria-hidden>
+          <Icon3D name={category3D(b.category)} size={124} className="-rotate-6" />
+        </span>
       </div>
 
-      <div className="grid max-h-[calc(100dvh-25rem)] gap-2.5 overflow-y-auto overscroll-contain lg:max-h-none lg:grid-cols-3 lg:items-start">
-        <div className="space-y-2.5 lg:col-span-2">
-          {/* Info */}
-          <Card className="p-3 sm:p-5">
-            <div className="flex items-start gap-2.5">
-              <BusinessAvatar logo={b.logo_url} icon={categoryIcon(b.category)} size={44} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-bold text-ink">{b.name}</p>
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {suspended ? <Badge tone="danger">{w.suspended}</Badge> : <Badge tone="success">{w.active}</Badge>}
-                  <SubscriptionBadge status={sub.status} plan={sub.plan} />
-                </div>
+      <div className="flex items-start gap-3 px-1">
+        <span className="relative z-10 -mt-12 shrink-0 rounded-[24px] border-4 border-canvas bg-surface p-3.5 shadow-card">
+          {b.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={b.logo_url} alt="" className="size-11 rounded-xl object-cover" />
+          ) : (
+            <Icon3D name={category3D(b.category)} size={44} />
+          )}
+        </span>
+        <div className="min-w-0 flex-1 pt-1">
+          <h1 className="truncate text-[22px] font-bold leading-tight text-ink">{b.name}</h1>
+          <p className="truncate text-[13px] text-muted">{[category, b.address].filter(Boolean).join(" · ")}</p>
+        </div>
+        <span className="pt-1.5">{suspended ? <Badge tone="danger">{w.suspended}</Badge> : <Badge tone="success">{w.active}</Badge>}</span>
+      </div>
+
+      {/* «ادخل كمحل»: everything the owner can do, with the founder's hands */}
+      <form action={actAsBusiness.bind(null, b.id)}>
+        <button type="submit" className="pass-shine press flex w-full items-center gap-4 rounded-[26px] bg-[linear-gradient(145deg,var(--color-brand-400)_0%,var(--color-brand-600)_48%,var(--color-brand-800)_100%)] p-[18px] text-start text-white shadow-pass">
+          <span className="grid size-[60px] shrink-0 place-items-center rounded-[20px] bg-white/20">
+            <Store className="size-7" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-xl font-bold">{w.actAs}</span>
+            <span className="block truncate text-[13.5px] text-white/85">{w.actAsHint}</span>
+          </span>
+        </button>
+      </form>
+
+      {/* the subscription, by hand */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-bold text-ink">{w.subscription}</p>
+          <SubscriptionBadge status={sub.status} plan={sub.plan} />
+        </div>
+        <div className="mt-1.5 flex items-baseline gap-2">
+          {sub.open ? (
+            <>
+              <span className="text-[13.5px] text-muted">{w.left}</span>
+              <span className="num text-[34px] font-bold leading-none text-ink">{days}</span>
+              <span className="text-[13.5px] text-muted">
+                {unit} · {fill(w.until, { date: formatDate(sub.expires_at, locale) })}
+              </span>
+            </>
+          ) : (
+            <span className="text-[13.5px] font-medium text-danger-600">{w.qrPaused}</span>
+          )}
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
+          <div className={`h-full rounded-full ${days <= 10 ? "bg-coral-500" : "bg-success-500"}`} style={{ width: `${Math.max(2, Math.min(100, (days / 365) * 100))}%` }} />
+        </div>
+        {sub.price ? <p className="mt-2 text-[13px] text-muted">{w.price} · {formatTND(sub.price, locale)}</p> : null}
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <ManageSubscription businessId={b.id} businessName={b.name} />
+          <ExtendSubscriptionButton businessId={b.id} />
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-3 gap-2.5">
+        {[
+          { v: formatNumber(b.stats.customers, locale), l: w.customers },
+          { v: formatNumber(b.stats.stamps_today, locale), l: w.scansToday },
+          { v: formatNumber(b.stats.redemptions, locale), l: w.redemptions },
+        ].map((k) => (
+          <div key={k.l} className="rounded-[22px] bg-surface px-2 py-3.5 text-center shadow-card">
+            <span className="num block text-[21px] font-bold text-ink">{k.v}</span>
+            <span className="block truncate text-[12px] text-muted">{k.l}</span>
+          </div>
+        ))}
+      </div>
+
+      <section>
+        <SectionTitle>{w.card}</SectionTitle>
+        <Card className="p-4">
+          {b.card ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="min-w-0 flex-1 truncate font-semibold text-ink">{b.card.name}</p>
+                {b.card.active ? <Badge tone="success">{w.cardLive}</Badge> : <Badge tone="neutral">{w.cardPaused}</Badge>}
               </div>
+              <p className="text-sm text-muted">{fill(w.cardRule, { stamps: b.card.stamps_required, cooldown: cooldownLabel(b.card.cooldown_minutes, t.data.cooldown, fill).toLowerCase() })}</p>
+              {b.rewards.length > 0 && (
+                <ul className="space-y-1.5">
+                  {b.rewards.map((r, i) => (
+                    <li key={i} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
+                      <Gift className="size-4 shrink-0" style={{ color }} />
+                      <span className="min-w-0 flex-1 truncate text-ink">{r.name}</span>
+                      <span className="num shrink-0 text-xs text-muted">{fill(w.rewardStamps, { n: r.stamps_required })}</span>
+                      {!r.active && <Badge tone="neutral">{w.rewardOff}</Badge>}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            <dl className="mt-2.5 grid grid-cols-2 gap-2 text-sm">
-              <Info icon={<Tag className="size-4" />} label={w.category} value={category} />
-              <Info icon={<Users className="size-4" />} label={w.owner} value={b.owner.name ?? "—"} />
-              <Info icon={<Phone className="size-4" />} label={w.ownerPhone} value={b.owner.phone ? formatPhone(b.owner.phone) : "—"} ltr={!!b.owner.phone} />
-              <Info icon={<Mail className="size-4" />} label={w.ownerEmail} value={b.owner.email ?? "—"} ltr={!!b.owner.email} />
-              {b.phone && <Info icon={<Phone className="size-4" />} label={w.businessPhone} value={formatPhone(b.phone)} ltr />}
-              <Info icon={<MapPin className="size-4" />} label={w.address} value={b.address ?? "—"} />
-              <Info icon={<CalendarDays className="size-4" />} label={w.created} value={formatDate(b.created_at, locale)} />
-            </dl>
-          </Card>
+          ) : (
+            <div>
+              <p className="text-sm font-medium text-ink">{w.noCard}</p>
+              <p className="mt-0.5 text-[13px] text-muted">{w.noCardHint}</p>
+            </div>
+          )}
+        </Card>
+      </section>
 
-          {/* Loyalty card */}
-          <section>
-            <SectionTitle>{w.card}</SectionTitle>
-            <Card className="p-3 sm:p-5">
-              {b.card ? (
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="min-w-0 flex-1 truncate font-semibold text-ink">{b.card.name}</p>
-                    {b.card.active ? <Badge tone="success">{w.cardLive}</Badge> : <Badge tone="neutral">{w.cardPaused}</Badge>}
+      <section>
+        <SectionTitle>{w.ownerAccess}</SectionTitle>
+        <Card className="divide-y divide-line overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-[11px] bg-surface-2 text-body">
+              <Users className="size-[18px]" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-medium text-ink">{b.owner.name ?? "—"}</p>
+              {b.owner.phone && <p className="num text-[12.5px] text-muted">{formatPhone(b.owner.phone)}</p>}
+            </div>
+            {b.owner.phone && (
+              <a href={`tel:${b.owner.phone}`} className="press grid size-9 place-items-center rounded-full bg-success-50 text-success-600" aria-label={w.ownerPhone}>
+                <Phone className="size-4" />
+              </a>
+            )}
+          </div>
+          <div className="px-4 py-3">
+            <ResetPasswordButton userId={b.owner.id} label={b.owner.name ?? b.name} />
+          </div>
+        </Card>
+      </section>
+
+      <BusinessStatusButton id={b.id} name={b.name} status={b.status} />
+
+      <section>
+        <SectionTitle>{w.history}</SectionTitle>
+        <Card className="divide-y divide-line overflow-hidden">
+          {b.subscriptions.length === 0 ? (
+            <p className="p-4 text-sm text-muted">{w.noSubscriptions}</p>
+          ) : (
+            b.subscriptions.map((s) => {
+              const running = s.status === "active" && !isPast(s.expires_at);
+              return (
+                <div key={s.id} className="flex flex-wrap items-center gap-2 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-ink">
+                      {planName(s.plan, s.plan)}
+                      {s.price ? <span className="font-normal text-muted"> · {formatTND(s.price, locale)}</span> : null}
+                    </p>
+                    <p className="text-sm text-muted">
+                      {formatDate(s.starts_at, locale)} {dir === "rtl" ? "←" : "→"} {formatDate(s.expires_at, locale)}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted">
-                    {fill(w.cardRule, { stamps: b.card.stamps_required, cooldown: cooldownLabel(b.card.cooldown_minutes, t.data.cooldown, fill).toLowerCase() })}
-                  </p>
-                  {b.rewards.length > 0 && (
-                    <ul className="space-y-1.5">
-                      {b.rewards.map((r, i) => (
-                        <li key={i} className="flex items-center gap-2 rounded-xl bg-canvas px-2.5 py-1.5 text-sm">
-                          <Gift className="size-4 shrink-0 text-brand-600" />
-                          <span className="min-w-0 flex-1 truncate text-ink">{r.name}</span>
-                          <span className="shrink-0 text-xs text-muted tabular">{fill(w.rewardStamps, { n: r.stamps_required })}</span>
-                          {!r.active && <Badge tone="neutral">{w.rewardOff}</Badge>}
-                        </li>
-                      ))}
-                    </ul>
+                  {s.status === "cancelled" ? (
+                    <Badge tone="neutral">{w.subCancelled}</Badge>
+                  ) : running ? (
+                    isPast(s.starts_at) ? <Badge tone="success">{w.subActive}</Badge> : <Badge tone="brand">{w.subUpcoming}</Badge>
+                  ) : (
+                    <Badge tone="danger">{w.subEnded}</Badge>
                   )}
+                  {running && <CancelSubscriptionButton id={s.id} businessName={b.name} planLabel={planName(s.plan, s.plan)} />}
                 </div>
-              ) : (
-                <p className="text-sm text-muted">{w.noCard}</p>
-              )}
-            </Card>
-          </section>
-
-          {/* Subscriptions history */}
-          <section>
-            <SectionTitle>{w.subscriptions}</SectionTitle>
-            <Card className="divide-y divide-line/80 overflow-hidden">
-              {b.subscriptions.length === 0 ? (
-                <p className="p-4 text-sm text-muted">{w.noSubscriptions}</p>
-              ) : (
-                b.subscriptions.map((s) => {
-                  const running = s.status === "active" && !isPast(s.expires_at);
-                  return (
-                    <div key={s.id} className="flex flex-wrap items-center gap-2 px-3.5 py-2.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-ink">
-                          {planName(s.plan, s.plan)}
-                          {s.price ? <span className="font-normal text-muted"> · {formatTND(s.price, locale)}</span> : null}
-                        </p>
-                        <p className="text-sm text-muted">
-                          {formatDate(s.starts_at, locale)} {dir === "rtl" ? "←" : "→"} {formatDate(s.expires_at, locale)}
-                        </p>
-                      </div>
-                      {s.status === "cancelled" ? (
-                        <Badge tone="neutral">{w.subCancelled}</Badge>
-                      ) : running ? (
-                        isPast(s.starts_at) ? <Badge tone="success">{w.subActive}</Badge> : <Badge tone="brand">{w.subUpcoming}</Badge>
-                      ) : (
-                        <Badge tone="danger">{w.subEnded}</Badge>
-                      )}
-                      {running && <CancelSubscriptionButton id={s.id} businessName={b.name} planLabel={planName(s.plan, s.plan)} />}
-                    </div>
-                  );
-                })
-              )}
-            </Card>
-          </section>
-
-          {/* Payments history */}
-          <section>
-            <SectionTitle>{w.payments}</SectionTitle>
-            <Card className="divide-y divide-line/80 overflow-hidden">
-              {b.payments.length === 0 ? (
-                <p className="p-4 text-sm text-muted">{w.noPayments}</p>
-              ) : (
-                b.payments.map((p) => (
-                  <div key={p.id} className="flex flex-col gap-2 px-3.5 py-2.5 sm:flex-row sm:items-center">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span dir="ltr" className="font-mono text-sm font-semibold text-ink">
-                          {p.payment_reference}
-                        </span>
-                        <PaymentBadge status={p.status} />
-                      </div>
-                      <p className="mt-0.5 text-sm text-muted">
-                        <span className="font-semibold text-ink">{formatTND(p.amount, locale)}</span> · {planName(p.plan, p.plan)} · {methods[p.method] ?? p.method} ·{" "}
-                        {formatDateTime(p.created_at, locale)}
-                      </p>
-                    </div>
-                    {p.status === "pending" && <PaymentActions id={p.id} businessName={b.name} planLabel={planName(p.plan, p.plan)} amount={p.amount} />}
-                  </div>
-                ))
-              )}
-            </Card>
-          </section>
-        </div>
-
-        {/* Side column */}
-        <div className="space-y-2.5 lg:sticky lg:top-6">
-          <section>
-            <SectionTitle>{w.subscription}</SectionTitle>
-            <Card className="p-3 sm:p-5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-bold text-ink">{planName(sub.plan, t.data.plans.none)}</p>
-                <SubscriptionBadge status={sub.status} plan={sub.plan} />
+              );
+            })
+          )}
+          {b.payments.map((p) => (
+            <div key={p.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="num font-mono text-sm font-semibold text-ink">{p.payment_reference}</span>
+                  <PaymentBadge status={p.status} />
+                </div>
+                <p className="mt-0.5 text-sm text-muted">
+                  <span className="font-semibold text-ink">{formatTND(p.amount, locale)}</span> · {planName(p.plan, p.plan)} · {methods[p.method] ?? p.method} · {formatDateTime(p.created_at, locale)}
+                </p>
               </div>
-              <dl className="mt-2 space-y-1.5 text-sm">
-                <Row label={sub.open ? w.expiresLabel : w.expiredLabel} value={formatDate(sub.expires_at, locale)} />
-                <Row label={w.daysLeftLabel} value={sub.open ? count(w.daysLeftValue, sub.days_left) : "—"} />
-                {sub.price ? <Row label={w.price} value={formatTND(sub.price, locale)} /> : null}
-              </dl>
-              {sub.status === "expiring_soon" && <p className="mt-2 rounded-xl bg-warning-50 px-3 py-1.5 text-[13px] font-medium text-warning-700">{w.renewalSoon}</p>}
-              {!sub.open && <p className="mt-2 rounded-xl bg-danger-50 px-3 py-1.5 text-[13px] font-medium text-danger-600">{w.qrPaused}</p>}
-            </Card>
-          </section>
-
-          <section>
-            <SectionTitle>{w.actions}</SectionTitle>
-            <Card className="space-y-2 p-3">
-              <ManageSubscription businessId={b.id} businessName={b.name} />
-              <ExtendSubscriptionButton businessId={b.id} />
-              <BusinessStatusButton id={b.id} name={b.name} status={b.status} />
-            </Card>
-          </section>
-        </div>
-      </div>
+              {p.status === "pending" && <PaymentActions id={p.id} businessName={b.name} planLabel={planName(p.plan, p.plan)} amount={p.amount} />}
+            </div>
+          ))}
+        </Card>
+      </section>
     </div>
   );
 }
 
-function Info({ icon, label, value, ltr = false }: { icon: React.ReactNode; label: string; value: string; ltr?: boolean }) {
-  return (
-    <div className="flex min-w-0 items-start gap-2">
-      <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-canvas text-muted">{icon}</span>
-      <div className="min-w-0">
-        <dt className="text-[11px] text-muted">{label}</dt>
-        <dd className="break-words text-[13px] font-medium text-ink">{ltr ? <span dir="ltr">{value}</span> : value}</dd>
-      </div>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="text-muted">{label}</dt>
-      <dd className="font-medium text-ink tabular">{value}</dd>
-    </div>
-  );
-}

@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Eye } from "lucide-react";
 import { logout } from "@/app/actions/auth";
+import { stopActing } from "@/app/actions/admin";
 import { MerchantNav, MerchantSideNav } from "@/components/merchant/MerchantNav";
 import { BusinessAvatar } from "@/components/CardIcon";
 import { Logo } from "@/components/Logo";
@@ -37,7 +39,20 @@ export default async function MerchantLayout({ children }: { children: React.Rea
           </form>
         }
       />
-      <div className="flex min-h-0 flex-1 flex-col lg:ps-60 print:!ps-0">
+      <div className="flex min-h-0 flex-1 flex-col lg:ps-64 print:!ps-0">
+        {ctx.acting && (
+          <div className="bg-ink px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] text-white print:hidden lg:pt-2" role="status">
+            <div className="mx-auto flex max-w-3xl items-center gap-2.5 text-[13.5px]">
+              <Eye className="size-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{fill(t.merchant.acting.inside, { name: ctx.business.name })}</span>
+              <form action={stopActing}>
+                <button type="submit" className="press rounded-full bg-white/15 px-3.5 py-1.5 font-semibold hover:bg-white/25">
+                  {t.merchant.acting.leave}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
         {suspended ? (
           <Banner tone="danger">{t.merchant.banner.suspended}</Banner>
         ) : sub && !sub.open ? (

@@ -2,6 +2,7 @@
 
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getI18n } from "@/lib/i18n/server";
@@ -138,4 +139,23 @@ export async function resetUserPassword(userId: string): Promise<Result> {
   const { error } = await createAdminClient().auth.admin.updateUserById(userId, { password: temp });
   if (error) return { ok: false, message: msg("network"), at: Date.now() };
   return { ok: true, message: t.admin.results.tempPasswordCreated, secret: temp, at: Date.now() };
+}
+
+/** «ادخل كمحل»: the founder works inside a shop with the owner's powers (0013). */
+export async function actAsBusiness(id: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("admin_act_as", { p_business: id });
+  if (!(data as { ok?: boolean } | null)?.ok) redirect(`/admin/businesses/${id}`);
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
+}
+
+/** Out of the shop, back to its page in the console. */
+export async function stopActing() {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("admin_stop_acting");
+  const back = (data as { business_id?: string | null } | null)?.business_id;
+  revalidatePath("/", "layout");
+  redirect(back ? `/admin/businesses/${back}` : "/admin");
 }
