@@ -16,7 +16,7 @@ export function Pills({ items, active }: { items: { key: string; label: string; 
           scroll={false}
           replace
           aria-current={it.key === active ? "true" : undefined}
-          className={`h-7 whitespace-nowrap rounded-lg px-2.5 text-xs font-medium leading-7 transition-colors ${it.key === active ? "bg-white text-ink shadow-card" : "text-muted hover:text-ink"}`}
+          className={`h-7 whitespace-nowrap rounded-lg px-2.5 text-xs font-medium leading-7 transition-colors ${it.key === active ? "bg-surface text-ink shadow-card" : "text-muted hover:text-ink"}`}
         >
           {it.label}
         </Link>
@@ -36,7 +36,7 @@ export function TogglePill({ on, href, label, hint }: { on: boolean; href: strin
       aria-pressed={on}
       className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium transition-colors ${on ? "bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-500/20" : "text-muted ring-1 ring-inset ring-line hover:text-ink"}`}
     >
-      <span className={`grid size-4 place-items-center rounded-[5px] ${on ? "bg-brand-600 text-white" : "bg-white ring-1 ring-inset ring-line"}`}>{on && <Check className="size-3" strokeWidth={3} />}</span>
+      <span className={`grid size-4 place-items-center rounded-[5px] ${on ? "bg-brand-600 text-white" : "bg-surface ring-1 ring-inset ring-line"}`}>{on && <Check className="size-3" strokeWidth={3} />}</span>
       {label}
     </Link>
   );
@@ -62,7 +62,7 @@ export function PagePicker({ value, options, hrefFor, label }: { value: string; 
       aria-label={label}
       value={value}
       onChange={(e) => router.replace(hrefFor[e.target.value] ?? "#", { scroll: false })}
-      className="h-9 min-w-0 flex-1 rounded-xl border border-line bg-white px-2.5 text-[13px] font-medium text-ink focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+      className="h-9 min-w-0 flex-1 rounded-xl bg-surface shadow-card px-2.5 text-[13px] font-medium text-ink focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>

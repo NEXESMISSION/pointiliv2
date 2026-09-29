@@ -156,7 +156,7 @@ export function ManageSubscription({ businessId, businessName }: { businessId: s
                 role="radio"
                 aria-checked={plan === id}
                 onClick={() => pick(id)}
-                className={`h-11 rounded-xl border-2 text-sm font-semibold transition ${plan === id ? "border-brand-600 bg-brand-50 text-brand-700" : "border-line bg-white text-body hover:bg-canvas"}`}
+                className={`h-11 rounded-xl border-2 text-sm font-semibold transition ${plan === id ? "border-brand-600 bg-brand-50 text-brand-700" : "border-line bg-surface text-body hover:bg-canvas"}`}
               >
                 {plans[id] ?? id}
               </button>

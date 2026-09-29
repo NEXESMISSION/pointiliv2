@@ -29,7 +29,7 @@ export default async function WelcomePage() {
     <div className="animate-fade space-y-4">
       <WelcomeSteps step={1} />
       <div className="text-center">
-        <h1 className="text-[1.35rem] font-semibold leading-tight tracking-tight text-ink">{first ? fill(w.hello, { name: first }) : w.helloNoName}</h1>
+        <h1 className="text-[1.35rem] font-semibold leading-tight text-ink">{first ? fill(w.hello, { name: first }) : w.helloNoName}</h1>
         <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-muted">{w.intro}</p>
       </div>
 
@@ -39,7 +39,7 @@ export default async function WelcomePage() {
         </p>
         <div className="flex flex-wrap gap-1.5">
           {prepared.map((p) => (
-            <span key={p.value} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-[13px] font-medium text-ink ring-1 ring-inset ring-line">
+            <span key={p.value} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-surface px-2.5 py-1.5 text-[13px] font-medium text-ink ring-1 ring-inset ring-line">
               <span className="shrink-0 text-muted">{p.icon}</span>
               <span className="truncate" dir={"ltr" in p && p.ltr ? "ltr" : undefined}>
                 {p.value}

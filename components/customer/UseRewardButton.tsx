@@ -16,7 +16,7 @@ export function UseRewardButton({ rewardId, pendingId, size = "lg" }: { rewardId
 
   if (pendingId) {
     return (
-      <Link href={`/customer/rewards/use/${pendingId}`} className={buttonClass("primary", size, true)}>
+      <Link href={`/customer/rewards/use/${pendingId}`} className={buttonClass("coral", size, true)}>
         {t.customer.use.showMyCode}
       </Link>
     );
@@ -24,6 +24,7 @@ export function UseRewardButton({ rewardId, pendingId, size = "lg" }: { rewardId
   return (
     <div>
       <Button
+        variant="coral"
         block
         size={size}
         loading={pending}

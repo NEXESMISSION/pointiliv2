@@ -29,7 +29,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
           type="button"
           onClick={() => code !== locale && apply(code, pathname)}
           aria-current={code === locale ? "true" : undefined}
-          className={`h-7 rounded-md px-2.5 text-xs font-semibold transition-colors ${code === locale ? "bg-white text-ink shadow-card" : "text-muted hover:text-ink"}`}
+          className={`h-7 rounded-md px-2.5 text-xs font-semibold transition-colors ${code === locale ? "bg-surface text-ink shadow-card" : "text-muted hover:text-ink"}`}
         >
           {LOCALE_SHORT[code]}
         </button>

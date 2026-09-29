@@ -90,7 +90,7 @@ export default async function ClicksPage({ searchParams }: { searchParams: Promi
 
       {!previewable ? (
         <>
-          {c.total > 0 && <p className="rounded-2xl bg-white px-4 py-3 text-center text-sm text-muted ring-1 ring-inset ring-line">{w.noPreview}</p>}
+          {c.total > 0 && <p className="rounded-2xl bg-surface px-4 py-3 text-center text-sm text-muted ring-1 ring-inset ring-line">{w.noPreview}</p>}
           {targets}
         </>
       ) : device === "mobile" ? (

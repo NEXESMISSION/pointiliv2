@@ -13,7 +13,7 @@ const styles: Record<Tone, { box: string; Icon: typeof Info }> = {
 export function Alert({ tone = "error", title, children, action, className = "" }: { tone?: Tone; title?: ReactNode; children?: ReactNode; action?: ReactNode; className?: string }) {
   const { box, Icon } = styles[tone];
   return (
-    <div className={`flex gap-3 rounded-2xl border p-3.5 text-sm ${box} ${className}`} role={tone === "error" ? "alert" : "status"}>
+    <div className={`flex gap-3 rounded-2xl p-3.5 text-sm ${box} ${className}`} role={tone === "error" ? "alert" : "status"}>
       <Icon className="mt-0.5 size-5 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1 space-y-1">
         {title && <p className="font-semibold">{title}</p>}

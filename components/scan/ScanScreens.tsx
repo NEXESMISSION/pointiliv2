@@ -5,6 +5,7 @@ import { Confetti } from "@/components/Confetti";
 import { IMPACT_MS, StampDrop } from "./StampDrop";
 import { Logo } from "@/components/Logo";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
+import { Icon3D } from "@/components/ui/Icon3D";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { CardDeadline } from "@/components/customer/CardDeadline";
 import { FollowInstagram } from "@/components/customer/FollowInstagram";
@@ -46,7 +47,7 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
     <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden text-center">
       <Confetti count={unlocked ? 60 : 32} />
       <StampDrop label={t.scan.stampWord} tone="success" size={96} />
-      <h1 className="animate-rise text-2xl font-extrabold tracking-tight text-ink" style={after(100)}>
+      <h1 className="animate-rise text-2xl font-bold text-ink" style={after(100)}>
         {t.scan.success.title}
       </h1>
 
@@ -57,12 +58,11 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
       {!unlocked && customer.expires_at && <CardDeadline expiresAt={customer.expires_at} className="mt-2 animate-rise" />}
 
       {unlocked ? (
-        <div className="mt-4 w-full animate-rise rounded-3xl border-2 border-dashed border-success-500 p-4" style={after(280)}>
-          <p className="text-3xl" aria-hidden>
-            🎉
-          </p>
-          <p className="mt-1 text-sm font-semibold text-success-600">{t.scan.success.unlocked}</p>
-          <p className="mt-0.5 text-xl font-extrabold uppercase tracking-tight text-ink">{unlocked.name}</p>
+        <div className="relative mt-4 w-full animate-rise overflow-hidden rounded-[26px] bg-surface p-4 shadow-card" style={after(280)}>
+          <span className="absolute -top-12 start-1/2 size-48 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,var(--color-coral-50)_0%,transparent_70%)] rtl:translate-x-1/2" aria-hidden />
+          <Icon3D name="gift" size={56} className="relative mx-auto animate-float" />
+          <p className="relative mt-1 text-sm font-semibold text-coral-600">{t.scan.success.unlocked}</p>
+          <p className="mt-0.5 text-xl font-bold text-ink">{unlocked.name}</p>
           <p className="text-[13px] text-muted">{business.name}</p>
           {unlocked.level && <p className="mt-1 text-[13px] font-medium text-brand-700">{t.customer.card.levelKeeps}</p>}
           <div className="mt-3">
@@ -70,8 +70,8 @@ export function StampSuccess({ result }: { result: Extract<StampResult, { ok: tr
           </div>
         </div>
       ) : next_reward ? (
-        <p className="mt-4 animate-rise text-[15px] text-body" style={after(280)}>
-          <span className="font-bold text-ink">{count(t.common.stampsToGo, next_reward.remaining)}</span> {fill(t.scan.success.toGo, { reward: next_reward.name })}
+        <p className="mt-4 w-full animate-rise rounded-[20px] bg-brand-100 px-4 py-3.5 text-[15px] font-medium text-brand-700" style={after(280)}>
+          <span className="font-bold">{count(t.common.stampsToGo, next_reward.remaining)}</span> {fill(t.scan.success.toGo, { reward: next_reward.name })}
         </p>
       ) : null}
 
@@ -111,7 +111,7 @@ export function ScanError({ code, result, onRetry }: { code: string; result?: St
       <div className={`mx-auto mt-6 grid size-20 shrink-0 animate-pop place-items-center rounded-full ${soft ? "bg-warning-50 text-warning-700" : "bg-danger-50 text-danger-600"}`}>
         <Icon className="size-9" />
       </div>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">
+      <h1 className="mt-4 text-2xl font-bold text-ink">
         {missed ? t.scan.error.missed : code === "already_processed" ? t.scan.error.alreadyStamped : code === "too_soon" ? t.scan.error.tooSoon : code === "network" ? t.scan.error.network : t.scan.error.generic}
       </h1>
       {name && <p className="mt-1 font-semibold text-body">{name}</p>}

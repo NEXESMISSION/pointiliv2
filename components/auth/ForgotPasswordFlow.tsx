@@ -139,7 +139,7 @@ function OtpInput({ invalid }: { invalid?: boolean }) {
           autoFocus={i === 0}
           aria-label={fill(t.auth.forgot.digit, { n: i + 1 })}
           aria-invalid={invalid || undefined}
-          className="h-14 w-full min-w-0 rounded-2xl border border-line bg-white text-center text-xl font-bold text-ink tabular focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15 aria-[invalid=true]:border-danger-500"
+          className="h-14 w-full min-w-0 rounded-2xl bg-surface shadow-card text-center text-xl font-bold text-ink tabular focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15 aria-[invalid=true]:border-danger-500"
         />
       ))}
     </div>

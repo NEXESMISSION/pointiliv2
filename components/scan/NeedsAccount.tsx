@@ -35,7 +35,7 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
       <StampDrop label={t.scan.stampWord} size={100} />
 
       <div className="space-y-1">
-        <h1 className="animate-rise text-[26px] font-extrabold leading-tight tracking-tight text-ink" style={after(100)}>
+        <h1 className="animate-rise text-[26px] font-bold leading-tight text-ink" style={after(100)}>
           {w.title}
         </h1>
         {businessName && (

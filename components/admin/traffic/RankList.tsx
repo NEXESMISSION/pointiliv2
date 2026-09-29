@@ -11,7 +11,7 @@ export type RankRow = { key: string; label: ReactNode; n: number; sub?: ReactNod
 export function RankList({ title, rows, empty, action }: { title: ReactNode; rows: RankRow[]; empty: ReactNode; action?: ReactNode }) {
   const max = Math.max(1, ...rows.map((r) => r.n));
   return (
-    <div className="min-w-0 rounded-2xl border border-line bg-white p-3 shadow-card">
+    <div className="min-w-0 rounded-2xl bg-surface shadow-card p-3 shadow-card">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="truncate text-[13px] font-semibold text-muted">{title}</h2>
         {action}

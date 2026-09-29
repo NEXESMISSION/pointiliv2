@@ -46,7 +46,7 @@ export function InstallBanner() {
 
   return (
     <>
-      <div className="flex animate-rise items-center gap-3 rounded-2xl border border-line bg-white p-3 shadow-card">
+      <div className="flex animate-rise items-center gap-3 rounded-2xl bg-surface shadow-card p-3 shadow-card">
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50">
           <LogoMark size={24} />
         </span>

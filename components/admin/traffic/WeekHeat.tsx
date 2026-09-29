@@ -61,7 +61,7 @@ export function WeekHeat({ visits, stamps }: { visits: HeatCell[]; stamps: HeatC
               role="tab"
               aria-selected={metric === k}
               onClick={() => setMetric(k)}
-              className={`h-7 rounded-lg px-3 text-[13px] font-medium transition-colors ${metric === k ? "bg-white text-ink shadow-card" : "text-muted hover:text-ink"}`}
+              className={`h-7 rounded-lg px-3 text-[13px] font-medium transition-colors ${metric === k ? "bg-surface text-ink shadow-card" : "text-muted hover:text-ink"}`}
             >
               {k === "visits" ? w.heatVisits : w.heatStamps}
             </button>

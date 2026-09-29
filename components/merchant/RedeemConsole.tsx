@@ -66,7 +66,7 @@ export function RedeemConsole({ initialPending, initialFound, initialError, auto
     return (
       <Card className="animate-rise p-6 text-center">
         <GiftOpen size={84} pace="quick" className="mx-auto" />
-        <p className="mt-2 animate-rise text-2xl font-extrabold text-ink" style={after(60)}>
+        <p className="mt-2 animate-rise text-2xl font-bold text-ink" style={after(60)}>
           {w.givenTitle}
         </p>
         <p className="mt-1 animate-pop text-lg font-semibold text-success-600" style={after(140)}>
@@ -132,7 +132,7 @@ export function RedeemConsole({ initialPending, initialFound, initialError, auto
               placeholder="000 000"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, ""))}
-              className="h-14 min-w-0 flex-1 rounded-2xl border border-line bg-white text-center font-mono text-2xl font-bold tracking-[0.25em] text-ink placeholder:text-line focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+              className="h-14 min-w-0 flex-1 rounded-2xl bg-surface shadow-card text-center font-mono text-2xl font-bold tracking-[0.25em] text-ink placeholder:text-line focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
             />
             <Button type="submit" variant="secondary" className="h-14 shrink-0" loading={checking} disabled={code.replace(/\D/g, "").length !== 6}>
               {w.check}

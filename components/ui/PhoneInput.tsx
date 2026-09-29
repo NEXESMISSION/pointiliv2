@@ -10,7 +10,7 @@ export function PhoneInput({ name = "phone", id = "phone", defaultValue = "", au
   const [value, setValue] = useState(formatLocalDigits(defaultValue.replace(/^\+?216/, "")));
   return (
     <div
-      className="flex h-12 w-full items-center rounded-xl border border-line bg-white shadow-card transition focus-within:border-brand-500 focus-within:ring-[3px] focus-within:ring-brand-500/15 aria-[invalid=true]:border-danger-500"
+      className="flex h-[52px] w-full items-center rounded-2xl bg-surface shadow-[var(--shadow-card),inset_0_0_0_1px_var(--color-line)] transition focus-within:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand-600)] focus-within:ring-0 focus-within:ring-brand-500/15 aria-[invalid=true]:border-danger-500"
       aria-invalid={invalid || undefined}
     >
       <span className="flex h-full items-center gap-2 border-e border-line ps-4 pe-3 text-base font-medium text-body" aria-hidden>

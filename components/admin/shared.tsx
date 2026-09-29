@@ -208,7 +208,7 @@ export function SearchForm({ action, q, placeholder, hidden = {} }: { action: st
         defaultValue={q}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="block h-12 w-full rounded-2xl border border-line bg-white ps-12 pe-4 text-base text-ink placeholder:text-faint transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+        className="block h-12 w-full rounded-2xl bg-surface shadow-card ps-12 pe-4 text-base text-ink placeholder:text-faint transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
       />
       {Object.entries(hidden).map(([k, v]) => (v ? <input key={k} type="hidden" name={k} value={v} /> : null))}
     </Form>

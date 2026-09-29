@@ -56,7 +56,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
         <div className="max-h-[calc(100dvh-17rem)] space-y-3 overflow-y-auto overscroll-contain lg:max-h-none">
           {groups.map((g) => (
             <section key={g.key}>
-              <h2 className="sticky top-0 z-10 mb-1.5 bg-canvas px-1 py-0.5 text-xs font-semibold uppercase tracking-wide text-muted">{g.label}</h2>
+              <h2 className="sticky top-0 z-10 mb-1.5 bg-canvas px-1 py-0.5 text-xs font-semibold text-muted">{g.label}</h2>
               <Card className="divide-y divide-line/80 overflow-hidden">
                 {g.items.map((a) => {
                   const extra = detail(a);

@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CardDeadline } from "@/components/customer/CardDeadline";
 import { UseRewardButton } from "@/components/customer/UseRewardButton";
+import { Icon3D } from "@/components/ui/Icon3D";
 import { rpc } from "@/lib/session";
 import { resolveDesign } from "@/lib/card-design";
 import { dayLabel, formatTime } from "@/lib/format";
@@ -53,12 +54,11 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
         {unlocked.length > 0 ? (
           <section className="mt-3 space-y-2.5">
             {unlocked.map((r) => (
-              <div key={r.id} className="animate-rise rounded-3xl bg-white p-4 text-center shadow-card">
-                <p className="text-2xl" aria-hidden>
-                  🎉
-                </p>
-                <p className="mt-0.5 text-xs font-semibold text-success-600">{t.customer.card.unlockedTitle}</p>
-                <p className="mt-0.5 text-xl font-extrabold uppercase tracking-tight text-ink">{r.name}</p>
+              <div key={r.id} className="relative animate-rise overflow-hidden rounded-[26px] bg-surface p-4 text-center shadow-card">
+                <span className="absolute -top-12 start-1/2 size-48 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,var(--color-coral-50)_0%,transparent_70%)] rtl:translate-x-1/2" aria-hidden />
+                <Icon3D name="gift" size={60} className="relative mx-auto animate-float" />
+                <p className="relative mt-1 text-xs font-semibold text-coral-600">{t.customer.card.unlockedTitle}</p>
+                <p className="relative mt-0.5 text-xl font-bold text-ink">{r.name}</p>
                 {r.description && <p className="mx-auto mt-1 max-w-xs text-[13px] text-muted">{r.description}</p>}
                 {r.level && <p className="mx-auto mt-1 max-w-xs text-[13px] font-medium text-brand-700">{t.customer.card.levelKeeps}</p>}
                 <p className="mx-auto mt-1.5 max-w-xs text-xs text-muted">{t.customer.card.showAtCounter}</p>
@@ -90,7 +90,7 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
             <Card className="divide-y divide-line/80">
               {rewards.map((r) => (
                 <div key={r.id} className="flex items-center gap-2.5 p-3">
-                  <span className="grid size-9 place-items-center rounded-xl bg-canvas text-body">{r.unlocked ? <Sparkles className="size-5 text-success-600" /> : <Gift className="size-5" />}</span>
+                  <span className="grid size-9 place-items-center rounded-[11px] bg-surface-2 text-body">{r.unlocked ? <Sparkles className="size-5 text-success-600" /> : <Gift className="size-5" />}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-ink">{r.name}</p>
                     <p className="text-sm text-muted tabular">
@@ -110,12 +110,12 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
         <section className="mt-4">
           <SectionTitle>{t.customer.card.history}</SectionTitle>
           {history.length === 0 ? (
-            <p className="rounded-2xl bg-white p-4 text-sm text-muted shadow-card">{t.customer.card.noHistory}</p>
+            <p className="rounded-2xl bg-surface p-4 text-sm text-muted shadow-card">{t.customer.card.noHistory}</p>
           ) : (
             <Card className="divide-y divide-line/80">
               {history.map((h, i) => (
                 <div key={i} className="flex items-center gap-2.5 px-3.5 py-2.5">
-                  <span className={`grid size-8 place-items-center rounded-full text-sm font-bold ${h.type === "stamp" ? "bg-success-50 text-success-600" : "bg-warning-50 text-warning-700"}`}>
+                  <span className={`num grid size-9 place-items-center rounded-[11px] text-[13px] font-bold ${h.type === "stamp" ? "bg-success-50 text-success-600" : "bg-coral-50 text-coral-600"}`}>
                     {h.type === "stamp" ? "+1" : <Gift className="size-4" />}
                   </span>
                   <p className="flex-1 text-[15px] font-medium text-ink">

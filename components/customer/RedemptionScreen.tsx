@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Gift } from "lucide-react";
 import { cancelRedemption } from "@/app/actions/customer";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { GIFT_OPEN_MS, GiftOpen } from "@/components/celebrate/GiftOpen";
 import { TopBar } from "@/components/nav/TopBar";
+import { Icon3D } from "@/components/ui/Icon3D";
 import { useT } from "@/components/i18n/Provider";
 import type { RedemptionStatus } from "@/lib/types";
 
@@ -43,10 +43,10 @@ export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus
     return (
       <div className="relative flex min-h-[80dvh] flex-col items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-b from-success-50 to-canvas px-6 text-center">
         <GiftOpen size={112} fountain />
-        <h1 className="mt-3 animate-rise text-2xl font-extrabold tracking-tight text-ink" style={after(120)}>
+        <h1 className="mt-3 animate-rise text-2xl font-bold text-ink" style={after(120)}>
           {t.customer.use.doneTitle}
         </h1>
-        <p className="mt-2 animate-land text-3xl font-extrabold uppercase tracking-tight text-success-600 text-balance" style={after(260)}>
+        <p className="mt-2 animate-land text-3xl font-bold text-success-600 text-balance" style={after(260)}>
           {state.reward_name}
         </p>
         <p className="mt-1 animate-rise text-muted" style={after(420)}>
@@ -67,53 +67,41 @@ export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus
   return (
     <>
       <TopBar title={t.customer.use.title} back="/customer/rewards" />
-      <div className="rounded-3xl bg-white p-5 text-center shadow-card">
-        <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-brand-50 text-brand-600">
-          <Gift className="size-6" />
-        </span>
-        <p className="mt-3 text-xl font-extrabold uppercase tracking-tight text-ink">{state.reward_name}</p>
-        <p className="text-sm text-muted">{state.business_name}</p>
+      <div className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(170deg,#ffa183_0%,#ff6b4a_45%,#d93f22_100%)] px-5 pb-5 pt-5 text-center text-white shadow-[0_24px_50px_-20px_rgb(217_63_34/0.6)]">
+        <Icon3D name="gift" size={58} className="mx-auto animate-float" />
+        <p className="mt-1.5 text-[26px] font-bold leading-tight text-balance">{state.reward_name}</p>
+        <p className="text-sm opacity-85">{state.business_name}</p>
 
         {state.status === "cancelled" || expired ? (
           <div className="mt-5 space-y-3">
-            <p className="rounded-2xl bg-warning-50 p-3 text-sm font-medium text-warning-700">
-              {state.status === "cancelled" ? t.errors.cancelled : t.customer.use.expired}
-            </p>
-            <LinkButton href="/customer/rewards" block>
+            <p className="rounded-2xl bg-white/15 p-3 text-sm font-medium">{state.status === "cancelled" ? t.errors.cancelled : t.customer.use.expired}</p>
+            <LinkButton href="/customer/rewards" variant="outline" block>
               {t.customer.use.backToRewards}
             </LinkButton>
           </div>
         ) : (
           <>
-            <p className="mt-4 text-sm font-medium text-body">{t.customer.use.showQr}</p>
-            <div
-              className="mx-auto mt-2.5 aspect-square w-[min(58vw,13.5rem)] rounded-2xl border border-line bg-white p-3 shadow-card [&>svg]:size-full"
-              role="img"
-              aria-label={t.customer.use.qrAria}
-              dangerouslySetInnerHTML={{ __html: qrSvg }}
-            />
-            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted">{t.customer.use.orCode}</p>
-            <p
-              dir="ltr"
-              className="mt-0.5 font-mono text-3xl font-extrabold tracking-[0.18em] text-brand-700 tabular"
-              aria-label={fill(t.customer.use.codeAria, { code: state.code.split("").join(" ") })}
-            >
-              {state.code.slice(0, 3)} {state.code.slice(3)}
-            </p>
-            <div className="mt-3 flex items-center justify-center gap-2 text-sm text-muted">
+            <p className="mt-3 text-sm font-medium opacity-90">{t.customer.use.showQr}</p>
+            <div className="mx-auto mt-3 w-[min(62vw,15rem)] rounded-[28px] bg-white p-3.5 text-ink shadow-[0_24px_50px_-20px_rgb(60_10_0/0.5)]">
+              <div className="aspect-square [&>svg]:size-full" role="img" aria-label={t.customer.use.qrAria} dangerouslySetInnerHTML={{ __html: qrSvg }} />
+              <p className="num mt-1.5 text-[26px] font-bold tracking-[0.14em]" aria-label={fill(t.customer.use.codeAria, { code: state.code.split("").join(" ") })}>
+                {state.code.slice(0, 3)} {state.code.slice(3)}
+              </p>
+            </div>
+            <div className="mx-auto mt-4 flex w-fit items-center gap-2 rounded-full bg-white/15 px-3.5 py-2 text-sm font-medium">
               <span className="relative flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand-400 opacity-60" />
-                <span className="relative inline-flex size-2.5 rounded-full bg-brand-600" />
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-white opacity-60" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-white" />
               </span>
               <span>
                 {t.customer.use.waiting} ·{" "}
-                <span dir="ltr" className="tabular">
+                <span className="num">
                   {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
                 </span>
               </span>
             </div>
-            <p className="mt-2.5 text-xs text-faint">{t.customer.use.onlyAfterConfirm}</p>
-            <Button variant="ghost" size="md" className="mt-2" loading={cancelling} onClick={() => startCancel(() => cancelRedemption(state.id))}>
+            <p className="mt-2.5 text-xs opacity-80">{t.customer.use.onlyAfterConfirm}</p>
+            <Button variant="ghost" size="md" className="mt-1.5 text-white hover:bg-white/10 hover:text-white" loading={cancelling} onClick={() => startCancel(() => cancelRedemption(state.id))}>
               {t.customer.use.cancelRequest}
             </Button>
           </>

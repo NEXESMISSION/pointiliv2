@@ -87,7 +87,7 @@ export function StampDrop({ label, tone = "brand", size = 104 }: { label: string
 
       {/* The count is Latin in both languages: "+1" must never read as "1+". */}
       <span
-        className="pd-plus absolute top-0 inline-flex items-center gap-1 rounded-full bg-ink px-2.5 py-1 text-[13px] font-extrabold leading-none text-white shadow-lift"
+        className="pd-plus absolute top-0 inline-flex items-center gap-1 rounded-full bg-ink px-2.5 py-1 text-[13px] font-bold leading-none text-white shadow-lift"
         style={{ insetInlineEnd: 0, animationDelay: `${IMPACT_MS}ms` }}
       >
         <span dir="ltr">+1</span>

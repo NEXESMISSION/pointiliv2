@@ -1,13 +1,13 @@
 import type { ComponentProps, ReactNode } from "react";
 
 export const inputClass =
-  "block h-11 w-full rounded-xl border border-line bg-white px-3.5 text-base text-ink shadow-card placeholder:text-faint transition focus:border-brand-500 focus:outline-none focus:ring-[3px] focus:ring-brand-500/15 aria-[invalid=true]:border-danger-500 disabled:bg-canvas disabled:text-muted";
+  "block h-[50px] w-full rounded-2xl border-0 bg-surface px-4 text-base text-ink shadow-[var(--shadow-card),inset_0_0_0_1px_var(--color-line)] placeholder:text-faint transition focus:outline-none focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand-600)] aria-[invalid=true]:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-danger-500)] disabled:bg-surface-2 disabled:text-muted";
 
 export function Field({ label, htmlFor, hint, error, children, action }: { label: ReactNode; htmlFor?: string; hint?: ReactNode; error?: string | null; children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <label htmlFor={htmlFor} className="text-[13px] font-medium text-body">
+        <label htmlFor={htmlFor} className="px-0.5 text-[13.5px] font-semibold text-muted">
           {label}
         </label>
         {action}

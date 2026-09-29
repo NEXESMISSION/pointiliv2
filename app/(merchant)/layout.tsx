@@ -15,7 +15,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   const suspended = ctx.business.status === "suspended";
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible print:bg-white">
+    <div className="flex h-dvh flex-col overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible print:bg-surface">
       <MerchantSideNav
         header={
           <div className="space-y-5">
@@ -66,7 +66,7 @@ function Banner({ tone, children, href, cta }: { tone: "danger" | "warning"; chi
     <div className={`flex items-center gap-3 px-4 py-2.5 print:hidden pt-[calc(0.625rem+env(safe-area-inset-top))] text-sm font-medium lg:px-8 lg:pt-2.5 ${tone === "danger" ? "bg-danger-600 text-white" : "bg-warning-50 text-warning-700"}`} role="status">
       <p className="flex-1">{children}</p>
       {href && cta && (
-        <Link href={href} className={`shrink-0 rounded-xl px-3 py-1.5 font-semibold ${tone === "danger" ? "bg-white text-danger-600" : "bg-warning-500 text-white"}`}>
+        <Link href={href} className={`shrink-0 rounded-xl px-3 py-1.5 font-semibold ${tone === "danger" ? "bg-surface text-danger-600" : "bg-warning-500 text-white"}`}>
           {cta}
         </Link>
       )}

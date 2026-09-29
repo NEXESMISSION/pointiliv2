@@ -38,7 +38,7 @@ export function Logo({ size = 30, light = false, className = "" }: { size?: numb
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <LogoMark size={Math.round(size * 1.15)} />
-      <span className={`font-extrabold tracking-tight ${light ? "text-white" : "text-ink"}`} style={{ fontSize: size * 0.78 }}>
+      <span className={`font-bold ${light ? "text-white" : "text-ink"}`} style={{ fontSize: size * 0.78 }}>
         Pointili
       </span>
     </span>

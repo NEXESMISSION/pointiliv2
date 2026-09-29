@@ -163,7 +163,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
           <LoyaltyCardVisual size="tile" className="lg:hidden" filled={preview} {...cardProps} />
           <div className="hidden lg:block">
             <LoyaltyCardVisual filled={preview} {...cardProps} />
-            <label className="mt-2 flex items-center gap-2.5 rounded-xl bg-white px-3 py-2 text-[13px] shadow-card">
+            <label className="mt-2 flex items-center gap-2.5 rounded-xl bg-surface px-3 py-2 text-[13px] shadow-card">
               <span className="font-medium text-body">{ds.previewStamps}</span>
               <input type="range" min={0} max={stamps} value={Math.min(preview, stamps)} onChange={(e) => setPreview(Number(e.target.value))} className="min-w-0 flex-1 accent-brand-600" />
               <span dir="ltr" className="w-12 text-end font-semibold text-ink tabular">
@@ -205,7 +205,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
                     key={idea}
                     type="button"
                     onClick={() => patch({ reward_name: idea })}
-                    className={`h-8 rounded-full px-3 text-xs font-medium transition-colors ${v.reward_name === idea ? "bg-brand-50 text-brand-700 ring-1 ring-brand-300" : "border border-line bg-white text-body hover:bg-canvas"}`}
+                    className={`h-8 rounded-full px-3 text-xs font-medium transition-colors ${v.reward_name === idea ? "bg-brand-50 text-brand-700 ring-1 ring-brand-300" : "bg-surface shadow-card text-body hover:bg-canvas"}`}
                   >
                     {idea}
                   </button>
@@ -235,7 +235,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
                   onClick={() => patch({ levels: levelsOn ? [] : suggestLevels(stamps, ideas.filter((x) => x !== v.reward_name).slice(0, 2)) })}
                   className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${levelsOn ? "bg-brand-600" : "bg-line"}`}
                 >
-                  <span className={`absolute top-0.5 size-6 rounded-full bg-white shadow-card transition-all ${levelsOn ? "end-0.5" : "start-0.5"}`} />
+                  <span className={`absolute top-0.5 size-6 rounded-full bg-surface shadow-card transition-all ${levelsOn ? "end-0.5" : "start-0.5"}`} />
                 </button>
               </div>
               {levelsOn && (
@@ -354,7 +354,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
                       onClick={() => set({ icon: name })}
                       aria-label={t.merchant.icons[name]}
                       aria-pressed={d.icon === name}
-                      className={`grid size-10 shrink-0 place-items-center rounded-xl border transition ${d.icon === name ? "border-transparent bg-ink text-white" : "border-line bg-white text-body hover:bg-canvas"}`}
+                      className={`grid size-10 shrink-0 place-items-center rounded-xl border transition ${d.icon === name ? "border-transparent bg-ink text-white" : "border-line bg-surface text-body hover:bg-canvas"}`}
                     >
                       <CardIcon name={name} className="size-5" />
                     </button>
@@ -383,7 +383,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
               <Row className="mt-2">
                 <span className="self-center pe-1 text-[13px] font-medium text-muted">{ds.textColour}</span>
                 <Chip active={d.text === "light"} onClick={() => set({ text: "light" })}>
-                  <span className="size-4 rounded-full border border-line bg-white" /> {ds.light}
+                  <span className="size-4 rounded-full bg-surface shadow-card" /> {ds.light}
                 </Chip>
                 <Chip active={d.text === "dark"} onClick={() => set({ text: "dark" })} disabled={d.use_cover && !!business.cover_url}>
                   <span className="size-4 rounded-full bg-ink" /> {ds.dark}
@@ -453,7 +453,7 @@ function Pick({ active, onClick, children, small }: { active: boolean; onClick: 
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`h-10 truncate rounded-xl px-1 font-semibold tabular transition-colors ${small ? "text-[13px]" : "text-[15px]"} ${active ? "bg-brand-600 text-white shadow-brand" : "border border-line bg-white text-body hover:bg-canvas"}`}
+      className={`h-10 truncate rounded-xl px-1 font-semibold tabular transition-colors ${small ? "text-[13px]" : "text-[15px]"} ${active ? "bg-brand-600 text-white shadow-brand" : "bg-surface shadow-card text-body hover:bg-canvas"}`}
     >
       {children}
     </button>
@@ -472,7 +472,7 @@ function Chip({ active, disabled, onClick, children }: { active: boolean; disabl
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold transition disabled:opacity-40 ${active ? "bg-ink text-white" : "border border-line bg-white text-body hover:bg-canvas"}`}
+      className={`inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold transition disabled:opacity-40 ${active ? "bg-ink text-white" : "bg-surface shadow-card text-body hover:bg-canvas"}`}
     >
       {children}
     </button>

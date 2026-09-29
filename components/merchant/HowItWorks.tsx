@@ -13,7 +13,7 @@ import { ChevronDown, CircleHelp } from "lucide-react";
  */
 export function HowItWorks({ title, steps, open = false }: { title: string; steps: { t: string; h: string }[]; open?: boolean }) {
   return (
-    <details open={open} className="group rounded-2xl border border-line bg-white shadow-card">
+    <details open={open} className="group rounded-2xl bg-surface shadow-card">
       <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-[15px] font-semibold text-ink marker:content-none">
         <CircleHelp className="size-[18px] shrink-0 text-brand-600" />
         {title}

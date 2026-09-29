@@ -198,7 +198,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
   const latest = flashes[flashes.length - 1];
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-white text-ink">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-surface text-ink">
       <div className="pointer-events-none absolute inset-0 opacity-40" style={{ background: `radial-gradient(70% 50% at 50% 0%, ${c.accent}22, transparent 70%)` }} aria-hidden />
       {latest && <ScreenWash key={latest.id} accent={c.accent} delay={latest.delay} />}
 
@@ -229,7 +229,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
       </header>
 
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-        <h1 className="text-center text-[clamp(1.6rem,4.5vh,3rem)] font-bold leading-tight tracking-tight">
+        <h1 className="text-center text-[clamp(1.6rem,4.5vh,3rem)] font-bold leading-tight">
           {w.headline1}
           <br />
           {w.headline2}
@@ -240,7 +240,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
           {flashes.map((f) => (
             <StampBurst key={f.id} code={f.code} accent={c.accent} soft={c.soft} side={QR_SIDE} delay={f.delay} />
           ))}
-          <div className="absolute inset-0 rounded-[2rem] border border-ink/5 bg-white p-[5%] shadow-[0_24px_60px_-28px_rgb(40_20_110/0.45)]">
+          <div className="absolute inset-0 rounded-[2rem] border border-ink/5 bg-surface p-[5%] shadow-[0_24px_60px_-28px_rgb(40_20_110/0.45)]">
             {token && !error ? (
               <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" data-qr="1" aria-label={w.qrAria} />
             ) : error ? (
@@ -267,7 +267,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
             )}
             {offline && token && (
               <div className="absolute inset-0 grid place-items-center rounded-[2rem] bg-white/70">
-                <p className="flex items-center gap-2 rounded-full bg-white px-4 py-2 font-semibold shadow-lift">
+                <p className="flex items-center gap-2 rounded-full bg-surface px-4 py-2 font-semibold shadow-lift">
                   <WifiOff className="size-5" /> {w.reconnecting}
                 </p>
               </div>
@@ -277,12 +277,12 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
 
         <div className="mt-[3vh] flex h-14 items-center">
           {latest ? (
-            <div key={latest.id} className="flex animate-pop items-center gap-2 rounded-full bg-success-500 px-7 py-3.5 text-xl font-extrabold text-white shadow-[0_12px_30px_-8px_rgb(34_197_94/0.5)]" role="status" aria-live="polite">
+            <div key={latest.id} className="flex animate-pop items-center gap-2 rounded-full bg-success-500 px-7 py-3.5 text-xl font-bold text-white shadow-[0_12px_30px_-8px_rgb(34_197_94/0.5)]" role="status" aria-live="polite">
               <Check className="size-6" strokeWidth={3} /> {w.stampFlash} ·{" "}
               <span dir="ltr">#{latest.code}</span>
             </div>
           ) : (
-            <div className="rounded-full bg-success-500 px-8 py-3 text-xl font-extrabold tracking-wide text-white">{w.stampFlash}</div>
+            <div className="rounded-full bg-success-500 px-8 py-3 text-xl font-bold tracking-wide text-white">{w.stampFlash}</div>
           )}
         </div>
 

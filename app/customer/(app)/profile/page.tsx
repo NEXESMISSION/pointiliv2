@@ -1,8 +1,8 @@
-import { CreditCard, Gift, CircleHelp, KeyRound, LogOut } from "lucide-react";
+import { KeyRound, LogOut } from "lucide-react";
 import { logout } from "@/app/actions/auth";
-import { TopBar } from "@/components/nav/TopBar";
-import { Card, Divided, ListRow } from "@/components/ui/Card";
+import { Card, Divided, ListRow, SectionTitle } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Stat";
+import { Icon3D } from "@/components/ui/Icon3D";
 import { NameForm } from "@/components/customer/NameForm";
 import { InstallRow } from "@/components/InstallPrompt";
 import { LanguageRow } from "@/components/i18n/LanguageSwitcher";
@@ -16,45 +16,48 @@ export async function generateMetadata() {
   return { title: t.common.profile };
 }
 
+/** The account: who you are, your cards and gifts, the settings, the way out. */
 export default async function ProfilePage() {
   const { t } = await getI18n();
   const ctx = await requireUser("/customer/profile");
   const u = ctx.user;
   return (
-    <>
-      <TopBar title={t.customer.profile.title} large back="/customer" />
-      <Card className="flex flex-col items-center p-4 text-center">
-        <Avatar label={initials(u.full_name, "P")} size={56} />
-        <p className="mt-2 text-base font-semibold tracking-tight text-ink">{u.full_name || t.customer.profile.member}</p>
-        {u.phone && (
-          <p className="text-[13px] text-muted tabular" dir="ltr">
-            {formatPhone(u.phone)}
-          </p>
-        )}
-        <div className="mt-3 w-full">
-          <NameForm defaultValue={u.full_name ?? ""} />
+    <div className="space-y-4">
+      <div className="px-0.5">
+        <p className="text-sm text-muted">{u.full_name || t.customer.profile.member}</p>
+        <h1 className="text-[30px] font-bold leading-tight text-ink">{t.nav.customer.profile}</h1>
+      </div>
+
+      <Card className="flex items-center gap-3.5 p-4">
+        <Avatar label={initials(u.full_name, "P")} size={52} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-semibold text-ink">{u.full_name || t.customer.profile.member}</p>
+          {u.phone && <p className="num text-[13px] text-muted">{formatPhone(u.phone)}</p>}
         </div>
       </Card>
+      <NameForm defaultValue={u.full_name ?? ""} />
 
-      <Divided className="mt-3">
-        <ListRow href="/customer/cards" icon={<CreditCard className="size-5" />} title={t.customer.cards.title} />
-        <ListRow href="/customer/rewards" icon={<Gift className="size-5" />} title={t.customer.profile.myRewards} />
+      <Divided>
+        <ListRow href="/customer/cards" icon={<Icon3D name="ticket" size={26} />} title={t.customer.cards.title} />
+        <ListRow href="/customer/rewards" icon={<Icon3D name="trophy" size={26} />} title={t.customer.profile.myRewards} />
         <ListRow href="/customer/profile/password" icon={<KeyRound className="size-5" />} title={t.customer.profile.changePassword} subtitle="••••••••" />
       </Divided>
 
-      <Divided className="mt-3">
-        <InstallRow />
-        <LanguageRow />
-        <ListRow href="/how-it-works" icon={<CircleHelp className="size-5" />} title={t.customer.howItWorks} />
-      </Divided>
-
-      <form action={logout} className="mt-3">
+      <div>
+        <SectionTitle className="!mb-2 [&_h2]:text-[15px] [&_h2]:text-muted">{t.nav.merchant.settings}</SectionTitle>
         <Divided>
-          <button type="submit" className="flex min-h-12 w-full items-center justify-center gap-2 px-4 text-[15px] font-medium text-danger-600 hover:bg-danger-50/60">
+          <InstallRow />
+          <LanguageRow />
+        </Divided>
+      </div>
+
+      <form action={logout}>
+        <Divided>
+          <button type="submit" className="flex min-h-[54px] w-full items-center justify-center gap-2 px-4 text-[15px] font-semibold text-coral-600 hover:bg-coral-50/60">
             <LogOut className="size-[18px]" /> {t.common.logout}
           </button>
         </Divided>
       </form>
-    </>
+    </div>
   );
 }

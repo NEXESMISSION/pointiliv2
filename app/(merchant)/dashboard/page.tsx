@@ -43,7 +43,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     <div className="space-y-4">
       <header className="flex flex-col items-center pt-1 text-center lg:pt-0">
         <BusinessAvatar logo={ctx.business.logo_url} icon={ctx.card?.icon} color={ctx.card?.color} size={44} rounded="rounded-xl" />
-        <h1 className="mt-2 max-w-full truncate text-lg font-semibold tracking-tight text-ink">{ctx.business.name}</h1>
+        <h1 className="mt-2 max-w-full truncate text-lg font-semibold text-ink">{ctx.business.name}</h1>
         {needsAttention && (
           <p className="mt-1.5">
             <SubscriptionBadge status={ctx.subscription?.status} plan={ctx.subscription?.plan} />
@@ -83,7 +83,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           {/* A button whose name is a verb still has to say WHEN to press it. */}
           <Link
             href="/redeem?scan=1"
-            className="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 shadow-card transition-colors hover:bg-canvas/60"
+            className="flex items-center gap-3 rounded-2xl bg-surface shadow-card px-4 py-3 shadow-card transition-colors hover:bg-canvas/60"
           >
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-canvas text-body">
               <Gift className="size-5" />
@@ -119,8 +119,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       <section className="grid grid-cols-3 gap-2.5">
         {stats.map((s) => (
-          <Link key={s.label} href={s.href} className="min-w-0 rounded-2xl border border-line bg-white p-3.5 text-center shadow-card transition-colors hover:bg-canvas/60">
-            <span className="block text-2xl font-semibold leading-none tracking-tight text-ink tabular">{s.value}</span>
+          <Link key={s.label} href={s.href} className="min-w-0 rounded-2xl bg-surface shadow-card p-3.5 text-center shadow-card transition-colors hover:bg-canvas/60">
+            <span className="block text-2xl font-semibold leading-none text-ink tabular">{s.value}</span>
             <span className="mt-1.5 block text-[12px] leading-tight text-muted">{s.label}</span>
           </Link>
         ))}

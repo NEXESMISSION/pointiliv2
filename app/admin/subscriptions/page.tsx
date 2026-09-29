@@ -36,7 +36,7 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
         subtitle={count(w.count, items.length)}
         large
         action={
-          <Link href="/admin/payments" className="flex h-9 items-center gap-1.5 rounded-full bg-white px-3 text-[13px] font-semibold text-ink ring-1 ring-inset ring-line hover:bg-canvas">
+          <Link href="/admin/payments" className="flex h-9 items-center gap-1.5 rounded-full bg-surface px-3 text-[13px] font-semibold text-ink ring-1 ring-inset ring-line hover:bg-canvas">
             <Receipt className="size-4 text-muted" />
             {t.nav.admin.payments}
           </Link>

@@ -16,6 +16,10 @@ export const customer = ns({
       andMore: p({ one: "+{n} autre", other: "+{n} autres" }),
       emptyBody: "Allez dans un commerce Pointili et scannez le QR au comptoir pour recevoir votre premier tampon.",
       seeAllCards: "Voir les {n} cartes",
+      giftWaiting: "Un cadeau vous attend",
+      take: "Le prendre",
+      myCards: "Mes cartes",
+      all: "Tout voir",
     },
 
     cards: {
@@ -113,7 +117,7 @@ export const customer = ns({
     noCards: "مازال ما عندك كارط فيدليتي",
 
     home: {
-      title: "الرئيسية",
+      title: "الدار",
       welcome: "مرحبا بيك",
       yourCards: "الكارطات متاعك",
       rewardReady: "كادو حاضر 🎉",
@@ -121,6 +125,10 @@ export const customer = ns({
       andMore: p({ other: "+{n} زادة" }),
       emptyBody: "روح لمحل Pointili وسكاني كود QR في الكونتوار باش تاخو أول تامبون متاعك.",
       seeAllCards: "شوف {n} كارطات",
+      giftWaiting: "عندك كادو يستنّى فيك",
+      take: "خوذو",
+      myCards: "الكارطات متاعي",
+      all: "الكل",
     },
 
     cards: {

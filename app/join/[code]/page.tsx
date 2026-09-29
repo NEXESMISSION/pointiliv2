@@ -110,7 +110,7 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative mx-auto flex h-dvh w-full max-w-md flex-col justify-center overflow-hidden bg-white px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))] sm:my-10 sm:h-auto sm:overflow-visible sm:rounded-3xl sm:border sm:border-line sm:shadow-card">
+    <main className="relative mx-auto flex h-dvh w-full max-w-md flex-col justify-center overflow-hidden bg-surface px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(0.75rem+env(safe-area-inset-top))] sm:my-10 sm:h-auto sm:overflow-visible sm:rounded-3xl sm:border sm:border-line sm:shadow-card">
       <div className="grid h-10 shrink-0 grid-cols-[2.5rem_1fr_2.5rem] items-center">
         <BackButton fallback="/customer" className="-ms-2" />
         <span className="justify-self-center">
@@ -129,7 +129,7 @@ async function JoinError({ code, businessName }: { code: string; businessName?: 
     <Shell>
       <div className="flex flex-col items-center pt-6 text-center">
         <div className={`grid size-20 place-items-center rounded-full ${own ? "bg-brand-50 text-brand-600" : "bg-danger-50 text-danger-600"}`}>{own ? <Store className="size-9" /> : <X className="size-9" />}</div>
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-ink">{own ? t.scan.join.ownTitle : t.scan.join.errorTitle}</h1>
+        <h1 className="mt-6 text-2xl font-semibold text-ink">{own ? t.scan.join.ownTitle : t.scan.join.errorTitle}</h1>
         {businessName && <p className="mt-1 font-medium text-body">{businessName}</p>}
         <p className="mx-auto mt-3 max-w-xs text-[15px] leading-relaxed text-muted">{own ? t.scan.join.ownBody : msg(code === "invalid" ? "invalid" : code)}</p>
         <div className="w-full space-y-2 pt-8">

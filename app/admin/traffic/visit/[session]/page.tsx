@@ -136,7 +136,7 @@ export default async function VisitPage({ params }: { params: Promise<{ session:
           <SectionTitle>{w.otherVisits}</SectionTitle>
           <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4">
             {v.other_visits.map((o) => (
-              <Link key={o.session} href={`/admin/traffic/visit/${o.session}`} className="shrink-0 rounded-xl bg-white px-3 py-2 text-xs ring-1 ring-inset ring-line hover:bg-canvas">
+              <Link key={o.session} href={`/admin/traffic/visit/${o.session}`} className="shrink-0 rounded-xl bg-surface px-3 py-2 text-xs ring-1 ring-inset ring-line hover:bg-canvas">
                 <b className="block font-semibold text-ink">{formatDate(o.started, locale, { year: undefined })}</b>
                 <span className="text-muted">{count(w.pages, o.views)}</span>
               </Link>

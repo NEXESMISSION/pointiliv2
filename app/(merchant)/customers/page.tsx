@@ -45,7 +45,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
           inputMode="search"
           placeholder={w.search}
           aria-label={w.search}
-          className="h-11 w-full rounded-2xl border border-line bg-white ps-10 pe-4 text-base placeholder:text-faint focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+          className="h-11 w-full rounded-2xl bg-surface shadow-card ps-10 pe-4 text-base placeholder:text-faint focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
         />
       </form>
 

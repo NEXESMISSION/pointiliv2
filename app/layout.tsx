@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
+import { Readex_Pro } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { NavTracker } from "@/components/nav/BackButton";
@@ -10,10 +10,9 @@ import { getI18n } from "@/lib/i18n/server";
 import { siteUrl } from "@/lib/url";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-// Latin text uses Inter; Arabic glyphs fall through to this one, so the
-// Tunisian version is set in a real Arabic typeface.
-const arabic = IBM_Plex_Sans_Arabic({ subsets: ["arabic"], weight: ["400", "500", "600", "700"], variable: "--font-arabic", display: "swap" });
+// One typeface for the whole app: Readex Pro draws Arabic, French and the
+// numbers in the same modern hand (the remake, round 2).
+const readex = Readex_Pro({ subsets: ["arabic", "latin"], variable: "--font-readex", display: "swap" });
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,15 +44,15 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
-    { media: "(prefers-color-scheme: dark)", color: "#6535E0" },
+    { media: "(prefers-color-scheme: light)", color: "#F4F3F9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0A12" },
   ],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { locale } = await getI18n();
   return (
-    <html lang={HTML_LANG[locale]} dir={DIR[locale]} className={`${inter.variable} ${arabic.variable}`}>
+    <html lang={HTML_LANG[locale]} dir={DIR[locale]} className={readex.variable}>
       <body className="min-h-dvh font-sans">
         <I18nProvider locale={locale}>
           <ToastProvider>{children}</ToastProvider>

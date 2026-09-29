@@ -4,9 +4,10 @@ import { ns } from "../dict";
 export const nav = ns({
   fr: {
     mainAria: "Navigation principale",
-    customer: { home: "Accueil", cards: "Cartes", rewards: "Récompenses", profile: "Profil", scanAria: "Scanner un QR code" },
+    customer: { home: "Accueil", cards: "Cartes", rewards: "Récompenses", profile: "Compte", scanAria: "Scanner un QR code" },
     merchant: {
       home: "Accueil",
+      numbers: "Chiffres",
       showQr: "Afficher le QR",
       customers: "Clients",
       activity: "Activité",
@@ -19,6 +20,9 @@ export const nav = ns({
       staff: "Équipe",
     },
     admin: {
+      home: "Accueil",
+      money: "Revenus",
+      newShop: "Ouvrir un commerce",
       dashboard: "Tableau de bord",
       businesses: "Commerces",
       plans: "Formules",
@@ -46,9 +50,10 @@ export const nav = ns({
   },
   tn: {
     mainAria: "التنقل الرئيسي",
-    customer: { home: "الرئيسية", cards: "الكارطات", rewards: "الكوادو", profile: "بروفايل", scanAria: "سكاني كود QR" },
+    customer: { home: "الدار", cards: "الكارطات", rewards: "الكوادو", profile: "الكونت", scanAria: "سكاني كود QR" },
     merchant: {
-      home: "الرئيسية",
+      home: "الدار",
+      numbers: "الأرقام",
       showQr: "ورّي الكود",
       customers: "الحرفاء",
       activity: "الحركة",
@@ -61,6 +66,9 @@ export const nav = ns({
       staff: "عامل",
     },
     admin: {
+      home: "الدار",
+      money: "الفلوس",
+      newShop: "حلّ محل جديد",
       dashboard: "لوحة التحكم",
       businesses: "المحلات",
       plans: "العروض",

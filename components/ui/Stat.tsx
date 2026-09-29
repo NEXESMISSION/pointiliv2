@@ -12,12 +12,12 @@ const tints = {
 /** Compact metric: small label + icon on top, the number below. */
 export function StatCard({ label, value, icon, tint = "white", change, sub }: { label: string; value: ReactNode; icon?: ReactNode; tint?: keyof typeof tints; change?: number | null; sub?: ReactNode }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-line bg-white p-3 text-center shadow-card">
+    <div className="min-w-0 rounded-2xl bg-surface p-3.5 text-center shadow-card">
       <div className="flex items-center justify-center gap-1.5">
         <span className="truncate text-[13px] font-medium text-muted">{label}</span>
         {icon && <span className={`shrink-0 [&>svg]:size-4 ${tints[tint]}`}>{icon}</span>}
       </div>
-      <span className="mt-1.5 block text-2xl font-semibold leading-none tracking-tight text-ink tabular">{value}</span>
+      <span className="num mt-1.5 block text-2xl font-bold leading-none text-ink">{value}</span>
       {(change != null || sub) && (
         <div className="mt-1.5 flex items-center justify-center gap-1.5 text-xs">
           {change != null && (
@@ -42,7 +42,7 @@ export function ProgressBar({ value, max, color = "var(--color-brand-600)", clas
   );
 }
 
-export function Avatar({ label, size = 44, color = "var(--color-brand-600)", src }: { label: string; size?: number; color?: string; src?: string | null }) {
+export function Avatar({ label, size = 44, color = "linear-gradient(145deg, var(--color-brand-400), var(--color-brand-600))", src }: { label: string; size?: number; color?: string; src?: string | null }) {
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt="" width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />;

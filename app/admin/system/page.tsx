@@ -40,7 +40,7 @@ export default async function SystemPage() {
             { icon: <Timer className="size-4" />, label: w.claimsPending, value: s.last_hour.claims_pending, tone: "text-muted" },
             { icon: <UserPlus className="size-4" />, label: w.signups, value: s.last_hour.signups, tone: "text-success-600" },
           ].map((it) => (
-            <div key={it.label} className="bg-white px-2 py-1.5 text-center">
+            <div key={it.label} className="bg-surface px-2 py-1.5 text-center">
               <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-muted">
                 <span className="truncate">{it.label}</span>
                 <span className={`shrink-0 ${it.tone}`}>{it.icon}</span>
@@ -55,7 +55,7 @@ export default async function SystemPage() {
         <SectionTitle>{w.tableRows}</SectionTitle>
         <Card className="grid max-h-[8.75rem] grid-cols-3 gap-px overflow-y-auto overscroll-contain bg-line/60 lg:max-h-none lg:grid-cols-5">
           {Object.entries(s.tables).map(([k, v]) => (
-            <div key={k} className="bg-white px-2 py-1.5 text-center">
+            <div key={k} className="bg-surface px-2 py-1.5 text-center">
               <p className="text-base font-bold leading-tight text-ink tabular">{formatNumber(v, locale)}</p>
               <p className="truncate text-[11px] font-medium text-muted">{tables[k] ?? k}</p>
             </div>

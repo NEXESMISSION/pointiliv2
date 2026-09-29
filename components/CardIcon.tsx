@@ -42,7 +42,7 @@ export function BusinessAvatar({ logo, icon, color, size = 48, rounded = "rounde
   const c = cardColor(color);
   if (logo) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={logo} alt="" className={`shrink-0 bg-white object-cover ${rounded}`} style={{ width: size, height: size }} />;
+    return <img src={logo} alt="" className={`shrink-0 bg-surface object-cover ${rounded}`} style={{ width: size, height: size }} />;
   }
   return (
     <span className={`grid shrink-0 place-items-center ${rounded}`} style={{ width: size, height: size, background: c.soft, color: c.accent }}>

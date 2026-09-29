@@ -42,17 +42,17 @@ export default async function HomePage() {
       <span className="hidden lg:block">
         <Logo size={40} />
       </span>
-      <h1 className="mt-4 text-xl font-semibold text-ink sm:mt-5 lg:mt-6 lg:text-3xl lg:font-bold lg:tracking-tight">{m.choose.title}</h1>
+      <h1 className="mt-4 text-xl font-semibold text-ink sm:mt-5 lg:mt-6 lg:text-3xl lg:font-bold lg:">{m.choose.title}</h1>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:mt-10 lg:gap-6">
         {doors.map((d) => (
           <Link
             key={d.href}
             href={d.href}
-            className="group flex items-center gap-4 rounded-2xl border border-line bg-white p-3.5 text-start shadow-card transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lift active:translate-y-0 sm:flex-col sm:gap-0 sm:px-5 sm:pb-5 sm:pt-6 sm:text-center lg:rounded-3xl lg:px-10 lg:pb-9 lg:pt-10"
+            className="group flex items-center gap-4 rounded-2xl bg-surface shadow-card p-3.5 text-start shadow-card transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lift active:translate-y-0 sm:flex-col sm:gap-0 sm:px-5 sm:pb-5 sm:pt-6 sm:text-center lg:rounded-3xl lg:px-10 lg:pb-9 lg:pt-10"
           >
             {/* the renders carry a faint frame at their edges: the tile crops it off */}
-            <span className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white sm:size-36 lg:size-52">
+            <span className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-2xl bg-surface sm:size-36 lg:size-52">
               <Image src={d.image} alt={d.alt} width={512} height={512} className="size-full scale-[1.08] object-cover" priority />
             </span>
             <span className="flex min-w-0 flex-1 flex-col sm:w-full">

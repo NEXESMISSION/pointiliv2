@@ -94,7 +94,7 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
           <Card className="hidden overflow-hidden lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-start text-sm">
-                <thead className="border-b border-line/80 bg-canvas/60 text-xs font-semibold uppercase tracking-wide text-muted">
+                <thead className="border-b border-line/80 bg-canvas/60 text-xs font-semibold text-muted">
                   <tr>
                     <th className="px-4 py-3">{w.table.business}</th>
                     <th className="px-4 py-3">{w.table.plan}</th>

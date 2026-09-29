@@ -91,7 +91,7 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
       <section className="mt-2">
         <SectionTitle action={<Link href="/activity" className="whitespace-nowrap text-[13px] font-semibold text-brand-600">{w.viewAllActivity}</Link>}>{w.history}</SectionTitle>
         {d.history.length === 0 ? (
-          <p className="rounded-2xl bg-white p-3 text-center text-sm text-muted shadow-card">{w.noHistory}</p>
+          <p className="rounded-2xl bg-surface p-3 text-center text-sm text-muted shadow-card">{w.noHistory}</p>
         ) : (
           // a regular's history runs long: it scrolls in here, the screen itself does not
           <Card className="max-h-32 divide-y divide-line/80 overflow-y-auto">

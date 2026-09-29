@@ -24,11 +24,12 @@ export function Modal({ open, onClose, title, children, footer }: { open: boolea
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className="m-0 mt-auto w-full max-w-none bg-transparent p-0 backdrop:bg-ink/40 backdrop:backdrop-blur-[2px] sm:m-auto sm:max-w-md"
+      className="m-0 mt-auto w-full max-w-none bg-transparent p-0 backdrop:bg-[rgb(10_6_30/0.38)] backdrop:backdrop-blur-[2px] sm:m-auto sm:max-w-md"
     >
-      <div className="animate-rise rounded-t-3xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-lift sm:rounded-3xl sm:pb-5">
+      <div className="animate-sheet rounded-t-[32px] bg-surface px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2.5 shadow-lift sm:animate-rise sm:rounded-3xl sm:pb-5 sm:pt-5">
+        <div className="mx-auto mb-3.5 h-[5px] w-10 rounded-full bg-line sm:hidden" aria-hidden />
         <div className="mb-4 flex items-start justify-between gap-4">
-          <div className="text-lg font-semibold text-ink">{title}</div>
+          <div className="text-[21px] font-bold text-ink">{title}</div>
           <button type="button" onClick={onClose} className="-m-2 grid size-10 place-items-center rounded-xl text-muted hover:bg-canvas" aria-label={t.common.close}>
             <X className="size-5" />
           </button>

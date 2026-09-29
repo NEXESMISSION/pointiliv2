@@ -2,7 +2,7 @@
 
 import { Check, Gift, Heart, Star } from "lucide-react";
 import { CardIcon } from "@/components/CardIcon";
-import { patternImage, surface, type CardDesign } from "@/lib/card-design";
+import { patternImage, rgba, surface, type CardDesign } from "@/lib/card-design";
 import { useT } from "@/components/i18n/Provider";
 
 type Props = {
@@ -16,8 +16,8 @@ type Props = {
   rewardName?: string | null;
   /** stamp numbers where a level gift waits on the way to the goal */
   levels?: number[];
-  /** tile = customer home list; full = card page, previews */
-  size?: "tile" | "full";
+  /** stack = a card behind others in the wallet (its top line only); tile = the home list; full = card page, previews */
+  size?: "stack" | "tile" | "full";
   animateIndex?: number;
   className?: string;
 };
@@ -26,7 +26,8 @@ type Props = {
 export function LoyaltyCardVisual({ design, business, subtitle, filled, total, rewardName, levels = [], size = "full", animateIndex, className = "" }: Props) {
   const { t, fill } = useT();
   const s = surface(design, !!business.cover_url);
-  const tile = size === "tile";
+  const tile = size === "tile" || size === "stack";
+  const stack = size === "stack";
   const done = Math.min(filled, total);
   const complete = filled >= total;
   const extras = Math.max(0, filled - total);
@@ -35,8 +36,8 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
 
   return (
     <div
-      className={`relative isolate overflow-hidden rounded-[1.25rem] shadow-lift ${className}`}
-      style={{ background: s.background, color: s.fg, border: s.border }}
+      className={`pass-shine rounded-[26px] ${className}`}
+      style={{ background: s.background, color: s.fg, border: s.border, boxShadow: `0 18px 40px -16px ${s.photo ? "rgba(0,0,0,0.55)" : rgba(design.bg2 ?? design.bg, 0.55)}` }}
       role="img"
       aria-label={`${fill(t.customer.loyaltyCard.aria, { business: business.name, done, total })}${rewardName ? fill(t.customer.loyaltyCard.ariaReward, { reward: rewardName }) : ""}`}
     >
@@ -49,9 +50,9 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
       )}
       {design.pattern !== "none" && <div className="absolute inset-0" style={{ backgroundImage: patternImage(design.pattern, s.light) }} aria-hidden />}
 
-      <div className={`relative ${tile ? "p-4" : "p-5"}`}>
+      <div className={`relative ${stack ? "px-4 pb-6 pt-3.5" : tile ? "p-4" : "p-5"}`}>
         <div className="flex items-center gap-3">
-          <span className="grid shrink-0 place-items-center overflow-hidden rounded-2xl" style={{ width: tile ? 42 : 50, height: tile ? 42 : 50, background: s.chip }}>
+          <span className="grid shrink-0 place-items-center overflow-hidden rounded-[14px] backdrop-blur-sm" style={{ width: tile ? 42 : 50, height: tile ? 42 : 50, background: s.chip }}>
             {business.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={business.logo_url} alt="" className="size-full object-cover" />
@@ -60,7 +61,7 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
             )}
           </span>
           <span className="min-w-0 flex-1">
-            <span className={`block truncate font-bold leading-tight ${tile ? "text-[17px]" : "text-lg"}`}>{business.name}</span>
+            <span className={`block truncate font-semibold leading-tight ${tile ? "text-base" : "text-lg"}`}>{business.name}</span>
             {subtitle && (
               <span className="block truncate text-sm" style={{ color: s.muted }}>
                 {subtitle}
@@ -68,13 +69,14 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
             )}
           </span>
           <span dir="ltr" className="shrink-0 text-end leading-none">
-            <span className={`font-extrabold tabular ${tile ? "text-2xl" : "text-[1.75rem]"}`}>{done}</span>
-            <span className="text-base font-semibold tabular" style={{ color: s.muted }}>
+            <span className={`font-bold tabular ${tile ? "text-[30px]" : "text-[34px]"}`}>{done}</span>
+            <span className="text-[15px] font-medium tabular" style={{ color: s.muted }}>
               /{total}
             </span>
           </span>
         </div>
 
+        {!stack && (
         <div className={`grid ${tile ? "mt-4 gap-1.5" : "mt-5 gap-2.5"}`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
           {Array.from({ length: total }, (_, i) => {
             const on = i < done;
@@ -108,7 +110,9 @@ export function LoyaltyCardVisual({ design, business, subtitle, filled, total, r
           })}
         </div>
 
-        {rewardName && (
+        )}
+
+        {rewardName && !stack && (
           <div className={`flex items-center gap-2 rounded-2xl font-semibold ${tile ? "mt-3.5 px-3 py-2 text-[13px]" : "mt-5 px-3.5 py-2.5 text-sm"}`} style={{ background: s.chip }}>
             <Gift className="size-4 shrink-0" />
             <span className="min-w-0 flex-1 truncate">{rewardName}</span>

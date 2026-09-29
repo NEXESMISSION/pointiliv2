@@ -41,11 +41,11 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
       <TopBar back="/admin/subscriptions" title={w.title} subtitle={subtitle} large />
 
       <div className="flex items-center justify-center gap-2.5 rounded-2xl bg-success-50 p-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-success-600">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface text-success-600">
           <Wallet className="size-5" />
         </span>
         <div className="min-w-0 text-center">
-          <p className="text-xl font-bold tracking-tight text-ink tabular">{formatTND(total_paid, locale)}</p>
+          <p className="text-xl font-bold text-ink tabular">{formatTND(total_paid, locale)}</p>
           <p className="text-xs font-medium text-muted">{w.totalPaid}</p>
         </div>
       </div>

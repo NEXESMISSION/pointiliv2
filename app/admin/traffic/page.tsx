@@ -61,7 +61,7 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
           <Link
             href={trafficHref("people", range, all)}
             aria-label={count(w.live, d.live.count)}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-white px-2.5 text-[13px] font-semibold text-ink ring-1 ring-inset ring-line"
+            className="flex h-8 items-center gap-1.5 rounded-full bg-surface px-2.5 text-[13px] font-semibold text-ink ring-1 ring-inset ring-line"
           >
             <span className={`size-2 rounded-full ${d.live.count ? "animate-pulse bg-success-500" : "bg-faint"}`} />
             <span className="tabular">{n(d.live.count)}</span>

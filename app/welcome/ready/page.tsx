@@ -26,7 +26,7 @@ export default async function WelcomeReadyPage() {
       <Confetti count={40} />
       <WelcomeSteps step={3} />
       <div>
-        <h1 className="text-[1.35rem] font-semibold leading-tight tracking-tight text-ink">{w.readyTitle}</h1>
+        <h1 className="text-[1.35rem] font-semibold leading-tight text-ink">{w.readyTitle}</h1>
         <p className="mx-auto mt-1.5 max-w-xs text-sm leading-relaxed text-muted">{w.readyBody}</p>
       </div>
       <LoyaltyCardVisual

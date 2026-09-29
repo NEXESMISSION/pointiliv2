@@ -89,7 +89,7 @@ export function ImageUploader({ kind, url, disabled, icon, color }: { kind: Kind
 
   const picker = (label: string, dark = false) => (
     <label
-      className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-semibold transition ${dark ? "bg-black/55 text-white backdrop-blur hover:bg-black/70" : "border border-line bg-white text-body hover:bg-canvas"} ${busy ? "pointer-events-none opacity-60" : ""}`}
+      className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-semibold transition ${dark ? "bg-black/55 text-white backdrop-blur hover:bg-black/70" : "bg-surface shadow-card text-body hover:bg-canvas"} ${busy ? "pointer-events-none opacity-60" : ""}`}
     >
       <ImageUp className="size-4" /> {label}
       <input ref={input} type="file" accept="image/*" className="sr-only" disabled={disabled || busy} onChange={(e) => onFile(e.target.files?.[0])} />

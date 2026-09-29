@@ -132,7 +132,7 @@ export function ClickMap({
   return (
     <div ref={box} className={fit === "height" ? "shrink-0" : "flex w-full justify-center"}>
       <div
-        className="relative overflow-hidden rounded-xl border border-line bg-white shadow-card"
+        className="relative overflow-hidden rounded-xl bg-surface shadow-card"
         style={{ width: scale ? width * scale : "100%", height: scale ? height * scale : maxHeight }}
       >
         {scale > 0 && (
@@ -141,7 +141,7 @@ export function ClickMap({
             src={src}
             title={title}
             onLoad={() => setLoaded((n) => n + 1)}
-            className="absolute left-0 top-0 border-0 bg-white"
+            className="absolute left-0 top-0 border-0 bg-surface"
             style={{ width, height, transform: `scale(${scale})`, transformOrigin: "0 0" }}
           />
         )}
