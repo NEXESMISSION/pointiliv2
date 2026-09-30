@@ -71,7 +71,7 @@ export function StampDrop({ label, tone = "brand", size = 104 }: { label: string
             {
               width: i % 3 === 0 ? 9 : 6,
               height: i % 3 === 0 ? 9 : 6,
-              background: i % 2 ? ring : "#f59e0b",
+              background: i % 2 ? ring : "#ff6b4a",
               "--a": `${(360 / SPARKS) * i}deg`,
               "--d": `${size * (0.62 + (i % 4) * 0.12)}px`,
               animationDelay: `${IMPACT_MS + (i % 3) * 40}ms`,

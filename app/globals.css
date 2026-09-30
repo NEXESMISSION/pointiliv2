@@ -53,9 +53,9 @@
   --color-danger-50: #fff1f2;
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
-  --color-warning-50: #fff8eb;
-  --color-warning-500: #f59e0b;
-  --color-warning-700: #b45309;
+  --color-warning-50: #ffede8;
+  --color-warning-500: #ff6b4a;
+  --color-warning-700: #b8331c;
 
   /* depth that floats: cards lift off the canvas, passes glow in their colour */
   --shadow-card: 0 1px 0 rgb(15 14 23 / 0.03), 0 14px 34px -14px rgb(33 20 90 / 0.22);

@@ -326,7 +326,13 @@ async function main() {
 
   const renamed = await saveCard(Math.max(2, otherNow.balance), "Free Cappuccino");
   const afterRename = (await rpc(other, "customer_home", {})).data.cards[0];
-  check("renaming the reward shows the new name", renamed.data?.ok && afterRename.unlocked.includes("Free Cappuccino"), afterRename.unlocked);
+  check("renaming the gift: a running card keeps the gift it was promised", renamed.data?.ok && afterRename.unlocked.includes("Free Coffee"), afterRename.unlocked);
+  const forAll = await rpc(merchant, "save_loyalty_card", {
+    p_name: "E2E Loyalty", p_description: "", p_stamps_required: Math.max(2, otherNow.balance), p_reward_name: "Free Cappuccino",
+    p_reward_description: "", p_color: "emerald", p_icon: "coffee", p_cooldown_minutes: 0, p_reward_for_all: true,
+  });
+  const afterForAll = (await rpc(other, "customer_home", {})).data.cards[0];
+  check("«للكل»: the owner can give running cards the new gift", forAll.data?.ok && afterForAll.unlocked.includes("Free Cappuccino"), afterForAll.unlocked);
 
   section("The card has a life: 30 days from the first stamp");
   const withLife = (days) =>
@@ -416,6 +422,101 @@ async function main() {
   const cleared = await levelCard([]);
   check("owner takes the levels off", cleared.data?.ok && (await rpc(merchant, "session_context", {})).data?.card?.levels?.length === 0, cleared.data);
 
+
+  section("A promise is a promise: changing the card later (board 8)");
+  const promiseCard = (o = {}) =>
+    rpc(merchant, "save_loyalty_card", {
+      p_name: "E2E Loyalty", p_description: "", p_stamps_required: o.goal ?? 10, p_reward_name: o.reward ?? "Free Coffee",
+      p_reward_description: "", p_color: "emerald", p_icon: "coffee", p_cooldown_minutes: 0, p_valid_days: o.days ?? 0,
+      p_levels: o.levels ?? [], p_expected_version: o.expected ?? null, p_reward_for_all: o.forAll ?? false,
+    });
+  const cardOf = async (who, id) => (await rpc(who, "customer_card", { p_customer_id: id })).data;
+  await promiseCard({ levels: [{ name: "Cookie", stamps: 4 }] });
+  const cookieId = (await rpc(merchant, "session_context", {})).data.card.levels[0].id;
+  const keeper = await makeUser("promised a cookie");
+  let kp;
+  for (let i = 0; i < 2; i++) kp = await stampAs(keeper);
+  const kid = kp.data.customer.id;
+
+  await promiseCard({ levels: [{ id: cookieId, name: "Cookie", stamps: 6 }] });
+  check("a level moved later stays where this card was promised it (4)", (await cardOf(keeper, kid)).rewards.find((r) => r.id === cookieId)?.stamps_required === 4, (await cardOf(keeper, kid)).rewards);
+  const fresh = await makeUser("new after the move");
+  const fr = await stampAs(fresh);
+  check("a card started after the move finds the level at 6", (await cardOf(fresh, fr.data.customer.id)).rewards.find((r) => r.id === cookieId)?.stamps_required === 6, (await cardOf(fresh, fr.data.customer.id)).rewards);
+
+  await promiseCard({ levels: [] });
+  check("a level taken off stays on the card that was promised it", (await cardOf(keeper, kid)).rewards.some((r) => r.id === cookieId && r.level), (await cardOf(keeper, kid)).rewards);
+  const later = await makeUser("new after the removal");
+  const lt = await stampAs(later);
+  check("and a card started after the removal does not have it", !(await cardOf(later, lt.data.customer.id)).rewards.some((r) => r.id === cookieId), (await cardOf(later, lt.data.customer.id)).rewards);
+
+  for (let i = 0; i < 2; i++) kp = await stampAs(keeper);
+  const kreq = await rpc(keeper, "request_redemption", { p_reward_id: cookieId });
+  const kconf = await rpc(merchant, "merchant_confirm_redemption", { p_id: kreq.data?.id });
+  check("the promised level is handed over at 4, no stamp spent", kreq.data?.ok && kconf.data?.ok && kconf.data.redemption.stamps_spent === 0, { req: kreq.data, conf: kconf.data });
+
+  await promiseCard({ levels: [{ name: "Muffin", stamps: 3 }] });
+  const muffinId = (await rpc(merchant, "session_context", {})).data.card.levels[0].id;
+  check("a level added below this card's stamps waits for its next card", !(await cardOf(keeper, kid)).rewards.some((r) => r.id === muffinId), (await cardOf(keeper, kid)).rewards);
+  const early = await makeUser("not there yet");
+  const er = await stampAs(early);
+  check("a card that has not passed it can reach it on this card", (await cardOf(early, er.data.customer.id)).rewards.some((r) => r.id === muffinId && r.stamps_required === 3), (await cardOf(early, er.data.customer.id)).rewards);
+
+  const muffin = [{ id: muffinId, name: "Muffin", stamps: 3 }];
+  await promiseCard({ reward: "Free Tea", levels: muffin });
+  const primaryOf = async (who, id) => (await cardOf(who, id)).rewards.find((r) => r.is_primary)?.name;
+  check("a new main gift: the running card keeps the one it was promised", (await primaryOf(keeper, kid)) === "Free Coffee", await primaryOf(keeper, kid));
+  const teaFan = await makeUser("new after the rename");
+  const tf = await stampAs(teaFan);
+  check("a card started after it gets the new gift", (await primaryOf(teaFan, tf.data.customer.id)) === "Free Tea", await primaryOf(teaFan, tf.data.customer.id));
+
+  const pv = await rpc(merchant, "preview_card_change", { p_stamps_required: 12, p_reward_name: "Free Tea", p_valid_days: 0, p_levels: muffin });
+  check("the preview counts the running cards that keep their goal", pv.data?.ok && pv.data.running >= 3 && pv.data.keep_goal === pv.data.running && pv.data.goal_to === 12, pv.data);
+  const sess = (await rpc(merchant, "session_context", {})).data;
+  check("the session carries the card's version, the one a screen saves against", sess.card?.version === pv.data.version, { session: sess.card?.version, preview: pv.data.version });
+  const lower = await rpc(merchant, "preview_card_change", { p_stamps_required: 3, p_reward_name: "Free Tea", p_valid_days: 0, p_levels: [] });
+  check("a lower goal: the preview splits the running cards into ready now and on the way", lower.data?.ok && typeof lower.data.on_the_way === "number" && lower.data.unlock_now + lower.data.on_the_way <= lower.data.running, lower.data);
+  const stale = await promiseCard({ reward: "Free Tea", levels: muffin, expected: pv.data.version - 1 });
+  check("a save made on an old screen is refused (card_changed)", stale.data?.error === "card_changed", stale.data);
+  const fine = await promiseCard({ reward: "Free Tea", levels: muffin, expected: pv.data.version });
+  check("a save on the current version goes through, as the next version", fine.data?.ok && fine.data.version === pv.data.version + 1, fine.data);
+
+  await promiseCard({ reward: "Free Tea", levels: muffin, days: 60 });
+  const sixty = await makeUser("sixty days");
+  const sx = await stampAs(sixty);
+  const d60 = new Date(sx.data.customer.expires_at).getTime();
+  await promiseCard({ reward: "Free Tea", levels: muffin, days: 30 });
+  const still = (await cardOf(sixty, sx.data.customer.id)).customer.expires_at;
+  check("a shorter life waits for new cards: the running one keeps its 60 days", new Date(still).getTime() === d60, { before: sx.data.customer.expires_at, after: still });
+  await promiseCard({ reward: "Free Tea", levels: muffin, days: 0 });
+
+  const hist = await rpc(merchant, "card_history", {});
+  check("every save is a version in the history, newest first", hist.data?.ok && hist.data.items.length >= 8 && hist.data.items[0].version === hist.data.live, { live: hist.data?.live, n: hist.data?.items?.length });
+  const oldest = hist.data.items[hist.data.items.length - 1];
+  const restored = await rpc(merchant, "restore_card_version", { p_version: oldest.version, p_expected_version: hist.data.live, p_reward_for_all: false });
+  const afterBack = await rpc(merchant, "session_context", {});
+  check("an old version comes back as a new one", restored.data?.ok && restored.data.version === hist.data.live + 1 && afterBack.data.card.stamps_required === oldest.stamps_required, restored.data);
+  const lateBack = await rpc(merchant, "restore_card_version", { p_version: oldest.version, p_expected_version: hist.data.live });
+  check("a restore from an old screen is refused too (card_changed)", lateBack.data?.error === "card_changed", lateBack.data);
+
+  section("10 → 6 → 10: what turned ready stays ready (board 8)");
+  await promiseCard({ goal: 10, reward: "Free Tea", levels: [{ name: "Cookie", stamps: 5 }] });
+  const yoyo = await makeUser("yo-yo");
+  let yy;
+  for (let i = 0; i < 7; i++) yy = await stampAs(yoyo);
+  const yid = yy.data.customer.id;
+  const cookie = (await rpc(merchant, "session_context", {})).data.card.levels[0].id;
+  await promiseCard({ goal: 6, reward: "Free Tea", levels: [{ id: cookie, name: "Cookie", stamps: 3 }] });
+  const at6 = (await cardOf(yoyo, yid)).rewards;
+  check("lowered to 6: the gift of a card at 7 is ready", at6.find((r) => r.is_primary)?.unlocked === true && at6.find((r) => r.is_primary)?.stamps_required === 6, at6);
+  await promiseCard({ goal: 10, reward: "Free Tea", levels: [{ id: cookie, name: "Cookie", stamps: 5 }] });
+  const at10 = (await cardOf(yoyo, yid)).rewards;
+  check("raised back to 10: it stays ready at 6", at10.find((r) => r.is_primary)?.unlocked === true && at10.find((r) => r.is_primary)?.stamps_required === 6, at10);
+  check("and the level moved 5 → 3 → 5 stays at 3 for this card", at10.find((r) => r.id === cookie)?.stamps_required === 3, at10);
+  const newbie = await makeUser("after the yo-yo");
+  const nw = await stampAs(newbie);
+  check("a card started after it finds the goal at 10", (await cardOf(newbie, nw.data.customer.id)).rewards.find((r) => r.is_primary)?.stamps_required === 10);
+
   section("The owner's welcome: only what the founder could not know");
   const pre = await rpc(merchant, "session_context", {});
   check("a shop the founder opened starts not set up", pre.data?.business?.onboarded_at === null, pre.data?.business?.onboarded_at);
@@ -424,6 +525,32 @@ async function main() {
   check("finishing the welcome marks it done, with the address", welcome.data?.ok && !!post.data?.business?.onboarded_at && post.data.business.address === "Rue de Marseille, Tunis", post.data?.business);
   const custWelcome = await rpc(customer, "finish_welcome", { p_address: "x", p_instagram: null });
   check("a customer cannot call the owner's welcome", !!custWelcome.error, custWelcome.data);
+
+
+  section("«ادخل كمحل»: the founder inside a shop (0013)");
+  const biz0 = created.businesses[0];
+  const inside = await asFounder(`select public.admin_act_as('${biz0}') as r`);
+  const ctxIn = await asFounder(`select public.session_context() as r`);
+  check("the founder enters a shop: its context, the owner's role, «acting»", inside?.ok && ctxIn?.acting === true && ctxIn?.business?.id === biz0 && ctxIn?.member_role === "owner", { acting: ctxIn?.acting, role: ctxIn?.member_role });
+  const powers = await asFounder(`select public.preview_card_change(10, 'Free Tea', 0, '[]'::jsonb) as r`);
+  check("inside, the founder has the owner's powers", powers?.ok === true, powers);
+  const out = await asFounder(`select public.admin_stop_acting() as r`);
+  const ctxOut = await asFounder(`select public.session_context() as r`);
+  check("leaving the shop ends it", out?.ok && ctxOut?.acting === false && ctxOut?.business?.id !== biz0, { acting: ctxOut?.acting });
+  const custIn = await rpc(customer, "admin_act_as", { p_business: biz0 });
+  check("a customer cannot enter a shop", !!custIn.error || custIn.data?.ok !== true, custIn.data);
+
+  section("A suspended shop's clocks stop (board 8)");
+  await promiseCard({ reward: "Free Tea", levels: muffin, days: 30 });
+  const sleeper = await makeUser("card on hold");
+  const sl = await stampAs(sleeper);
+  const before = new Date(sl.data.customer.expires_at).getTime();
+  await asFounder(`select public.admin_set_business_status('${biz0}', 'suspended') as r`);
+  await runSql(`update public.businesses set suspended_at = now() - interval '3 days' where id = '${biz0}'`);
+  await asFounder(`select public.admin_set_business_status('${biz0}', 'active') as r`);
+  const after = new Date((await cardOf(sleeper, sl.data.customer.id)).customer.expires_at).getTime();
+  check("back from suspension, the card got its 3 days back", Math.abs(after - before - 3 * 86400000) < 120000, { before, after });
+  await promiseCard({ reward: "Free Tea", levels: muffin, days: 0 });
 
   section("The founder's hand on a subscription");
   const until = new Date(Date.now() + 45 * 86400000).toISOString();

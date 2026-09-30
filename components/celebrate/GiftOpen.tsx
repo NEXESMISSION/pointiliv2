@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { AMBER, BurstStyle, Chips, Flash, Fountain, GREEN, Shockwaves, Sparks, VIOLET } from "./Burst";
+import { CORAL, BurstStyle, Chips, Flash, Fountain, GREEN, Shockwaves, Sparks, VIOLET } from "./Burst";
 
 /**
  * THE GIFT OPENING — the payoff of ten visits, on both sides of the counter.
@@ -26,7 +26,7 @@ export const GIFT_QUICK_OPEN_MS = 520;
 
 const BOX = "#6535e0";
 const LID = "#5328c4";
-const RIBBON = AMBER;
+const RIBBON = CORAL;
 
 const CSS = `
 @keyframes cb-gift-grand{0%{transform:translate3d(0,-170px,0) scale(1.5,1.5) rotate(-16deg);opacity:0}10%{opacity:1}40%{transform:translate3d(0,0,0) scale(1.1,.84) rotate(3deg);opacity:1}50%{transform:translate3d(0,-10px,0) scale(.96,1.06) rotate(-2deg)}58%{transform:translate3d(0,0,0) scale(1,1) rotate(0)}66%{transform:translate3d(0,0,0) scale(1.03,1.03) rotate(-7deg)}74%{transform:translate3d(0,0,0) scale(1.05,1.05) rotate(7deg)}82%{transform:translate3d(0,0,0) scale(1.07,1.07) rotate(-6deg)}90%{transform:translate3d(0,0,0) scale(1.09,1.09) rotate(5deg)}100%{transform:translate3d(0,0,0) scale(1.12,1.04) rotate(0);opacity:1}}
@@ -48,7 +48,7 @@ export function GiftOpen({ size = 104, pace = "grand", fountain = false, classNa
   const open = grand ? GIFT_OPEN_MS : GIFT_QUICK_OPEN_MS;
   const disc = size * 0.8;
   const unit = `${size}px`;
-  const colors = [VIOLET, AMBER, GREEN, "#ec4899", "#0ea5e9"];
+  const colors = [VIOLET, CORAL, GREEN, "#ec4899", "#0ea5e9"];
 
   return (
     <div className={`relative grid shrink-0 place-items-center ${className}`} style={{ width: size * 1.62, height: size * 1.34 }}>
@@ -59,7 +59,7 @@ export function GiftOpen({ size = 104, pace = "grand", fountain = false, classNa
       <span className="cb-gift-halo pointer-events-none absolute rounded-full" style={{ width: disc * 1.5, height: disc * 1.5, background: "rgba(34,197,94,0.2)", animationDelay: `${open + 900}ms` }} aria-hidden />
       <Flash size={`${size * 2.4}px`} delay={open - 20} />
       <Shockwaves count={grand ? 3 : 2} size={`${disc}px`} color={GREEN} delay={open} />
-      <Sparks unit={unit} count={grand ? 14 : 12} colors={[GREEN, AMBER, VIOLET]} dot={0.07} delay={open + 20} />
+      <Sparks unit={unit} count={grand ? 14 : 12} colors={[GREEN, CORAL, VIOLET]} dot={0.07} delay={open + 20} />
       {grand && <Chips unit={unit} count={10} near={0.9} far={1.4} chip={0.06} colors={colors} delay={open + 20} />}
       {fountain && <Fountain colors={colors} delay={open + 40} />}
 

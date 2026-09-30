@@ -121,7 +121,7 @@ export const common = ns({
     stamps: "تامبونات",
     customers: "حرفاء",
     stampsCount: p({ one: "تامبون واحد", other: "{n} تامبونات" }),
-    customersCount: p({ one: "حريف واحد", other: "{n} حرفاء" }),
+    customersCount: p({ one: "حريف واحد", two: "زوز حرفاء", few: "{n} حرفاء", other: "{n} حريف" }),
     visitsCount: p({ one: "مرّة وحدة", other: "{n} مرّات" }),
     stampsToGo: p({ one: "باقيلك تامبون واحد", other: "باقيلك {n} تامبونات" }),
     outOf: "{done}/{total}",

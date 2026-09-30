@@ -16,7 +16,7 @@
  * same burst scales from a phone to a tablet without a line of JS.
  */
 
-export const AMBER = "#f59e0b";
+export const CORAL = "#ff6b4a";
 export const GREEN = "#22c55e";
 export const VIOLET = "#7c50ee";
 

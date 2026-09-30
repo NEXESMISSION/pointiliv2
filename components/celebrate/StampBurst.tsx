@@ -1,6 +1,6 @@
 "use client";
 
-import { AMBER, BurstStyle, Chips, GREEN, Shockwaves, Sparks } from "./Burst";
+import { CORAL, BurstStyle, Chips, GREEN, Shockwaves, Sparks } from "./Burst";
 
 /**
  * THE COUNTER CELEBRATION — a stamp was just collected, seen from a metre away.
@@ -31,7 +31,7 @@ const CSS = `
 
 export function StampBurst({ code, accent, soft, side, delay = 0 }: { code: number; accent: string; soft: string; side: string; delay?: number }) {
   /* The shop's colour leads; amber and green keep a slate or a navy card from throwing a grey party. */
-  const colors = [accent, AMBER, accent, GREEN, soft];
+  const colors = [accent, CORAL, accent, GREEN, soft];
   return (
     <div className="pointer-events-none absolute inset-0 grid place-items-center" style={{ "--s": side } as React.CSSProperties} aria-hidden>
       <BurstStyle />

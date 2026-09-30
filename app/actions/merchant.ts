@@ -36,10 +36,45 @@ export type CardInput = {
   valid_days: number;
   levels?: { id?: string; name: string; stamps: number }[];
   design: CardDesign;
+  /** the card's version when the screen was opened: a save on a stale screen is refused (0015) */
+  expected_version?: number | null;
+  /** «للكل»: running cards take the new main gift too */
+  reward_for_all?: boolean;
 };
 
+/** What saving these values would do to the customers, counted by the database (0015). */
+export type CardPreview = {
+  ok: boolean;
+  message?: string;
+  new_card?: boolean;
+  version?: number;
+  goal_from?: number;
+  goal_to?: number;
+  running?: number;
+  keep_goal?: number;
+  unlock_now?: number;
+  on_the_way?: number;
+  ready?: number;
+  reward_changed?: boolean;
+  reward_from?: string;
+  level_next_card?: number;
+  level_now?: number;
+  valid_shorter?: boolean;
+};
+
+export async function previewCardChange(input: Pick<CardInput, "stamps_required" | "reward_name" | "valid_days" | "levels">): Promise<CardPreview> {
+  const res = await call("preview_card_change", {
+    p_stamps_required: input.stamps_required,
+    p_reward_name: input.reward_name.trim(),
+    p_valid_days: input.valid_days || 0,
+    p_levels: (input.levels ?? []).map((l) => ({ id: l.id ?? null, name: l.name.trim(), stamps: l.stamps })),
+  });
+  if (!res.ok) return { ok: false, message: (await getI18n()).msg(res.error) };
+  return res as CardPreview;
+}
+
 /** The whole card in one save: what it gives, then how it looks. Both RPCs validate; the first one creates the card when there is none. */
-export async function saveCard(input: CardInput): Promise<{ ok: boolean; message: string; created: boolean }> {
+export async function saveCard(input: CardInput): Promise<{ ok: boolean; message: string; created: boolean; stale?: boolean; version?: number }> {
   const { t, msg } = await getI18n();
   const res = await call("save_loyalty_card", {
     p_name: input.name,
@@ -53,12 +88,15 @@ export async function saveCard(input: CardInput): Promise<{ ok: boolean; message
     p_valid_days: input.valid_days || 0,
     // the gifts on the way to the goal, replacing whatever levels were there
     p_levels: (input.levels ?? []).map((l) => ({ id: l.id ?? null, name: l.name.trim(), stamps: l.stamps })),
+    p_expected_version: input.expected_version ?? null,
+    p_reward_for_all: !!input.reward_for_all,
   });
+  if (res.error === "card_changed") return { ok: false, message: t.merchant.loyalty.changedMeanwhile, created: false, stale: true };
   if (!res.ok) return { ok: false, message: msg(res.error), created: false };
   const look = await call("save_card_design", { p_description: input.description, p_design: input.design });
   revalidatePath("/", "layout");
   if (!look.ok) return { ok: false, message: msg(look.error), created: !!res.created };
-  return { ok: true, message: t.ops.toasts.loyaltyCardSaved, created: !!res.created };
+  return { ok: true, message: t.ops.toasts.loyaltyCardSaved, created: !!res.created, version: res.version as number | undefined };
 }
 
 export async function updateBusiness(_: FormState, fd: FormData): Promise<FormState> {
@@ -171,4 +209,14 @@ export async function redeemDirect(customerId: string, rewardId: string): Promis
   const res = await call("merchant_redeem_direct", { p_customer_id: customerId, p_reward_id: rewardId });
   revalidatePath(`/customers/${customerId}`);
   return { ok: res.ok, message: res.ok ? t.ops.toasts.rewardGiven : msg(res.error) };
+}
+
+/** Bring an old version of the card back, as a new version (0015). */
+export async function restoreCardVersion(version: number, expected: number | null, forAll = false): Promise<{ ok: boolean; message: string; stale?: boolean }> {
+  const { t, msg } = await getI18n();
+  const res = await call("restore_card_version", { p_version: version, p_expected_version: expected, p_reward_for_all: forAll });
+  revalidatePath("/", "layout");
+  if (res.error === "card_changed") return { ok: false, message: t.merchant.loyalty.changedMeanwhile, stale: true };
+  if (!res.ok) return { ok: false, message: msg(res.error) };
+  return { ok: true, message: t.ops.toasts.loyaltyCardSaved };
 }

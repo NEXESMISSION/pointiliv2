@@ -1,16 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
-import { Check, Gift, Heart, ImageIcon, Plus, Star, X } from "lucide-react";
-import { saveCard } from "@/app/actions/merchant";
+import { Check, ChevronRight, Gift, Heart, ImageIcon, Plus, RotateCw, Star, X } from "lucide-react";
+import { previewCardChange, saveCard, type CardPreview } from "@/app/actions/merchant";
+import { ChangePreview, worthASheet } from "@/components/merchant/ChangePreview";
 import { CardIcon } from "@/components/CardIcon";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input, Select } from "@/components/ui/Field";
-import { ConfirmDialog } from "@/components/ui/Modal";
+import { Icon3D } from "@/components/ui/Icon3D";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/components/i18n/Provider";
 import { CARD_ICONS } from "@/lib/constants";
@@ -69,7 +71,7 @@ function guessBrand(d: CardDesign) {
  * it, how long it lives. The preview never leaves the screen, every change
  * shows on it at once, and one button saves all of it. Nothing folded away.
  */
-export function CardStudio({ initial, design: initialDesign, business, isNew, disabled, impact, branding }: { initial: CardValues; design: CardDesign; business: Business; isNew: boolean; disabled?: boolean; impact: CardImpact | null; branding: ReactNode }) {
+export function CardStudio({ initial, design: initialDesign, business, isNew, disabled, impact, branding, version }: { initial: CardValues; design: CardDesign; business: Business; isNew: boolean; disabled?: boolean; impact: CardImpact | null; branding: ReactNode; version: number | null }) {
   const { t, count, fill } = useT();
   const w = t.merchant.loyalty;
   const ds = t.merchant.design;
@@ -86,8 +88,12 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
   const [brand, setBrand] = useState(() => guessBrand(initialDesign));
   const [custom, setCustom] = useState(!STAMP_PICKS.includes(initial.stamps_required));
   const [preview, setPreview] = useState(Math.max(1, Math.round(initial.stamps_required * 0.6)));
-  const [ask, setAsk] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // the version this screen shows: a save made after somebody else's is refused, not silently merged
+  const [ver, setVer] = useState(version);
+  const [stale, setStale] = useState(false);
+  const [pv, setPv] = useState<CardPreview | null>(null);
+  const [forAll, setForAll] = useState(false);
 
   const patch = (p: Partial<CardValues>) => setV((x) => ({ ...x, ...p }));
   const set = (p: Partial<CardDesign>) => setD((x) => ({ ...x, ...p }));
@@ -108,7 +114,6 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
   const keepGoal = raised ? tally((r) => r.target < stamps) : 0;
   const unlockNow = lowered ? tally((r) => r.balance >= stamps && r.balance < r.target) : 0;
   const renamed = !isNew && !!initial.reward_name && v.reward_name.trim() !== initial.reward_name && (impact?.customers ?? 0) > 0;
-  const needsConfirm = keepGoal > 0 || unlockNow > 0 || renamed;
   const levelsOn = v.levels.length > 0;
   const levelsValid = levelsOk(v.levels, stamps);
   const setLevel = (i: number, p: Partial<LevelDraft>) => patch({ levels: v.levels.map((l, k) => (k === i ? { ...l, ...p } : l)) });
@@ -130,25 +135,37 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
     </>
   );
 
-  const run = () =>
+  const fail = (message: string, isStale = false) => {
+    setError(message);
+    setStale(isStale);
+    toast(message, "error");
+  };
+  const persist = async (all: boolean) => {
+    const res = await saveCard({ ...v, reward_name: v.reward_name.trim(), design: d, expected_version: ver, reward_for_all: all });
+    setPv(null);
+    if (!res.ok) return fail(res.message, res.stale);
+    toast(res.message, "success");
+    if (res.created) {
+      // the last step of the owner's welcome: the card, ready, and the QR one tap away
+      router.push("/welcome/ready");
+      return;
+    }
+    if (res.version) setVer(res.version);
+    setSaved({ v, d });
+    router.refresh();
+  };
+  // a new card has nobody to tell; a change is counted first, and shown when it touches somebody
+  const save = () =>
     start(async () => {
       setError(null);
-      const res = await saveCard({ ...v, reward_name: v.reward_name.trim(), design: d });
-      if (!res.ok) {
-        setError(res.message);
-        toast(res.message, "error");
-        return;
-      }
-      toast(res.message, "success");
-      if (res.created) {
-        // the last step of the owner's welcome: his card, ready, and the QR one tap away
-        router.push("/welcome/ready");
-        return;
-      }
-      setSaved({ v, d });
-      router.refresh();
+      if (isNew) return persist(false);
+      const p = await previewCardChange(v);
+      if (!p.ok) return fail(p.message ?? "");
+      if (ver !== null && p.version !== undefined && p.version !== ver) return fail(w.changedMeanwhile, true);
+      if (!worthASheet(p)) return persist(false);
+      setForAll(false);
+      setPv(p);
     });
-  const save = () => (needsConfirm ? setAsk(true) : run());
 
   const accentChoices = Array.from(new Set(["#FFFFFF", brand, "#F5C451", "#111827", shade(brand, 0.35), "#E11D48", "#0E9F6E"].map((c) => c.toUpperCase())));
   const bgChoices = Array.from(new Set([brand, shade(brand, 0.3), ...SWATCHES].map((c) => c.toUpperCase())));
@@ -174,7 +191,20 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
         </aside>
 
         <div className="min-w-0 space-y-3">
-          {error && <Alert>{error}</Alert>}
+          {error && (
+            <Alert
+              tone={stale ? "warning" : "error"}
+              action={
+                stale && (
+                  <Button size="sm" variant="secondary" onClick={() => window.location.reload()}>
+                    <RotateCw className="size-4" /> {w.reload}
+                  </Button>
+                )
+              }
+            >
+              {error}
+            </Alert>
+          )}
 
           {/* what the card gives */}
           <Card className="divide-y divide-line">
@@ -407,6 +437,19 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
               </Select>
             </Section>
           </Card>
+
+          {!isNew && !disabled && (
+            <Link href="/loyalty/history" className="press flex items-center gap-3 rounded-[20px] bg-surface p-3 shadow-card">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-surface-2">
+                <Icon3D name="hourglass" size={28} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold text-ink">{w.history}</span>
+                <span className="block truncate text-[12.5px] text-muted">{w.historyHint}</span>
+              </span>
+              <ChevronRight className="size-5 shrink-0 text-faint rtl:-scale-x-100" />
+            </Link>
+          )}
         </div>
       </fieldset>
 
@@ -421,18 +464,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
         </div>
       )}
 
-      <ConfirmDialog
-        open={ask}
-        onClose={() => setAsk(false)}
-        title={w.confirmTitle}
-        confirmLabel={t.common.save}
-        onConfirm={() => {
-          setAsk(false);
-          run();
-        }}
-      >
-        <ul className="list-disc space-y-2 ps-5">{impactMessages}</ul>
-      </ConfirmDialog>
+      <ChangePreview preview={pv} reward={v.reward_name.trim()} forAll={forAll} onForAll={setForAll} onClose={() => setPv(null)} onSave={() => start(() => persist(forAll))} saving={saving} />
     </>
   );
 }

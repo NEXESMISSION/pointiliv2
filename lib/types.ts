@@ -48,6 +48,8 @@ export type SessionContext = {
     reward: { id: string; name: string; description: string | null } | null;
     /** gifts on the way to the goal: taking one costs no stamps (0012) */
     levels: CardLevel[];
+    /** bumped by every save: a save made against an older one is refused (0015) */
+    version: number;
   } | null;
   subscription: SubscriptionState | null;
 };

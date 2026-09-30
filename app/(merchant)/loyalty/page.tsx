@@ -60,6 +60,7 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Prom
         design={design}
         disabled={!isOwner}
         isNew={!card}
+        version={card?.version ?? null}
         impact={impact}
         initial={{
           name: card?.name ?? fill(t.merchant.loyalty.defaultName, { name: ctx.business.name }),
