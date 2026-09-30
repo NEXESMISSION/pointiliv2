@@ -574,6 +574,119 @@ try {
   failures.push(`crashed: ${e.message}`);
   console.error(e);
 } finally {
+  section("Points: the second system (board 2, 0016)");
+  const pOwner = await makeUser("points owner");
+  const pShop = await asFounder(`select public.admin_create_business('${pOwner.id}', 'E2E Salon', 'salon', 'Nour') as r`);
+  created.businesses.push(pShop?.business_id);
+  const cat = (items, o = {}) => rpc(pOwner, "save_points_card", {
+    p_name: "E2E Salon", p_dinars_per_point: o.rate ?? 1, p_points_expire: o.expire ?? false, p_catalog: items, p_expected_version: o.expected ?? null,
+  });
+  const made = await cat([{ name: "Remise 10 DT", points: 100 }, { name: "Brushing", points: 300 }]);
+  check("the owner sets up points: a rate and a catalog", made.data?.ok && made.data.created && made.data.version === 1, made.data);
+  const pCtx = (await rpc(pOwner, "session_context", {})).data;
+  check("the session knows the shop runs points", pCtx.card?.system === "points" && Number(pCtx.card?.dinars_per_point) === 1, pCtx.card);
+  const noStamps = await rpc(pOwner, "mint_qr_token", {});
+  check("a points shop makes no stamps codes", noStamps.data?.error === "points_card", noStamps.data);
+  const noSave = await rpc(pOwner, "save_loyalty_card", { p_name: "E2E Salon", p_description: "", p_stamps_required: 10, p_reward_name: "Free", p_reward_description: "", p_color: "sea", p_icon: "coffee", p_cooldown_minutes: 0 });
+  check("a stamps save never lands on a points card", noSave.data?.error === "other_system", noSave.data);
+  const small = await rpc(pOwner, "mint_points_token", { p_amount: 0.5 });
+  check("less than a point's worth makes no code", small.data?.error === "amount_too_small", small.data);
+
+  const buyer = await makeUser("points customer");
+  const m1 = await rpc(pOwner, "mint_points_token", { p_amount: 35 });
+  check("35 DT at 1 DT a point: a one-use code for 35 points", m1.data?.ok && m1.data.points === 35 && Number(m1.data.amount) === 35, m1.data);
+  const e1 = await rpc(buyer, "collect_stamp", { p_token: m1.data.token, p_claim: null });
+  check("the customer scans: +35 points, on a points card", e1.data?.ok && e1.data.earned?.points === 35 && e1.data.customer.balance === 35 && e1.data.system === "points", e1.data);
+  const again1 = await rpc(buyer, "collect_stamp", { p_token: m1.data.token, p_claim: null });
+  check("the same code twice gives nothing more", again1.data?.error === "already_processed" && again1.data.customer?.balance === 35, again1.data);
+  const st1 = await rpc(pOwner, "qr_token_state", { p_id: m1.data.id, p_since: null });
+  check("the counter sees who took the points", st1.data?.consumed && st1.data.earned?.points === 35 && st1.data.earned.code === e1.data.customer.code, st1.data);
+
+  const m2 = await rpc(pOwner, "mint_points_token", { p_amount: 70 });
+  const e2 = await rpc(buyer, "collect_stamp", { p_token: m2.data.token, p_claim: null });
+  check("no waiting between two purchases; 105 points unlock the 100-point gift", e2.data?.ok && e2.data.customer.balance === 105 && e2.data.newly_unlocked.some((r) => r.points === 100), e2.data?.newly_unlocked);
+  const pid = e2.data.customer.id;
+  const homeP = (await rpc(buyer, "customer_home", {})).data.cards.find((c) => c.customer_id === pid);
+  check("the lobby shows the points card with its balance", homeP?.system === "points" && homeP.balance === 105 && homeP.unlocked.includes("Remise 10 DT"), homeP);
+
+  const wrong = await rpc(pOwner, "mint_points_token", { p_amount: 500 });
+  const right = await rpc(pOwner, "mint_points_token", { p_amount: 50, p_replace: wrong.data.id });
+  const late = await makeUser("scanned the wrong amount");
+  const lateTry = await rpc(late, "collect_stamp", { p_token: wrong.data.token, p_claim: null });
+  check("a code for a wrong amount dies when the right one is made", right.data?.ok && lateTry.data?.error === "invalid", lateTry.data);
+  const voidMe = await rpc(pOwner, "mint_points_token", { p_amount: 20 });
+  await rpc(pOwner, "void_qr_token", { p_id: voidMe.data.id });
+  const voided = await rpc(late, "collect_stamp", { p_token: voidMe.data.token, p_claim: null });
+  check("a code closed at the counter no longer works", voided.data?.error === "invalid", voided.data);
+  await rpc(pOwner, "void_qr_token", { p_id: right.data.id });
+
+  const pc = (await rpc(buyer, "customer_card", { p_customer_id: pid })).data;
+  const remise = pc.rewards.find((r) => r.points === 100);
+  const brushing = pc.rewards.find((r) => r.points === 300);
+  check("the card lists the catalog, what is within reach lit", remise?.unlocked && !brushing?.unlocked && pc.history.length === 2, { rewards: pc.rewards, history: pc.history });
+  const tooDear = await rpc(buyer, "request_redemption", { p_reward_id: brushing.id });
+  check("a gift beyond the points is refused", tooDear.data?.error === "not_enough_points", tooDear.data);
+  const req = await rpc(buyer, "request_redemption", { p_reward_id: remise.id });
+  const still = (await rpc(buyer, "customer_card", { p_customer_id: pid })).data.customer.balance;
+  check("asking for a gift: a code, the points still there", req.data?.ok && req.data.points_spent === 100 && still === 105, { req: req.data, still });
+  const conf = await rpc(pOwner, "merchant_confirm_redemption", { p_id: req.data.id });
+  const after = (await rpc(buyer, "customer_card", { p_customer_id: pid })).data;
+  check("handed over: the points leave the card (105 → 5), in the ledger", conf.data?.ok && conf.data.redemption.points_spent === 100 && after.customer.balance === 5 && after.history[0].points === -100, { conf: conf.data, bal: after.customer.balance, h: after.history[0] });
+
+  // the catalog's promises
+  const v1 = (await rpc(pOwner, "points_card", {})).data;
+  const pv = await rpc(pOwner, "preview_points_change", { p_dinars_per_point: 1, p_points_expire: false,
+    p_catalog: [{ id: remise.id, name: "Remise 10 DT", points: 150 }, { id: brushing.id, name: "Brushing", points: 200 }] });
+  check("the preview counts a rise, a drop and who they touch", pv.data?.ok && pv.data.raised.length === 1 && pv.data.lowered.length === 1 && pv.data.holders >= 1, pv.data);
+  const rise = await cat([{ id: remise.id, name: "Remise 10 DT", points: 150 }, { id: brushing.id, name: "Brushing", points: 200 }], { expected: v1.version });
+  const cat2 = (await rpc(buyer, "customer_card", { p_customer_id: pid })).data.rewards;
+  const r2 = cat2.find((r) => r.id === remise.id);
+  const b2 = cat2.find((r) => r.id === brushing.id);
+  check("a price rise waits 14 days: 100 now, 150 announced", rise.data?.ok && r2.points === 100 && r2.next_points === 150 && !!r2.next_at, r2);
+  check("a price drop applies at once (300 → 200)", b2.points === 200 && !b2.next_points, b2);
+  const staleP = await cat([{ id: remise.id, name: "Remise 10 DT", points: 150 }], { expected: v1.version });
+  check("a points save from an old screen is refused", staleP.data?.error === "card_changed", staleP.data);
+  const dropB = await cat([{ id: remise.id, name: "Remise 10 DT", points: 150 }]);
+  const cat3 = (await rpc(buyer, "customer_card", { p_customer_id: pid })).data.rewards;
+  check("a gift taken off stays on offer 14 more days", dropB.data?.ok && cat3.some((r) => r.id === brushing.id && r.ends_at), cat3);
+  check("the same rise saved again keeps its date", cat3.find((r) => r.id === remise.id)?.next_at === r2.next_at, { before: r2.next_at, after: cat3.find((r) => r.id === remise.id)?.next_at });
+
+  // the rate reaches only what comes after it
+  await cat([{ id: remise.id, name: "Remise 10 DT", points: 150 }, { id: brushing.id, name: "Brushing", points: 200 }], { rate: 0.5 });
+  const m3 = await rpc(pOwner, "mint_points_token", { p_amount: 20 });
+  const e3 = await rpc(buyer, "collect_stamp", { p_token: m3.data.token, p_claim: null });
+  check("a new rate (0.5 DT a point): 20 DT → 40 points, the old points untouched", m3.data?.points === 40 && e3.data?.customer.balance === 45, { mint: m3.data?.points, bal: e3.data?.customer?.balance });
+
+  // expiry counts from the day it is turned on
+  await cat([{ id: remise.id, name: "Remise 10 DT", points: 150 }, { id: brushing.id, name: "Brushing", points: 200 }], { rate: 0.5, expire: true });
+  const exp = (await rpc(buyer, "customer_card", { p_customer_id: pid })).data.customer.expires_at;
+  check("expiry turned on: a year from today for points already held", exp && new Date(exp).getTime() - Date.now() > 364 * 86400000, exp);
+  await runSql(`update public.customers set card_expires_at = now() - interval '1 minute' where id = '${pid}'`);
+  const m4 = await rpc(pOwner, "mint_points_token", { p_amount: 5 });
+  const e4 = await rpc(buyer, "collect_stamp", { p_token: m4.data.token, p_claim: null });
+  const h4 = (await rpc(buyer, "customer_card", { p_customer_id: pid })).data.history;
+  check("a year without a visit: the old points expire, the new ones count", e4.data?.customer.balance === 10 && h4.some((h) => h.type === "expire" && h.points === -45), { bal: e4.data?.customer?.balance, h: h4.slice(0, 3) });
+
+  // the owner's side
+  const direct = await rpc(pOwner, "merchant_redeem_direct", { p_customer_id: pid, p_reward_id: remise.id });
+  check("handing a gift without a code checks the points too", direct.data?.error === "not_enough_points", direct.data);
+  const list = (await rpc(pOwner, "merchant_customers", {})).data;
+  check("the customers list speaks points", list.system === "points" && list.items.find((i) => i.id === pid)?.balance === 10, list.items?.[0]);
+  const one = (await rpc(pOwner, "merchant_customer", { p_customer_id: pid })).data;
+  check("a customer's page shows the points history", one.system === "points" && one.history.some((h) => h.type === "points" && h.amount !== null), one.history?.slice(0, 2));
+  const dash = (await rpc(pOwner, "merchant_dashboard", {})).data;
+  check("the owner's home counts today's points and visitors", dash.system === "points" && dash.points_today >= 115 && dash.visitors_today >= 1, { pts: dash.points_today, v: dash.visitors_today });
+  const pvHist = (await rpc(pOwner, "card_history", {})).data;
+  check("every points save is a version with its terms", pvHist.system === "points" && pvHist.items.length >= 5 && pvHist.items[0].terms?.catalog?.length >= 1, { n: pvHist.items?.length });
+  const firstV = pvHist.items[pvHist.items.length - 1];
+  const back = await rpc(pOwner, "restore_card_version", { p_version: firstV.version, p_expected_version: pvHist.live });
+  const backCard = (await rpc(pOwner, "points_card", {})).data;
+  check("an old points version comes back (rate 1, the first catalog)", back.data?.ok && Number(backCard.dinars_per_point) === 1 && backCard.catalog.some((c) => c.name === "Remise 10 DT"), { back: back.data, rate: backCard.dinars_per_point });
+  const join = await admin.rpc("join_card_preview", { p_code: (await rpc(pOwner, "session_context", {})).data.business.join_code });
+  check("the counter QR's page shows the points and the catalog", join.data?.card?.system === "points" && join.data.catalog?.length >= 1, join.data?.card);
+  const custSave = await rpc(buyer, "save_points_card", { p_name: "x", p_dinars_per_point: 1, p_points_expire: false, p_catalog: [{ name: "Free", points: 1 }] });
+  check("a customer cannot set up points", !!custSave.error || custSave.data?.ok !== true, custSave.data);
+
   section("Cleanup");
   for (const b of created.businesses.filter(Boolean)) await admin.from("businesses").delete().eq("id", b);
   for (const u of created.users) await admin.auth.admin.deleteUser(u);
