@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CardDeadline } from "@/components/customer/CardDeadline";
 import { PointsCardDetail } from "@/components/customer/PointsCardDetail";
+import { ConvertedNote, type Converted } from "@/components/customer/ConvertedNote";
 import { UseRewardButton } from "@/components/customer/UseRewardButton";
 import { Icon3D } from "@/components/ui/Icon3D";
 import { rpc } from "@/lib/session";
@@ -25,7 +26,7 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
   const { t, locale, count, fill } = await getI18n();
   const [{ id }, { joined }] = await Promise.all([params, searchParams]);
   if (!UUID.test(id)) notFound();
-  const data = await rpc<(CardPayload & { history: HistoryItem[] }) | null>("customer_card", { p_customer_id: id });
+  const data = await rpc<(CardPayload & { history: HistoryItem[]; converted?: Converted }) | null>("customer_card", { p_customer_id: id });
   if (!data) notFound();
 
   const { business, card, customer, rewards, next_reward, history } = data;
@@ -35,6 +36,7 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
     return (
       <>
         <TopBar title={business.name} subtitle={[category, business.address].filter(Boolean).join(" · ")} back="/customer/cards" />
+        <ConvertedNote converted={data.converted} shop={business.name} />
         <PointsCardDetail data={data} joined={!!joined} />
       </>
     );
@@ -47,6 +49,7 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
   return (
     <>
       <TopBar title={business.name} subtitle={[category, business.address].filter(Boolean).join(" · ")} back="/customer/cards" />
+      <ConvertedNote converted={data.converted} shop={business.name} />
 
       <LoyaltyCardVisual design={design} business={business} subtitle={card?.description} filled={customer.balance} total={total} levels={card?.levels} rewardName={primary?.name} />
 

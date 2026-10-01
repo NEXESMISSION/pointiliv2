@@ -277,3 +277,29 @@ export async function savePointsCard(input: PointsInput): Promise<{ ok: boolean;
   if (!look.ok) return { ok: false, message: msg(look.error), created: !!res.created };
   return { ok: true, message: t.ops.toasts.loyaltyCardSaved, created: !!res.created, version: res.version as number | undefined };
 }
+
+/** Switching systems (board 8, K4): the same numbers as a preview (dryRun), or the switch itself (0017). */
+export type SwitchResult = {
+  ok: boolean;
+  message?: string;
+  stale?: boolean;
+  version?: number;
+  holders?: number;
+  stamps?: number;
+  points?: number;
+  levels_ready?: number;
+  full_cards?: number;
+  pending?: number;
+  per_stamp?: number;
+  goal?: number;
+  sample?: { stamps: number; goal?: number; points: number } | null;
+};
+
+export async function switchSystem(to: "stamps" | "points", terms: Record<string, unknown>, expectedVersion: number | null, dryRun: boolean): Promise<SwitchResult> {
+  const { t, msg } = await getI18n();
+  const res = await call("switch_card_system", { p_to: to, p_terms: terms, p_expected_version: expectedVersion, p_dry_run: dryRun });
+  if (res.error === "card_changed") return { ok: false, message: t.merchant.loyalty.changedMeanwhile, stale: true };
+  if (!res.ok) return { ok: false, message: msg(res.error) };
+  if (!dryRun) revalidatePath("/", "layout");
+  return { ...(res as SwitchResult), message: dryRun ? undefined : t.points.swDone };
+}

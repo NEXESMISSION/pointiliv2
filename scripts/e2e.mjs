@@ -687,6 +687,56 @@ try {
   const custSave = await rpc(buyer, "save_points_card", { p_name: "x", p_dinars_per_point: 1, p_points_expire: false, p_catalog: [{ name: "Free", points: 1 }] });
   check("a customer cannot set up points", !!custSave.error || custSave.data?.ok !== true, custSave.data);
 
+  section("Switching systems: nobody starts from zero (board 8, K4, 0017)");
+  const sOwner = await makeUser("switch owner");
+  const sShop = await asFounder(`select public.admin_create_business('${sOwner.id}', 'E2E Switch', 'cafe', 'S') as r`);
+  created.businesses.push(sShop?.business_id);
+  await rpc(sOwner, "save_loyalty_card", {
+    p_name: "E2E Switch", p_description: "", p_stamps_required: 10, p_reward_name: "Coffee", p_reward_description: "",
+    p_color: "emerald", p_icon: "coffee", p_cooldown_minutes: 0, p_valid_days: 0, p_levels: [{ name: "Cookie", stamps: 4 }],
+  });
+  const sCtx = (await rpc(sOwner, "session_context", {})).data;
+  const cookieLevel = sCtx.card.levels[0].id;
+  const stampS = async (who) => {
+    const tk = await rpc(sOwner, "mint_qr_token", {});
+    return rpc(who, "collect_stamp", { p_token: tk.data.token, p_claim: null });
+  };
+  const seven = await makeUser("seven stamps");
+  let sv;
+  for (let i = 0; i < 7; i++) sv = await stampS(seven);
+  const two = await makeUser("two stamps");
+  let tw;
+  for (let i = 0; i < 2; i++) tw = await stampS(two);
+  const sevenId = sv.data.customer.id;
+  const twoId = tw.data.customer.id;
+  const toPoints = { main_points: 100, rate: 1, expire: false, catalog: [{ name: "Coffee", points: 100 }, { name: "Cookie", points: 30 }], level_points: { [cookieLevel]: 30 } };
+  const dry = await rpc(sOwner, "switch_card_system", { p_to: "points", p_terms: toPoints, p_dry_run: true });
+  check("the switch's preview: 7/10 + a cookie reached → 100, 2/10 → 20", dry.data?.ok && dry.data.holders === 2 && dry.data.points === 120 && dry.data.levels_ready === 1, dry.data);
+  check("a preview changes nothing", (await rpc(sOwner, "session_context", {})).data.card.system === "stamps");
+  const oldCode = await rpc(sOwner, "mint_qr_token", {});
+  const wentPoints = await rpc(sOwner, "switch_card_system", { p_to: "points", p_terms: toPoints, p_expected_version: sCtx.card.version });
+  const sevenP = (await rpc(seven, "customer_card", { p_customer_id: sevenId })).data;
+  const twoP = (await rpc(two, "customer_card", { p_customer_id: twoId })).data;
+  check("stamps → points: every stamp and the reached cookie count (100 and 20 points)", wentPoints.data?.ok && sevenP.system === "points" && sevenP.customer.balance === 100 && twoP.customer.balance === 20, { went: wentPoints.data, a: sevenP.customer?.balance, b: twoP.customer?.balance });
+  check("the card says once what happened, and the gift is within reach", sevenP.converted?.from === "stamps" && sevenP.converted.points === 100 && sevenP.rewards.some((r) => r.points === 100 && r.unlocked), sevenP.converted);
+  const deadCode = await rpc(two, "collect_stamp", { p_token: oldCode.data.token, p_claim: null });
+  check("a stamps code on a screen before the switch is dead", deadCode.data?.error === "invalid", deadCode.data);
+  const stale2 = await rpc(sOwner, "switch_card_system", { p_to: "stamps", p_terms: { points_per_stamp: 10, goal: 10, reward: "Coffee" }, p_expected_version: sCtx.card.version });
+  check("a switch from an old screen is refused", stale2.data?.error === "card_changed", stale2.data);
+  const same = await rpc(sOwner, "switch_card_system", { p_to: "points", p_terms: toPoints });
+  check("switching to the system it already runs is refused", same.data?.error === "same_system", same.data);
+
+  const m5 = await rpc(sOwner, "mint_points_token", { p_amount: 25 });
+  await rpc(two, "collect_stamp", { p_token: m5.data.token, p_claim: null });
+  const backDry = await rpc(sOwner, "switch_card_system", { p_to: "stamps", p_terms: { points_per_stamp: 10, goal: 10, reward: "Coffee", levels: [] }, p_dry_run: true });
+  check("points → stamps preview: 100 → 10 stamps, 45 → 5", backDry.data?.ok && backDry.data.stamps === 15 && backDry.data.full_cards === 1, backDry.data);
+  const back2 = await rpc(sOwner, "switch_card_system", { p_to: "stamps", p_terms: { points_per_stamp: 10, goal: 10, reward: "Coffee", levels: [], valid_days: 0 } });
+  const sevenS = (await rpc(seven, "customer_card", { p_customer_id: sevenId })).data;
+  const twoS = (await rpc(two, "customer_card", { p_customer_id: twoId })).data;
+  check("points → stamps: 100 points = a full card of 10, 45 = 5 (rounded up)", back2.data?.ok && sevenS.system === "stamps" && sevenS.customer.balance === 10 && twoS.customer.balance === 5, { a: sevenS.customer?.balance, b: twoS.customer?.balance });
+  check("the full card is a gift ready; the catalog has closed", sevenS.rewards.some((r) => r.is_primary && r.unlocked) && (await rpc(sOwner, "points_card", {})).data.catalog.length === 0, sevenS.rewards);
+  check("the stamps card is a version again", (await rpc(sOwner, "card_history", {})).data.items[0].system === "stamps");
+
   section("Cleanup");
   for (const b of created.businesses.filter(Boolean)) await admin.from("businesses").delete().eq("id", b);
   for (const u of created.users) await admin.auth.admin.deleteUser(u);

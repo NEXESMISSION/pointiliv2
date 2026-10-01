@@ -302,6 +302,18 @@ export function PointsStudio({ initial, leaving: initialLeaving, design: initial
               <ChevronRight className="size-5 shrink-0 text-faint rtl:-scale-x-100" />
             </Link>
           )}
+          {!isNew && !disabled && (
+            <Link href="/loyalty/switch" className="press flex items-center gap-3 rounded-[20px] bg-surface p-3 shadow-card">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-brand-100">
+                <Icon3D name="coffee" size={28} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold text-ink">{t.points.swEntry}</span>
+                <span className="block truncate text-[12.5px] text-muted">{t.points.swEntryToStamps}</span>
+              </span>
+              <ChevronRight className="size-5 shrink-0 text-faint rtl:-scale-x-100" />
+            </Link>
+          )}
         </div>
       </fieldset>
 
