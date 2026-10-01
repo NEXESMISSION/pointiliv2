@@ -42,7 +42,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
       />
       <div className="flex min-h-0 flex-1 flex-col lg:ps-64 print:!ps-0">
         {ctx.acting && (
-          <div className="bg-ink px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] text-white print:hidden lg:pt-2" role="status">
+          <div className="bg-chrome px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] text-white print:hidden lg:pt-2" role="status">
             <div className="mx-auto flex max-w-3xl items-center gap-2.5 text-[13.5px]">
               <Eye className="size-4 shrink-0" />
               <span className="min-w-0 flex-1 truncate">{fill(t.merchant.acting.inside, { name: ctx.business.name })}</span>
@@ -79,7 +79,7 @@ export default async function MerchantLayout({ children }: { children: React.Rea
 
 function Banner({ tone, children, href, cta }: { tone: "danger" | "warning"; children: React.ReactNode; href?: string; cta?: string }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-2.5 print:hidden pt-[calc(0.625rem+env(safe-area-inset-top))] text-sm font-medium lg:px-8 lg:pt-2.5 ${tone === "danger" ? "bg-danger-600 text-white" : "bg-warning-50 text-warning-700"}`} role="status">
+    <div className={`flex items-center gap-3 px-4 py-2.5 print:hidden pt-[calc(0.625rem+env(safe-area-inset-top))] text-sm font-medium lg:px-8 lg:pt-2.5 ${tone === "danger" ? "bg-danger-500 text-white" : "bg-warning-50 text-warning-700"}`} role="status">
       <p className="flex-1">{children}</p>
       {href && cta && (
         <Link href={href} className={`shrink-0 rounded-xl px-3 py-1.5 font-semibold ${tone === "danger" ? "bg-surface text-danger-600" : "bg-warning-500 text-white"}`}>

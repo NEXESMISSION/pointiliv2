@@ -6,6 +6,8 @@ import { Icon3D } from "@/components/ui/Icon3D";
 import { NameForm } from "@/components/customer/NameForm";
 import { InstallRow } from "@/components/InstallPrompt";
 import { LanguageRow } from "@/components/i18n/LanguageSwitcher";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { themeChoice } from "@/lib/theme";
 import { requireUser } from "@/lib/session";
 import { formatPhone } from "@/lib/phone";
 import { initials } from "@/lib/format";
@@ -19,6 +21,7 @@ export async function generateMetadata() {
 /** The account: who you are, your cards and gifts, the settings, the way out. */
 export default async function ProfilePage() {
   const { t } = await getI18n();
+  const theme = await themeChoice();
   const ctx = await requireUser("/customer/profile");
   const u = ctx.user;
   return (
@@ -49,6 +52,11 @@ export default async function ProfilePage() {
           <InstallRow />
           <LanguageRow />
         </Divided>
+      </div>
+
+      <div className="space-y-2">
+        <p className="px-1 text-[13.5px] font-semibold text-muted">{t.common.theme.title}</p>
+        <ThemeSwitch initial={theme} />
       </div>
 
       <form action={logout}>

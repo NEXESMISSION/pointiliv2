@@ -53,7 +53,7 @@ export function WeekHeat({ visits, stamps }: { visits: HeatCell[]; stamps: HeatC
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <div className="inline-flex gap-1 rounded-xl bg-black/[0.045] p-1" role="tablist">
+        <div className="inline-flex gap-1 rounded-xl bg-ink/[0.06] p-1" role="tablist">
           {(["visits", "stamps"] as const).map((k) => (
             <button
               key={k}

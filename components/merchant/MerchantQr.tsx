@@ -240,7 +240,7 @@ export function MerchantQr({ businessName, logo, icon, color }: { businessName: 
           {flashes.map((f) => (
             <StampBurst key={f.id} code={f.code} accent={c.accent} soft={c.soft} side={QR_SIDE} delay={f.delay} />
           ))}
-          <div className="absolute inset-0 rounded-[32px] bg-white p-[5%] text-ink shadow-[0_30px_60px_-20px_rgb(10_0_60/0.6)]">
+          <div className="absolute inset-0 rounded-[32px] bg-white p-[5%] text-[#0f0e17] shadow-[0_30px_60px_-20px_rgb(10_0_60/0.6)]">
             {token && !error ? (
               <div key={token.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-30" : ""}`} dangerouslySetInnerHTML={{ __html: token.svg }} role="img" data-qr="1" aria-label={w.qrAria} />
             ) : error ? (

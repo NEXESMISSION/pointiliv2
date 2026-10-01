@@ -8,7 +8,7 @@ import { Check } from "lucide-react";
 /** Small link pills: the range, the device. State lives in the URL. */
 export function Pills({ items, active }: { items: { key: string; label: string; href: string }[]; active: string }) {
   return (
-    <div className="inline-flex shrink-0 gap-1 rounded-xl bg-black/[0.045] p-1">
+    <div className="inline-flex shrink-0 gap-1 rounded-xl bg-ink/[0.06] p-1">
       {items.map((it) => (
         <Link
           key={it.key}

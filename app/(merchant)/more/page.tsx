@@ -3,6 +3,9 @@ import { logout } from "@/app/actions/auth";
 import { TopBar } from "@/components/nav/TopBar";
 import { Divided, ListRow } from "@/components/ui/Card";
 import { Icon3D } from "@/components/ui/Icon3D";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { rateRule } from "@/lib/points";
+import { themeChoice } from "@/lib/theme";
 import { requireMerchant } from "@/lib/session";
 import { getI18n } from "@/lib/i18n/server";
 
@@ -13,7 +16,7 @@ export async function generateMetadata() {
 
 /** The only menu: one flat list, then log out. */
 export default async function MorePage() {
-  const [ctx, { t, count }] = await Promise.all([requireMerchant("/more"), getI18n()]);
+  const [ctx, { t, count }, theme] = await Promise.all([requireMerchant("/more"), getI18n(), themeChoice()]);
   const card = ctx.card;
   const plans = t.data.plans as Record<string, string>;
 
@@ -28,10 +31,17 @@ export default async function MorePage() {
           href="/loyalty"
           icon={<Icon3D name="ticket" size={26} />}
           title={t.nav.merchant.card}
-          subtitle={card ? `${count(t.common.stampsCount, card.stamps_required)} · ${card.reward?.name ?? ""}` : t.merchant.more.cardNone}
+          subtitle={card ? (card.system === "points" ? rateRule(Number(card.dinars_per_point) || 1, t.points) : `${count(t.common.stampsCount, card.stamps_required)} · ${card.reward?.name ?? ""}`) : t.merchant.more.cardNone}
         />
         <ListRow href="/settings" icon={<Settings className="size-5" />} title={t.nav.merchant.settings} subtitle={plans[ctx.subscription?.plan ?? ""] ?? t.merchant.more.settingsHint} />
       </Divided>
+
+      <div className="mt-4">
+      <div className="space-y-2">
+        <p className="px-1 text-[13.5px] font-semibold text-muted">{t.common.theme.title}</p>
+        <ThemeSwitch initial={theme} />
+      </div>
+      </div>
 
       <form action={logout} className="mt-4">
         <Divided>

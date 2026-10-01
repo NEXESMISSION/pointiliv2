@@ -288,7 +288,7 @@ export function PointsCounter({ businessName, logo, icon, color, rate }: { busin
           <>
             <Icon3D name="coin" size={58} className="animate-float" />
             <h1 className="mt-2 text-[clamp(1.5rem,4vh,2.3rem)] font-bold leading-tight">{count(w.scanFor, code.points)}</h1>
-            <div className="mt-[2.5vh] rounded-[30px] bg-white p-[4%] text-ink shadow-[0_30px_60px_-20px_rgb(4_40_52/0.6)]" style={{ width: "min(76vw, 44vh, 26rem)" }}>
+            <div className="mt-[2.5vh] rounded-[30px] bg-white p-[4%] text-[#0f0e17] shadow-[0_30px_60px_-20px_rgb(4_40_52/0.6)]" style={{ width: "min(76vw, 44vh, 26rem)" }}>
               <div key={code.id} className="aspect-square animate-fade [&>svg]:size-full" role="img" aria-label={count(w.scanFor, code.points)} data-qr="1" dangerouslySetInnerHTML={{ __html: code.svg }} />
               <p className="mt-2 text-[15px] font-semibold text-sea-700">
                 <span className="num">+{code.points}</span> · {fill(w.codeFoot, { amount: formatAmount(code.amount, locale) })}

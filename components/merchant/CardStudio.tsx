@@ -384,7 +384,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
                       onClick={() => set({ icon: name })}
                       aria-label={t.merchant.icons[name]}
                       aria-pressed={d.icon === name}
-                      className={`grid size-10 shrink-0 place-items-center rounded-xl border transition ${d.icon === name ? "border-transparent bg-ink text-white" : "border-line bg-surface text-body hover:bg-canvas"}`}
+                      className={`grid size-10 shrink-0 place-items-center rounded-xl border transition ${d.icon === name ? "border-transparent bg-chrome text-white" : "border-line bg-surface text-body hover:bg-canvas"}`}
                     >
                       <CardIcon name={name} className="size-5" />
                     </button>
@@ -416,7 +416,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
                   <span className="size-4 rounded-full bg-surface shadow-card" /> {ds.light}
                 </Chip>
                 <Chip active={d.text === "dark"} onClick={() => set({ text: "dark" })} disabled={d.use_cover && !!business.cover_url}>
-                  <span className="size-4 rounded-full bg-ink" /> {ds.dark}
+                  <span className="size-4 rounded-full bg-[#0f1222]" /> {ds.dark}
                 </Chip>
               </Row>
             </Section>
@@ -467,7 +467,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
 
       {!disabled && (
         <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 mt-3 lg:bottom-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-ink/95 p-1.5 ps-3 text-white shadow-lift backdrop-blur">
+          <div className="flex items-center gap-3 rounded-2xl bg-chrome/95 p-1.5 ps-3 text-white shadow-lift backdrop-blur">
             <p className="min-w-0 flex-1 truncate text-[13px]">{isNew ? w.oneButton : dirty ? ds.unsaved : ds.allSaved}</p>
             <Button size="md" loading={saving} disabled={!dirty || !levelsValid} onClick={save}>
               {isNew ? t.merchant.home.createCta : t.common.save}
@@ -516,7 +516,7 @@ export function Chip({ active, disabled, onClick, children }: { active: boolean;
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold transition disabled:opacity-40 ${active ? "bg-ink text-white" : "bg-surface shadow-card text-body hover:bg-canvas"}`}
+      className={`inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold transition disabled:opacity-40 ${active ? "bg-chrome text-white" : "bg-surface shadow-card text-body hover:bg-canvas"}`}
     >
       {children}
     </button>

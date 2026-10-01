@@ -58,7 +58,7 @@ export default async function HomePage() {
             <span className="flex min-w-0 flex-1 flex-col sm:w-full">
               <span className="block text-[17px] font-bold text-ink sm:mt-3 lg:mt-5 lg:text-2xl">{d.title}</span>
               <span className="mt-0.5 block text-[13px] leading-snug text-muted sm:text-sm lg:mt-1 lg:text-base">{d.text}</span>
-              <span className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white shadow-brand transition-colors group-hover:bg-brand-700 sm:mt-5 lg:mt-7 lg:h-12 lg:text-base">
+              <span className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white shadow-brand transition-colors group-hover:brightness-110 sm:mt-5 lg:mt-7 lg:h-12 lg:text-base">
                 {d.button}
               </span>
             </span>

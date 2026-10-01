@@ -22,7 +22,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
   const { locale, t } = useT();
   const pathname = usePathname();
   return (
-    <div className={`inline-flex gap-0.5 rounded-lg bg-black/[0.045] p-0.5 ${className}`} role="group" aria-label={t.common.language}>
+    <div className={`inline-flex gap-0.5 rounded-lg bg-ink/[0.06] p-0.5 ${className}`} role="group" aria-label={t.common.language}>
       {LOCALES.map((code) => (
         <button
           key={code}
@@ -48,7 +48,7 @@ export function LanguageToggle({ className = "" }: { className?: string }) {
       type="button"
       onClick={() => apply(other, pathname)}
       title={`${t.common.language}: ${LOCALE_NAME[other]}`}
-      className={`inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted transition-colors hover:bg-black/[0.045] hover:text-ink ${className}`}
+      className={`inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted transition-colors hover:bg-ink/[0.06] hover:text-ink ${className}`}
     >
       <Languages className="size-4" aria-hidden />
       {LOCALE_SHORT[other]}

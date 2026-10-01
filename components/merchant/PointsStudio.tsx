@@ -319,7 +319,7 @@ export function PointsStudio({ initial, leaving: initialLeaving, design: initial
 
       {!disabled && (
         <div className="sticky bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 mt-3 lg:bottom-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-ink/95 p-1.5 ps-3 text-white shadow-lift backdrop-blur">
+          <div className="flex items-center gap-3 rounded-2xl bg-chrome/95 p-1.5 ps-3 text-white shadow-lift backdrop-blur">
             <p className="min-w-0 flex-1 truncate text-[13px]">{isNew ? lw.oneButton : dirty ? ds.unsaved : ds.allSaved}</p>
             <Button size="md" variant="sea" loading={saving} disabled={!dirty || !valid} onClick={save}>
               {isNew ? t.merchant.home.createCta : t.common.save}

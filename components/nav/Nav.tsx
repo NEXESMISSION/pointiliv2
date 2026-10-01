@@ -50,7 +50,7 @@ export function BottomNav({ items, center, hideOnDesktop = true }: { items: NavI
   };
   return (
     <nav className={`pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3.5 pb-[calc(0.9rem+env(safe-area-inset-bottom))] print:hidden ${hideOnDesktop ? "lg:hidden" : ""}`} aria-label={t.nav.mainAria}>
-      <div className="glass pointer-events-auto mx-auto flex h-[72px] max-w-md items-center rounded-[28px] px-1.5 shadow-[0_10px_30px_-8px_rgb(20_10_60/0.25),inset_0_0_0_1px_rgb(255_255_255/0.6)]">
+      <div className="glass pointer-events-auto mx-auto flex h-[72px] max-w-md items-center rounded-[28px] px-1.5 shadow-[0_10px_30px_-8px_rgb(20_10_60/0.25),inset_0_0_0_1px_var(--glass-line)]">
         {center ? (
           <>
             {items.slice(0, half).map(render)}

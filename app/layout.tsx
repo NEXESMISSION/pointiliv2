@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import { Readex_Pro } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ServiceWorker } from "@/components/ServiceWorker";
@@ -50,9 +51,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { locale } = await getI18n();
+  const [{ locale }, jar] = await Promise.all([getI18n(), cookies()]);
+  // day or night by choice (the account's «الشكل»); otherwise the phone decides
+  const theme = jar.get("pl_theme")?.value;
   return (
-    <html lang={HTML_LANG[locale]} dir={DIR[locale]} className={readex.variable}>
+    <html lang={HTML_LANG[locale]} dir={DIR[locale]} className={readex.variable} data-theme={theme === "light" || theme === "dark" ? theme : undefined}>
       <body className="min-h-dvh font-sans">
         <I18nProvider locale={locale}>
           <ToastProvider>{children}</ToastProvider>

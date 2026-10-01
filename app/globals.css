@@ -46,6 +46,8 @@
   --color-canvas: #f4f3f9;
   --color-surface: #ffffff;
   --color-surface-2: #f7f6fb;
+  /* dark chips on a light page — toasts, the save bar, a chosen chip; they stay dark at night */
+  --color-chrome: #0f0e17;
 
   --color-success-50: #e5f8ee;
   --color-success-500: #12b76a;
@@ -155,6 +157,90 @@
   }
 }
 
+/* Night (round 2, look B): the same tokens, their dark values. The phone
+   decides, unless the person picked light or dark in their account
+   (data-theme on <html>, from the pl_theme cookie, so nothing flashes). */
+:root {
+  --glass-bg: rgb(255 255 255 / 0.72);
+  --glass-line: rgb(255 255 255 / 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-ink: #f4f3fa;
+    --color-body: #d2cee2;
+    --color-muted: #a6a2bb;
+    --color-faint: #6f6b83;
+    --color-line: rgb(255 255 255 / 0.08);
+    --color-canvas: #0b0a12;
+    --color-surface: #17151f;
+    --color-surface-2: #1e1b29;
+    --color-chrome: #2b2739;
+    --color-brand-50: rgb(140 107 255 / 0.1);
+    --color-brand-100: rgb(140 107 255 / 0.18);
+    --color-brand-200: rgb(140 107 255 / 0.28);
+    --color-brand-300: #8c6bff;
+    --color-brand-500: #8c6bff;
+    --color-brand-700: #c2b1ff;
+    --color-coral-50: rgb(255 107 74 / 0.14);
+    --color-coral-100: rgb(255 107 74 / 0.22);
+    --color-coral-600: #ff8a6e;
+    --color-coral-700: #ffa98f;
+    --color-sea-50: rgb(34 196 221 / 0.14);
+    --color-sea-100: rgb(34 196 221 / 0.22);
+    --color-sea-600: #3fd0e6;
+    --color-sea-700: #74def0;
+    --color-success-50: rgb(18 183 106 / 0.16);
+    --color-success-600: #3ddc8f;
+    --color-danger-50: rgb(239 68 68 / 0.16);
+    --color-danger-600: #ff7b7b;
+    --color-warning-50: rgb(255 107 74 / 0.14);
+    --color-warning-700: #ffa98f;
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.03), 0 14px 34px -14px rgb(0 0 0 / 0.6);
+    --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 22px 46px -18px rgb(0 0 0 / 0.7);
+    --shadow-pass: 0 18px 44px -14px rgb(108 71 255 / 0.45);
+    --glass-bg: rgb(26 23 36 / 0.74);
+    --glass-line: rgb(255 255 255 / 0.08);
+  }
+}
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-ink: #f4f3fa;
+    --color-body: #d2cee2;
+    --color-muted: #a6a2bb;
+    --color-faint: #6f6b83;
+    --color-line: rgb(255 255 255 / 0.08);
+    --color-canvas: #0b0a12;
+    --color-surface: #17151f;
+    --color-surface-2: #1e1b29;
+    --color-chrome: #2b2739;
+    --color-brand-50: rgb(140 107 255 / 0.1);
+    --color-brand-100: rgb(140 107 255 / 0.18);
+    --color-brand-200: rgb(140 107 255 / 0.28);
+    --color-brand-300: #8c6bff;
+    --color-brand-500: #8c6bff;
+    --color-brand-700: #c2b1ff;
+    --color-coral-50: rgb(255 107 74 / 0.14);
+    --color-coral-100: rgb(255 107 74 / 0.22);
+    --color-coral-600: #ff8a6e;
+    --color-coral-700: #ffa98f;
+    --color-sea-50: rgb(34 196 221 / 0.14);
+    --color-sea-100: rgb(34 196 221 / 0.22);
+    --color-sea-600: #3fd0e6;
+    --color-sea-700: #74def0;
+    --color-success-50: rgb(18 183 106 / 0.16);
+    --color-success-600: #3ddc8f;
+    --color-danger-50: rgb(239 68 68 / 0.16);
+    --color-danger-600: #ff7b7b;
+    --color-warning-50: rgb(255 107 74 / 0.14);
+    --color-warning-700: #ffa98f;
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.03), 0 14px 34px -14px rgb(0 0 0 / 0.6);
+    --shadow-lift: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 22px 46px -18px rgb(0 0 0 / 0.7);
+    --shadow-pass: 0 18px 44px -14px rgb(108 71 255 / 0.45);
+    --glass-bg: rgb(26 23 36 / 0.74);
+    --glass-line: rgb(255 255 255 / 0.08);
+}
+
 @layer utilities {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
@@ -203,7 +289,7 @@
   }
   /* Frosted glass: the floating tab bar, the folded title. */
   .glass {
-    background: rgb(255 255 255 / 0.72);
+    background: var(--glass-bg);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
   }

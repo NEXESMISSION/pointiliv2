@@ -90,7 +90,7 @@ export function RedemptionScreen({ initial, qrSvg }: { initial: RedemptionStatus
         ) : (
           <>
             <p className="mt-3 text-sm font-medium opacity-90">{t.customer.use.showQr}</p>
-            <div className="mx-auto mt-3 w-[min(62vw,15rem)] rounded-[28px] bg-white p-3.5 text-ink shadow-[0_24px_50px_-20px_rgb(60_10_0/0.5)]">
+            <div className="mx-auto mt-3 w-[min(62vw,15rem)] rounded-[28px] bg-white p-3.5 text-[#0f0e17] shadow-[0_24px_50px_-20px_rgb(60_10_0/0.5)]">
               <div className="aspect-square [&>svg]:size-full" role="img" aria-label={t.customer.use.qrAria} dangerouslySetInnerHTML={{ __html: qrSvg }} />
               <p className="num mt-1.5 text-[26px] font-bold tracking-[0.14em]" aria-label={fill(t.customer.use.codeAria, { code: state.code.split("").join(" ") })}>
                 {state.code.slice(0, 3)} {state.code.slice(3)}
