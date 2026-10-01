@@ -1,10 +1,12 @@
 import { notFound, redirect } from "next/navigation";
+import { Gift, Phone } from "lucide-react";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { Pass } from "@/components/Pass";
 import { Top } from "@/components/Top";
 import { Icon3D, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
+import { digits, pretty } from "@/lib/phone";
 import { kindIcon, t } from "@/lib/t";
 
 export const metadata = { title: "محل", robots: { index: false } };
@@ -48,10 +50,21 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
         )}
       </div>
 
-      <div className="mt-4 rounded-[22px] bg-surface p-4 shadow-card">
-        <p className="text-[13px] font-semibold text-muted">{t.aOwner}</p>
-        <p className="mt-0.5 text-[17px] font-bold">{s.owner?.name || t.someone}</p>
-        {s.owner?.phone && <p className="num text-start text-[15px] text-body">{s.owner.phone}</p>}
+      <div className="mt-4 flex items-center gap-3 rounded-[22px] bg-surface p-4 shadow-card">
+        <span className="min-w-0 flex-1">
+          <span className="block text-[13px] font-semibold text-muted">{t.aOwner}</span>
+          <span className="mt-0.5 block truncate text-[17px] font-bold">{s.owner?.name || t.someone}</span>
+          {s.owner?.phone && (
+            <span dir="ltr" className="num inline-block text-[15px] text-body">
+              {pretty(s.owner.phone)}
+            </span>
+          )}
+        </span>
+        {s.owner?.phone && (
+          <a href={`tel:+216${digits(s.owner.phone)}`} className="press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-4 text-[14.5px] font-bold text-brand">
+            <Phone className="size-4" /> {t.aCall}
+          </a>
+        )}
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2.5">
@@ -73,9 +86,16 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                 <span className="min-w-0 flex-1 truncate text-[15px] font-medium">
                   {c.name ?? t.someone} {c.phone && <span dir="ltr" className="num inline-block text-[12.5px] text-muted">{c.phone}</span>}
                 </span>
-                <span className="num shrink-0 text-[13px] text-muted">
-                  {c.stamps} · 🎁 {c.gifts}
-                </span>
+                {c.gifts > 0 && (
+                  <span className="num flex shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2.5 py-1 text-[12.5px] font-bold text-coral">
+                    <Gift className="size-3.5" /> {c.gifts}
+                  </span>
+                )}
+                {s.goal && (
+                  <span className="num shrink-0 text-[14px] font-bold text-body">
+                    {Math.min(c.stamps, s.goal)}/{s.goal}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

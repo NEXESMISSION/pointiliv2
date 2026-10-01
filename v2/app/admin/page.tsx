@@ -4,7 +4,8 @@ import { Search } from "lucide-react";
 import { Icon3D, Logo, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
-import { kindIcon, t } from "@/lib/t";
+import { pretty } from "@/lib/phone";
+import { accountsN, kindIcon, liveN, pausedN, stampsN, t, waitingN } from "@/lib/t";
 
 export const metadata = { title: "الأدمين", robots: { index: false } };
 
@@ -27,11 +28,13 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     people ? call<PersonRow[]>("admin_people", { p_q: q || null }) : Promise.resolve(null),
   ]);
   const max = Math.max(1, ...(o?.week ?? []).map((w) => w.stamps));
+  const live = o?.live ?? 0;
+  const paused = o?.paused ?? 0;
   const tiles = [
-    { icon: "shop", value: o?.shops ?? 0, label: t.aShops, sub: `${o?.live ?? 0} ${t.aLive}${o?.paused ? ` · ${o.paused} ${t.aPaused}` : ""}` },
-    { icon: "people", value: o?.customers ?? 0, label: t.aCustomers, sub: `${o?.people ?? 0} ${t.aPeople}` },
-    { icon: "fire", value: o?.today ?? 0, label: t.aToday, sub: `${o?.stamps ?? 0} ${t.aStamps}` },
-    { icon: "gift", value: o?.given ?? 0, label: t.aGiven, sub: `${o?.waiting ?? 0} ${t.aWaiting}` },
+    { icon: "shop", value: o?.shops ?? 0, label: t.aShops, sub: !o?.shops ? t.aNothing : paused ? `${liveN(live)} · ${pausedN(paused)}` : live === o.shops ? t.aAllLive : liveN(live) },
+    { icon: "people", value: o?.customers ?? 0, label: t.aCustomers, sub: accountsN(o?.people ?? 0) },
+    { icon: "fire", value: o?.today ?? 0, label: t.aToday, sub: `${stampsN(o?.stamps ?? 0)} ${t.aInAll}` },
+    { icon: "gift", value: o?.given ?? 0, label: t.aGiven, sub: waitingN(o?.waiting ?? 0) },
   ];
 
   return (
@@ -110,7 +113,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
                     {s.owner.phone && (
                       <>
                         {" · "}
-                        <span dir="ltr" className="num inline-block">{s.owner.phone}</span>
+                        <span dir="ltr" className="num inline-block">{pretty(s.owner.phone)}</span>
                       </>
                     )}
                   </span>
@@ -137,7 +140,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
                   {p.admin && <span className="shrink-0 rounded-full bg-ink px-2 py-0.5 text-[11px] font-bold text-white">{t.aAdminBadge}</span>}
                 </span>
                 <span className="block truncate text-[12.5px] text-muted">
-                  {p.phone && <span dir="ltr" className="num inline-block">{p.phone}</span>}
+                  {p.phone && <span dir="ltr" className="num inline-block">{pretty(p.phone)}</span>}
                   {p.shop ? ` · ${t.aShopOf} ${p.shop}` : ""} · {day(p.created_at)}
                 </span>
               </span>

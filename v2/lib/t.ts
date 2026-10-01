@@ -201,14 +201,16 @@ export const t = {
   admin: "الأدمين",
   aShops: "المحلات",
   aPeople: "الناس",
-  aLive: "خدّامين",
-  aPaused: "موقّفين",
+  aPaused: "موقّف",
   aCustomers: "حرفاء",
   aStamps: "تامبون في الكل",
   aToday: "تامبون اليوم",
   aGiven: "كادو تعطى",
-  aWaiting: "كادو يستنّى",
-  aWeek: "التامبونات في الجمعة",
+  aWeek: "التامبونات، آخر 7 أيّام",
+  aAllLive: "الكل يخدمو",
+  aInAll: "في الكل",
+  aNoneWaiting: "حتى كادو ما يستنّى",
+  aCall: "كلّمو",
   aSearch: "لوّج بالاسم ولا النومرو",
   aNoCard: "ما عملش الكارط",
   aOwner: "المولى",
@@ -275,3 +277,9 @@ export function counted(n: number, one: string, two: string, few: string, many: 
 }
 export const stampsN = (n: number) => counted(n, "تامبون واحد", "زوز تامبونات", "تامبونات", "تامبون");
 export const customersN = (n: number) => counted(n, "حريف واحد", "زوز حرفاء", "حرفاء", "حريف");
+export const giftsN = (n: number) => counted(n, "كادو واحد", "زوز كادوات", "كادوات", "كادو");
+export const accountsN = (n: number) => counted(n, "كونت واحد", "زوز كونتات", "كونتات", "كونت");
+export const liveN = (n: number) => counted(n, "واحد يخدم", "زوز يخدمو", "يخدمو", "يخدمو");
+export const pausedN = (n: number) => counted(n, "واحد موقّف", "زوز موقّفين", "موقّفين", "موقّفين");
+/** كادو واحد يستنّى, زوز كادوات يستنّاو */
+export const waitingN = (n: number) => (n === 0 ? t.aNoneWaiting : n === 1 ? `${giftsN(1)} يستنّى` : `${giftsN(n)} يستنّاو`);

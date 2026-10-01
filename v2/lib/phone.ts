@@ -10,3 +10,6 @@ export const phoneEmail = (raw: string) => `216${digits(raw)}@phone.pointidi.app
 
 /** 22 123 456 */
 export const spaced = (raw: string) => digits(raw).replace(/^(\d{2})(\d{3})(\d{3})$/, "$1 $2 $3");
+
+/** +216 22 123 456 — a whole number, as the founder reads it. */
+export const pretty = (raw: string) => `+216 ${spaced(raw)}`;

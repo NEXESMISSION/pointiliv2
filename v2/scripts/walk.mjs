@@ -15,7 +15,7 @@ import { createClient } from "@supabase/supabase-js";
 
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
-const OUT = "shots";
+const OUT = process.env.OUT || "shots";
 mkdirSync(OUT, { recursive: true });
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
