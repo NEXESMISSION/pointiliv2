@@ -1,0 +1,190 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Settings, WifiOff } from "lucide-react";
+import { give } from "@/app/actions";
+import { Confetti } from "@/components/StampLand";
+import { Icon3D } from "@/components/ui";
+import { fill, kindIcon, t } from "@/lib/t";
+
+type Code = { id: string; svg: string; expiresLocal: number };
+type Flash = { id: number; name: string | null };
+type Gift = { id: number; name: string | null; gift: string };
+
+/** a code is replaced this long before it dies, so a phone never scans a dead one */
+const RENEW_BEFORE_MS = 10_000;
+
+/**
+ * The owner's one screen. A code that works once, in the shop's colour: open
+ * it and leave it. Every scan bursts «+1 سامي» out from behind the code (the
+ * code itself never moves, so the next phone can scan at once) and a fresh
+ * code takes its place. When a card fills up, the gift waits at the bottom
+ * of the screen until the owner taps «عطيتو».
+ */
+export function Counter({ shop }: { shop: { name: string; kind: string; color: string } }) {
+  const [code, setCode] = useState<Code | null>(null);
+  const [flashes, setFlashes] = useState<Flash[]>([]);
+  const [gifts, setGifts] = useState<Gift[]>([]);
+  const [offline, setOffline] = useState(false);
+  const [giving, setGiving] = useState(false);
+  const [party, setParty] = useState(0);
+  const codeRef = useRef<Code | null>(null);
+  const seen = useRef(new Set<number>());
+  const openedAt = useRef(new Date().toISOString());
+  const busy = useRef(false);
+
+  const mint = useCallback(async () => {
+    const res = await fetch("/api/code", { method: "POST", cache: "no-store" });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error ?? "network");
+    const offset = Date.parse(j.server_now) - Date.now();
+    const c = { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset };
+    codeRef.current = c;
+    setCode(c);
+  }, []);
+
+  const tick = useCallback(async () => {
+    if (busy.current || document.visibilityState !== "visible") return;
+    busy.current = true;
+    try {
+      const c = codeRef.current;
+      if (!c || c.expiresLocal - Date.now() < RENEW_BEFORE_MS) {
+        await mint();
+      } else {
+        const res = await fetch(`/api/counter?code=${c.id}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("state");
+        const s = (await res.json()) as { taken: boolean; expired: boolean; stamps: { id: number; name: string | null }[]; gifts: Gift[] };
+        const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
+        if (fresh.length) {
+          fresh.forEach((x) => seen.current.add(x.id));
+          const shown = fresh.slice(-2);
+          setFlashes((f) => [...f, ...shown]);
+          navigator.vibrate?.(60);
+          setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 2600);
+        }
+        setGifts((g) => {
+          if (s.gifts.length > g.length) setParty((p) => p + 1);
+          return s.gifts;
+        });
+        if (s.taken || s.expired) await mint();
+      }
+      setOffline(false);
+    } catch {
+      setOffline(true);
+    } finally {
+      busy.current = false;
+    }
+  }, [mint]);
+
+  useEffect(() => {
+    const first = setTimeout(tick, 0);
+    const poll = setInterval(tick, 1000);
+    const wake = () => document.visibilityState === "visible" && void tick();
+    document.addEventListener("visibilitychange", wake);
+    window.addEventListener("online", wake);
+    let lock: WakeLockSentinel | null = null;
+    const awake = async () => {
+      try {
+        if (document.visibilityState === "visible" && "wakeLock" in navigator) lock = await navigator.wakeLock.request("screen");
+      } catch {
+        /* not allowed: the code still works */
+      }
+    };
+    void awake();
+    document.addEventListener("visibilitychange", awake);
+    return () => {
+      clearTimeout(first);
+      clearInterval(poll);
+      document.removeEventListener("visibilitychange", wake);
+      document.removeEventListener("visibilitychange", awake);
+      window.removeEventListener("online", wake);
+      void lock?.release().catch(() => {});
+    };
+  }, [tick]);
+
+  const hand = async (g: Gift) => {
+    setGiving(true);
+    const ok = await give(g.id);
+    setGiving(false);
+    if (ok) setGifts((list) => list.filter((x) => x.id !== g.id));
+  };
+
+  const latest = flashes[flashes.length - 1];
+  const gift = gifts[0];
+
+  return (
+    <div
+      className="fixed inset-0 flex flex-col overflow-hidden text-white"
+      style={{ background: `linear-gradient(170deg, color-mix(in oklab, ${shop.color} 70%, white) -10%, ${shop.color} 42%, color-mix(in oklab, ${shop.color} 60%, black) 110%)` }}
+    >
+      <style>{`
+        @keyframes ct-ring { 0% { transform: scale(0.85); opacity: 0.7; } 100% { transform: scale(1.5); opacity: 0; } }
+        @keyframes ct-pill { 0% { transform: translateY(20px) scale(0.5); opacity: 0; } 60% { transform: translateY(-6px) scale(1.12); opacity: 1; } 100% { transform: none; opacity: 1; } }
+        @keyframes ct-sheet { 0% { transform: translateY(110%); } 70% { transform: translateY(-4%); } 100% { transform: none; } }
+      `}</style>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_45%_at_50%_0%,rgb(255_255_255/0.2),transparent_70%)]" aria-hidden />
+      {party > 0 && <Confetti key={party} count={50} />}
+
+      <header className="safe-t relative z-10 flex items-center gap-3 px-5">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white/20">
+          <Icon3D name={kindIcon(shop.kind)} size={28} />
+        </span>
+        <p className="min-w-0 flex-1 truncate text-[19px] font-bold">{shop.name}</p>
+        <Link href="/shop/settings" className="press grid size-11 shrink-0 place-items-center rounded-full bg-white/15 hover:bg-white/25" aria-label={t.settings}>
+          <Settings className="size-5" />
+        </Link>
+      </header>
+
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-8">
+        <h1 className="text-center text-[clamp(1.7rem,5vh,2.8rem)] font-bold leading-tight">{t.counterTitle}</h1>
+
+        <div className="relative mt-[3.5vh] aspect-square" style={{ width: "min(78vw, 50vh, 30rem)" }}>
+          {flashes.map((f) => (
+            <span key={f.id} className="absolute inset-0 rounded-[34px] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
+          ))}
+          <div className="absolute inset-0 rounded-[34px] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
+            {code ? (
+              <div key={code.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-25" : ""}`} dangerouslySetInnerHTML={{ __html: code.svg }} role="img" aria-label={t.counterTitle} data-qr="1" />
+            ) : (
+              <div className="grid size-full place-items-center">
+                <span className="size-12 animate-spin rounded-full border-4 border-line border-t-brand" />
+              </div>
+            )}
+            {offline && (
+              <div className="absolute inset-0 grid place-items-center">
+                <p className="flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[15px] font-semibold text-white">
+                  <WifiOff className="size-5" /> {t.reconnecting}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-[3vh] flex h-14 items-center">
+          {latest ? (
+            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-7 py-3 text-[20px] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
+              <Check className="size-6" strokeWidth={3} /> <span className="num">+1</span> {latest.name ?? t.someone}
+            </p>
+          ) : (
+            <p className="max-w-xs text-center text-[15px] text-white/80">{t.counterHint}</p>
+          )}
+        </div>
+      </main>
+
+      {gift && (
+        <div className="safe-b absolute inset-x-0 bottom-0 z-20 mx-auto max-w-md px-4" style={{ animation: "ct-sheet 560ms cubic-bezier(0.2,0.9,0.3,1.1) both" }}>
+          <div className="rounded-[30px] bg-surface p-5 text-center text-ink shadow-[0_-10px_40px_-10px_rgb(0_0_0/0.35)]">
+            <Icon3D name="gift" size={70} className="mx-auto -mt-14 animate-float" />
+            <p className="mt-1 text-[22px] font-bold">{fill(t.giftFor, { who: gift.name ?? t.someone, gift: gift.gift })}</p>
+            <p className="mt-0.5 text-[15px] text-muted">{t.giveNow}</p>
+            <button type="button" disabled={giving} onClick={() => void hand(gift)} className="press mt-4 h-[58px] w-full rounded-[20px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[19px] font-bold text-white shadow-[0_14px_30px_-12px_rgb(255_107_74/0.7)] disabled:opacity-60">
+              {t.given}
+            </button>
+            {gifts.length > 1 && <p className="num mt-2 text-[13px] text-muted">+{gifts.length - 1}</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

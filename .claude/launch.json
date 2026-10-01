@@ -2,6 +2,17 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "v2",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "v2",
+        "run",
+        "dev"
+      ],
+      "port": 3200
+    },
+    {
       "name": "pointidi-dev",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
