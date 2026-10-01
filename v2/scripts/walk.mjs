@@ -21,6 +21,7 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUP
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
 const ownerPhone = phoneNo();
 const customerPhone = phoneNo();
+let bossPhone = null;
 
 const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN" };
 const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
@@ -143,7 +144,7 @@ try {
   await shot(o, "16b-owner-account");
 
   // ── the founder's console, through a throwaway admin ──
-  const bossPhone = phoneNo();
+  bossPhone = phoneNo();
   const { data: bossUser } = await admin.auth.admin.createUser({ email: `216${bossPhone}@phone.pointidi.app`, password: "boss-walk-123", email_confirm: true, app_metadata: { phone: `+216${bossPhone}` } });
   await admin.from("people").upsert({ id: bossUser.user.id, name: "Boss", phone: `+216${bossPhone}`, is_admin: true });
   const a = await (await browser.newContext(phone)).newPage();
@@ -173,12 +174,13 @@ try {
   await shot(l, "18b-forgot");
 } finally {
   await browser.close();
-  for (const p of [ownerPhone, customerPhone]) {
+  // the throwaway admin too, should the walk stop half way
+  for (const p of [ownerPhone, customerPhone, bossPhone].filter(Boolean)) {
     const { data } = await admin.from("people").select("id").eq("phone", `+216${p}`).maybeSingle();
     if (data) {
       await admin.from("shops").delete().eq("owner_id", data.id);
       await admin.auth.admin.deleteUser(data.id);
     }
   }
-  console.log("cleaned up the two accounts");
+  console.log("cleaned up the walk's accounts");
 }
