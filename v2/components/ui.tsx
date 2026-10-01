@@ -45,9 +45,10 @@ export function Field({ label, error, className = "", ...rest }: ComponentProps<
   );
 }
 
-export function Icon3D({ name, size = 32, className = "" }: { name: string; size?: number; className?: string }) {
+/** A Fluent 3D picture (WebP, a sixth of the PNG's weight). `lazy`: only when it scrolls into view. */
+export function Icon3D({ name, size = 32, className = "", lazy }: { name: string; size?: number; className?: string; lazy?: boolean }) {
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={`/3d/${name}.png`} alt="" width={size} height={size} className={`e3d ${className}`} />;
+  return <img src={`/3d/${name}.webp`} alt="" width={size} height={size} decoding="async" loading={lazy ? "lazy" : undefined} className={`e3d ${className}`} />;
 }
 
 /**

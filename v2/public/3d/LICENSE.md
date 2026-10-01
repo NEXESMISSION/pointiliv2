@@ -1,6 +1,6 @@
 # 3D icons
 
-These PNGs are from Microsoft's Fluent UI Emoji (3D style):
+These images are Microsoft's Fluent UI Emoji (3D style), converted from PNG to WebP:
 https://github.com/microsoft/fluentui-emoji
 
 MIT License

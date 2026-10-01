@@ -6,7 +6,7 @@ import { Icon3D, boxLook } from "@/components/ui";
 import { KIND_GROUPS, kindIcon, kindMatches, t } from "@/lib/t";
 
 /** One kind of shop: its picture and its name, lit when chosen. */
-export function KindTile({ id, on, onPick }: { id: string; on: boolean; onPick: (id: string) => void }) {
+export function KindTile({ id, on, onPick, lazy }: { id: string; on: boolean; onPick: (id: string) => void; lazy?: boolean }) {
   return (
     <button
       type="button"
@@ -14,7 +14,7 @@ export function KindTile({ id, on, onPick }: { id: string; on: boolean; onPick: 
       aria-pressed={on}
       className={`press flex flex-col items-center gap-1 rounded-[18px] px-1 py-3 text-[12.5px] font-semibold leading-tight ${on ? "bg-brand-soft text-brand shadow-[inset_0_0_0_2px_var(--color-brand)]" : "bg-surface text-body shadow-card"}`}
     >
-      <Icon3D name={kindIcon(id)} size={32} />
+      <Icon3D name={kindIcon(id)} size={32} lazy={lazy} />
       <span className="line-clamp-2 text-center">{t.kinds[id]}</span>
     </button>
   );
@@ -76,7 +76,7 @@ export function KindPicker({ value, onPick, onClose }: { value: string; onPick: 
               <h3 className="mb-2 px-1 text-[14px] font-bold text-muted">{g.label}</h3>
               <div className="grid grid-cols-4 gap-2">
                 {g.kinds.map((id) => (
-                  <KindTile key={id} id={id} on={value === id} onPick={onPick} />
+                  <KindTile key={id} id={id} on={value === id} onPick={onPick} lazy />
                 ))}
               </div>
             </section>
