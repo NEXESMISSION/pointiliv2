@@ -86,8 +86,10 @@ export type AdminBusinessDetail = {
   logo_url: string | null;
   created_at: string;
   owner: { id: string; name: string | null; phone: string | null; email: string | null };
-  card: { name: string; stamps_required: number; active: boolean; cooldown_minutes: number } | null;
+  card: { name: string; stamps_required: number; active: boolean; cooldown_minutes: number; system?: "stamps" | "points"; dinars_per_point?: number; points_expire?: boolean } | null;
   rewards: { name: string; stamps_required: number; active: boolean }[];
+  /** a points card's gifts, at today's price (0016) */
+  catalog?: { name: string; points: number }[];
   stats: { customers: number; stamps: number; stamps_today: number; redemptions: number; last_stamp_at: string | null };
   subscription: SubscriptionState;
   subscriptions: { id: string; plan: string; price: number | null; starts_at: string; expires_at: string; status: string }[];

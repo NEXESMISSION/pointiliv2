@@ -10,10 +10,11 @@ import { marketing } from "./marketing";
 import { merchant } from "./merchant";
 import { nav } from "./nav";
 import { ops } from "./ops";
+import { points } from "./points";
 import { scan } from "./scan";
 
 /** One namespace per area. French defines the shape; Tunisian must match it. */
-const NAMESPACES = { common, errors, formats, data, nav, marketing, auth, customer, scan, merchant, ops, admin };
+const NAMESPACES = { common, errors, formats, data, nav, marketing, auth, customer, scan, merchant, ops, admin, points };
 
 export type Messages = { [K in keyof typeof NAMESPACES]: (typeof NAMESPACES)[K]["fr"] };
 

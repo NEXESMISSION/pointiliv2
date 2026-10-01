@@ -11,5 +11,7 @@ export async function generateMetadata() {
 export default async function QrPage() {
   const ctx = await requireMerchant("/qr");
   if (!ctx.card) redirect("/loyalty?welcome=1&from=qr");
+  // a points shop's counter types what was paid instead
+  if (ctx.card.system === "points") redirect("/points");
   return <MerchantQr businessName={ctx.business.name} logo={ctx.business.logo_url} icon={ctx.card.icon} color={ctx.card.color} />;
 }

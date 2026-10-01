@@ -8,6 +8,7 @@ import { Icon3D, category3D } from "@/components/ui/Icon3D";
 import { Badge, SubscriptionBadge } from "@/components/ui/Badge";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { formatDate, formatDateTime, formatNumber, formatTND } from "@/lib/format";
+import { rateRule } from "@/lib/points";
 import { getI18n } from "@/lib/i18n/server";
 import { formatPhone } from "@/lib/phone";
 import { rpc } from "@/lib/session";
@@ -153,8 +154,27 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
                 <p className="min-w-0 flex-1 truncate font-semibold text-ink">{b.card.name}</p>
                 {b.card.active ? <Badge tone="success">{w.cardLive}</Badge> : <Badge tone="neutral">{w.cardPaused}</Badge>}
               </div>
+              {b.card.system === "points" ? (
+                <>
+                  <p className="text-sm text-muted">
+                    {t.points.system} · {rateRule(Number(b.card.dinars_per_point ?? 1), t.points)}
+                  </p>
+                  {(b.catalog ?? []).length > 0 && (
+                    <ul className="space-y-1.5">
+                      {(b.catalog ?? []).map((g, i) => (
+                        <li key={i} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
+                          <Gift className="size-4 shrink-0 text-sea-600" />
+                          <span className="min-w-0 flex-1 truncate text-ink">{g.name}</span>
+                          <span className="shrink-0 text-xs text-muted">{count(t.points.count, g.points)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : (
               <p className="text-sm text-muted">{fill(w.cardRule, { stamps: b.card.stamps_required, cooldown: cooldownLabel(b.card.cooldown_minutes, t.data.cooldown, fill).toLowerCase() })}</p>
-              {b.rewards.length > 0 && (
+              )}
+              {b.card.system !== "points" && b.rewards.length > 0 && (
                 <ul className="space-y-1.5">
                   {b.rewards.map((r, i) => (
                     <li key={i} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">

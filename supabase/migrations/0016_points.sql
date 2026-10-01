@@ -785,6 +785,22 @@ language sql stable security definer set search_path = '' as $$
                  from public.customers c join public.profiles p on p.id = c.user_id where c.id = x.customer_id))
 $$;
 
+-- the customer's code screen: what the gift will cost, and what stays
+create or replace function public.redemption_status(p_id uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('id', x.id, 'status',
+           case when x.status = 'pending' and x.expires_at <= now() then 'expired' else x.status end,
+           'code', x.code, 'reward_name', x.reward_name, 'business_name', b.name,
+           'expires_at', x.expires_at, 'redeemed_at', x.redeemed_at, 'customer_id', x.customer_id,
+           'system', case when x.point_reward_id is not null then 'points' else 'stamps' end,
+           'points_spent', x.points_spent,
+           'balance', (select case when x.point_reward_id is not null then public.live_balance(c.points_balance, c.card_expires_at)
+                                   else public.live_balance(c.stamps_balance, c.card_expires_at) end
+                        from public.customers c where c.id = x.customer_id))
+  from public.reward_redemptions x join public.businesses b on b.id = x.business_id
+  where x.id = p_id and x.user_id = auth.uid()
+$$;
+
 -- ═══ the customer's side: the lobby and the gifts ══════════════════════════
 create or replace function public.home_card(p_customer uuid) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$

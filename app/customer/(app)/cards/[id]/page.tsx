@@ -5,6 +5,7 @@ import { TopBar } from "@/components/nav/TopBar";
 import { Alert } from "@/components/ui/Alert";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { CardDeadline } from "@/components/customer/CardDeadline";
+import { PointsCardDetail } from "@/components/customer/PointsCardDetail";
 import { UseRewardButton } from "@/components/customer/UseRewardButton";
 import { Icon3D } from "@/components/ui/Icon3D";
 import { rpc } from "@/lib/session";
@@ -28,12 +29,20 @@ export default async function CardDetail({ params, searchParams }: { params: Pro
   if (!data) notFound();
 
   const { business, card, customer, rewards, next_reward, history } = data;
+  const categories = t.data.categories as Record<string, string>;
+  const category = categories[business.category ?? "other"] ?? categories.other!;
+  if (data.system === "points") {
+    return (
+      <>
+        <TopBar title={business.name} subtitle={[category, business.address].filter(Boolean).join(" · ")} back="/customer/cards" />
+        <PointsCardDetail data={data} joined={!!joined} />
+      </>
+    );
+  }
   const total = card?.stamps_required ?? 10;
   const design = resolveDesign(card?.design, { color: card?.color, icon: card?.icon });
   const primary = rewards.find((r) => r.is_primary) ?? rewards[0];
   const unlocked = rewards.filter((r) => r.unlocked);
-  const categories = t.data.categories as Record<string, string>;
-  const category = categories[business.category ?? "other"] ?? categories.other!;
 
   return (
     <>

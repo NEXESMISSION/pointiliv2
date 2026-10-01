@@ -21,9 +21,10 @@ import { IMPACT_MS, StampDrop } from "./StampDrop";
  * typed as its own number — a cascade that drifts out of step with the impact
  * looks like a slow page rather than a choreographed one.
  */
-export function NeedsAccount({ token, businessName }: { token: string; businessName: string | null }) {
-  const { t } = useT();
+export function NeedsAccount({ token, businessName, points }: { token: string; businessName: string | null; points?: number | null }) {
+  const { t, count } = useT();
   const w = t.scan.needsAccount;
+  const p = t.points;
   const next = encodeURIComponent(`/scan/${token}`);
   /* ms after the stamp hits — the order the eye should read them in. */
   const after = (ms: number) => ({ animationDelay: `${IMPACT_MS + ms}ms` });
@@ -32,11 +33,17 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
     <div className="flex flex-1 flex-col items-center justify-center gap-3.5 py-4 text-center">
       <Logo size={24} />
 
-      <StampDrop label={t.scan.stampWord} size={100} />
+      {points ? (
+        <div className="my-3 grid size-28 animate-pop place-items-center rounded-full bg-[linear-gradient(150deg,var(--color-sea-300)_-10%,var(--color-sea-500)_55%,var(--color-sea-700))] text-white shadow-[0_22px_44px_-14px_var(--color-sea-500)]">
+          <span className="num text-[38px] font-bold leading-none">+{points}</span>
+        </div>
+      ) : (
+        <StampDrop label={t.scan.stampWord} size={100} />
+      )}
 
       <div className="space-y-1">
         <h1 className="animate-rise text-[26px] font-bold leading-tight text-ink" style={after(100)}>
-          {w.title}
+          {points ? count(p.reserved, points) : w.title}
         </h1>
         {businessName && (
           <p className="animate-rise text-base font-semibold text-brand-600" style={after(160)}>
@@ -46,7 +53,7 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
       </div>
 
       <p className="animate-rise text-[15px] text-body" style={after(220)}>
-        {w.body}
+        {points ? p.reservedBody : w.body}
       </p>
 
       <p
@@ -54,7 +61,7 @@ export function NeedsAccount({ token, businessName }: { token: string; businessN
         style={after(280)}
       >
         <AlertTriangle className="size-5 shrink-0" aria-hidden />
-        {w.warning}
+        {points ? p.reservedWarning : w.warning}
       </p>
 
       <p className="inline-flex animate-rise items-center gap-1.5 rounded-full bg-success-50 px-3 py-1.5 text-sm font-medium text-success-600" style={after(340)}>

@@ -7,11 +7,13 @@ import { actAsBusiness, openShop, type NewShopInput } from "@/app/actions/admin"
 import { CardIcon } from "@/components/CardIcon";
 import { Confetti } from "@/components/Confetti";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
+import { PointsPass } from "@/components/PointsPass";
 import { useT } from "@/components/i18n/Provider";
 import { Button } from "@/components/ui/Button";
 import { Icon3D, category3D } from "@/components/ui/Icon3D";
 import { TEMPLATES, resolveDesign } from "@/lib/card-design";
 import { CATEGORIES, type CardIconName } from "@/lib/constants";
+import { RATE_PICKS, rateRule } from "@/lib/points";
 
 const COLORS = ["#6C47FF", "#FF6B4A", "#0891B2", "#1F1B2E", "#E0457B", "#16A34A", "#D97706", "#6B4226"];
 const MARKS: CardIconName[] = ["coffee", "croissant", "cake", "pizza", "burger", "scissors", "sparkles", "star"];
@@ -64,6 +66,8 @@ export function NewShopWizard() {
     goal: 10,
     reward: w.idea1,
     levels: [],
+    rate: 1,
+    gifts: [],
     color: COLORS[0]!,
     icon: "coffee",
   });
@@ -79,12 +83,17 @@ export function NewShopWizard() {
     (s.levels.length > 0 &&
       s.levels.every((l) => l.stamps >= 1 && l.stamps < s.goal && l.name.trim().length >= 2) &&
       new Set(s.levels.map((l) => l.stamps)).size === s.levels.length);
-  const canGo = [s.name.trim().length >= 2, digits(s.phone).length === 8 && s.password.length >= 8, true, true, s.reward.trim().length >= 2 && levelsOk, true][step - 1];
+  const giftsOk = s.gifts.length >= 1 && s.gifts.every((g) => g.name.trim().length >= 2 && Number.isInteger(g.points) && g.points >= 1 && g.points <= 100_000);
+  const cardOk = s.system === "points" ? giftsOk : s.reward.trim().length >= 2 && levelsOk;
+  const canGo = [s.name.trim().length >= 2, digits(s.phone).length === 8 && s.password.length >= 8, true, true, cardOk, true][step - 1];
+  const p = t.points;
+  const shopIdeas = Object.values((t.merchant.ideas as unknown as Record<string, Record<string, string>>)[s.category] ?? {});
   const until = new Date();
   until.setMonth(until.getMonth() + (s.plan === "yearly" ? 12 : s.plan === "six_month" ? 6 : 1));
 
   function pickSystem(system: NewShopInput["system"]) {
-    if (system === "levels" && s.system !== "levels") set({ system, goal: 20, levels: [{ stamps: 6, name: w.idea1 }, { stamps: 10, name: w.idea3 }], reward: w.idea2 });
+    if (system === "points" && s.system !== "points") set({ system, rate: 1, color: s.color === COLORS[0] ? "#0891B2" : s.color, gifts: (shopIdeas.length ? shopIdeas : [w.idea1, w.idea2]).slice(0, 2).map((name, i) => ({ name, points: (i + 1) * 100 })) });
+    else if (system === "levels" && s.system !== "levels") set({ system, goal: 20, levels: [{ stamps: 6, name: w.idea1 }, { stamps: 10, name: w.idea3 }], reward: w.idea2 });
     else if (system === "stamps" && s.system !== "stamps") set({ system, goal: 10, levels: [], reward: w.idea1 });
     else set({ system });
   }
@@ -161,7 +170,19 @@ export function NewShopWizard() {
   const chip = (on: boolean) => `press rounded-[18px] bg-surface shadow-card ${on ? "shadow-[0_0_0_2px_var(--color-brand-600),var(--shadow-card)] bg-brand-100 text-brand-700" : "text-ink"}`;
   const field = "h-[50px] w-full rounded-2xl bg-surface px-4 text-base text-ink shadow-[var(--shadow-card),inset_0_0_0_1px_var(--color-line)] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand-600)]";
   const label = "mb-1.5 mt-4 block px-0.5 text-[13.5px] font-semibold text-muted";
-  const preview = (
+  const cheapest = [...s.gifts].sort((a, b) => a.points - b.points)[0];
+  const preview =
+    s.system === "points" ? (
+      <PointsPass
+        size="tile"
+        design={design}
+        business={{ name: s.name || "Pointili", logo_url: null }}
+        subtitle={rateRule(s.rate, p)}
+        balance={cheapest ? Math.round(cheapest.points * 0.6) : 0}
+        goal={cheapest?.points ?? 100}
+        next={cheapest ? { name: cheapest.name, remaining: cheapest.points - Math.round(cheapest.points * 0.6) } : null}
+      />
+    ) : (
     <LoyaltyCardVisual
       size="tile"
       design={design}
@@ -171,7 +192,7 @@ export function NewShopWizard() {
       levels={s.system === "levels" ? s.levels.map((l) => l.stamps) : []}
       rewardName={s.reward}
     />
-  );
+    );
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-canvas">
@@ -275,17 +296,17 @@ export function NewShopWizard() {
                 [
                   { id: "stamps", n: w.stamps, l: w.stampsLine, icon: "coffee", tint: "bg-brand-100" },
                   { id: "levels", n: w.levels, l: w.levelsLine, icon: "trophy", tint: "bg-coral-50" },
-                  { id: "points", n: w.points, l: w.pointsLine, icon: "coin", tint: "bg-sea-50", soon: true },
+                  { id: "points", n: w.points, l: w.pointsLine, icon: "coin", tint: "bg-sea-50" },
                 ] as const
               ).map((o) => {
                 const on = s.system === o.id;
-                const soon = "soon" in o;
+                const soon = false;
                 return (
                   <button
                     key={o.id}
                     type="button"
                     disabled={soon}
-                    onClick={() => !soon && pickSystem(o.id as "stamps" | "levels")}
+                    onClick={() => pickSystem(o.id)}
                     className={`${chip(on)} mt-2.5 flex w-full items-center gap-3 p-3.5 text-start disabled:opacity-55`}
                   >
                     <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${o.tint}`}>
@@ -312,7 +333,50 @@ export function NewShopWizard() {
             </>
           )}
 
-          {step === 5 && (
+          {step === 5 && s.system === "points" && (
+            <>
+              <div className="mt-3">{preview}</div>
+              <span className={label}>{p.rateQuestion}</span>
+              <div className="flex gap-2">
+                {RATE_PICKS.map((r) => (
+                  <button key={r} type="button" onClick={() => set({ rate: r })} className={`h-[46px] flex-1 rounded-[15px] text-[14px] font-semibold shadow-card ${s.rate === r ? "bg-sea-500 text-white" : "bg-surface text-ink"}`}>
+                    {r < 1 ? fill(p.millimes, { m: Math.round(r * 1000) }) : <><span className="num">{r}</span> {p.dt}</>}
+                  </button>
+                ))}
+              </div>
+              <span className={label}>{p.catalog}</span>
+              {s.gifts.map((g, i) => (
+                <div key={i} className="mb-2 flex items-center gap-2 rounded-2xl bg-surface p-2 shadow-card">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={100000}
+                    value={g.points}
+                    onChange={(e) => set({ gifts: s.gifts.map((x, k) => (k === i ? { ...x, points: Math.round(Number(e.target.value)) || 0 } : x)) })}
+                    className="num h-10 w-20 shrink-0 rounded-xl bg-sea-50 text-center font-bold text-sea-700 outline-none"
+                    aria-label={p.giftPoints}
+                  />
+                  <input value={g.name} onChange={(e) => set({ gifts: s.gifts.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)) })} className="h-10 min-w-0 flex-1 bg-transparent px-1 outline-none" maxLength={60} aria-label={p.giftName} />
+                  <button type="button" disabled={s.gifts.length <= 1} onClick={() => set({ gifts: s.gifts.filter((_, k) => k !== i) })} className="press grid size-9 place-items-center rounded-full text-muted hover:bg-surface-2 disabled:opacity-30" aria-label={p.removeGift}>
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              ))}
+              {s.gifts.length < 6 && (
+                <button
+                  type="button"
+                  onClick={() => set({ gifts: [...s.gifts, { name: "", points: Math.max(0, ...s.gifts.map((g) => g.points)) + 100 }] })}
+                  className="press flex h-11 w-full items-center justify-center gap-1.5 rounded-[14px] bg-sea-50 text-sm font-semibold text-sea-700"
+                >
+                  <Plus className="size-4" /> {p.addGift}
+                </button>
+              )}
+              {!giftsOk && <p className="mt-2 px-0.5 text-xs font-medium text-danger-600">{p.catalogInvalid}</p>}
+            </>
+          )}
+
+          {step === 5 && s.system !== "points" && (
             <>
               <div className="mt-3">{preview}</div>
               <span className={label}>{w.goalQ}</span>

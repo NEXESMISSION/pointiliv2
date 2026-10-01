@@ -6,6 +6,9 @@ import { TopBar } from "@/components/nav/TopBar";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Stat";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
+import { PointsPass } from "@/components/PointsPass";
+import { Icon3D } from "@/components/ui/Icon3D";
+import { formatAmount, rateRule } from "@/lib/points";
 import { resolveDesign } from "@/lib/card-design";
 import { RedeemNowButton } from "@/components/merchant/RedeemNowButton";
 import { rpc } from "@/lib/session";
@@ -34,6 +37,8 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
   const unlocked = rewards.filter((r) => r.unlocked);
   const w = t.ops.customer;
   const title = profile.name || fill(t.ops.customers.anon, { code: customer.code });
+  const points = d.system === "points";
+  const p = t.points;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -54,14 +59,27 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
         {card && (
           // the short "tile" card: one row of stamps instead of two, so the screen holds
           <div className="mt-2 w-full max-w-sm text-start">
-            <LoyaltyCardVisual size="tile" design={resolveDesign(card.design, { color: card.color, icon: card.icon })} business={d.business} subtitle={card.description} filled={customer.balance} total={required} rewardName={rewards.find((r) => r.is_primary)?.name} />
+            {points ? (
+              <PointsPass
+                size="tile"
+                design={resolveDesign(card.design, { color: card.color, icon: card.icon })}
+                business={d.business}
+                subtitle={rateRule(card.dinars_per_point ?? 1, p)}
+                balance={customer.balance}
+                goal={required}
+                ready={unlocked[0]?.name ?? null}
+                next={d.next_reward ? { name: d.next_reward.name, remaining: d.next_reward.remaining } : null}
+              />
+            ) : (
+              <LoyaltyCardVisual size="tile" design={resolveDesign(card.design, { color: card.color, icon: card.icon })} business={d.business} subtitle={card.description} filled={customer.balance} total={required} rewardName={rewards.find((r) => r.is_primary)?.name} />
+            )}
           </div>
         )}
       </Card>
 
       <Card className="mt-2 grid grid-cols-3 items-center gap-2 p-2 text-center">
-        <Cell value={`${customer.balance}/${required}`} label={w.currentStamps} />
-        <Cell value={customer.total_stamps} label={w.totalVisits} />
+        <Cell value={points ? customer.balance : `${customer.balance}/${required}`} label={points ? p.currentPoints : w.currentStamps} />
+        <Cell value={points ? (customer.total_points ?? 0) : customer.total_stamps} label={points ? p.totalPoints : w.totalVisits} />
         <Cell value={d.rewards_earned} label={w.rewardsEarned} />
         <Cell value={customer.rewards_redeemed} label={w.rewardsGiven} />
         <Cell value={formatDate(customer.first_stamp_at, locale)} label={w.firstActivity} small />
@@ -79,9 +97,9 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-bold text-ink">{r.name}</p>
-                  <p className="text-[13px] text-muted">{count(t.common.stampsCount, r.stamps_required)}</p>
+                  <p className="text-[13px] text-muted">{count(points ? p.count : t.common.stampsCount, r.stamps_required)}</p>
                 </div>
-                <RedeemNowButton customerId={customer.id} rewardId={r.id} rewardName={r.name} customerLabel={title} stamps={r.stamps_required} />
+                <RedeemNowButton customerId={customer.id} rewardId={r.id} rewardName={r.name} customerLabel={title} stamps={r.stamps_required} points={points} />
               </Card>
             ))}
           </div>
@@ -97,10 +115,24 @@ export default async function CustomerDetail({ params }: { params: Promise<{ id:
           <Card className="max-h-32 divide-y divide-line/80 overflow-y-auto">
             {d.history.map((h, i) => (
               <div key={i} className="flex items-center gap-2.5 px-3 py-2">
-                <span className={`grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-bold ${h.type === "stamp" ? "bg-success-50 text-success-600" : "bg-warning-50 text-warning-700"}`}>
-                  {h.type === "stamp" ? "+1" : <Gift className="size-4" />}
+                <span
+                  className={`num grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-bold ${
+                    h.type === "stamp" ? "bg-success-50 text-success-600" : h.type === "points" ? "bg-sea-50 text-sea-700" : h.type === "reward_redeemed" ? "bg-coral-50 text-coral-600" : "bg-surface-2 text-muted"
+                  }`}
+                >
+                  {h.type === "stamp" ? "+1" : h.type === "points" ? `+${h.points}` : h.type === "reward_redeemed" ? <Gift className="size-4" /> : <Icon3D name="hourglass" size={16} />}
                 </span>
-                <p className="flex-1 text-sm font-medium text-ink">{h.type === "stamp" ? w.stampLine : fill(w.rewardLine, { name: h.reward_name ?? "" })}</p>
+                <p className="flex-1 text-sm font-medium text-ink">
+                  {h.type === "stamp"
+                    ? w.stampLine
+                    : h.type === "points"
+                      ? fill(p.paidLine, { amount: formatAmount(h.amount, locale) })
+                      : h.type === "reward_redeemed"
+                        ? fill(w.rewardLine, { name: h.reward_name ?? "" })
+                        : h.type === "expire"
+                          ? p.expiredLine
+                          : p.adjustLine}
+                </p>
                 <p className="text-end text-xs text-muted">
                   {dayLabel(h.at, locale)} · {formatTime(h.at, locale)}
                 </p>

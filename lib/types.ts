@@ -3,6 +3,9 @@ import type { CardDesign } from "./card-design";
 
 export type Role = "customer" | "merchant" | "admin";
 
+/** A shop runs stamps (with or without levels) or points (0016). */
+export type CardSystem = "stamps" | "points";
+
 export type SubscriptionState = {
   status: "active" | "expiring_soon" | "expired" | "cancelled" | "none";
   open: boolean;
@@ -50,6 +53,10 @@ export type SessionContext = {
     levels: CardLevel[];
     /** bumped by every save: a save made against an older one is refused (0015) */
     version: number;
+    system: CardSystem;
+    /** points: how many dinars paid make one point */
+    dinars_per_point: number;
+    points_expire: boolean;
   } | null;
   subscription: SubscriptionState | null;
 };
@@ -58,7 +65,7 @@ export type CardLevel = { id: string; name: string; stamps: number };
 
 export type BusinessMini = { id?: string; name: string; logo_url: string | null; cover_url?: string | null; category: string; address?: string | null; instagram?: string | null; status?: string };
 /** stamps_required is THIS customer's goal (see reward_cost in SQL); card_stamps_required is today's setting. */
-export type CardStyle = { id?: string; name?: string; description?: string | null; stamps_required: number; levels?: number[]; card_stamps_required?: number; color: string; icon: string; cooldown_minutes?: number; valid_days?: number; active?: boolean; design?: Partial<CardDesign> | null };
+export type CardStyle = { id?: string; name?: string; description?: string | null; stamps_required: number; levels?: number[]; card_stamps_required?: number; color: string; icon: string; cooldown_minutes?: number; valid_days?: number; active?: boolean; design?: Partial<CardDesign> | null; system?: CardSystem; dinars_per_point?: number; points_expire?: boolean };
 
 /** merchant_card_impact(): customers mid-card grouped by (their goal, their stamps). */
 export type CardImpact = {
@@ -80,14 +87,22 @@ export type RewardItem = {
   claimed?: boolean;
   unlocked: boolean;
   pending: { id: string; code: string; expires_at: string } | null;
+  /** points: the price in force, a rise to come (a price rise waits 14 days), the end of a gift taken off */
+  points?: number;
+  next_points?: number | null;
+  next_at?: string | null;
+  ends_at?: string | null;
 };
 
 export type CardPayload = {
+  system?: CardSystem;
   customer: {
     id: string;
     code: number;
+    /** stamps, or points on a points card */
     balance: number;
     total_stamps: number;
+    total_points?: number;
     rewards_redeemed: number;
     first_stamp_at: string | null;
     last_stamp_at: string | null;
@@ -97,21 +112,24 @@ export type CardPayload = {
   business: BusinessMini;
   card: CardStyle | null;
   rewards: RewardItem[];
-  next_reward: { id: string; name: string; stamps_required: number; remaining: number } | null;
-  newly_unlocked: { id: string; name: string; stamps_required: number; level?: boolean }[];
+  next_reward: { id: string; name: string; stamps_required: number; remaining: number; points?: number } | null;
+  newly_unlocked: { id: string; name: string; stamps_required: number; level?: boolean; points?: number }[];
 };
 
-export type HistoryItem = { type: "stamp" | "reward_redeemed"; at: string; reward_name?: string };
+/** points: a purchase (+), a gift (−), an expiry, a conversion; stamps: a stamp, a gift */
+export type HistoryItem = { type: "stamp" | "reward_redeemed" | "points" | "expire" | "convert" | "adjust"; at: string; reward_name?: string | null; points?: number; amount?: number | null };
 
 export type StampResult =
-  | ({ ok: true; stamp_id: string } & CardPayload)
+  | ({ ok: true; stamp_id?: string; points_id?: string; earned?: { points: number; amount: number } } & CardPayload)
   | ({ ok: false; error: string; next_at?: string } & Partial<CardPayload>);
 
 export type HomeCard = {
   customer_id: string;
   code: number;
+  system?: CardSystem;
   balance: number;
   total_stamps: number;
+  total_points?: number;
   last_stamp_at: string | null;
   expires_at?: string | null;
   business: BusinessMini;
@@ -127,7 +145,7 @@ export type ActivityItem = {
   at: string;
   customer_id: string | null;
   customer_code: number | null;
-  data: { balance?: number; reward_name?: string; stamps_spent?: number; code?: number };
+  data: { balance?: number; reward_name?: string; stamps_spent?: number; points_spent?: number; points?: number; amount?: number; code?: number };
   business_name?: string | null;
   business_id?: string | null;
 };
@@ -138,6 +156,8 @@ export type RedemptionView = {
   status: "pending" | "redeemed" | "cancelled" | "expired";
   reward_name: string;
   stamps_spent: number;
+  points_spent?: number;
+  system?: CardSystem;
   expires_at: string;
   redeemed_at: string | null;
   customer: { id: string; code: number; balance: number; name: string | null; phone_masked: string | null };
@@ -152,6 +172,10 @@ export type RedemptionStatus = {
   expires_at: string;
   redeemed_at: string | null;
   customer_id: string;
+  system?: CardSystem;
+  points_spent?: number;
+  /** the customer's balance now: points on a points card */
+  balance?: number;
 };
 
 export type MerchantContext = SessionContext & { business: NonNullable<SessionContext["business"]> };
@@ -163,9 +187,10 @@ export type MerchantCustomerRow = {
   phone_masked: string | null;
   balance: number;
   total_stamps: number;
+  total_points?: number;
   rewards_redeemed: number;
   first_stamp_at: string | null;
   last_stamp_at: string | null;
   reward_ready: boolean;
-  target?: number;
+  target?: number | null;
 };

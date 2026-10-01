@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Gift, Search } from "lucide-react";
 import { TopBar } from "@/components/nav/TopBar";
 import { Card } from "@/components/ui/Card";
+import { Icon3D } from "@/components/ui/Icon3D";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkButton } from "@/components/ui/Button";
 import { rpc } from "@/lib/session";
@@ -26,15 +27,16 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
   const [{ t, locale, count, fill }, { q = "" }] = await Promise.all([getI18n(), searchParams]);
   const w = t.merchant.people;
   const [list, today] = await Promise.all([
-    rpc<{ total: number; stamps_required: number | null; items: MerchantCustomerRow[] }>("merchant_customers", { p_search: q || null, p_sort: "recent", p_limit: 200, p_offset: 0 }),
-    rpc<{ stamps: number; redemptions: number; items: ActivityItem[] }>("merchant_activity", { p_range: "today", p_from: null, p_to: null }),
+    rpc<{ total: number; system?: "stamps" | "points"; stamps_required: number | null; items: MerchantCustomerRow[] }>("merchant_customers", { p_search: q || null, p_sort: "recent", p_limit: 200, p_offset: 0 }),
+    rpc<{ stamps: number; points?: number; redemptions: number; items: ActivityItem[] }>("merchant_activity", { p_range: "today", p_from: null, p_to: null }),
   ]);
   const required = list.stamps_required ?? 10;
+  const points = list.system === "points";
   const groups = byRecency(list.items);
 
   return (
     <div className="mx-auto max-w-2xl">
-      <TopBar title={w.title} large back="/dashboard" subtitle={fill(w.today, { stamps: count(t.common.stampsCount, today.stamps), rewards: count(w.rewardsCount, today.redemptions) })} />
+      <TopBar title={w.title} large back="/dashboard" subtitle={fill(w.today, { stamps: points ? count(t.points.count, today.points ?? 0) : count(t.common.stampsCount, today.stamps), rewards: count(w.rewardsCount, today.redemptions) })} />
 
       <form action="/customers" className="relative mb-3">
         <Search className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-faint" aria-hidden />
@@ -50,7 +52,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
       </form>
 
       {list.total === 0 ? (
-        <EmptyState icon={<Gift className="size-8" />} title={w.emptyTitle} action={<LinkButton href="/qr" block>{w.openQr}</LinkButton>}>
+        <EmptyState icon={<Gift className="size-8" />} title={w.emptyTitle} action={<LinkButton href={points ? "/points" : "/qr"} block>{points ? t.points.add : w.openQr}</LinkButton>}>
           {w.emptyBody}
         </EmptyState>
       ) : list.items.length === 0 ? (
@@ -70,16 +72,33 @@ export default async function PeoplePage({ searchParams }: { searchParams: Promi
                     const target = row.target ?? required;
                     return (
                       <Link key={row.id} href={`/customers/${row.id}`} className="flex items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-canvas/70">
-                        <Ring balance={row.balance} target={target} ready={row.reward_ready} />
+                        {points ? (
+                          <span className={`grid size-10 shrink-0 place-items-center rounded-full ${row.reward_ready ? "bg-sea-500 text-white" : "bg-sea-50"}`}>
+                            {row.reward_ready ? <Gift className="size-4" strokeWidth={2.4} /> : <Icon3D name="coin" size={22} />}
+                          </span>
+                        ) : (
+                          <Ring balance={row.balance} target={target} ready={row.reward_ready} />
+                        )}
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[15px] font-semibold text-ink">{row.name || fill(w.anon, { code: row.code })}</span>
                           <span className="block truncate text-[13px] text-muted">
                             {row.last_stamp_at ? timeAgo(row.last_stamp_at, locale) : w.never}
-                            {row.phone_masked ? <span dir="ltr" className="inline-block"> · {row.phone_masked}</span> : null}
+                            {row.phone_masked ? (
+                              <>
+                                {" · "}
+                                <span dir="ltr" className="inline-block">
+                                  {row.phone_masked}
+                                </span>
+                              </>
+                            ) : null}
                           </span>
                         </span>
                         {row.reward_ready ? (
                           <span className="shrink-0 rounded-full bg-brand-600 px-2.5 py-1 text-xs font-bold text-white">{w.ready}</span>
+                        ) : points ? (
+                          <span className="shrink-0 text-sm font-semibold text-body">
+                            <span className="num">{row.balance}</span> <span className="text-[12px] font-medium text-muted">{count(t.points.unit, row.balance)}</span>
+                          </span>
                         ) : (
                           <span dir="ltr" className="shrink-0 text-sm font-semibold text-body tabular">
                             {Math.min(row.balance, target)}

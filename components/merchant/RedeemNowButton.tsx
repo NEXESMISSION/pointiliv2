@@ -8,7 +8,7 @@ import { ConfirmDialog } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useT } from "@/components/i18n/Provider";
 
-export function RedeemNowButton({ customerId, rewardId, rewardName, customerLabel, stamps }: { customerId: string; rewardId: string; rewardName: string; customerLabel: string; stamps: number }) {
+export function RedeemNowButton({ customerId, rewardId, rewardName, customerLabel, stamps, points }: { customerId: string; rewardId: string; rewardName: string; customerLabel: string; stamps: number; points?: boolean }) {
   const { t, count } = useT();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -35,7 +35,7 @@ export function RedeemNowButton({ customerId, rewardId, rewardName, customerLabe
           })
         }
       >
-        <b>{rewardName}</b> — {count(w.giveBody, stamps, { customer: customerLabel })}
+        <b>{rewardName}</b> — {count(points ? t.points.giveBody : w.giveBody, stamps, { customer: customerLabel })}
       </ConfirmDialog>
     </>
   );

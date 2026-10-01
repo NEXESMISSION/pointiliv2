@@ -21,6 +21,7 @@ type Analytics = {
   new_customers_prev: number;
   active_customers: number;
   returning_customers: number;
+  system?: "stamps" | "points";
   stamps: number;
   stamps_prev: number;
   redemptions: number;
@@ -69,7 +70,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <StatCard tint="white" icon={<Users className="size-5" />} label={w.totalCustomers} value={formatNumber(a.customers_total, locale)} sub={fill(w.cameBack, { n: formatNumber(a.returning_rate, locale) })} />
         <StatCard tint="white" icon={<UserPlus className="size-5" />} label={w.newCustomers} value={formatNumber(a.new_customers, locale)} change={pctChange(a.new_customers, a.new_customers_prev)} sub={w.vsPrevious} />
         <StatCard tint="white" icon={<RefreshCw className="size-5" />} label={w.returningCustomers} value={formatNumber(a.returning_customers, locale)} sub={fill(w.ofActive, { n: formatNumber(a.active_customers, locale) })} />
-        <StatCard tint="white" icon={<QrCode className="size-5" />} label={w.stampsIssued} value={formatNumber(a.stamps, locale)} change={pctChange(a.stamps, a.stamps_prev)} sub={w.vsPrevious} />
+        <StatCard tint="white" icon={<QrCode className="size-5" />} label={a.system === "points" ? t.points.visits : w.stampsIssued} value={formatNumber(a.stamps, locale)} change={pctChange(a.stamps, a.stamps_prev)} sub={w.vsPrevious} />
         {/* fifth of five: it takes the whole row rather than leaving a hole beside it */}
         <div className="col-span-2 lg:col-span-1">
           <StatCard tint="white" icon={<Gift className="size-5" />} label={w.rewardsGiven} value={formatNumber(a.redemptions, locale)} change={pctChange(a.redemptions, a.redemptions_prev)} sub={w.vsPrevious} />
@@ -79,7 +80,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       <div className="mt-1.5 grid grid-cols-2 gap-2 lg:gap-4">
         <Card className="p-2.5 lg:col-span-2 lg:p-5">
           <SectionTitle className="mb-1">{Number(active) > 30 ? w.stampsByWeek : w.stampsByDay}</SectionTitle>
-          <BarChart label={w.stampsIssued} data={bucket(a.series, "stamps", a.days, locale)} />
+          <BarChart label={a.system === "points" ? t.points.visits : w.stampsIssued} data={bucket(a.series, "stamps", a.days, locale)} />
         </Card>
         <Card className="p-2.5 lg:p-5">
           <SectionTitle className="mb-1">{w.rewardsGiven}</SectionTitle>

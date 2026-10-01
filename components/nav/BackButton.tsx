@@ -26,7 +26,7 @@ const TRANSIENT = [
   /^\/(fr\/)?(how-it-works|pricing)$/,
 ];
 /** A screen someone opens the app ON: landing here starts a fresh trail. */
-const ROOTS = new Set(["/customer", "/dashboard", "/admin", "/qr"]);
+const ROOTS = new Set(["/customer", "/dashboard", "/admin", "/qr", "/points"]);
 
 function read(): string[] {
   try {

@@ -3,14 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { RotateCw } from "lucide-react";
-import { previewCardChange, restoreCardVersion, type CardPreview } from "@/app/actions/merchant";
+import { previewCardChange, previewPointsChange, restoreCardVersion, type CardPreview, type PointsPreview } from "@/app/actions/merchant";
 import { useT } from "@/components/i18n/Provider";
 import { ChangePreview, worthASheet } from "@/components/merchant/ChangePreview";
+import { PointsPreviewSheet, worthAPointsSheet } from "@/components/merchant/PointsPreviewSheet";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Icon3D, category3D } from "@/components/ui/Icon3D";
 import { useToast } from "@/components/ui/Toast";
 import { formatDate } from "@/lib/format";
+import { rateRule } from "@/lib/points";
 
 export type CardVersion = {
   version: number;
@@ -23,6 +25,9 @@ export type CardVersion = {
   by: string;
   by_admin: boolean;
   running: number;
+  /** a points version keeps its terms instead of a goal (0016) */
+  system?: "stamps" | "points";
+  terms?: { dinars_per_point: number; points_expire: boolean; catalog: { id: string; name: string; points: number }[] } | null;
 };
 
 /**
@@ -38,6 +43,7 @@ export function CardHistory({ items, live, category }: { items: CardVersion[]; l
   const [busy, start] = useTransition();
   const [picked, setPicked] = useState<CardVersion | null>(null);
   const [pv, setPv] = useState<CardPreview | null>(null);
+  const [ppv, setPpv] = useState<PointsPreview | null>(null);
   const [forAll, setForAll] = useState(false);
   const [stale, setStale] = useState(false);
   const day = (iso: string) => formatDate(iso, locale, { year: undefined });
@@ -45,6 +51,7 @@ export function CardHistory({ items, live, category }: { items: CardVersion[]; l
   const bring = async (v: CardVersion, all: boolean) => {
     const res = await restoreCardVersion(v.version, live, all);
     setPv(null);
+    setPpv(null);
     setPicked(null);
     if (!res.ok) {
       setStale(!!res.stale);
@@ -57,6 +64,22 @@ export function CardHistory({ items, live, category }: { items: CardVersion[]; l
   const restore = (v: CardVersion) =>
     start(async () => {
       setPicked(v);
+      if (v.system === "points" && v.terms) {
+        const pp = await previewPointsChange({ dinars_per_point: Number(v.terms.dinars_per_point), points_expire: v.terms.points_expire, catalog: v.terms.catalog });
+        if (!pp.ok) {
+          setPicked(null);
+          toast(pp.message ?? "", "error");
+          return;
+        }
+        if (pp.version !== undefined && pp.version !== live) {
+          setPicked(null);
+          setStale(true);
+          return;
+        }
+        if (!worthAPointsSheet(pp)) return bring(v, false);
+        setPpv(pp);
+        return;
+      }
       const p = await previewCardChange(v);
       if (!p.ok) {
         setPicked(null);
@@ -98,10 +121,14 @@ export function CardHistory({ items, live, category }: { items: CardVersion[]; l
           return (
             <div key={v.version} className="flex items-center gap-3 px-3.5 py-3">
               <span className={`grid size-11 shrink-0 place-items-center rounded-[14px] ${isLive ? "bg-brand-100" : "bg-surface-2"}`}>
-                <Icon3D name={category3D(category)} size={28} />
+                <Icon3D name={v.system === "points" ? "coin" : category3D(category)} size={28} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-semibold text-ink">{count(w.versionGoal, v.stamps_required, { reward: v.reward_name })}</span>
+                <span className="block truncate text-[15px] font-semibold text-ink">
+                  {v.system === "points" && v.terms
+                    ? fill(t.points.versionLine, { rule: rateRule(Number(v.terms.dinars_per_point), t.points), gifts: count(t.points.giftsCount, v.terms.catalog.length) })
+                    : count(w.versionGoal, v.stamps_required, { reward: v.reward_name })}
+                </span>
                 <span className="block text-[12.5px] leading-snug text-muted">{meta}</span>
                 {!isLive && v.running > 0 && <span className="block truncate text-[12.5px] font-medium text-brand-700">{count(w.stillOnIt, v.running)}</span>}
               </span>
@@ -129,6 +156,15 @@ export function CardHistory({ items, live, category }: { items: CardVersion[]; l
           setPicked(null);
         }}
         onSave={() => start(() => (picked ? bring(picked, forAll) : Promise.resolve()))}
+        saving={busy}
+      />
+      <PointsPreviewSheet
+        preview={ppv}
+        onClose={() => {
+          setPpv(null);
+          setPicked(null);
+        }}
+        onSave={() => start(() => (picked ? bring(picked, false) : Promise.resolve()))}
         saving={busy}
       />
     </div>

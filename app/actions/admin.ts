@@ -10,7 +10,7 @@ import { requireAdmin } from "@/lib/session";
 import { normalizePhone, phoneAuthEmail } from "@/lib/phone";
 import { PLANS, type CardIconName } from "@/lib/constants";
 import { TEMPLATES, resolveDesign } from "@/lib/card-design";
-import { saveCard } from "@/app/actions/merchant";
+import { saveCard, savePointsCard } from "@/app/actions/merchant";
 
 type Result = { ok: boolean; message: string; at: number; secret?: string };
 
@@ -165,10 +165,13 @@ export type NewShopInput = {
   /** how it was paid today; "later" records no payment yet */
   paid: "cash" | "d17" | "bank_transfer" | "later";
   /** "skip": the owner chooses the card at the first sign-in (the welcome) */
-  system: "stamps" | "levels" | "skip";
+  system: "stamps" | "levels" | "points" | "skip";
   goal: number;
   reward: string;
   levels: { name: string; stamps: number }[];
+  /** points: dinars paid for one point, and the gifts priced in points (0016) */
+  rate: number;
+  gifts: { name: string; points: number }[];
   /** the card's colour (hex) and the mark on its stamps */
   color: string;
   icon: CardIconName;
@@ -206,7 +209,18 @@ export async function openShop(input: NewShopInput): Promise<{ ok: true; busines
     if (input.city.trim()) {
       await supabase.rpc("update_business", { p_name: input.name.trim(), p_category: input.category, p_phone: null, p_address: input.city.trim(), p_instagram: null });
     }
-    if (input.system !== "skip") {
+    if (input.system === "points") {
+      const design = resolveDesign({ ...TEMPLATES.bold.make(input.color), template: "bold", stamp: "icon", icon: input.icon });
+      const saved = await savePointsCard({
+        name: input.name.trim(),
+        description: "",
+        dinars_per_point: input.rate,
+        points_expire: false,
+        catalog: input.gifts.map((g) => ({ name: g.name.trim(), points: g.points })),
+        design,
+      });
+      if (!saved.ok) return { ok: false, message: saved.message };
+    } else if (input.system !== "skip") {
       const design = resolveDesign({ ...TEMPLATES.bold.make(input.color), template: "bold", stamp: "icon", icon: input.icon });
       const saved = await saveCard({
         name: input.name.trim(),

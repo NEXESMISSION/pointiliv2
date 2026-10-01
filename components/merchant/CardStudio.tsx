@@ -469,7 +469,7 @@ export function CardStudio({ initial, design: initialDesign, business, isNew, di
   );
 }
 
-function Section({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function Section({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <div className="p-3">
       <p className="mb-2 text-sm font-semibold text-ink">{label}</p>
@@ -479,7 +479,7 @@ function Section({ label, hint, children }: { label: string; hint?: string; chil
   );
 }
 
-function Pick({ active, onClick, children, small }: { active: boolean; onClick: () => void; children: ReactNode; small?: boolean }) {
+export function Pick({ active, onClick, children, small }: { active: boolean; onClick: () => void; children: ReactNode; small?: boolean }) {
   return (
     <button
       type="button"
@@ -493,11 +493,11 @@ function Pick({ active, onClick, children, small }: { active: boolean; onClick: 
 }
 
 /** One line that slides sideways: a phone shows the first few, a thumb brings the rest. Wrapping them would triple the page. */
-function Row({ className = "", children }: { className?: string; children: ReactNode }) {
+export function Row({ className = "", children }: { className?: string; children: ReactNode }) {
   return <div className={`-mx-3 flex gap-1.5 overflow-x-auto px-3 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}>{children}</div>;
 }
 
-function Chip({ active, disabled, onClick, children }: { active: boolean; disabled?: boolean; onClick: () => void; children: ReactNode }) {
+export function Chip({ active, disabled, onClick, children }: { active: boolean; disabled?: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button
       type="button"
@@ -511,7 +511,7 @@ function Chip({ active, disabled, onClick, children }: { active: boolean; disabl
   );
 }
 
-function Swatches({ value, choices, onPick, label, customLabel, fill }: { value: string; choices: string[]; onPick: (hex: string) => void; label: string; customLabel: string; fill: (template: string, vars?: Record<string, string | number>) => string }) {
+export function Swatches({ value, choices, onPick, label, customLabel, fill }: { value: string; choices: string[]; onPick: (hex: string) => void; label: string; customLabel: string; fill: (template: string, vars?: Record<string, string | number>) => string }) {
   return (
     <Row className="items-center gap-2">
       {choices.map((c) => {

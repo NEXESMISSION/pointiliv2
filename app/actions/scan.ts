@@ -11,7 +11,7 @@ import type { StampResult } from "@/lib/types";
 export type ScanOutcome =
   | { kind: "stamped"; result: Extract<StampResult, { ok: true }> }
   | { kind: "error"; code: string; result?: StampResult }
-  | { kind: "auth"; businessName: string | null };
+  | { kind: "auth"; businessName: string | null; points?: number | null };
 
 const CLAIM_COOKIE = "pd_claim";
 
@@ -55,7 +55,7 @@ export async function processScan(token: string): Promise<ScanOutcome> {
     console.error("[scan] claim", error?.message);
     return { kind: "error", code: "network" };
   }
-  const res = data as { ok: boolean; error?: string; business_name?: string };
+  const res = data as { ok: boolean; error?: string; business_name?: string; points?: number | null };
   if (!res.ok) return { kind: "error", code: res.error ?? "invalid" };
 
   jar.set(CLAIM_COOKIE, `${token}.${newClaim}`, {
@@ -65,5 +65,5 @@ export async function processScan(token: string): Promise<ScanOutcome> {
     path: "/",
     maxAge: 20 * 60,
   });
-  return { kind: "auth", businessName: res.business_name ?? null };
+  return { kind: "auth", businessName: res.business_name ?? null, points: res.points ?? null };
 }

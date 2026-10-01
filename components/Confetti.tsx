@@ -1,4 +1,4 @@
-const COLORS = ["#6535E0", "#22C55E", "#F59E0B", "#EC4899", "#0EA5E9", "#9A76F7"];
+const COLORS = ["#6535E0", "#22C55E", "#FF6B4A", "#EC4899", "#0891B2", "#9A76F7"];
 
 /** A one-shot burst of confetti. CSS only (transform/opacity), respects reduced motion via globals.css. */
 export function Confetti({ count = 36 }: { count?: number }) {

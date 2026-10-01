@@ -4,10 +4,12 @@ import { Check, Store, X } from "lucide-react";
 import { BackButton } from "@/components/nav/BackButton";
 import { Logo } from "@/components/Logo";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
+import { PointsPass } from "@/components/PointsPass";
 import { Alert } from "@/components/ui/Alert";
 import { LinkButton } from "@/components/ui/Button";
 import { resolveDesign, type CardDesign } from "@/lib/card-design";
 import { getI18n } from "@/lib/i18n/server";
+import { rateRule } from "@/lib/points";
 import { getContext } from "@/lib/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -25,8 +27,8 @@ type Preview =
       ok: true;
       open: boolean;
       business: { name: string; logo_url: string | null; cover_url: string | null; category: string; address: string | null };
-      card: { name: string; description: string | null; stamps_required: number; color: string; icon: string; design: Partial<CardDesign> | null };
-      reward: { name: string; description: string | null } | null;
+      card: { name: string; description: string | null; stamps_required: number; color: string; icon: string; design: Partial<CardDesign> | null; system?: "stamps" | "points"; dinars_per_point?: number };
+      reward: { name: string; description?: string | null; points?: number } | null;
     }
   | { ok: false; error: string; business?: { name: string } };
 
@@ -66,7 +68,13 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
         {business.name}
       </h1>
       <p className="mx-auto mt-2 max-w-xs text-center text-[15px] leading-relaxed text-muted">
-        {reward ? (
+        {card.system === "points" ? (
+          reward ? (
+            fill(t.points.joinGift, { rule: rateRule(card.dinars_per_point ?? 1, t.points), reward: reward.name, points: count(t.points.count, reward.points ?? 0) })
+          ) : (
+            rateRule(card.dinars_per_point ?? 1, t.points)
+          )
+        ) : reward ? (
           <>
             {fill(t.scan.join.rewardLine, { stamps: count(t.common.stampsCount, card.stamps_required) })} <span className="font-medium text-ink">{reward.name}</span>.
           </>
@@ -76,7 +84,18 @@ export default async function JoinPage({ params }: { params: Promise<{ code: str
       </p>
 
       <div className="mt-5">
-        <LoyaltyCardVisual design={design} business={business} subtitle={card.description} filled={0} total={card.stamps_required} rewardName={reward?.name} />
+        {card.system === "points" ? (
+          <PointsPass
+            design={design}
+            business={business}
+            subtitle={rateRule(card.dinars_per_point ?? 1, t.points)}
+            balance={0}
+            goal={reward?.points ?? 100}
+            next={reward ? { name: reward.name, remaining: reward.points ?? 0 } : null}
+          />
+        ) : (
+          <LoyaltyCardVisual design={design} business={business} subtitle={card.description} filled={0} total={card.stamps_required} rewardName={reward?.name} />
+        )}
       </div>
 
       {!preview.open && (

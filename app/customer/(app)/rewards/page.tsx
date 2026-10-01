@@ -22,7 +22,7 @@ type Biz = { name: string; logo_url: string | null; category: string };
 type Style = { color: string; icon: string };
 type Rewards = {
   unlocked: { reward_id: string; name: string; description: string | null; stamps_required: number; customer_id: string; balance: number; business: Biz; card: Style }[];
-  upcoming: { reward_id: string; name: string; stamps_required: number; customer_id: string; balance: number; remaining: number; business: Biz; card: Style }[];
+  upcoming: { reward_id: string; name: string; stamps_required: number; customer_id: string; balance: number; remaining: number; points?: boolean; business: Biz; card: Style }[];
   history: { id: string; reward_name: string; business_name: string; redeemed_at: string }[];
 };
 type Pending = { id: string; reward_id?: string };
@@ -95,7 +95,7 @@ export default async function RewardsPage() {
                           </p>
                         </div>
                         <p className="mb-1.5 truncate text-[13px] text-muted">
-                          {r.business.name} · {count(t.common.stampsToGo, r.remaining)}
+                          {r.business.name} · {r.points ? count(t.points.toGoShort, r.remaining) : count(t.common.stampsToGo, r.remaining)}
                         </p>
                         <ProgressBar value={r.balance} max={r.stamps_required} color={c.accent} />
                       </div>
@@ -112,7 +112,7 @@ export default async function RewardsPage() {
               <Card className="divide-y divide-line/80">
                 {data.history.map((h) => (
                   <div key={h.id} className="flex items-center gap-2.5 px-3.5 py-2.5">
-                    <span className="grid size-8 place-items-center rounded-full bg-warning-50 text-warning-700">
+                    <span className="grid size-8 place-items-center rounded-full bg-coral-50 text-coral-600">
                       <Gift className="size-4" />
                     </span>
                     <div className="min-w-0 flex-1">

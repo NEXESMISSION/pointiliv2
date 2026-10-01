@@ -2,11 +2,7 @@
 
 import type { CardPreview } from "@/app/actions/merchant";
 import { useT } from "@/components/i18n/Provider";
-import { Button } from "@/components/ui/Button";
-import { Icon3D, type Icon3DName } from "@/components/ui/Icon3D";
-import { Modal } from "@/components/ui/Modal";
-
-type Line = { icon: Icon3DName; tone: string; title: string; hint: string };
+import { PreviewSheet, type PreviewLine } from "@/components/merchant/PreviewSheet";
 
 /** A save that touches nobody goes straight through; anything else is shown first (board 8, rule 4). */
 export function worthASheet(p: CardPreview): boolean {
@@ -37,7 +33,7 @@ export function ChangePreview({ preview, reward, forAll, onForAll, onClose, onSa
   const running = p.running ?? 0;
   const renamed = !!p.reward_changed && running > 0;
 
-  const lines: Line[] = [];
+  const lines: PreviewLine[] = [];
   if (to > from && (p.keep_goal ?? 0) > 0) {
     lines.push({ icon: "people", tone: "bg-brand-100", title: count(w.pvKeep, p.keep_goal ?? 0), hint: count(w.pvKeepHint, p.keep_goal ?? 0, { from }) });
     lines.push({ icon: "sparkles", tone: "bg-success-50", title: w.pvNew, hint: fill(w.pvNewHint, { to }) });
@@ -54,54 +50,18 @@ export function ChangePreview({ preview, reward, forAll, onForAll, onClose, onSa
   const good = to < from && !renamed && !(p.valid_shorter && running > 0) && !(p.level_next_card ?? 0);
 
   return (
-    <Modal
-      open={!!preview}
-      onClose={onClose}
-      title={
-        good ? (
-          <span className="flex items-center gap-2">
-            <Icon3D name="party" size={30} /> {w.goodNews}
+    <PreviewSheet open={!!preview} good={good} subtitle={to !== from ? count(w.goalChange, to, { from }) : null} lines={lines} onClose={onClose} onSave={onSave} saving={saving}>
+      {renamed && (
+        <button type="button" role="switch" aria-checked={forAll} onClick={() => onForAll(!forAll)} className="flex w-full items-center gap-3 px-3.5 py-3 text-start">
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14.5px] font-semibold leading-snug text-ink">{fill(w.pvForAll, { to: reward })}</span>
+            <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">{w.pvForAllHint}</span>
           </span>
-        ) : (
-          w.beforeSave
-        )
-      }
-      footer={
-        <>
-          <Button variant="ghost" size="lg" onClick={onClose} className="sm:w-auto">
-            {t.common.back}
-          </Button>
-          <Button size="lg" loading={saving} onClick={onSave} className="sm:w-auto">
-            {good ? w.saveDelight : t.common.save}
-          </Button>
-        </>
-      }
-    >
-      {to !== from && <p className="-mt-2 mb-3 text-sm text-muted">{count(w.goalChange, to, { from })}</p>}
-      <div className="divide-y divide-line overflow-hidden rounded-[20px] bg-surface ring-1 ring-line">
-        {lines.map((l, i) => (
-          <div key={i} className="flex items-center gap-3 px-3.5 py-3">
-            <span className={`grid size-10 shrink-0 place-items-center rounded-[12px] ${l.tone}`}>
-              <Icon3D name={l.icon} size={24} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[14.5px] font-semibold leading-snug text-ink">{l.title}</span>
-              <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">{l.hint}</span>
-            </span>
-          </div>
-        ))}
-        {renamed && (
-          <button type="button" role="switch" aria-checked={forAll} onClick={() => onForAll(!forAll)} className="flex w-full items-center gap-3 px-3.5 py-3 text-start">
-            <span className="min-w-0 flex-1">
-              <span className="block text-[14.5px] font-semibold leading-snug text-ink">{fill(w.pvForAll, { to: reward })}</span>
-              <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">{w.pvForAllHint}</span>
-            </span>
-            <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${forAll ? "bg-brand-600" : "bg-line"}`} aria-hidden>
-              <span className={`absolute top-0.5 size-6 rounded-full bg-surface shadow-card transition-all ${forAll ? "end-0.5" : "start-0.5"}`} />
-            </span>
-          </button>
-        )}
-      </div>
-    </Modal>
+          <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${forAll ? "bg-brand-600" : "bg-line"}`} aria-hidden>
+            <span className={`absolute top-0.5 size-6 rounded-full bg-surface shadow-card transition-all ${forAll ? "end-0.5" : "start-0.5"}`} />
+          </span>
+        </button>
+      )}
+    </PreviewSheet>
   );
 }

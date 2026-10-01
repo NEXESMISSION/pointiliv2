@@ -5,6 +5,7 @@ import { Confetti } from "@/components/Confetti";
 import { IMPACT_MS, StampDrop } from "./StampDrop";
 import { Logo } from "@/components/Logo";
 import { LoyaltyCardVisual } from "@/components/LoyaltyCardVisual";
+import { PointsPass } from "@/components/PointsPass";
 import { Icon3D } from "@/components/ui/Icon3D";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { CardDeadline } from "@/components/customer/CardDeadline";
@@ -13,6 +14,7 @@ import { UseRewardButton } from "@/components/customer/UseRewardButton";
 import { useT } from "@/components/i18n/Provider";
 import { resolveDesign } from "@/lib/card-design";
 import { formatTime } from "@/lib/format";
+import { formatAmount, rateRule } from "@/lib/points";
 import type { StampResult } from "@/lib/types";
 
 export function Checking() {
@@ -34,6 +36,76 @@ export function Checking() {
 }
 
 export function StampSuccess({ result }: { result: Extract<StampResult, { ok: true }> }) {
+  if (result.system === "points" && result.earned) return <PointsSuccess result={result} />;
+  return <StampLanded result={result} />;
+}
+
+/**
+ * Points, right after the scan (board 2, P2): the same joy as a stamp, in
+ * sea blue and «+35»; if a gift came within reach, it says so and the gift
+ * is one tap away.
+ */
+function PointsSuccess({ result }: { result: Extract<StampResult, { ok: true }> }) {
+  const { t, count, fill, locale } = useT();
+  const w = t.points;
+  const { business, card, customer, next_reward, newly_unlocked, rewards, earned } = result;
+  const design = resolveDesign(card?.design, { color: card?.color, icon: card?.icon });
+  const unlocked = newly_unlocked[0] ?? null;
+  const ready = unlocked?.name ?? rewards.find((r) => r.unlocked)?.name ?? null;
+  const after = (ms: number) => ({ animationDelay: `${ms}ms` });
+
+  return (
+    <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden text-center">
+      <Confetti count={unlocked ? 60 : 32} />
+      <div className="grid size-28 animate-pop place-items-center rounded-full bg-[linear-gradient(150deg,var(--color-sea-300)_-10%,var(--color-sea-500)_55%,var(--color-sea-700))] text-white shadow-[0_22px_44px_-14px_var(--color-sea-500)]">
+        <span className="num text-[38px] font-bold leading-none">+{earned!.points}</span>
+      </div>
+      <h1 className="mt-4 animate-rise text-2xl font-bold text-ink" style={after(140)}>
+        {count(w.newPoints, earned!.points)}
+      </h1>
+      <p className="mt-1 animate-rise text-[15px] text-muted" style={after(200)}>
+        {fill(w.paidAt, { shop: business.name, amount: formatAmount(earned!.amount, locale) })}
+      </p>
+
+      <div className="mt-4 w-full animate-rise text-start" style={after(260)}>
+        <PointsPass
+          design={design}
+          business={business}
+          subtitle={rateRule(card?.dinars_per_point ?? 1, w)}
+          balance={customer.balance}
+          goal={card?.stamps_required ?? 100}
+          ready={ready}
+          next={next_reward ? { name: next_reward.name, remaining: next_reward.remaining } : null}
+          size="tile"
+        />
+      </div>
+
+      {unlocked && (
+        <div className="relative mt-4 w-full animate-rise overflow-hidden rounded-[26px] bg-surface p-4 shadow-card" style={after(340)}>
+          <span className="absolute -top-12 start-1/2 size-48 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,var(--color-coral-50)_0%,transparent_70%)] rtl:translate-x-1/2" aria-hidden />
+          <Icon3D name="gift" size={52} className="relative mx-auto animate-float" />
+          <p className="relative mt-1 text-sm font-semibold text-coral-600">{w.giftReady}</p>
+          <p className="mt-0.5 text-xl font-bold text-ink">{unlocked.name}</p>
+          <p className="text-[13px] text-muted">{count(w.haveNow, customer.balance)}</p>
+          <div className="mt-3">
+            <UseRewardButton rewardId={unlocked.id} />
+          </div>
+        </div>
+      )}
+
+      <div className="w-full animate-rise space-y-2 pt-5" style={after(400)}>
+        <LinkButton href={`/customer/cards/${customer.id}`} variant={unlocked ? "outline" : "sea"} block>
+          {t.scan.success.viewCard}
+        </LinkButton>
+        <LinkButton href="/customer" variant="ghost" block>
+          {t.common.done}
+        </LinkButton>
+      </div>
+    </div>
+  );
+}
+
+function StampLanded({ result }: { result: Extract<StampResult, { ok: true }> }) {
   const { t, count, fill } = useT();
   const { business, card, customer, next_reward, newly_unlocked, rewards } = result;
   const total = card?.stamps_required ?? 10;

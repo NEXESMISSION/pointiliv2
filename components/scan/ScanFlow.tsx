@@ -27,7 +27,7 @@ export function ScanFlow({ token }: { token: string }) {
 
   if (!outcome) return <Checking />;
   if (outcome.kind === "stamped") return <StampSuccess result={outcome.result} />;
-  if (outcome.kind === "auth") return <NeedsAccount token={token} businessName={outcome.businessName} />;
+  if (outcome.kind === "auth") return <NeedsAccount token={token} businessName={outcome.businessName} points={outcome.points ?? null} />;
   return (
     <ScanError
       code={outcome.code}

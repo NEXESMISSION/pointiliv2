@@ -35,7 +35,7 @@ export function homeFor(ctx: Pick<SessionContext, "user" | "business" | "card" |
   if (ctx.business) {
     const owner = ctx.member_role === "owner";
     if (owner && !ctx.business.onboarded_at) return "/welcome";
-    if (ctx.card) return "/qr";
+    if (ctx.card) return ctx.card.system === "points" ? "/points" : "/qr";
     return owner ? "/loyalty?welcome=1" : "/dashboard";
   }
   return "/customer";

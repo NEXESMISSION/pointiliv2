@@ -220,3 +220,60 @@ export async function restoreCardVersion(version: number, expected: number | nul
   if (!res.ok) return { ok: false, message: msg(res.error) };
   return { ok: true, message: t.ops.toasts.loyaltyCardSaved };
 }
+
+/** A points card's terms (0016): the rate, the catalog, expiry — and its look, as for stamps. */
+export type PointsInput = {
+  name: string;
+  description: string;
+  dinars_per_point: number;
+  points_expire: boolean;
+  catalog: { id?: string; name: string; points: number }[];
+  design: CardDesign;
+  expected_version?: number | null;
+};
+
+/** What saving these terms would do to the points already earned, counted by the database. */
+export type PointsPreview = {
+  ok: boolean;
+  message?: string;
+  new_card?: boolean;
+  version?: number;
+  holders?: number;
+  rate_from?: number;
+  rate_to?: number;
+  expire_on?: boolean;
+  expire_off?: boolean;
+  raised?: { name: string; from: number; to: number; can_afford: number }[];
+  lowered?: { name: string; from: number; to: number; now_afford: number }[];
+  removed?: { name: string; points: number; can_afford: number }[];
+  until?: string;
+};
+
+const catalogArg = (c: PointsInput["catalog"]) => c.map((g) => ({ id: g.id ?? null, name: g.name.trim(), points: Math.round(g.points) }));
+
+export async function previewPointsChange(input: Pick<PointsInput, "dinars_per_point" | "points_expire" | "catalog">): Promise<PointsPreview> {
+  const res = await call("preview_points_change", {
+    p_dinars_per_point: input.dinars_per_point,
+    p_points_expire: input.points_expire,
+    p_catalog: catalogArg(input.catalog),
+  });
+  if (!res.ok) return { ok: false, message: (await getI18n()).msg(res.error) };
+  return res as PointsPreview;
+}
+
+export async function savePointsCard(input: PointsInput): Promise<{ ok: boolean; message: string; created: boolean; stale?: boolean; version?: number }> {
+  const { t, msg } = await getI18n();
+  const res = await call("save_points_card", {
+    p_name: input.name,
+    p_dinars_per_point: input.dinars_per_point,
+    p_points_expire: input.points_expire,
+    p_catalog: catalogArg(input.catalog),
+    p_expected_version: input.expected_version ?? null,
+  });
+  if (res.error === "card_changed") return { ok: false, message: t.merchant.loyalty.changedMeanwhile, created: false, stale: true };
+  if (!res.ok) return { ok: false, message: msg(res.error), created: false };
+  const look = await call("save_card_design", { p_description: input.description, p_design: input.design });
+  revalidatePath("/", "layout");
+  if (!look.ok) return { ok: false, message: msg(look.error), created: !!res.created };
+  return { ok: true, message: t.ops.toasts.loyaltyCardSaved, created: !!res.created, version: res.version as number | undefined };
+}

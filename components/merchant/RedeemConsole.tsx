@@ -198,7 +198,11 @@ function Confirm({ r, compact, onDone, onCancel }: { r: RedemptionView; compact?
       </div>
       {!compact && (
         <p className="mt-3 text-sm text-muted">
-          {r.stamps_spent === 0 ? fill(w.levelGive, { balance: r.customer.balance }) : count(w.uses, r.stamps_spent, { balance: r.customer.balance })}
+          {r.system === "points"
+            ? count(t.points.uses, r.points_spent ?? 0, { balance: r.customer.balance })
+            : r.stamps_spent === 0
+              ? fill(w.levelGive, { balance: r.customer.balance })
+              : count(w.uses, r.stamps_spent, { balance: r.customer.balance })}
         </p>
       )}
       <div className="mt-4 flex gap-2">
