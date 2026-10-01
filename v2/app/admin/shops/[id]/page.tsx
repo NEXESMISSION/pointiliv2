@@ -16,7 +16,7 @@ type Shop = {
   owner: { name: string; phone: string | null } | null;
   customers: number; stamps: number; today: number; given: number; waiting: number;
   recent: { at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; phone: string | null }[];
-  top: { name: string | null; phone: string | null; stamps: number; gifts: number }[];
+  top: { name: string | null; phone: string | null; stamps: number; gifts: number; goal: number | null }[];
 };
 
 const when = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -91,9 +91,9 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                     <Gift className="size-3.5" /> {c.gifts}
                   </span>
                 )}
-                {s.goal && (
+                {(c.goal ?? s.goal) && (
                   <span className="num shrink-0 text-[14px] font-bold text-body">
-                    {Math.min(c.stamps, s.goal)}/{s.goal}
+                    {Math.min(c.stamps, c.goal ?? s.goal ?? 0)}/{c.goal ?? s.goal}
                   </span>
                 )}
               </li>

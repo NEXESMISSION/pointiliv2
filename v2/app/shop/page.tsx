@@ -15,7 +15,7 @@ type Home = {
   visitors_today: number;
   given: number;
   waiting: { id: number; at: string; name: string | null; gift: string }[];
-  recent: { id: number; at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; stamps: number; goal: number }[];
+  recent: { id: number; at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; stamps: number; goal: number; gift: string | null }[];
 };
 
 const time = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -31,7 +31,7 @@ export default async function ShopHome() {
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
   const home = await call<Home>("shop_home");
-  const first = me.name.split(" ")[0];
+  const first = (me.name ?? "").split(" ")[0];
   const tiles = [
     { icon: "fire", value: home?.today ?? 0, label: t.numToday },
     { icon: "people", value: home?.visitors_today ?? 0, label: t.numVisitors },
@@ -142,7 +142,7 @@ export default async function ShopHome() {
                 <span className="min-w-0 flex-1 truncate text-[15px] font-medium">
                   {r.kind === "stamp"
                     ? fill(t.lateStamp, { who: r.name ?? t.someone })
-                    : fill(r.given ? t.lateGiven : t.lateGift, { who: r.name ?? t.someone, gift: shop.gift ?? "" })}
+                    : fill(r.given ? t.lateGiven : t.lateGift, { who: r.name ?? t.someone, gift: r.gift ?? shop.gift ?? "" })}
                 </span>
                 <span className="num shrink-0 text-[12.5px] text-muted">{time(r.at)}</span>
               </li>

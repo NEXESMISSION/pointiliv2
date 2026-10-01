@@ -1,11 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Info } from "lucide-react";
 import { saveCard } from "@/app/actions";
 import { Pass } from "@/components/Pass";
 import { Btn } from "@/components/ui";
-import { t } from "@/lib/t";
+import { customersN, fill, sameGift, t } from "@/lib/t";
 import type { FormState } from "@/lib/types";
 
 const GOALS = [5, 6, 8, 10, 12];
@@ -14,14 +14,18 @@ const COLORS = ["#6C47FF", "#FF6B4A", "#0891B2", "#12B76A", "#E0457B", "#1F1B2E"
 /**
  * Step 3 for an owner: the card. How many stamps, what the gift is, its
  * colour — and the card itself above, changing as they choose, the way the
- * customer will see it.
+ * customer will see it. When the card is changed later, one line says what
+ * happens to the customers already on their way (`onTheWay` of them).
  */
-export function CardForm({ shop, next, cta }: { shop: { name: string; kind: string; goal: number | null; gift: string | null; color: string }; next?: string; cta: string }) {
+export function CardForm({ shop, next, cta, onTheWay }: { shop: { name: string; kind: string; goal: number | null; gift: string | null; color: string }; next?: string; cta: string; onTheWay?: number }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const [goal, setGoal] = useState(shop.goal ?? 8);
   const [gift, setGift] = useState(shop.gift ?? t.ideas[shop.kind]?.[0] ?? "");
   const [color, setColor] = useState(shop.color.toUpperCase());
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
+  const changed = !!shop.goal && onTheWay !== undefined && (goal !== shop.goal || !sameGift(gift, shop.gift));
+  const easier = changed && goal < (shop.goal ?? 0) && sameGift(gift, shop.gift);
+  const note = !changed ? null : onTheWay === 0 ? t.cardNoteNone : fill(easier ? t.cardNoteEase : t.cardNoteKeep, { who: customersN(onTheWay ?? 0) });
 
   return (
     <form action={action} className="flex flex-1 flex-col">
@@ -71,6 +75,11 @@ export function CardForm({ shop, next, cta }: { shop: { name: string; kind: stri
       <input type="hidden" name="goal" value={goal} />
       <input type="hidden" name="color" value={color} />
       {next && <input type="hidden" name="next" value={next} />}
+      {note && (
+        <p className="mt-6 flex animate-fade gap-2.5 rounded-2xl bg-brand-soft px-4 py-3 text-[14.5px] font-medium leading-relaxed text-brand-deep" role="status">
+          <Info className="mt-0.5 size-[18px] shrink-0" /> {note}
+        </p>
+      )}
       {state?.error && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[14.5px] font-medium text-coral">{state.error}</p>}
       <div className="mt-auto pt-8">
         <Btn type="submit" disabled={pending || gift.trim().length < 2}>

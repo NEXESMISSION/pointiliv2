@@ -10,5 +10,5 @@ export default async function ShopQr() {
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
-  return <Counter shop={{ name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused }} />;
+  return <Counter shop={{ name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused, signal: me.shop.signal }} />;
 }

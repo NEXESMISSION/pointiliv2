@@ -8,7 +8,7 @@ import { customersN, t } from "@/lib/t";
 
 export const metadata = { title: "الحرفاء" };
 
-type Row = { id: string; name: string | null; phone: string | null; stamps: number; gifts: number; last_at: string | null; ready: boolean };
+type Row = { id: string; name: string | null; phone: string | null; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null };
 
 const when = (iso: string | null) =>
   iso ? new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso)) : t.never;
@@ -33,7 +33,9 @@ export default async function ShopCustomers() {
       ) : (
         <ul className="mt-5 divide-y divide-line overflow-hidden rounded-[22px] bg-surface shadow-card">
           {items.map((c) => {
-            const pct = Math.min(100, Math.round((c.stamps / goal) * 100));
+            // each card has its own goal: the one it started with
+            const of = c.goal ?? goal;
+            const pct = Math.min(100, Math.round((c.stamps / of) * 100));
             return (
               <li key={c.id} className="flex items-center gap-3 px-4 py-3">
                 <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[16px] font-bold text-white">
@@ -60,7 +62,7 @@ export default async function ShopCustomers() {
                   </span>
                 ) : (
                   <span className="num shrink-0 text-[14px] font-bold text-body">
-                    {Math.min(c.stamps, goal)}/{goal}
+                    {Math.min(c.stamps, of)}/{of}
                   </span>
                 )}
               </li>

@@ -60,6 +60,15 @@ try {
   await o.locator('input[name="name"]').fill("Café Yasmine");
   await o.getByRole("button", { name: "قهوة" }).click();
   await shot(o, "03-owner-shop", 300);
+  // the other 39 kinds: the full list, a search in it, a pick from it
+  await o.getByRole("button", { name: /الكل/ }).click();
+  await o.getByRole("dialog").waitFor();
+  await shot(o, "03b-kinds-all", 500);
+  await o.locator('input[type="search"]').fill("parfum");
+  await shot(o, "03c-kinds-search", 400);
+  await o.getByRole("dialog").getByRole("button", { name: "عطورات" }).click();
+  await shot(o, "03d-kinds-picked", 400);
+  await o.getByRole("button", { name: "قهوة" }).click();
   await Promise.all([o.waitForURL("**/shop/card", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   await o.getByRole("button", { name: "5", exact: true }).click();
   await o.getByRole("button", { name: "#FF6B4A" }).click();
@@ -81,11 +90,21 @@ try {
   await c.locator('input[name="phone"]').fill(customerPhone);
   await c.locator('input[name="password"]').fill("sami1234");
   await shot(c, "07-join", 300);
+  // the counter hears the stamp (Realtime): «+1 سامي» shows for a moment — caught as it lands
+  const t0 = Date.now();
+  const plusOne = o
+    .getByRole("status")
+    .first()
+    .waitFor({ timeout: 30000 })
+    .then(async () => {
+      console.log(`  · the counter showed +1 ${((Date.now() - t0) / 1000).toFixed(1)} s after the tap`);
+      await shot(o, "09-counter-plus-one", 450);
+    })
+    .catch(() => console.log("  ! the counter never showed +1"));
   await Promise.all([c.waitForURL("**/s/**", { timeout: 60000 }), c.locator('button[type="submit"]').click()]);
   await c.getByText("تامبون جديد!").waitFor({ timeout: 30000 });
   await shot(c, "08-stamped", 1800);
-  await o.getByRole("status").first().waitFor({ timeout: 20000 }).catch(() => {});
-  await shot(o, "09-counter-plus-one", 200);
+  await plusOne;
 
   // ── the card fills up ──
   const { data: who } = await admin.from("people").select("id").eq("phone", `+216${customerPhone}`).single();
@@ -115,6 +134,13 @@ try {
   await shot(o, "17-owner-home");
   await o.goto(BASE + "/shop/customers", { waitUntil: "load" });
   await shot(o, "19-owner-customers");
+  // changing the card: one line says what happens to the customers on their way
+  await o.goto(BASE + "/shop/card", { waitUntil: "load" });
+  await o.getByRole("button", { name: "8", exact: true }).click();
+  await o.getByRole("status").scrollIntoViewIfNeeded();
+  await shot(o, "17b-card-change", 500);
+  await o.goto(BASE + "/me", { waitUntil: "load" });
+  await shot(o, "16b-owner-account");
 
   // ── the founder's console, through a throwaway admin ──
   const bossPhone = phoneNo();
@@ -131,10 +157,20 @@ try {
   await shot(a, "21-admin-shop");
   await a.goto(BASE + "/admin?tab=people", { waitUntil: "load" });
   await shot(a, "22-admin-people");
+  await a.goto(BASE + "/admin?tab=people&q=" + encodeURIComponent("سامي"), { waitUntil: "load" });
+  await a.locator('a[href^="/admin/people/"]').first().click();
+  await a.waitForURL("**/admin/people/**");
+  await shot(a, "23-admin-person");
+  await a.getByRole("button", { name: /كلمة سر جديدة/ }).click();
+  await a.getByText("كلمة السر الجديدة").waitFor({ timeout: 20000 });
+  await shot(a, "24-admin-new-password", 600);
   await admin.auth.admin.deleteUser(bossUser.user.id);
   const l = await (await browser.newContext(phone)).newPage();
   await l.goto(BASE + "/login", { waitUntil: "load" });
   await shot(l, "18-login");
+  await l.getByRole("link", { name: "نسيت كلمة السر؟" }).click();
+  await l.waitForURL("**/forgot");
+  await shot(l, "18b-forgot");
 } finally {
   await browser.close();
   for (const p of [ownerPhone, customerPhone]) {

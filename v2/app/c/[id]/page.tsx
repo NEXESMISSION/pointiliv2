@@ -5,10 +5,10 @@ import { Top } from "@/components/Top";
 import { Icon3D, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
-import { fill, t } from "@/lib/t";
+import { fill, stampsN, t } from "@/lib/t";
 import type { CardView } from "@/lib/types";
 
-type Card = CardView & { history: { kind: "stamp" | "gift"; at: string; given: boolean }[] };
+type Card = CardView & { history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null }[] };
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -27,6 +27,11 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
       <div className="mt-5 animate-rise">
         <Pass shop={card.shop} stamps={card.stamps} />
       </div>
+      {card.next && (
+        <p className="mt-3 rounded-2xl bg-surface px-4 py-3 text-[14.5px] leading-relaxed text-body shadow-card">
+          {fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}
+        </p>
+      )}
 
       {card.ready && (
         <div className="relative mt-4 animate-pop overflow-hidden rounded-[28px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a_55%,#e0452a)] p-5 text-center text-white shadow-[0_20px_44px_-18px_rgb(255_107_74/0.85)]">
@@ -54,7 +59,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
                   </span>
                 )}
                 <span className="min-w-0 flex-1 text-[15.5px] font-medium">
-                  {h.kind === "stamp" ? t.hStamp : h.given ? fill(t.hGift, { gift: card.shop.gift ?? "" }) : t.hGiftWaiting}
+                  {h.kind === "stamp" ? t.hStamp : h.given ? fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" }) : t.hGiftWaiting}
                 </span>
                 <span className="shrink-0 text-[12.5px] text-muted">{when(h.at)}</span>
               </li>

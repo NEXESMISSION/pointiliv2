@@ -137,6 +137,94 @@ try {
   check("a kind of shop outside the list becomes «other»", (await rpc(odd, "open_shop", { p_name: "Mystery", p_kind: "spaceship" })).ok && (await rpc(odd, "me")).shop.kind === "other");
   check("a new kind from the list is kept", (await rpc(odd, "open_shop", { p_name: "Mystery", p_kind: "barber" })).ok && (await rpc(odd, "me")).shop.kind === "barber");
 
+  console.log("\nChanging the card: a card is a promise");
+  const shop2 = await person("Hedi");
+  await rpc(shop2, "open_shop", { p_name: "Promise Café", p_kind: "perfume" });
+  check("a new kind (perfume) is kept", (await rpc(shop2, "me")).shop.kind === "perfume");
+  await rpc(shop2, "save_card", { p_goal: 5, p_gift: "قهوة بلاش", p_color: "#6C47FF" });
+  const signal = (await rpc(shop2, "me")).shop.signal;
+  check("the shop has a secret radio topic for its counter", /^[0-9a-f]{32}$/.test(signal ?? ""), signal);
+  const p1 = await person("Rania");
+  const p2 = await person("Karim");
+  const stampAt = async (who) => {
+    const c = await rpc(shop2, "new_code");
+    const r = await rpc(who, "stamp", { p_token: c.token });
+    if (r.card) await admin.from("cards").update({ last_at: ago(61) }).eq("id", r.card.id);
+    return r;
+  };
+  await stampAt(p1);
+  const p1b = await stampAt(p1);
+  check("Rania is on her way: 2 of 5 for a coffee", p1b.card.stamps === 2 && p1b.card.shop.goal === 5, p1b.card);
+  check("one customer on the way, as the card page tells the owner", (await rpc(shop2, "in_progress")).n === 1);
+  const raised = await rpc(shop2, "save_card", { p_goal: 8, p_gift: "قهوة بلاش", p_color: "#6C47FF" });
+  check("more stamps for the same gift: the owner is told one customer keeps her card", raised.ok && raised.kept === 1 && raised.eased === 0, raised);
+  let v1 = await rpc(p1, "card", { p_id: p1b.card.id });
+  check("Rania keeps 5 for her coffee, and sees the new card coming after it", v1.shop.goal === 5 && v1.shop.gift === "قهوة بلاش" && v1.next?.goal === 8, v1);
+  const k1 = await stampAt(p2);
+  check("Karim, new, gets the card of today: 8", k1.card.shop.goal === 8 && !k1.card.next, k1.card);
+  const regift = await rpc(shop2, "save_card", { p_goal: 8, p_gift: "كرواسون بلاش", p_color: "#6C47FF" });
+  check("another gift: both on the way keep theirs", regift.kept === 2, regift);
+  v1 = await rpc(p1, "card", { p_id: p1b.card.id });
+  check("Rania: still 5 for a coffee; next, a croissant", v1.shop.goal === 5 && v1.shop.gift === "قهوة بلاش" && v1.next?.gift === "كرواسون بلاش", v1);
+  const eased = await rpc(shop2, "save_card", { p_goal: 3, p_gift: "  قهوة   بلاش ", p_color: "#6C47FF" });
+  check("the same coffee for fewer stamps (spaces aside): both get the easier card at once", eased.eased === 2 && eased.filled === 0, eased);
+  v1 = await rpc(p1, "card", { p_id: p1b.card.id });
+  check("Rania: 2 of 3 now", v1.shop.goal === 3 && v1.stamps === 2 && !v1.waiting, v1);
+  await admin.from("cards").update({ stamps: 4 }).eq("id", p1b.card.id);
+  const fill1 = await rpc(shop2, "save_card", { p_goal: 3, p_gift: "قهوة بلاش", p_color: "#6C47FF" });
+  check("a card that reaches its goal gets its gift waiting", fill1.filled === 1, fill1);
+  await rpc(shop2, "save_card", { p_goal: 6, p_gift: "كرواسون بلاش", p_color: "#6C47FF" });
+  const g2 = (await rpc(shop2, "shop_home")).waiting;
+  check("the waiting gift stays the coffee she earned, whatever the card says now", g2.length === 1 && g2[0].gift === "قهوة بلاش", g2);
+  check("handing it over", (await rpc(shop2, "give", { p_moment: g2[0].id })).ok);
+  v1 = await rpc(p1, "card", { p_id: p1b.card.id });
+  check("her card's own goal leaves it (4 − 3 = 1), and the next card is today's: 1 of 6 for a croissant", v1.stamps === 1 && v1.shop.goal === 6 && v1.shop.gift === "كرواسون بلاش" && !v1.next && v1.gifts === 1, v1);
+  check("the story names the gift she got", v1.history.some((h) => h.kind === "gift" && h.given && h.gift === "قهوة بلاش"), v1.history);
+  await admin.from("cards").update({ stamps: 0 }).eq("id", p1b.card.id);
+  await rpc(shop2, "save_card", { p_goal: 7, p_gift: "عصير بلاش", p_color: "#6C47FF" });
+  v1 = await rpc(p1, "card", { p_id: p1b.card.id });
+  check("a card at rest (no stamps) takes the new card at once", v1.shop.goal === 7 && v1.shop.gift === "عصير بلاش" && !v1.next, v1);
+
+  console.log("\nTwo phones, one code, the same instant");
+  const twinA = await person("Twin A");
+  const twinB = await person("Twin B");
+  const cTwin = await rpc(shop2, "new_code");
+  const [ra, rb] = await Promise.all([rpc(twinA, "stamp", { p_token: cTwin.token }), rpc(twinB, "stamp", { p_token: cTwin.token })]);
+  check("exactly one of them gets the stamp, the other is told to scan the new code", [ra, rb].filter((r) => r.ok).length === 1 && [ra, rb].some((r) => r.error === "used"), [ra, rb]);
+
+  console.log("\nThe counter's radio");
+  const heard = await new Promise((resolve) => {
+    const ear = createClient(URL_, ANON, { auth: { persistSession: false } });
+    let ch = null;
+    const timer = setTimeout(() => done(false), 15000);
+    function done(v) {
+      clearTimeout(timer);
+      if (ch) void ear.removeChannel(ch);
+      resolve(v);
+    }
+    ch = ear
+      .channel(`pointili:${signal}`)
+      .on("broadcast", { event: "ping" }, () => done(true))
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") setTimeout(() => void stampAt(p2), 1000);
+      });
+  });
+  check("a scan pings the shop's counter over Realtime", heard === true);
+
+  console.log("\nDoors that count");
+  const door = `test:${randomBytes(6).toString("hex")}`;
+  const opens = [];
+  for (let i = 0; i < 9; i++) opens.push((await admin.rpc("try_once", { p_key: door, p_max: 8, p_minutes: 15 })).data);
+  check("8 tries go through, the 9th waits", opens.slice(0, 8).every((x) => x === true) && opens[8] === false, opens);
+  await admin.rpc("forget_tries", { p_key: door });
+  check("a good sign-in forgets the tries", (await admin.rpc("try_once", { p_key: door, p_max: 8, p_minutes: 15 })).data === true);
+  await admin.rpc("forget_tries", { p_key: door });
+  check("a browser cannot count or clear tries", !!(await sami.client.rpc("try_once", { p_key: door, p_max: 1, p_minutes: 1 })).error && !!(await sami.client.rpc("forget_tries", { p_key: door })).error);
+  check("a browser cannot sign anyone out", !!(await sami.client.rpc("end_sessions", { p_user: sami.id })).error);
+  const gone = await person("Gone");
+  await admin.auth.admin.deleteUser(gone.id);
+  check("an account deleted while still signed in is nobody (no half-person)", (await rpc(gone, "me")) === null);
+
   console.log("\nThe founder's console");
   const boss = await person("Boss");
   await admin.from("people").update({ is_admin: true }).eq("id", boss.id);
@@ -155,6 +243,9 @@ try {
   await rpc(boss, "admin_set_paused", { p_id: found[0].id, p_paused: false });
   check("resumed, it makes codes again", (await rpc(owner, "new_code")).ok === true);
   check("the founder lists people, admins marked", (await rpc(boss, "admin_people", { p_q: "Boss" })).some((p) => p.admin));
+  const rania = await rpc(boss, "admin_person", { p_id: p1.id });
+  check("one person's page: the name, the cards", rania?.name === "Rania" && rania.cards.length === 1 && rania.cards[0].shop === "Promise Café", rania);
+  check("a customer cannot open someone's page", !!(await rpc(sami, "admin_person", { p_id: p1.id })).error);
   const mystery = (await rpc(boss, "admin_shops", { p_q: "Mystery" }))[0];
   check("the founder deletes a shop", (await rpc(boss, "admin_delete_shop", { p_id: mystery.id })).ok && (await rpc(odd, "me")).shop === null);
 } catch (e) {

@@ -1,19 +1,24 @@
 -- ═══ Pointili: the whole database, one file ══════════════════════════════════
--- Five tables: people, shops (with their one card), cards (a customer's card
--- at a shop), codes (the counter's one-use QR codes) and moments (a stamp, or
--- a gift — waiting until the shop gives it). Everything goes through the
--- functions below; nobody reads a table directly.
+-- Six tables: people, shops (with their one card), cards (a customer's card
+-- at a shop), codes (the counter's one-use QR codes), moments (a stamp, or a
+-- gift — waiting until the shop gives it) and tries (the doors that count).
+-- Everything goes through the functions below; nobody reads a table directly.
 --
 -- The rules, all of them:
 --   · a shop has one card: N stamps = one gift;
+--   · a customer's card is a promise: it keeps the goal and the gift it
+--     started with until that gift is handed over, so a change of card never
+--     takes anything away. A card at rest (no stamps) takes the new card at
+--     once, and the same gift for fewer stamps is for everyone at once;
 --   · a counter code works once, for 60 seconds;
 --   · a phone without an account can hold a code for 20 minutes, the time to
 --     make one — the stamp is theirs when they come back signed in;
 --   · one stamp per shop per hour, per customer;
---   · when a card reaches the goal a gift waits; the shop taps «عطيتو», the
---     goal's stamps leave the card and the rest carries over;
+--   · when a card reaches its goal a gift waits; the shop taps «عطيتو», the
+--     goal's stamps leave the card and the rest carries over to the next one;
 --   · an owner never stamps his own card;
 --   · a paused shop (the founder's switch) gives no stamps until resumed;
+--   · signing in and making accounts are counted: too many tries, a pause;
 --   · the founder (people.is_admin) sees and steers every shop.
 -- Re-runnable: every statement is safe to apply again.
 
@@ -48,6 +53,9 @@ create table if not exists public.cards (
   created_at  timestamptz not null default now(),
   unique (shop_id, user_id)
 );
+-- the card this customer is on: the shop's goal and gift on the day it started
+alter table public.cards add column if not exists goal int check (goal between 3 and 30);
+alter table public.cards add column if not exists gift text;
 create index if not exists cards_user_idx on public.cards (user_id, last_at desc);
 create index if not exists cards_shop_idx on public.cards (shop_id, last_at desc);
 
@@ -63,6 +71,8 @@ create table if not exists public.codes (
   created_at  timestamptz not null default now()
 );
 create index if not exists codes_shop_idx on public.codes (shop_id, created_at desc);
+-- the counter's private radio: Realtime topic "pointili:<signal>", told of every scan
+alter table public.shops add column if not exists signal text not null default encode(extensions.gen_random_bytes(16), 'hex');
 
 create table if not exists public.moments (
   id          bigint generated always as identity primary key,
@@ -75,11 +85,25 @@ create table if not exists public.moments (
 create index if not exists moments_shop_idx on public.moments (shop_id, created_at desc);
 create index if not exists moments_card_idx on public.moments (card_id, created_at desc);
 create unique index if not exists moments_one_waiting_gift on public.moments (card_id) where kind = 'gift' and given_at is null;
+-- a gift remembers what it was, whatever the card says later
+alter table public.moments add column if not exists gift text;
+
+-- every door that counts (signing in, making an account): one row per try
+create table if not exists public.tries (
+  id          bigint generated always as identity primary key,
+  key         text not null,
+  at          timestamptz not null default now()
+);
+create index if not exists tries_key_idx on public.tries (key, at desc);
+
+-- cards and gifts from before cards were promises
+update public.cards c set goal = s.goal, gift = s.gift from public.shops s where s.id = c.shop_id and c.goal is null and s.goal is not null;
+update public.moments m set gift = c.gift from public.cards c where c.id = m.card_id and m.kind = 'gift' and m.gift is null;
 
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -112,9 +136,23 @@ $$;
 
 create or replace function public.kinds() returns text[]
 language sql immutable set search_path = '' as $$
-  select array['cafe', 'juice', 'bakery', 'pastry', 'viennoiserie', 'restaurant', 'fastfood', 'pizza', 'grill',
-               'barber', 'hair', 'beauty', 'nails', 'clothes', 'phones', 'grocery', 'gym', 'games', 'events',
-               'carwash', 'gifts', 'other']
+  select array[
+    -- food and drink
+    'cafe', 'juice', 'bakery', 'pastry', 'viennoiserie', 'crepes', 'restaurant', 'fastfood', 'snack', 'pizza', 'grill',
+    -- the house's shopping
+    'grocery', 'market', 'butcher', 'fish', 'veggies', 'roastery',
+    -- beauty and health
+    'barber', 'hair', 'beauty', 'nails', 'perfume', 'parapharmacy', 'hammam', 'optics', 'gym',
+    -- things
+    'clothes', 'fripe', 'shoes', 'bags', 'jewelry', 'phones', 'electronics', 'books', 'toys', 'gifts', 'flowers', 'pets', 'hardware',
+    -- services and fun
+    'carwash', 'mechanic', 'laundry', 'tailor', 'print', 'photo', 'courses', 'games', 'pitch', 'events', 'other']
+$$;
+
+-- «قهوة بلاش» and «  قهوة   بلاش » are the same gift
+create or replace function public.same_gift(a text, b text) returns boolean
+language sql immutable set search_path = '' as $$
+  select lower(regexp_replace(trim(coalesce(a, '')), '\s+', ' ', 'g')) = lower(regexp_replace(trim(coalesce(b, '')), '\s+', ' ', 'g'))
 $$;
 
 create or replace function public.tunis_today() returns timestamptz
@@ -129,15 +167,27 @@ language sql immutable set search_path = '' as $$
               else substr(right(p_phone, 8), 1, 2) || ' ••• ' || right(p_phone, 3) end
 $$;
 
--- what a customer's card looks like, everywhere it is shown
+-- is a gift waiting on this card?
+create or replace function public.waits(p_card uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.moments m where m.card_id = p_card and m.kind = 'gift' and m.given_at is null)
+$$;
+
+-- what a customer's card looks like, everywhere it is shown: the goal and the
+-- gift are this card's own (the promise); "next" is the shop's card of today
+-- when it differs — it starts for this customer after this gift
 create or replace function public.card_view(p_card uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select jsonb_build_object(
     'id', c.id, 'stamps', c.stamps, 'gifts', c.gifts, 'last_at', c.last_at,
-    'ready', s.goal is not null and c.stamps >= s.goal,
-    'waiting', exists (select 1 from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null),
-    'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color))
+    'ready', w.waiting, 'waiting', w.waiting,
+    'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color,
+                               'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift)),
+    'next', case when s.goal is not null
+                  and (coalesce(c.goal, s.goal) <> s.goal or not public.same_gift(coalesce(c.gift, s.gift), s.gift))
+                 then jsonb_build_object('goal', s.goal, 'gift', s.gift) end)
   from public.cards c join public.shops s on s.id = c.shop_id
+  cross join lateral (select public.waits(c.id) as waiting) w
   where c.id = p_card
 $$;
 
@@ -153,12 +203,15 @@ begin
     select v_uid, nullif(u.raw_app_meta_data ->> 'phone', '') from auth.users u where u.id = v_uid
     on conflict (id) do nothing;
     select * into p from public.people where id = v_uid;
+    -- the account is gone (deleted while this phone was still signed in): nobody
+    if p.id is null then return null; end if;
   end if;
   select * into s from public.shops where owner_id = v_uid;
   return jsonb_build_object(
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin,
     'shop', case when s.id is null then null else jsonb_build_object(
-      'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused) end);
+      'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
+      'signal', s.signal) end);
 end $$;
 
 create or replace function public.set_name(p_name text) returns jsonb
@@ -185,22 +238,49 @@ begin
   return jsonb_build_object('ok', true, 'id', s.id);
 end $$;
 
+-- the card, made or changed. What happens to the customers' cards:
+--   · at rest (no stamps, no gift waiting): the new card, at once;
+--   · on the way, same gift, fewer stamps: the easier goal, at once — and a
+--     card that it fills gets its gift waiting now;
+--   · on the way otherwise (more stamps, another gift): they finish the card
+--     they started; the new one is theirs after that gift.
 create or replace function public.save_card(p_goal int, p_gift text, p_color text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare s public.shops%rowtype;
+declare s public.shops%rowtype; v_gift text := trim(coalesce(p_gift, '')); v_eased int; v_filled int; v_kept int;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
   if p_goal is null or p_goal not between 3 and 30 then return public.err('invalid_goal'); end if;
-  if char_length(trim(coalesce(p_gift, ''))) not between 2 and 60 then return public.err('invalid_gift'); end if;
+  if char_length(v_gift) not between 2 and 60 then return public.err('invalid_gift'); end if;
   if coalesce(p_color, '') !~ '^#[0-9A-Fa-f]{6}$' then p_color := s.color; end if;
-  update public.shops set goal = p_goal, gift = trim(p_gift), color = upper(p_color) where id = s.id;
-  -- a lower goal can fill cards at once: their gift waits now
-  insert into public.moments (shop_id, card_id, kind)
-  select s.id, c.id, 'gift' from public.cards c
-  where c.shop_id = s.id and c.stamps >= p_goal
-    and not exists (select 1 from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null);
-  return jsonb_build_object('ok', true);
+  update public.shops set goal = p_goal, gift = v_gift, color = upper(p_color) where id = s.id;
+
+  update public.cards c set goal = p_goal, gift = v_gift
+  where c.shop_id = s.id and c.stamps = 0 and not public.waits(c.id);
+
+  update public.cards c set goal = p_goal
+  where c.shop_id = s.id and c.stamps > 0 and coalesce(c.goal, 999) > p_goal and public.same_gift(c.gift, v_gift) and not public.waits(c.id);
+  get diagnostics v_eased = row_count;
+
+  insert into public.moments (shop_id, card_id, kind, gift)
+  select s.id, c.id, 'gift', coalesce(c.gift, v_gift) from public.cards c
+  where c.shop_id = s.id and c.stamps >= coalesce(c.goal, p_goal) and not public.waits(c.id);
+  get diagnostics v_filled = row_count;
+
+  select count(*) into v_kept from public.cards c
+  where c.shop_id = s.id and c.stamps > 0 and not public.waits(c.id)
+    and (c.goal is distinct from p_goal or not public.same_gift(c.gift, v_gift));
+  return jsonb_build_object('ok', true, 'eased', v_eased, 'filled', v_filled, 'kept', v_kept);
+end $$;
+
+-- how many customers are on their way (stamps, no gift waiting): what a change of card would touch
+create or replace function public.in_progress() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return jsonb_build_object('ok', true, 'n', (select count(*) from public.cards c where c.shop_id = s.id and c.stamps > 0 and not public.waits(c.id)));
 end $$;
 
 -- the owner's home: today, the gifts waiting, who came lately
@@ -216,12 +296,13 @@ begin
     'visitors_today', (select count(distinct card_id) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
     'given', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is not null),
     'waiting', coalesce((
-      select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(split_part(p.name, ' ', 1), ''), 'gift', s.gift) order by m.created_at)
+      select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(split_part(p.name, ' ', 1), ''), 'gift', coalesce(m.gift, c.gift, s.gift)) order by m.created_at)
       from public.moments m join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id
       where m.shop_id = s.id and m.kind = 'gift' and m.given_at is null), '[]'::jsonb),
     'recent', coalesce((
       select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'kind', m.kind, 'given', m.given_at is not null,
-                                          'name', nullif(split_part(p.name, ' ', 1), ''), 'stamps', c.stamps, 'goal', s.goal)
+                                          'name', nullif(split_part(p.name, ' ', 1), ''), 'stamps', c.stamps, 'goal', coalesce(c.goal, s.goal),
+                                          'gift', coalesce(m.gift, c.gift, s.gift))
                        order by m.created_at desc)
       from (select * from public.moments where shop_id = s.id order by created_at desc limit 8) m
       join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb));
@@ -237,7 +318,7 @@ begin
   return jsonb_build_object('ok', true, 'goal', s.goal, 'items', coalesce((
     select jsonb_agg(jsonb_build_object('id', c.id, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone),
                                         'stamps', c.stamps, 'gifts', c.gifts, 'last_at', c.last_at,
-                                        'ready', s.goal is not null and c.stamps >= s.goal)
+                                        'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift), 'ready', public.waits(c.id))
                      order by c.last_at desc nulls last, c.created_at desc)
     from public.cards c left join public.people p on p.id = c.user_id
     where c.shop_id = s.id), '[]'::jsonb));
@@ -289,7 +370,7 @@ begin
     'expired', k.id is null or k.expires_at <= now(),
     'stamps', coalesce((
       select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(split_part(p.name, ' ', 1), ''),
-                                          'stamps', c.stamps, 'goal', s.goal) order by m.created_at)
+                                          'stamps', c.stamps, 'goal', coalesce(c.goal, s.goal)) order by m.created_at)
       from (select * from public.moments where shop_id = s.id and kind = 'stamp' and created_at > coalesce(p_since, now())
             order by created_at desc limit 20) m
       join public.cards c on c.id = m.card_id
@@ -297,7 +378,7 @@ begin
     ), '[]'::jsonb),
     'gifts', coalesce((
       select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(split_part(p.name, ' ', 1), ''),
-                                          'gift', s.gift) order by m.created_at)
+                                          'gift', coalesce(m.gift, c.gift, s.gift)) order by m.created_at)
       from public.moments m
       join public.cards c on c.id = m.card_id
       left join public.people p on p.id = c.user_id
@@ -306,7 +387,8 @@ begin
   );
 end $$;
 
--- the shop hands the gift over: the goal's stamps leave the card, the rest carries over
+-- the shop hands the gift over: the card's goal of stamps leaves it, and the
+-- rest carries over to the next card — the shop's card as it is today
 create or replace function public.give(p_moment bigint) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; m public.moments%rowtype; c public.cards%rowtype;
@@ -316,10 +398,12 @@ begin
   select * into m from public.moments where id = p_moment and shop_id = s.id and kind = 'gift' for update;
   if m.id is null then return public.err('not_found'); end if;
   if m.given_at is not null then return jsonb_build_object('ok', true, 'already', true); end if;
+  perform 1 from public.cards where id = m.card_id for update;
   update public.moments set given_at = now() where id = m.id;
-  update public.cards set stamps = greatest(stamps - s.goal, 0), gifts = gifts + 1 where id = m.card_id returning * into c;
-  if c.stamps >= s.goal then
-    insert into public.moments (shop_id, card_id, kind) values (s.id, c.id, 'gift');
+  update public.cards set stamps = greatest(stamps - coalesce(goal, s.goal), 0), gifts = gifts + 1, goal = s.goal, gift = s.gift
+  where id = m.card_id returning * into c;
+  if c.stamps >= c.goal then
+    insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
   end if;
   return jsonb_build_object('ok', true);
 end $$;
@@ -352,6 +436,7 @@ declare
   s public.shops%rowtype;
   c public.cards%rowtype;
   v_gift boolean := false;
+  v_waiting boolean;
 begin
   if v_uid is null then return public.err('not_signed_in'); end if;
   if p_token is null or p_token !~ '^[A-Za-z0-9_-]{20,64}$' then return public.err('invalid'); end if;
@@ -378,18 +463,24 @@ begin
   if s.paused then return public.err('paused', jsonb_build_object('shop', s.name)); end if;
 
   insert into public.people (id) values (v_uid) on conflict (id) do nothing;
-  insert into public.cards (shop_id, user_id) values (s.id, v_uid) on conflict (shop_id, user_id) do nothing;
+  insert into public.cards (shop_id, user_id, goal, gift) values (s.id, v_uid, s.goal, s.gift) on conflict (shop_id, user_id) do nothing;
   select * into c from public.cards where shop_id = s.id and user_id = v_uid for update;
 
   if c.last_at is not null and c.last_at > now() - interval '60 minutes' then
     return public.err('too_soon', jsonb_build_object('next_at', c.last_at + interval '60 minutes', 'card', public.card_view(c.id)));
   end if;
 
+  v_waiting := public.waits(c.id);
   update public.codes set used_at = now(), used_by = v_uid where id = k.id;
-  update public.cards set stamps = stamps + 1, last_at = now() where id = c.id returning * into c;
+  -- a card at rest follows the shop's card of today; a card on its way keeps the one it started
+  update public.cards set
+    goal = case when (stamps = 0 and not v_waiting) or goal is null then s.goal else goal end,
+    gift = case when (stamps = 0 and not v_waiting) or gift is null then s.gift else gift end,
+    stamps = stamps + 1, last_at = now()
+  where id = c.id returning * into c;
   insert into public.moments (shop_id, card_id, kind) values (s.id, c.id, 'stamp');
-  if c.stamps >= s.goal and not exists (select 1 from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null) then
-    insert into public.moments (shop_id, card_id, kind) values (s.id, c.id, 'gift');
+  if c.stamps >= c.goal and not v_waiting then
+    insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
     v_gift := true;
   end if;
   return jsonb_build_object('ok', true, 'gift', v_gift, 'card', public.card_view(c.id));
@@ -404,7 +495,7 @@ $$;
 create or replace function public.card(p_id uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select public.card_view(c.id) || jsonb_build_object('history', coalesce((
-           select jsonb_agg(jsonb_build_object('kind', m.kind, 'at', coalesce(m.given_at, m.created_at), 'given', m.given_at is not null)
+           select jsonb_agg(jsonb_build_object('kind', m.kind, 'at', coalesce(m.given_at, m.created_at), 'given', m.given_at is not null, 'gift', m.gift)
                             order by coalesce(m.given_at, m.created_at) desc)
            from (select * from public.moments where card_id = c.id order by created_at desc limit 30) m), '[]'::jsonb))
   from public.cards c where c.id = p_id and c.user_id = auth.uid()
@@ -472,12 +563,13 @@ begin
     'given', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is not null),
     'waiting', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is null),
     'recent', coalesce((
-      select jsonb_agg(jsonb_build_object('at', m.created_at, 'kind', m.kind, 'given', m.given_at is not null,
+      select jsonb_agg(jsonb_build_object('at', m.created_at, 'kind', m.kind, 'given', m.given_at is not null, 'gift', m.gift,
                                           'name', nullif(p.name, ''), 'phone', public.masked(p.phone)) order by m.created_at desc)
       from (select * from public.moments where shop_id = s.id order by created_at desc limit 15) m
       join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb),
     'top', coalesce((
-      select jsonb_agg(jsonb_build_object('name', nullif(p.name, ''), 'phone', public.masked(p.phone), 'stamps', c.stamps, 'gifts', c.gifts) order by c.gifts desc, c.stamps desc)
+      select jsonb_agg(jsonb_build_object('name', nullif(p.name, ''), 'phone', public.masked(p.phone), 'stamps', c.stamps, 'gifts', c.gifts,
+                                          'goal', coalesce(c.goal, s.goal)) order by c.gifts desc, c.stamps desc)
       from (select * from public.cards where shop_id = s.id order by gifts desc, stamps desc limit 5) c
       left join public.people p on p.id = c.user_id), '[]'::jsonb));
 end $$;
@@ -520,14 +612,76 @@ begin
   ), '[]'::jsonb);
 end $$;
 
+-- one person: who, their shop, their cards
+create or replace function public.admin_person(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare p public.people%rowtype;
+begin
+  perform public.require_admin();
+  select * into p from public.people where id = p_id;
+  if p.id is null then return null; end if;
+  return jsonb_build_object(
+    'id', p.id, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'created_at', p.created_at,
+    'shop', (select jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color) from public.shops s where s.owner_id = p.id),
+    'cards', coalesce((
+      select jsonb_agg(jsonb_build_object('shop', s.name, 'kind', s.kind, 'color', s.color, 'stamps', c.stamps,
+                                          'goal', coalesce(c.goal, s.goal), 'gifts', c.gifts, 'last_at', c.last_at)
+                       order by c.last_at desc nulls last)
+      from public.cards c join public.shops s on s.id = c.shop_id where c.user_id = p.id), '[]'::jsonb));
+end $$;
+
+-- ═══ the server's own doors (service role only) ════════════════════════════
+-- one more try at something that has a limit: false when there were too many lately
+create or replace function public.try_once(p_key text, p_max int, p_minutes int) returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare n int;
+begin
+  delete from public.tries where key = p_key and at < now() - make_interval(mins => p_minutes);
+  select count(*) into n from public.tries where key = p_key;
+  if n >= p_max then return false; end if;
+  insert into public.tries (key) values (p_key);
+  if random() < 0.02 then delete from public.tries where at < now() - interval '1 day'; end if;
+  return true;
+end $$;
+
+create or replace function public.forget_tries(p_key text) returns void
+language sql security definer set search_path = '' as $$
+  delete from public.tries where key = p_key
+$$;
+
+-- a new password from the founder: every phone signed in with the old one is signed out
+create or replace function public.end_sessions(p_user uuid) returns void
+language sql security definer set search_path = '' as $$
+  delete from auth.sessions where user_id = p_user
+$$;
+
+-- ═══ the counter's radio ═══════════════════════════════════════════════════
+-- every scan (a stamp, a gift, a code held for a phone without an account)
+-- pings the shop's counter at once over Realtime, and the counter asks what
+-- happened. A ping that fails never fails the scan.
+create or replace function public.ping_counter() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  begin
+    perform realtime.send('{}'::jsonb, 'ping', 'pointili:' || (select s.signal from public.shops s where s.id = new.shop_id), false);
+  exception when others then null;
+  end;
+  return null;
+end $$;
+drop trigger if exists moments_ping on public.moments;
+create trigger moments_ping after insert on public.moments for each row execute function public.ping_counter();
+drop trigger if exists codes_ping on public.codes;
+create trigger codes_ping after update of held_hash on public.codes for each row
+  when (old.held_hash is null and new.held_hash is not null) execute function public.ping_counter();
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 grant execute on function public.me(), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text),
-  public.shop_home(), public.shop_customers(), public.shop_numbers(),
+  public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
-  public.admin_delete_shop(uuid), public.admin_people(text) to authenticated;
+  public.admin_delete_shop(uuid), public.admin_people(text), public.admin_person(uuid) to authenticated;
 grant execute on all functions in schema public to service_role;
 
 -- nothing a visitor without an account can call

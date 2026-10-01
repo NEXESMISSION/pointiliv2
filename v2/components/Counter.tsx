@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { Check, ChevronRight, WifiOff } from "lucide-react";
 import { give } from "@/app/actions";
 import { Confetti } from "@/components/StampLand";
@@ -14,6 +15,21 @@ type Gift = { id: number; name: string | null; gift: string };
 
 /** a code is replaced this long before it dies, so a phone never scans a dead one */
 const RENEW_BEFORE_MS = 10_000;
+/** how often the counter asks, with the radio on (a safety net) and without it */
+const ASK_LIVE_MS = 6_000;
+const ASK_DEAF_MS = 1_500;
+/** a paused shop: how often it checks whether the founder switched it back on */
+const ASK_PAUSED_MS = 20_000;
+
+/** One radio for the page: Realtime only, no sign-in of its own. */
+let radio: SupabaseClient | null = null;
+function tuneIn(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  radio ??= createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: "pointili-counter-radio" } });
+  return radio;
+}
 
 /**
  * The owner's one screen. A code that works once, in the shop's colour: open
@@ -21,19 +37,27 @@ const RENEW_BEFORE_MS = 10_000;
  * code itself never moves, so the next phone can scan at once) and a fresh
  * code takes its place. When a card fills up, the gift waits at the bottom
  * of the screen until the owner taps «عطيتو».
+ *
+ * It hears every scan at once over Supabase Realtime (the shop's own topic,
+ * pinged by the database) and only then asks what happened; a slow question
+ * every few seconds stays as a safety net, and a fast one when the radio is
+ * off. A hidden screen asks nothing.
  */
-export function Counter({ shop }: { shop: { name: string; kind: string; color: string; paused?: boolean } }) {
+export function Counter({ shop }: { shop: { name: string; kind: string; color: string; paused?: boolean; signal?: string } }) {
   const [code, setCode] = useState<Code | null>(null);
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
   const [paused, setPaused] = useState(!!shop.paused);
   const [giving, setGiving] = useState(false);
+  const [giveFailed, setGiveFailed] = useState(false);
+  const [live, setLive] = useState(false);
   const [party, setParty] = useState(0);
   const codeRef = useRef<Code | null>(null);
   const seen = useRef(new Set<number>());
   const openedAt = useRef(new Date().toISOString());
   const busy = useRef(false);
+  const again = useRef(false);
 
   const mint = useCallback(async () => {
     const res = await fetch("/api/code", { method: "POST", cache: "no-store" });
@@ -51,7 +75,12 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
   }, []);
 
   const tick = useCallback(async () => {
-    if (busy.current || document.visibilityState !== "visible") return;
+    if (document.visibilityState !== "visible") return;
+    if (busy.current) {
+      // a ping during a question: ask once more right after
+      again.current = true;
+      return;
+    }
     busy.current = true;
     try {
       const c = codeRef.current;
@@ -80,13 +109,45 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
       setOffline(true);
     } finally {
       busy.current = false;
+      if (again.current) {
+        again.current = false;
+        setTimeout(() => void tickRef.current(), 0);
+      }
     }
   }, [mint]);
+  const tickRef = useRef(tick);
+  useEffect(() => {
+    tickRef.current = tick;
+  }, [tick]);
+
+  // the radio: the database pings "pointili:<signal>" on every scan
+  useEffect(() => {
+    if (!shop.signal || paused) return;
+    const sb = tuneIn();
+    if (!sb) return;
+    const channel = sb
+      .channel(`pointili:${shop.signal}`)
+      .on("broadcast", { event: "ping" }, () => void tickRef.current())
+      .subscribe((status) => setLive(status === "SUBSCRIBED"));
+    return () => {
+      setLive(false);
+      void sb.removeChannel(channel);
+    };
+  }, [shop.signal, paused]);
+
+  // paused by the founder: look now and then whether it is back on
+  useEffect(() => {
+    if (!paused) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") void mint().catch(() => {});
+    }, ASK_PAUSED_MS);
+    return () => clearInterval(id);
+  }, [paused, mint]);
 
   useEffect(() => {
     if (paused) return;
     const first = setTimeout(tick, 0);
-    const poll = setInterval(tick, 1000);
+    const poll = setInterval(tick, live ? ASK_LIVE_MS : ASK_DEAF_MS);
     const wake = () => document.visibilityState === "visible" && void tick();
     document.addEventListener("visibilitychange", wake);
     window.addEventListener("online", wake);
@@ -108,13 +169,15 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
       window.removeEventListener("online", wake);
       void lock?.release().catch(() => {});
     };
-  }, [tick, paused]);
+  }, [tick, paused, live]);
 
   const hand = async (g: Gift) => {
     setGiving(true);
-    const ok = await give(g.id);
+    setGiveFailed(false);
+    const ok = await give(g.id).catch(() => false);
     setGiving(false);
     if (ok) setGifts((list) => list.filter((x) => x.id !== g.id));
+    else setGiveFailed(true);
   };
 
   const latest = flashes[flashes.length - 1];
@@ -192,6 +255,7 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
             <button type="button" disabled={giving} onClick={() => void hand(gift)} className="press mt-4 h-[58px] w-full rounded-[20px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[19px] font-bold text-white shadow-[0_14px_30px_-12px_rgb(255_107_74/0.7)] disabled:opacity-60">
               {t.given}
             </button>
+            {giveFailed && <p className="mt-2 text-[14px] font-medium text-coral">{t.errNetwork}</p>}
             {gifts.length > 1 && <p className="num mt-2 text-[13px] text-muted">+{gifts.length - 1}</p>}
           </div>
         </div>

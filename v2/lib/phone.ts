@@ -1,6 +1,9 @@
+/** ٠١٢٣٤٥٦٧٨٩ and ۰۱۲۳۴۵۶۷۸۹ (some Arabic keyboards type them) → 0123456789. */
+export const western = (raw: string) => String(raw ?? "").replace(/[٠-٩۰-۹]/g, (d) => String(d.charCodeAt(0) & 0xf));
+
 /** A Tunisian mobile number: 8 digits, with or without +216. */
 export function digits(raw: string): string {
-  return String(raw ?? "").replace(/\D/g, "").replace(/^216(?=\d{8}$)/, "").slice(0, 8);
+  return western(raw).replace(/\D/g, "").replace(/^216(?=\d{8}$)/, "").slice(0, 8);
 }
 
 export const validPhone = (raw: string) => /^[2-9]\d{7}$/.test(digits(raw));

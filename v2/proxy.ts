@@ -4,7 +4,8 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * One job: keep the session fresh. A page cannot write cookies, so a token
  * refreshed during a render would be lost — and with refresh-token rotation,
- * lost means logged out. The refresh happens here, a day before expiry.
+ * lost means logged out. The refresh happens here, in the token's last ten
+ * minutes (it lives an hour): the other requests skip the round trip.
  */
 export async function proxy(request: NextRequest) {
   if (!needsRefresh(request)) return NextResponse.next();
@@ -37,7 +38,7 @@ function needsRefresh(request: NextRequest): boolean {
     const json = raw.startsWith("base64-") ? Buffer.from(raw.slice(7), "base64").toString("utf8") : decodeURIComponent(raw);
     const token = JSON.parse(json)?.access_token as string;
     const claims = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8"));
-    return Number(claims.exp) - Math.floor(Date.now() / 1000) < 86_400;
+    return Number(claims.exp) - Math.floor(Date.now() / 1000) < 600;
   } catch {
     return true;
   }

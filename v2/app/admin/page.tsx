@@ -132,7 +132,8 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         <ul className="mt-3 divide-y divide-line overflow-hidden rounded-[22px] bg-surface shadow-card">
           {(persons ?? []).length === 0 && <li className="p-4 text-center text-[15px] text-muted">{t.aNothing}</li>}
           {(persons ?? []).map((p) => (
-            <li key={p.id} className="flex items-center gap-3 px-4 py-3">
+            <li key={p.id}>
+              <Link href={`/admin/people/${p.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-canvas/60">
               <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[16px] font-bold text-white">{(p.name?.[0] ?? "؟").toUpperCase()}</span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
@@ -148,6 +149,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
                 <span className="num block text-[15px] font-bold">{p.cards}</span>
                 <span className="block text-[11px] text-muted">{t.aCards}</span>
               </span>
+              </Link>
             </li>
           ))}
         </ul>

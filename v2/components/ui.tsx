@@ -27,12 +27,16 @@ export function LinkBtn({ kind = "main", className = "", children, href }: { kin
   );
 }
 
-export function Field({ label, error, ...rest }: ComponentProps<"input"> & { label: string; error?: string | null }) {
+/** The look of every text box: white, rounded, a ring when typing in it. */
+export const boxLook = "rounded-[18px] bg-surface shadow-[var(--shadow-card),inset_0_0_0_1px_var(--color-line)]";
+export const boxFocus = "focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]";
+
+export function Field({ label, error, className = "", ...rest }: ComponentProps<"input"> & { label: string; error?: string | null }) {
   return (
     <label className="block">
       <span className="mb-1.5 block px-1 text-[14px] font-semibold text-muted">{label}</span>
       <input
-        className="block h-[56px] w-full rounded-[18px] bg-surface px-4 text-[17px] text-ink shadow-[var(--shadow-card),inset_0_0_0_1px_var(--color-line)] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]"
+        className={`block h-[56px] w-full px-4 text-[17px] text-ink outline-none placeholder:text-faint ${boxLook} ${boxFocus} ${className}`}
         aria-invalid={!!error}
         {...rest}
       />
@@ -46,20 +50,21 @@ export function Icon3D({ name, size = 32, className = "" }: { name: string; size
   return <img src={`/3d/${name}.png`} alt="" width={size} height={size} className={`e3d ${className}`} />;
 }
 
-/** A phone screen: centred, never wider than a phone, room for the notch and the home bar. */
+/**
+ * A phone screen: centred, never wider than a phone, room for the notch and
+ * the home bar. Sideways it clips (not hides: sticky still sticks), so a card
+ * that pops a little bigger never widens the page — a phone would zoom out.
+ */
 export function Screen({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <main className={`safe-t safe-b mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 ${className}`}>{children}</main>;
+  return <main className={`safe-t safe-b mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-5 ${className}`}>{children}</main>;
 }
 
+/** Pointili's mark — two loyalty cards, the front one with a sparkle — and the name. */
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 text-[20px] font-bold text-ink ${className}`} dir="ltr">
-      <span className="grid size-9 place-items-center rounded-[12px] bg-[linear-gradient(150deg,#9b7bff,#6c47ff_55%,#4a2ad6)] text-white shadow-[0_8px_18px_-8px_rgb(108_71_255/0.8)]">
-        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <circle cx="12" cy="12" r="8" />
-          <path d="m8.5 12.2 2.4 2.4 4.6-4.9" />
-        </svg>
-      </span>
+    <span className={`inline-flex items-center gap-2 text-[21px] font-bold text-ink ${className}`} dir="ltr">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand-mark.svg" alt="" width={40} height={29} className="drop-shadow-[0_6px_10px_rgb(80_40_200/0.25)]" />
       Pointili
     </span>
   );
