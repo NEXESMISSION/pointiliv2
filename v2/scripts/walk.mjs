@@ -17,7 +17,7 @@ config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
 const OUT = "shots";
 mkdirSync(OUT, { recursive: true });
-const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false }, db: { schema: "v2" } });
+const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
 const ownerPhone = phoneNo();
 const customerPhone = phoneNo();
@@ -64,7 +64,7 @@ try {
   await o.getByRole("button", { name: "5", exact: true }).click();
   await o.getByRole("button", { name: "#FF6B4A" }).click();
   await shot(o, "04-owner-card", 500);
-  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05-counter", 1200);
 
@@ -111,8 +111,27 @@ try {
   await shot(c, "15-scanner", 1500);
   await c.goto(BASE + "/me", { waitUntil: "load" });
   await shot(c, "16-account");
-  await o.goto(BASE + "/shop/settings", { waitUntil: "load" });
-  await shot(o, "17-settings");
+  await o.goto(BASE + "/shop", { waitUntil: "load" });
+  await shot(o, "17-owner-home");
+  await o.goto(BASE + "/shop/customers", { waitUntil: "load" });
+  await shot(o, "19-owner-customers");
+
+  // ── the founder's console, through a throwaway admin ──
+  const bossPhone = phoneNo();
+  const { data: bossUser } = await admin.auth.admin.createUser({ email: `216${bossPhone}@phone.pointidi.app`, password: "boss-walk-123", email_confirm: true, app_metadata: { phone: `+216${bossPhone}` } });
+  await admin.from("people").upsert({ id: bossUser.user.id, name: "Boss", phone: `+216${bossPhone}`, is_admin: true });
+  const a = await (await browser.newContext(phone)).newPage();
+  await a.goto(BASE + "/login", { waitUntil: "load" });
+  await a.locator('input[name="phone"]').fill(bossPhone);
+  await a.locator('input[name="password"]').fill("boss-walk-123");
+  await Promise.all([a.waitForURL("**/admin**", { timeout: 60000 }), a.locator('button[type="submit"]').click()]);
+  await shot(a, "20-admin");
+  await a.locator('a[href^="/admin/shops/"]').first().click();
+  await a.waitForURL("**/admin/shops/**");
+  await shot(a, "21-admin-shop");
+  await a.goto(BASE + "/admin?tab=people", { waitUntil: "load" });
+  await shot(a, "22-admin-people");
+  await admin.auth.admin.deleteUser(bossUser.user.id);
   const l = await (await browser.newContext(phone)).newPage();
   await l.goto(BASE + "/login", { waitUntil: "load" });
   await shot(l, "18-login");

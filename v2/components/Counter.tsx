@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Settings, WifiOff } from "lucide-react";
+import { Check, ChevronRight, WifiOff } from "lucide-react";
 import { give } from "@/app/actions";
 import { Confetti } from "@/components/StampLand";
 import { Icon3D } from "@/components/ui";
@@ -22,11 +22,12 @@ const RENEW_BEFORE_MS = 10_000;
  * code takes its place. When a card fills up, the gift waits at the bottom
  * of the screen until the owner taps «عطيتو».
  */
-export function Counter({ shop }: { shop: { name: string; kind: string; color: string } }) {
+export function Counter({ shop }: { shop: { name: string; kind: string; color: string; paused?: boolean } }) {
   const [code, setCode] = useState<Code | null>(null);
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
+  const [paused, setPaused] = useState(!!shop.paused);
   const [giving, setGiving] = useState(false);
   const [party, setParty] = useState(0);
   const codeRef = useRef<Code | null>(null);
@@ -37,7 +38,12 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
   const mint = useCallback(async () => {
     const res = await fetch("/api/code", { method: "POST", cache: "no-store" });
     const j = await res.json();
+    if (j.error === "paused") {
+      setPaused(true);
+      return;
+    }
     if (!j.ok) throw new Error(j.error ?? "network");
+    setPaused(false);
     const offset = Date.parse(j.server_now) - Date.now();
     const c = { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset };
     codeRef.current = c;
@@ -78,6 +84,7 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
   }, [mint]);
 
   useEffect(() => {
+    if (paused) return;
     const first = setTimeout(tick, 0);
     const poll = setInterval(tick, 1000);
     const wake = () => document.visibilityState === "visible" && void tick();
@@ -101,7 +108,7 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
       window.removeEventListener("online", wake);
       void lock?.release().catch(() => {});
     };
-  }, [tick]);
+  }, [tick, paused]);
 
   const hand = async (g: Gift) => {
     setGiving(true);
@@ -127,13 +134,13 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
       {party > 0 && <Confetti key={party} count={50} />}
 
       <header className="safe-t relative z-10 flex items-center gap-3 px-5">
+        <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-white/15 hover:bg-white/25" aria-label={t.back}>
+          <ChevronRight className="size-5" />
+        </Link>
+        <p className="min-w-0 flex-1 truncate text-center text-[19px] font-bold">{shop.name}</p>
         <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white/20">
           <Icon3D name={kindIcon(shop.kind)} size={28} />
         </span>
-        <p className="min-w-0 flex-1 truncate text-[19px] font-bold">{shop.name}</p>
-        <Link href="/shop/settings" className="press grid size-11 shrink-0 place-items-center rounded-full bg-white/15 hover:bg-white/25" aria-label={t.settings}>
-          <Settings className="size-5" />
-        </Link>
       </header>
 
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-8">
@@ -144,7 +151,11 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
             <span key={f.id} className="absolute inset-0 rounded-[34px] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
           ))}
           <div className="absolute inset-0 rounded-[34px] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
-            {code ? (
+            {paused ? (
+              <div className="grid size-full place-items-center p-6 text-center">
+                <p className="text-[19px] font-bold text-ink">{t.pausedBanner}</p>
+              </div>
+            ) : code ? (
               <div key={code.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-25" : ""}`} dangerouslySetInnerHTML={{ __html: code.svg }} role="img" aria-label={t.counterTitle} data-qr="1" />
             ) : (
               <div className="grid size-full place-items-center">

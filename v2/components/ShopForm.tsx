@@ -3,10 +3,9 @@
 import { useActionState, useState } from "react";
 import { openShop } from "@/app/actions";
 import { Btn, Field, Icon3D } from "@/components/ui";
-import { kindIcon, t } from "@/lib/t";
+import { KINDS, kindIcon, t } from "@/lib/t";
 import type { FormState } from "@/lib/types";
 
-const KINDS = ["cafe", "bakery", "restaurant", "pizza", "salon", "beauty", "shop", "other"];
 
 /** Step 2 for an owner: the shop's name and what it sells — two answers, one tap each. */
 export function ShopForm({ name = "", kind = "cafe", next }: { name?: string; kind?: string; next?: string }) {
@@ -23,10 +22,10 @@ export function ShopForm({ name = "", kind = "cafe", next }: { name?: string; ki
             type="button"
             onClick={() => setK(id)}
             aria-pressed={k === id}
-            className={`press flex flex-col items-center gap-1 rounded-[18px] py-3 text-[13px] font-semibold ${k === id ? "bg-brand-soft text-brand shadow-[inset_0_0_0_2px_var(--color-brand)]" : "bg-surface text-body shadow-card"}`}
+            className={`press flex flex-col items-center gap-1 rounded-[18px] px-1 py-3 text-[12.5px] font-semibold leading-tight ${k === id ? "bg-brand-soft text-brand shadow-[inset_0_0_0_2px_var(--color-brand)]" : "bg-surface text-body shadow-card"}`}
           >
-            <Icon3D name={kindIcon(id)} size={34} />
-            {t.kinds[id]}
+            <Icon3D name={kindIcon(id)} size={32} />
+            <span className="line-clamp-2 text-center">{t.kinds[id]}</span>
           </button>
         ))}
       </div>

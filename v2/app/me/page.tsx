@@ -15,7 +15,7 @@ export default async function Account() {
   if (!me) redirect("/login?next=/me");
   return (
     <Screen>
-      <Top back={me.shop ? "/shop/settings" : "/"} title={t.account} />
+      <Top back={me.admin ? "/admin" : me.shop ? "/shop" : "/"} title={t.account} />
       <div className="mt-6 space-y-5">
         <NameForm name={me.name} />
         {me.phone && (

@@ -11,7 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 config({ path: ".env.local", quiet: true });
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false }, db: { schema: "v2" } });
+const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
 let passed = 0;
 const failed = [];
@@ -33,7 +33,7 @@ async function person(name) {
   const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { phone: `+216${digits}` } });
   if (error) throw error;
   users.push(data.user.id);
-  const client = createClient(URL_, ANON, { auth: { persistSession: false }, db: { schema: "v2" } });
+  const client = createClient(URL_, ANON, { auth: { persistSession: false } });
   const { error: e2 } = await client.auth.signInWithPassword({ email, password });
   if (e2) throw e2;
   if (name) await client.rpc("set_name", { p_name: name });
@@ -85,7 +85,7 @@ try {
   const newbie = await person("Amel");
   const s3 = await rpc(newbie, "stamp", { p_token: c3.token, p_hold: hold });
   check("the same phone, back with an account, gets its stamp", s3.ok && s3.card.stamps === 1, s3);
-  const anon = createClient(URL_, ANON, { auth: { persistSession: false }, db: { schema: "v2" } });
+  const anon = createClient(URL_, ANON, { auth: { persistSession: false } });
   const anonHold = await anon.rpc("hold", { p_token: c3.token, p_hold: hold });
   check("a browser cannot call hold itself (server only)", !!anonHold.error);
   const anonStamp = await anon.rpc("stamp", { p_token: c3.token });
@@ -127,6 +127,36 @@ try {
   check("the owner's numbers", nums.ok && nums.customers === 2 && nums.gifts === 1 && nums.today >= 7, nums);
   const direct = await sami.client.from("cards").select("*");
   check("tables are closed to the app (functions only)", !!direct.error || (direct.data ?? []).length === 0, direct.error?.message);
+
+  console.log("\nThe owner's home");
+  const home = await rpc(owner, "shop_home");
+  check("the owner's home: numbers, waiting gifts, the latest moments", home.ok && home.customers === 2 && home.recent.length > 0 && Array.isArray(home.waiting), home);
+  const cust = await rpc(owner, "shop_customers");
+  check("the owner's customers, latest first, with masked phones", cust.ok && cust.items.length === 2 && cust.items.every((c) => !c.phone || c.phone.includes("•••")), cust.items);
+  const odd = await person("Odd");
+  check("a kind of shop outside the list becomes «other»", (await rpc(odd, "open_shop", { p_name: "Mystery", p_kind: "spaceship" })).ok && (await rpc(odd, "me")).shop.kind === "other");
+  check("a new kind from the list is kept", (await rpc(odd, "open_shop", { p_name: "Mystery", p_kind: "barber" })).ok && (await rpc(odd, "me")).shop.kind === "barber");
+
+  console.log("\nThe founder's console");
+  const boss = await person("Boss");
+  await admin.from("people").update({ is_admin: true }).eq("id", boss.id);
+  check("the founder is an admin in the session", (await rpc(boss, "me")).admin === true);
+  const ov = await rpc(boss, "admin_overview");
+  check("the founder sees the totals and the week", ov.shops >= 2 && ov.customers >= 2 && ov.week.length === 7, ov);
+  check("a customer cannot open the console", !!(await rpc(sami, "admin_overview")).error);
+  check("an owner cannot open the console", !!(await rpc(owner, "admin_shops", { p_q: null })).error);
+  const found = await rpc(boss, "admin_shops", { p_q: "Café Test" });
+  check("the founder finds a shop by its name", found.length === 1 && found[0].customers === 2 && found[0].owner.name === "Yasmine", found);
+  const page = await rpc(boss, "admin_shop", { p_id: found[0].id });
+  check("a shop's page: the owner, the numbers, the best customers", page.owner?.name === "Yasmine" && page.top.length === 2 && page.stamps >= 7, page);
+  check("pausing a shop", (await rpc(boss, "admin_set_paused", { p_id: found[0].id, p_paused: true })).ok);
+  check("a paused shop makes no code", (await rpc(owner, "new_code")).error === "paused");
+  check("the owner sees it paused", (await rpc(owner, "me")).shop.paused === true);
+  await rpc(boss, "admin_set_paused", { p_id: found[0].id, p_paused: false });
+  check("resumed, it makes codes again", (await rpc(owner, "new_code")).ok === true);
+  check("the founder lists people, admins marked", (await rpc(boss, "admin_people", { p_q: "Boss" })).some((p) => p.admin));
+  const mystery = (await rpc(boss, "admin_shops", { p_q: "Mystery" }))[0];
+  check("the founder deletes a shop", (await rpc(boss, "admin_delete_shop", { p_id: mystery.id })).ok && (await rpc(odd, "me")).shop === null);
 } catch (e) {
   failed.push(`crashed: ${e.message}`);
   console.log(`  ✗ crashed: ${e.message}`);

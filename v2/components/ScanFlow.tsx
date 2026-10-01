@@ -134,6 +134,7 @@ function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
     },
     done: { icon: QrCode, title: t.errDone },
     own_shop: { icon: X, title: t.errOwn, body: t.errOwnBody },
+    paused: { icon: X, title: t.errPaused },
     network: { icon: WifiOff, title: t.errNetwork },
   };
   const v = view[code] ?? { icon: X, title: t.errInvalid };

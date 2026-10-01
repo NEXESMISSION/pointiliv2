@@ -9,6 +9,11 @@ export const t = {
   haveAccount: "عندي كونت",
   shopLink: "عندك محل؟",
   shopLinkCta: "ابدا من هوني",
+  iAmCustomer: "نلمّ التامبونات",
+  iAmCustomerHint: "كارطات المحلات اللي تحبّهم، في تليفونك",
+  iAmShop: "نعطي التامبونات",
+  iAmShopHint: "حلّ كارط فيديليتي لمحلّك في دقيقتين",
+  haveAccountLogin: "عندك كونت؟ ادخل",
   back: "ارجع",
   next: "كمّل",
   ok: "باهي",
@@ -57,6 +62,7 @@ export const t = {
   errOwn: "هذا المحل متاعك 🙂",
   errOwnBody: "الكود هذا للحرفاء",
   errInvalid: "الكود هذا موش صحيح",
+  errPaused: "المحل هذا موقّف التامبونات توّا",
   scanAgain: "سكاني من جديد",
 
   // the wallet
@@ -100,12 +106,26 @@ export const t = {
   shopKind: "شنوّة يبيع؟",
   kinds: {
     cafe: "قهوة",
+    juice: "عصير وجلاطي",
     bakery: "مخبزة",
+    pastry: "حلويات",
+    viennoiserie: "فطاير وكرواسون",
     restaurant: "ريستو",
+    fastfood: "فاست فود",
     pizza: "بيتزا",
-    salon: "حلّاق",
+    grill: "مشوي",
+    barber: "حلّاق",
+    hair: "كوافير",
     beauty: "تجميل",
-    shop: "حانوت",
+    nails: "أظافر",
+    clothes: "ملابس",
+    phones: "تليفونات",
+    grocery: "عطّار",
+    gym: "رياضة",
+    games: "ألعاب",
+    events: "حفلات",
+    carwash: "لافاج",
+    gifts: "كادوات",
     other: "آخر",
   } as Record<string, string>,
   cardTitle: "الكارط",
@@ -116,12 +136,26 @@ export const t = {
   cardDone: "حلّ الكود",
   ideas: {
     cafe: ["قهوة بلاش", "كابوسان بلاش", "كرواسون بلاش"],
-    bakery: ["كرواسون بلاش", "خبزة بلاش", "قطعة قاتو بلاش"],
+    juice: ["عصير بلاش", "جلاطي بلاش", "ميلك شيك بلاش"],
+    bakery: ["خبزة بلاش", "كرواسون بلاش", "قطعة قاتو بلاش"],
+    pastry: ["قطعة قاتو بلاش", "كيلو حلويات بريميز", "ميلفاي بلاش"],
+    viennoiserie: ["كرواسون بلاش", "فطيرة بلاش", "قهوة وكرواسون"],
     restaurant: ["ديسار بلاش", "مشروب بلاش", "صحن بلاش"],
+    fastfood: ["سندويتش بلاش", "فريت ومشروب بلاش", "مشروب بلاش"],
     pizza: ["بيتزا صغيرة بلاش", "مشروب بلاش", "ديسار بلاش"],
-    salon: ["حجامة بلاش", "تعديل اللحية بلاش", "ريميز 10 د"],
-    beauty: ["سوان بلاش", "مانيكير بلاش", "ريميز 10 د"],
-    shop: ["ريميز 10 د", "كادو مفاجأة", "ريميز 5 د"],
+    grill: ["صحن مشوي بلاش", "مشروب بلاش", "سلطة بلاش"],
+    barber: ["حجامة بلاش", "تعديل اللحية بلاش", "ريميز 10 د"],
+    hair: ["بروشينغ بلاش", "سوان شعر بلاش", "ريميز 20%"],
+    beauty: ["سوان وجه بلاش", "ريميز 20%", "كادو مفاجأة"],
+    nails: ["مانيكير بلاش", "فارني بلاش", "ريميز 20%"],
+    clothes: ["ريميز 10%", "ريميز 20 د", "كادو مفاجأة"],
+    phones: ["كوك بلاش", "شارجور بلاش", "ريميز 10%"],
+    grocery: ["ريميز 5 د", "كادو مفاجأة", "قهوة بلاش"],
+    gym: ["سيانس بلاش", "شهر بريميز", "مشروب بروتين بلاش"],
+    games: ["بارتية بلاش", "ساعة بلاش", "كادو مفاجأة"],
+    events: ["ريميز 10%", "كادو مفاجأة", "صورة بلاش"],
+    carwash: ["لافاج بلاش", "تنظيف داخل بلاش", "ريميز 50%"],
+    gifts: ["ريميز 10%", "تغليف بلاش", "كادو مفاجأة"],
     other: ["كادو بلاش", "ريميز 10 د", "كادو مفاجأة"],
   } as Record<string, string[]>,
   preview: "هكّا يشوفها الحريف",
@@ -136,6 +170,24 @@ export const t = {
   noCardYet: "اعمل الكارط قبل",
   reconnecting: "نعاود نتصل…",
 
+  // the owner's home
+  showCode: "ورّي الكود",
+  showCodeHint: "الحريف يسكاني ويخوذ تامبون",
+  todayTitle: "اليوم",
+  numVisitors: "حريف جا",
+  waitingTitle: "كوادو يستنّاو",
+  lately: "آخر حركة",
+  lateStamp: "{who} خذا تامبون",
+  lateGift: "{who} ربح {gift}",
+  lateGiven: "{who} خذا {gift}",
+  options: "الخيارات",
+  customersTitle: "الحرفاء",
+  customersEmpty: "مازال حتى حريف",
+  customersEmptyBody: "ورّي الكود للحرفاء وكل واحد يسكاني يولّي هوني",
+  never: "مازال",
+  pausedBanner: "المحل موقّف من Pointili. كلّمنا.",
+  ago: "قبل {n}",
+
   // the owner's settings
   settings: "المحل",
   numCustomers: "حريف",
@@ -144,6 +196,34 @@ export const t = {
   editCard: "بدّل الكارط",
   editShop: "بدّل المحل",
   openCounter: "حلّ الكود",
+
+  // the founder's console
+  admin: "الأدمين",
+  aShops: "المحلات",
+  aPeople: "الناس",
+  aLive: "خدّامين",
+  aPaused: "موقّفين",
+  aCustomers: "حرفاء",
+  aStamps: "تامبون في الكل",
+  aToday: "تامبون اليوم",
+  aGiven: "كادو تعطى",
+  aWaiting: "كادو يستنّى",
+  aWeek: "التامبونات في الجمعة",
+  aSearch: "لوّج بالاسم ولا النومرو",
+  aNoCard: "ما عملش الكارط",
+  aOwner: "المولى",
+  aCreated: "تحلّ",
+  aLast: "آخر حركة",
+  aPause: "وقّف المحل",
+  aResume: "رجّع المحل يخدم",
+  aDelete: "امسح المحل",
+  aDeleteConfirm: "متأكد؟ المحل والكارطات متاعو يتمسحو ما يرجعوش.",
+  aTop: "أكثر الحرفاء",
+  aRecent: "آخر الحركة",
+  aCards: "كارطات",
+  aShopOf: "محل",
+  aAdminBadge: "أدمين",
+  aNothing: "ما فمّا شي",
 };
 
 /** "مازالولك {n}" + { n: 3 } → "مازالولك 3" */
@@ -153,5 +233,45 @@ export function fill(template: string, vars: Record<string, string | number>): s
 
 /** The 3D picture of a kind of shop. */
 export function kindIcon(kind: string | null | undefined): string {
-  return ({ cafe: "coffee", bakery: "croissant", restaurant: "burger", pizza: "pizza", salon: "scissors", beauty: "gem", shop: "shop" } as Record<string, string>)[kind ?? ""] ?? "star";
+  return (
+    {
+      cafe: "coffee",
+      juice: "juice",
+      bakery: "bread",
+      pastry: "cake",
+      viennoiserie: "croissant",
+      restaurant: "bell",
+      fastfood: "burger",
+      pizza: "pizza",
+      grill: "fire",
+      barber: "barber",
+      hair: "scissors",
+      beauty: "gem",
+      nails: "sparkles",
+      clothes: "crown",
+      phones: "phone",
+      grocery: "shop",
+      gym: "trophy",
+      games: "ticket",
+      events: "party",
+      carwash: "star",
+      gifts: "gift",
+      // the first app's kinds, should one ever come back
+      salon: "scissors",
+      shop: "shop",
+    } as Record<string, string>
+  )[kind ?? ""] ?? "pin";
 }
+
+/** Every kind of shop, in the order the owner sees them. */
+export const KINDS = Object.keys(t.kinds);
+
+/** Counting the Tunisian way: حريف واحد, زوز حرفاء, 5 حرفاء, 12 حريف. */
+export function counted(n: number, one: string, two: string, few: string, many: string): string {
+  if (n === 1) return one;
+  if (n === 2) return two;
+  const r = n % 100;
+  return r >= 3 && r <= 10 ? `${n} ${few}` : `${n} ${many}`;
+}
+export const stampsN = (n: number) => counted(n, "تامبون واحد", "زوز تامبونات", "تامبونات", "تامبون");
+export const customersN = (n: number) => counted(n, "حريف واحد", "زوز حرفاء", "حرفاء", "حريف");

@@ -1,6 +1,6 @@
 /**
- * Apply v2/supabase/schema.sql to the Supabase project, over the Management
- * API (HTTPS), and make sure the API serves the v2 schema.
+ * Lay supabase/schema.sql into the database (re-runnable), over the
+ * Management API, then make the founder's phones (ADMIN_PHONES) admins.
  *
  *   node scripts/db.mjs          (from v2/, reads .env.local)
  */
@@ -13,7 +13,7 @@ const REF = process.env.SUPABASE_PROJECT_REF;
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 if (!REF || !TOKEN) throw new Error("SUPABASE_PROJECT_REF / SUPABASE_ACCESS_TOKEN missing in v2/.env.local");
 
-async function api(path, { method = "GET", body } = {}) {
+export async function api(path, { method = "GET", body } = {}) {
   for (let attempt = 1; ; attempt++) {
     try {
       const res = await fetch(`https://api.supabase.com/v1/projects/${REF}${path}`, {
@@ -37,10 +37,18 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const t0 = Date.now();
   await sql(readFileSync("supabase/schema.sql", "utf8"));
   console.log(`✓ schema.sql (${Date.now() - t0} ms)`);
-  const rest = await api("/postgrest");
-  const schemas = String(rest.db_schema || "public").split(",").map((s) => s.trim()).filter(Boolean);
-  if (!schemas.includes("v2")) {
-    await api("/postgrest", { method: "PATCH", body: { db_schema: [...schemas, "v2"].join(",") } });
-    console.log(`✓ API now serves: ${[...schemas, "v2"].join(", ")}`);
-  } else console.log(`✓ API serves v2 (${schemas.join(", ")})`);
+
+  const phones = String(process.env.ADMIN_PHONES ?? "")
+    .split(",")
+    .map((p) => p.replace(/\D/g, "").replace(/^216(?=\d{8}$)/, ""))
+    .filter((p) => /^\d{8}$/.test(p));
+  if (phones.length) {
+    const emails = phones.map((p) => `'216${p}@phone.pointidi.app'`).join(", ");
+    const rows = await sql(`
+      insert into public.people (id, phone, is_admin)
+      select u.id, '+' || split_part(u.email, '@', 1), true from auth.users u where u.email in (${emails})
+      on conflict (id) do update set is_admin = true
+      returning id`);
+    console.log(`✓ admins: ${rows.length} of ${phones.length} phones have an account`);
+  }
 }

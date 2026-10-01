@@ -128,3 +128,16 @@ export async function give(moment: number): Promise<boolean> {
   const res = await call<{ ok: boolean }>("give", { p_moment: moment });
   return !!res?.ok;
 }
+
+// ── the founder ────────────────────────────────────────────────────────────
+export async function adminPause(id: string, paused: boolean): Promise<boolean> {
+  const res = await call<{ ok: boolean }>("admin_set_paused", { p_id: id, p_paused: paused });
+  revalidatePath("/admin", "layout");
+  return !!res?.ok;
+}
+
+export async function adminDelete(id: string) {
+  const res = await call<{ ok: boolean }>("admin_delete_shop", { p_id: id });
+  revalidatePath("/admin", "layout");
+  if (res?.ok) redirect("/admin");
+}

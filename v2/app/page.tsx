@@ -88,19 +88,31 @@ function Welcome() {
         </div>
         <Icon3D name="gift" size={78} className="absolute -bottom-8 -end-2 animate-float" />
       </div>
-      <h1 className="mt-12 text-center text-[30px] font-bold leading-tight">{t.tagline}</h1>
+      <h1 className="mt-12 text-center text-[28px] font-bold leading-tight">{t.tagline}</h1>
 
+      {/* the crossroads: someone who collects, or a shop that gives */}
       <div className="mt-auto space-y-3 pt-8">
-        <LinkBtn href="/join">{t.createAccount}</LinkBtn>
-        <LinkBtn href="/login" kind="soft">
-          {t.haveAccount}
-        </LinkBtn>
-        <p className="pt-2 text-center text-[14.5px] text-muted">
-          {t.shopLink}{" "}
-          <Link href="/shop/new" className="font-semibold text-brand">
-            {t.shopLinkCta}
-          </Link>
-        </p>
+        <Link href="/join" className="press flex items-center gap-4 rounded-[24px] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] p-4 text-white shadow-[0_16px_34px_-14px_rgb(108_71_255/0.7)]">
+          <span className="grid size-14 shrink-0 place-items-center rounded-[18px] bg-white/20">
+            <Icon3D name="ticket" size={36} />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[19px] font-bold">{t.iAmCustomer}</span>
+            <span className="block text-[13.5px] text-white/85">{t.iAmCustomerHint}</span>
+          </span>
+        </Link>
+        <Link href="/shop/new" className="press flex items-center gap-4 rounded-[24px] bg-surface p-4 shadow-card">
+          <span className="grid size-14 shrink-0 place-items-center rounded-[18px] bg-coral-soft">
+            <Icon3D name="shop" size={36} />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[19px] font-bold">{t.iAmShop}</span>
+            <span className="block text-[13.5px] text-muted">{t.iAmShopHint}</span>
+          </span>
+        </Link>
+        <Link href="/login" className="block py-2 text-center text-[15.5px] font-semibold text-brand">
+          {t.haveAccountLogin}
+        </Link>
       </div>
     </Screen>
   );

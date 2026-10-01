@@ -15,11 +15,11 @@ export default async function ShopSetup({ searchParams }: { searchParams: Promis
   const editing = !!edit && !!me.shop;
   return (
     <Screen>
-      <Top back={editing ? "/shop/settings" : undefined} title={t.shopTitle}>
+      <Top back={editing ? "/shop" : undefined} title={t.shopTitle}>
         {!editing && <Steps at={2} />}
       </Top>
       <div className="mt-6 flex flex-1 flex-col">
-        <ShopForm name={me.shop?.name} kind={me.shop?.kind} next={editing ? "/shop/settings" : undefined} />
+        <ShopForm name={me.shop?.name} kind={me.shop?.kind} next={editing ? "/shop" : undefined} />
       </div>
     </Screen>
   );

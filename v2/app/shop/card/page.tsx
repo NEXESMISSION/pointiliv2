@@ -16,11 +16,11 @@ export default async function ShopCard() {
   const editing = !!me.shop.goal;
   return (
     <Screen>
-      <Top back={editing ? "/shop/settings" : undefined} title={t.cardTitle}>
+      <Top back={editing ? "/shop" : undefined} title={t.cardTitle}>
         {!editing && <Steps at={3} />}
       </Top>
       <div className="mt-4 flex flex-1 flex-col">
-        <CardForm shop={me.shop} next={editing ? "/shop/settings" : "/shop"} cta={editing ? t.save : t.cardDone} />
+        <CardForm shop={me.shop} next={editing ? "/shop" : "/shop/qr"} cta={editing ? t.save : t.cardDone} />
       </div>
     </Screen>
   );
