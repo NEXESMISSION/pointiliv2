@@ -12,7 +12,7 @@ import type { ScanResult } from "@/lib/types";
 /** after the tampon hits: each line arrives in reading order */
 const after = (ms: number) => ({ animationDelay: `${IMPACT_MS + ms}ms` });
 /** the tampon and the card get smaller on a shorter phone, so the answer never scrolls */
-const SHRINK = "[@media(max-height:780px)]:[zoom:0.86] [@media(max-height:690px)]:[zoom:0.74] [@media(max-height:620px)]:[zoom:0.66]";
+const SHRINK = "[@media(max-height:780px)]:[zoom:0.86] [@media(max-height:690px)]:[zoom:0.74] [@media(max-height:660px)]:[zoom:0.66]";
 
 /** Scan → the tampon lands. One POST, then the answer. */
 export function ScanFlow({ token }: { token: string }) {
@@ -74,11 +74,11 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
         </p>
       )}
 
-      <div className="mt-[3dvh] w-full animate-rise space-y-1.5" style={after(500)}>
+      <div className="mt-[3dvh] w-full animate-rise space-y-1.5 [@media(max-height:660px)]:mt-[2dvh]" style={after(500)}>
         <LinkBtn href={`/c/${card.id}`} kind={gift ? "soft" : "main"}>
           {t.seeCard}
         </LinkBtn>
-        <LinkBtn href="/" kind="ghost">
+        <LinkBtn href="/" kind="ghost" className="[@media(max-height:660px)]:h-11">
           {t.done}
         </LinkBtn>
       </div>

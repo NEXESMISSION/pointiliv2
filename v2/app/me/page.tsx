@@ -25,7 +25,7 @@ export default async function Account() {
   return (
     <Screen>
       <Top back={me.admin ? "/admin" : me.shop ? "/shop" : "/"} title={t.account} />
-      <div className="mt-6 space-y-5">
+      <div className="mt-6 space-y-5 [@media(max-height:680px)]:mt-4 [@media(max-height:680px)]:space-y-3">
         <NameForm name={me.name ?? ""} />
         {me.phone && (
           <div>

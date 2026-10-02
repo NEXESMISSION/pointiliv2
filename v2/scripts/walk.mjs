@@ -74,10 +74,23 @@ try {
   await shot(o, "03d-kinds-picked", 400);
   await o.getByRole("button", { name: "قهوة" }).click();
   await Promise.all([o.waitForURL("**/shop/card", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
+  // the card, one question at a time: the hello, how many, which gift, which colour, ready
+  await o.getByText("توّا نعملو مع بعضنا").waitFor({ timeout: 30000 });
+  await shot(o, "04a-card-hello", 1600);
+  await o.getByRole("button", { name: "يلّا نبداو" }).click();
   await o.getByRole("button", { name: "5", exact: true }).click();
+  await shot(o, "04b-card-goal", 600);
+  await o.getByRole("button", { name: "كمّل" }).click();
+  await o.getByText("شنوّة يربح الحريف").waitFor();
+  await shot(o, "04c-card-gift", 600);
+  await o.getByRole("button", { name: "كمّل" }).click();
   await o.getByRole("button", { name: "#FF6B4A" }).click();
-  await shot(o, "04-owner-card", 500);
-  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
+  await shot(o, "04d-card-color", 600);
+  await o.getByRole("button", { name: "كمّل" }).click();
+  await o.getByText("الكارط متاعك حاضرة").waitFor();
+  await shot(o, "04-owner-card", 1200);
+  // the button breathes: Playwright never finds it "stable", so the click is forced
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), o.locator('button[type="submit"]').click({ force: true })]);
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05-counter", 1200);
 
@@ -141,7 +154,8 @@ try {
   // changing the card: one line says what happens to the customers on their way
   await o.goto(BASE + "/shop/card", { waitUntil: "load" });
   await o.getByRole("button", { name: "8", exact: true }).click();
-  await o.getByRole("status").scrollIntoViewIfNeeded();
+  for (let i = 0; i < 3; i++) await o.getByRole("button", { name: "كمّل" }).click();
+  await o.getByRole("status").waitFor();
   await shot(o, "17b-card-change", 500);
   await o.goto(BASE + "/me", { waitUntil: "load" });
   await shot(o, "16b-owner-account");
