@@ -295,6 +295,7 @@ begin
     'today', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
     'visitors_today', (select count(distinct card_id) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
     'given', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is not null),
+    'given_today', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at >= public.tunis_today()),
     'waiting', coalesce((
       select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(split_part(p.name, ' ', 1), ''), 'gift', coalesce(m.gift, c.gift, s.gift)) order by m.created_at)
       from public.moments m join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id

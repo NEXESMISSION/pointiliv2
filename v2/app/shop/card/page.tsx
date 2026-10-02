@@ -17,7 +17,7 @@ export default async function ShopCard() {
     <CardWizard
       shop={me.shop}
       owner={(me.name ?? "").split(" ")[0] ?? ""}
-      next={editing ? "/shop" : "/shop/qr"}
+      next={editing ? "/shop" : "/shop/qr?welcome=1"}
       editing={editing}
       onTheWay={editing ? (way?.n ?? 0) : undefined}
     />

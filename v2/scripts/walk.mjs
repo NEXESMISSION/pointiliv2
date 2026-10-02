@@ -91,6 +91,21 @@ try {
   await shot(o, "04-owner-card", 1200);
   // the button breathes: Playwright never finds it "stable", so the click is forced
   await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), o.locator('button[type="submit"]').click({ force: true })]);
+  // the first code comes with a bravo, then a tip: try it with another phone
+  await o.getByText("برافو").waitFor({ timeout: 30000 });
+  await shot(o, "05a-bravo", 1400);
+  await o.getByRole("button", { name: "ورّيني" }).click();
+  await o.getByText("عندك تليفون آخر").waitFor({ timeout: 20000 });
+  await o.locator("[data-qr]").waitFor({ timeout: 30000 });
+  await shot(o, "05b-tip", 900);
+  const covered = await o.evaluate(() => {
+    const q = document.querySelector("[data-qr]").getBoundingClientRect();
+    const d = document.querySelector('[role="dialog"]').getBoundingClientRect();
+    return Math.min(q.bottom, d.bottom) > Math.max(q.top, d.top) && Math.min(q.right, d.right) > Math.max(q.left, d.left);
+  });
+  if (covered) console.log("  ! the tip covers the code");
+  await o.getByRole("button", { name: "باهي، فهمت" }).click();
+  await o.waitForURL((u) => u.pathname === "/shop/qr" && !u.search, { timeout: 20000 });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05-counter", 1200);
 
