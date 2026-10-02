@@ -22,15 +22,15 @@ export function ShopForm({ name = "", kind = "cafe", next }: { name?: string; ki
   const shown = POPULAR.includes(k) ? POPULAR : [k, ...POPULAR.slice(0, POPULAR.length - 1)];
 
   return (
-    <form action={action} className="flex flex-1 flex-col">
+    <form action={action} className="mt-[3dvh] flex flex-col">
       <Field label={t.shopName} name="name" value={shopName} onChange={(e) => setShopName(e.target.value)} placeholder={t.shopNamePh} required maxLength={60} error={state?.field === "name" ? state.error : null} />
-      <p className="mb-2 mt-6 px-1 text-[14px] font-semibold text-muted">{t.shopKind}</p>
+      <p className="mb-2 mt-[2.5dvh] px-1 text-[0.875rem] font-semibold text-muted">{t.shopKind}</p>
       <div className="grid grid-cols-4 gap-2">
         {shown.map((id) => (
           <KindTile key={id} id={id} on={k === id} onPick={setK} />
         ))}
-        <button type="button" onClick={() => setAll(true)} className="press flex flex-col items-center justify-center gap-1 rounded-[18px] bg-brand px-1 py-3 text-[12.5px] font-bold leading-tight text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
-          <LayoutGrid className="size-[30px]" strokeWidth={2.2} />
+        <button type="button" onClick={() => setAll(true)} className="press flex flex-col items-center justify-center gap-1 rounded-[1.125rem] bg-brand px-1 py-3 text-[0.7812rem] font-bold leading-tight text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
+          <LayoutGrid className="size-[1.875rem]" strokeWidth={2.2} />
           <span>
             {t.kindsAll} <span className="num font-semibold text-white/80">+{KINDS.length - shown.length}</span>
           </span>
@@ -48,8 +48,8 @@ export function ShopForm({ name = "", kind = "cafe", next }: { name?: string; ki
       )}
       <input type="hidden" name="kind" value={k} />
       {next && <input type="hidden" name="next" value={next} />}
-      {state?.error && !state.field && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[14.5px] font-medium text-coral">{state.error}</p>}
-      <div className="mt-auto pt-8">
+      {state?.error && !state.field && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
+      <div className="mt-[3.5dvh]">
         <Btn type="submit" disabled={pending}>
           {pending ? t.checking : t.next}
         </Btn>

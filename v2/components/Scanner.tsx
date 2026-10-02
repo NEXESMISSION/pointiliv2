@@ -18,10 +18,10 @@ function pathOf(text: string): string | null {
 }
 
 const CORNERS = [
-  "top-0 start-0 border-t-4 border-s-4 rounded-ss-[28px]",
-  "top-0 end-0 border-t-4 border-e-4 rounded-se-[28px]",
-  "bottom-0 start-0 border-b-4 border-s-4 rounded-es-[28px]",
-  "bottom-0 end-0 border-b-4 border-e-4 rounded-ee-[28px]",
+  "top-0 start-0 border-t-4 border-s-4 rounded-ss-[1.75rem]",
+  "top-0 end-0 border-t-4 border-e-4 rounded-se-[1.75rem]",
+  "bottom-0 start-0 border-b-4 border-s-4 rounded-es-[1.75rem]",
+  "bottom-0 end-0 border-b-4 border-e-4 rounded-ee-[1.75rem]",
 ];
 
 /**
@@ -108,15 +108,15 @@ export function Scanner() {
         <Link href="/" className="press grid size-11 place-items-center rounded-full bg-white/15 backdrop-blur" aria-label={t.back}>
           <X className="size-5" />
         </Link>
-        <p className="text-[18px] font-bold">{t.scanTitle}</p>
+        <p className="text-[1.125rem] font-bold">{t.scanTitle}</p>
         <span className="size-11" />
       </div>
 
       <div className="absolute inset-0 grid place-items-center">
         {off ? (
-          <div className="mx-8 rounded-[26px] bg-white/10 p-6 text-center backdrop-blur">
-            <p className="text-[19px] font-bold">{t.cameraOff}</p>
-            <p className="mt-1.5 text-[15px] text-white/80">{t.cameraOffBody}</p>
+          <div className="mx-8 rounded-[1.625rem] bg-white/10 p-6 text-center backdrop-blur">
+            <p className="text-[1.1875rem] font-bold">{t.cameraOff}</p>
+            <p className="mt-1.5 text-[0.9375rem] text-white/80">{t.cameraOffBody}</p>
           </div>
         ) : (
           <div className="relative size-[68vw] max-h-80 max-w-80">
@@ -129,7 +129,7 @@ export function Scanner() {
       </div>
 
       <div className="safe-b absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-3 px-5">
-        <p className="text-center text-[16px] font-medium text-white/90">{t.scanHint}</p>
+        <p className="text-center text-[1rem] font-medium text-white/90">{t.scanHint}</p>
         <label className="press grid size-16 cursor-pointer place-items-center rounded-full border border-white/30 bg-white/15 backdrop-blur" aria-label={t.photo}>
           <Camera className="size-7" />
           <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => void fromPhoto(e.target.files?.[0])} />

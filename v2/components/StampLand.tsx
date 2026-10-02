@@ -96,7 +96,7 @@ export function StampLand({ color = "#6c47ff", icon = "star", size = 112, label 
       </span>
 
       <span
-        className="num absolute -top-1 rounded-full bg-ink px-3.5 py-1.5 text-[17px] font-bold text-white shadow-lift"
+        className="num absolute -top-1 rounded-full bg-ink px-3.5 py-1.5 text-[1.0625rem] font-bold text-white shadow-lift"
         style={{ animation: `sl-plus 620ms cubic-bezier(0.2,0.9,0.3,1.3) ${IMPACT_MS + 60}ms both`, insetInlineEnd: size * 0.12 }}
       >
         {label}
@@ -116,7 +116,7 @@ export function Confetti({ count = 40, delay = 0 }: { count?: number; delay?: nu
         return (
           <span
             key={i}
-            className="absolute top-0 block rounded-[2px]"
+            className="absolute top-0 block rounded-[0.125rem]"
             style={
               {
                 left: `${r(1) * 100}%`,

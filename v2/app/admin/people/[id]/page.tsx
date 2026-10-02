@@ -28,50 +28,50 @@ export default async function AdminPerson({ params }: { params: Promise<{ id: st
   if (!p) notFound();
 
   return (
-    <Screen className="pb-10">
+    <Screen>
       <Top back="/admin?tab=people" title={p.name || t.someone} hint={`${t.aCreated} ${day(p.created_at)}`} />
 
       {p.phone && (
-        <div className="mt-5 flex items-center gap-3 rounded-[22px] bg-surface p-4 shadow-card">
+        <div className="mt-5 flex items-center gap-3 rounded-[1.375rem] bg-surface p-4 shadow-card">
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-semibold text-muted">{t.phone}</span>
-            <span dir="ltr" className="num inline-block text-[17px] font-bold">
+            <span className="block text-[0.8125rem] font-semibold text-muted">{t.phone}</span>
+            <span dir="ltr" className="num inline-block text-[1.0625rem] font-bold">
               {pretty(p.phone)}
             </span>
           </span>
-          <a href={`tel:+216${digits(p.phone)}`} className="press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-4 text-[14.5px] font-bold text-brand">
+          <a href={`tel:+216${digits(p.phone)}`} className="press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-4 text-[0.9062rem] font-bold text-brand">
             <Phone className="size-4" /> {t.aCall}
           </a>
         </div>
       )}
 
       {p.shop && (
-        <Link href={`/admin/shops/${p.shop.id}`} className="press mt-3 flex items-center gap-3 rounded-[22px] bg-surface p-4 shadow-card">
-          <span className="grid size-11 shrink-0 place-items-center rounded-[14px]" style={{ background: p.shop.color }}>
+        <Link href={`/admin/shops/${p.shop.id}`} className="press mt-3 flex items-center gap-3 rounded-[1.375rem] bg-surface p-4 shadow-card">
+          <span className="grid size-11 shrink-0 place-items-center rounded-[0.875rem]" style={{ background: p.shop.color }}>
             <Icon3D name={kindIcon(p.shop.kind)} size={28} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-semibold text-muted">{t.aShopOf}</span>
-            <span className="block truncate text-[16.5px] font-bold">{p.shop.name}</span>
+            <span className="block text-[0.8125rem] font-semibold text-muted">{t.aShopOf}</span>
+            <span className="block truncate text-[1.0312rem] font-bold">{p.shop.name}</span>
           </span>
           <ChevronLeft className="size-5 shrink-0 text-faint" />
         </Link>
       )}
 
-      <section className="mt-4">
-        <h2 className="mb-2 px-0.5 text-[16px] font-bold">{t.aCardsOf}</h2>
+      <section className="mt-[1.8dvh] flex min-h-0 flex-1 flex-col">
+        <h2 className="mb-2 px-0.5 text-[1rem] font-bold">{t.aCardsOf}</h2>
         {p.cards.length === 0 ? (
-          <p className="rounded-[20px] bg-surface p-4 text-[15px] text-muted shadow-card">{t.aNoCardsOf}</p>
+          <p className="rounded-[1.25rem] bg-surface p-4 text-[0.9375rem] text-muted shadow-card">{t.aNoCardsOf}</p>
         ) : (
-          <ul className="divide-y divide-line overflow-hidden rounded-[20px] bg-surface shadow-card">
+          <ul className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.25rem] bg-surface shadow-card">
             {p.cards.map((c, i) => (
               <li key={i} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-[12px]" style={{ background: c.color }}>
+                <span className="grid size-9 shrink-0 place-items-center rounded-[0.75rem]" style={{ background: c.color }}>
                   <Icon3D name={kindIcon(c.kind)} size={22} />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{c.shop}</span>
-                {c.gifts > 0 && <span className="num shrink-0 rounded-full bg-coral-soft px-2.5 py-1 text-[12.5px] font-bold text-coral">🎁 {c.gifts}</span>}
-                <span className="num shrink-0 text-[14px] font-bold text-body">
+                <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-medium">{c.shop}</span>
+                {c.gifts > 0 && <span className="num shrink-0 rounded-full bg-coral-soft px-2.5 py-1 text-[0.7812rem] font-bold text-coral">🎁 {c.gifts}</span>}
+                <span className="num shrink-0 text-[0.875rem] font-bold text-body">
                   {Math.min(c.stamps, c.goal ?? c.stamps)}/{c.goal ?? "–"}
                 </span>
               </li>
@@ -81,7 +81,7 @@ export default async function AdminPerson({ params }: { params: Promise<{ id: st
       </section>
 
       {p.admin ? (
-        <p className="mt-6 rounded-2xl bg-ink/[0.05] px-4 py-3 text-center text-[14.5px] font-medium text-muted">{t.aIsAdmin}</p>
+        <p className="mt-6 rounded-2xl bg-ink/[0.05] px-4 py-3 text-center text-[0.9062rem] font-medium text-muted">{t.aIsAdmin}</p>
       ) : (
         <AdminPersonActions id={p.id} name={p.name} phone={p.phone} />
       )}

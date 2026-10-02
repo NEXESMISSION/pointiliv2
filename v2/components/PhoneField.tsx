@@ -17,9 +17,9 @@ export function PhoneField({ label, name = "phone", error }: { label: string; na
   const [value, setValue] = useState("");
   return (
     <label className="block">
-      <span className="mb-1.5 block px-1 text-[14px] font-semibold text-muted">{label}</span>
-      <span dir="ltr" className={`flex h-[56px] w-full items-center ${boxLook} focus-within:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]`}>
-        <span className="num ps-4 pe-3 text-[17px] font-semibold text-muted">+216</span>
+      <span className="mb-1.5 block px-1 text-[0.875rem] font-semibold text-muted">{label}</span>
+      <span dir="ltr" className={`flex h-[3.5rem] w-full items-center ${boxLook} focus-within:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]`}>
+        <span className="num ps-4 pe-3 text-[1.0625rem] font-semibold text-muted">+216</span>
         <span className="h-6 w-px bg-line" aria-hidden />
         <input
           name={name}
@@ -31,10 +31,10 @@ export function PhoneField({ label, name = "phone", error }: { label: string; na
           value={value}
           onChange={(e) => setValue(shape(e.target.value))}
           aria-invalid={!!error}
-          className="num h-full min-w-0 flex-1 rounded-e-[18px] bg-transparent px-3 text-[17px] tracking-wide text-ink outline-none placeholder:text-faint"
+          className="num h-full min-w-0 flex-1 rounded-e-[1.125rem] bg-transparent px-3 text-[17px] tracking-wide text-ink outline-none placeholder:text-faint"
         />
       </span>
-      {error && <span className="mt-1.5 block px-1 text-[13.5px] font-medium text-coral">{error}</span>}
+      {error && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{error}</span>}
     </label>
   );
 }

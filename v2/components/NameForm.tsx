@@ -13,7 +13,7 @@ export function NameForm({ name }: { name: string }) {
       <div className="flex-1">
         <Field label={t.name} name="name" defaultValue={name} maxLength={60} error={state?.error} />
       </div>
-      <button type="submit" disabled={pending} className="press mb-px h-[56px] shrink-0 rounded-[18px] bg-brand-soft px-5 text-[16px] font-semibold text-brand disabled:opacity-50">
+      <button type="submit" disabled={pending} className="press mb-px h-[3.5rem] shrink-0 rounded-[1.125rem] bg-brand-soft px-5 text-[1rem] font-semibold text-brand disabled:opacity-50">
         {state && !state.error ? t.saved : t.save}
       </button>
     </form>

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/AuthForm";
 import { Steps } from "@/components/Steps";
-import { Top } from "@/components/Top";
-import { Screen } from "@/components/ui";
+import { Heading, Top } from "@/components/Top";
+import { Middle, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { t } from "@/lib/t";
 
@@ -14,12 +14,13 @@ export default async function ShopNew() {
   if (me) redirect(me.shop ? (me.shop.goal ? "/shop" : "/shop/card") : "/shop/setup");
   return (
     <Screen>
-      <Top back="/" title={t.shopNewTitle} hint={t.shopNewHint}>
-        <Steps at={1} />
-      </Top>
-      <div className="mt-6 flex flex-1 flex-col">
+      <Top back="/" />
+      <Middle>
+        <Heading title={t.shopNewTitle} hint={t.shopNewHint}>
+          <Steps at={1} />
+        </Heading>
         <AuthForm mode="join" owner />
-      </div>
+      </Middle>
     </Screen>
   );
 }

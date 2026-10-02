@@ -15,7 +15,7 @@ export function PasswordForm() {
       <div className="flex-1">
         <Field label={t.newPassword} name="password" type="password" autoComplete="new-password" placeholder={t.passwordPh} minLength={8} required error={state?.error} />
       </div>
-      <button type="submit" disabled={pending} className="press mb-px h-[56px] shrink-0 rounded-[18px] bg-brand-soft px-5 text-[16px] font-semibold text-brand disabled:opacity-50">
+      <button type="submit" disabled={pending} className="press mb-px h-[3.5rem] shrink-0 rounded-[1.125rem] bg-brand-soft px-5 text-[1rem] font-semibold text-brand disabled:opacity-50">
         {done ? t.saved : t.change}
       </button>
     </form>

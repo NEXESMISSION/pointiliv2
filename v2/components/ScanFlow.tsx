@@ -43,7 +43,7 @@ function Checking() {
           <ScanLine className="size-9" />
         </span>
       </span>
-      <p className="mt-6 text-[18px] font-semibold text-muted">{t.checking}</p>
+      <p className="mt-6 text-[1.125rem] font-semibold text-muted">{t.checking}</p>
     </div>
   );
 }
@@ -56,10 +56,10 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
       <div className={SHRINK}>
         <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} />
       </div>
-      <h1 className="mt-1 animate-rise text-[clamp(24px,4dvh,30px)] font-bold leading-tight" style={after(80)}>
+      <h1 className="mt-1 animate-rise text-[1.8rem] font-bold leading-tight" style={after(80)}>
         {gift ? fill(t.won, { gift: card.shop.gift ?? "" }) : t.newStamp}
       </h1>
-      <p className="animate-rise text-[16px] font-semibold text-muted" style={after(140)}>
+      <p className="animate-rise text-[1rem] font-semibold text-muted" style={after(140)}>
         {card.shop.name}
       </p>
 
@@ -69,7 +69,7 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
 
       {/* the gift: one line to show at the counter, not a second card */}
       {gift && (
-        <p className="relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[18px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[16.5px] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)]" style={after(420)}>
+        <p className="relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0312rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)]" style={after(420)}>
           <Icon3D name="gift" size={30} className="animate-float" /> {t.wonBody}
         </p>
       )}
@@ -97,16 +97,16 @@ function Held({ token, res }: { token: string; res: Extract<ScanResult, { kind: 
     <div className="flex flex-col items-center text-center">
       <Logo className="mb-2 scale-90" />
       <StampLand color={res.color} icon={kindIcon(res.shopKind)} />
-      <h1 className="mt-1 animate-rise text-[30px] font-bold" style={after(80)}>
+      <h1 className="mt-1 animate-rise text-[1.875rem] font-bold" style={after(80)}>
         {t.reserved}
       </h1>
-      <p className="animate-rise text-[17px] font-semibold" style={{ ...after(140), color: res.color }}>
+      <p className="animate-rise text-[1.0625rem] font-semibold" style={{ ...after(140), color: res.color }}>
         {res.shop}
       </p>
-      <p className="mt-3 animate-rise text-[16px] text-body" style={after(200)}>
+      <p className="mt-3 animate-rise text-[1rem] text-body" style={after(200)}>
         {t.reservedBody}
       </p>
-      <p className="mt-3 inline-flex animate-rise items-center gap-1.5 rounded-full bg-mint-soft px-3.5 py-1.5 text-[14px] font-semibold text-mint" style={after(260)}>
+      <p className="mt-3 inline-flex animate-rise items-center gap-1.5 rounded-full bg-mint-soft px-3.5 py-1.5 text-[0.875rem] font-semibold text-mint" style={after(260)}>
         <Clock className="size-4" /> {t.reservedClock}
       </p>
 
@@ -148,8 +148,8 @@ function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
       <span className="grid size-24 animate-pop place-items-center rounded-full bg-coral-soft text-coral">
         <Icon className="size-11" />
       </span>
-      <h1 className="mt-5 text-[26px] font-bold">{v.title}</h1>
-      {v.body && <p className="mt-2 max-w-xs text-[16px] text-muted">{v.body}</p>}
+      <h1 className="mt-5 text-[1.625rem] font-bold">{v.title}</h1>
+      {v.body && <p className="mt-2 max-w-xs text-[1rem] text-muted">{v.body}</p>}
       {card && (
         <div className="mt-6 w-full text-start">
           <Pass shop={card.shop} stamps={card.stamps} />

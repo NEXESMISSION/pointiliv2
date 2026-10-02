@@ -1,13 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { Gift, Phone } from "lucide-react";
 import { AdminShopActions } from "@/components/AdminShopActions";
-import { Pass } from "@/components/Pass";
 import { Top } from "@/components/Top";
 import { Icon3D, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
-import { kindIcon, t } from "@/lib/t";
+import { kindIcon, stampsN, t } from "@/lib/t";
 
 export const metadata = { title: "محل", robots: { index: false } };
 
@@ -21,7 +20,12 @@ type Shop = {
 
 const when = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
 
-/** One shop, as the founder sees it: its card, its numbers, its people, and the two switches. */
+/**
+ * One shop, as the founder sees it, on one screen: the shop and its card in
+ * a line, the owner with a call button, four numbers in a row, the best
+ * customers and the latest moments scrolling inside one box, and the two
+ * switches at the bottom.
+ */
 export default async function AdminShop({ params }: { params: Promise<{ id: string }> }) {
   const [{ id }, me] = await Promise.all([params, getMe()]);
   if (!me?.admin) redirect("/");
@@ -36,86 +40,94 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
   ];
 
   return (
-    <Screen className="pb-10">
-      <Top back="/admin" title={s.name} hint={`${t.kinds[s.kind] ?? ""} · ${t.aCreated} ${when(s.created_at)}`} />
+    <Screen>
+      <Top back="/admin" />
 
-      <div className="mt-5">
-        {s.goal ? (
-          <Pass shop={s} stamps={0} />
-        ) : (
-          <div className="flex items-center gap-3 rounded-[22px] bg-surface p-4 shadow-card">
-            <Icon3D name={kindIcon(s.kind)} size={36} />
-            <span className="text-[15px] font-semibold text-muted">{t.aNoCard}</span>
-          </div>
-        )}
+      {/* the shop and its card, in one line */}
+      <div className="mt-[1.8dvh] flex shrink-0 items-center gap-3">
+        <span className="grid size-14 shrink-0 place-items-center rounded-[1.125rem] shadow-card" style={{ background: s.color }}>
+          <Icon3D name={kindIcon(s.kind)} size={34} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate text-[1.5rem] font-bold leading-tight">{s.name}</span>
+            {s.paused && <span className="shrink-0 rounded-full bg-coral-soft px-2 py-0.5 text-[0.6875rem] font-bold text-coral">{t.aPaused}</span>}
+          </span>
+          <span className="block truncate text-[0.8125rem] text-muted">
+            {s.goal ? `${stampsN(s.goal)} ← ${s.gift}` : t.aNoCard} · {t.aCreated} {when(s.created_at)}
+          </span>
+        </span>
       </div>
 
-      <div className="mt-4 flex items-center gap-3 rounded-[22px] bg-surface p-4 shadow-card">
+      <div className="mt-[1.6dvh] flex shrink-0 items-center gap-3 rounded-[1.25rem] bg-surface px-3.5 py-3 shadow-card">
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-semibold text-muted">{t.aOwner}</span>
-          <span className="mt-0.5 block truncate text-[17px] font-bold">{s.owner?.name || t.someone}</span>
+          <span className="block truncate text-[0.9688rem] font-bold">{s.owner?.name || t.someone}</span>
           {s.owner?.phone && (
-            <span dir="ltr" className="num inline-block text-[15px] text-body">
+            <span dir="ltr" className="num inline-block text-[0.875rem] text-body">
               {pretty(s.owner.phone)}
             </span>
           )}
         </span>
         {s.owner?.phone && (
-          <a href={`tel:+216${digits(s.owner.phone)}`} className="press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-4 text-[14.5px] font-bold text-brand">
+          <a href={`tel:+216${digits(s.owner.phone)}`} className="press flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-3.5 text-[0.875rem] font-bold text-brand">
             <Phone className="size-4" /> {t.aCall}
           </a>
         )}
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2.5">
+      {/* four numbers, one row */}
+      <div className="mt-[1.6dvh] grid shrink-0 grid-cols-4 gap-2">
         {tiles.map((x) => (
-          <div key={x.label} className="rounded-[20px] bg-surface p-3 shadow-card">
-            <Icon3D name={x.icon} size={26} />
-            <p className="num mt-0.5 text-[22px] font-bold">{x.value}</p>
-            <p className="truncate text-[12.5px] text-muted">{x.label}</p>
+          <div key={x.label} className="rounded-[1rem] bg-surface px-1.5 py-2 text-center shadow-card">
+            <Icon3D name={x.icon} size={22} className="mx-auto" />
+            <p className="num mt-0.5 text-[1.125rem] font-bold leading-tight">{x.value}</p>
+            <p className="truncate text-[0.6875rem] text-muted">{x.label}</p>
           </div>
         ))}
       </div>
 
-      {s.top.length > 0 && (
-        <section className="mt-4">
-          <h2 className="mb-2 px-0.5 text-[16px] font-bold">{t.aTop}</h2>
-          <ul className="divide-y divide-line overflow-hidden rounded-[20px] bg-surface shadow-card">
-            {s.top.map((c, i) => (
-              <li key={i} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="min-w-0 flex-1 truncate text-[15px] font-medium">
-                  {c.name ?? t.someone} {c.phone && <span dir="ltr" className="num inline-block text-[12.5px] text-muted">{c.phone}</span>}
-                </span>
-                {c.gifts > 0 && (
-                  <span className="num flex shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2.5 py-1 text-[12.5px] font-bold text-coral">
-                    <Gift className="size-3.5" /> {c.gifts}
+      {/* the best customers, then the latest moments: one box, scrolling inside */}
+      <div className="mt-[1.8dvh] min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[1.25rem] bg-surface shadow-card">
+        {s.top.length === 0 && s.recent.length === 0 && <p className="p-4 text-center text-[0.9375rem] text-muted">{t.aNothing}</p>}
+        {s.top.length > 0 && (
+          <>
+            <h2 className="sticky top-0 z-10 bg-surface/95 px-3.5 pb-1 pt-2.5 text-[0.8125rem] font-bold text-muted backdrop-blur">{t.aTop}</h2>
+            <ul className="divide-y divide-line">
+              {s.top.map((c, i) => (
+                <li key={i} className="flex items-center gap-2.5 px-3.5 py-2">
+                  <span className="min-w-0 flex-1 truncate text-[0.9062rem] font-medium">
+                    {c.name ?? t.someone} {c.phone && <span dir="ltr" className="num inline-block text-[0.75rem] text-muted">{c.phone}</span>}
                   </span>
-                )}
-                {(c.goal ?? s.goal) && (
-                  <span className="num shrink-0 text-[14px] font-bold text-body">
-                    {Math.min(c.stamps, c.goal ?? s.goal ?? 0)}/{c.goal ?? s.goal}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {s.recent.length > 0 && (
-        <section className="mt-4">
-          <h2 className="mb-2 px-0.5 text-[16px] font-bold">{t.aRecent}</h2>
-          <ul className="divide-y divide-line overflow-hidden rounded-[20px] bg-surface shadow-card">
-            {s.recent.map((r, i) => (
-              <li key={i} className="flex items-center gap-3 px-4 py-2.5">
-                <span className={`num grid size-8 shrink-0 place-items-center rounded-full text-[12px] font-bold ${r.kind === "stamp" ? "bg-brand-soft text-brand" : "bg-coral-soft text-coral"}`}>{r.kind === "stamp" ? "+1" : "🎁"}</span>
-                <span className="min-w-0 flex-1 truncate text-[14.5px]">{r.name ?? (r.phone ? <span dir="ltr" className="num inline-block">{r.phone}</span> : t.someone)}</span>
-                <span className="num shrink-0 text-[12px] text-muted">{when(r.at)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+                  {c.gifts > 0 && (
+                    <span className="num flex shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2 py-0.5 text-[0.75rem] font-bold text-coral">
+                      <Gift className="size-3.5" /> {c.gifts}
+                    </span>
+                  )}
+                  {(c.goal ?? s.goal) && (
+                    <span className="num shrink-0 text-[0.8438rem] font-bold text-body">
+                      {Math.min(c.stamps, c.goal ?? s.goal ?? 0)}/{c.goal ?? s.goal}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {s.recent.length > 0 && (
+          <>
+            <h2 className="sticky top-0 z-10 bg-surface/95 px-3.5 pb-1 pt-2.5 text-[0.8125rem] font-bold text-muted backdrop-blur">{t.aRecent}</h2>
+            <ul className="divide-y divide-line">
+              {s.recent.map((r, i) => (
+                <li key={i} className="flex items-center gap-2.5 px-3.5 py-2">
+                  <span className={`num grid size-7 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold ${r.kind === "stamp" ? "bg-brand-soft text-brand" : "bg-coral-soft text-coral"}`}>{r.kind === "stamp" ? "+1" : "🎁"}</span>
+                  <span className="min-w-0 flex-1 truncate text-[0.875rem]">{r.name ?? (r.phone ? <span dir="ltr" className="num inline-block">{r.phone}</span> : t.someone)}</span>
+                  <span className="num shrink-0 text-[0.7188rem] text-muted">{when(r.at)}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
 
       <AdminShopActions id={s.id} paused={s.paused} />
     </Screen>

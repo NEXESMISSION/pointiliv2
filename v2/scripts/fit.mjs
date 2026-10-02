@@ -28,7 +28,10 @@ try {
     for (const path of paths) {
       await page.goto(BASE + path, { waitUntil: "load" });
       await page.waitForTimeout(700);
-      const m = await page.evaluate(() => ({ h: document.documentElement.scrollHeight - innerHeight, w: document.documentElement.scrollWidth - innerWidth }));
+      const m = await page.evaluate(() => ({
+        h: Math.max(document.documentElement.scrollHeight - innerHeight, ...[...document.querySelectorAll("main")].map((x) => x.scrollHeight - x.clientHeight), 0),
+        w: document.documentElement.scrollWidth - innerWidth,
+      }));
       const name = `${path === "/" ? "home" : path.slice(1).replace(/\//g, "-")}-${width}x${height}`;
       await page.screenshot({ path: `${OUT}/${name}.png` });
       const ok = m.h <= 0 && m.w <= 0;

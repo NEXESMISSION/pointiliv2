@@ -19,7 +19,7 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
 
   return (
     <div
-      className={`relative overflow-hidden rounded-[28px] text-white ${className}`}
+      className={`relative overflow-hidden rounded-[1.75rem] text-white ${className}`}
       style={{
         background: `linear-gradient(150deg, color-mix(in oklab, ${shop.color} 75%, white) -20%, ${shop.color} 45%, color-mix(in oklab, ${shop.color} 70%, black) 120%)`,
         boxShadow: `0 20px 44px -18px color-mix(in oklab, ${shop.color} 80%, black)`,
@@ -38,13 +38,13 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
 
       <div className={`relative ${small ? "px-4 pb-7 pt-3.5" : "p-5"}`}>
         <div className="flex items-center gap-3">
-          <span className="grid size-[46px] shrink-0 place-items-center rounded-[15px] bg-white/20 backdrop-blur-sm">
+          <span className="grid size-[2.875rem] shrink-0 place-items-center rounded-[0.9375rem] bg-white/20 backdrop-blur-sm">
             <Icon3D name={kindIcon(shop.kind)} size={30} />
           </span>
-          <span className="min-w-0 flex-1 truncate text-[18px] font-bold leading-tight">{shop.name}</span>
+          <span className="min-w-0 flex-1 truncate text-[1.125rem] font-bold leading-tight">{shop.name}</span>
           <span className="num shrink-0 leading-none">
-            <span className="text-[32px] font-bold">{done}</span>
-            <span className="text-[16px] font-semibold text-white/70">/{goal}</span>
+            <span className="text-[2rem] font-bold">{done}</span>
+            <span className="text-[1rem] font-semibold text-white/70">/{goal}</span>
           </span>
         </div>
 
@@ -72,8 +72,8 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
             </div>
 
             {shop.gift && (
-              <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/[0.16] px-3.5 py-2.5 text-[14.5px] font-semibold">
-                <Gift className="size-[18px] shrink-0" />
+              <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/[0.16] px-3.5 py-2.5 text-[0.9062rem] font-semibold">
+                <Gift className="size-[1.125rem] shrink-0" />
                 <span className="min-w-0 flex-1 truncate">{ready ? fill(t.won, { gift: shop.gift }) : left === 1 ? fill(t.toGoOne, { gift: shop.gift }) : fill(t.toGo, { n: left, gift: shop.gift })}</span>
               </div>
             )}

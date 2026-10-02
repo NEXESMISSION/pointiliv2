@@ -52,9 +52,17 @@
 }
 
 @layer base {
+  /*
+   * The whole app is sized in rem, and the rem follows the screen: 16px on a
+   * phone of 844px and more, down to 14px on the smallest (640px tall, or
+   * narrow) — text, buttons, cards and gaps shrink together, so every screen
+   * fits on one screen without a scroll and keeps its proportions.
+   */
   html {
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
+    font-size: 16px;
+    font-size: clamp(14px, min(1.9dvh, 4.2vw), 16px);
   }
   body {
     @apply bg-canvas text-ink antialiased;

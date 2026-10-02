@@ -15,7 +15,7 @@ const COLORS = ["#D7141A", "#FF6B4A", "#B45309", "#12B76A", "#0891B2", "#1D5FA8"
 /** how long the hello stays before the first question slides in by itself */
 const HELLO_MS = 3400;
 /** the card above the question gets smaller on a shorter phone, so nothing ever scrolls */
-const SHRINK = "[@media(max-height:780px)]:[zoom:0.86] [@media(max-height:690px)]:[zoom:0.74] [@media(max-height:650px)]:[zoom:0.62]";
+const SHRINK = "[@media(max-height:720px)]:[zoom:0.88] [@media(max-height:650px)]:[zoom:0.8]";
 
 type Shop = { name: string; kind: string; goal: number | null; gift: string | null; color: string };
 
@@ -58,17 +58,17 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
 
   if (step === 0) {
     return (
-      <main className="safe-t safe-b relative mx-auto flex h-dvh max-w-md flex-col items-center justify-center overflow-hidden px-6 text-center">
+      <main className="safe-t safe-b relative mx-auto flex h-dvh max-w-md flex-col items-center justify-center overflow-hidden px-[clamp(1.25rem,6vw,1.75rem)] text-center">
         <style>{`@keyframes wz-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }`}</style>
         <Icon3D name="party" size={86} className="animate-pop" />
-        <p className="mt-4 animate-rise text-[15px] font-semibold text-muted" style={{ animationDelay: "150ms" }}>
+        <p className="mt-4 animate-rise text-[0.9375rem] font-semibold text-muted" style={{ animationDelay: "150ms" }}>
           {fill(t.wizOpened, { shop: shop.name })}
         </p>
-        <h1 className="mt-2 animate-rise text-[clamp(23px,3.8dvh,30px)] font-bold leading-snug" style={{ animationDelay: "450ms" }}>
+        <h1 className="mt-2 animate-rise text-[1.75rem] font-bold leading-snug" style={{ animationDelay: "450ms" }}>
           {owner ? `${owner}، ` : ""}
           {t.wizTitle}
         </h1>
-        <p className="mt-3 animate-rise text-[16px] text-body" style={{ animationDelay: "800ms" }}>
+        <p className="mt-3 animate-rise text-[1rem] text-body" style={{ animationDelay: "800ms" }}>
           {t.wizBody}
         </p>
         <div className={`mt-[4dvh] w-full animate-rise ${SHRINK}`} style={{ animationDelay: "1100ms" }}>
@@ -77,7 +77,7 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
         <div className="mt-[4dvh] h-1 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
           <span className="block h-full origin-right rounded-full bg-brand" style={{ animation: `wz-bar ${HELLO_MS}ms linear both` }} />
         </div>
-        <button type="button" onClick={() => go(1)} className="press mt-4 px-6 py-2 text-[16px] font-bold text-brand">
+        <button type="button" onClick={() => go(1)} className="press mt-4 px-6 py-2 text-[1rem] font-bold text-brand">
           {t.wizStart}
         </button>
       </main>
@@ -89,7 +89,7 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
   const canGo = step !== 2 || gift.trim().length >= 2;
 
   return (
-    <form action={action} className="safe-t safe-b relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden px-5">
+    <form action={action} className="safe-t safe-b relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden px-[clamp(1rem,5vw,1.5rem)]">
       <style>{`
         @keyframes wz-in-next { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
         @keyframes wz-in-back { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
@@ -112,25 +112,26 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
             ))}
           </span>
         ) : (
-          <span className="text-[14px] font-semibold text-muted">{editing ? t.wizEdit : ""}</span>
+          <span className="text-[0.875rem] font-semibold text-muted">{editing ? t.wizEdit : ""}</span>
         )}
         <span className="size-11" />
       </header>
 
-      {/* the card, as the customer will see it, changing with every answer */}
-      <div className={`mt-[2.4dvh] ${SHRINK}`}>
+      {/* the card, the question, the answers and the button: one block, in the middle */}
+      <div className="flex min-h-0 flex-1 flex-col justify-center py-[2dvh]">
+      <div className={SHRINK}>
         <Pass shop={preview} stamps={step === 4 ? 1 : Math.max(1, Math.round(goal * 0.6))} fresh={step === 4} key={step === 4 ? "ready" : "live"} />
       </div>
 
       {/* on the smallest phones the answers may need a little more room: they scroll inside, never under the button */}
-      <section key={step} className="mt-[3dvh] flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain" style={{ animation: `${back ? "wz-in-back" : "wz-in-next"} 380ms cubic-bezier(0.2,0.8,0.2,1) both` }}>
-        <h1 className="text-[clamp(21px,3.3dvh,26px)] font-bold leading-snug">{question}</h1>
-        {example && <p className="mt-1.5 text-[15px] text-muted">{example}</p>}
+      <section key={step} className="mt-[3dvh] min-h-0 shrink overflow-y-auto overscroll-contain" style={{ animation: `${back ? "wz-in-back" : "wz-in-next"} 380ms cubic-bezier(0.2,0.8,0.2,1) both` }}>
+        <h1 className="text-[1.55rem] font-bold leading-snug">{question}</h1>
+        {example && <p className="mt-1.5 text-[0.9375rem] text-muted">{example}</p>}
 
         {step === 1 && (
           <div className="mt-[2.4dvh] grid grid-cols-5 gap-2">
             {GOALS.map((g) => (
-              <button key={g} type="button" onClick={() => setGoal(g)} aria-pressed={goal === g} className={`press num h-[clamp(50px,7.5dvh,60px)] rounded-[18px] text-[21px] font-bold ${goal === g ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}>
+              <button key={g} type="button" onClick={() => setGoal(g)} aria-pressed={goal === g} className={`press num h-[3.6rem] rounded-[1.125rem] text-[1.3125rem] font-bold ${goal === g ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}>
                 {g}
               </button>
             ))}
@@ -141,7 +142,7 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
           <div className="mt-[2dvh]">
             <div className="flex flex-wrap gap-1.5">
               {ideas.map((idea) => (
-                <button key={idea} type="button" onClick={() => setGift(idea)} aria-pressed={gift === idea} className={`press rounded-full px-3.5 py-2 text-[14px] font-semibold ${gift === idea ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}>
+                <button key={idea} type="button" onClick={() => setGift(idea)} aria-pressed={gift === idea} className={`press rounded-full px-3.5 py-2 text-[0.875rem] font-semibold ${gift === idea ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}>
                   {idea}
                 </button>
               ))}
@@ -158,7 +159,7 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
               placeholder={t.wizGiftPh}
               maxLength={60}
               aria-label={t.wizGiftPh}
-              className={`mt-2.5 block h-[52px] w-full px-4 text-[16px] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)] ${boxLook}`}
+              className={`mt-2.5 block h-[3.25rem] w-full px-4 text-[16px] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)] ${boxLook}`}
             />
           </div>
         )}
@@ -174,19 +175,14 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
         )}
 
         {step === 4 && note && (
-          <p className="mt-[2dvh] flex gap-2.5 rounded-2xl bg-brand-soft px-4 py-3 text-[14.5px] font-medium leading-relaxed text-brand-deep" role="status">
-            <Info className="mt-0.5 size-[18px] shrink-0" /> {note}
+          <p className="mt-[2dvh] flex gap-2.5 rounded-2xl bg-brand-soft px-4 py-3 text-[0.9062rem] font-medium leading-relaxed text-brand-deep" role="status">
+            <Info className="mt-0.5 size-[1.125rem] shrink-0" /> {note}
           </p>
         )}
-        {state?.error && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[14.5px] font-medium text-coral">{state.error}</p>}
+        {state?.error && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
       </section>
 
-      <input type="hidden" name="goal" value={goal} />
-      <input type="hidden" name="gift" value={gift.trim()} />
-      <input type="hidden" name="color" value={color} />
-      <input type="hidden" name="next" value={next} />
-
-      <div className="relative z-10 bg-canvas pb-[2dvh] pt-3">
+      <div className="mt-[3.5dvh] shrink-0">
         {/* two different buttons (keys): one patched from "button" to "submit" inside its own click would send the form */}
         {step < 4 ? (
           <Btn key="next" type="button" disabled={!canGo} onClick={() => go(step + 1)}>
@@ -198,6 +194,12 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
           </Btn>
         )}
       </div>
+      </div>
+
+      <input type="hidden" name="goal" value={goal} />
+      <input type="hidden" name="gift" value={gift.trim()} />
+      <input type="hidden" name="color" value={color} />
+      <input type="hidden" name="next" value={next} />
     </form>
   );
 }

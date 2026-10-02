@@ -18,6 +18,8 @@ const BASE = process.env.BASE || "http://localhost:3200";
 const OUT = process.env.OUT || "shots";
 mkdirSync(OUT, { recursive: true });
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+// walking the local server again and again: its sign-up and sign-in counters start from zero
+if (/localhost|127\.0\.0\.1/.test(BASE)) for (const ip of ["local", "::1", "127.0.0.1"]) for (const key of [`join-ip:${ip}`, `login-ip:${ip}`]) await admin.rpc("forget_tries", { p_key: key });
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
 const ownerPhone = phoneNo();
 const customerPhone = phoneNo();
@@ -30,7 +32,10 @@ const browser = await chromium.launch({ executablePath: "C:/Program Files/Google
 const shot = async (page, name, wait = 900) => {
   await page.waitForTimeout(wait);
   await page.screenshot({ path: `${OUT}/${name}.png` });
-  const over = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  // the page, and every page frame (a <main>, the card questions' form): none may hold more than the screen
+  const over = await page.evaluate(() =>
+    Math.max(document.documentElement.scrollHeight - innerHeight, ...[...document.querySelectorAll("main, body > form, main form.h-dvh")].map((m) => m.scrollHeight - m.clientHeight), 0),
+  );
   console.log("  ·", name, over > 0 ? `— scrolls ${over}px` : "");
 };
 const readQr = async (page) => {

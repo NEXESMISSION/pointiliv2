@@ -4,8 +4,8 @@ import { ChevronLeft, LogOut } from "lucide-react";
 import { logout } from "@/app/actions";
 import { NameForm } from "@/components/NameForm";
 import { PasswordForm } from "@/components/PasswordForm";
-import { Top } from "@/components/Top";
-import { Icon3D, Screen } from "@/components/ui";
+import { Heading, Top } from "@/components/Top";
+import { Icon3D, Middle, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { spaced } from "@/lib/phone";
 import { kindIcon, t } from "@/lib/t";
@@ -24,13 +24,15 @@ export default async function Account() {
   ];
   return (
     <Screen>
-      <Top back={me.admin ? "/admin" : me.shop ? "/shop" : "/"} title={t.account} />
-      <div className="mt-6 space-y-5 [@media(max-height:680px)]:mt-4 [@media(max-height:680px)]:space-y-3">
+      <Top back={me.admin ? "/admin" : me.shop ? "/shop" : "/"} />
+      <Middle>
+      <Heading title={t.account} />
+      <div className="mt-[3dvh] space-y-[2dvh]">
         <NameForm name={me.name ?? ""} />
         {me.phone && (
           <div>
-            <p className="mb-1.5 px-1 text-[14px] font-semibold text-muted">{t.phone}</p>
-            <p className="rounded-[18px] bg-surface px-4 py-4 text-[17px] shadow-card">
+            <p className="mb-1.5 px-1 text-[0.875rem] font-semibold text-muted">{t.phone}</p>
+            <p className="rounded-[1.125rem] bg-surface px-4 py-4 text-[1.0625rem] shadow-card">
               <span dir="ltr" className="num inline-block">
                 +216 {spaced(me.phone)}
               </span>
@@ -39,21 +41,22 @@ export default async function Account() {
         )}
         <PasswordForm />
         {links.map((l) => (
-          <Link key={l.href} href={l.href} className="press flex items-center gap-3 rounded-[22px] bg-surface p-4 shadow-card">
+          <Link key={l.href} href={l.href} className="press flex items-center gap-3 rounded-[1.375rem] bg-surface p-4 shadow-card">
             <Icon3D name={l.icon} size={40} className="shrink-0" />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[16.5px] font-bold">{l.title}</span>
-              <span className="block truncate text-[13.5px] text-muted">{l.hint}</span>
+              <span className="block truncate text-[1.0312rem] font-bold">{l.title}</span>
+              <span className="block truncate text-[0.8438rem] text-muted">{l.hint}</span>
             </span>
             <ChevronLeft className="size-5 shrink-0 text-faint" />
           </Link>
         ))}
       </div>
-      <form action={logout} className="mt-auto pt-8">
-        <button type="submit" className="press flex h-[56px] w-full items-center justify-center gap-2 rounded-[20px] bg-surface text-[17px] font-semibold text-coral shadow-card">
+      <form action={logout} className="mt-[3dvh]">
+        <button type="submit" className="press flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0625rem] font-semibold text-coral shadow-card">
           <LogOut className="size-5" /> {t.logout}
         </button>
       </form>
+      </Middle>
     </Screen>
   );
 }

@@ -1,6 +1,6 @@
 import { MessageCircle } from "lucide-react";
-import { Top } from "@/components/Top";
-import { Icon3D, Screen } from "@/components/ui";
+import { Heading, Top } from "@/components/Top";
+import { Icon3D, Middle, Screen } from "@/components/ui";
 import { t } from "@/lib/t";
 
 export const metadata = { title: "نسيت كلمة السر" };
@@ -18,19 +18,20 @@ export default function Forgot() {
   const number = support();
   return (
     <Screen>
-      <Top back="/login" title={t.forgot} />
-      <div className="flex flex-1 flex-col items-center justify-center pb-10 text-center">
-        <Icon3D name="phone" size={96} className="animate-float" />
-        <p className="mt-6 max-w-xs text-[17px] leading-relaxed text-body">{number ? t.forgotBody : t.forgotNoContact}</p>
+      <Top back="/login" />
+      <Middle className="items-center text-center">
+        <Icon3D name="phone" size={88} className="animate-float" />
+        <Heading title={t.forgot} className="mt-[2.5dvh]" />
+        <p className="mt-2 max-w-xs text-[1.0625rem] leading-relaxed text-body">{number ? t.forgotBody : t.forgotNoContact}</p>
         {number && (
           <a
             href={`https://wa.me/${number}?text=${encodeURIComponent(t.forgotMsg)}`}
-            className="press mt-8 flex h-[56px] w-full items-center justify-center gap-2 rounded-[20px] bg-[#25D366] text-[17px] font-bold text-white shadow-[0_14px_30px_-12px_rgb(37_211_102/0.7)]"
+            className="press mt-[4dvh] flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-[#25D366] text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(37_211_102/0.7)]"
           >
             <MessageCircle className="size-5" /> {t.forgotCta}
           </a>
         )}
-      </div>
+      </Middle>
     </Screen>
   );
 }

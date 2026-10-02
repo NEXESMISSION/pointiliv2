@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/AuthForm";
-import { Top } from "@/components/Top";
-import { Screen } from "@/components/ui";
+import { Heading, Top } from "@/components/Top";
+import { Middle, Screen } from "@/components/ui";
 import { getMe, homeOf } from "@/lib/session";
 import { t } from "@/lib/t";
 
@@ -12,10 +12,11 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   if (me) redirect(next?.startsWith("/") ? next : homeOf(me));
   return (
     <Screen>
-      <Top back="/" title={t.loginTitle} hint={t.loginHint} />
-      <div className="mt-7 flex flex-1 flex-col">
+      <Top back="/" />
+      <Middle>
+        <Heading title={t.loginTitle} hint={t.loginHint} />
         <AuthForm mode="login" next={next} />
-      </div>
+      </Middle>
     </Screen>
   );
 }

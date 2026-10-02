@@ -12,7 +12,7 @@ export function KindTile({ id, on, onPick, lazy }: { id: string; on: boolean; on
       type="button"
       onClick={() => onPick(id)}
       aria-pressed={on}
-      className={`press flex flex-col items-center gap-1 rounded-[18px] px-1 py-3 text-[12.5px] font-semibold leading-tight ${on ? "bg-brand-soft text-brand shadow-[inset_0_0_0_2px_var(--color-brand)]" : "bg-surface text-body shadow-card"}`}
+      className={`press flex flex-col items-center gap-1 rounded-[1.125rem] px-1 py-3 text-[0.7812rem] font-semibold leading-tight ${on ? "bg-brand-soft text-brand shadow-[inset_0_0_0_2px_var(--color-brand)]" : "bg-surface text-body shadow-card"}`}
     >
       <Icon3D name={kindIcon(id)} size={32} lazy={lazy} />
       <span className="line-clamp-2 text-center">{t.kinds[id]}</span>
@@ -44,13 +44,13 @@ export function KindPicker({ value, onPick, onClose }: { value: string; onPick: 
     <div className="fixed inset-0 z-50 flex animate-fade flex-col bg-canvas" role="dialog" aria-modal="true" aria-label={t.kindsTitle}>
       <div className="safe-t mx-auto w-full max-w-md px-5 pb-3">
         <div className="flex items-center justify-between gap-3 pt-3">
-          <h2 className="text-[24px] font-bold leading-tight">{t.kindsTitle}</h2>
+          <h2 className="text-[1.5rem] font-bold leading-tight">{t.kindsTitle}</h2>
           <button type="button" onClick={onClose} className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
             <X className="size-5" />
           </button>
         </div>
         <label className="relative mt-3 block">
-          <Search className="pointer-events-none absolute start-4 top-1/2 size-[18px] -translate-y-1/2 text-faint" />
+          <Search className="pointer-events-none absolute start-4 top-1/2 size-[1.125rem] -translate-y-1/2 text-faint" />
           <input
             type="search"
             value={q}
@@ -65,7 +65,7 @@ export function KindPicker({ value, onPick, onClose }: { value: string; onPick: 
         <div className="safe-b mx-auto w-full max-w-md px-5 pb-10">
           {groups.length === 0 && (
             <div className="mt-6 text-center">
-              <p className="text-[15px] text-muted">{t.kindsNone}</p>
+              <p className="text-[0.9375rem] text-muted">{t.kindsNone}</p>
               <div className="mx-auto mt-3 w-24">
                 <KindTile id="other" on={value === "other"} onPick={onPick} />
               </div>
@@ -73,7 +73,7 @@ export function KindPicker({ value, onPick, onClose }: { value: string; onPick: 
           )}
           {groups.map((g) => (
             <section key={g.id} className="mt-3">
-              <h3 className="mb-2 px-1 text-[14px] font-bold text-muted">{g.label}</h3>
+              <h3 className="mb-2 px-1 text-[0.875rem] font-bold text-muted">{g.label}</h3>
               <div className="grid grid-cols-4 gap-2">
                 {g.kinds.map((id) => (
                   <KindTile key={id} id={id} on={value === id} onPick={onPick} lazy />

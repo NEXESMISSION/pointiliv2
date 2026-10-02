@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { Check, ChevronRight, WifiOff } from "lucide-react";
+import { ArrowDown, Check, ChevronRight, WifiOff } from "lucide-react";
 import { give } from "@/app/actions";
 import { Confetti } from "@/components/StampLand";
 import { Icon3D } from "@/components/ui";
@@ -20,6 +21,8 @@ const ASK_LIVE_MS = 6_000;
 const ASK_DEAF_MS = 1_500;
 /** a paused shop: how often it checks whether the founder switched it back on */
 const ASK_PAUSED_MS = 20_000;
+/** the bravo after a new card: how long before the code shows by itself */
+const BRAVO_MS = 3600;
 
 /** One radio for the page: Realtime only, no sign-in of its own. */
 let radio: SupabaseClient | null = null;
@@ -42,8 +45,16 @@ function tuneIn(): SupabaseClient | null {
  * pinged by the database) and only then asks what happened; a slow question
  * every few seconds stays as a safety net, and a fast one when the radio is
  * off. A hidden screen asks nothing.
+ *
+ * Right after a new card (`welcome` = the owner's first name), a bravo covers
+ * the screen and fades by itself onto the code; then one note takes the
+ * title's place, above the code — never on it: try it with another phone.
+ * Everything fits one screen: when a gift waits, the title steps aside and
+ * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop }: { shop: { name: string; kind: string; color: string; paused?: boolean; signal?: string } }) {
+export function Counter({ shop, welcome }: { shop: { name: string; kind: string; color: string; paused?: boolean; signal?: string }; welcome?: string | null }) {
+  const router = useRouter();
+  const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(welcome != null ? "bravo" : null);
   const [code, setCode] = useState<Code | null>(null);
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
@@ -171,6 +182,17 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
     };
   }, [tick, paused, live]);
 
+  // the bravo fades onto the code by itself
+  function showCode() {
+    setCoach("leaving");
+    setTimeout(() => setCoach("tip"), 450);
+  }
+  useEffect(() => {
+    if (coach !== "bravo") return;
+    const id = setTimeout(showCode, BRAVO_MS);
+    return () => clearTimeout(id);
+  }, [coach]);
+
   const hand = async (g: Gift) => {
     setGiving(true);
     setGiveFailed(false);
@@ -182,6 +204,8 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
 
   const latest = flashes[flashes.length - 1];
   const gift = gifts[0];
+  // the code's size: the screen's width or height, whichever is shorter — smaller when a gift needs room under it
+  const qr = gift ? "min(60vw, 32dvh, 22rem)" : "min(78vw, 48dvh, 30rem)";
 
   return (
     <div
@@ -191,32 +215,59 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
       <style>{`
         @keyframes ct-ring { 0% { transform: scale(0.85); opacity: 0.7; } 100% { transform: scale(1.5); opacity: 0; } }
         @keyframes ct-pill { 0% { transform: translateY(20px) scale(0.5); opacity: 0; } 60% { transform: translateY(-6px) scale(1.12); opacity: 1; } 100% { transform: none; opacity: 1; } }
-        @keyframes ct-sheet { 0% { transform: translateY(110%); } 70% { transform: translateY(-4%); } 100% { transform: none; } }
+        @keyframes ct-in { 0% { transform: translateY(14px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+        @keyframes ct-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
       `}</style>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_45%_at_50%_0%,rgb(255_255_255/0.2),transparent_70%)]" aria-hidden />
       {party > 0 && <Confetti key={party} count={50} />}
 
-      <header className="safe-t relative z-10 flex items-center gap-3 px-5">
+      <header className="safe-t relative z-10 flex shrink-0 items-center gap-3 px-[clamp(1rem,5vw,1.5rem)] pt-2">
         <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-white/15 hover:bg-white/25" aria-label={t.back}>
           <ChevronRight className="size-5" />
         </Link>
-        <p className="min-w-0 flex-1 truncate text-center text-[19px] font-bold">{shop.name}</p>
+        <p className="min-w-0 flex-1 truncate text-center text-[1.1875rem] font-bold">{shop.name}</p>
         <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white/20">
           <Icon3D name={kindIcon(shop.kind)} size={28} />
         </span>
       </header>
 
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-8">
-        <h1 className="text-center text-[clamp(1.7rem,5vh,2.8rem)] font-bold leading-tight">{t.counterTitle}</h1>
+      <main className="safe-b relative z-10 mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col items-center justify-center gap-[2.4dvh] px-[clamp(1rem,5vw,1.5rem)] py-[2dvh]">
+        {coach === "tip" ? (
+          // the note takes the title's place: above the code, never on it
+          <div className="w-full rounded-[1.375rem] bg-surface p-4 text-ink shadow-[0_14px_40px_-12px_rgb(0_0_0/0.45)]" style={{ animation: "ct-in 420ms cubic-bezier(0.2,0.8,0.2,1) both" }} role="dialog" aria-label={t.coachTipTitle}>
+            <p className="flex items-center gap-2 text-[1.0312rem] font-bold leading-snug">
+              <span className="grid size-7 shrink-0 animate-bounce place-items-center rounded-full bg-brand-soft text-brand">
+                <ArrowDown className="size-4" strokeWidth={2.8} />
+              </span>
+              {t.coachTipTitle}
+            </p>
+            <p className="mt-1.5 flex items-center gap-2 text-[0.875rem] leading-relaxed text-body">
+              <Icon3D name="phone" size={28} className="shrink-0" />
+              {t.coachTip}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setCoach(null);
+                router.replace("/shop/qr");
+              }}
+              className="press mt-2.5 h-10 w-full rounded-[0.875rem] bg-brand text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]"
+            >
+              {t.coachTipOk}
+            </button>
+          </div>
+        ) : (
+          !gift && <h1 className="text-center text-[clamp(1.6rem,4.6dvh,2.6rem)] font-bold leading-tight">{t.counterTitle}</h1>
+        )}
 
-        <div className="relative mt-[3.5vh] aspect-square" style={{ width: "min(78vw, 50vh, 30rem)" }}>
+        <div className="relative aspect-square shrink-0 transition-[width] duration-500" style={{ width: qr }}>
           {flashes.map((f) => (
-            <span key={f.id} className="absolute inset-0 rounded-[34px] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
+            <span key={f.id} className="absolute inset-0 rounded-[2.125rem] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
           ))}
-          <div className="absolute inset-0 rounded-[34px] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
+          <div className="absolute inset-0 rounded-[2.125rem] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
             {paused ? (
               <div className="grid size-full place-items-center p-6 text-center">
-                <p className="text-[19px] font-bold text-ink">{t.pausedBanner}</p>
+                <p className="text-[1.1875rem] font-bold text-ink">{t.pausedBanner}</p>
               </div>
             ) : code ? (
               <div key={code.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-25" : ""}`} dangerouslySetInnerHTML={{ __html: code.svg }} role="img" aria-label={t.counterTitle} data-qr="1" />
@@ -227,7 +278,7 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
             )}
             {offline && (
               <div className="absolute inset-0 grid place-items-center">
-                <p className="flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[15px] font-semibold text-white">
+                <p className="flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[0.9375rem] font-semibold text-white">
                   <WifiOff className="size-5" /> {t.reconnecting}
                 </p>
               </div>
@@ -235,29 +286,53 @@ export function Counter({ shop }: { shop: { name: string; kind: string; color: s
           </div>
         </div>
 
-        <div className="mt-[3vh] flex h-14 items-center">
+        <div className="flex h-12 shrink-0 items-center">
           {latest ? (
-            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-7 py-3 text-[20px] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
-              <Check className="size-6" strokeWidth={3} /> <span className="num">+1</span> {latest.name ?? t.someone}
+            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.125rem] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
+              <Check className="size-5" strokeWidth={3} /> <span className="num">+1</span> {latest.name ?? t.someone}
             </p>
           ) : (
-            <p className="max-w-xs text-center text-[15px] text-white/80">{t.counterHint}</p>
+            <p className="max-w-xs text-center text-[0.9375rem] text-white/80">{t.counterHint}</p>
           )}
         </div>
-      </main>
 
-      {gift && (
-        <div className="safe-b absolute inset-x-0 bottom-0 z-20 mx-auto max-w-md px-4" style={{ animation: "ct-sheet 560ms cubic-bezier(0.2,0.9,0.3,1.1) both" }}>
-          <div className="rounded-[30px] bg-surface p-5 text-center text-ink shadow-[0_-10px_40px_-10px_rgb(0_0_0/0.35)]">
-            <Icon3D name="gift" size={70} className="mx-auto -mt-14 animate-float" />
-            <p className="mt-1 text-[22px] font-bold">{fill(t.giftFor, { who: gift.name ?? t.someone, gift: gift.gift })}</p>
-            <p className="mt-0.5 text-[15px] text-muted">{t.giveNow}</p>
-            <button type="button" disabled={giving} onClick={() => void hand(gift)} className="press mt-4 h-[58px] w-full rounded-[20px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[19px] font-bold text-white shadow-[0_14px_30px_-12px_rgb(255_107_74/0.7)] disabled:opacity-60">
+        {/* a gift to hand over: under the code, in the page, never over the code */}
+        {gift && (
+          <div className="w-full shrink-0 rounded-[1.75rem] bg-surface p-[1.1rem] text-center text-ink shadow-[0_-10px_40px_-10px_rgb(0_0_0/0.35)]" style={{ animation: "ct-in 480ms cubic-bezier(0.2,0.8,0.2,1) both" }}>
+            <p className="flex items-center justify-center gap-2 text-[1.25rem] font-bold leading-tight">
+              <Icon3D name="gift" size={36} className="animate-float" />
+              {fill(t.giftFor, { who: gift.name ?? t.someone, gift: gift.gift })}
+            </p>
+            <p className="mt-0.5 text-[0.9375rem] text-muted">{t.giveNow}</p>
+            <button type="button" disabled={giving} onClick={() => void hand(gift)} className="press mt-3 h-[3.4rem] w-full rounded-[1.25rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[1.1875rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(255_107_74/0.7)] disabled:opacity-60">
               {t.given}
             </button>
-            {giveFailed && <p className="mt-2 text-[14px] font-medium text-coral">{t.errNetwork}</p>}
-            {gifts.length > 1 && <p className="num mt-2 text-[13px] text-muted">+{gifts.length - 1}</p>}
+            {giveFailed && <p className="mt-2 text-[0.875rem] font-medium text-coral">{t.errNetwork}</p>}
+            {gifts.length > 1 && <p className="num mt-1.5 text-[0.8125rem] text-muted">+{gifts.length - 1}</p>}
           </div>
+        )}
+      </main>
+
+      {/* right after a new card: the bravo, over everything, fading by itself onto the code */}
+      {(coach === "bravo" || coach === "leaving") && (
+        <div className={`safe-t safe-b fixed inset-0 z-50 flex flex-col items-center justify-center bg-canvas px-[clamp(1.25rem,6vw,1.75rem)] text-center text-ink transition-[opacity,transform] duration-[450ms] ${coach === "leaving" ? "scale-[1.04] opacity-0" : "animate-fade"}`} role="dialog" aria-modal="true">
+          <Confetti count={70} />
+          <Icon3D name="trophy" size={92} className="animate-pop" />
+          <h1 className="mt-[2dvh] animate-rise text-[2.1rem] font-bold" style={{ animationDelay: "150ms" }}>
+            {welcome ? fill(t.coachBravo, { name: welcome }) : t.coachBravoAnon}
+          </h1>
+          <p className="mt-1 animate-rise text-[1.125rem] font-semibold text-body" style={{ animationDelay: "400ms" }}>
+            {t.coachReady}
+          </p>
+          <p className="mt-[2.5dvh] max-w-[17rem] animate-rise text-[1rem] leading-relaxed text-muted" style={{ animationDelay: "800ms" }}>
+            {t.coachShow}
+          </p>
+          <div className="mt-[4dvh] h-1 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
+            <span className="block h-full origin-right rounded-full bg-brand" style={{ animation: `ct-bar ${BRAVO_MS}ms linear both` }} />
+          </div>
+          <button type="button" onClick={showCode} className="press mt-4 px-6 py-2 text-[1rem] font-bold text-brand">
+            {t.coachShowCta}
+          </button>
         </div>
       )}
     </div>
