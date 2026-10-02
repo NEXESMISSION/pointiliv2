@@ -11,6 +11,8 @@ import type { ScanResult } from "@/lib/types";
 
 /** after the tampon hits: each line arrives in reading order */
 const after = (ms: number) => ({ animationDelay: `${IMPACT_MS + ms}ms` });
+/** the tampon and the card get smaller on a shorter phone, so the answer never scrolls */
+const SHRINK = "[@media(max-height:780px)]:[zoom:0.86] [@media(max-height:690px)]:[zoom:0.74] [@media(max-height:620px)]:[zoom:0.66]";
 
 /** Scan → the tampon lands. One POST, then the answer. */
 export function ScanFlow({ token }: { token: string }) {
@@ -51,26 +53,28 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   return (
     <div className="relative flex flex-col items-center text-center">
       <Confetti count={gift ? 70 : 36} delay={IMPACT_MS} />
-      <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} />
-      <h1 className="mt-1 animate-rise text-[30px] font-bold" style={after(80)}>
+      <div className={SHRINK}>
+        <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} />
+      </div>
+      <h1 className="mt-1 animate-rise text-[clamp(24px,4dvh,30px)] font-bold leading-tight" style={after(80)}>
         {gift ? fill(t.won, { gift: card.shop.gift ?? "" }) : t.newStamp}
       </h1>
       <p className="animate-rise text-[16px] font-semibold text-muted" style={after(140)}>
         {card.shop.name}
       </p>
 
-      <div className="mt-5 w-full animate-rise text-start" style={after(220)}>
+      <div className={`mt-[2.4dvh] w-full animate-rise text-start ${SHRINK}`} style={after(220)}>
         <Pass shop={card.shop} stamps={card.stamps} fresh />
       </div>
 
+      {/* the gift: one line to show at the counter, not a second card */}
       {gift && (
-        <div className="relative mt-4 w-full animate-pop overflow-hidden rounded-[26px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] p-4 text-white shadow-[0_18px_40px_-16px_rgb(255_107_74/0.8)]" style={after(420)}>
-          <Icon3D name="gift" size={60} className="mx-auto animate-float" />
-          <p className="mt-1 text-[18px] font-bold">{t.wonBody}</p>
-        </div>
+        <p className="relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[18px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[16.5px] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)]" style={after(420)}>
+          <Icon3D name="gift" size={30} className="animate-float" /> {t.wonBody}
+        </p>
       )}
 
-      <div className="mt-6 w-full animate-rise space-y-2.5" style={after(500)}>
+      <div className="mt-[3dvh] w-full animate-rise space-y-1.5" style={after(500)}>
         <LinkBtn href={`/c/${card.id}`} kind={gift ? "soft" : "main"}>
           {t.seeCard}
         </LinkBtn>

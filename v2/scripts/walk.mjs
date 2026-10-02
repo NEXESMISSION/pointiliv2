@@ -23,12 +23,15 @@ const ownerPhone = phoneNo();
 const customerPhone = phoneNo();
 let bossPhone = null;
 
-const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN" };
+// SIZE=375x667 walks a small phone; every screen says how far it scrolls, if it does
+const [W, H] = (process.env.SIZE || "390x844").split("x").map(Number);
+const phone = { viewport: { width: W, height: H }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN" };
 const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
 const shot = async (page, name, wait = 900) => {
   await page.waitForTimeout(wait);
   await page.screenshot({ path: `${OUT}/${name}.png` });
-  console.log("  ·", name);
+  const over = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  console.log("  ·", name, over > 0 ? `— scrolls ${over}px` : "");
 };
 const readQr = async (page) => {
   await page.addScriptTag({ path: "node_modules/jsqr/dist/jsQR.js" });

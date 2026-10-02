@@ -22,7 +22,8 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
   if (!card) notFound();
 
   return (
-    <Screen>
+    // one screen: the story below scrolls inside its own box, the card never moves
+    <Screen className="h-dvh">
       <Top back="/" title={card.shop.name} />
       <div className="mt-5 animate-rise">
         <Pass shop={card.shop} stamps={card.stamps} />
@@ -34,7 +35,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
       )}
 
       {card.ready && (
-        <div className="relative mt-4 animate-pop overflow-hidden rounded-[28px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a_55%,#e0452a)] p-5 text-center text-white shadow-[0_20px_44px_-18px_rgb(255_107_74/0.85)]">
+        <div className="relative mt-4 animate-pop overflow-hidden rounded-[28px] bg-[linear-gradient(150deg,#ffa183,#ff6b4a_55%,#e0452a)] p-5 text-center text-white shadow-[0_20px_44px_-18px_rgb(255_107_74/0.85)] [@media(max-height:760px)]:[zoom:0.82]">
           <span className="pointer-events-none absolute -top-16 start-1/2 size-56 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" aria-hidden />
           <Icon3D name="gift" size={72} className="relative mx-auto animate-float" />
           <p className="relative mt-1 text-[22px] font-bold">{t.ready}</p>
@@ -43,12 +44,12 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
 
-      <section className="mt-6 pb-6">
+      <section className="mt-6 flex min-h-0 flex-1 flex-col pb-4">
         <h2 className="mb-2.5 px-0.5 text-[17px] font-bold">{t.history}</h2>
         {card.history.length === 0 ? (
           <p className="rounded-[20px] bg-surface p-4 text-[15px] text-muted shadow-card">{t.nothingYet}</p>
         ) : (
-          <ul className="divide-y divide-line overflow-hidden rounded-[22px] bg-surface shadow-card">
+          <ul className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[22px] bg-surface shadow-card">
             {card.history.map((h, i) => (
               <li key={i} className="flex items-center gap-3 px-4 py-3">
                 {h.kind === "stamp" ? (
