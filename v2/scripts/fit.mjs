@@ -16,6 +16,7 @@ const sizes = [
   [375, 667],
   [390, 844],
   [430, 932],
+  [465, 830],
 ];
 const paths = ["/", "/join", "/login", "/shop/new", "/forgot"];
 

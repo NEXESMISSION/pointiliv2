@@ -52,7 +52,7 @@ export function Welcome() {
       </div>
 
       {/* the card, the jasmine, the tea: drawn at one size, zoomed down on shorter screens so nothing is cut */}
-      <div className="relative mx-auto mt-[3.5dvh] w-[320px] [zoom:1] [@media(max-height:860px)]:[zoom:0.92] [@media(max-height:760px)]:[zoom:0.84] [@media(max-height:690px)]:[zoom:0.76] [@media(max-height:610px)]:[zoom:0.68]">
+      <div className="relative mx-auto mt-[3.5dvh] w-[336px] [zoom:1] [@media(max-height:860px)]:[zoom:0.95] [@media(max-height:760px)]:[zoom:0.87] [@media(max-height:690px)]:[zoom:0.8] [@media(max-height:610px)]:[zoom:0.72]">
         <div className="absolute inset-x-6 -top-[2.2dvh] -rotate-[5deg] opacity-95">
           <Pass shop={{ name: "Salon Nour", kind: "hair", color: BLUE, goal: 6, gift: "بروشينغ بلاش" }} stamps={3} small />
         </div>
@@ -65,7 +65,7 @@ export function Welcome() {
         <img src="/tn/tea.webp" alt="" width={78} height={130} className="pointer-events-none absolute -bottom-10 -start-12 h-[130px] w-auto drop-shadow-[0_12px_16px_rgb(0_0_0/0.22)]" />
       </div>
 
-      <h1 className="relative mt-[6.5dvh] text-center text-[clamp(21px,3.4dvh,28px)] font-bold leading-snug">
+      <h1 className="relative mt-[6.5dvh] text-center text-[clamp(18px,2.9dvh,23px)] font-bold leading-snug">
         {/* «كارطات الفيدليتي متاعك،» then «في تليفونك»: the line breaks where it is said */}
         {t.tagline.split("، ").map((part, i, all) => (
           <span key={i} className="block">
@@ -84,24 +84,24 @@ export function Welcome() {
       <div className="relative mt-[4.5dvh] space-y-[1.4dvh]">
         <Link
           href="/shop/new"
-          className="press relative flex h-[clamp(54px,8dvh,64px)] items-center gap-3 overflow-hidden rounded-[22px] bg-[linear-gradient(150deg,#F2414A,#D7141A_55%,#B00D17)] px-4 text-white shadow-[0_16px_30px_-14px_rgb(215_20_26/0.75)]"
+          className="press relative flex h-[clamp(52px,7.4dvh,60px)] items-center gap-3 overflow-hidden rounded-[20px] bg-[linear-gradient(150deg,#F2414A,#D7141A_55%,#B00D17)] px-4 text-white shadow-[0_16px_30px_-14px_rgb(215_20_26/0.75)]"
         >
           <Zellige color="#fff" id="zl-shop" />
-          <span className="relative grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/95">
-            <Icon3D name="shop" size={30} />
+          <span className="relative grid size-10 shrink-0 place-items-center rounded-[13px] bg-white/95">
+            <Icon3D name="shop" size={27} />
           </span>
-          <span className="relative flex-1 text-[19px] font-bold">{t.enterAsShop}</span>
+          <span className="relative flex-1 text-[17px] font-bold">{t.enterAsShop}</span>
           <ChevronLeft className="relative size-5 shrink-0 opacity-80" />
         </Link>
-        <Link href="/join" className="press relative flex h-[clamp(54px,8dvh,64px)] items-center gap-3 overflow-hidden rounded-[22px] bg-white px-4 shadow-[0_10px_26px_-14px_rgb(29_95_168/0.45)] ring-1 ring-[#1D5FA8]/10">
+        <Link href="/join" className="press relative flex h-[clamp(52px,7.4dvh,60px)] items-center gap-3 overflow-hidden rounded-[20px] bg-white px-4 shadow-[0_10px_26px_-14px_rgb(29_95_168/0.45)] ring-1 ring-[#1D5FA8]/10">
           <Zellige color={BLUE} id="zl-customer" />
-          <span className="relative grid size-11 shrink-0 place-items-center rounded-[14px] bg-[#EAF1FA]">
-            <Icon3D name="ticket" size={30} />
+          <span className="relative grid size-10 shrink-0 place-items-center rounded-[13px] bg-[#EAF1FA]">
+            <Icon3D name="ticket" size={27} />
           </span>
-          <span className="relative flex-1 text-[19px] font-bold text-ink">{t.enterAsCustomer}</span>
+          <span className="relative flex-1 text-[17px] font-bold text-ink">{t.enterAsCustomer}</span>
           <ChevronLeft className="relative size-5 shrink-0 text-faint" />
         </Link>
-        <Link href="/login" className="block py-[1dvh] text-center text-[15px] font-semibold text-[#B00D17]">
+        <Link href="/login" className="block py-[1dvh] text-center text-[14.5px] font-semibold text-[#B00D17]">
           {t.haveAccountLogin}
         </Link>
       </div>
