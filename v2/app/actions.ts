@@ -206,6 +206,11 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
   redirect(inside(str(fd, "next")) ?? "/shop");
 }
 
+/** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
+export async function markSeen(note: "coach" | "logo_tip" | "card_hello"): Promise<void> {
+  await call("see", { p_key: note });
+}
+
 /** The shop hands a waiting gift over. */
 export async function give(moment: number): Promise<boolean> {
   const res = await call<{ ok: boolean }>("give", { p_moment: moment });

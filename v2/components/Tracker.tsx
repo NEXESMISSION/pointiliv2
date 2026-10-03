@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { settle } from "@/lib/once";
 import { enterPage, setScreen, startTracking } from "@/lib/track";
 
 /** In the root layout: every page the visitor opens, and the listeners, once. */
@@ -9,6 +10,7 @@ export function Tracker() {
   const path = usePathname();
   useEffect(() => {
     startTracking();
+    settle();
   }, []);
   useEffect(() => {
     if (path) enterPage(path);

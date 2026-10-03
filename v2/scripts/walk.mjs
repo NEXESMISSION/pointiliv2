@@ -40,6 +40,12 @@ const shot = async (page, name, wait = 900) => {
   );
   console.log("  ·", name, over > 0 ? `— scrolls ${over}px` : "");
 };
+// a one-time note must stay away: wait a moment, then complain loudly if it came back
+const never = async (page, what, locator, ms = 2500) => {
+  await page.waitForTimeout(ms);
+  if (await locator.isVisible().catch(() => false)) console.log(`  ! ${what} showed twice`);
+  else console.log(`  · ${what}: not again ✓`);
+};
 const readQr = async (page) => {
   await page.addScriptTag({ path: "node_modules/jsqr/dist/jsQR.js" });
   return page.evaluate(async () => {
@@ -95,7 +101,9 @@ try {
   // the card, one question at a time: the hello, how many, which gift, which colour, ready
   await o.getByText("توّا نعملو مع بعضنا").waitFor({ timeout: 30000 });
   await shot(o, "04a-card-hello", 1600);
-  await o.getByRole("button", { name: "يلّا نبداو" }).click();
+  await o.reload({ waitUntil: "load" });
+  await never(o, "the card's hello (reload)", o.getByText("توّا نعملو مع بعضنا"), 1500);
+  await o.getByText("قدّاش من تامبون").first().waitFor({ timeout: 20000 });
   await o.getByRole("textbox", { name: "ولا اكتب العدد" }).fill("15");
   await shot(o, "04b2-card-goal-typed", 500);
   await o.getByRole("button", { name: "5", exact: true }).click();
@@ -128,6 +136,12 @@ try {
   await o.waitForURL((u) => u.pathname === "/shop/qr" && !u.search, { timeout: 20000 });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05-counter", 1200);
+  await o.reload({ waitUntil: "load" });
+  await never(o, "the bravo (reload)", o.getByText("برافو"));
+  await o.goto(BASE + "/shop/qr?welcome=1", { waitUntil: "load" });
+  await never(o, "the bravo (its old address)", o.getByText("برافو"));
+  await o.goto(BASE + "/shop/qr", { waitUntil: "load" });
+  await o.locator("[data-qr]").waitFor({ timeout: 30000 });
 
   // ── a customer with no account scans it ──
   const url = await readQr(o);
@@ -187,6 +201,20 @@ try {
   await shot(o, "17d-logo-tip", 700);
   await o.getByRole("button", { name: "باهي", exact: true }).click();
   await shot(o, "17-owner-home");
+  await o.reload({ waitUntil: "load" });
+  await never(o, "the logo tip (reload)", o.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
+  {
+    // the same owner on another phone: the notes were written on the person, not on the first phone
+    const other = await (await browser.newContext(phone)).newPage();
+    await other.goto(BASE + "/login", { waitUntil: "load" });
+    await other.locator('input[name="phone"]').fill(ownerPhone);
+    await other.locator('input[name="password"]').fill("yasmine123");
+    await Promise.all([other.waitForURL("**/shop", { timeout: 60000 }), other.locator('button[type="submit"]').click()]);
+    await never(other, "the logo tip (another phone)", other.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
+    await other.goto(BASE + "/shop/qr?welcome=1", { waitUntil: "load" });
+    await never(other, "the bravo (another phone)", other.getByText("برافو"));
+    await other.context().close();
+  }
   // «عندك سؤال؟»: call, WhatsApp, the videos
   await o.getByRole("button", { name: "عندك سؤال؟" }).click();
   await o.getByRole("dialog", { name: "عندك سؤال؟" }).waitFor();

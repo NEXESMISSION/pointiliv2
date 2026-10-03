@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { call } from "@/lib/supabase";
 
 export type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; paused?: boolean; signal?: string; logo?: string | null };
-export type Me = { id: string; name: string; phone: string | null; admin?: boolean; shop: Shop | null };
+export type Me = { id: string; name: string; phone: string | null; admin?: boolean; shop: Shop | null; seen?: string[] };
 
 /** Who is here: null when nobody is signed in (no network call without a session cookie). */
 export async function getMe(): Promise<Me | null> {

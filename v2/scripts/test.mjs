@@ -60,6 +60,13 @@ try {
   check("a goal outside 3–30 is refused", (await rpc(owner, "save_card", { p_goal: 2, p_gift: "x x", p_color: "#000000" })).error === "invalid_goal");
   check("a card of 30 stamps (typed by hand) is fine", (await rpc(owner, "save_card", { p_goal: 30, p_gift: "قهوة بلاش", p_color: "#6c47ff" })).ok && (await rpc(owner, "save_card", { p_goal: 5, p_gift: "قهوة بلاش", p_color: "#6c47ff" })).ok);
   check("a new shop has no logo", me.shop.logo === null, me.shop);
+  check("a new owner has seen no one-time note yet", Array.isArray(me.seen) && me.seen.length === 0, me.seen);
+  check("the logo tip, seen: written on the person", (await rpc(owner, "see", { p_key: "logo_tip" })).ok && (await rpc(owner, "me")).seen.join() === "logo_tip");
+  await rpc(owner, "see", { p_key: "logo_tip" });
+  check("…once, however often it is said", (await rpc(owner, "me")).seen.length === 1);
+  check("a note that does not exist is refused", (await rpc(owner, "see", { p_key: "popup" })).error === "invalid");
+  const nobody = createClient(URL_, ANON, { auth: { persistSession: false } });
+  check("nobody signed in cannot mark notes", !!(await nobody.rpc("see", { p_key: "coach" })).error);
   const logoUrl = `${URL_}/storage/v1/object/public/logos/${owner.id}/test.webp`;
   await owner.client.from("shops").update({ logo: "https://evil.example/x.png" }).eq("owner_id", owner.id);
   check("a browser cannot set a logo itself", (await rpc(owner, "me")).shop.logo === null);

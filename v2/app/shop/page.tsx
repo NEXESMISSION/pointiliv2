@@ -190,7 +190,7 @@ export default async function ShopHome() {
         </div>
       </section>
 
-      <LogoTip shopId={shop.id} logo={shop.logo ?? null} />
+      <LogoTip shopId={shop.id} logo={shop.logo ?? null} show={!(me.seen ?? []).includes("logo_tip")} />
     </main>
   );
 }

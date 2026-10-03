@@ -3,34 +3,32 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon3D } from "@/components/ui";
+import { seenHere, shown } from "@/lib/once";
 import { signal } from "@/lib/track";
 import { t } from "@/lib/t";
 
 type Spot = { top: number; left: number; width: number; height: number };
 
 /**
- * Once per shop, on the owner's home: the «المحل» tile lit in the dark, and
- * a note under it — the logo lives there, and it can be put or changed any
- * time («نحطّو توّا» goes straight there when there is none yet).
+ * Once in a new owner's life, on their home: the «المحل» tile lit in the
+ * dark, and a note under it — the logo lives there, and it can be put or
+ * changed any time («نحطّو توّا» goes straight there when there is none
+ * yet). `show` comes from the person's list of notes seen (owners from before
+ * this note never get it); it is written there the moment it shows.
  */
-export function LogoTip({ shopId, logo }: { shopId: string; logo: string | null }) {
-  const key = `pt_logo_tip:${shopId}`;
+export function LogoTip({ shopId, logo, show }: { shopId: string; logo: string | null; show: boolean }) {
   const [open, setOpen] = useState(false);
   const [spot, setSpot] = useState<Spot | null>(null);
 
   useEffect(() => {
-    let seen = false;
-    try {
-      seen = !!localStorage.getItem(key);
-    } catch {
-      seen = true;
-    }
-    if (seen) return;
+    if (!show || seenHere("logo_tip", shopId)) return;
     const find = () => {
       const r = document.getElementById("shop-tile")?.getBoundingClientRect();
       setSpot(r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null);
     };
     const id = setTimeout(() => {
+      if (seenHere("logo_tip", shopId)) return;
+      shown("logo_tip", shopId);
       find();
       setOpen(true);
       signal("logo_tip", logo ? "has" : "none");
@@ -40,16 +38,9 @@ export function LogoTip({ shopId, logo }: { shopId: string; logo: string | null 
       clearTimeout(id);
       removeEventListener("resize", find);
     };
-  }, [key, logo]);
+  }, [show, shopId, logo]);
 
-  const close = () => {
-    try {
-      localStorage.setItem(key, "1");
-    } catch {
-      /* private mode: it may show once more */
-    }
-    setOpen(false);
-  };
+  const close = () => setOpen(false);
   if (!open) return null;
 
   // the note goes under the tile, or over it when the screen is short

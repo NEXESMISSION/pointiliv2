@@ -30,6 +30,11 @@ create table if not exists public.people (
   created_at  timestamptz not null default now()
 );
 
+-- the one-time notes this person has seen (the bravo after the first card,
+-- the card's hello, the logo tip): kept here, not on the phone, so none ever
+-- shows twice — not after a reload, not on another phone
+alter table public.people add column if not exists seen text[] not null default '{}';
+
 create table if not exists public.shops (
   id          uuid primary key default gen_random_uuid(),
   owner_id    uuid not null unique references auth.users (id) on delete cascade,
@@ -296,10 +301,20 @@ begin
   end if;
   select * into s from public.shops where owner_id = v_uid;
   return jsonb_build_object(
-    'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin,
+    'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen),
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
       'signal', s.signal, 'logo', s.logo) end);
+end $$;
+
+-- a one-time note seen: added once to the person's list (unknown notes refused)
+create or replace function public.see(p_key text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello') then return public.err('invalid'); end if;
+  update public.people set seen = array_append(seen, p_key) where id = auth.uid() and not (p_key = any (seen));
+  return jsonb_build_object('ok', true);
 end $$;
 
 create or replace function public.set_name(p_name text) returns jsonb
@@ -968,7 +983,16 @@ create trigger codes_ping after update of held_hash on public.codes for each row
 
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
-grant execute on function public.me(), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text),
+-- ═══ once: the owners from before the notes were kept here ═════════════════
+-- (2026-10-03) never get them — they met the hello and the bravo already, and
+-- the logo tip is for new owners. Re-runnable: only shops from before then.
+update public.people p
+set seen = array(select distinct x from unnest(p.seen || case when s.goal is not null then array['card_hello', 'coach', 'logo_tip'] else array['card_hello', 'logo_tip'] end) x)
+from public.shops s
+where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
+  and not (p.seen @> case when s.goal is not null then array['card_hello', 'coach', 'logo_tip'] else array['card_hello', 'logo_tip'] end);
+
+grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),

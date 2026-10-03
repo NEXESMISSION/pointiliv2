@@ -20,6 +20,7 @@ export default async function ShopCard() {
       owner={(me.name ?? "").split(" ")[0] ?? ""}
       next={editing ? "/shop" : "/shop/qr?welcome=1"}
       editing={editing}
+      hello={!editing && !(me.seen ?? []).includes("card_hello")}
       onTheWay={editing ? (way?.n ?? 0) : undefined}
       help={help}
     />

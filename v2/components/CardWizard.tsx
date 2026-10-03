@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Info } from "lucide-react";
 import { saveCard } from "@/app/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
@@ -9,6 +9,7 @@ import { Pass } from "@/components/Pass";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { Btn, Icon3D, boxLook } from "@/components/ui";
+import { seenBefore, shown } from "@/lib/once";
 import { customersN, fill, sameGift, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import type { FormState } from "@/lib/types";
@@ -20,7 +21,7 @@ const HELLO_MS = 3400;
 /** the card above the question gets smaller on a shorter phone, so nothing ever scrolls */
 const SHRINK = "[@media(max-height:720px)]:[zoom:0.88] [@media(max-height:650px)]:[zoom:0.8]";
 
-type Shop = { name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null };
+type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null };
 
 /**
  * The card, one question at a time. A new owner first gets a hello — «توّا
@@ -31,11 +32,12 @@ type Shop = { name: string; kind: string; goal: number | null; gift: string | nu
  * from the card as it is, and the last step says what happens to the
  * customers already on their way (`onTheWay` of them).
  */
-export function CardWizard({ shop, owner, next, editing, onTheWay, help }: { shop: Shop; owner: string; next: string; editing: boolean; onTheWay?: number; help?: HelpSettings }) {
+export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay, help }: { shop: Shop; owner: string; next: string; editing: boolean; hello?: boolean; onTheWay?: number; help?: HelpSettings }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const router = useRouter();
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
-  const [step, setStep] = useState(editing ? 1 : 0);
+  // the hello is once in a lifetime (`hello`: the person never had it)
+  const [step, setStep] = useState(() => (editing || !hello || seenBefore("card_hello", shop.id) ? 1 : 0));
   const [back, setBack] = useState(false);
   const [goal, setGoal] = useState(shop.goal ?? 8);
   // a number typed by hand (3 to 30) instead of one of the five
@@ -53,6 +55,15 @@ export function CardWizard({ shop, owner, next, editing, onTheWay, help }: { sho
     setBack(to < step);
     setStep(to);
   };
+
+  // the hello, written down the moment it shows: a reload or another phone goes straight to the first question
+  const claimed = useRef(false);
+  useEffect(() => {
+    if (step !== 0 || claimed.current) return;
+    claimed.current = true;
+    shown("card_hello", shop.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // the hello goes on by itself
   useEffect(() => {

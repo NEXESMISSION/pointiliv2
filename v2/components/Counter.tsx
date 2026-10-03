@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ArrowDown, Check, ChevronRight, WifiOff } from "lucide-react";
@@ -10,6 +9,7 @@ import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
+import { seenBefore, shown } from "@/lib/once";
 import { fill, t } from "@/lib/t";
 
 type Code = { id: string; svg: string; expiresLocal: number };
@@ -54,9 +54,10 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome }: { shop: { name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null }; welcome?: string | null }) {
-  const router = useRouter();
-  const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(welcome != null ? "bravo" : null);
+export function Counter({ shop, welcome }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null }; welcome?: string | null }) {
+  const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() => (welcome != null && !seenBefore("coach", shop.id) ? "bravo" : null));
+  // the name, kept: the address drops ?welcome at once
+  const [name] = useState(welcome);
   const [code, setCode] = useState<Code | null>(null);
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
@@ -184,6 +185,17 @@ export function Counter({ shop, welcome }: { shop: { name: string; kind: string;
     };
   }, [tick, paused, live]);
 
+  // the bravo is once in a lifetime: written down the moment it shows, and the
+  // address loses ?welcome, so neither a reload nor the back button brings it back
+  const claimed = useRef(false);
+  useEffect(() => {
+    if (coach !== "bravo" || claimed.current) return;
+    claimed.current = true;
+    shown("coach", shop.id);
+    window.history.replaceState(null, "", "/shop/qr");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // the bravo fades onto the code by itself
   function showCode() {
     setCoach("leaving");
@@ -251,10 +263,7 @@ export function Counter({ shop, welcome }: { shop: { name: string; kind: string;
             </p>
             <button
               type="button"
-              onClick={() => {
-                setCoach(null);
-                router.replace("/shop/qr");
-              }}
+              onClick={() => setCoach(null)}
               className="press mt-2.5 h-10 w-full rounded-[0.875rem] bg-brand text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]"
             >
               {t.coachTipOk}
@@ -323,7 +332,7 @@ export function Counter({ shop, welcome }: { shop: { name: string; kind: string;
           <Confetti count={70} />
           <Icon3D name="trophy" size={92} className="animate-pop" />
           <h1 className="mt-[2dvh] animate-rise text-[2.1rem] font-bold" style={{ animationDelay: "150ms" }}>
-            {welcome ? fill(t.coachBravo, { name: welcome }) : t.coachBravoAnon}
+            {name ? fill(t.coachBravo, { name }) : t.coachBravoAnon}
           </h1>
           <p className="mt-1 animate-rise text-[1.125rem] font-semibold text-body" style={{ animationDelay: "400ms" }}>
             {t.coachReady}
