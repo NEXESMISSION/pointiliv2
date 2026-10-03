@@ -28,7 +28,8 @@ function client(ua: string) {
                   : /Safari/i.test(ua)
                     ? "Safari"
                     : "?";
-  const bot = /bot|crawl|spider|slurp|HeadlessChrome|Playwright|Puppeteer|Lighthouse|facebookexternalhit|meta-externalagent|curl|wget|python|node-fetch|axios|undici/i.test(ua);
+  // crawlers name themselves (Googlebot/2.1, AhrefsBot/7) — a phone called CUBOT is not one
+  const bot = /[a-z]bot\/|\bbot\b|crawler|spider|slurp|HeadlessChrome|Playwright|Puppeteer|Lighthouse|facebookexternalhit|meta-externalagent|curl\/|wget\/|python|node-fetch|axios|undici|okhttp|go-http-client/i.test(ua);
   return { device, os, browser, bot };
 }
 
