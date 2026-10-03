@@ -2,16 +2,19 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 /** A screen's top: a round back button — and, on a list screen, the title under it. */
-export function Top({ back, title, hint, children }: { back?: string; title?: string; hint?: string; children?: React.ReactNode }) {
+export function Top({ back, title, hint, end, children }: { back?: string; title?: string; hint?: string; end?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <header className="shrink-0 pt-2">
-      {back ? (
-        <Link href={back} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label="back">
-          <ChevronRight className="size-5" />
-        </Link>
-      ) : (
-        <span className="block size-11" aria-hidden />
-      )}
+      <div className="flex items-center justify-between gap-3">
+        {back ? (
+          <Link href={back} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label="back">
+            <ChevronRight className="size-5" />
+          </Link>
+        ) : (
+          <span className="block size-11" aria-hidden />
+        )}
+        {end}
+      </div>
       {title && <Heading title={title} hint={hint} className="mt-[2.2dvh]" />}
       {children}
     </header>

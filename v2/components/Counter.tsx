@@ -7,6 +7,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ArrowDown, Check, ChevronRight, WifiOff } from "lucide-react";
 import { give } from "@/app/actions";
 import { Confetti } from "@/components/StampLand";
+import { useScreen } from "@/components/Tracker";
 import { Icon3D } from "@/components/ui";
 import { fill, kindIcon, t } from "@/lib/t";
 
@@ -201,6 +202,8 @@ export function Counter({ shop, welcome }: { shop: { name: string; kind: string;
     if (ok) setGifts((list) => list.filter((x) => x.id !== g.id));
     else setGiveFailed(true);
   };
+
+  useScreen(coach === "bravo" || coach === "leaving" ? "bravo" : coach === "tip" ? "tip" : "code");
 
   const latest = flashes[flashes.length - 1];
   const gift = gifts[0];

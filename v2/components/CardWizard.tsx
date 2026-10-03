@@ -4,10 +4,13 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { Check, ChevronRight, Info } from "lucide-react";
 import { saveCard } from "@/app/actions";
+import { HelpButton, type HelpSettings } from "@/components/Help";
 import { Pass } from "@/components/Pass";
 import { Confetti } from "@/components/StampLand";
+import { useScreen } from "@/components/Tracker";
 import { Btn, Icon3D, boxLook } from "@/components/ui";
 import { customersN, fill, sameGift, t } from "@/lib/t";
+import { signal } from "@/lib/track";
 import type { FormState } from "@/lib/types";
 
 const GOALS = [5, 6, 8, 10, 12];
@@ -28,7 +31,7 @@ type Shop = { name: string; kind: string; goal: number | null; gift: string | nu
  * from the card as it is, and the last step says what happens to the
  * customers already on their way (`onTheWay` of them).
  */
-export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Shop; owner: string; next: string; editing: boolean; onTheWay?: number }) {
+export function CardWizard({ shop, owner, next, editing, onTheWay, help }: { shop: Shop; owner: string; next: string; editing: boolean; onTheWay?: number; help?: HelpSettings }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const router = useRouter();
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
@@ -37,6 +40,11 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
   const [goal, setGoal] = useState(shop.goal ?? 8);
   const [gift, setGift] = useState(shop.gift ?? ideas[0] ?? "");
   const [color, setColor] = useState((shop.color || COLORS[0]!).toUpperCase());
+
+  useScreen(`${editing ? "edit-" : ""}${["hello", "goal", "gift", "color", "ready"][step] ?? "ready"}`);
+  useEffect(() => {
+    if (state?.error) signal("form_error", `card · ${state.error}`);
+  }, [state]);
 
   const go = (to: number) => {
     setBack(to < step);
@@ -97,7 +105,7 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
       {step === 4 && !editing && <Confetti count={60} />}
 
       {/* the way back, and where we are: three dots */}
-      <header className="flex items-center justify-between pt-2">
+      <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-2">
         {step > 1 || editing ? (
           <button type="button" onClick={() => (step > 1 ? go(step - 1) : router.push(next))} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
             <ChevronRight className="size-5" />
@@ -114,7 +122,7 @@ export function CardWizard({ shop, owner, next, editing, onTheWay }: { shop: Sho
         ) : (
           <span className="text-[0.875rem] font-semibold text-muted">{editing ? t.wizEdit : ""}</span>
         )}
-        <span className="size-11" />
+        <span className="flex justify-end">{help ? <HelpButton help={help} compact /> : <span className="size-11" />}</span>
       </header>
 
       {/* the card, the question, the answers and the button: one block, in the middle */}

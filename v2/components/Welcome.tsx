@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { VideoPill, type HelpVideo } from "@/components/Help";
 import { Pass } from "@/components/Pass";
+import { Mark } from "@/components/Tracker";
 import { Icon3D, Logo } from "@/components/ui";
 import { t } from "@/lib/t";
 
@@ -38,11 +40,13 @@ function Zellige({ color, id }: { color: string; id: string }) {
  * The front door, Tunisian: a card from a café in the Medina between jasmine
  * and a glass of mint tea, a corner of Sidi Bou Said, and two doors only —
  * the shop's (first) and the customer's. One screen, on the smallest phone:
- * every size here follows the screen's height.
+ * every size here follows the screen's height. The founder's first video
+ * («كيفاش تخدم؟») floats on the card's edge.
  */
-export function Welcome() {
+export function Welcome({ video }: { video?: HelpVideo | null }) {
   return (
     <main className="relative mx-auto flex h-dvh max-w-md flex-col justify-center overflow-hidden bg-[#FBF6EF] px-5 safe-t safe-b">
+      <Mark screen="welcome" />
       {/* a corner of Sidi Bou Said, behind everything */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/tn/sidibou.webp" alt="" width={220} height={520} className="pointer-events-none absolute -start-3 -top-[3dvh] h-[36dvh] w-auto [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
@@ -64,6 +68,13 @@ export function Welcome() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/tn/tea.webp" alt="" width={78} height={130} className="pointer-events-none absolute -bottom-10 -start-12 h-[8.125rem] w-auto drop-shadow-[0_12px_16px_rgb(0_0_0/0.22)]" />
       </div>
+
+      {/* the video: on the card's bottom edge, outside the zoom so its words stay readable — it takes no room of its own */}
+      {video ? (
+        <div className="relative z-10 -mb-[1.2rem] -mt-[1.2rem] flex justify-center">
+          <VideoPill video={video} className="max-w-[17rem]" />
+        </div>
+      ) : null}
 
       <h1 className="relative mt-[6.5dvh] text-center text-[1.4rem] font-bold leading-snug">
         {/* «كارطات الفيدليتي متاعك،» then «في تليفونك»: the line breaks where it is said */}

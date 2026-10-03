@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { join, login } from "@/app/actions";
 import { PhoneField } from "@/components/PhoneField";
 import { Btn, Field } from "@/components/ui";
+import { signal } from "@/lib/track";
 import { t } from "@/lib/t";
 import type { FormState } from "@/lib/types";
 
@@ -17,6 +18,9 @@ export function AuthForm({ mode, next, owner }: { mode: "join" | "login"; next?:
   // kept by hand: a form action clears its fields, and a name typed once is enough
   const [name, setName] = useState("");
   const err = (f: string) => (state?.field === f ? state.error : null);
+  useEffect(() => {
+    if (state?.error) signal("form_error", `${mode}${owner ? "-owner" : ""} · ${state.field ?? "form"} · ${state.error}`);
+  }, [state, mode, owner]);
   // an owner who already has an account signs in and carries on opening the shop
   const after = next ?? (owner ? "/shop/new" : undefined);
   const q = after ? `?next=${encodeURIComponent(after)}` : "";

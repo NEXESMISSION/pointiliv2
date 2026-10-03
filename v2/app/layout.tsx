@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Readex_Pro } from "next/font/google";
+import { Tracker } from "@/components/Tracker";
 import { t } from "@/lib/t";
 import "./globals.css";
 
@@ -19,7 +20,10 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar-TN" dir="rtl" className={readex.variable}>
-      <body className="min-h-dvh font-sans">{children}</body>
+      <body className="min-h-dvh font-sans">
+        {children}
+        <Tracker />
+      </body>
     </html>
   );
 }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useCallback, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import { LayoutGrid } from "lucide-react";
 import { openShop } from "@/app/actions";
 import { KindPicker, KindTile } from "@/components/KindPicker";
 import { Btn, Field } from "@/components/ui";
 import { KINDS, t } from "@/lib/t";
+import { signal } from "@/lib/track";
 import type { FormState } from "@/lib/types";
 
 /** The kinds most shops are: one tap away. The other 39 are behind «الكل». */
@@ -18,6 +19,9 @@ export function ShopForm({ name = "", kind = "cafe", next }: { name?: string; ki
   const [k, setK] = useState(KINDS.includes(kind) ? kind : "other");
   const [all, setAll] = useState(false);
   const close = useCallback(() => setAll(false), []);
+  useEffect(() => {
+    if (state?.error) signal("form_error", `shop · ${state.field ?? "form"} · ${state.error}`);
+  }, [state]);
   // a kind chosen from the full list takes the first place, lit
   const shown = POPULAR.includes(k) ? POPULAR : [k, ...POPULAR.slice(0, POPULAR.length - 1)];
 

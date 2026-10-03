@@ -31,6 +31,8 @@ const phone = { viewport: { width: W, height: H }, deviceScaleFactor: 2, isMobil
 const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
 const shot = async (page, name, wait = 900) => {
   await page.waitForTimeout(wait);
+  // the dev server's own badge is not part of the app
+  await page.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((e) => (e.style.display = "none")));
   await page.screenshot({ path: `${OUT}/${name}.png` });
   // the page, and every page frame (a <main>, the card questions' form): none may hold more than the screen
   const over = await page.evaluate(() =>
@@ -60,6 +62,14 @@ try {
   const o = await (await browser.newContext(phone)).newPage();
   await o.goto(BASE + "/", { waitUntil: "load" });
   await shot(o, "01-welcome");
+  // the founder's first video, when there is one: it opens over the page
+  const pill = o.getByRole("button", { name: /كيفاش|فيديو/ }).first();
+  if (await pill.count()) {
+    await pill.click();
+    await o.locator("iframe[src*='youtube']").waitFor({ timeout: 20000 });
+    await shot(o, "01b-video", 1200);
+    await o.keyboard.press("Escape");
+  }
   await o.goto(BASE + "/shop/new", { waitUntil: "load" });
   await o.locator('input[name="name"]').fill("ياسمين");
   await o.locator('input[name="phone"]').fill(ownerPhone);
@@ -169,6 +179,10 @@ try {
   await shot(c, "16-account");
   await o.goto(BASE + "/shop", { waitUntil: "load" });
   await shot(o, "17-owner-home");
+  // «عندك سؤال؟»: call, WhatsApp, the videos
+  await o.getByRole("button", { name: "عندك سؤال؟" }).click();
+  await o.getByRole("dialog", { name: "عندك سؤال؟" }).waitFor();
+  await shot(o, "17c-help", 600);
   await o.goto(BASE + "/shop/customers", { waitUntil: "load" });
   await shot(o, "19-owner-customers");
   // changing the card: one line says what happens to the customers on their way
@@ -190,6 +204,22 @@ try {
   await a.locator('input[name="password"]').fill("boss-walk-123");
   await Promise.all([a.waitForURL("**/admin**", { timeout: 60000 }), a.locator('button[type="submit"]').click()]);
   await shot(a, "20-admin");
+  // the traffic (the walks are robots: shown with «مع زياراتي»), and the settings
+  for (const [tab, name] of [["overview", "25-traffic"], ["pages", "25b-traffic-pages"], ["sources", "25c-traffic-sources"], ["visits", "25d-traffic-visits"]]) {
+    await a.goto(`${BASE}/admin/traffic?all=1&tab=${tab}`, { waitUntil: "load" });
+    await shot(a, name, 400);
+  }
+  const firstVisit = a.locator('a[href*="tab=visits"][href*="v="]').first();
+  if (await firstVisit.count()) {
+    await firstVisit.click();
+    await a.waitForURL("**v=**");
+    await shot(a, "25e-traffic-visit", 400);
+  }
+  await a.goto(`${BASE}/admin/traffic?all=1&tab=heat&h=${encodeURIComponent("/:welcome")}`, { waitUntil: "load" });
+  await shot(a, "25f-traffic-heat", 800);
+  await a.goto(`${BASE}/admin/settings`, { waitUntil: "load" });
+  await shot(a, "26-settings", 300);
+  await a.goto(`${BASE}/admin`, { waitUntil: "load" });
   await a.locator('a[href^="/admin/shops/"]').first().click();
   await a.waitForURL("**/admin/shops/**");
   await shot(a, "21-admin-shop");

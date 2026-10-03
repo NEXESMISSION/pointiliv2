@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Search } from "lucide-react";
+import { BarChart3, Search, Settings2 } from "lucide-react";
 import { Icon3D, Logo, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
@@ -45,7 +45,17 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         </Link>
         <Logo />
       </header>
-      <h1 className="mt-[1.8dvh] shrink-0 text-[1.75rem] font-bold leading-tight">{t.admin}</h1>
+      <div className="mt-[1.8dvh] flex shrink-0 items-center justify-between gap-2">
+        <h1 className="text-[1.75rem] font-bold leading-tight">{t.admin}</h1>
+        <nav className="flex gap-1.5">
+          <Link href="/admin/traffic" className="press flex h-10 items-center gap-1.5 rounded-full bg-brand px-3.5 text-[0.875rem] font-bold text-white shadow-[0_10px_22px_-12px_rgb(108_71_255/0.8)]">
+            <BarChart3 className="size-4" /> {t.aTraffic}
+          </Link>
+          <Link href="/admin/settings" className="press grid size-10 place-items-center rounded-full bg-surface shadow-card" aria-label={t.aSettings}>
+            <Settings2 className="size-[1.125rem]" />
+          </Link>
+        </nav>
+      </div>
 
       {/* the four numbers, two by two, each one line high */}
       <div className="mt-[1.6dvh] grid shrink-0 grid-cols-2 gap-2">

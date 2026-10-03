@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, ScanLine } from "lucide-react";
 import { Pass } from "@/components/Pass";
+import { Mark } from "@/components/Tracker";
 import { Icon3D, LinkBtn, Logo, Screen } from "@/components/ui";
 import type { Me } from "@/lib/session";
 import { fill, t } from "@/lib/t";
@@ -17,6 +18,7 @@ export function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; back?: 
 
   return (
     <Screen>
+      <Mark screen="wallet" />
       <header className="flex shrink-0 items-center justify-between pt-2">
         {back ? (
           <Link href={back} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>

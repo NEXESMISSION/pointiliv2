@@ -4,7 +4,7 @@
  *
  *   node scripts/test.mjs        (from v2/)
  */
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
@@ -25,6 +25,9 @@ const check = (name, ok, detail) => {
   }
 };
 const users = [];
+// the founder's settings are real (production shares this database): put back as they were
+let settingsBefore = null;
+const visitsMade = [];
 
 async function person(name) {
   const digits = `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
@@ -248,10 +251,80 @@ try {
   check("a customer cannot open someone's page", !!(await rpc(sami, "admin_person", { p_id: p1.id })).error);
   const mystery = (await rpc(boss, "admin_shops", { p_q: "Mystery" }))[0];
   check("the founder deletes a shop", (await rpc(boss, "admin_delete_shop", { p_id: mystery.id })).ok && (await rpc(odd, "me")).shop === null);
+
+  console.log("\nThe founder's settings: the help number and the videos");
+  settingsBefore = (await admin.from("settings").select("key, value")).data ?? [];
+  check("the founder saves the help number", (await rpc(boss, "admin_set_setting", { p_key: "support_phone", p_value: " +216 22 000 111 " })).ok);
+  const saved = (await admin.from("settings").select("value").eq("key", "support_phone").single()).data;
+  check("…trimmed", saved?.value === "+216 22 000 111", saved);
+  check("a setting that does not exist is refused", (await rpc(boss, "admin_set_setting", { p_key: "colour", p_value: "red" })).error === "invalid");
+  check("an owner cannot change the settings", !!(await rpc(owner, "admin_set_setting", { p_key: "support_phone", p_value: "1" })).error);
+  check("a browser cannot read the settings table", ((await sami.client.from("settings").select("key")).data ?? []).length === 0);
+
+  console.log("\nThe traffic: a visit from an ad, its screens, its taps");
+  const vid = randomUUID();
+  const welcome = randomUUID();
+  const ownerDoor = randomUUID();
+  visitsMade.push(vid);
+  const at = (s) => new Date(Date.now() - s * 1000).toISOString();
+  const visit = { id: vid, visitor: "testvisitor0001", landing: "/?utm_source=facebook&utm_campaign=test-campaign", source: "facebook", campaign: "test-campaign", fbclid: true, device: "phone", os: "Android", browser: "Facebook", screen: "390x844", lang: "ar-TN", country: "TN", city: "Sfax" };
+  const first = await admin.rpc("track", {
+    p: {
+      visit,
+      views: [{ id: welcome, path: "/", route: "/", screen: "welcome", entered_at: at(30), left_at: null, active_ms: 4200, vw: 390, vh: 844, next: null }],
+      taps: [
+        { view: welcome, at: at(26), x: 0.13, y: 0.52, target: null, kind: null, rage: false, dead: true, external: false },
+        { view: welcome, at: at(25), x: 0.5, y: 0.76, target: "ادخل كمولى محل", kind: "a", rage: false, dead: false, external: false },
+      ],
+      signals: [{ view: welcome, route: "/", screen: "welcome", at: at(28), name: "video", detail: "كيفاش تخدم Pointili؟" }],
+    },
+  });
+  check("the beacon's door writes the visit, a screen, two taps and a signal", !first.error, first.error?.message);
+  const later = await admin.rpc("track", {
+    p: {
+      visit,
+      views: [
+        { id: welcome, path: "/", route: "/", screen: "welcome", entered_at: at(30), left_at: at(24), active_ms: 6000, vw: 390, vh: 844, next: "/shop/new" },
+        { id: ownerDoor, path: "/shop/new", route: "/shop/new", screen: null, entered_at: at(24), left_at: null, active_ms: 1500, vw: 390, vh: 844, next: null },
+      ],
+      taps: [],
+      signals: [{ view: ownerDoor, route: "/shop/new", screen: null, at: at(10), name: "form_error", detail: "join-owner · password · short" }],
+    },
+  });
+  check("a later batch carries on the same visit", !later.error, later.error?.message);
+  const intruder = await sami.client.rpc("track", { p: { visit: { ...visit, id: randomUUID() } } });
+  check("a browser cannot write traffic itself", !!intruder.error);
+  const tr = await rpc(boss, "admin_traffic", { p_days: 1, p_all: false });
+  check("the founder sees the visit from the ad, with its campaign", tr.sources?.some((x) => x.source === "facebook" && x.campaign === "test-campaign"), tr.sources);
+  check("…the welcome then the owner's door, in the funnel", tr.funnel?.owner[0].visits >= 1 && tr.funnel.owner[1].visits >= 1, tr.funnel);
+  const welcomeRow = tr.pages?.find((x) => x.route === "/" && x.screen === "welcome");
+  check("…the welcome screen with its taps", welcomeRow?.taps >= 2, welcomeRow);
+  check("…the refused form among what happened", tr.signals?.some((x) => x.name === "form_error"), tr.signals);
+  const trail = tr.recent?.find((x) => x.id === vid);
+  check("…the visit's trail: welcome → /shop/new, 7.5 seconds", trail?.trail?.join(" → ") === "/:welcome → /shop/new" && Number(trail.ms) === 7500, trail);
+  const one = await rpc(boss, "admin_visit", { p_id: vid });
+  check("one visit step by step: the later batch updated the welcome (6s, then /shop/new)", one.views?.length === 2 && one.views[0].ms === 6000 && one.views[0].taps.length === 2 && one.signals.length === 2, one.views);
+  check("…the visitor's own id never leaves the database", one.visit && !("visitor" in one.visit), one.visit);
+  const heat = await rpc(boss, "admin_heat", { p_route: "/", p_screen: "welcome", p_days: 1, p_all: false });
+  check("the welcome's heat: the tap where it landed, and the dead one marked", heat.taps?.some(([x, y, f]) => x === 0.5 && y === 0.76 && f === 0) && heat.taps.some(([, , f]) => f === 1), heat.taps?.slice(0, 4));
+  check("…what was tapped, by its words", heat.top?.some((x) => x.target === "ادخل كمولى محل" && x.n >= 1), heat.top);
+  const mine = randomUUID();
+  visitsMade.push(mine);
+  await admin.rpc("track", { p: { visit: { ...visit, id: mine, is_admin: true }, views: [], taps: [], signals: [] } });
+  const without = await rpc(boss, "admin_traffic", { p_days: 1, p_all: false });
+  const withMine = await rpc(boss, "admin_traffic", { p_days: 1, p_all: true });
+  check("the founder's own visits stay out unless asked", !without.recent.some((x) => x.id === mine) && withMine.recent.some((x) => x.id === mine));
+  check("a customer cannot read the traffic", !!(await rpc(sami, "admin_traffic", { p_days: 1, p_all: false })).error && !!(await rpc(sami, "admin_heat", { p_route: "/", p_screen: "welcome", p_days: 1, p_all: false })).error && !!(await rpc(sami, "admin_visit", { p_id: vid })).error);
+  check("an owner cannot read the traffic", !!(await rpc(owner, "admin_traffic", { p_days: 7, p_all: true })).error);
 } catch (e) {
   failed.push(`crashed: ${e.message}`);
   console.log(`  ✗ crashed: ${e.message}`);
 } finally {
+  for (const id of visitsMade) await admin.from("visits").delete().eq("id", id);
+  if (settingsBefore) {
+    await admin.from("settings").delete().neq("key", "");
+    if (settingsBefore.length) await admin.from("settings").insert(settingsBefore);
+  }
   for (const id of users) await admin.from("shops").delete().eq("owner_id", id);
   for (const id of users) await admin.auth.admin.deleteUser(id);
   console.log(`\n${passed} passed, ${failed.length} failed (removed ${users.length} accounts)`);

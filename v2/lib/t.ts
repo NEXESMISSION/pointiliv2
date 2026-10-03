@@ -17,7 +17,7 @@ export const t = {
 
   // auth
   joinTitle: "اعمل كونت",
-  joinHint: "بنومرو التليفون وخلاص",
+  joinHint: "بالنومرو متاعك برك",
   loginTitle: "مرحبا بيك",
   loginHint: "ادخل بنومرو التليفون",
   name: "إسمك",
@@ -28,7 +28,7 @@ export const t = {
   join: "اعمل الكونت",
   login: "ادخل",
   toLogin: "عندك كونت؟ ادخل",
-  toJoin: "ما عندكش كونت؟ اعمل واحد",
+  toJoin: "أوّل مرّة؟ اعمل كونت",
   errPhone: "النومرو لازمو 8 أرقام",
   errPassword: "كلمة السر لازمها 8 حروف ولا أرقام على الأقل",
   errName: "اكتب إسمك",
@@ -257,6 +257,24 @@ export const t = {
   giveNow: "اعطيه الكادو، وبعد اضغط",
   given: "عطيتو ✓",
   noCardYet: "اعمل الكارط قبل",
+  // help for an owner, set by the founder: a number to call, two videos
+  helpCta: "عندك سؤال؟",
+  helpTitle: "عندك سؤال؟",
+  helpBody: "كلّمنا ونجاوبوك على أي سؤال، ولا شوف الفيديوات",
+  helpCall: "كلّمنا",
+  helpWhatsapp: "واتساب",
+  helpWhatsappMsg: "سلام، عندي سؤال على Pointili",
+  // the founder's settings and traffic
+  aSettings: "الريڤلاج",
+  aSettingsHint: "النومرو اللي يكلّمو عليه الموالي، والفيديوات",
+  aSupportPhone: "نومرو المساعدة",
+  aVideo1: "الفيديو الأوّل (كيفاش تخدم)",
+  aVideo2: "الفيديو الثاني",
+  aVideoLabel: "الكلام على البوتون",
+  aVideoUrl: "لينك يوتيوب",
+  aVideoBad: "اللينك هذا موش متاع يوتيوب",
+  aSaved: "تسجّل",
+  aTraffic: "الترافيك",
   // the first time the code shows, right after the card
   coachBravo: "برافو {name}!",
   coachBravoAnon: "برافو!",

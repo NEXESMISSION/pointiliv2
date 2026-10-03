@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
 import { scan } from "@/app/actions";
 import { Pass } from "@/components/Pass";
+import { useScreen } from "@/components/Tracker";
 import { Confetti, IMPACT_MS, StampLand } from "@/components/StampLand";
 import { Icon3D, LinkBtn, Logo } from "@/components/ui";
 import { fill, kindIcon, t } from "@/lib/t";
+import { signal } from "@/lib/track";
 import type { ScanResult } from "@/lib/types";
 
 /** after the tampon hits: each line arrives in reading order */
@@ -24,9 +26,13 @@ export function ScanFlow({ token }: { token: string }) {
     if (started.current) return;
     started.current = true;
     scan(token)
-      .then(setRes)
+      .then((r) => {
+        setRes(r);
+        if (r.kind === "stamped" && r.gift) signal("gift_won", r.card.shop.name);
+      })
       .catch(() => setRes({ kind: "error", code: "network" }));
   }, [token]);
+  useScreen(!res ? "checking" : res.kind === "error" ? `failed:${res.code}` : res.kind);
 
   if (!res) return <Checking />;
   if (res.kind === "stamped") return <Stamped res={res} />;

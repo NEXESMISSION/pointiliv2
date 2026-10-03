@@ -45,6 +45,6 @@ function needsRefresh(request: NextRequest): boolean {
 }
 
 export const config = {
-  // the counter polls every second: those requests never refresh a session
-  matcher: ["/((?!_next/static|_next/image|api/counter|3d/|.*\.(?:png|svg|ico|webmanifest)$).*)"],
+  // the counter polls, the traffic beacon reports: neither ever refreshes a session
+  matcher: ["/((?!_next/static|_next/image|api/counter|api/beacon|3d/|tn/|heat/|.*\.(?:png|svg|ico|webmanifest)$).*)"],
 };

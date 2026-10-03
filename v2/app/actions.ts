@@ -3,10 +3,11 @@
 import { randomBytes, randomInt } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, phoneEmail, validPhone } from "@/lib/phone";
+import { youtubeId } from "@/lib/settings";
 import { t } from "@/lib/t";
 import type { CardView, FormState, ScanResult } from "@/lib/types";
 
@@ -178,6 +179,25 @@ export async function adminDelete(id: string) {
   const res = await call<{ ok: boolean }>("admin_delete_shop", { p_id: id });
   revalidatePath("/admin", "layout");
   if (res?.ok) redirect("/admin");
+}
+
+/** The founder's settings: the number owners call, the two videos (YouTube links checked here). */
+export async function adminSaveSettings(_: FormState, fd: FormData): Promise<FormState> {
+  if (!(await getMe())?.admin) return { error: t.errNetwork };
+  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url"] as const;
+  const phone = str(fd, "support_phone");
+  if (phone && phone.replace(/\D/g, "").length < 8) return { error: t.errPhone, field: "support_phone" };
+  for (const key of ["video1_url", "video2_url"] as const) {
+    const url = str(fd, key);
+    if (url && !youtubeId(url)) return { error: t.aVideoBad, field: key };
+  }
+  for (const key of keys) {
+    const res = await call<{ ok: boolean }>("admin_set_setting", { p_key: key, p_value: str(fd, key) });
+    if (!res?.ok) return { error: t.errNetwork };
+  }
+  updateTag("settings");
+  revalidatePath("/", "layout");
+  return { error: null };
 }
 
 /** Someone who is not the founder: the only people the console may change. */

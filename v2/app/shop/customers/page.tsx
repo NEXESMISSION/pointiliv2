@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { Gift } from "lucide-react";
+import { HelpButton } from "@/components/Help";
 import { Top } from "@/components/Top";
 import { Icon3D, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
+import { getHelp } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { customersN, t } from "@/lib/t";
 
@@ -17,13 +19,13 @@ const when = (iso: string | null) =>
 export default async function ShopCustomers() {
   const me = await getMe();
   if (!me?.shop) redirect("/shop/new");
-  const res = await call<{ goal: number; items: Row[] }>("shop_customers");
+  const [res, help] = await Promise.all([call<{ goal: number; items: Row[] }>("shop_customers"), getHelp()]);
   const items = res?.items ?? [];
   const goal = res?.goal ?? me.shop.goal ?? 10;
 
   return (
     <Screen>
-      <Top back="/shop" title={t.customersTitle} hint={items.length ? customersN(items.length) : undefined} />
+      <Top back="/shop" end={<HelpButton help={help} />} title={t.customersTitle} hint={items.length ? customersN(items.length) : undefined} />
       {items.length === 0 ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center pb-[6dvh] text-center">
           <Icon3D name="people" size={88} className="animate-float" />

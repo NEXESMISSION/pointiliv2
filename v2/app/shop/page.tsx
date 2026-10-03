@@ -2,8 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { GiveButton } from "@/components/GiveButton";
+import { HelpButton } from "@/components/Help";
 import { Icon3D } from "@/components/ui";
 import { getMe } from "@/lib/session";
+import { getHelp } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { fill, kindIcon, t } from "@/lib/t";
 
@@ -32,7 +34,7 @@ export default async function ShopHome() {
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
-  const home = await call<Home>("shop_home");
+  const [home, help] = await Promise.all([call<Home>("shop_home"), getHelp()]);
   const first = (me.name ?? "").split(" ")[0];
   const tiles = [
     { icon: "fire", value: home?.today ?? 0, label: t.numToday },
@@ -53,9 +55,12 @@ export default async function ShopHome() {
           <Icon3D name={kindIcon(shop.kind)} size={30} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[0.8438rem] text-muted">
-            {t.hello}
-            {first ? ` ${first}` : ""}
+          <span className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-[0.8438rem] text-muted">
+              {t.hello}
+              {first ? ` ${first}` : ""}
+            </span>
+            <HelpButton help={help} small />
           </span>
           <span className="block truncate text-[1.4375rem] font-bold leading-tight">{shop.name}</span>
         </span>
