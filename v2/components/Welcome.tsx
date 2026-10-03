@@ -112,7 +112,7 @@ export function Welcome({ video }: { video?: HelpVideo | null }) {
           <span className="relative flex-1 text-[1.0625rem] font-bold text-ink">{t.enterAsCustomer}</span>
           <ChevronLeft className="relative size-5 shrink-0 text-faint" />
         </Link>
-        <Link href="/login" className="block py-[1dvh] text-center text-[0.9062rem] font-semibold text-[#B00D17]">
+        <Link href="/login" className="press mx-auto flex h-[2.6rem] w-fit items-center rounded-full bg-white px-5 text-[0.9062rem] font-bold text-[#B00D17] shadow-[0_8px_18px_-12px_rgb(176_13_23/0.55)] ring-1 ring-[#D7141A]/20">
           {t.haveAccountLogin}
         </Link>
       </div>

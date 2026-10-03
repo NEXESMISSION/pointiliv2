@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
-/** The two kinds of button the app has: the one big thing to do, and the quiet second one. */
+/** The kinds of button the app has: the one big thing to do, the quiet second one, the other door (line). */
 const look = {
   main: "bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]",
   soft: "bg-surface text-ink shadow-card",
+  line: "bg-surface text-brand shadow-[var(--shadow-card),inset_0_0_0_1.5px_rgb(108_71_255/0.22)]",
   coral: "bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-white shadow-[0_14px_30px_-12px_rgb(255_107_74/0.6)]",
   ghost: "text-muted",
 } as const;

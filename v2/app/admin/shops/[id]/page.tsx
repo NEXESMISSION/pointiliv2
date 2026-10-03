@@ -2,16 +2,17 @@ import { notFound, redirect } from "next/navigation";
 import { Gift, Phone } from "lucide-react";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { Top } from "@/components/Top";
+import { ShopMark } from "@/components/ShopMark";
 import { Icon3D, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
-import { kindIcon, stampsN, t } from "@/lib/t";
+import { stampsN, t } from "@/lib/t";
 
 export const metadata = { title: "محل", robots: { index: false } };
 
 type Shop = {
-  id: string; name: string; kind: string; color: string; goal: number | null; gift: string | null; paused: boolean; created_at: string;
+  id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; gift: string | null; paused: boolean; created_at: string;
   owner: { name: string; phone: string | null } | null;
   customers: number; stamps: number; today: number; given: number; waiting: number;
   recent: { at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; phone: string | null }[];
@@ -45,8 +46,8 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
 
       {/* the shop and its card, in one line */}
       <div className="mt-[1.8dvh] flex shrink-0 items-center gap-3">
-        <span className="grid size-14 shrink-0 place-items-center rounded-[1.125rem] shadow-card" style={{ background: s.color }}>
-          <Icon3D name={kindIcon(s.kind)} size={34} />
+        <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-[1.125rem] shadow-card" style={{ background: s.color }}>
+          <ShopMark shop={s} size={34} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">

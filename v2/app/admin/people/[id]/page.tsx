@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { ChevronLeft, Phone } from "lucide-react";
 import { AdminPersonActions } from "@/components/AdminPersonActions";
 import { Top } from "@/components/Top";
+import { ShopMark } from "@/components/ShopMark";
 import { Icon3D, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
@@ -13,7 +14,7 @@ export const metadata = { title: "كونت", robots: { index: false } };
 
 type Person = {
   id: string; name: string; phone: string | null; admin: boolean; created_at: string;
-  shop: { id: string; name: string; kind: string; color: string } | null;
+  shop: { id: string; name: string; kind: string; color: string; logo: string | null } | null;
   cards: { shop: string; kind: string; color: string; stamps: number; goal: number | null; gifts: number; last_at: string | null }[];
 };
 
@@ -47,8 +48,8 @@ export default async function AdminPerson({ params }: { params: Promise<{ id: st
 
       {p.shop && (
         <Link href={`/admin/shops/${p.shop.id}`} className="press mt-3 flex items-center gap-3 rounded-[1.375rem] bg-surface p-4 shadow-card">
-          <span className="grid size-11 shrink-0 place-items-center rounded-[0.875rem]" style={{ background: p.shop.color }}>
-            <Icon3D name={kindIcon(p.shop.kind)} size={28} />
+          <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-[0.875rem]" style={{ background: p.shop.color }}>
+            <ShopMark shop={p.shop} size={28} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[0.8125rem] font-semibold text-muted">{t.aShopOf}</span>

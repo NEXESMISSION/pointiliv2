@@ -4,6 +4,7 @@ import { randomBytes, randomInt } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath, updateTag } from "next/cache";
+import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, phoneEmail, validPhone } from "@/lib/phone";
@@ -144,12 +145,55 @@ export async function scan(token: string): Promise<ScanResult> {
 }
 
 // ── the owner ──────────────────────────────────────────────────────────────
+/** Where every logo is read from: the public «logos» box, one folder per owner. */
+const LOGOS = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/logos/`;
+
 export async function openShop(_: FormState, fd: FormData): Promise<FormState> {
   const name = str(fd, "name");
   if (name.length < 2 || name.length > 60) return { error: t.errName, field: "name" };
+  const me = await getMe();
+  if (!me) return { error: t.errNetwork };
   const res = await call<{ ok: boolean; error?: string }>("open_shop", { p_name: name, p_kind: str(fd, "kind") });
   if (!res?.ok) return { error: t.errNetwork };
+  // the logo: only a picture of this owner's own folder in the box; "" takes it away
+  const logo = str(fd, "logo");
+  const before = me.shop?.logo ?? "";
+  if (logo !== before && (logo === "" || logo.startsWith(`${LOGOS}${me.id}/`))) {
+    await service().from("shops").update({ logo: logo || null }).eq("owner_id", me.id);
+    if (before.startsWith(`${LOGOS}${me.id}/`)) await service().storage.from("logos").remove([before.slice(LOGOS.length)]);
+  }
+  revalidatePath("/", "layout");
   redirect(inside(str(fd, "next")) ?? "/shop/card");
+}
+
+/**
+ * A shop's logo, from the owner's phone (made small there first): read as a
+ * picture whatever it was (a photo, a PNG with see-through corners), turned
+ * upright, fitted whole into 256×256 — nothing cut off — and kept as WebP in
+ * the owner's own folder. The form saves it on the shop with the name.
+ */
+export async function uploadLogo(fd: FormData): Promise<{ url?: string; error?: string }> {
+  const me = await getMe();
+  if (!me) return { error: t.errNetwork };
+  const file = fd.get("logo");
+  if (!(file instanceof Blob) || !file.size) return { error: t.errLogo };
+  if (file.size > 4_000_000) return { error: t.errLogoBig };
+  if (!(await allowed(`logo:${me.id}`, 30, 60))) return { error: t.errTooMany };
+  let picture: Buffer;
+  try {
+    picture = await sharp(Buffer.from(await file.arrayBuffer()), { limitInputPixels: 40_000_000 })
+      .rotate()
+      .resize(256, 256, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+      .webp({ quality: 88 })
+      .toBuffer();
+  } catch {
+    return { error: t.errLogo };
+  }
+  const path = `${me.id}/${Date.now().toString(36)}${randomBytes(3).toString("hex")}.webp`;
+  const box = service().storage.from("logos");
+  const { error } = await box.upload(path, picture, { contentType: "image/webp", cacheControl: "31536000", upsert: false });
+  if (error) return { error: t.errNetwork };
+  return { url: `${LOGOS}${path}` };
 }
 
 export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
@@ -176,9 +220,20 @@ export async function adminPause(id: string, paused: boolean): Promise<boolean> 
 }
 
 export async function adminDelete(id: string) {
+  const { data: shop } = UUID.test(id) ? await service().from("shops").select("owner_id").eq("id", id).maybeSingle() : { data: null };
   const res = await call<{ ok: boolean }>("admin_delete_shop", { p_id: id });
   revalidatePath("/admin", "layout");
-  if (res?.ok) redirect("/admin");
+  if (res?.ok) {
+    if (shop) await dropLogos(shop.owner_id as string);
+    redirect("/admin");
+  }
+}
+
+/** An owner's logos go with the shop (or the account): the whole folder in the box. */
+async function dropLogos(owner: string) {
+  const box = service().storage.from("logos");
+  const { data } = await box.list(owner, { limit: 100 });
+  if (data?.length) await box.remove(data.map((f) => `${owner}/${f.name}`));
 }
 
 /** The founder's settings: the number owners call, the two videos (YouTube links checked here). */
@@ -232,6 +287,7 @@ export async function adminDeletePerson(id: string) {
     console.error("[delete person]", error.message);
     return;
   }
+  await dropLogos(id);
   revalidatePath("/admin", "layout");
   redirect("/admin?tab=people");
 }

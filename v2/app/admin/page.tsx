@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BarChart3, Search, Settings2 } from "lucide-react";
+import { ShopMark } from "@/components/ShopMark";
 import { Icon3D, Logo, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { pretty } from "@/lib/phone";
-import { accountsN, kindIcon, liveN, pausedN, stampsN, t, waitingN } from "@/lib/t";
+import { accountsN, liveN, pausedN, stampsN, t, waitingN } from "@/lib/t";
 
 export const metadata = { title: "الأدمين", robots: { index: false } };
 
 type Overview = { shops: number; live: number; paused: number; customers: number; people: number; stamps: number; today: number; given: number; waiting: number; week: { day: string; stamps: number }[] };
-type ShopRow = { id: string; name: string; kind: string; color: string; goal: number | null; paused: boolean; created_at: string; owner: { name: string; phone: string | null }; customers: number; stamps: number; today: number; last_at: string | null };
+type ShopRow = { id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; paused: boolean; created_at: string; owner: { name: string; phone: string | null }; customers: number; stamps: number; today: number; last_at: string | null };
 type PersonRow = { id: string; name: string; phone: string | null; admin: boolean; created_at: string; shop: string | null; cards: number; stamps: number };
 
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -114,8 +115,8 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           {(shops ?? []).map((s) => (
             <li key={s.id}>
               <Link href={`/admin/shops/${s.id}`} className="flex items-center gap-3 px-3.5 py-2.5 hover:bg-canvas/60">
-                <span className="grid size-11 shrink-0 place-items-center rounded-[0.875rem]" style={{ background: s.color }}>
-                  <Icon3D name={kindIcon(s.kind)} size={28} />
+                <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-[0.875rem]" style={{ background: s.color }}>
+                  <ShopMark shop={s} size={28} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">

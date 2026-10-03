@@ -9,7 +9,7 @@ export type CardView = {
   /** a gift waits for the shop to hand it over */
   waiting: boolean;
   /** the shop, with this card's own goal and gift (the promise it started with) */
-  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string };
+  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null };
   /** the shop's card of today when it differs: this customer's next card, after this gift */
   next?: { goal: number; gift: string } | null;
 };

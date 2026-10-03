@@ -20,7 +20,7 @@ export default async function ShopSetup({ searchParams }: { searchParams: Promis
       <Top back={editing ? "/shop" : undefined} end={<HelpButton help={help} />} />
       <Middle>
         <Heading title={t.shopTitle}>{!editing && <Steps at={2} />}</Heading>
-        <ShopForm name={me.shop?.name} kind={me.shop?.kind} next={editing ? "/shop" : undefined} />
+        <ShopForm name={me.shop?.name} kind={me.shop?.kind} logo={me.shop?.logo} next={editing ? "/shop" : undefined} />
       </Middle>
     </Screen>
   );

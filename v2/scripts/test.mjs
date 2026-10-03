@@ -58,6 +58,14 @@ try {
   const me = await rpc(owner, "me");
   check("the session knows the shop and its card", me.shop?.goal === 5 && me.shop.gift === "قهوة بلاش" && me.shop.color === "#6C47FF", me.shop);
   check("a goal outside 3–30 is refused", (await rpc(owner, "save_card", { p_goal: 2, p_gift: "x x", p_color: "#000000" })).error === "invalid_goal");
+  check("a card of 30 stamps (typed by hand) is fine", (await rpc(owner, "save_card", { p_goal: 30, p_gift: "قهوة بلاش", p_color: "#6c47ff" })).ok && (await rpc(owner, "save_card", { p_goal: 5, p_gift: "قهوة بلاش", p_color: "#6c47ff" })).ok);
+  check("a new shop has no logo", me.shop.logo === null, me.shop);
+  const logoUrl = `${URL_}/storage/v1/object/public/logos/${owner.id}/test.webp`;
+  await owner.client.from("shops").update({ logo: "https://evil.example/x.png" }).eq("owner_id", owner.id);
+  check("a browser cannot set a logo itself", (await rpc(owner, "me")).shop.logo === null);
+  await admin.from("shops").update({ logo: logoUrl }).eq("owner_id", owner.id);
+  check("the logo the server saved is in the session", (await rpc(owner, "me")).shop.logo === logoUrl);
+  check("a logo must be a web address", !!(await admin.from("shops").update({ logo: "javascript:alert(1)" }).eq("owner_id", owner.id)).error);
 
   console.log("\nThe customer: a code works once");
   const sami = await person("سامي بن علي");
@@ -125,6 +133,7 @@ try {
   console.log("\nThe wallet and the owner's numbers");
   const wallet = await rpc(sami, "wallet");
   check("the wallet lists the card with its shop", wallet.length === 1 && wallet[0].shop.name === "Café Test", wallet);
+  check("…and the shop's logo on the card", wallet[0].shop.logo?.endsWith("/test.webp"), wallet[0].shop);
   check("nobody reads another person's card", (await rpc(other, "card", { p_id: s1.card.id })) === null);
   const nums = await rpc(owner, "shop_numbers");
   check("the owner's numbers", nums.ok && nums.customers === 2 && nums.gifts === 1 && nums.today >= 7, nums);

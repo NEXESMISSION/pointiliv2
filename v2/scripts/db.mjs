@@ -33,10 +33,24 @@ export async function api(path, { method = "GET", body } = {}) {
 
 export const sql = (query) => api("/database/query", { method: "POST", body: { query } });
 
+/** The «logos» box: public to read (a logo shows on every customer's card), written by the server only; small WebP only. */
+async function logosBucket() {
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/bucket`;
+  const headers = { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json" };
+  const shape = { public: true, file_size_limit: 524288, allowed_mime_types: ["image/webp"] };
+  const have = await fetch(`${url}/logos`, { headers });
+  const res = have.ok
+    ? await fetch(`${url}/logos`, { method: "PUT", headers, body: JSON.stringify(shape) })
+    : await fetch(url, { method: "POST", headers, body: JSON.stringify({ id: "logos", name: "logos", ...shape }) });
+  if (!res.ok) throw new Error(`logos bucket: HTTP ${res.status} — ${(await res.text()).slice(0, 300)}`);
+  console.log(`✓ logos bucket (${have.ok ? "kept" : "made"})`);
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const t0 = Date.now();
   await sql(readFileSync("supabase/schema.sql", "utf8"));
   console.log(`✓ schema.sql (${Date.now() - t0} ms)`);
+  await logosBucket();
 
   const phones = String(process.env.ADMIN_PHONES ?? "")
     .split(",")

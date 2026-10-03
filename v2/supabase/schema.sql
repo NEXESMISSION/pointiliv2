@@ -43,6 +43,9 @@ create table if not exists public.shops (
   created_at  timestamptz not null default now()
 );
 
+-- the shop's logo (optional): a picture in the public «logos» box, set by the owner
+alter table public.shops add column if not exists logo text check (logo is null or (logo ~ '^https://' and char_length(logo) <= 300));
+
 create table if not exists public.cards (
   id          uuid primary key default gen_random_uuid(),
   shop_id     uuid not null references public.shops (id) on delete cascade,
@@ -266,7 +269,7 @@ language sql stable security definer set search_path = '' as $$
   select jsonb_build_object(
     'id', c.id, 'stamps', c.stamps, 'gifts', c.gifts, 'last_at', c.last_at,
     'ready', w.waiting, 'waiting', w.waiting,
-    'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color,
+    'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo,
                                'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift)),
     'next', case when s.goal is not null
                   and (coalesce(c.goal, s.goal) <> s.goal or not public.same_gift(coalesce(c.gift, s.gift), s.gift))
@@ -296,7 +299,7 @@ begin
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal) end);
+      'signal', s.signal, 'logo', s.logo) end);
 end $$;
 
 create or replace function public.set_name(p_name text) returns jsonb
@@ -505,13 +508,13 @@ begin
   if k.id is null then return public.err('invalid'); end if;
   select * into s from public.shops where id = k.shop_id;
   if k.held_hash = public.sha(p_hold) and k.held_until > now() then
-    return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind);
+    return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo);
   end if;
   if k.used_at is not null or k.held_hash is not null then return public.err('used'); end if;
   if k.expires_at <= now() then return public.err('expired'); end if;
   if s.paused then return public.err('paused'); end if;
   update public.codes set held_hash = public.sha(p_hold), held_until = now() + interval '20 minutes' where id = k.id;
-  return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind);
+  return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo);
 end $$;
 
 create or replace function public.stamp(p_token text, p_hold text default null) returns jsonb
@@ -622,7 +625,7 @@ begin
   perform public.require_admin();
   return coalesce((
     select jsonb_agg(jsonb_build_object(
-      'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused,
+      'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused,
       'created_at', s.created_at, 'owner', jsonb_build_object('name', p.name, 'phone', p.phone),
       'customers', (select count(*) from public.cards c where c.shop_id = s.id),
       'stamps', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
@@ -641,7 +644,7 @@ begin
   select * into s from public.shops where id = p_id;
   if s.id is null then return null; end if;
   return jsonb_build_object(
-    'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused, 'created_at', s.created_at,
+    'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused, 'created_at', s.created_at,
     'owner', (select jsonb_build_object('name', p.name, 'phone', p.phone) from public.people p where p.id = s.owner_id),
     'customers', (select count(*) from public.cards where shop_id = s.id),
     'stamps', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp'),
@@ -708,7 +711,7 @@ begin
   if p.id is null then return null; end if;
   return jsonb_build_object(
     'id', p.id, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'created_at', p.created_at,
-    'shop', (select jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color) from public.shops s where s.owner_id = p.id),
+    'shop', (select jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo) from public.shops s where s.owner_id = p.id),
     'cards', coalesce((
       select jsonb_agg(jsonb_build_object('shop', s.name, 'kind', s.kind, 'color', s.color, 'stamps', c.stamps,
                                           'goal', coalesce(c.goal, s.goal), 'gifts', c.gifts, 'last_at', c.last_at)

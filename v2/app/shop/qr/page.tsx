@@ -12,7 +12,7 @@ export default async function ShopQr({ searchParams }: { searchParams: Promise<{
   if (!me.shop.goal) redirect("/shop/card");
   return (
     <Counter
-      shop={{ name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused, signal: me.shop.signal }}
+      shop={{ name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused, signal: me.shop.signal, logo: me.shop.logo }}
       welcome={welcome ? ((me.name ?? "").split(" ")[0] ?? "") : null}
     />
   );

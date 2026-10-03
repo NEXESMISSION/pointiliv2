@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { join, login } from "@/app/actions";
 import { PhoneField } from "@/components/PhoneField";
-import { Btn, Field } from "@/components/ui";
+import { Btn, Field, LinkBtn } from "@/components/ui";
 import { signal } from "@/lib/track";
 import { t } from "@/lib/t";
 import type { FormState } from "@/lib/types";
@@ -48,13 +48,13 @@ export function AuthForm({ mode, next, owner }: { mode: "join" | "login"; next?:
         </Link>
       )}
 
-      <div className="mt-[3.5dvh] space-y-1">
+      <div className="mt-[3.5dvh] space-y-2.5">
         <Btn type="submit" disabled={pending}>
           {pending ? t.checking : mode === "join" ? (owner ? t.next : t.join) : t.login}
         </Btn>
-        <Link href={mode === "join" ? `/login${q}` : owner ? "/shop/new" : `/join${q}`} className="block py-2 text-center text-[0.9375rem] font-semibold text-brand">
+        <LinkBtn href={mode === "join" ? `/login${q}` : owner ? "/shop/new" : `/join${q}`} kind="line">
           {mode === "join" ? t.toLogin : t.toJoin}
-        </Link>
+        </LinkBtn>
       </div>
     </form>
   );

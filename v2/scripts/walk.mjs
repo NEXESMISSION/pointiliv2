@@ -78,6 +78,9 @@ try {
   await Promise.all([o.waitForURL("**/shop/setup", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   await o.locator('input[name="name"]').fill("Café Yasmine");
   await o.getByRole("button", { name: "قهوة" }).click();
+  // the logo (not needed): a picture from the phone, made small, shown beside the name
+  await o.locator('input[type="file"]').setInputFiles("app/apple-icon.png");
+  await o.locator('img[src*="/logos/"]').first().waitFor({ timeout: 30000 });
   await shot(o, "03-owner-shop", 300);
   // the other 39 kinds: the full list, a search in it, a pick from it
   await o.getByRole("button", { name: /الكل/ }).click();
@@ -93,6 +96,8 @@ try {
   await o.getByText("توّا نعملو مع بعضنا").waitFor({ timeout: 30000 });
   await shot(o, "04a-card-hello", 1600);
   await o.getByRole("button", { name: "يلّا نبداو" }).click();
+  await o.getByRole("textbox", { name: "ولا اكتب العدد" }).fill("15");
+  await shot(o, "04b2-card-goal-typed", 500);
   await o.getByRole("button", { name: "5", exact: true }).click();
   await shot(o, "04b-card-goal", 600);
   await o.getByRole("button", { name: "كمّل" }).click();
@@ -178,6 +183,9 @@ try {
   await c.goto(BASE + "/me", { waitUntil: "load" });
   await shot(c, "16-account");
   await o.goto(BASE + "/shop", { waitUntil: "load" });
+  await o.getByRole("dialog", { name: "اللوغو متاعك هوني" }).waitFor({ timeout: 20000 });
+  await shot(o, "17d-logo-tip", 700);
+  await o.getByRole("button", { name: "باهي", exact: true }).click();
   await shot(o, "17-owner-home");
   // «عندك سؤال؟»: call, WhatsApp, the videos
   await o.getByRole("button", { name: "عندك سؤال؟" }).click();
@@ -245,6 +253,8 @@ try {
   for (const p of [ownerPhone, customerPhone, bossPhone].filter(Boolean)) {
     const { data } = await admin.from("people").select("id").eq("phone", `+216${p}`).maybeSingle();
     if (data) {
+      const { data: files } = await admin.storage.from("logos").list(data.id);
+      if (files?.length) await admin.storage.from("logos").remove(files.map((f) => `${data.id}/${f.name}`));
       await admin.from("shops").delete().eq("owner_id", data.id);
       await admin.auth.admin.deleteUser(data.id);
     }

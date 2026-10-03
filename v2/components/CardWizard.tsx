@@ -20,7 +20,7 @@ const HELLO_MS = 3400;
 /** the card above the question gets smaller on a shorter phone, so nothing ever scrolls */
 const SHRINK = "[@media(max-height:720px)]:[zoom:0.88] [@media(max-height:650px)]:[zoom:0.8]";
 
-type Shop = { name: string; kind: string; goal: number | null; gift: string | null; color: string };
+type Shop = { name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null };
 
 /**
  * The card, one question at a time. A new owner first gets a hello — «توّا
@@ -38,6 +38,9 @@ export function CardWizard({ shop, owner, next, editing, onTheWay, help }: { sho
   const [step, setStep] = useState(editing ? 1 : 0);
   const [back, setBack] = useState(false);
   const [goal, setGoal] = useState(shop.goal ?? 8);
+  // a number typed by hand (3 to 30) instead of one of the five
+  const [other, setOther] = useState(shop.goal && !GOALS.includes(shop.goal) ? String(shop.goal) : "");
+  const otherBad = other !== "" && !(Number(other) >= 3 && Number(other) <= 30);
   const [gift, setGift] = useState(shop.gift ?? ideas[0] ?? "");
   const [color, setColor] = useState((shop.color || COLORS[0]!).toUpperCase());
 
@@ -62,7 +65,7 @@ export function CardWizard({ shop, owner, next, editing, onTheWay, help }: { sho
   const changed = editing && (goal !== shop.goal || !sameGift(gift, shop.gift));
   const easier = changed && goal < (shop.goal ?? 0) && sameGift(gift, shop.gift);
   const note = !changed || onTheWay === undefined ? null : onTheWay === 0 ? t.cardNoteNone : fill(easier ? t.cardNoteEase : t.cardNoteKeep, { who: customersN(onTheWay) });
-  const preview = { name: shop.name, kind: shop.kind, goal, gift: gift.trim() || "…", color };
+  const preview = { name: shop.name, kind: shop.kind, logo: shop.logo, goal, gift: gift.trim() || "…", color };
 
   if (step === 0) {
     return (
@@ -94,7 +97,7 @@ export function CardWizard({ shop, owner, next, editing, onTheWay, help }: { sho
 
   const question = step === 1 ? t.wizGoalQ : step === 2 ? t.wizGiftQ : step === 3 ? t.wizColorQ : editing ? t.wizReview : t.wizReady;
   const example = step === 1 ? t.wizGoalEx : step === 2 ? fill(t.wizGiftEx, { a: ideas[0] ?? "", b: ideas[1] ?? "" }) : step === 3 ? t.wizColorEx : editing ? null : t.wizReadyBody;
-  const canGo = step !== 2 || gift.trim().length >= 2;
+  const canGo = step === 1 ? !otherBad : step !== 2 || gift.trim().length >= 2;
 
   return (
     <form action={action} className="safe-t safe-b relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden px-[clamp(1rem,5vw,1.5rem)]">
@@ -137,13 +140,50 @@ export function CardWizard({ shop, owner, next, editing, onTheWay, help }: { sho
         {example && <p className="mt-1.5 text-[0.9375rem] text-muted">{example}</p>}
 
         {step === 1 && (
-          <div className="mt-[2.4dvh] grid grid-cols-5 gap-2">
-            {GOALS.map((g) => (
-              <button key={g} type="button" onClick={() => setGoal(g)} aria-pressed={goal === g} className={`press num h-[3.6rem] rounded-[1.125rem] text-[1.3125rem] font-bold ${goal === g ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}>
-                {g}
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="mt-[2.4dvh] grid grid-cols-5 gap-2">
+              {GOALS.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => {
+                    setGoal(g);
+                    setOther("");
+                  }}
+                  aria-pressed={goal === g}
+                  className={`press num h-[3.6rem] rounded-[1.125rem] text-[1.3125rem] font-bold ${goal === g ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+            <label className="mt-[1.6dvh] flex items-center justify-center gap-2.5">
+              <span className="text-[0.9062rem] font-semibold text-muted">{t.wizGoalOther}</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={2}
+                value={other}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 2);
+                  setOther(v);
+                  if (Number(v) >= 3 && Number(v) <= 30) setGoal(Number(v));
+                }}
+                // Enter goes to the next question, it does not send the card half made
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  if (!otherBad) go(2);
+                }}
+                placeholder="15"
+                aria-label={t.wizGoalOther}
+                aria-invalid={otherBad}
+                className={`num h-11 w-[4.75rem] text-center text-[16px] font-bold outline-none placeholder:font-normal placeholder:text-faint ${boxLook} ${otherBad ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-coral)]" : !GOALS.includes(goal) && other ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]" : "focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]"}`}
+              />
+              <span className={`text-[0.8125rem] ${otherBad ? "font-semibold text-coral" : "text-faint"}`}>{t.wizGoalRange}</span>
+            </label>
+          </>
         )}
 
         {step === 2 && (

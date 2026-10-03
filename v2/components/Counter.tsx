@@ -8,8 +8,9 @@ import { ArrowDown, Check, ChevronRight, WifiOff } from "lucide-react";
 import { give } from "@/app/actions";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
+import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
-import { fill, kindIcon, t } from "@/lib/t";
+import { fill, t } from "@/lib/t";
 
 type Code = { id: string; svg: string; expiresLocal: number };
 type Flash = { id: number; name: string | null };
@@ -53,7 +54,7 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome }: { shop: { name: string; kind: string; color: string; paused?: boolean; signal?: string }; welcome?: string | null }) {
+export function Counter({ shop, welcome }: { shop: { name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null }; welcome?: string | null }) {
   const router = useRouter();
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(welcome != null ? "bravo" : null);
   const [code, setCode] = useState<Code | null>(null);
@@ -229,8 +230,8 @@ export function Counter({ shop, welcome }: { shop: { name: string; kind: string;
           <ChevronRight className="size-5" />
         </Link>
         <p className="min-w-0 flex-1 truncate text-center text-[1.1875rem] font-bold">{shop.name}</p>
-        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white/20">
-          <Icon3D name={kindIcon(shop.kind)} size={28} />
+        <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-white/20">
+          <ShopMark shop={shop} size={28} />
         </span>
       </header>
 

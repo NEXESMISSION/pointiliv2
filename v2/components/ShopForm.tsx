@@ -4,7 +4,8 @@ import { useActionState, useCallback, useEffect, useState } from "react";
 import { LayoutGrid } from "lucide-react";
 import { openShop } from "@/app/actions";
 import { KindPicker, KindTile } from "@/components/KindPicker";
-import { Btn, Field } from "@/components/ui";
+import { LogoPicker } from "@/components/LogoPicker";
+import { Btn, boxFocus, boxLook } from "@/components/ui";
 import { KINDS, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import type { FormState } from "@/lib/types";
@@ -12,10 +13,16 @@ import type { FormState } from "@/lib/types";
 /** The kinds most shops are: one tap away. The other 39 are behind «الكل». */
 const POPULAR = ["cafe", "juice", "bakery", "pastry", "restaurant", "fastfood", "pizza", "barber", "hair", "beauty", "clothes"];
 
-/** Step 2 for an owner: the shop's name and what it sells — two answers, one tap each. */
-export function ShopForm({ name = "", kind = "cafe", next }: { name?: string; kind?: string; next?: string }) {
+/**
+ * Step 2 for an owner: the shop's name (and its logo beside it, if the owner
+ * has one — not needed) and what it sells. Later, from «المحل», the same
+ * form changes any of them.
+ */
+export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?: string; kind?: string; logo?: string | null; next?: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(openShop, null);
   const [shopName, setShopName] = useState(name);
+  const [mark, setMark] = useState(logo ?? "");
+  const [logoError, setLogoError] = useState<string | null>(null);
   const [k, setK] = useState(KINDS.includes(kind) ? kind : "other");
   const [all, setAll] = useState(false);
   const close = useCallback(() => setAll(false), []);
@@ -27,7 +34,34 @@ export function ShopForm({ name = "", kind = "cafe", next }: { name?: string; ki
 
   return (
     <form action={action} className="mt-[3dvh] flex flex-col">
-      <Field label={t.shopName} name="name" value={shopName} onChange={(e) => setShopName(e.target.value)} placeholder={t.shopNamePh} required maxLength={60} error={state?.field === "name" ? state.error : null} />
+      {/* the name, and the logo beside it */}
+      <div>
+        <div className="mb-1.5 flex items-baseline justify-between gap-2 px-1">
+          <label htmlFor="shop-name" className="text-[0.875rem] font-semibold text-muted">
+            {t.shopName}
+          </label>
+          <span className="text-[0.8125rem] font-semibold text-muted">
+            {t.logo} <span className="font-normal text-faint">· {t.optional}</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <input
+            id="shop-name"
+            name="name"
+            value={shopName}
+            onChange={(e) => setShopName(e.target.value)}
+            placeholder={t.shopNamePh}
+            required
+            maxLength={60}
+            aria-invalid={state?.field === "name"}
+            className={`block h-[3.5rem] min-w-0 flex-1 px-4 text-[17px] text-ink outline-none placeholder:text-faint ${boxLook} ${boxFocus}`}
+          />
+          <LogoPicker value={mark} onChange={setMark} onError={setLogoError} />
+        </div>
+        {state?.field === "name" && state.error && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{state.error}</span>}
+        {logoError && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{logoError}</span>}
+      </div>
+      <input type="hidden" name="logo" value={mark} />
       <p className="mb-2 mt-[2.5dvh] px-1 text-[0.875rem] font-semibold text-muted">{t.shopKind}</p>
       <div className="grid grid-cols-4 gap-2">
         {shown.map((id) => (

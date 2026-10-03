@@ -1,8 +1,8 @@
 import { Check, Gift } from "lucide-react";
-import { Icon3D } from "@/components/ui";
-import { fill, kindIcon, t } from "@/lib/t";
+import { ShopMark } from "@/components/ShopMark";
+import { fill, t } from "@/lib/t";
 
-export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null };
+export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null };
 
 /**
  * The loyalty card, the same everywhere: the shop's colour, its name, a dot
@@ -38,8 +38,8 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
 
       <div className={`relative ${small ? "px-4 pb-7 pt-3.5" : "p-5"}`}>
         <div className="flex items-center gap-3">
-          <span className="grid size-[2.875rem] shrink-0 place-items-center rounded-[0.9375rem] bg-white/20 backdrop-blur-sm">
-            <Icon3D name={kindIcon(shop.kind)} size={30} />
+          <span className="grid size-[2.875rem] shrink-0 place-items-center overflow-hidden rounded-[0.9375rem] bg-white/20 backdrop-blur-sm">
+            <ShopMark shop={shop} size={30} />
           </span>
           <span className="min-w-0 flex-1 truncate text-[1.125rem] font-bold leading-tight">{shop.name}</span>
           <span className="num shrink-0 leading-none">
