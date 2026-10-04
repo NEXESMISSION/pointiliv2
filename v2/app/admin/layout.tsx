@@ -39,7 +39,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
             </Link>
             <Link href="/" className="flex h-10 items-center gap-2.5 rounded-[0.75rem] px-3 text-[0.875rem] font-semibold text-muted transition-colors hover:bg-canvas hover:text-ink">
               <ExternalLink className="size-4 shrink-0" />
-              <span className="hidden lg:block">الإبليكاسيون</span>
+              <span className="hidden lg:block">الأبليكاسيون</span>
             </Link>
           </div>
         </div>

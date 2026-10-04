@@ -12,9 +12,18 @@ import { Btn, Icon3D, boxLook } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
 import { customersN, fill, sameGift, t } from "@/lib/t";
 import { signal } from "@/lib/track";
+import { waitSays } from "@/lib/when";
 import type { FormState } from "@/lib/types";
 
 const GOALS = [5, 6, 8, 10, 12];
+/** the wait between two tampons, in minutes: an hour, once a day (the next day in Tunis), none — or hours typed */
+const WAITS = [60, 1440, 0];
+/** the steps: 0 is the hello, then the four questions, then the card made */
+const GOAL = 1;
+const GIFT = 2;
+const WAIT = 3;
+const COLOR = 4;
+const READY = 5;
 const COLORS = ["#D7141A", "#FF6B4A", "#B45309", "#12B76A", "#0891B2", "#1D5FA8", "#6C47FF", "#E0457B", "#1F1B2E"];
 /** how long the hello stays before the first question slides in by itself */
 const HELLO_MS = 3400;
@@ -30,14 +39,15 @@ const HELLO_MS = 3400;
 const SHRINK = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(85.5dvh_-_31rem))))]";
 const SHRINK_HELLO = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(92dvh_-_31rem))))]";
 
-type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null };
+type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_gap?: number };
 
 /**
  * The card, one question at a time. A new owner first gets a hello — «توّا
- * نعملو مع بعضنا أوّل كارط» — that slides on by itself; then three questions,
+ * نعملو مع بعضنا أوّل كارط» — that slides on by itself; then four questions,
  * each alone on the screen with an example under it (how many stamps, which
- * gift, which colour), the card itself changing above them; then the card
- * is ready. Changing the card later walks the same three questions, starting
+ * gift, how long a customer waits between two tampons, which colour), the
+ * card itself changing above them; then the card
+ * is ready. Changing the card later walks the same four questions, starting
  * from the card as it is, and the last step says what happens to the
  * customers already on their way (`onTheWay` of them).
  */
@@ -54,8 +64,12 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
   const otherBad = other !== "" && !(Number(other) >= 3 && Number(other) <= 30);
   const [gift, setGift] = useState(shop.gift ?? ideas[0] ?? "");
   const [color, setColor] = useState((shop.color || COLORS[0]!).toUpperCase());
+  // the wait: one of the three, or a number of hours typed (1 to 72)
+  const [gap, setGap] = useState(shop.stamp_gap ?? 60);
+  const [hours, setHours] = useState(() => (shop.stamp_gap && !WAITS.includes(shop.stamp_gap) ? String(Math.round(shop.stamp_gap / 60)) : ""));
+  const hoursBad = hours !== "" && !(Number(hours) >= 1 && Number(hours) <= 72);
 
-  useScreen(`${editing ? "edit-" : ""}${["hello", "goal", "gift", "color", "ready"][step] ?? "ready"}`);
+  useScreen(`${editing ? "edit-" : ""}${["hello", "goal", "gift", "wait", "color", "ready"][step] ?? "ready"}`);
   useEffect(() => {
     if (state?.error) signal("form_error", `card · ${state.error}`);
   }, [state]);
@@ -77,7 +91,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
   // the hello goes on by itself
   useEffect(() => {
     if (step !== 0) return;
-    const id = setTimeout(() => go(1), HELLO_MS);
+    const id = setTimeout(() => go(GOAL), HELLO_MS);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
@@ -108,16 +122,27 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
         <div className="mt-[4dvh] h-1 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
           <span className="block h-full origin-right rounded-full bg-brand" style={{ animation: `wz-bar ${HELLO_MS}ms linear both` }} />
         </div>
-        <button type="button" onClick={() => go(1)} className="press mt-4 px-6 py-2 text-[1rem] font-bold text-brand">
+        <button type="button" onClick={() => go(GOAL)} className="press mt-4 px-6 py-2 text-[1rem] font-bold text-brand">
           {t.wizStart}
         </button>
       </main>
     );
   }
 
-  const question = step === 1 ? t.wizGoalQ : step === 2 ? t.wizGiftQ : step === 3 ? t.wizColorQ : editing ? t.wizReview : t.wizReady;
-  const example = step === 1 ? t.wizGoalEx : step === 2 ? fill(t.wizGiftEx, { a: ideas[0] ?? "", b: ideas[1] ?? "" }) : step === 3 ? t.wizColorEx : editing ? null : t.wizReadyBody;
-  const canGo = step === 1 ? !otherBad : step !== 2 || gift.trim().length >= 2;
+  const question = step === GOAL ? t.wizGoalQ : step === GIFT ? t.wizGiftQ : step === WAIT ? t.wizWaitQ : step === COLOR ? t.wizColorQ : editing ? t.wizReview : t.wizReady;
+  const example =
+    step === GOAL
+      ? t.wizGoalEx
+      : step === GIFT
+        ? fill(t.wizGiftEx, { a: ideas[0] ?? "", b: ideas[1] ?? "" })
+        : step === WAIT
+          ? waitSays(gap)
+          : step === COLOR
+            ? t.wizColorEx
+            : editing
+              ? null
+              : t.wizReadyBody;
+  const canGo = step === GOAL ? !otherBad : step === GIFT ? gift.trim().length >= 2 : step === WAIT ? !hoursBad : true;
 
   return (
     <form action={action} className="safe-t safe-b relative mx-auto flex min-h-dvh max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
@@ -125,20 +150,20 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
         @keyframes wz-in-next { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
         @keyframes wz-in-back { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
       `}</style>
-      {step === 4 && !editing && <Confetti count={60} />}
+      {step === READY && !editing && <Confetti count={60} />}
 
-      {/* the way back, and where we are: three dots */}
+      {/* the way back, and where we are: a dot per question */}
       <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-2">
-        {step > 1 || editing ? (
-          <button type="button" onClick={() => (step > 1 ? go(step - 1) : router.push(next))} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
+        {step > GOAL || editing ? (
+          <button type="button" onClick={() => (step > GOAL ? go(step - 1) : router.push(next))} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
             <ChevronRight className="size-5" />
           </button>
         ) : (
           <span className="size-11" />
         )}
-        {step <= 3 ? (
+        {step < READY ? (
           <span className="flex items-center gap-2" aria-label={fill(t.wizStep, { n: step })}>
-            {[1, 2, 3].map((n) => (
+            {[GOAL, GIFT, WAIT, COLOR].map((n) => (
               <span key={n} className={`h-2 rounded-full transition-all duration-300 ${n === step ? "w-6 bg-brand" : n < step ? "w-2 bg-brand/50" : "w-2 bg-line"}`} />
             ))}
           </span>
@@ -151,7 +176,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
       {/* the card, the question, the answers and the button: one block, in the middle */}
       <div className="flex flex-1 flex-col justify-center py-[2dvh]">
       <div className={SHRINK}>
-        <Pass shop={preview} stamps={step === 4 ? 1 : Math.max(1, Math.round(goal * 0.6))} fresh={step === 4} key={step === 4 ? "ready" : "live"} />
+        <Pass shop={preview} stamps={step === READY ? 1 : Math.max(1, Math.round(goal * 0.6))} fresh={step === READY} key={step === READY ? "ready" : "live"} />
       </div>
 
       {/* the question slides in from the side: clipped sideways only, at the screen's edge, so the page never widens */}
@@ -159,9 +184,9 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
       <section key={step} style={{ animation: `${back ? "wz-in-back" : "wz-in-next"} 380ms cubic-bezier(0.2,0.8,0.2,1) both` }}>
         <h1 className="text-[1.55rem] font-bold leading-snug">{question}</h1>
         {/* the gift's example names the first two gifts already on the buttons under it: on a short screen, where those buttons may take two rows, it gives them its room */}
-        {example && <p className={`mt-1.5 text-[0.9375rem] text-muted ${step === 2 ? "[@media(max-height:700px)]:hidden" : ""}`}>{example}</p>}
+        {example && <p className={`mt-1.5 text-[0.9375rem] text-muted ${step === GIFT ? "[@media(max-height:700px)]:hidden" : ""}`}>{example}</p>}
 
-        {step === 1 && (
+        {step === GOAL && (
           <>
             <div className="mt-[2.4dvh] grid grid-cols-5 gap-2">
               {GOALS.map((g) => (
@@ -196,7 +221,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
                 onKeyDown={(e) => {
                   if (e.key !== "Enter") return;
                   e.preventDefault();
-                  if (!otherBad) go(2);
+                  if (!otherBad) go(GIFT);
                 }}
                 placeholder="15"
                 aria-label={t.wizGoalOther}
@@ -208,7 +233,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
           </>
         )}
 
-        {step === 2 && (
+        {step === GIFT && (
           <div className="mt-[2dvh]">
             <div className="flex flex-wrap gap-1.5">
               {ideas.map((idea) => (
@@ -224,7 +249,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
                 e.preventDefault();
-                if (gift.trim().length >= 2) go(3);
+                if (gift.trim().length >= 2) go(WAIT);
               }}
               placeholder={t.wizGiftPh}
               maxLength={60}
@@ -234,7 +259,55 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
           </div>
         )}
 
-        {step === 3 && (
+        {step === WAIT && (
+          <>
+            <div className="mt-[2.4dvh] grid grid-cols-3 gap-2">
+              {WAITS.map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => {
+                    setGap(w);
+                    setHours("");
+                  }}
+                  aria-pressed={gap === w && !hours}
+                  className={`press min-h-[3.6rem] rounded-[1.125rem] px-1.5 py-2 text-[0.9688rem] font-bold leading-tight ${gap === w && !hours ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
+                >
+                  {w === 60 ? t.waitHour : w === 1440 ? t.waitDay : t.waitNone}
+                </button>
+              ))}
+            </div>
+            <label className="mt-[1.6dvh] flex items-center justify-center gap-2.5">
+              <span className="text-[0.9062rem] font-semibold text-muted">{t.wizWaitOther}</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={2}
+                value={hours}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 2);
+                  setHours(v);
+                  if (Number(v) >= 1 && Number(v) <= 72) setGap(Number(v) * 60);
+                  else if (v === "") setGap(shop.stamp_gap !== undefined && WAITS.includes(shop.stamp_gap) ? shop.stamp_gap : 60);
+                }}
+                // Enter goes to the next question, it does not send the card half made
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  if (!hoursBad) go(COLOR);
+                }}
+                placeholder="3"
+                aria-label={t.wizWaitOther}
+                aria-invalid={hoursBad}
+                className={`num h-11 w-[4.75rem] text-center text-[16px] font-bold outline-none placeholder:font-normal placeholder:text-faint ${boxLook} ${hoursBad ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-coral)]" : hours ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]" : "focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]"}`}
+              />
+              <span className={`text-[0.8125rem] ${hoursBad ? "font-semibold text-coral" : "text-faint"}`}>{t.wizWaitRange}</span>
+            </label>
+          </>
+        )}
+
+        {step === COLOR && (
           <div className="mt-[2.4dvh] grid grid-cols-5 justify-items-center gap-3">
             {COLORS.map((c) => (
               <button key={c} type="button" onClick={() => setColor(c)} aria-label={c} aria-pressed={color === c} className="press grid size-12 place-items-center rounded-full text-white" style={{ background: c, boxShadow: color === c ? `0 0 0 3px var(--color-canvas), 0 0 0 5px ${c}` : undefined }}>
@@ -244,7 +317,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
           </div>
         )}
 
-        {step === 4 && note && (
+        {step === READY && note && (
           <p className="mt-[2dvh] flex gap-2.5 rounded-2xl bg-brand-soft px-4 py-3 text-[0.9062rem] font-medium leading-relaxed text-brand-deep" role="status">
             <Info className="mt-0.5 size-[1.125rem] shrink-0" /> {note}
           </p>
@@ -255,7 +328,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
 
       <div className="mt-[3.5dvh] shrink-0">
         {/* two different buttons (keys): one patched from "button" to "submit" inside its own click would send the form */}
-        {step < 4 ? (
+        {step < READY ? (
           <Btn key="next" type="button" disabled={!canGo} onClick={() => go(step + 1)}>
             {t.next}
           </Btn>
@@ -270,6 +343,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
       <input type="hidden" name="goal" value={goal} />
       <input type="hidden" name="gift" value={gift.trim()} />
       <input type="hidden" name="color" value={color} />
+      <input type="hidden" name="gap" value={gap} />
       <input type="hidden" name="next" value={next} />
     </form>
   );

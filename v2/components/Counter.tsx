@@ -18,6 +18,8 @@ type Gift = { id: number; name: string | null; gift: string };
 
 /** a code is replaced this long before it dies, so a phone never scans a dead one */
 const RENEW_BEFORE_MS = 10_000;
+/** a code still good for a while: shown now, it lives long enough to be scanned */
+const fresh = (c: Code | null): c is Code => !!c && c.expiresLocal - Date.now() > RENEW_BEFORE_MS;
 /** how often the counter asks, with the radio on (a safety net) and without it */
 const ASK_LIVE_MS = 6_000;
 const ASK_DEAF_MS = 1_500;
@@ -40,8 +42,10 @@ function tuneIn(): SupabaseClient | null {
  * The owner's one screen. A code that works once, in the shop's colour: open
  * it and leave it. Every scan bursts «+1 سامي» out from behind the code (the
  * code itself never moves, so the next phone can scan at once) and a fresh
- * code takes its place. When a card fills up, the gift waits at the bottom
- * of the screen until the owner taps «عطيتو».
+ * code takes its place at once: the next one is always made in advance, and
+ * the database names the code the moment a phone takes it, so a used code
+ * never stays on the screen. When a card fills up, the gift waits at the
+ * bottom of the screen until the owner taps «عطيتو».
  *
  * It hears every scan at once over Supabase Realtime (the shop's own topic,
  * pinged by the database) and only then asks what happened; a slow question
@@ -72,25 +76,72 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
   const [live, setLive] = useState(false);
   const [party, setParty] = useState(0);
   const codeRef = useRef<Code | null>(null);
+  // the next code, made in advance: the swap after a scan waits for nothing
+  const spareRef = useRef<Code | null>(null);
+  const sparing = useRef(false);
   const seen = useRef(new Set<number>());
   const openedAt = useRef(new Date().toISOString());
   const busy = useRef(false);
   const again = useRef(false);
 
-  const mint = useCallback(async () => {
+  const fetchCode = useCallback(async (): Promise<Code | "paused"> => {
     const res = await fetch("/api/code", { method: "POST", cache: "no-store" });
     const j = await res.json();
-    if (j.error === "paused") {
-      setPaused(true);
-      return;
-    }
+    if (j.error === "paused") return "paused";
     if (!j.ok) throw new Error(j.error ?? "network");
-    setPaused(false);
     const offset = Date.parse(j.server_now) - Date.now();
-    const c = { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset };
+    return { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset };
+  }, []);
+
+  // the next code, kept ready (made again when it gets old)
+  const prepare = useCallback(async () => {
+    if (sparing.current || (spareRef.current && spareRef.current.expiresLocal - Date.now() > 2 * RENEW_BEFORE_MS)) return;
+    sparing.current = true;
+    try {
+      const c = await fetchCode();
+      if (c !== "paused") spareRef.current = c;
+    } catch {
+      /* the next tick tries again */
+    } finally {
+      sparing.current = false;
+    }
+  }, [fetchCode]);
+
+  const show = useCallback((c: Code) => {
     codeRef.current = c;
     setCode(c);
   }, []);
+
+  const mint = useCallback(async () => {
+    const spare = spareRef.current;
+    spareRef.current = null;
+    if (fresh(spare)) {
+      setPaused(false);
+      show(spare);
+    } else {
+      const c = await fetchCode();
+      if (c === "paused") {
+        setPaused(true);
+        return;
+      }
+      setPaused(false);
+      show(c);
+    }
+    void prepare();
+  }, [fetchCode, prepare, show]);
+
+  // a phone just took the code on screen: the next one goes up this instant (or the screen
+  // clears until it comes), never the used one
+  const swapNow = useCallback(() => {
+    const spare = spareRef.current;
+    spareRef.current = null;
+    if (fresh(spare)) show(spare);
+    else {
+      codeRef.current = null;
+      setCode(null);
+    }
+    void prepare();
+  }, [prepare, show]);
 
   const tick = useCallback(async () => {
     if (document.visibilityState !== "visible") return;
@@ -108,6 +159,8 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
         const res = await fetch(`/api/counter?code=${c.id}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" });
         if (!res.ok) throw new Error("state");
         const s = (await res.json()) as { taken: boolean; expired: boolean; stamps: { id: number; name: string | null }[]; gifts: Gift[] };
+        // the code on screen changed while asking (the radio swapped it): its answer is about the old one
+        const same = codeRef.current?.id === c.id;
         const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
         if (fresh.length) {
           fresh.forEach((x) => seen.current.add(x.id));
@@ -120,7 +173,8 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
           if (s.gifts.length > g.length) setParty((p) => p + 1);
           return s.gifts;
         });
-        if (s.taken || s.expired) await mint();
+        if (same && (s.taken || s.expired)) await mint();
+        else void prepare();
       }
       setOffline(false);
     } catch {
@@ -132,8 +186,12 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
         setTimeout(() => void tickRef.current(), 0);
       }
     }
-  }, [mint]);
+  }, [mint, prepare]);
   const tickRef = useRef(tick);
+  const swapRef = useRef(swapNow);
+  useEffect(() => {
+    swapRef.current = swapNow;
+  }, [swapNow]);
   useEffect(() => {
     tickRef.current = tick;
   }, [tick]);
@@ -145,7 +203,12 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
     if (!sb) return;
     const channel = sb
       .channel(`pointili:${shop.signal}`)
-      .on("broadcast", { event: "ping" }, () => void tickRef.current())
+      .on("broadcast", { event: "ping" }, (msg) => {
+        // the code on screen was just taken (held or used): the next one, now
+        const taken = (msg?.payload as { code?: string } | undefined)?.code;
+        if (taken && taken === codeRef.current?.id) swapRef.current();
+        void tickRef.current();
+      })
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
     return () => {
       setLive(false);

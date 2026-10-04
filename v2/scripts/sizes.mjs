@@ -264,14 +264,15 @@ const SCREENS = [
   { name: "wizard-edit-goal", as: "owner", path: "/shop/card" },
   { name: "wizard-edit-review", as: "owner", path: "/shop/card", act: async (p) => {
     await p.getByRole("button", { name: "10", exact: true }).click();
-    for (let n = 0; n < 3; n++) await press(p, "كمّل");
+    for (let n = 0; n < 4; n++) await press(p, "كمّل");
   } },
 
   { name: "wizard-hello", as: "fresh", before: () => notes(fresh, []), path: "/shop/card", wait: 1300 },
   { name: "wizard-goal", as: "fresh", path: "/shop/card" },
   { name: "wizard-gift", as: "fresh", path: "/shop/card", act: (p) => press(p, "كمّل") },
-  { name: "wizard-color", as: "fresh", path: "/shop/card", act: async (p) => { await press(p, "كمّل"); await press(p, "كمّل"); } },
-  { name: "wizard-ready", as: "fresh", path: "/shop/card", act: async (p) => { for (let n = 0; n < 3; n++) await press(p, "كمّل"); }, wait: 1500 },
+  { name: "wizard-wait", as: "fresh", path: "/shop/card", act: async (p) => { await press(p, "كمّل"); await press(p, "كمّل"); } },
+  { name: "wizard-color", as: "fresh", path: "/shop/card", act: async (p) => { for (let n = 0; n < 3; n++) await press(p, "كمّل"); } },
+  { name: "wizard-ready", as: "fresh", path: "/shop/card", act: async (p) => { for (let n = 0; n < 4; n++) await press(p, "كمّل"); }, wait: 1500 },
   { name: "setup", as: "noShop", path: "/shop/setup" },
 
   { name: "console", as: "boss", path: "/admin", read: true },

@@ -10,6 +10,7 @@ import { Confetti } from "@/components/StampLand";
 import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
+import { nextTampon } from "@/lib/when";
 import type { CardView } from "@/lib/types";
 
 type Step =
@@ -27,7 +28,6 @@ type Step =
 const complete = (d: string) => d.length === 6 || d.length === 8 || (d.length === 11 && d.startsWith("216"));
 /** A customer's own QR (…/u/123456), or the bare 6 digits. */
 export const codeOf = (text: string): string | null => text.match(/\/u\/(\d{6})(?:[/?#]|$)/)?.[1] ?? (/^\s*\d{6}\s*$/.test(text) ? text.trim() : null);
-const hm = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Africa/Tunis" }).format(new Date(iso));
 
 /** A gift on the customer's card, waiting: what it is, and «عطيتو ✓» to hand it over. */
 function GiftRow({ w, busy, onHand }: { w: WaitingGift; busy: boolean; onHand: () => void }) {
@@ -291,7 +291,7 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
                 <>
                   <div className="rounded-[1.375rem] bg-surface px-4 py-3.5 text-center shadow-card">
                     <p className="text-[1.0625rem] font-bold">{who}</p>
-                    <p className="mt-1 text-[0.9375rem] text-muted">{fill(t.collectSoon, { time: hm(step.at) })}</p>
+                    <p className="mt-1 text-[0.9375rem] text-muted">{fill(t.collectSoon, { when: nextTampon(step.at) })}</p>
                   </div>
                   {step.waiting && <GiftRow w={step.waiting} busy={handing} onHand={() => void hand(step.waiting!)} />}
                 </>

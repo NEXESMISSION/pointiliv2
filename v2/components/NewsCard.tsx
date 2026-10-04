@@ -17,7 +17,7 @@ export function NewsCard({
   news: Pick<News, "title" | "body" | "icon" | "cta_label" | "cta_href">;
   onAction?: () => void;
   onClose?: () => void;
-  /** a tour: which slide of how many (the button says «التالي» until the last) */
+  /** a tour: which slide of how many (the button says «كمّل» until the last) */
   step?: { index: number; total: number };
   onNext?: () => void;
 }) {

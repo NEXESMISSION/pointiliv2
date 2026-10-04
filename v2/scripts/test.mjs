@@ -340,6 +340,24 @@ try {
   const afterGift = await rpc(owner, "customer_at", { p_who: nourMe.code });
   check("…then nothing waits, and the card starts again", afterGift.ok && afterGift.waiting === null && afterGift.card?.stamps === 0, afterGift);
 
+  console.log("\nThe shop chooses the wait between two tampons");
+  const card0 = (await rpc(owner, "me")).shop;
+  const saveWait = (gap) => rpc(owner, "save_card", { p_goal: card0.goal, p_gift: card0.gift, p_color: card0.color, p_gap: gap });
+  check("a wait out of bounds is refused", (await saveWait(5000)).error === "invalid_gap");
+  check("an hour by default", (await rpc(owner, "me")).shop.stamp_gap === 60);
+  check("no limit: two tampons in a row", (await saveWait(0)).ok && (await rpc(owner, "give_stamp", { p_who: nourMe.code })).ok && (await rpc(owner, "give_stamp", { p_who: nourMe.code })).ok);
+  await saveWait(180);
+  const in3h = await rpc(owner, "give_stamp", { p_who: nourMe.code });
+  const wait3h = (Date.parse(in3h.next_at) - Date.now()) / 3_600_000;
+  check("three hours typed: the next one in three hours", in3h.error === "too_soon" && wait3h > 2.9 && wait3h <= 3, in3h);
+  await saveWait(1440);
+  const nextDay = await rpc(owner, "give_stamp", { p_who: nourMe.code });
+  const ymd = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Tunis", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  const hhmm = (d) => new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Tunis", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
+  const dayAt = new Date(nextDay.next_at);
+  check("once a day: the next one tomorrow, at midnight in Tunis", nextDay.error === "too_soon" && ymd(dayAt) === ymd(new Date(Date.now() + 86_400_000)) && hhmm(dayAt) === "00:00", [nextDay.next_at, ymd(dayAt), hhmm(dayAt)]);
+  check("back to an hour", (await saveWait(60)).ok && (await rpc(owner, "me")).shop.stamp_gap === 60);
+
   console.log("\nPaying for the year");
   const pay0 = await rpc(owner, "my_payment");
   check("a new shop is not paid yet, and its offer runs 48 hours", pay0.paid_until === null && Date.parse(pay0.offer_until) > Date.now(), pay0);

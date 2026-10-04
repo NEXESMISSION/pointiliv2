@@ -9,7 +9,7 @@ import { getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { fill, t } from "@/lib/t";
 
-export const metadata = { title: "الاشتراك", robots: { index: false } };
+export const metadata = { title: "الأبونمان", robots: { index: false } };
 
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Tunis" }).format(new Date(iso));
 

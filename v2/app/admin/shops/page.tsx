@@ -24,7 +24,7 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
       <Stats cols={4}>
         <Stat label={t.aShops} value={shops.length} sub={q ? "من اللّوجان" : "في الكل"} />
         <Stat label="يخدمو" value={live} sub={shops.length - live ? `${shops.length - live} موقّفين` : t.aAllLive} tone="mint" />
-        <Stat label="ما عملوش الكارط" value={noCard} sub={noCard ? "ما ينجّمو ياخذو حتى تامبون" : "الكل عملو الكارط"} tone={noCard ? "coral" : "ink"} />
+        <Stat label="ما عملوش الكارط" value={noCard} sub={noCard ? "ما ينجمو ياخذو حتى تامبون" : "الكل عملو الكارط"} tone={noCard ? "coral" : "ink"} />
         <Stat label="بلا تامبون اليوم" value={quiet} sub={`من ${shops.length}`} />
       </Stats>
 

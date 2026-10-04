@@ -9,6 +9,7 @@ import { Confetti, IMPACT_MS, StampLand } from "@/components/StampLand";
 import { Icon3D, LinkBtn, Logo } from "@/components/ui";
 import { fill, kindIcon, t } from "@/lib/t";
 import { signal } from "@/lib/track";
+import { nextTampon } from "@/lib/when";
 import type { ScanResult } from "@/lib/types";
 
 /** after the tampon hits: each line arrives in reading order */
@@ -151,7 +152,7 @@ function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
     too_soon: {
       icon: Clock,
       title: t.errSoon,
-      body: res.next_at ? fill(t.errSoonBody, { time: new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(res.next_at)) }) : undefined,
+      body: res.next_at ? fill(t.errSoonBody, { when: nextTampon(res.next_at) }) : undefined,
     },
     done: { icon: QrCode, title: t.errDone },
     own_shop: { icon: X, title: t.errOwn, body: t.errOwnBody },

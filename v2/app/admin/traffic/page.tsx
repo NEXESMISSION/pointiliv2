@@ -82,6 +82,7 @@ const SCREENS: Record<string, string> = {
   wallet: "كارطات الحريف",
   hello: "مرحبا",
   goal: "قدّاش من تامبون",
+  wait: "كل قدّاش",
   gift: "الكادو",
   color: "اللون",
   ready: "حاضرة",
@@ -191,7 +192,7 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
           <Segments now={String(days)} items={RANGES.map((r) => ({ id: String(r.d), label: r.label, href: href({ d: String(r.d) }) }))} />
           <Link
             href={href({ all: all ? null : "1" })}
-            title="زياراتك انت والروبوات"
+            title="زياراتك إنت والروبوات"
             className={`inline-flex h-9 items-center gap-2 rounded-[0.625rem] border px-3 text-[0.8438rem] font-semibold ${all ? "border-ink bg-ink text-white" : "border-line bg-surface text-muted hover:border-brand hover:text-brand"}`}
           >
             <span className={`grid size-4 place-items-center rounded-[0.25rem] text-[0.625rem] ${all ? "bg-white text-ink" : "ring-1 ring-faint"}`}>{all ? "✓" : ""}</span>

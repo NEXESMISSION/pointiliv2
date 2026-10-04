@@ -201,7 +201,10 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
   const goal = Number(fd.get("goal"));
   const gift = str(fd, "gift");
   if (gift.length < 2) return { error: t.cardGiftPh, field: "gift" };
-  const res = await call<{ ok: boolean; error?: string }>("save_card", { p_goal: goal, p_gift: gift, p_color: str(fd, "color") });
+  // the wait between two tampons, in minutes (0: none; 1440: once a day); missing: as it was
+  const gapRaw = str(fd, "gap");
+  const gap = gapRaw === "" ? null : Math.round(Number(gapRaw));
+  const res = await call<{ ok: boolean; error?: string }>("save_card", { p_goal: goal, p_gift: gift, p_color: str(fd, "color"), p_gap: gap !== null && Number.isFinite(gap) ? gap : null });
   if (!res?.ok) return { error: t.errNetwork };
   revalidatePath("/", "layout");
   redirect(inside(str(fd, "next")) ?? "/shop");
@@ -212,16 +215,16 @@ export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offe
   await call("see", { p_key: note });
 }
 
-/** The customer behind a code or a number, for the shop about to give them a tampon (their first name, their card here). */
 /** A gift the customer's card holds for the shop to hand over. */
 export type WaitingGift = { id: number; gift: string | null };
 
+/** The customer behind a code or a number, for the shop about to give them a tampon (their first name, their card here, a gift waiting). */
 export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null }> {
   const res = await call<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null }>("customer_at", { p_who: String(who).slice(0, 20) });
   return res ?? { ok: false, error: "network" };
 }
 
-/** The shop gives the tampon itself: the same rules as a scan (one an hour, the gift at the goal). */
+/** The shop gives the tampon itself: the same rules as a scan (the shop's wait between two, the gift at the goal). */
 export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null }> {
   const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null }>("give_stamp", { p_who: String(who).slice(0, 20) });
   return res ?? { ok: false, error: "network" };

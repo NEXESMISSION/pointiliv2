@@ -91,6 +91,13 @@ alter table public.payments add constraint payments_method_check check (method i
 -- the shop's logo (optional): a picture in the public «logos» box, set by the owner
 alter table public.shops add column if not exists logo text check (logo is null or (logo ~ '^https://' and char_length(logo) <= 300));
 
+-- how long a customer waits between two tampons here, in minutes, the owner's
+-- choice on the card: 60 (an hour) by default; 0 = no wait; 1440 = once a day
+-- (a new day in Tunis, not 24 hours); up to 72 hours
+alter table public.shops add column if not exists stamp_gap int not null default 60;
+alter table public.shops drop constraint if exists shops_stamp_gap_check;
+alter table public.shops add constraint shops_stamp_gap_check check (stamp_gap between 0 and 4320);
+
 create table if not exists public.cards (
   id          uuid primary key default gen_random_uuid(),
   shop_id     uuid not null references public.shops (id) on delete cascade,
@@ -335,6 +342,17 @@ language sql immutable set search_path = '' as $$
 $$;
 
 -- is a gift waiting on this card?
+-- when a customer may take the next tampon at a shop, after one at p_last: never
+-- held back (null) with no wait; the next day in Tunis for «once a day»
+create or replace function public.next_stamp_at(p_last timestamptz, p_gap int) returns timestamptz
+language sql stable set search_path = '' as $$
+  select case
+    when p_last is null or coalesce(p_gap, 60) <= 0 then null
+    when p_gap = 1440 then (date_trunc('day', p_last at time zone 'Africa/Tunis') + interval '1 day') at time zone 'Africa/Tunis'
+    else p_last + make_interval(mins => p_gap)
+  end
+$$;
+
 create or replace function public.waits(p_card uuid) returns boolean
 language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.moments m where m.card_id = p_card and m.kind = 'gift' and m.given_at is null)
@@ -378,7 +396,7 @@ begin
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal, 'logo', s.logo) end);
+      'signal', s.signal, 'logo', s.logo, 'stamp_gap', s.stamp_gap) end);
 end $$;
 
 -- a one-time note seen: added once to the person's list (unknown notes refused)
@@ -421,7 +439,8 @@ end $$;
 --     card that it fills gets its gift waiting now;
 --   · on the way otherwise (more stamps, another gift): they finish the card
 --     they started; the new one is theirs after that gift.
-create or replace function public.save_card(p_goal int, p_gift text, p_color text) returns jsonb
+drop function if exists public.save_card(int, text, text);
+create or replace function public.save_card(p_goal int, p_gift text, p_color text, p_gap int default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_gift text := trim(coalesce(p_gift, '')); v_eased int; v_filled int; v_kept int;
 begin
@@ -429,8 +448,9 @@ begin
   if s.id is null then return public.err('no_shop'); end if;
   if p_goal is null or p_goal not between 3 and 30 then return public.err('invalid_goal'); end if;
   if char_length(v_gift) not between 2 and 60 then return public.err('invalid_gift'); end if;
+  if p_gap is not null and p_gap not between 0 and 4320 then return public.err('invalid_gap'); end if;
   if coalesce(p_color, '') !~ '^#[0-9A-Fa-f]{6}$' then p_color := s.color; end if;
-  update public.shops set goal = p_goal, gift = v_gift, color = upper(p_color) where id = s.id;
+  update public.shops set goal = p_goal, gift = v_gift, color = upper(p_color), stamp_gap = coalesce(p_gap, stamp_gap) where id = s.id;
 
   update public.cards c set goal = p_goal, gift = v_gift
   where c.shop_id = s.id and c.stamps = 0 and not public.waits(c.id);
@@ -678,8 +698,8 @@ begin
   insert into public.cards (shop_id, user_id, goal, gift) values (s.id, v_uid, s.goal, s.gift) on conflict (shop_id, user_id) do nothing;
   select * into c from public.cards where shop_id = s.id and user_id = v_uid for update;
 
-  if c.last_at is not null and c.last_at > now() - interval '60 minutes' then
-    return public.err('too_soon', jsonb_build_object('next_at', c.last_at + interval '60 minutes', 'card', public.card_view(c.id)));
+  if public.next_stamp_at(c.last_at, s.stamp_gap) > now() then
+    return public.err('too_soon', jsonb_build_object('next_at', public.next_stamp_at(c.last_at, s.stamp_gap), 'card', public.card_view(c.id)));
   end if;
 
   v_waiting := public.waits(c.id);
@@ -910,8 +930,8 @@ begin
 
   insert into public.cards (shop_id, user_id, goal, gift) values (s.id, v_person, s.goal, s.gift) on conflict (shop_id, user_id) do nothing;
   select * into c from public.cards where shop_id = s.id and user_id = v_person for update;
-  if c.last_at is not null and c.last_at > now() - interval '60 minutes' then
-    return public.err('too_soon', jsonb_build_object('next_at', c.last_at + interval '60 minutes', 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id)));
+  if public.next_stamp_at(c.last_at, s.stamp_gap) > now() then
+    return public.err('too_soon', jsonb_build_object('next_at', public.next_stamp_at(c.last_at, s.stamp_gap), 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id)));
   end if;
 
   v_waiting := public.waits(c.id);
@@ -1357,7 +1377,9 @@ create or replace function public.ping_counter() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
   begin
-    perform realtime.send('{}'::jsonb, 'ping', 'pointili:' || (select s.signal from public.shops s where s.id = new.shop_id), false);
+    -- a code taken (held or used): its id, so the counter puts the next one up at once
+    perform realtime.send(case when tg_table_name = 'codes' then jsonb_build_object('code', new.id) else '{}'::jsonb end,
+      'ping', 'pointili:' || (select s.signal from public.shops s where s.id = new.shop_id), false);
   exception when others then null;
   end;
   return null;
@@ -1365,8 +1387,9 @@ end $$;
 drop trigger if exists moments_ping on public.moments;
 create trigger moments_ping after insert on public.moments for each row execute function public.ping_counter();
 drop trigger if exists codes_ping on public.codes;
-create trigger codes_ping after update of held_hash on public.codes for each row
-  when (old.held_hash is null and new.held_hash is not null) execute function public.ping_counter();
+create trigger codes_ping after update of held_hash, used_at on public.codes for each row
+  when ((old.held_hash is null and new.held_hash is not null) or (old.used_at is null and new.used_at is not null))
+  execute function public.ping_counter();
 
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
@@ -1379,7 +1402,7 @@ from public.shops s
 where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
   and not (p.seen @> case when s.goal is not null then array['card_hello', 'coach', 'logo_tip'] else array['card_hello', 'logo_tip'] end);
 
-grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text),
+grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),

@@ -16,7 +16,7 @@ export async function GET() {
 
 ## Key facts
 - What: a stamp-based loyalty card for any local business in Tunisia (cafés, bakeries, barbers, hair and beauty salons, restaurants, pizzerias, perfume shops, clothing stores, gyms, car washes, and ${NICHES.length - 12}+ other kinds).
-- How a customer collects a stamp: they scan the shop's QR code with their phone camera (it opens in the browser, no app), or the shop scans the customer's own code, or the shop types the customer's 6-digit code or phone number. One stamp per hour per shop; the shop's QR code changes by itself and works once.
+- How a customer collects a stamp: they scan the shop's QR code with their phone camera (it opens in the browser, no app), or the shop scans the customer's own code, or the shop types the customer's 6-digit code or phone number. The shop chooses how long a customer waits between two stamps (an hour by default, once a day, a number of hours, or no limit); the shop's QR code changes as soon as it is scanned and works once.
 - The reward: the shop chooses the number of stamps (3 to 30) and the gift (free coffee, free brushing, a discount...). Customers already on their way keep the card they started.
 - For the owner: sign up in two minutes with a phone number; see every customer, their visits and who is close to a gift; add the shop's logo and colour to the card.
 - Price: ${PRICE} TND per year per shop, unlimited customers and stamps. Paying within 48 hours of opening the account gives 3 extra months (15 months for the price of 12).

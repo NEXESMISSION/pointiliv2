@@ -103,7 +103,7 @@ try {
   await shot(o, "03d-kinds-picked", 400);
   await o.getByRole("button", { name: "قهوة" }).click();
   await Promise.all([o.waitForURL("**/shop/card", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
-  // the card, one question at a time: the hello, how many, which gift, which colour, ready
+  // the card, one question at a time: the hello, how many, which gift, how long between two, which colour, ready
   await o.getByText("توّا نعملو مع بعضنا").waitFor({ timeout: 30000 });
   await shot(o, "04a-card-hello", 1600);
   await o.reload({ waitUntil: "load" });
@@ -116,6 +116,10 @@ try {
   await o.getByRole("button", { name: "كمّل" }).click();
   await o.getByText("شنوّة يربح الحريف").waitFor();
   await shot(o, "04c-card-gift", 600);
+  await o.getByRole("button", { name: "كمّل" }).click();
+  // the wait between two tampons: an hour stays (the rest of the walk scans by the hour)
+  await o.getByText("كل قدّاش ينجم الحريف").waitFor();
+  await shot(o, "04c2-card-wait", 600);
   await o.getByRole("button", { name: "كمّل" }).click();
   await o.getByRole("button", { name: "#FF6B4A" }).click();
   await shot(o, "04d-card-color", 600);
@@ -260,7 +264,7 @@ try {
   // changing the card: one line says what happens to the customers on their way
   await o.goto(BASE + "/shop/card", { waitUntil: "load" });
   await o.getByRole("button", { name: "8", exact: true }).click();
-  for (let i = 0; i < 3; i++) await o.getByRole("button", { name: "كمّل" }).click();
+  for (let i = 0; i < 4; i++) await o.getByRole("button", { name: "كمّل" }).click();
   await o.getByRole("status").waitFor();
   await shot(o, "17b-card-change", 500);
   await o.goto(BASE + "/me", { waitUntil: "load" });

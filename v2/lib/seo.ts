@@ -97,12 +97,12 @@ export const FAQ: { q: string; a: string; fr: { q: string; a: string } }[] = [
   },
   {
     q: "الحريف ينجم يغشّ ولا ياخو تامبونات زايدة؟",
-    a: "لا. الكود متاع المحل يتبدّل وحدو ويخدم مرّة برك، والحريف ياخو تامبون واحد في الساعة على الأكثر في نفس المحل.",
-    fr: { q: "Le client peut-il tricher ?", a: "Non. Le QR code du commerce change tout seul et ne sert qu'une fois, et un client ne peut recevoir qu'un tampon par heure dans le même commerce." },
+    a: "لا. الكود متاع المحل يتبدّل كي يتسكانا ويخدم مرّة برك، والمحل يختار قدّاش يستنّى الحريف بين تامبون وتامبون: ساعة، نهار، ولا الوقت اللي يحبّو.",
+    fr: { q: "Le client peut-il tricher ?", a: "Non. Le QR code du commerce change dès qu'il est scanné et ne sert qu'une fois, et le commerce choisit le délai entre deux tampons d'un même client : une heure, une journée, ou le délai qu'il veut." },
   },
   {
     q: "نجم نختار الكادو وعدد التامبونات؟",
-    a: "إيه. تختار قدّاش من تامبون (من 3 لـ 30) وشنوّة الكادو: قهوة بلاش، بروشينغ، تخفيض… وتبدّلهم وقتلّي تحب، واللي بداو الكارط يكمّلوها كيما بداوها.",
+    a: "إيه. تختار قدّاش من تامبون (من 3 لـ 30) وشنوّة الكادو: قهوة بلاش، بروشينغ، ريميز… وتبدّلهم وقتلّي تحب، واللي بداو الكارط يكمّلوها كيما بداوها.",
     fr: { q: "Puis-je choisir la récompense et le nombre de tampons ?", a: "Oui. Vous choisissez le nombre de tampons (de 3 à 30) et le cadeau : café offert, brushing, réduction… Vous pouvez les changer quand vous voulez, et les clients déjà en cours gardent leur carte." },
   },
   {
@@ -121,7 +121,7 @@ export const FAQ: { q: string; a: string; fr: { q: string; a: string } }[] = [
     fr: { q: "Comment payer ?", a: "Par D17, par virement ou versement bancaire, ou par mandat postal. Appelez-nous ou écrivez-nous sur WhatsApp et on finalise le paiement ensemble." },
   },
   {
-    q: "قدّاش ياخذ وقت باش نبدا؟",
+    q: "قدّاش ياخو وقت باش نبدا؟",
     a: "دقيقتين: تعمل كونت بالنومرو متاعك، تكتب اسم المحل، تختار الكارط، وتبدا تعطي التامبونات.",
     fr: { q: "Combien de temps pour démarrer ?", a: "Deux minutes : vous créez un compte avec votre numéro, vous entrez le nom du commerce, vous choisissez la carte et vous commencez à donner des tampons." },
   },
@@ -167,7 +167,7 @@ export function orgJsonLd(support: string | null) {
         inLanguage: ["ar-TN", "fr-TN"],
         description:
           "Pointili lets any shop in Tunisia run a digital loyalty card: customers collect stamps on their phone (scan a QR code, no app to install) and get a gift when the card is full. The owner sees every customer.",
-        offers: { "@type": "Offer", price: PRICE, priceCurrency: CURRENCY, description: "Abonnement annuel par commerce — اشتراك عام للمحل", url: `${SITE}/prix` },
+        offers: { "@type": "Offer", price: PRICE, priceCurrency: CURRENCY, description: "Abonnement annuel par commerce — أبونمان عام للمحل", url: `${SITE}/prix` },
         publisher: { "@id": `${SITE}/#org` },
       },
       { "@type": "WebSite", "@id": `${SITE}/#site`, url: SITE, name: "Pointili", inLanguage: "ar-TN", publisher: { "@id": `${SITE}/#org` } },
