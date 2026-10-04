@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, X } from "lucide-react";
-import { customerAt, giveStamp } from "@/app/actions";
+import { customerAt, give as handOver, giveStamp, type WaitingGift } from "@/app/actions";
 import { Pass } from "@/components/Pass";
 import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
@@ -17,16 +17,38 @@ type Step =
   | { kind: "looking" }
   | { kind: "unknown" }
   | { kind: "error"; text: string }
-  | { kind: "found"; name: string | null; card: CardView | null }
-  | { kind: "giving"; name: string | null; card: CardView | null }
-  | { kind: "done"; name: string | null; card: CardView; gift: boolean }
-  | { kind: "soon"; name: string | null; at: string; card?: CardView };
+  | { kind: "found"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
+  | { kind: "giving"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
+  | { kind: "done"; name: string | null; card: CardView; gift: boolean; waiting: WaitingGift | null }
+  | { kind: "soon"; name: string | null; at: string; card?: CardView; waiting: WaitingGift | null }
+  | { kind: "handed"; name: string | null; gift: string; card: CardView | null; waiting: WaitingGift | null };
 
 /** 6 digits are a customer's code; 8 (or 216 + 8) their number. */
 const complete = (d: string) => d.length === 6 || d.length === 8 || (d.length === 11 && d.startsWith("216"));
 /** A customer's own QR (…/u/123456), or the bare 6 digits. */
 export const codeOf = (text: string): string | null => text.match(/\/u\/(\d{6})(?:[/?#]|$)/)?.[1] ?? (/^\s*\d{6}\s*$/.test(text) ? text.trim() : null);
 const hm = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Africa/Tunis" }).format(new Date(iso));
+
+/** A gift on the customer's card, waiting: what it is, and «عطيتو ✓» to hand it over. */
+function GiftRow({ w, busy, onHand }: { w: WaitingGift; busy: boolean; onHand: () => void }) {
+  return (
+    <div className="mt-3 flex w-full animate-rise items-center gap-3 rounded-[1.375rem] bg-surface p-3 text-start shadow-card">
+      <Icon3D name="gift" size={36} className="shrink-0" />
+      <span className="min-w-0 flex-1">
+        <span className="block text-[0.8125rem] font-semibold text-muted">{t.collectGiftWaits}</span>
+        <span className="block truncate text-[1rem] font-bold">{w.gift}</span>
+      </span>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onHand}
+        className="press h-11 shrink-0 rounded-[1rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 text-[0.9375rem] font-bold text-white disabled:opacity-60"
+      >
+        {busy ? t.checking : t.given}
+      </button>
+    </div>
+  );
+}
 
 function errorText(code?: string): string {
   if (code === "own_shop") return t.collectOwn;
@@ -41,7 +63,8 @@ function errorText(code?: string): string {
  * own code (in their wallet), or the code typed — 6 digits, or simply their
  * phone number. Before the tampon, who it is and how far their card is; then
  * the tampon lands on the card (the gift, when it is the last one), and the
- * next customer is one tap away.
+ * next customer is one tap away. A gift waiting on the card is handed over
+ * from here too — «عطيتو ✓» — before or after the tampon.
  */
 export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: string }) {
   const [mode, setMode] = useState(by);
@@ -58,7 +81,7 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
       setStep({ kind: "looking" });
       const res = await customerAt(digits).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof customerAt>>);
       if (asked.current !== digits) return;
-      if (res.ok) setStep({ kind: "found", name: res.name ?? null, card: res.card ?? null });
+      if (res.ok) setStep({ kind: "found", name: res.name ?? null, card: res.card ?? null, waiting: res.waiting ?? null });
       else if (res.error === "unknown") {
         setStep({ kind: "unknown" });
         signal("collect_unknown", mode);
@@ -68,16 +91,41 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
   }, [digits, mode]);
 
   const give = async () => {
-    if (step.kind !== "found") return;
+    if (step.kind !== "found" && step.kind !== "handed") return;
     const { name, card } = step;
-    setStep({ kind: "giving", name, card });
+    setStep({ kind: "giving", name, card, waiting: null });
     const res = await giveStamp(digits).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
     if (res.ok && res.card) {
       navigator.vibrate?.(60);
-      setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift });
+      setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null });
       signal("collect", `${mode}${res.gift ? " · gift" : ""}`);
-    } else if (res.error === "too_soon" && res.next_at) setStep({ kind: "soon", name: res.name ?? name, at: res.next_at, card: res.card });
+    } else if (res.error === "too_soon" && res.next_at) setStep({ kind: "soon", name: res.name ?? name, at: res.next_at, card: res.card, waiting: res.waiting ?? null });
     else setStep({ kind: "error", text: errorText(res.error) });
+  };
+
+  // the gift handed over at the counter: the card as it is now (the rest of the stamps carried on)
+  const [handing, setHanding] = useState(false);
+  const hand = async (w: WaitingGift) => {
+    if (handing) return;
+    setHanding(true);
+    const ok = await handOver(w.id).catch(() => false);
+    if (!ok) {
+      setHanding(false);
+      setStep({ kind: "error", text: t.errNetwork });
+      return;
+    }
+    navigator.vibrate?.(60);
+    signal("collect_gift", mode);
+    const now = await customerAt(digits).catch(() => null);
+    setHanding(false);
+    setStep({
+      kind: "handed",
+      name: (now?.ok ? now.name : null) ?? ("name" in step ? step.name : null),
+      gift: w.gift ?? "",
+      card: now?.ok ? (now.card ?? null) : null,
+      // a card with stamps to spare can hold the next gift already
+      waiting: now?.ok ? (now.waiting ?? null) : null,
+    });
   };
 
   const again = () => {
@@ -115,7 +163,7 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
 
   return (
     <main className="safe-t safe-b relative mx-auto flex h-dvh w-full max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
-      {step.kind === "done" && step.gift && <Confetti count={70} />}
+      {((step.kind === "done" && step.gift) || step.kind === "handed") && <Confetti count={70} />}
       <header className="flex shrink-0 items-center gap-3 pt-2">
         <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
           <ChevronRight className="size-5" />
@@ -165,6 +213,7 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
               <Pass shop={step.card.shop} stamps={step.card.stamps} fresh />
             </div>
+            {step.waiting && <GiftRow w={step.waiting} busy={handing} onHand={() => void hand(step.waiting!)} />}
             <div className="mt-[3dvh] w-full space-y-2">
               <Btn type="button" onClick={again}>
                 <RotateCcw className="size-5" /> {t.collectNext}
@@ -172,6 +221,27 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
               <Link href="/shop" className="block py-2 text-center text-[0.9375rem] font-semibold text-muted">
                 {t.done}
               </Link>
+            </div>
+          </div>
+        ) : step.kind === "handed" ? (
+          <div className="my-auto flex flex-col items-center text-center">
+            <span className="grid size-[clamp(3.5rem,10dvh,5rem)] animate-pop place-items-center rounded-full bg-mint text-white">
+              <Icon3D name="gift" size={46} />
+            </span>
+            <h2 className="mt-3 text-balance text-[1.625rem] font-bold">{fill(t.collectHanded, { name: who, gift: step.gift })}</h2>
+            {step.card && (
+              <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
+                <Pass shop={step.card.shop} stamps={step.card.stamps} />
+              </div>
+            )}
+            {step.waiting && <GiftRow w={step.waiting} busy={handing} onHand={() => void hand(step.waiting!)} />}
+            <div className="mt-[3dvh] w-full space-y-2">
+              <Btn type="button" onClick={() => void give()}>
+                {name ? fill(t.collectGive, { name }) : t.collectGiveAnon}
+              </Btn>
+              <Btn type="button" kind="soft" onClick={again}>
+                <RotateCcw className="size-5" /> {t.collectNext}
+              </Btn>
             </div>
           </div>
         ) : (
@@ -218,10 +288,13 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
                 </p>
               )}
               {step.kind === "soon" && (
-                <div className="rounded-[1.375rem] bg-surface px-4 py-3.5 text-center shadow-card">
-                  <p className="text-[1.0625rem] font-bold">{who}</p>
-                  <p className="mt-1 text-[0.9375rem] text-muted">{fill(t.collectSoon, { time: hm(step.at) })}</p>
-                </div>
+                <>
+                  <div className="rounded-[1.375rem] bg-surface px-4 py-3.5 text-center shadow-card">
+                    <p className="text-[1.0625rem] font-bold">{who}</p>
+                    <p className="mt-1 text-[0.9375rem] text-muted">{fill(t.collectSoon, { time: hm(step.at) })}</p>
+                  </div>
+                  {step.waiting && <GiftRow w={step.waiting} busy={handing} onHand={() => void hand(step.waiting!)} />}
+                </>
               )}
               {(step.kind === "found" || step.kind === "giving") && (
                 <div className="animate-rise">
@@ -238,6 +311,7 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
                       )}
                     </span>
                   </div>
+                  {step.waiting && <GiftRow w={step.waiting} busy={handing} onHand={() => void hand(step.waiting!)} />}
                   <Btn type="button" onClick={() => void give()} disabled={step.kind === "giving"} className="mt-3 h-[3.75rem] text-[1.125rem]">
                     {step.kind === "giving" ? t.checking : name ? fill(t.collectGive, { name }) : t.collectGiveAnon}
                   </Btn>
@@ -248,7 +322,7 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
         )}
       </div>
 
-      {mode === "code" && step.kind !== "done" && (
+      {mode === "code" && step.kind !== "done" && step.kind !== "handed" && (
         <Link href="/shop/qr" className="mb-[2dvh] flex shrink-0 items-center justify-center gap-1.5 text-[0.875rem] font-semibold text-brand">
           <QrCode className="size-4" /> {t.collectOr}
         </Link>

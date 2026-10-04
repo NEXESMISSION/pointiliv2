@@ -249,9 +249,9 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
           <ChevronRight className="size-5" />
         </Link>
         <p className="min-w-0 flex-1 truncate text-center text-[1.1875rem] font-bold">{shop.name}</p>
-        <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-white/20">
+        <Link href="/me" aria-label={t.account} className="press grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-white/20">
           <ShopMark shop={shop} size={28} />
-        </span>
+        </Link>
       </header>
 
       <main className="safe-b relative z-10 mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col items-center justify-center gap-[2.4dvh] px-[clamp(1rem,5vw,1.5rem)] py-[2dvh]">

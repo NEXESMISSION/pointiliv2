@@ -213,14 +213,17 @@ export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offe
 }
 
 /** The customer behind a code or a number, for the shop about to give them a tampon (their first name, their card here). */
-export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null }> {
-  const res = await call<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null }>("customer_at", { p_who: String(who).slice(0, 20) });
+/** A gift the customer's card holds for the shop to hand over. */
+export type WaitingGift = { id: number; gift: string | null };
+
+export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null }> {
+  const res = await call<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null }>("customer_at", { p_who: String(who).slice(0, 20) });
   return res ?? { ok: false, error: "network" };
 }
 
 /** The shop gives the tampon itself: the same rules as a scan (one an hour, the gift at the goal). */
-export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string }> {
-  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string }>("give_stamp", { p_who: String(who).slice(0, 20) });
+export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null }> {
+  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null }>("give_stamp", { p_who: String(who).slice(0, 20) });
   return res ?? { ok: false, error: "network" };
 }
 

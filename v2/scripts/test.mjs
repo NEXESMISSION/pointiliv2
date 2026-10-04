@@ -253,9 +253,10 @@ try {
   check("the founder sees the totals and the week", ov.shops >= 2 && ov.customers >= 2 && ov.week.length === 7, ov);
   check("a customer cannot open the console", !!(await rpc(sami, "admin_overview")).error);
   check("an owner cannot open the console", !!(await rpc(owner, "admin_shops", { p_q: null })).error);
-  const found = await rpc(boss, "admin_shops", { p_q: "Café Test" });
-  check("the founder finds a shop by its name", found.length === 1 && found[0].customers === 2 && found[0].owner.name === "Yasmine", found);
-  const page = await rpc(boss, "admin_shop", { p_id: found[0].id });
+  // (the founder's test account may hold a «Café Test» of its own: this run's is Yasmine's)
+  const found = ((await rpc(boss, "admin_shops", { p_q: "Café Test" })) ?? []).filter((x) => x.owner?.name === "Yasmine");
+  check("the founder finds a shop by its name", found.length === 1 && found[0].customers === 2, found);
+  const page = await rpc(boss, "admin_shop", { p_id: found[0]?.id });
   check("a shop's page: the owner, the numbers, the best customers", page.owner?.name === "Yasmine" && page.top.length === 2 && page.stamps >= 7, page);
   check("pausing a shop", (await rpc(boss, "admin_set_paused", { p_id: found[0].id, p_paused: true })).ok);
   check("a paused shop makes no code", (await rpc(owner, "new_code")).error === "paused");
@@ -326,6 +327,18 @@ try {
   check("an owner cannot stamp their own card", (await rpc(owner, "give_stamp", { p_who: (await rpc(owner, "me")).code })).error === "own_shop");
   check("a customer (no shop) cannot give tampons", (await rpc(nour, "give_stamp", { p_who: (await rpc(sami, "me")).code })).error === "no_shop");
   check("the tampon shows in the customer's wallet", ((await rpc(nour, "wallet")) ?? []).some((c) => c.shop.name === "Café Test" && c.stamps === 1));
+  // the card one stamp from its gift (an hour later): the last tampon by the code, then the gift handed over from the same screen
+  const nourCard = (await admin.from("cards").select("id, goal").eq("user_id", nour.id).single()).data;
+  await admin.from("cards").update({ stamps: (nourCard.goal ?? 0) - 1, last_at: new Date(Date.now() - 2 * 3600_000).toISOString() }).eq("id", nourCard.id);
+  const lastOne = await rpc(owner, "give_stamp", { p_who: nourMe.code });
+  check("the last tampon by the code wins the gift, and says which one waits", lastOne.ok && lastOne.gift === true && typeof lastOne.waiting?.id === "number" && !!lastOne.waiting.gift, lastOne);
+  const lookGift = await rpc(owner, "customer_at", { p_who: nourMe.code });
+  check("looking the customer up shows the gift waiting", lookGift.ok && lookGift.waiting?.id === lastOne.waiting?.id, lookGift);
+  check("…and a tampon too soon still says the gift waits", (await rpc(owner, "give_stamp", { p_who: nourMe.code })).waiting?.id === lastOne.waiting?.id);
+  check("another shop cannot hand this gift over", (await rpc(shop2, "give", { p_moment: lastOne.waiting?.id })).error === "not_found");
+  check("the shop hands the gift over from the collect screen", (await rpc(owner, "give", { p_moment: lastOne.waiting?.id })).ok);
+  const afterGift = await rpc(owner, "customer_at", { p_who: nourMe.code });
+  check("…then nothing waits, and the card starts again", afterGift.ok && afterGift.waiting === null && afterGift.card?.stamps === 0, afterGift);
 
   console.log("\nPaying for the year");
   const pay0 = await rpc(owner, "my_payment");

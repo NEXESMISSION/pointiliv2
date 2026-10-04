@@ -413,6 +413,8 @@ export const t = {
   collectScanHint: "حط الكود متاع الحريف في وسط الإيكران",
   collectNoShop: "الكود هذا يخدم كان للمحلات",
   collectFirst: "أوّل مرّة عندك",
+  collectGiftWaits: "عندو كادو يستنّى",
+  collectHanded: "{name} خذا {gift}",
   myCode: "الكود متاعي",
   myCodeTitle: "الكود متاعك",
   myCodeHint: "ورّيه للمحل، ولا قولّو النومرو متاعك، ويزيدك التامبون",

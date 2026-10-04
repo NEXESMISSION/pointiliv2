@@ -856,7 +856,16 @@ begin
   return v;
 end $$;
 
--- who a code is, for the shop about to give them a tampon: the first name and their card here
+-- the gift a card holds for the shop to hand over, if any: which one, and what
+create or replace function public.waiting_gift(p_card uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('id', m.id, 'gift', coalesce(m.gift, c.gift))
+  from public.moments m join public.cards c on c.id = m.card_id
+  where m.card_id = p_card and m.kind = 'gift' and m.given_at is null
+  order by m.created_at limit 1
+$$;
+
+-- who a code is, for the shop about to give them a tampon: the first name, their card here, and a gift waiting
 create or replace function public.customer_at(p_who text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare v_uid uuid := auth.uid(); s public.shops%rowtype; v_person uuid; c public.cards%rowtype; v_name text;
@@ -871,7 +880,8 @@ begin
   select split_part(coalesce(nullif(trim(name), ''), ''), ' ', 1) into v_name from public.people where id = v_person;
   select * into c from public.cards where shop_id = s.id and user_id = v_person;
   return jsonb_build_object('ok', true, 'name', nullif(v_name, ''),
-    'card', case when c.id is null then null else public.card_view(c.id) end);
+    'card', case when c.id is null then null else public.card_view(c.id) end,
+    'waiting', case when c.id is null then null else public.waiting_gift(c.id) end);
 end $$;
 
 -- the tampon, given by the shop: the same rules as a scan (one an hour, the
@@ -901,7 +911,7 @@ begin
   insert into public.cards (shop_id, user_id, goal, gift) values (s.id, v_person, s.goal, s.gift) on conflict (shop_id, user_id) do nothing;
   select * into c from public.cards where shop_id = s.id and user_id = v_person for update;
   if c.last_at is not null and c.last_at > now() - interval '60 minutes' then
-    return public.err('too_soon', jsonb_build_object('next_at', c.last_at + interval '60 minutes', 'name', nullif(v_name, ''), 'card', public.card_view(c.id)));
+    return public.err('too_soon', jsonb_build_object('next_at', c.last_at + interval '60 minutes', 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id)));
   end if;
 
   v_waiting := public.waits(c.id);
@@ -915,7 +925,7 @@ begin
     insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
     v_gift := true;
   end if;
-  return jsonb_build_object('ok', true, 'gift', v_gift, 'name', nullif(v_name, ''), 'card', public.card_view(c.id));
+  return jsonb_build_object('ok', true, 'gift', v_gift, 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id));
 end $$;
 
 -- ═══ paying for the year ═══════════════════════════════════════════════════

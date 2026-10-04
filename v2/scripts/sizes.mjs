@@ -157,6 +157,13 @@ async function signIn(who) {
 }
 
 const notes = (who, seen) => admin.from("people").update({ seen }).eq("id", who.id);
+// the regular's card full again, its gift waiting (handing it over at one size takes it away)
+async function giftBack() {
+  const { data: waiting } = await admin.from("moments").select("id").eq("card_id", cardHere.id).eq("kind", "gift").is("given_at", null);
+  if (waiting?.length) return;
+  await admin.from("cards").update({ stamps: shop.goal, last_at: ago(2 * HOUR) }).eq("id", cardHere.id);
+  await admin.from("moments").insert({ shop_id: shop.id, card_id: cardHere.id, kind: "gift", gift: shop.gift });
+}
 let ownerDb = null;
 async function newToken() {
   if (!ownerDb) {
@@ -225,6 +232,28 @@ const SCREENS = [
       await p.getByRole("textbox").fill(takers[i].code);
       await p.getByRole("button", { name: /زيد تامبون لـ/ }).click({ timeout: 20000 });
       await p.getByText("+1").first().waitFor({ timeout: 20000 });
+    },
+    wait: 1400,
+  },
+  {
+    name: "collect-gift",
+    as: "owner",
+    before: () => giftBack(),
+    path: "/shop/collect?by=code",
+    act: async (p) => {
+      await p.getByRole("textbox").fill(customer.code);
+      await p.getByText("عندو كادو يستنّى").waitFor({ timeout: 20000 });
+    },
+  },
+  {
+    name: "collect-handed",
+    as: "owner",
+    before: () => giftBack(),
+    path: "/shop/collect?by=code",
+    act: async (p) => {
+      await p.getByRole("textbox").fill(customer.code);
+      await p.getByRole("button", { name: "عطيتو ✓" }).click({ timeout: 20000 });
+      await p.getByRole("heading", { name: /خذا/ }).waitFor({ timeout: 20000 });
     },
     wait: 1400,
   },

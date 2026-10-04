@@ -78,9 +78,10 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
     // nothing is clipped: on a phone too short for it all, the page scrolls as a whole
     <main className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col px-5">
       <header className="flex items-center gap-3 pt-3">
-        <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-full shadow-card" style={{ background: shop.color }}>
+        {/* the shop's picture is the way to the account, like a profile picture */}
+        <Link href="/me" aria-label={t.account} className="press grid size-12 shrink-0 place-items-center overflow-hidden rounded-full shadow-card" style={{ background: shop.color }}>
           <ShopMark shop={shop} size={30} />
-        </span>
+        </Link>
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-2">
             <span className="min-w-0 truncate text-[0.8438rem] text-muted">
