@@ -24,6 +24,9 @@ const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0
 const ownerPhone = phoneNo();
 const customerPhone = phoneNo();
 let bossPhone = null;
+// a piece of news for this walk's owner only (no real owner ever sees it)
+const NEWS_TITLE = "جديد: اللوغو متاعك على الكارط";
+let newsId = null;
 
 // SIZE=375x667 walks a small phone; every screen says how far it scrolls, if it does
 const [W, H] = (process.env.SIZE || "390x844").split("x").map(Number);
@@ -196,6 +199,15 @@ try {
   await shot(c, "15-scanner", 1500);
   await c.goto(BASE + "/me", { waitUntil: "load" });
   await shot(c, "16-account");
+  {
+    const { data: me } = await admin.from("people").select("id").eq("phone", `+216${ownerPhone}`).single();
+    const { data: piece } = await admin
+      .from("news")
+      .insert({ title: NEWS_TITLE, body: "حطّ اللوغو متاعك ويبان على كارط كل حريف.", icon: "camera", cta_label: "حطّ اللوغو", cta_href: "/shop/setup?edit=1", only_people: [me.id] })
+      .select("id")
+      .single();
+    newsId = piece.id;
+  }
   await o.goto(BASE + "/shop", { waitUntil: "load" });
   await o.getByRole("dialog", { name: "اللوغو متاعك هوني" }).waitFor({ timeout: 20000 });
   await shot(o, "17d-logo-tip", 700);
@@ -203,6 +215,13 @@ try {
   await shot(o, "17-owner-home");
   await o.reload({ waitUntil: "load" });
   await never(o, "the logo tip (reload)", o.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
+  const news = o.getByRole("dialog", { name: NEWS_TITLE });
+  await news.waitFor({ timeout: 20000 });
+  await shot(o, "17e-news", 700);
+  await o.getByRole("button", { name: "حطّ اللوغو" }).click();
+  await o.waitForURL("**/shop/setup?edit=1", { timeout: 20000 });
+  await o.goto(BASE + "/shop", { waitUntil: "load" });
+  await never(o, "the news (back home)", news);
   {
     // the same owner on another phone: the notes were written on the person, not on the first phone
     const other = await (await browser.newContext(phone)).newPage();
@@ -211,6 +230,7 @@ try {
     await other.locator('input[name="password"]').fill("yasmine123");
     await Promise.all([other.waitForURL("**/shop", { timeout: 60000 }), other.locator('button[type="submit"]').click()]);
     await never(other, "the logo tip (another phone)", other.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
+    await never(other, "the news (another phone)", other.getByRole("dialog", { name: NEWS_TITLE }), 500);
     await other.goto(BASE + "/shop/qr?welcome=1", { waitUntil: "load" });
     await never(other, "the bravo (another phone)", other.getByText("برافو"));
     await other.context().close();
@@ -255,6 +275,18 @@ try {
   await shot(a, "25f-traffic-heat", 800);
   await a.goto(`${BASE}/admin/settings`, { waitUntil: "load" });
   await shot(a, "26-settings", 300);
+  await a.goto(`${BASE}/admin/news`, { waitUntil: "load" });
+  await shot(a, "27-news", 300);
+  if (newsId) {
+    await a.goto(`${BASE}/admin/news?id=${newsId}`, { waitUntil: "load" });
+    await shot(a, "27b-news-piece", 400);
+  }
+  await a.goto(`${BASE}/admin/news?new=1`, { waitUntil: "load" });
+  await a.locator('input[name="title"]').fill("توّا تنجم تحط اللوغو متاعك");
+  await a.locator('textarea[name="body"]').fill("يبان على كارط كل حريف، وتبدّلو وقتلّي تحب.");
+  await a.getByRole("button", { name: "المحل (الإسم واللوغو)" }).click();
+  await a.locator('input[name="cta_label"]').fill("جرّبها توّا");
+  await shot(a, "27c-news-new", 400);
   await a.goto(`${BASE}/admin`, { waitUntil: "load" });
   await a.locator('a[href^="/admin/shops/"]').first().click();
   await a.waitForURL("**/admin/shops/**");
@@ -277,6 +309,7 @@ try {
   await shot(l, "18b-forgot");
 } finally {
   await browser.close();
+  if (newsId) await admin.from("news").delete().eq("id", newsId);
   // the throwaway admin too, should the walk stop half way
   for (const p of [ownerPhone, customerPhone, bossPhone].filter(Boolean)) {
     const { data } = await admin.from("people").select("id").eq("phone", `+216${p}`).maybeSingle();

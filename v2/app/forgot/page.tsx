@@ -1,21 +1,18 @@
 import { MessageCircle } from "lucide-react";
 import { Heading, Top } from "@/components/Top";
 import { Icon3D, Middle, Screen } from "@/components/ui";
+import { getSettings } from "@/lib/settings";
 import { t } from "@/lib/t";
 
 export const metadata = { title: "نسيت كلمة السر" };
 
-/** Digits only, country code first: what wa.me expects (SUPPORT_WHATSAPP, else the first admin phone). */
-function support(): string | null {
-  const raw = process.env.SUPPORT_WHATSAPP || process.env.ADMIN_PHONES?.split(",")[0] || "";
-  const d = raw.replace(/\D/g, "");
-  if (d.length < 8) return null;
-  return d.length === 8 ? `216${d}` : d;
-}
-
-/** No SMS in Pointili: a forgotten password is a WhatsApp to us, and the founder gives a new one. */
-export default function Forgot() {
-  const number = support();
+/**
+ * No SMS in Pointili: a forgotten password is a WhatsApp to us, and the
+ * founder gives a new one — on the help number set in the console (the same
+ * one the owners call).
+ */
+export default async function Forgot() {
+  const number = (await getSettings()).supportPhone;
   return (
     <Screen>
       <Top back="/login" />

@@ -28,6 +28,7 @@ const users = [];
 // the founder's settings are real (production shares this database): put back as they were
 let settingsBefore = null;
 const visitsMade = [];
+const newsMade = [];
 
 async function person(name) {
   const digits = `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
@@ -277,6 +278,34 @@ try {
   check("an owner cannot change the settings", !!(await rpc(owner, "admin_set_setting", { p_key: "support_phone", p_value: "1" })).error);
   check("a browser cannot read the settings table", ((await sami.client.from("settings").select("key")).data ?? []).length === 0);
 
+  console.log("\nNews for the owners: once each, and who saw it");
+  // only for this test's own accounts: no real owner ever sees it
+  const piece = { p_title: "جديد: اللوغو على الكارط", p_body: "حطّ اللوغو متاعك ويبان عند كل حريف", p_icon: "camera", p_cta_label: "حطّو توّا", p_cta_href: "/shop/setup?edit=1", p_only: [owner.id, sami.id, shop2.id] };
+  const news1 = await rpc(boss, "admin_news_save", piece);
+  if (news1.id) newsMade.push(news1.id);
+  check("the founder publishes a piece of news", news1.ok && !!news1.id, news1);
+  check("an owner cannot publish news", !!(await rpc(owner, "admin_news_save", piece)).error);
+  check("its button leads inside the app or to https only", (await rpc(boss, "admin_news_save", { ...piece, p_cta_href: "javascript:alert(1)" })).error === "invalid");
+  const next = await rpc(owner, "news_next");
+  check("an owner whose shop opened before it gets it", next?.id === news1.id && next.cta_href === "/shop/setup?edit=1" && next.icon === "camera", next);
+  check("a customer gets no news", (await rpc(sami, "news_next")) === null);
+  const late = await person("Late");
+  await rpc(late, "open_shop", { p_name: "Late Shop", p_kind: "cafe" });
+  check("a shop opened after it does not (no old news for new owners)", (await rpc(late, "news_next")) === null);
+  check("shown: written on the owner", (await rpc(owner, "news_seen", { p_id: news1.id })).ok);
+  check("…and never shown again", (await rpc(owner, "news_next")) === null);
+  check("its button tapped: written too", (await rpc(owner, "news_clicked", { p_id: news1.id })).ok);
+  const second = await rpc(boss, "admin_news_save", { ...piece, p_title: "خبر ثاني", p_only: [owner.id] });
+  if (second.id) newsMade.push(second.id);
+  check("one a day at the most: a second piece waits for tomorrow", (await rpc(owner, "news_next")) === null);
+  const listed = ((await rpc(boss, "admin_news_list")) ?? []).find((n) => n.id === news1.id);
+  check("the founder sees how many saw it and tapped it", listed?.audience === 2 && listed.seen === 1 && listed.clicked === 1, listed);
+  const detail = await rpc(boss, "admin_news", { p_id: news1.id });
+  check("…owner by owner: who saw it, who not yet", detail?.people?.some((p) => p.id === owner.id && p.seen_at && p.clicked_at) && detail.people.some((p) => p.id === shop2.id && !p.seen_at), detail?.people);
+  check("a customer cannot read who saw it", !!(await rpc(sami, "admin_news_list")).error && !!(await rpc(sami, "admin_news", { p_id: news1.id })).error);
+  check("a stopped piece goes to nobody new", (await rpc(boss, "admin_news_set_active", { p_id: news1.id, p_active: false })).ok && (await rpc(shop2, "news_next")) === null);
+  check("the founder deletes a piece", (await rpc(boss, "admin_news_delete", { p_id: second.id })).ok && !((await rpc(boss, "admin_news_list")) ?? []).some((n) => n.id === second.id));
+
   console.log("\nThe traffic: a visit from an ad, its screens, its taps");
   const vid = randomUUID();
   const welcome = randomUUID();
@@ -337,6 +366,7 @@ try {
   console.log(`  ✗ crashed: ${e.message}`);
 } finally {
   for (const id of visitsMade) await admin.from("visits").delete().eq("id", id);
+  for (const id of newsMade) await admin.from("news").delete().eq("id", id);
   if (settingsBefore) {
     await admin.from("settings").delete().neq("key", "");
     if (settingsBefore.length) await admin.from("settings").insert(settingsBefore);

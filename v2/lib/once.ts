@@ -36,6 +36,28 @@ export function seenHere(note: Note, who: string): boolean {
   }
 }
 
+/** A piece of news (components/NewsPopup): did this phone show it already? */
+export function newsSeenHere(id: string, who: string): boolean {
+  const key = `pt_news:${id}:${who}`;
+  if (here.has(key)) return true;
+  try {
+    return !!localStorage.getItem(key);
+  } catch {
+    return false;
+  }
+}
+
+/** A piece of news just showed on this phone (the popup writes it on the person too). */
+export function newsShownHere(id: string, who: string) {
+  const key = `pt_news:${id}:${who}`;
+  here.add(key);
+  try {
+    localStorage.setItem(key, "1");
+  } catch {
+    /* private mode: the database still knows */
+  }
+}
+
 /** The note just showed: never again, here or anywhere. */
 export function shown(note: Note, who: string) {
   const key = `pt_seen:${note}:${who}`;

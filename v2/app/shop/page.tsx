@@ -4,9 +4,11 @@ import { ChevronLeft, QrCode } from "lucide-react";
 import { GiveButton } from "@/components/GiveButton";
 import { HelpButton } from "@/components/Help";
 import { LogoTip } from "@/components/LogoTip";
+import { NewsPopup } from "@/components/NewsPopup";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
 import { getMe } from "@/lib/session";
+import type { News } from "@/lib/news";
 import { getHelp } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { fill, t } from "@/lib/t";
@@ -37,7 +39,9 @@ export default async function ShopHome() {
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
-  const [home, help] = await Promise.all([call<Home>("shop_home"), getHelp()]);
+  const [home, help, news] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next")]);
+  // one popup at a time: a new owner's logo tip first, the news on a later visit
+  const logoTip = !(me.seen ?? []).includes("logo_tip");
   const first = (me.name ?? "").split(" ")[0];
   const tiles = [
     { icon: "fire", value: home?.today ?? 0, label: t.numToday },
@@ -190,7 +194,8 @@ export default async function ShopHome() {
         </div>
       </section>
 
-      <LogoTip shopId={shop.id} logo={shop.logo ?? null} show={!(me.seen ?? []).includes("logo_tip")} />
+      <LogoTip shopId={shop.id} logo={shop.logo ?? null} show={logoTip} />
+      <NewsPopup news={logoTip ? null : (news ?? null)} who={me.id} />
     </main>
   );
 }

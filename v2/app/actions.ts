@@ -8,6 +8,7 @@ import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, phoneEmail, validPhone } from "@/lib/phone";
+import { NEWS_ICONS, newsHref } from "@/lib/news";
 import { youtubeId } from "@/lib/settings";
 import { t } from "@/lib/t";
 import type { CardView, FormState, ScanResult } from "@/lib/types";
@@ -211,6 +212,16 @@ export async function markSeen(note: "coach" | "logo_tip" | "card_hello"): Promi
   await call("see", { p_key: note });
 }
 
+/** A piece of news showed to this owner: written on them, once (who saw it, and when). */
+export async function newsSeen(id: string): Promise<void> {
+  if (UUID.test(id)) await call("news_seen", { p_id: id });
+}
+
+/** Its button tapped. */
+export async function newsClicked(id: string): Promise<void> {
+  if (UUID.test(id)) await call("news_clicked", { p_id: id });
+}
+
 /** The shop hands a waiting gift over. */
 export async function give(moment: number): Promise<boolean> {
   const res = await call<{ ok: boolean }>("give", { p_moment: moment });
@@ -239,6 +250,52 @@ async function dropLogos(owner: string) {
   const box = service().storage.from("logos");
   const { data } = await box.list(owner, { limit: 100 });
   if (data?.length) await box.remove(data.map((f) => `${owner}/${f.name}`));
+}
+
+/**
+ * A piece of news for the owners, published at once: a title, a few words, a
+ * picture, and maybe a button that leads to one of the owner's places (or to
+ * a web address). It goes to every shop opened before now, once each.
+ */
+export async function adminNewsSave(_: FormState, fd: FormData): Promise<FormState> {
+  if (!(await getMe())?.admin) return { error: t.errNetwork };
+  const title = str(fd, "title");
+  const body = str(fd, "body").replace(/\r\n/g, "\n");
+  const icon = (NEWS_ICONS as readonly string[]).includes(str(fd, "icon")) ? str(fd, "icon") : "sparkles";
+  const target = str(fd, "cta_target");
+  const href = newsHref(target === "link" ? str(fd, "cta_link") : target);
+  const label = str(fd, "cta_label");
+  if (title.length < 2 || title.length > 80) return { error: t.aNewsErrTitle, field: "title" };
+  if (body.length > 400) return { error: t.aNewsErrBody, field: "body" };
+  if (href === null) return { error: t.aNewsErrLink, field: "cta_link" };
+  if (href && (label.length < 2 || label.length > 30)) return { error: t.aNewsErrLabel, field: "cta_label" };
+  const res = await call<{ ok: boolean; id?: string }>("admin_news_save", {
+    p_title: title,
+    p_body: body,
+    p_icon: icon,
+    p_cta_label: href ? label : null,
+    p_cta_href: href || null,
+    p_only: null,
+  });
+  if (!res?.ok || !res.id) return { error: t.errNetwork };
+  revalidatePath("/admin/news");
+  redirect(`/admin/news?id=${res.id}`);
+}
+
+/** Stop a piece of news (nobody new sees it), or let it go on. */
+export async function adminNewsActive(id: string, active: boolean): Promise<boolean> {
+  if (!UUID.test(id)) return false;
+  const res = await call<{ ok: boolean }>("admin_news_set_active", { p_id: id, p_active: active });
+  revalidatePath("/admin/news");
+  return !!res?.ok;
+}
+
+/** Delete a piece of news, and who saw it with it. */
+export async function adminNewsDelete(id: string) {
+  if (!UUID.test(id)) return;
+  const res = await call<{ ok: boolean }>("admin_news_delete", { p_id: id });
+  revalidatePath("/admin/news");
+  if (res?.ok) redirect("/admin/news");
 }
 
 /** The founder's settings: the number owners call, the two videos (YouTube links checked here). */

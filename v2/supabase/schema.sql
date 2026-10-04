@@ -189,6 +189,31 @@ create table if not exists public.signals (
 );
 create index if not exists signals_visit_idx on public.signals (visit_id, at);
 
+-- ═══ news for the owners: something new to know, shown once to each ═══════
+-- a piece of news (written by the founder in the console): a title, a few
+-- words, a picture, and maybe a button that leads to the thing itself;
+-- `only_people` keeps it to a few accounts (the tests use it)
+create table if not exists public.news (
+  id            uuid primary key default gen_random_uuid(),
+  title         text not null check (char_length(title) between 2 and 80),
+  body          text not null default '' check (char_length(body) <= 400),
+  icon          text not null default 'sparkles' check (icon ~ '^[a-z0-9]{2,20}$'),
+  cta_label     text check (cta_label is null or char_length(cta_label) between 2 and 30),
+  cta_href      text check (cta_href is null or (char_length(cta_href) <= 300 and (cta_href ~ '^/([^/\\]|$)' or cta_href ~ '^https://'))),
+  only_people   uuid[],
+  active        boolean not null default true,
+  published_at  timestamptz not null default now()
+);
+-- who saw which (the first time is the only time), and who tapped its button
+create table if not exists public.news_views (
+  news_id     uuid not null references public.news (id) on delete cascade,
+  person_id   uuid not null references auth.users (id) on delete cascade,
+  seen_at     timestamptz not null default now(),
+  clicked_at  timestamptz,
+  primary key (news_id, person_id)
+);
+create index if not exists news_views_person_idx on public.news_views (person_id, seen_at desc);
+
 -- cards and gifts from before cards were promises
 update public.cards c set goal = s.goal, gift = s.gift from public.shops s where s.id = c.shop_id and c.goal is null and s.goal is not null;
 update public.moments m set gift = c.gift from public.cards c where c.id = m.card_id and m.kind = 'gift' and m.gift is null;
@@ -196,7 +221,7 @@ update public.moments m set gift = c.gift from public.cards c where c.id = m.car
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -734,6 +759,126 @@ begin
       from public.cards c join public.shops s on s.id = c.shop_id where c.user_id = p.id), '[]'::jsonb));
 end $$;
 
+-- ═══ news: the owner's side ════════════════════════════════════════════════
+-- the one piece of news to show this owner now, or null: live, published
+-- after their shop opened (a new owner gets no old news), never shown to
+-- them before — and one a day at the most, the newest first
+create or replace function public.news_next() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v_uid uuid := auth.uid(); v_opened timestamptz;
+begin
+  if v_uid is null then return null; end if;
+  select created_at into v_opened from public.shops where owner_id = v_uid;
+  if v_opened is null then return null; end if;
+  if exists (select 1 from public.news_views where person_id = v_uid and seen_at >= public.tunis_today()) then return null; end if;
+  return (
+    select jsonb_build_object('id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href)
+    from public.news n
+    where n.active and n.published_at <= now() and n.published_at > v_opened
+      and (n.only_people is null or v_uid = any (n.only_people))
+      and not exists (select 1 from public.news_views w where w.news_id = n.id and w.person_id = v_uid)
+    order by n.published_at desc
+    limit 1);
+end $$;
+
+-- shown to this person: written the first time, never again
+create or replace function public.news_seen(p_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  insert into public.news_views (news_id, person_id)
+  select p_id, auth.uid() where exists (select 1 from public.news where id = p_id)
+  on conflict do nothing;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- its button tapped
+create or replace function public.news_clicked(p_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  insert into public.news_views (news_id, person_id, clicked_at)
+  select p_id, auth.uid(), now() where exists (select 1 from public.news where id = p_id)
+  on conflict (news_id, person_id) do update set clicked_at = coalesce(public.news_views.clicked_at, now());
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- ═══ news: the founder's side ══════════════════════════════════════════════
+-- the owners a piece of news is for: every shop opened before it was
+-- published (the founder's own shops too, marked admin — left out of the counts)
+create or replace function public.news_audience(p_id uuid) returns table (person_id uuid, name text, phone text, shop text, admin boolean)
+language sql stable security definer set search_path = '' as $$
+  select p.id, p.name, p.phone, s.name, p.is_admin
+  from public.news n
+  join public.shops s on s.created_at < n.published_at
+  join public.people p on p.id = s.owner_id
+  where n.id = p_id and (n.only_people is null or p.id = any (n.only_people))
+$$;
+
+create or replace function public.admin_news_save(p_title text, p_body text, p_icon text, p_cta_label text, p_cta_href text, p_only uuid[] default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_id uuid;
+begin
+  perform public.require_admin();
+  insert into public.news (title, body, icon, cta_label, cta_href, only_people)
+  values (trim(p_title), coalesce(trim(p_body), ''), coalesce(nullif(trim(p_icon), ''), 'sparkles'),
+          nullif(trim(coalesce(p_cta_label, '')), ''), nullif(trim(coalesce(p_cta_href, '')), ''), p_only)
+  returning id into v_id;
+  return jsonb_build_object('ok', true, 'id', v_id);
+exception when check_violation then
+  return public.err('invalid');
+end $$;
+
+create or replace function public.admin_news_list() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href,
+      'active', n.active, 'published_at', n.published_at, 'only', n.only_people is not null,
+      'audience', (select count(*) from public.news_audience(n.id) a where not a.admin),
+      'seen', (select count(*) from public.news_audience(n.id) a join public.news_views w on w.news_id = n.id and w.person_id = a.person_id where not a.admin),
+      'clicked', (select count(*) from public.news_audience(n.id) a join public.news_views w on w.news_id = n.id and w.person_id = a.person_id where not a.admin and w.clicked_at is not null))
+      order by n.published_at desc)
+    from public.news n
+  ), '[]'::jsonb);
+end $$;
+
+-- one piece of news: who it was for, who saw it (and when), who tapped its button, who not yet
+create or replace function public.admin_news(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return (
+    select jsonb_build_object(
+      'id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href,
+      'active', n.active, 'published_at', n.published_at, 'only', n.only_people is not null,
+      'people', coalesce((
+        select jsonb_agg(jsonb_build_object('id', a.person_id, 'name', a.name, 'phone', a.phone, 'shop', a.shop, 'admin', a.admin,
+                                            'seen_at', w.seen_at, 'clicked_at', w.clicked_at)
+                         order by w.seen_at desc nulls last, a.shop)
+        from public.news_audience(n.id) a
+        left join public.news_views w on w.news_id = n.id and w.person_id = a.person_id), '[]'::jsonb))
+    from public.news n where n.id = p_id);
+end $$;
+
+create or replace function public.admin_news_set_active(p_id uuid, p_active boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  update public.news set active = p_active where id = p_id;
+  return jsonb_build_object('ok', found);
+end $$;
+
+create or replace function public.admin_news_delete(p_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  delete from public.news where id = p_id;
+  return jsonb_build_object('ok', found);
+end $$;
+
 -- ═══ the founder's settings ════════════════════════════════════════════════
 create or replace function public.admin_set_setting(p_key text, p_value text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -998,7 +1143,10 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text), public.admin_person(uuid),
-  public.admin_set_setting(text, text), public.admin_traffic(int, boolean), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean) to authenticated;
+  public.admin_set_setting(text, text), public.admin_traffic(int, boolean), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean),
+  public.news_next(), public.news_seen(uuid), public.news_clicked(uuid),
+  public.admin_news_save(text, text, text, text, text, uuid[]), public.admin_news_list(), public.admin_news(uuid),
+  public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid) to authenticated;
 grant execute on all functions in schema public to service_role;
 
 -- nothing a visitor without an account can call

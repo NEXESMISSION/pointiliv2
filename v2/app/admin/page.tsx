@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BarChart3, Search, Settings2 } from "lucide-react";
+import { BarChart3, Megaphone, Search, Settings2 } from "lucide-react";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D, Logo, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
@@ -51,6 +51,9 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         <nav className="flex gap-1.5">
           <Link href="/admin/traffic" className="press flex h-10 items-center gap-1.5 rounded-full bg-brand px-3.5 text-[0.875rem] font-bold text-white shadow-[0_10px_22px_-12px_rgb(108_71_255/0.8)]">
             <BarChart3 className="size-4" /> {t.aTraffic}
+          </Link>
+          <Link href="/admin/news" className="press grid size-10 place-items-center rounded-full bg-surface shadow-card" aria-label={t.aNews}>
+            <Megaphone className="size-[1.125rem]" />
           </Link>
           <Link href="/admin/settings" className="press grid size-10 place-items-center rounded-full bg-surface shadow-card" aria-label={t.aSettings}>
             <Settings2 className="size-[1.125rem]" />
