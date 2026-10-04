@@ -305,6 +305,46 @@ try {
   check("a customer cannot read who saw it", !!(await rpc(sami, "admin_news_list")).error && !!(await rpc(sami, "admin_news", { p_id: news1.id })).error);
   check("a stopped piece goes to nobody new", (await rpc(boss, "admin_news_set_active", { p_id: news1.id, p_active: false })).ok && (await rpc(shop2, "news_next")) === null);
   check("the founder deletes a piece", (await rpc(boss, "admin_news_delete", { p_id: second.id })).ok && !((await rpc(boss, "admin_news_list")) ?? []).some((n) => n.id === second.id));
+  const forTesters = await admin.from("news").insert({ title: "for the test account", only_testers: true }).select("id").single();
+  if (forTesters.data?.id) newsMade.push(forTesters.data.id);
+  check("a piece for test accounts never reaches a real owner", (await rpc(shop2, "news_next"))?.id !== forTesters.data?.id);
+
+  console.log("\nThe shop gives the tampon itself: by the customer's code or number");
+  const nour = await person("نور الهدى");
+  const nourMe = await rpc(nour, "me");
+  check("every person has a 6-digit code", /^\d{6}$/.test(nourMe.code ?? ""), nourMe.code);
+  const look = await rpc(owner, "customer_at", { p_who: nourMe.code });
+  check("the shop sees who a code is: the first name, no card yet", look.ok && look.name === "نور" && look.card === null, look);
+  const given = await rpc(owner, "give_stamp", { p_who: nourMe.code });
+  check("the shop gives the tampon by the code", given.ok && given.card?.stamps === 1 && given.name === "نور", given);
+  // the number on the sign-in (the people row of a test person may not carry it): give it to the row, as signing up does
+  const nourPhone = (await admin.auth.admin.getUserById(nour.id)).data.user?.app_metadata?.phone ?? "";
+  await admin.from("people").update({ phone: nourPhone }).eq("id", nour.id);
+  const byPhone = await rpc(owner, "give_stamp", { p_who: nourPhone.replace("+216", "") });
+  check("…once an hour, whatever way (here the phone number)", byPhone.error === "too_soon", byPhone);
+  check("an unknown code is nobody", (await rpc(owner, "give_stamp", { p_who: "000000" === nourMe.code ? "000001" : "000000" })).error === "unknown");
+  check("an owner cannot stamp their own card", (await rpc(owner, "give_stamp", { p_who: (await rpc(owner, "me")).code })).error === "own_shop");
+  check("a customer (no shop) cannot give tampons", (await rpc(nour, "give_stamp", { p_who: (await rpc(sami, "me")).code })).error === "no_shop");
+  check("the tampon shows in the customer's wallet", ((await rpc(nour, "wallet")) ?? []).some((c) => c.shop.name === "Café Test" && c.stamps === 1));
+
+  console.log("\nPaying for the year");
+  const pay0 = await rpc(owner, "my_payment");
+  check("a new shop is not paid yet, and its offer runs 48 hours", pay0.paid_until === null && Date.parse(pay0.offer_until) > Date.now(), pay0);
+  const req = await rpc(owner, "pay_request", { p_method: "d17" });
+  check("asking to pay within the offer counts 15 months", req.ok && req.months === 15, req);
+  check("a way to pay that does not exist is refused", (await rpc(owner, "pay_request", { p_method: "bitcoin" })).error === "invalid");
+  const req2 = await rpc(owner, "pay_request", { p_method: "virement" });
+  check("one payment waits at a time (the way changes)", req2.id === req.id, req2);
+  check("a customer cannot read the payments", !!(await rpc(sami, "admin_payments")).error);
+  const waitingPay = ((await rpc(boss, "admin_payments")) ?? []).find((x) => x.id === req.id);
+  check("the founder sees it waiting, with the shop", waitingPay?.status === "pending" && waitingPay.method === "virement" && waitingPay.shop.name === "Café Test", waitingPay);
+  check("an owner cannot confirm their own payment", !!(await rpc(owner, "admin_payment_decide", { p_id: req.id, p_paid: true })).error);
+  check("the founder confirms it", (await rpc(boss, "admin_payment_decide", { p_id: req.id, p_paid: true })).ok);
+  const pay1 = await rpc(owner, "my_payment");
+  const monthsPaid = (Date.parse(pay1.paid_until) - Date.now()) / (30.44 * 86_400_000);
+  check("…the year starts: paid for about 15 months", monthsPaid > 14.5 && monthsPaid < 15.5, pay1.paid_until);
+  check("a payment decided cannot be decided again", (await rpc(boss, "admin_payment_decide", { p_id: req.id, p_paid: false })).error === "done");
+  check("the offer is a one-time note", (await rpc(owner, "see", { p_key: "offer" })).ok);
 
   console.log("\nThe traffic: a visit from an ad, its screens, its taps");
   const vid = randomUUID();

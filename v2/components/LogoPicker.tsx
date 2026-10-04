@@ -36,12 +36,18 @@ async function shrink(file: File): Promise<Blob> {
  * camera opens), the logo in it once chosen, a small × to take it away. Not
  * needed — the owner can add it, change it or remove it any time from «المحل».
  */
-export function LogoPicker({ value, onChange, onError }: { value: string; onChange: (url: string) => void; onError: (message: string | null) => void }) {
+export function LogoPicker({ value, onChange, onError, onBusy }: { value: string; onChange: (url: string) => void; onError: (message: string | null) => void; onBusy?: (busy: boolean) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  // the form must not be saved while the picture is still on its way up,
+  // or the shop is saved with the old logo (or none)
+  const working = (on: boolean) => {
+    setBusy(on);
+    onBusy?.(on);
+  };
 
   async function pick(file: File) {
-    setBusy(true);
+    working(true);
     onError(null);
     try {
       const fd = new FormData();
@@ -58,7 +64,7 @@ export function LogoPicker({ value, onChange, onError }: { value: string; onChan
       onError(t.errLogo);
       signal("form_error", "logo · unreadable");
     }
-    setBusy(false);
+    working(false);
   }
 
   return (

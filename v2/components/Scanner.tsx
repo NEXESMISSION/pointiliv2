@@ -27,22 +27,46 @@ const CORNERS = [
 /**
  * The in-app camera: point it at the counter's code, and the scan opens by
  * itself. If the camera is refused, a photo of the code does the same job.
+ * The shop uses the same camera for a customer's own code: `read` says what
+ * a code means (null: not ours), `onRead` takes it instead of opening a page,
+ * and `children` sit at the bottom (the way back to typing the code).
  */
-export function Scanner() {
+export function Scanner({
+  back = "/",
+  title = t.scanTitle,
+  hint = t.scanHint,
+  read = pathOf,
+  onRead,
+  children,
+}: {
+  back?: string;
+  title?: string;
+  hint?: string;
+  read?: (text: string) => string | null;
+  onRead?: (value: string) => void;
+  children?: React.ReactNode;
+}) {
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [off, setOff] = useState(false);
   const router = useRouter();
   const found = useRef(false);
+  const readRef = useRef(read);
+  const onReadRef = useRef(onRead);
+  useEffect(() => {
+    readRef.current = read;
+    onReadRef.current = onRead;
+  });
 
   useEffect(() => {
     let stream: MediaStream | null = null;
     let frame = 0;
-    const go = (path: string) => {
+    const go = (value: string) => {
       if (found.current) return;
       found.current = true;
       navigator.vibrate?.(40);
-      router.push(path);
+      if (onReadRef.current) onReadRef.current(value);
+      else router.push(value);
     };
     const tick = () => {
       const v = video.current;
@@ -56,8 +80,8 @@ export function Scanner() {
         if (g) {
           g.drawImage(v, 0, 0, w, h);
           const hit = jsQR(g.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
-          const path = hit && pathOf(hit.data);
-          if (path) return go(path);
+          const value = hit && readRef.current(hit.data);
+          if (value) return go(value);
         }
       }
       frame = requestAnimationFrame(tick);
@@ -94,8 +118,10 @@ export function Scanner() {
     if (!g) return;
     g.drawImage(img, 0, 0, c.width, c.height);
     const hit = jsQR(g.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
-    const path = hit && pathOf(hit.data);
-    if (path) router.push(path);
+    const value = hit && read(hit.data);
+    if (!value) return;
+    if (onRead) onRead(value);
+    else router.push(value);
   };
 
   return (
@@ -105,10 +131,10 @@ export function Scanner() {
       <div className="absolute inset-0 bg-black/35" aria-hidden />
 
       <div className="safe-t relative z-10 flex items-center justify-between px-5">
-        <Link href="/" className="press grid size-11 place-items-center rounded-full bg-white/15 backdrop-blur" aria-label={t.back}>
+        <Link href={back} className="press grid size-11 place-items-center rounded-full bg-white/15 backdrop-blur" aria-label={t.back}>
           <X className="size-5" />
         </Link>
-        <p className="text-[1.125rem] font-bold">{t.scanTitle}</p>
+        <p className="text-[1.125rem] font-bold">{title}</p>
         <span className="size-11" />
       </div>
 
@@ -119,7 +145,8 @@ export function Scanner() {
             <p className="mt-1.5 text-[0.9375rem] text-white/80">{t.cameraOffBody}</p>
           </div>
         ) : (
-          <div className="relative size-[68vw] max-h-80 max-w-80">
+          // the frame follows the width, and the height too: it never reaches the hint and the buttons below
+          <div className="relative size-[min(68vw,20rem,40dvh)]">
             {CORNERS.map((c) => (
               <span key={c} className={`absolute size-16 border-white ${c}`} />
             ))}
@@ -129,11 +156,12 @@ export function Scanner() {
       </div>
 
       <div className="safe-b absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-3 px-5">
-        <p className="text-center text-[1rem] font-medium text-white/90">{t.scanHint}</p>
+        <p className="text-center text-[1rem] font-medium text-white/90">{hint}</p>
         <label className="press grid size-16 cursor-pointer place-items-center rounded-full border border-white/30 bg-white/15 backdrop-blur" aria-label={t.photo}>
           <Camera className="size-7" />
           <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => void fromPhoto(e.target.files?.[0])} />
         </label>
+        {children}
       </div>
     </div>
   );

@@ -41,22 +41,30 @@ function Zellige({ color, id }: { color: string; id: string }) {
  * and a glass of mint tea, a corner of Sidi Bou Said, and two doors only —
  * the shop's (first) and the customer's. One screen, on the smallest phone:
  * every size here follows the screen's height. The founder's first video
- * («كيفاش تخدم؟») floats on the card's edge.
+ * («كيفاش تخدم؟») floats on the card's edge. At least the screen's height,
+ * never cut: on a phone shorter than everything (under ~525px) the page
+ * scrolls a little instead. The whole width of a phone (max-w-md is in rem,
+ * and the rem shrinks on short screens); a column on a computer. The
+ * pictures are decoration: they may be cut at the edges.
  */
 export function Welcome({ video }: { video?: HelpVideo | null }) {
   return (
-    <main className="relative mx-auto flex h-dvh max-w-md flex-col justify-center overflow-hidden bg-[#FBF6EF] px-5 safe-t safe-b">
+    <main className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-center overflow-hidden bg-[#FBF6EF] px-5 safe-t safe-b max-[448px]:max-w-none">
       <Mark screen="welcome" />
       {/* a corner of Sidi Bou Said, behind everything */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/tn/sidibou.webp" alt="" width={220} height={520} className="pointer-events-none absolute -start-3 -top-[3dvh] h-[36dvh] w-auto [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
+      <img src="/tn/sidibou.webp" alt="" aria-hidden width={220} height={520} className="pointer-events-none absolute -start-3 -top-[3dvh] h-[36dvh] w-auto [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
 
       <div className="relative flex justify-center">
         <Logo />
       </div>
 
-      {/* the card, the jasmine, the tea: drawn at one size, zoomed down on shorter screens so nothing is cut */}
-      <div className="relative mx-auto mt-[3.5dvh] w-[21rem] [zoom:1] [@media(max-height:860px)]:[zoom:0.95] [@media(max-height:760px)]:[zoom:0.87] [@media(max-height:690px)]:[zoom:0.8] [@media(max-height:610px)]:[zoom:0.72]">
+      {/* the card, the jasmine, the tea: drawn at one size in rem — the rem follows the
+          screen's height, so they shrink with everything else — a touch smaller under 860px,
+          and a touch more under 548px, where the rem stops shrinking. The steps never
+          overlap: Tailwind writes max-height steps from the smallest up, so in a chain of
+          them the largest would always win. */}
+      <div className="relative mx-auto mt-[3.5dvh] w-[21rem] [@media(min-height:548px)_and_(max-height:860px)]:[zoom:0.95] [@media(max-height:547.98px)]:[zoom:0.88]">
         <div className="absolute inset-x-6 -top-[2.2dvh] -rotate-[5deg] opacity-95">
           <Pass shop={{ name: "Salon Nour", kind: "hair", color: BLUE, goal: 6, gift: "بروشينغ بلاش" }} stamps={3} small />
         </div>
@@ -64,9 +72,9 @@ export function Welcome({ video }: { video?: HelpVideo | null }) {
           <Pass shop={{ name: "Café El Medina", kind: "cafe", color: RED, goal: 8, gift: "قهوة بلاش" }} stamps={6} />
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tn/jasmine.webp" alt="" width={140} height={118} className="pointer-events-none absolute -bottom-12 -end-16 h-[7.375rem] w-auto drop-shadow-[0_10px_14px_rgb(0_0_0/0.18)]" />
+        <img src="/tn/jasmine.webp" alt="" aria-hidden width={140} height={118} className="pointer-events-none absolute -bottom-12 -end-16 h-[7.375rem] w-auto drop-shadow-[0_10px_14px_rgb(0_0_0/0.18)]" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tn/tea.webp" alt="" width={78} height={130} className="pointer-events-none absolute -bottom-10 -start-12 h-[8.125rem] w-auto drop-shadow-[0_12px_16px_rgb(0_0_0/0.22)]" />
+        <img src="/tn/tea.webp" alt="" aria-hidden width={78} height={130} className="pointer-events-none absolute -bottom-10 -start-12 h-[8.125rem] w-auto drop-shadow-[0_12px_16px_rgb(0_0_0/0.22)]" />
       </div>
 
       {/* the video: on the card's bottom edge, outside the zoom so its words stay readable — it takes no room of its own */}
@@ -92,7 +100,7 @@ export function Welcome({ video }: { video?: HelpVideo | null }) {
       </div>
 
       {/* two doors: the shop's first */}
-      <div className="relative mt-[4.5dvh] space-y-[1.4dvh]">
+      <div className="relative mt-[4.2dvh] space-y-[1.2dvh]">
         <Link
           href="/shop/new"
           className="press relative flex h-[3.6rem] items-center gap-3 overflow-hidden rounded-[1.25rem] bg-[linear-gradient(150deg,#F2414A,#D7141A_55%,#B00D17)] px-4 text-white shadow-[0_16px_30px_-14px_rgb(215_20_26/0.75)]"
@@ -112,10 +120,21 @@ export function Welcome({ video }: { video?: HelpVideo | null }) {
           <span className="relative flex-1 text-[1.0625rem] font-bold text-ink">{t.enterAsCustomer}</span>
           <ChevronLeft className="relative size-5 shrink-0 text-faint" />
         </Link>
-        <Link href="/login" className="press mx-auto flex h-[2.6rem] w-fit items-center rounded-full bg-white px-5 text-[0.9062rem] font-bold text-[#B00D17] shadow-[0_8px_18px_-12px_rgb(176_13_23/0.55)] ring-1 ring-[#D7141A]/20">
-          {t.haveAccountLogin}
+        {/* the third way in is a whisper, not a third button: no box, no ring —
+            the two doors above keep all the weight */}
+        <Link href="/login" className="press mx-auto flex h-10 w-fit items-center gap-1.5 px-3 text-[0.9062rem] font-semibold text-[#7A6F63]">
+          عندك كونت؟
+          <span className="font-bold text-[#B00D17] underline decoration-[#D7141A]/30 decoration-2 underline-offset-4">ادخل</span>
         </Link>
       </div>
+
+      {/* the reading pages, for the curious (and for search engines): a footer
+          with a rhythm — a dot between them, not a flat gap */}
+      <nav className="relative mt-[0.2dvh] flex items-center justify-center gap-2.5 text-[0.75rem] font-semibold leading-tight text-[#A2978A]">
+        <Link href="/prix">الأسعار</Link>
+        <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
+        <Link href="/faq">أسئلة</Link>
+      </nav>
     </main>
   );
 }

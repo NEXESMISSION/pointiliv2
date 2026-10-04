@@ -1,0 +1,258 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, X } from "lucide-react";
+import { customerAt, giveStamp } from "@/app/actions";
+import { Pass } from "@/components/Pass";
+import { Scanner } from "@/components/Scanner";
+import { Confetti } from "@/components/StampLand";
+import { Btn, Icon3D } from "@/components/ui";
+import { signal } from "@/lib/track";
+import { fill, t } from "@/lib/t";
+import type { CardView } from "@/lib/types";
+
+type Step =
+  | { kind: "idle" }
+  | { kind: "looking" }
+  | { kind: "unknown" }
+  | { kind: "error"; text: string }
+  | { kind: "found"; name: string | null; card: CardView | null }
+  | { kind: "giving"; name: string | null; card: CardView | null }
+  | { kind: "done"; name: string | null; card: CardView; gift: boolean }
+  | { kind: "soon"; name: string | null; at: string; card?: CardView };
+
+/** 6 digits are a customer's code; 8 (or 216 + 8) their number. */
+const complete = (d: string) => d.length === 6 || d.length === 8 || (d.length === 11 && d.startsWith("216"));
+/** A customer's own QR (…/u/123456), or the bare 6 digits. */
+export const codeOf = (text: string): string | null => text.match(/\/u\/(\d{6})(?:[/?#]|$)/)?.[1] ?? (/^\s*\d{6}\s*$/.test(text) ? text.trim() : null);
+const hm = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Africa/Tunis" }).format(new Date(iso));
+
+function errorText(code?: string): string {
+  if (code === "own_shop") return t.collectOwn;
+  if (code === "paused") return t.pausedBanner;
+  if (code === "too_many") return t.errTooMany;
+  if (code === "no_shop" || code === "no_card") return t.collectNoShop;
+  return t.errNetwork;
+}
+
+/**
+ * The shop gives the tampon itself, two ways: the camera on the customer's
+ * own code (in their wallet), or the code typed — 6 digits, or simply their
+ * phone number. Before the tampon, who it is and how far their card is; then
+ * the tampon lands on the card (the gift, when it is the last one), and the
+ * next customer is one tap away.
+ */
+export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: string }) {
+  const [mode, setMode] = useState(by);
+  const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
+  const [step, setStep] = useState<Step>({ kind: "idle" });
+  const [round, setRound] = useState(0);
+  const asked = useRef("");
+
+  // a complete code: who is it?
+  useEffect(() => {
+    if (!complete(digits) || asked.current === digits) return;
+    const id = setTimeout(async () => {
+      asked.current = digits;
+      setStep({ kind: "looking" });
+      const res = await customerAt(digits).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof customerAt>>);
+      if (asked.current !== digits) return;
+      if (res.ok) setStep({ kind: "found", name: res.name ?? null, card: res.card ?? null });
+      else if (res.error === "unknown") {
+        setStep({ kind: "unknown" });
+        signal("collect_unknown", mode);
+      } else setStep({ kind: "error", text: errorText(res.error) });
+    }, 220);
+    return () => clearTimeout(id);
+  }, [digits, mode]);
+
+  const give = async () => {
+    if (step.kind !== "found") return;
+    const { name, card } = step;
+    setStep({ kind: "giving", name, card });
+    const res = await giveStamp(digits).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
+    if (res.ok && res.card) {
+      navigator.vibrate?.(60);
+      setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift });
+      signal("collect", `${mode}${res.gift ? " · gift" : ""}`);
+    } else if (res.error === "too_soon" && res.next_at) setStep({ kind: "soon", name: res.name ?? name, at: res.next_at, card: res.card });
+    else setStep({ kind: "error", text: errorText(res.error) });
+  };
+
+  const again = () => {
+    asked.current = "";
+    setDigits("");
+    setStep({ kind: "idle" });
+    setRound((r) => r + 1);
+  };
+
+  // the camera: a customer's code read → the same steps as typing it
+  if (mode === "scan" && step.kind === "idle") {
+    return (
+      <Scanner
+        key={round}
+        back="/shop"
+        title={t.collect}
+        hint={t.collectScanHint}
+        read={codeOf}
+        onRead={(code) => {
+          setDigits(code);
+          setMode("scan");
+          setStep({ kind: "looking" });
+          asked.current = "";
+        }}
+      >
+        <button type="button" onClick={() => setMode("code")} className="press mt-1 flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[0.9375rem] font-bold text-ink">
+          <Keyboard className="size-5" /> {t.collectTypeShort}
+        </button>
+      </Scanner>
+    );
+  }
+
+  const name = "name" in step ? step.name : null;
+  const who = name ?? t.someone;
+
+  return (
+    <main className="safe-t safe-b relative mx-auto flex h-dvh w-full max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
+      {step.kind === "done" && step.gift && <Confetti count={70} />}
+      <header className="flex shrink-0 items-center gap-3 pt-2">
+        <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
+          <ChevronRight className="size-5" />
+        </Link>
+        <h1 className="min-w-0 flex-1 truncate text-[1.375rem] font-bold">{t.collect}</h1>
+      </header>
+
+      {/* two ways: the camera, or the code typed */}
+      <div className="mt-[2dvh] grid shrink-0 grid-cols-2 gap-1 rounded-[1.125rem] bg-ink/[0.06] p-1">
+        {(
+          [
+            { id: "scan", label: t.collectScanShort, icon: ScanLine },
+            { id: "code", label: t.collectTypeShort, icon: Keyboard },
+          ] as const
+        ).map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            onClick={() => {
+              if (x.id === "scan") again();
+              setMode(x.id);
+            }}
+            className={`flex h-11 items-center justify-center gap-2 rounded-[0.875rem] text-[0.9688rem] font-bold ${mode === x.id ? "bg-surface text-ink shadow-card" : "text-muted"}`}
+          >
+            <x.icon className="size-5" /> {x.label}
+          </button>
+        ))}
+      </div>
+
+      {/* centred in the room left; on a screen too short for it, it starts under the two ways (my-auto), never over them */}
+      <div className="flex min-h-0 flex-1 flex-col py-[2dvh]">
+        {step.kind === "done" ? (
+          <div className="my-auto flex flex-col items-center text-center">
+            <span className="grid size-[clamp(3.5rem,10dvh,5rem)] animate-pop place-items-center rounded-full bg-mint text-white shadow-[0_16px_34px_-14px_rgb(18_183_106/0.8)]">
+              {step.gift ? <Icon3D name="gift" size={46} /> : <Check className="size-10" strokeWidth={3} />}
+            </span>
+            <h2 className="mt-3 text-[1.625rem] font-bold">
+              {step.gift ? (
+                fill(t.collectGift, { name: who, gift: step.card.shop.gift ?? "" })
+              ) : (
+                <>
+                  <bdi className="num">+1</bdi> {name ? fill(t.collectDone, { name }) : t.collectDoneAnon}
+                </>
+              )}
+            </h2>
+            {/* the card a little smaller on a short screen (ranges that do not overlap: the CSS lists them by size) */}
+            <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
+              <Pass shop={step.card.shop} stamps={step.card.stamps} fresh />
+            </div>
+            <div className="mt-[3dvh] w-full space-y-2">
+              <Btn type="button" onClick={again}>
+                <RotateCcw className="size-5" /> {t.collectNext}
+              </Btn>
+              <Link href="/shop" className="block py-2 text-center text-[0.9375rem] font-semibold text-muted">
+                {t.done}
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="my-auto">
+            {mode === "code" && (
+              <label className="block">
+                <span className="mb-2 block text-center text-[0.9375rem] font-semibold text-muted">{t.collectInput}</span>
+                <input
+                  value={digits.length <= 6 ? digits.replace(/^(\d{3})(\d)/, "$1 $2") : digits.length === 8 ? digits.replace(/^(\d{2})(\d{3})(\d{3})$/, "$1 $2 $3") : digits}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    if (v !== digits) {
+                      asked.current = "";
+                      setStep({ kind: "idle" });
+                    }
+                    setDigits(v);
+                  }}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  autoFocus
+                  placeholder="482 917"
+                  aria-label={t.collectInput}
+                  dir="ltr"
+                  className="num block h-[4.25rem] w-full rounded-[1.375rem] bg-surface text-center text-[2rem] font-bold tracking-[0.12em] text-ink shadow-[var(--shadow-card),inset_0_0_0_1px_var(--color-line)] outline-none placeholder:font-semibold placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]"
+                />
+              </label>
+            )}
+
+            {/* who it is, and the tampon */}
+            <div className="mt-[2.5dvh] min-h-[9.5rem]">
+              {step.kind === "looking" && <p className="animate-pulse text-center text-[1rem] font-semibold text-muted">{t.collectLooking}</p>}
+              {step.kind === "unknown" && (
+                <div className="rounded-[1.375rem] bg-coral-soft px-4 py-3.5 text-center">
+                  <p className="text-[1rem] font-bold text-coral">{t.collectUnknown}</p>
+                  <p className="mt-1 text-[0.875rem] text-body">{t.collectUnknownHint}</p>
+                  <Link href="/shop/qr" className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-[0.875rem] font-bold text-brand shadow-card">
+                    <QrCode className="size-4" /> {t.showCode}
+                  </Link>
+                </div>
+              )}
+              {step.kind === "error" && (
+                <p className="flex items-center justify-center gap-2 rounded-[1.375rem] bg-coral-soft px-4 py-3.5 text-center text-[0.9688rem] font-semibold text-coral">
+                  <X className="size-5 shrink-0" /> {step.text}
+                </p>
+              )}
+              {step.kind === "soon" && (
+                <div className="rounded-[1.375rem] bg-surface px-4 py-3.5 text-center shadow-card">
+                  <p className="text-[1.0625rem] font-bold">{who}</p>
+                  <p className="mt-1 text-[0.9375rem] text-muted">{fill(t.collectSoon, { time: hm(step.at) })}</p>
+                </div>
+              )}
+              {(step.kind === "found" || step.kind === "giving") && (
+                <div className="animate-rise">
+                  <div className="flex items-center gap-3 rounded-[1.375rem] bg-surface p-3.5 shadow-card">
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.125rem] font-bold text-white">{(who[0] ?? "؟").toUpperCase()}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[1.125rem] font-bold">{who}</span>
+                      {step.card ? (
+                        <span className="num block text-[0.875rem] text-muted">
+                          {Math.min(step.card.stamps, step.card.shop.goal ?? 0)}/{step.card.shop.goal}
+                        </span>
+                      ) : (
+                        <span className="block text-[0.875rem] text-muted">{t.collectFirst}</span>
+                      )}
+                    </span>
+                  </div>
+                  <Btn type="button" onClick={() => void give()} disabled={step.kind === "giving"} className="mt-3 h-[3.75rem] text-[1.125rem]">
+                    {step.kind === "giving" ? t.checking : name ? fill(t.collectGive, { name }) : t.collectGiveAnon}
+                  </Btn>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {mode === "code" && step.kind !== "done" && (
+        <Link href="/shop/qr" className="mb-[2dvh] flex shrink-0 items-center justify-center gap-1.5 text-[0.875rem] font-semibold text-brand">
+          <QrCode className="size-4" /> {t.collectOr}
+        </Link>
+      )}
+    </main>
+  );
+}

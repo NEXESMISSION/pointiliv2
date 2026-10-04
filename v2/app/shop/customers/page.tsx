@@ -33,7 +33,7 @@ export default async function ShopCustomers() {
           <p className="mt-1.5 max-w-[17rem] text-[0.9375rem] text-muted">{t.customersEmptyBody}</p>
         </div>
       ) : (
-        <ul className="mb-[2dvh] mt-[2.5dvh] min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
+        <ul data-list className="mb-[2dvh] mt-[2.5dvh] min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
           {items.map((c) => {
             // each card has its own goal: the one it started with
             const of = c.goal ?? goal;

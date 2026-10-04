@@ -13,8 +13,15 @@ import type { ScanResult } from "@/lib/types";
 
 /** after the tampon hits: each line arrives in reading order */
 const after = (ms: number) => ({ animationDelay: `${IMPACT_MS + ms}ms` });
-/** the tampon and the card get smaller on a shorter phone, so the answer never scrolls */
-const SHRINK = "[@media(max-height:780px)]:[zoom:0.86] [@media(max-height:690px)]:[zoom:0.74] [@media(max-height:660px)]:[zoom:0.66]";
+/**
+ * The card grows with the width, so on a short screen its width follows the
+ * height too (the tampon above does the same by itself): the answer never
+ * scrolls, and the card's text stays its real size. A gift won adds a line,
+ * so its card gives a little more way.
+ */
+const CARD = "w-full max-w-[min(100%,50dvh)]";
+const CARD_GIFT = "w-full max-w-[min(100%,44dvh)]";
+const CARD_GIFT_LONG = "w-full max-w-[min(100%,44dvh)] [@media(max-height:700px)]:max-w-[min(100%,36dvh)]";
 
 /** Scan → the tampon lands. One POST, then the answer. */
 export function ScanFlow({ token }: { token: string }) {
@@ -56,26 +63,30 @@ function Checking() {
 
 function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   const { card, gift } = res;
+  const title = gift ? fill(t.won, { gift: card.shop.gift ?? "" }) : t.newStamp;
+  // a gift with a long name (up to 60 letters) takes two lines: smaller on a short screen, and the card gives way
+  const long = title.length > 24;
   return (
     <div className="relative flex flex-col items-center text-center">
       <Confetti count={gift ? 70 : 36} delay={IMPACT_MS} />
-      <div className={SHRINK}>
-        <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} />
-      </div>
-      <h1 className="mt-1 animate-rise text-[1.8rem] font-bold leading-tight" style={after(80)}>
-        {gift ? fill(t.won, { gift: card.shop.gift ?? "" }) : t.newStamp}
+      <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} />
+      <h1
+        className={`mt-1 animate-rise text-balance text-[1.8rem] font-bold leading-tight [@media(max-height:700px)]:mt-0 ${long ? "[@media(max-height:700px)]:text-[1.5rem]" : ""}`}
+        style={after(80)}
+      >
+        {title}
       </h1>
       <p className="animate-rise text-[1rem] font-semibold text-muted" style={after(140)}>
         {card.shop.name}
       </p>
 
-      <div className={`mt-[2.4dvh] w-full animate-rise text-start ${SHRINK}`} style={after(220)}>
+      <div className={`mt-[2.4dvh] animate-rise text-start ${gift ? (long ? CARD_GIFT_LONG : CARD_GIFT) : CARD}`} style={after(220)}>
         <Pass shop={card.shop} stamps={card.stamps} fresh />
       </div>
 
       {/* the gift: one line to show at the counter, not a second card */}
       {gift && (
-        <p className="relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0312rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)]" style={after(420)}>
+        <p className="relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0312rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)] [@media(max-height:700px)]:mt-[1.4dvh] [@media(max-height:600px)]:py-2" style={after(420)}>
           <Icon3D name="gift" size={30} className="animate-float" /> {t.wonBody}
         </p>
       )}
@@ -84,7 +95,7 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
         <LinkBtn href={`/c/${card.id}`} kind={gift ? "soft" : "main"}>
           {t.seeCard}
         </LinkBtn>
-        <LinkBtn href="/" kind="ghost" className="[@media(max-height:660px)]:h-11">
+        <LinkBtn href="/" kind="ghost" className="[@media(max-height:700px)]:h-11">
           {t.done}
         </LinkBtn>
       </div>
@@ -155,9 +166,9 @@ function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
         <Icon className="size-11" />
       </span>
       <h1 className="mt-5 text-[1.625rem] font-bold">{v.title}</h1>
-      {v.body && <p className="mt-2 max-w-xs text-[1rem] text-muted">{v.body}</p>}
+      {v.body && <p className="mt-2 max-w-xs text-balance text-[1rem] text-muted">{v.body}</p>}
       {card && (
-        <div className="mt-6 w-full text-start">
+        <div className={`mt-6 text-start ${CARD}`}>
           <Pass shop={card.shop} stamps={card.stamps} />
         </div>
       )}

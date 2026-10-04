@@ -54,15 +54,36 @@
 @layer base {
   /*
    * The whole app is sized in rem, and the rem follows the screen: 16px on a
-   * phone of 844px and more, down to 14px on the smallest (640px tall, or
-   * narrow) — text, buttons, cards and gaps shrink together, so every screen
-   * fits on one screen without a scroll and keeps its proportions.
+   * phone of 844px and more, 14px at 640px tall, or narrow — text, buttons,
+   * cards and gaps shrink together, so every screen fits on one screen
+   * without a scroll and keeps its proportions.
    */
   html {
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
     font-size: 16px;
     font-size: clamp(14px, min(1.9dvh, 4.2vw), 16px);
+  }
+  /*
+   * A phone's browser keeps 100 to 180px for its own bars: what a page gets is
+   * often 540 to 620px tall (an iPhone SE in Safari: 548). Below 640px the
+   * rem goes on shrinking with the height, the same proportions, down to
+   * 12px at 548px. Shorter than that the page may scroll: never cut.
+   */
+  @media (max-height: 639.98px) {
+    html {
+      font-size: clamp(12px, min(2.19dvh, 4.2vw), 14px);
+    }
+  }
+  /*
+   * The console is a desk, not a screen-sized card: it scrolls, so nothing has
+   * to shrink to fit the height, and a short laptop window must not make the
+   * whole console small.
+   */
+  @media (min-width: 900px) {
+    html:has([data-console], [data-read]) {
+      font-size: 16px;
+    }
   }
   body {
     @apply bg-canvas text-ink antialiased;
@@ -94,6 +115,12 @@
     unicode-bidi: isolate;
     font-variant-numeric: tabular-nums;
   }
+  /* a Latin word — a route, a link, a browser's name — sealed off the same
+     way, so it never flips or drags the punctuation around it with it */
+  .lat {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
   /* the Fluent 3D emoji sit a little lifted */
   .e3d {
     filter: drop-shadow(0 6px 10px rgb(33 20 90 / 0.18));
@@ -105,6 +132,11 @@
   }
   .safe-t {
     padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  /* a list that scrolls inside its box: a thin bar on a computer, none in the way */
+  [data-list] {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
   }
 }
 

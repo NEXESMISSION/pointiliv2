@@ -18,8 +18,17 @@ const GOALS = [5, 6, 8, 10, 12];
 const COLORS = ["#D7141A", "#FF6B4A", "#B45309", "#12B76A", "#0891B2", "#1D5FA8", "#6C47FF", "#E0457B", "#1F1B2E"];
 /** how long the hello stays before the first question slides in by itself */
 const HELLO_MS = 3400;
-/** the card above the question gets smaller on a shorter phone, so nothing ever scrolls */
-const SHRINK = "[@media(max-height:720px)]:[zoom:0.88] [@media(max-height:650px)]:[zoom:0.8]";
+/**
+ * The card above the question: its height follows its width (a dot per
+ * stamp: about 9rem + 0.4 × its width), so on a short screen it gets narrower.
+ * Everything else on a question (the top, the question, the answers, the
+ * button, the gaps) takes about 30.5rem + 14.5dvh: the card may be as wide as
+ * 2.5 × (85.5dvh − 31rem) and the rest still fits under it. On the hello the
+ * rest is 30.5rem + 8dvh. Never under 19rem, where its own lines would be
+ * cut: on the smallest screens the page scrolls a little instead.
+ */
+const SHRINK = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(85.5dvh_-_31rem))))]";
+const SHRINK_HELLO = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(92dvh_-_31rem))))]";
 
 type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null };
 
@@ -80,7 +89,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
 
   if (step === 0) {
     return (
-      <main className="safe-t safe-b relative mx-auto flex h-dvh max-w-md flex-col items-center justify-center overflow-hidden px-[clamp(1.25rem,6vw,1.75rem)] text-center">
+      <main className="safe-t safe-b relative mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-[clamp(1.25rem,6vw,1.75rem)] text-center">
         <style>{`@keyframes wz-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }`}</style>
         <Icon3D name="party" size={86} className="animate-pop" />
         <p className="mt-4 animate-rise text-[0.9375rem] font-semibold text-muted" style={{ animationDelay: "150ms" }}>
@@ -93,7 +102,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
         <p className="mt-3 animate-rise text-[1rem] text-body" style={{ animationDelay: "800ms" }}>
           {t.wizBody}
         </p>
-        <div className={`mt-[4dvh] w-full animate-rise ${SHRINK}`} style={{ animationDelay: "1100ms" }}>
+        <div className={`mt-[4dvh] animate-rise ${SHRINK_HELLO}`} style={{ animationDelay: "1100ms" }}>
           <Pass shop={{ ...preview, gift: ideas[0] ?? "" }} stamps={0} />
         </div>
         <div className="mt-[4dvh] h-1 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
@@ -111,7 +120,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
   const canGo = step === 1 ? !otherBad : step !== 2 || gift.trim().length >= 2;
 
   return (
-    <form action={action} className="safe-t safe-b relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden px-[clamp(1rem,5vw,1.5rem)]">
+    <form action={action} className="safe-t safe-b relative mx-auto flex min-h-dvh max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
       <style>{`
         @keyframes wz-in-next { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
         @keyframes wz-in-back { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
@@ -140,15 +149,17 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
       </header>
 
       {/* the card, the question, the answers and the button: one block, in the middle */}
-      <div className="flex min-h-0 flex-1 flex-col justify-center py-[2dvh]">
+      <div className="flex flex-1 flex-col justify-center py-[2dvh]">
       <div className={SHRINK}>
         <Pass shop={preview} stamps={step === 4 ? 1 : Math.max(1, Math.round(goal * 0.6))} fresh={step === 4} key={step === 4 ? "ready" : "live"} />
       </div>
 
-      {/* on the smallest phones the answers may need a little more room: they scroll inside, never under the button */}
-      <section key={step} className="mt-[3dvh] min-h-0 shrink overflow-y-auto overscroll-contain" style={{ animation: `${back ? "wz-in-back" : "wz-in-next"} 380ms cubic-bezier(0.2,0.8,0.2,1) both` }}>
+      {/* the question slides in from the side: clipped sideways only, at the screen's edge, so the page never widens */}
+      <div className="-mx-[clamp(1rem,5vw,1.5rem)] mt-[3dvh] overflow-x-clip px-[clamp(1rem,5vw,1.5rem)]">
+      <section key={step} style={{ animation: `${back ? "wz-in-back" : "wz-in-next"} 380ms cubic-bezier(0.2,0.8,0.2,1) both` }}>
         <h1 className="text-[1.55rem] font-bold leading-snug">{question}</h1>
-        {example && <p className="mt-1.5 text-[0.9375rem] text-muted">{example}</p>}
+        {/* the gift's example names the first two gifts already on the buttons under it: on a short screen, where those buttons may take two rows, it gives them its room */}
+        {example && <p className={`mt-1.5 text-[0.9375rem] text-muted ${step === 2 ? "[@media(max-height:700px)]:hidden" : ""}`}>{example}</p>}
 
         {step === 1 && (
           <>
@@ -240,6 +251,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
         )}
         {state?.error && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
       </section>
+      </div>
 
       <div className="mt-[3.5dvh] shrink-0">
         {/* two different buttons (keys): one patched from "button" to "submit" inside its own click would send the form */}

@@ -7,7 +7,8 @@ import { seenHere, shown } from "@/lib/once";
 import { signal } from "@/lib/track";
 import { t } from "@/lib/t";
 
-type Spot = { top: number; left: number; width: number; height: number };
+/** the tile, and the row of tiles it sits in (the note is as wide as the row) */
+type Spot = { top: number; left: number; width: number; height: number; row: { left: number; width: number } | null };
 
 /**
  * Once in a new owner's life, on their home: the «المحل» tile lit in the
@@ -23,8 +24,10 @@ export function LogoTip({ shopId, logo, show }: { shopId: string; logo: string |
   useEffect(() => {
     if (!show || seenHere("logo_tip", shopId)) return;
     const find = () => {
-      const r = document.getElementById("shop-tile")?.getBoundingClientRect();
-      setSpot(r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null);
+      const tile = document.getElementById("shop-tile");
+      const r = tile?.getBoundingClientRect();
+      const row = tile?.parentElement?.getBoundingClientRect();
+      setSpot(r ? { top: r.top, left: r.left, width: r.width, height: r.height, row: row ? { left: row.left, width: row.width } : null } : null);
     };
     const id = setTimeout(() => {
       if (seenHere("logo_tip", shopId)) return;
@@ -43,11 +46,12 @@ export function LogoTip({ shopId, logo, show }: { shopId: string; logo: string |
   const close = () => setOpen(false);
   if (!open) return null;
 
-  // the note goes under the tile, or over it when the screen is short
+  // the note goes under the tile, or over it when the screen is short; as wide
+  // as the row of tiles, so on a wide window it stays in the app's column
   const vh = typeof window === "undefined" ? 800 : innerHeight;
   const vw = typeof window === "undefined" ? 400 : innerWidth;
-  const width = Math.min(448, vw - 32);
-  const left = (vw - width) / 2;
+  const width = spot?.row ? spot.row.width : Math.min(448, vw - 32);
+  const left = spot?.row ? spot.row.left : (vw - width) / 2;
   const below = !spot || vh - (spot.top + spot.height) > 250;
   const arrow = spot ? Math.min(width - 28, Math.max(12, spot.left + spot.width / 2 - left - 8)) : null;
 

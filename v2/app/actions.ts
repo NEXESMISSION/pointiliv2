@@ -208,8 +208,44 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
 }
 
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
-export async function markSeen(note: "coach" | "logo_tip" | "card_hello"): Promise<void> {
+export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer"): Promise<void> {
   await call("see", { p_key: note });
+}
+
+/** The customer behind a code or a number, for the shop about to give them a tampon (their first name, their card here). */
+export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null }> {
+  const res = await call<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null }>("customer_at", { p_who: String(who).slice(0, 20) });
+  return res ?? { ok: false, error: "network" };
+}
+
+/** The shop gives the tampon itself: the same rules as a scan (one an hour, the gift at the goal). */
+export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string }> {
+  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string }>("give_stamp", { p_who: String(who).slice(0, 20) });
+  return res ?? { ok: false, error: "network" };
+}
+
+/** The owner chose a way to pay and says the money is sent: one payment waits for the founder's word. */
+export async function payRequest(method: string): Promise<{ ok: boolean; months?: number; error?: string }> {
+  const res = await call<{ ok: boolean; months?: number; error?: string }>("pay_request", { p_method: method });
+  revalidatePath("/shop");
+  return res ?? { ok: false, error: "network" };
+}
+
+/** The founder's word on a payment: the money came (the year starts) or it did not. */
+export async function adminPaymentDecide(id: string, paid: boolean): Promise<boolean> {
+  if (!UUID.test(id)) return false;
+  const res = await call<{ ok: boolean }>("admin_payment_decide", { p_id: id, p_paid: paid });
+  revalidatePath("/admin/payments");
+  return !!res?.ok;
+}
+
+/** The test account, back to a starting point (lib/tester.ts): fresh, new (no shop), or an owner of three days. */
+export async function adminTester(mode: "fresh" | "new" | "owner"): Promise<boolean> {
+  if (!(await getMe())?.admin) return false;
+  const { resetTester } = await import("@/lib/tester");
+  const ok = await resetTester(mode);
+  revalidatePath("/admin/tester");
+  return ok;
 }
 
 /** A piece of news showed to this owner: written on them, once (who saw it, and when). */
@@ -301,8 +337,12 @@ export async function adminNewsDelete(id: string) {
 /** The founder's settings: the number owners call, the two videos (YouTube links checked here). */
 export async function adminSaveSettings(_: FormState, fd: FormData): Promise<FormState> {
   if (!(await getMe())?.admin) return { error: t.errNetwork };
-  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url"] as const;
+  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "pay_card_url", "pay_d17", "pay_name", "pay_bank", "pay_rib", "pay_mandat"] as const;
   const phone = str(fd, "support_phone");
+  const card = str(fd, "pay_card_url");
+  if (card && !/^https:\/\/\S+$/.test(card)) return { error: t.aNewsErrLink, field: "pay_card_url" };
+  const rib = str(fd, "pay_rib").replace(/\s/g, "");
+  if (rib && !/^\d{20}$/.test(rib)) return { error: t.aPayRib, field: "pay_rib" };
   if (phone && phone.replace(/\D/g, "").length < 8) return { error: t.errPhone, field: "support_phone" };
   for (const key of ["video1_url", "video2_url"] as const) {
     const url = str(fd, key);

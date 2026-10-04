@@ -10,11 +10,15 @@ const SPARKS = 16;
  * everything, throws three shockwaves and a ring of sparks, splashes its ink,
  * and a «+1» jumps out. CSS only, one shot; the reduced-motion rule flattens
  * it to the final frame for whoever asked their phone for less movement.
+ * `size` is its width on a phone of 844px and more; a shorter screen gets a
+ * smaller tampon (it follows the rem and the height), so the answer under it
+ * always fits.
  */
 export function StampLand({ color = "#6c47ff", icon = "star", size = 112, label = "+1" }: { color?: string; icon?: string; size?: number; label?: string }) {
-  const w = size * 1.9;
+  const k = (n: number) => `calc(var(--sl) * ${n})`;
+  const box = { "--sl": `min(${size / 16}rem, ${+(size / 8.44).toFixed(2)}dvh)`, width: k(1.9), height: k(1.6) } as React.CSSProperties;
   return (
-    <div className="sl-shake relative grid shrink-0 place-items-center" style={{ width: w, height: size * 1.6 }} aria-hidden>
+    <div className="sl-shake relative grid shrink-0 place-items-center" style={box} aria-hidden>
       <style>{`
         @keyframes sl-drop {
           0% { transform: translate3d(0,-260px,0) scale(2.1) rotate(-32deg); opacity: 0; }
@@ -52,14 +56,14 @@ export function StampLand({ color = "#6c47ff", icon = "star", size = 112, label 
       {/* the ink left on the page, breathing after the hit */}
       <span
         className="absolute rounded-full"
-        style={{ width: size * 1.35, height: size * 1.35, background: `radial-gradient(circle, ${color} 0%, transparent 68%)`, animation: `sl-ink 900ms ease-out ${IMPACT_MS - 40}ms both, sl-halo 2.6s ease-in-out ${IMPACT_MS + 900}ms infinite` }}
+        style={{ width: k(1.35), height: k(1.35), background: `radial-gradient(circle, ${color} 0%, transparent 68%)`, animation: `sl-ink 900ms ease-out ${IMPACT_MS - 40}ms both, sl-halo 2.6s ease-in-out ${IMPACT_MS + 900}ms infinite` }}
       />
 
       {[0, 1, 2].map((i) => (
         <span
           key={i}
           className="absolute rounded-full border-[3px]"
-          style={{ width: size, height: size, borderColor: color, animation: `sl-wave 900ms cubic-bezier(0.1,0.7,0.3,1) ${IMPACT_MS + i * 130}ms both` }}
+          style={{ width: k(1), height: k(1), borderColor: color, animation: `sl-wave 900ms cubic-bezier(0.1,0.7,0.3,1) ${IMPACT_MS + i * 130}ms both` }}
         />
       ))}
 
@@ -73,7 +77,7 @@ export function StampLand({ color = "#6c47ff", icon = "star", size = 112, label 
               height: i % 3 === 0 ? 11 : 7,
               background: i % 2 ? color : "#ff6b4a",
               "--a": `${(360 / SPARKS) * i}deg`,
-              "--d": `${size * (0.72 + (i % 4) * 0.14)}px`,
+              "--d": k(0.72 + (i % 4) * 0.14),
               animation: `sl-spark 760ms cubic-bezier(0.15,0.75,0.3,1) ${IMPACT_MS + (i % 3) * 40}ms both`,
             } as React.CSSProperties
           }
@@ -84,20 +88,22 @@ export function StampLand({ color = "#6c47ff", icon = "star", size = 112, label 
       <span
         className="relative grid place-items-center rounded-full text-white"
         style={{
-          width: size,
-          height: size,
+          width: k(1),
+          height: k(1),
           background: `linear-gradient(150deg, color-mix(in oklab, ${color} 70%, white) -10%, ${color} 50%, color-mix(in oklab, ${color} 65%, black) 120%)`,
           boxShadow: `0 22px 44px -14px ${color}, inset 0 2px 0 rgb(255 255 255 / 0.35), inset 0 -6px 14px rgb(0 0 0 / 0.18)`,
           animation: "sl-drop 900ms cubic-bezier(0.3,0,0.2,1) both",
         }}
       >
         <span className="absolute inset-[9%] rounded-full border-2 border-dashed border-white/55" />
-        <Icon3D name={icon} size={size * 0.5} />
+        <span className="grid place-items-center" style={{ width: k(0.5), height: k(0.5) }}>
+          <Icon3D name={icon} size={size * 0.5} className="size-full!" />
+        </span>
       </span>
 
       <span
         className="num absolute -top-1 rounded-full bg-ink px-3.5 py-1.5 text-[1.0625rem] font-bold text-white shadow-lift"
-        style={{ animation: `sl-plus 620ms cubic-bezier(0.2,0.9,0.3,1.3) ${IMPACT_MS + 60}ms both`, insetInlineEnd: size * 0.12 }}
+        style={{ animation: `sl-plus 620ms cubic-bezier(0.2,0.9,0.3,1.3) ${IMPACT_MS + 60}ms both`, insetInlineEnd: k(0.12) }}
       >
         {label}
       </span>

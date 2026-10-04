@@ -1,15 +1,14 @@
-import { notFound, redirect } from "next/navigation";
-import { Gift, Phone } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ChevronRight, Gift, Phone } from "lucide-react";
 import { AdminShopActions } from "@/components/AdminShopActions";
-import { Top } from "@/components/Top";
 import { ShopMark } from "@/components/ShopMark";
-import { Icon3D, Screen } from "@/components/ui";
-import { getMe } from "@/lib/session";
+import { Card, Cell, Empty, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
 import { stampsN, t } from "@/lib/t";
 
-export const metadata = { title: "محل", robots: { index: false } };
+export const metadata = { title: "محل" };
 
 type Shop = {
   id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; gift: string | null; paused: boolean; created_at: string;
@@ -19,118 +18,135 @@ type Shop = {
   top: { name: string | null; phone: string | null; stamps: number; gifts: number; goal: number | null }[];
 };
 
-const when = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
+const TZ = "Africa/Tunis";
+const when = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: TZ }).format(new Date(iso));
+const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).format(new Date(iso));
 
-/**
- * One shop, as the founder sees it, on one screen: the shop and its card in
- * a line, the owner with a call button, four numbers in a row, the best
- * customers and the latest moments scrolling inside one box, and the two
- * switches at the bottom.
- */
+/** One shop: who owns it on the side, how it is doing in the middle. */
 export default async function AdminShop({ params }: { params: Promise<{ id: string }> }) {
-  const [{ id }, me] = await Promise.all([params, getMe()]);
-  if (!me?.admin) redirect("/");
+  const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const s = await call<Shop | null>("admin_shop", { p_id: id });
   if (!s) notFound();
-  const tiles = [
-    { icon: "people", value: s.customers, label: t.aCustomers },
-    { icon: "fire", value: s.today, label: t.aToday },
-    { icon: "star", value: s.stamps, label: t.aStamps },
-    { icon: "gift", value: s.given, label: t.aGiven },
-  ];
 
   return (
-    <Screen>
-      <Top back="/admin" />
+    <Page
+      title={s.name}
+      hint={s.goal ? `${stampsN(s.goal)} ← ${s.gift}` : t.aNoCard}
+      actions={
+        <Link href="/admin/shops" className="inline-flex h-9 items-center gap-1 rounded-[0.625rem] border border-line bg-surface px-3 text-[0.8438rem] font-semibold text-body hover:border-brand hover:text-brand">
+          <ChevronRight className="size-4" /> {t.aShops}
+        </Link>
+      }
+    >
+      <div className="grid gap-4 xl:grid-cols-[18rem_1fr]">
+        <div className="space-y-4">
+          <Card>
+            <div className="flex items-center gap-3">
+              <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-[0.875rem]" style={{ background: s.color }}>
+                <ShopMark shop={s} size={34} />
+              </span>
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5">
+                  <b className="truncate text-[1.0625rem] text-ink">{s.name}</b>
+                  {s.paused && <Pill tone="coral">{t.aPaused}</Pill>}
+                </p>
+                <p className="truncate text-[0.8125rem] text-muted">{t.kinds[s.kind as keyof typeof t.kinds] ?? s.kind}</p>
+              </div>
+            </div>
+            <dl className="mt-4 space-y-2 border-t border-line pt-3 text-[0.8438rem]">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">{t.aCreated}</dt>
+                <dd className="text-end font-semibold text-body">
+                  <When>{day(s.created_at)}</When>
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">الكارط</dt>
+                <dd className="min-w-0 text-end font-semibold text-body">{s.goal ? <>{s.gift} ← <Num>{s.goal}</Num></> : t.aNoCard}</dd>
+              </div>
+            </dl>
+          </Card>
 
-      {/* the shop and its card, in one line */}
-      <div className="mt-[1.8dvh] flex shrink-0 items-center gap-3">
-        <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-[1.125rem] shadow-card" style={{ background: s.color }}>
-          <ShopMark shop={s} size={34} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5">
-            <span className="truncate text-[1.5rem] font-bold leading-tight">{s.name}</span>
-            {s.paused && <span className="shrink-0 rounded-full bg-coral-soft px-2 py-0.5 text-[0.6875rem] font-bold text-coral">{t.aPaused}</span>}
-          </span>
-          <span className="block truncate text-[0.8125rem] text-muted">
-            {s.goal ? `${stampsN(s.goal)} ← ${s.gift}` : t.aNoCard} · {t.aCreated} {when(s.created_at)}
-          </span>
-        </span>
-      </div>
+          <Card title={t.aOwner}>
+            <p className="truncate text-[0.9375rem] font-bold text-ink">{s.owner?.name || t.someone}</p>
+            {s.owner?.phone ? (
+              <>
+                <p className="mt-0.5 text-[0.875rem] text-body">
+                  <Num>{pretty(s.owner.phone)}</Num>
+                </p>
+                <a href={`tel:+216${digits(s.owner.phone)}`} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-brand-soft px-3.5 text-[0.8438rem] font-bold text-brand hover:bg-brand hover:text-white">
+                  <Phone className="size-4" /> {t.aCall}
+                </a>
+              </>
+            ) : (
+              <p className="mt-1 text-[0.8125rem] text-faint">بلا نومرو</p>
+            )}
+          </Card>
 
-      <div className="mt-[1.6dvh] flex shrink-0 items-center gap-3 rounded-[1.25rem] bg-surface px-3.5 py-3 shadow-card">
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[0.9688rem] font-bold">{s.owner?.name || t.someone}</span>
-          {s.owner?.phone && (
-            <span dir="ltr" className="num inline-block text-[0.875rem] text-body">
-              {pretty(s.owner.phone)}
-            </span>
-          )}
-        </span>
-        {s.owner?.phone && (
-          <a href={`tel:+216${digits(s.owner.phone)}`} className="press flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-3.5 text-[0.875rem] font-bold text-brand">
-            <Phone className="size-4" /> {t.aCall}
-          </a>
-        )}
-      </div>
+          <AdminShopActions id={s.id} paused={s.paused} />
+        </div>
 
-      {/* four numbers, one row */}
-      <div className="mt-[1.6dvh] grid shrink-0 grid-cols-4 gap-2">
-        {tiles.map((x) => (
-          <div key={x.label} className="rounded-[1rem] bg-surface px-1.5 py-2 text-center shadow-card">
-            <Icon3D name={x.icon} size={22} className="mx-auto" />
-            <p className="num mt-0.5 text-[1.125rem] font-bold leading-tight">{x.value}</p>
-            <p className="truncate text-[0.6875rem] text-muted">{x.label}</p>
+        <div className="min-w-0 space-y-4">
+          <Stats cols={5}>
+            <Stat label={t.aCustomers} value={s.customers} />
+            <Stat label={t.aToday} value={s.today} tone="brand" />
+            <Stat label={t.aStamps} value={s.stamps} />
+            <Stat label={t.aGiven} value={s.given} tone="coral" />
+            <Stat label="كادو يستنّى" value={s.waiting} />
+          </Stats>
+
+          <div className="grid gap-4 2xl:grid-cols-2">
+            <Card title={t.aTop} pad={false}>
+              {s.top.length === 0 ? (
+                <Empty>{t.aNothing}</Empty>
+              ) : (
+                <Table head={["الحريف", "كادو", "تامبون"]}>
+                  {s.top.map((c, i) => (
+                    <Row key={i}>
+                      <Cell strong>
+                        <span className="block truncate">{c.name ?? t.someone}</span>
+                        {c.phone && (
+                          <span className="block text-[0.75rem] font-normal text-muted">
+                            {/* the RPC hands back only the tail of a customer's number */}
+                            <Num>{c.phone}</Num>
+                          </span>
+                        )}
+                      </Cell>
+                      <Cell n>{c.gifts > 0 ? <span className="inline-flex items-center gap-1 font-bold text-coral"><Gift className="size-3.5" />{c.gifts}</span> : "—"}</Cell>
+                      <Cell n strong>
+                        {(c.goal ?? s.goal) ? `${Math.min(c.stamps, c.goal ?? s.goal ?? 0)}/${c.goal ?? s.goal}` : c.stamps}
+                      </Cell>
+                    </Row>
+                  ))}
+                </Table>
+              )}
+            </Card>
+
+            <Card title={t.aRecent} pad={false}>
+              {s.recent.length === 0 ? (
+                <Empty>{t.aNothing}</Empty>
+              ) : (
+                <Table head={["شنوّة", "شكون", "وقتاش"]} words={[1]}>
+                  {s.recent.map((r, i) => (
+                    <Row key={i}>
+                      <Cell>
+                        <Pill tone={r.kind === "stamp" ? "brand" : "coral"}>{r.kind === "stamp" ? <><Num>+1</Num> تامبون</> : "كادو"}</Pill>
+                      </Cell>
+                      <Cell muted>
+                        <span className="block truncate">{r.name ?? (r.phone ? <Num>{r.phone}</Num> : t.someone)}</span>
+                      </Cell>
+                      <Cell n muted>
+                        {when(r.at)}
+                      </Cell>
+                    </Row>
+                  ))}
+                </Table>
+              )}
+            </Card>
           </div>
-        ))}
+        </div>
       </div>
-
-      {/* the best customers, then the latest moments: one box, scrolling inside */}
-      <div className="mt-[1.8dvh] min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[1.25rem] bg-surface shadow-card">
-        {s.top.length === 0 && s.recent.length === 0 && <p className="p-4 text-center text-[0.9375rem] text-muted">{t.aNothing}</p>}
-        {s.top.length > 0 && (
-          <>
-            <h2 className="sticky top-0 z-10 bg-surface/95 px-3.5 pb-1 pt-2.5 text-[0.8125rem] font-bold text-muted backdrop-blur">{t.aTop}</h2>
-            <ul className="divide-y divide-line">
-              {s.top.map((c, i) => (
-                <li key={i} className="flex items-center gap-2.5 px-3.5 py-2">
-                  <span className="min-w-0 flex-1 truncate text-[0.9062rem] font-medium">
-                    {c.name ?? t.someone} {c.phone && <span dir="ltr" className="num inline-block text-[0.75rem] text-muted">{c.phone}</span>}
-                  </span>
-                  {c.gifts > 0 && (
-                    <span className="num flex shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2 py-0.5 text-[0.75rem] font-bold text-coral">
-                      <Gift className="size-3.5" /> {c.gifts}
-                    </span>
-                  )}
-                  {(c.goal ?? s.goal) && (
-                    <span className="num shrink-0 text-[0.8438rem] font-bold text-body">
-                      {Math.min(c.stamps, c.goal ?? s.goal ?? 0)}/{c.goal ?? s.goal}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-        {s.recent.length > 0 && (
-          <>
-            <h2 className="sticky top-0 z-10 bg-surface/95 px-3.5 pb-1 pt-2.5 text-[0.8125rem] font-bold text-muted backdrop-blur">{t.aRecent}</h2>
-            <ul className="divide-y divide-line">
-              {s.recent.map((r, i) => (
-                <li key={i} className="flex items-center gap-2.5 px-3.5 py-2">
-                  <span className={`num grid size-7 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold ${r.kind === "stamp" ? "bg-brand-soft text-brand" : "bg-coral-soft text-coral"}`}>{r.kind === "stamp" ? "+1" : "🎁"}</span>
-                  <span className="min-w-0 flex-1 truncate text-[0.875rem]">{r.name ?? (r.phone ? <span dir="ltr" className="num inline-block">{r.phone}</span> : t.someone)}</span>
-                  <span className="num shrink-0 text-[0.7188rem] text-muted">{when(r.at)}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
-
-      <AdminShopActions id={s.id} paused={s.paused} />
-    </Screen>
+    </Page>
   );
 }

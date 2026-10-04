@@ -1,15 +1,26 @@
 import { redirect } from "next/navigation";
 import { Wallet } from "@/components/Wallet";
+import { JsonLd } from "@/components/SiteFrame";
 import { Welcome } from "@/components/Welcome";
 import { getMe, homeOf } from "@/lib/session";
-import { getHelp } from "@/lib/settings";
+import { faqJsonLd, FAQ, orgJsonLd } from "@/lib/seo";
+import { getHelp, getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import type { CardView } from "@/lib/types";
 
 /** Home: the welcome for a stranger, the counter for a shop, the wallet for a customer. */
 export default async function Home() {
   const me = await getMe();
-  if (!me) return <Welcome video={(await getHelp()).video1} />;
+  if (!me) {
+    const [help, settings] = await Promise.all([getHelp(), getSettings()]);
+    return (
+      <>
+        <JsonLd data={orgJsonLd(settings.supportPhone)} />
+        <JsonLd data={faqJsonLd(FAQ.slice(0, 5).flatMap((f) => [{ q: f.q, a: f.a }, f.fr]))} />
+        <Welcome video={help.video1} />
+      </>
+    );
+  }
   if (me.shop) redirect(homeOf(me));
   const cards = (await call<CardView[]>("wallet")) ?? [];
   return <Wallet me={me} cards={cards} />;

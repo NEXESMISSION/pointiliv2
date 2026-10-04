@@ -35,7 +35,8 @@ export function VideoModal({ video, onClose }: { video: HelpVideo; onClose: () =
       <p className="mb-3 max-w-md text-center text-[1rem] font-bold text-white">{video.label}</p>
       <div
         className="overflow-hidden rounded-[1.25rem] bg-black shadow-2xl"
-        style={video.vertical ? { height: "min(78dvh, 177vw)", aspectRatio: "9 / 16" } : { width: "min(92vw, 56rem)", aspectRatio: "16 / 9" }}
+        // a picture whose height follows its width: capped by the screen both ways, so it never spills out
+        style={video.vertical ? { height: "min(78dvh, calc((100vw - 2rem) * 16 / 9))", aspectRatio: "9 / 16" } : { width: "min(92vw, 56rem, calc((100dvh - 8rem) * 16 / 9))", aspectRatio: "16 / 9" }}
         onClick={(e) => e.stopPropagation()}
       >
         <iframe

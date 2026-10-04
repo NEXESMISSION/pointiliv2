@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight, ExternalLink, Flame, MousePointerClick, TriangleAlert } from "lucide-react";
 import { HeatMap, type HeatTap } from "@/components/HeatMap";
-import { getMe } from "@/lib/session";
+import { Bars, Bidi, Card, Cell, Empty, Lat, Num, Page, Pill, Row, Segments, Stat, Stats, Table, When } from "@/components/console";
 import { call } from "@/lib/supabase";
 
-export const metadata = { title: "الترافيك", robots: { index: false } };
+export const metadata = { title: "الترافيك" };
 
 type Step = { step: string; visits: number };
 type PageRow = { route: string; screen: string | null; views: number; visits: number; ms: number; exits: number; taps: number; rage: number };
@@ -55,8 +54,10 @@ function dur(ms: number): string {
   return `${Math.floor(m / 60)}س ${m % 60}د`;
 }
 const pct = (a: number, b: number) => (b ? `${Math.round((a * 100) / b)}%` : "—");
+/** A length of time holds Arabic letters, so it reads right to left like the rest. */
+const D = ({ ms }: { ms: number }) => <bdi className="tabular-nums">{dur(ms)}</bdi>;
 /** A share inside Arabic words: kept «25%», not turned round into «%25». */
-const Pct = ({ a, b }: { a: number; b: number }) => <span className="num">{pct(a, b)}</span>;
+const Pct = ({ a, b }: { a: number; b: number }) => <Num>{pct(a, b)}</Num>;
 
 /** Every page and every step inside one, by the name the founder knows it by. */
 const ROUTES: Record<string, string> = {
@@ -119,6 +120,25 @@ const DEVICES: Record<string, string> = { phone: "تليفون", tablet: "تاب
 const SIGNALS: Record<string, string> = { video: "▶ شاف فيديو", video_close: "▶ سكّر الفيديو", help_open: "؟ حلّ «عندك سؤال؟»", form_error: "⚠ فورم ما تعدّاش", gift_won: "🎁 ربح كادو" };
 const signalName = (n: string) => SIGNALS[n] ?? n;
 
+/**
+ * «تليفون · Safari · Tunis» — a line joined out of Arabic and Latin pieces.
+ * Unsealed, the two Latin words swap on screen; each one isolated, the line
+ * reads in the order it was written.
+ */
+function Parts({ of }: { of: (string | null | undefined)[] }) {
+  const xs = of.filter(Boolean) as string[];
+  return (
+    <>
+      {xs.map((x, i) => (
+        <span key={i}>
+          {i > 0 && " · "}
+          {/^[؀-ۿ]/.test(x) ? x : <Lat>{x}</Lat>}
+        </span>
+      ))}
+    </>
+  );
+}
+
 const TABS = [
   { id: "overview", label: "الخلاصة" },
   { id: "pages", label: "الصفحات" },
@@ -136,15 +156,13 @@ const OWNER_STEPS: Record<string, string> = { "/": "الصفحة الأولى", 
 const CUSTOMER_STEPS: Record<string, string> = { "/s/[token]": "سكانا كود", "s:held": "ما عندوش كونت", "/join": "حلّ التسجيل", "s:stamped": "خذا تامبون" };
 
 /**
- * The founder's traffic: who came (and from which ad), how far they got,
- * where they stopped, how long they stayed on every screen, where their
- * fingers landed — and any one visit, step by step. One screen: the numbers
- * scroll inside their own box.
+ * The founder's traffic, on a desk: who came and from which ad, how far they
+ * got, where they stopped, where their fingers landed — and any one visit,
+ * second by second. Five tabs, because five questions; the screen is wide
+ * enough that each one gets its own columns instead of a pile.
  */
 export default async function TrafficPage({ searchParams }: { searchParams: Promise<{ tab?: string; d?: string; all?: string; v?: string; h?: string }> }) {
-  const [me, sp] = await Promise.all([getMe(), searchParams]);
-  if (!me) redirect("/login?next=/admin/traffic");
-  if (!me.admin) redirect("/");
+  const sp = await searchParams;
   const tab = TABS.some((x) => x.id === sp.tab) ? sp.tab! : "overview";
   const days = RANGES.some((r) => String(r.d) === sp.d) ? Number(sp.d) : 7;
   const all = sp.all === "1";
@@ -165,199 +183,172 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
   const heat = heatAt ? await call<Heat>("admin_heat", { p_route: heatAt[0], p_screen: heatAt[1] ?? "", p_days: days, p_all: all }) : null;
 
   return (
-    <main className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden px-[clamp(1rem,5vw,1.5rem)] md:max-w-2xl">
-      <header className="flex shrink-0 items-center gap-2.5 pt-2">
-        <Link href="/admin" className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label="back">
-          <ChevronRight className="size-5" />
-        </Link>
-        <h1 className="min-w-0 flex-1 truncate text-[1.5rem] font-bold">الترافيك</h1>
-        <Link href={href({ all: all ? null : "1" })} className={`press flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[0.8125rem] font-bold ${all ? "bg-ink text-white" : "bg-surface text-muted shadow-card"}`} title="زياراتك انت والروبوات">
-          <span className={`grid size-4 place-items-center rounded-[0.3rem] text-[0.6875rem] ${all ? "bg-white text-ink" : "ring-1 ring-faint"}`}>{all ? "✓" : ""}</span>
-          مع زياراتي
-        </Link>
-      </header>
-
-      <div className="mt-2 flex shrink-0 gap-1 rounded-[1rem] bg-ink/[0.06] p-1">
-        {RANGES.map((r) => (
-          <Link key={r.d} href={href({ d: String(r.d) })} className={`flex h-8 flex-1 items-center justify-center rounded-[0.75rem] text-[0.8125rem] font-semibold ${days === r.d ? "bg-surface text-ink shadow-card" : "text-muted"}`}>
-            {r.label}
+    <Page
+      title="الترافيك"
+      hint="منين جاو، وشنوّة عملو قبل ما يسجّلو"
+      actions={
+        <>
+          <Segments now={String(days)} items={RANGES.map((r) => ({ id: String(r.d), label: r.label, href: href({ d: String(r.d) }) }))} />
+          <Link
+            href={href({ all: all ? null : "1" })}
+            title="زياراتك انت والروبوات"
+            className={`inline-flex h-9 items-center gap-2 rounded-[0.625rem] border px-3 text-[0.8438rem] font-semibold ${all ? "border-ink bg-ink text-white" : "border-line bg-surface text-muted hover:border-brand hover:text-brand"}`}
+          >
+            <span className={`grid size-4 place-items-center rounded-[0.25rem] text-[0.625rem] ${all ? "bg-white text-ink" : "ring-1 ring-faint"}`}>{all ? "✓" : ""}</span>
+            مع زياراتي
           </Link>
-        ))}
-      </div>
-
-      <nav className="mt-2 grid shrink-0 grid-cols-5 gap-1">
+        </>
+      }
+    >
+      <nav className="mb-4 flex flex-wrap gap-1.5">
         {TABS.map((x) => (
-          <Link key={x.id} href={href({ tab: x.id, h: null })} className={`flex h-9 items-center justify-center truncate rounded-[0.75rem] px-1 text-[0.8125rem] font-bold ${tab === x.id ? "bg-brand text-white shadow-[0_8px_18px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-body shadow-card"}`}>
+          <Link
+            key={x.id}
+            href={href({ tab: x.id, h: null })}
+            className={`inline-flex h-9 items-center rounded-[0.625rem] px-3.5 text-[0.875rem] font-semibold transition-colors ${tab === x.id ? "bg-brand text-white" : "border border-line bg-surface text-body hover:border-brand hover:text-brand"}`}
+          >
             {x.label}
           </Link>
         ))}
       </nav>
 
-      <section className="-mx-1 mt-1.5 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-4">
-        {!data ? (
-          <p className="mt-6 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">ما نجمناش نجيبو الترافيك. عاود بعد شويّة.</p>
-        ) : tab === "overview" ? (
-          <Overview data={data} days={days} heatHref={(k) => href({ tab: "heat", h: k })} />
-        ) : tab === "pages" ? (
-          <Pages pages={pages} heatHref={(k) => href({ tab: "heat", h: k })} />
-        ) : tab === "sources" ? (
-          <Sources data={data} />
-        ) : tab === "visits" ? (
-          visitId ? (
-            visit ? (
-              <Visit data={visit} back={href({ tab: "visits", v: null })} />
-            ) : (
-              <p className="mt-6 text-center text-[0.9375rem] text-muted">الزيارة هاذي ما عادش موجودة.</p>
-            )
+      {!data ? (
+        <p className="rounded-[1rem] bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">ما نجمناش نجيبو الترافيك. عاود بعد شويّة.</p>
+      ) : tab === "overview" ? (
+        <Overview data={data} days={days} heatHref={(k) => href({ tab: "heat", h: k })} />
+      ) : tab === "pages" ? (
+        <Pages pages={pages} heatHref={(k) => href({ tab: "heat", h: k })} />
+      ) : tab === "sources" ? (
+        <Sources data={data} />
+      ) : tab === "visits" ? (
+        visitId ? (
+          visit ? (
+            <Visit data={visit} back={href({ tab: "visits", v: null })} />
           ) : (
-            <Visits rows={data.recent} open={(id) => href({ tab: "visits", v: id })} />
+            <Empty>الزيارة هاذي ما عادش موجودة.</Empty>
           )
         ) : (
-          <HeatTab pages={pages} heatKey={heatKey!} heat={heat} pick={(k) => href({ tab: "heat", h: k })} />
-        )}
-      </section>
-    </main>
+          <Visits rows={data.recent} open={(id) => href({ tab: "visits", v: id })} />
+        )
+      ) : (
+        <HeatTab pages={pages} heatKey={heatKey!} heat={heat} pick={(k) => href({ tab: "heat", h: k })} />
+      )}
+    </Page>
   );
 }
 
-function Card({ title, hint, children, className = "" }: { title?: string; hint?: string; children: React.ReactNode; className?: string }) {
-  return (
-    <section className={`mt-2.5 rounded-[1.25rem] bg-surface px-3.5 py-3 shadow-card ${className}`}>
-      {title && (
-        <h2 className="text-[0.9375rem] font-bold">
-          {title}
-          {hint && <span className="ms-1.5 text-[0.75rem] font-medium text-muted">{hint}</span>}
-        </h2>
-      )}
-      {children}
-    </section>
-  );
-}
+/* ── الخلاصة ────────────────────────────────────────────────────────── */
 
 function Overview({ data, days, heatHref }: { data: Traffic; days: number; heatHref: (key: string) => string }) {
-  const tiles: { value: React.ReactNode; label: string; sub: React.ReactNode }[] = [
-    { value: data.visitors, label: "زوّار", sub: `${data.visits} زيارة` },
-    { value: dur(data.avg_ms), label: "وقت الزيارة", sub: `${data.visits ? (data.views / data.visits).toFixed(1) : 0} صفحة` },
-    { value: pct(Math.round(data.bounce * 1000), 1000), label: "خرجو طول", sub: "من أوّل صفحة" },
-    {
-      value: data.from_ads,
-      label: "من فيسبوك",
-      sub: (
-        <>
-          وإنستا · <Pct a={data.from_ads} b={data.visits} />
-        </>
-      ),
-    },
-    { value: data.accounts, label: "كونتات جدد", sub: `${data.shops} محل جديد` },
-    { value: data.rage, label: "ضربات بالغشّ", sub: `من ${data.taps} ضربة` },
-  ];
   const max = Math.max(1, ...data.days.map((d) => d.visits));
-  // where people stop: the screens most visits ended on
-  const stops = [...data.pages].filter((p) => p.exits > 0).sort((a, b) => b.exits - a.exits).slice(0, 6);
-  const happened = data.signals.slice(0, 10);
+  const stops = [...data.pages].filter((p) => p.exits > 0).sort((a, b) => b.exits - a.exits).slice(0, 7);
+
   return (
-    <>
-      <div className="mt-1 grid grid-cols-3 gap-2">
-        {tiles.map((x) => (
-          <div key={x.label} className="rounded-[1.125rem] bg-surface px-2.5 py-2.5 shadow-card">
-            <span className="block truncate text-[1.25rem] font-bold leading-none tabular-nums">{x.value}</span>
-            <span className="mt-1 block truncate text-[0.75rem] font-semibold">{x.label}</span>
-            <span className="block truncate text-[0.6875rem] text-muted">{x.sub}</span>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-4">
+      <Stats cols={6}>
+        <Stat label="زوّار" value={data.visitors} sub={`${data.visits} زيارة`} />
+        <Stat label="وقت الزيارة" value={<D ms={data.avg_ms} />} sub={`${data.visits ? (data.views / data.visits).toFixed(1) : 0} صفحة`} />
+        <Stat label="خرجو طول" value={pct(Math.round(data.bounce * 1000), 1000)} sub="من أوّل صفحة" />
+        <Stat label="من فيسبوك" value={data.from_ads} sub={<>وإنستا · {pct(data.from_ads, data.visits)}</>} tone="brand" />
+        <Stat label="كونتات جدد" value={data.accounts} sub={`${data.shops} محل جديد`} tone="mint" />
+        <Stat label="ضربات بالغشّ" value={data.rage} sub={`من ${data.taps} ضربة`} tone={data.rage ? "coral" : "ink"} />
+      </Stats>
 
       {days > 1 && (
         <Card title="الزيارات كل نهار">
-          <div className="mt-2 flex h-[5.5rem] items-end gap-[3px]" dir="ltr">
-            {data.days.map((d, i) => (
-              <div key={d.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${weekday(d.day)} · ${d.visits}`}>
-                {(i === data.days.length - 1 || d.visits === max) && d.visits > 0 && <span className="num text-[0.625rem] font-semibold text-muted">{d.visits}</span>}
-                <span className={`w-full max-w-6 rounded-t-[0.25rem] ${i === data.days.length - 1 ? "bg-brand" : "bg-brand/35"}`} style={{ height: `${Math.max(3, (d.visits / max) * 100)}%` }} />
-              </div>
-            ))}
+          <div className="flex h-[9rem] items-end gap-1" dir="ltr">
+            {data.days.map((d, i) => {
+              const last = i === data.days.length - 1;
+              return (
+                <div key={d.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${weekday(d.day)} · ${d.visits}`}>
+                  {(last || d.visits === max) && d.visits > 0 && (
+                    <span className="text-[0.6875rem] font-bold text-muted">
+                      <Num>{d.visits}</Num>
+                    </span>
+                  )}
+                  <span className={`w-full max-w-10 rounded-t-[0.25rem] ${last ? "bg-brand" : "bg-brand/30"}`} style={{ height: `${Math.max(3, (d.visits / max) * 100)}%` }} />
+                </div>
+              );
+            })}
           </div>
-          <div className="mt-1 flex justify-between text-[0.625rem] text-faint" dir="ltr">
-            <span>{weekday(data.days[0]!.day)}</span>
-            <span>{weekday(data.days[data.days.length - 1]!.day)}</span>
+          <div className="mt-1.5 flex justify-between text-[0.6875rem] text-faint" dir="ltr">
+            <bdi>{weekday(data.days[0]!.day)}</bdi>
+            <bdi>{weekday(data.days[data.days.length - 1]!.day)}</bdi>
           </div>
         </Card>
       )}
 
-      <Card title="الموالي: قدّاش وصلو" hint="من أوّل صفحة للكود">
-        <Funnel steps={data.funnel.owner} names={OWNER_STEPS} />
-      </Card>
-      <Card title="الحرفاء: قدّاش وصلو" hint="من السكان للتامبون">
-        <Funnel steps={data.funnel.customer} names={CUSTOMER_STEPS} />
-      </Card>
+      <div className="grid gap-4 2xl:grid-cols-2">
+        <Card title="الموالي: قدّاش وصلو" hint="من أوّل صفحة للكود">
+          <Funnel steps={data.funnel.owner} names={OWNER_STEPS} />
+        </Card>
+        <Card title="الحرفاء: قدّاش وصلو" hint="من السكان للتامبون">
+          <Funnel steps={data.funnel.customer} names={CUSTOMER_STEPS} />
+        </Card>
+      </div>
 
-      <Card title="وين يحبسو" hint="آخر صفحة قبل ما يخرجو">
-        {stops.length === 0 ? (
-          <p className="mt-1.5 text-[0.875rem] text-muted">مازال حتّى شي.</p>
-        ) : (
-          <ul className="mt-1.5 divide-y divide-line">
-            {stops.map((p) => (
-              <li key={keyOf(p.route, p.screen)}>
-                <Link href={heatHref(keyOf(p.route, p.screen))} className="flex items-center gap-2 py-2">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[0.875rem] font-semibold">{screenName(p.route, p.screen)}</span>
-                    <span className="block text-[0.75rem] text-muted tabular-nums">
-                      {p.views} مرّة · {dur(p.ms)} في المعدّل{p.rage ? ` · ${p.rage} بالغشّ` : ""}
+      <div className="grid gap-4 2xl:grid-cols-[1.4fr_1fr]">
+        <Card title="وين يحبسو" hint="آخر صفحة قبل ما يخرجو" pad={false}>
+          {stops.length === 0 ? (
+            <Empty>مازال حتّى شي.</Empty>
+          ) : (
+            <Table head={["الصفحة", "مرّات", "الوقت", "خرجو"]}>
+              {stops.map((p) => (
+                <Row key={keyOf(p.route, p.screen)} href={heatHref(keyOf(p.route, p.screen))}>
+                  <Cell strong>
+                    <Bidi className="block truncate">{screenName(p.route, p.screen)}</Bidi>
+                    {p.rage > 0 && (
+                      <span className="block text-[0.75rem] font-normal text-coral">
+                        <Num>{p.rage}</Num> ضربة بالغشّ
+                      </span>
+                    )}
+                  </Cell>
+                  <Cell n>{p.views}</Cell>
+                  <Cell n muted>
+                    <D ms={p.ms} />
+                  </Cell>
+                  <Cell n>
+                    <span className="rounded-full bg-coral-soft px-2 py-0.5 font-bold text-coral">
+                      <Pct a={p.exits} b={p.views} />
                     </span>
-                  </span>
-                  <span className="shrink-0 rounded-full bg-coral-soft px-2 py-0.5 text-[0.75rem] font-bold text-coral">
-                    <Pct a={p.exits} b={p.views} /> خرجو
-                  </span>
-                  <ChevronLeft className="size-4 shrink-0 text-faint" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+                  </Cell>
+                </Row>
+              ))}
+            </Table>
+          )}
+        </Card>
 
-      <Card title="شنوّة عملو" hint={data.video_s ? `الفيديو: ${dur(data.video_s * 1000)} في المعدّل` : undefined}>
-        {happened.length === 0 ? (
-          <p className="mt-1.5 text-[0.875rem] text-muted">مازال حتّى شي.</p>
-        ) : (
-          <ul className="mt-1.5 space-y-1.5">
-            {happened.map((s, i) => (
-              <li key={i} className="flex items-start gap-2 text-[0.8125rem]">
-                <span className="num mt-px shrink-0 rounded-full bg-ink/[0.06] px-2 py-0.5 text-[0.75rem] font-bold">{s.n}</span>
-                <span className="min-w-0 flex-1">
-                  <b className="font-semibold">{signalName(s.name)}</b>
-                  {s.detail && <span className="block truncate text-muted">{s.detail}</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-    </>
+        <Card title="شنوّة عملو" hint={data.video_s ? `الفيديو: ${dur(data.video_s * 1000)} في المعدّل` : undefined}>
+          <Bars rows={data.signals.slice(0, 10).map((s, i) => ({ key: String(i), label: signalName(s.name), sub: s.detail ? <Bidi>{s.detail}</Bidi> : null, n: s.n }))} />
+        </Card>
+      </div>
+    </div>
   );
 }
 
 function Funnel({ steps, names }: { steps: Step[]; names: Record<string, string> }) {
   const first = steps[0]?.visits ?? 0;
   return (
-    <ol className="mt-2 space-y-1.5">
+    <ol className="space-y-2">
       {steps.map((s, i) => {
         const prev = i ? steps[i - 1]!.visits : s.visits;
         const lost = prev - s.visits;
         return (
           <li key={s.step}>
             {i > 0 && lost > 0 && (
-              <p className="-mt-0.5 mb-0.5 text-[0.6875rem] font-semibold text-coral tabular-nums">
-                ↓ {lost} وقفو هوني (<Pct a={lost} b={prev} />)
+              <p className="mb-1 text-[0.6875rem] font-semibold text-coral">
+                ↓ <Num>{lost}</Num> وقفو هوني (<Pct a={lost} b={prev} />)
               </p>
             )}
-            <div className="flex items-center gap-2">
-              <span className="w-[6.25rem] shrink-0 truncate text-[0.8125rem] font-semibold">{names[s.step] ?? s.step}</span>
-              <span className="relative h-6 min-w-0 flex-1 overflow-hidden rounded-[0.5rem] bg-ink/[0.05]">
+            <div className="flex items-center gap-2.5">
+              <span className="w-[8rem] shrink-0 truncate text-[0.8125rem] font-semibold text-ink">{names[s.step] ?? s.step}</span>
+              <span className="relative h-7 min-w-0 flex-1 overflow-hidden rounded-[0.5rem] bg-canvas">
                 <span className="absolute inset-y-0 start-0 rounded-[0.5rem] bg-brand/80" style={{ width: `${first ? Math.max(2, (s.visits / first) * 100) : 0}%` }} />
               </span>
-              <span className="num w-7 shrink-0 text-center text-[0.875rem] font-bold">{s.visits}</span>
-              <span className="num w-9 shrink-0 text-end text-[0.6875rem] font-semibold text-muted">{i ? pct(s.visits, first) : ""}</span>
+              <span className="w-8 shrink-0 text-center text-[0.875rem] font-bold text-ink">
+                <Num>{s.visits}</Num>
+              </span>
+              <span className="w-10 shrink-0 text-end text-[0.75rem] font-semibold text-muted">{i ? <Num>{pct(s.visits, first)}</Num> : ""}</span>
             </div>
           </li>
         );
@@ -366,103 +357,102 @@ function Funnel({ steps, names }: { steps: Step[]; names: Record<string, string>
   );
 }
 
+/* ── الصفحات ────────────────────────────────────────────────────────── */
+
 function Pages({ pages, heatHref }: { pages: PageRow[]; heatHref: (key: string) => string }) {
-  if (!pages.length) return <p className="mt-6 text-center text-[0.9375rem] text-muted">مازال حتّى زيارة.</p>;
+  if (!pages.length) return <Empty>مازال حتّى زيارة.</Empty>;
   return (
-    <ul className="mt-1 divide-y divide-line rounded-[1.25rem] bg-surface shadow-card">
-      {pages.map((p) => (
-        <li key={keyOf(p.route, p.screen)}>
-          <Link href={heatHref(keyOf(p.route, p.screen))} className="flex items-center gap-2.5 px-3.5 py-2.5">
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[0.9062rem] font-semibold">{screenName(p.route, p.screen)}</span>
-              <span className="block text-[0.75rem] text-muted tabular-nums">
-                {p.views} مرّة · {p.visits} زيارة · {dur(p.ms)} · خروج <Pct a={p.exits} b={p.views} />
+    <Card pad={false}>
+      <Table head={["الصفحة", "مرّات", "زيارات", "الوقت", "خروج", "ضربات", "بالغشّ"]}>
+        {pages.map((p) => (
+          <Row key={keyOf(p.route, p.screen)} href={heatHref(keyOf(p.route, p.screen))}>
+            <Cell strong>
+              <Bidi className="block truncate">{screenName(p.route, p.screen)}</Bidi>
+              <span className="block truncate text-[0.75rem] font-normal text-faint">
+                <Lat>{p.route}</Lat>
               </span>
-            </span>
-            <span className="flex shrink-0 flex-col items-end gap-0.5 text-[0.75rem]">
-              <span className="num flex items-center gap-1 font-bold">
-                <MousePointerClick className="size-3.5 text-muted" /> {p.taps}
-              </span>
-              {p.rage > 0 && (
-                <span className="num flex items-center gap-1 font-bold text-coral">
-                  <Flame className="size-3.5" /> {p.rage}
-                </span>
-              )}
-            </span>
-            <ChevronLeft className="size-4 shrink-0 text-faint" />
-          </Link>
-        </li>
-      ))}
-    </ul>
+            </Cell>
+            <Cell n strong>
+              {p.views}
+            </Cell>
+            <Cell n>{p.visits}</Cell>
+            <Cell n muted>
+              <D ms={p.ms} />
+            </Cell>
+            <Cell n>
+              <Pct a={p.exits} b={p.views} />
+            </Cell>
+            <Cell n muted>
+              {p.taps}
+            </Cell>
+            <Cell n>{p.rage > 0 ? <span className="font-bold text-coral">{p.rage}</span> : "—"}</Cell>
+          </Row>
+        ))}
+      </Table>
+    </Card>
   );
 }
 
-function Bars({ rows }: { rows: { key: string; label: string; sub?: string; n: number }[] }) {
-  const max = Math.max(1, ...rows.map((r) => r.n));
-  if (!rows.length) return <p className="mt-1.5 text-[0.875rem] text-muted">مازال حتّى شي.</p>;
-  return (
-    <ul className="mt-2 space-y-2">
-      {rows.map((r) => (
-        <li key={r.key}>
-          <div className="flex items-baseline justify-between gap-2 text-[0.8125rem]">
-            <span className="min-w-0 truncate font-semibold">
-              {r.label}
-              {r.sub && <span className="font-normal text-muted"> · {r.sub}</span>}
-            </span>
-            <span className="num shrink-0 font-bold">{r.n}</span>
-          </div>
-          <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-ink/[0.05]">
-            <span className="block h-full rounded-full bg-brand/75" style={{ width: `${(r.n / max) * 100}%` }} />
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
+/* ── منين جاو ───────────────────────────────────────────────────────── */
 
 function Sources({ data }: { data: Traffic }) {
   return (
-    <>
-      <Card title="منين جاو" hint="والإعلان (utm_campaign)">
+    <div className="grid gap-4 2xl:grid-cols-[1.5fr_1fr]">
+      <Card title="منين جاو" hint="والإعلان (utm_campaign)" pad={false}>
         {data.sources.length === 0 ? (
-          <p className="mt-1.5 text-[0.875rem] text-muted">مازال حتّى زيارة.</p>
+          <Empty>مازال حتّى زيارة.</Empty>
         ) : (
-          <ul className="mt-1.5 divide-y divide-line">
+          <Table head={["المصدر", "زيارات", "زوّار", "صفحات", "الوقت", "كونت"]}>
             {data.sources.map((s, i) => (
-              <li key={i} className="py-2">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="min-w-0 truncate text-[0.875rem] font-bold">
-                    {sourceName(s.source)}
-                    {s.campaign && <span className="ms-1.5 text-[0.75rem] font-semibold text-brand">{s.campaign}</span>}
-                  </span>
-                  <span className="num shrink-0 text-[0.875rem] font-bold">{s.visits}</span>
-                </div>
-                <p className="text-[0.75rem] text-muted tabular-nums">
-                  {s.visitors} زائر · {s.pages} صفحة في الزيارة · {dur(s.ms)} · {s.signed} عندهم كونت
-                </p>
-              </li>
+              <Row key={i}>
+                <Cell strong>
+                  <span className="truncate">{sourceName(s.source)}</span>
+                  {s.campaign && (
+                    <span className="block truncate text-[0.75rem] font-semibold text-brand">
+                      <Lat>{s.campaign}</Lat>
+                    </span>
+                  )}
+                </Cell>
+                <Cell n strong>
+                  {s.visits}
+                </Cell>
+                <Cell n>{s.visitors}</Cell>
+                <Cell n muted>
+                  {s.pages}
+                </Cell>
+                <Cell n muted>
+                  <D ms={s.ms} />
+                </Cell>
+                <Cell n>{s.signed > 0 ? <span className="font-bold text-mint">{s.signed}</span> : "—"}</Cell>
+              </Row>
             ))}
-          </ul>
+          </Table>
         )}
       </Card>
-      <Card title="التليفونات" hint="والبراوزر (فيسبوك = من داخل الإبليكاسيون)">
-        <Bars rows={data.devices.map((d, i) => ({ key: String(i), label: DEVICES[d.device] ?? d.device, sub: [d.os, d.browser].filter((x) => x && x !== "?").join(" · "), n: d.visits }))} />
-      </Card>
-      <Card title="البلاد">
-        <Bars rows={data.places.map((p, i) => ({ key: String(i), label: p.city || (p.country === "?" ? "ما نعرفوش" : p.country), sub: p.city ? p.country : undefined, n: p.visits }))} />
-      </Card>
-    </>
+
+      <div className="space-y-4">
+        <Card title="التليفونات" hint="والبراوزر">
+          <Bars rows={data.devices.map((d, i) => ({ key: String(i), label: DEVICES[d.device] ?? d.device, sub: [d.os, d.browser].filter((x) => x && x !== "?").join(" · "), n: d.visits }))} />
+        </Card>
+        <Card title="البلاد">
+          <Bars rows={data.places.map((p, i) => ({ key: String(i), label: p.city || (p.country === "?" ? "ما نعرفوش" : p.country), sub: p.city ? p.country : undefined, n: p.visits }))} />
+        </Card>
+      </div>
+    </div>
   );
 }
 
+/* ── الزيارات ───────────────────────────────────────────────────────── */
+
 function Trail({ trail }: { trail: string[] | null }) {
   const steps = (trail ?? []).map((k) => split(k));
+  if (!steps.length) return null;
   return (
     <span className="mt-1 flex flex-wrap items-center gap-1">
       {steps.map(([r, s], i) => (
         <span key={i} className="flex items-center gap-1">
           {i > 0 && <ChevronLeft className="size-3 text-faint" />}
-          <span className="rounded-full bg-ink/[0.05] px-2 py-0.5 text-[0.6875rem] font-semibold text-body">{screenName(r, s)}</span>
+          <Bidi className="rounded-full bg-canvas px-2 py-0.5 text-[0.6875rem] font-semibold text-body">{screenName(r, s)}</Bidi>
         </span>
       ))}
     </span>
@@ -470,29 +460,40 @@ function Trail({ trail }: { trail: string[] | null }) {
 }
 
 function Visits({ rows, open }: { rows: Traffic["recent"]; open: (id: string) => string }) {
-  if (!rows.length) return <p className="mt-6 text-center text-[0.9375rem] text-muted">مازال حتّى زيارة.</p>;
+  if (!rows.length) return <Empty>مازال حتّى زيارة.</Empty>;
   return (
-    <ul className="mt-1 divide-y divide-line rounded-[1.25rem] bg-surface shadow-card">
-      {rows.map((v) => (
-        <li key={v.id}>
-          <Link href={open(v.id)} className="block px-3.5 py-2.5">
-            <span className="flex items-center gap-2">
-              <span className="shrink-0 text-[0.75rem] font-semibold text-muted tabular-nums">{dayHm(v.started_at)}</span>
-              <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[0.6875rem] font-bold text-brand">{sourceName(v.source)}</span>
-              <span className="min-w-0 flex-1 truncate text-[0.75rem] text-muted">
-                {[DEVICES[v.device ?? ""] ?? v.device, v.browser, v.city || v.country].filter(Boolean).join(" · ")}
+    <Card pad={false}>
+      <Table head={["الزيارة", "منين", "صفحات", "الوقت", "ضربات", ""]}>
+        {rows.map((v) => (
+          <Row key={v.id} href={open(v.id)}>
+            <Cell strong>
+              <span className="flex items-center gap-2">
+                <When className="text-[0.75rem] font-semibold text-muted">{dayHm(v.started_at)}</When>
+                <span className="truncate text-[0.8125rem] text-muted"><Parts of={[DEVICES[v.device ?? ""] ?? v.device, v.browser, v.city || v.country]} /></span>
               </span>
-              {v.signed && <span className="shrink-0 rounded-full bg-mint-soft px-2 py-0.5 text-[0.6875rem] font-bold text-mint">كونت</span>}
-            </span>
-            <Trail trail={v.trail} />
-            <span className="mt-1 block text-[0.6875rem] text-muted tabular-nums">
-              {v.pages} صفحة · {dur(v.ms)} · {v.taps} ضربة{v.rage ? ` · ${v.rage} بالغشّ` : ""}
-              {v.campaign ? ` · ${v.campaign}` : ""}
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+              <Trail trail={v.trail} />
+            </Cell>
+            <Cell n>
+              <Pill tone="brand">{sourceName(v.source)}</Pill>
+              {v.campaign && (
+                <span className="mt-0.5 block text-[0.6875rem] text-muted">
+                  <Lat>{v.campaign}</Lat>
+                </span>
+              )}
+            </Cell>
+            <Cell n>{v.pages}</Cell>
+            <Cell n muted>
+              <D ms={v.ms} />
+            </Cell>
+            <Cell n muted>
+              {v.taps}
+              {v.rage > 0 && <span className="font-bold text-coral"> · {v.rage}</span>}
+            </Cell>
+            <Cell n>{v.signed && <Pill tone="mint">كونت</Pill>}</Cell>
+          </Row>
+        ))}
+      </Table>
+    </Card>
   );
 }
 
@@ -501,85 +502,91 @@ function Visit({ data, back }: { data: VisitDetail; back: string }) {
   const first = data.views[0] ? Date.parse(data.views[0].entered_at) : Date.parse(v.started_at);
   const end = Math.max(Date.parse(v.last_at), ...data.views.map((w) => Date.parse(w.left_at ?? w.entered_at)));
   const facts: [string, React.ReactNode][] = [
-    ["بدات", dayHm(v.started_at)],
-    ["دامت", dur(end - first)],
-    ["منين", [sourceName(v.source), v.campaign, v.content, v.term].filter(Boolean).join(" · ") + (v.fbclid ? " · fbclid" : "")],
-    ["أوّل صفحة", v.landing ?? "—"],
-    ["جا من", v.referrer ? hostOf(v.referrer) : "—"],
-    ["التليفون", [DEVICES[v.device ?? ""] ?? v.device, v.os, v.browser, v.screen].filter(Boolean).join(" · ")],
-    ["البلاد", [v.city, v.country].filter(Boolean).join(" · ") || "—"],
+    ["بدات", <When key="a">{dayHm(v.started_at)}</When>],
+    ["دامت", <D key="b" ms={end - first} />],
+    ["منين", <Parts key="src" of={[sourceName(v.source), v.campaign, v.content, v.term, v.fbclid ? "fbclid" : null]} />],
+    ["أوّل صفحة", v.landing ? <Lat key="c">{v.landing}</Lat> : "—"],
+    ["جا من", v.referrer ? <Lat key="d">{hostOf(v.referrer)}</Lat> : "—"],
+    ["التليفون", <Parts key="dev" of={[DEVICES[v.device ?? ""] ?? v.device, v.os, v.browser]} />],
+    ["الإيكران", v.screen ? <Lat key="e">{v.screen}</Lat> : "—"],
+    ["البلاد", v.city || v.country ? <Parts key="place" of={[v.city, v.country]} /> : "—"],
     ["قبل", data.visits_before ? `جا ${data.visits_before} مرّات قبل` : "أوّل مرّة"],
   ];
   const at = (iso: string) => Date.parse(iso);
-  return (
-    <>
-      <Link href={back} className="mt-1 inline-flex items-center gap-1 text-[0.875rem] font-bold text-brand">
-        <ChevronRight className="size-4" /> الزيارات
-      </Link>
-      <Card>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[0.8125rem]">
-          {facts.map(([k, val]) => (
-            <div key={k} className="contents">
-              <dt className="text-muted">{k}</dt>
-              <dd className="min-w-0 break-words font-semibold" dir="auto">
-                {val}
-              </dd>
-            </div>
-          ))}
-          {v.user_id && (
-            <div className="contents">
-              <dt className="text-muted">الكونت</dt>
-              <dd>
-                <Link href={`/admin/people/${v.user_id}`} className="font-bold text-brand">
-                  شوف الشخص ←
-                </Link>
-              </dd>
-            </div>
-          )}
-        </dl>
-      </Card>
 
-      <ol className="relative mt-3 space-y-2 border-s-2 border-line ps-4">
-        {data.views.map((w, i) => {
-          const until = data.views[i + 1] ? at(data.views[i + 1]!.entered_at) : Infinity;
-          const from = i === 0 ? -Infinity : at(w.entered_at);
-          const sigs = data.signals.filter((s) => at(s.at) >= from && at(s.at) < until);
-          const last = i === data.views.length - 1;
-          return (
-            <li key={i} className="relative">
-              <span className="absolute -start-[1.4rem] top-1.5 size-2.5 rounded-full bg-brand ring-4 ring-canvas" aria-hidden />
-              <p className="flex items-baseline gap-2">
-                <span className="num shrink-0 text-[0.6875rem] text-muted">{hms(w.entered_at)}</span>
-                <b className="min-w-0 flex-1 truncate text-[0.875rem]">{screenName(w.route, w.screen)}</b>
-                <span className="shrink-0 rounded-full bg-ink/[0.06] px-2 py-0.5 text-[0.6875rem] font-bold tabular-nums">{dur(w.ms)}</span>
-              </p>
-              {(w.taps.length > 0 || sigs.length > 0) && (
-                <ul className="mt-1 space-y-0.5 text-[0.75rem]">
-                  {[
-                    ...w.taps.map((tp) => ({ t: at(tp.at), node: <TapLine tap={tp} after={at(tp.at) - at(w.entered_at)} /> })),
-                    ...sigs.map((s) => ({
-                      t: at(s.at),
-                      node: (
-                        <span className={`flex gap-1.5 ${s.name === "form_error" ? "text-coral" : "text-brand-deep"}`}>
-                          <span className="w-9 shrink-0 text-muted tabular-nums">+{Math.max(0, Math.round((at(s.at) - at(w.entered_at)) / 1000))}ث</span>
-                          <b className="shrink-0 font-semibold">{signalName(s.name)}</b>
-                          {s.detail && <span className="min-w-0 truncate">{s.detail}</span>}
-                        </span>
-                      ),
-                    })),
-                  ]
-                    .sort((a, b) => a.t - b.t)
-                    .map((x, j) => (
-                      <li key={j}>{x.node}</li>
-                    ))}
-                </ul>
-              )}
-              {last && <p className="mt-1.5 text-[0.75rem] font-bold text-muted">{w.left_at ? `خرج ${hm(w.left_at)}` : "مازال هوني"}</p>}
-            </li>
-          );
-        })}
-      </ol>
-    </>
+  return (
+    <div className="grid gap-4 xl:grid-cols-[20rem_1fr]">
+      <div className="space-y-4">
+        <Link href={back} className="inline-flex h-9 items-center gap-1 rounded-[0.625rem] border border-line bg-surface px-3 text-[0.8438rem] font-semibold text-body hover:border-brand hover:text-brand">
+          <ChevronRight className="size-4" /> الزيارات
+        </Link>
+        <Card title="الزيارة">
+          <dl className="space-y-1.5 text-[0.8125rem]">
+            {facts.map(([k, val]) => (
+              <div key={k} className="flex justify-between gap-3">
+                <dt className="shrink-0 text-muted">{k}</dt>
+                <dd className="min-w-0 break-words text-end font-semibold text-body">{val}</dd>
+              </div>
+            ))}
+            {v.user_id && (
+              <div className="flex justify-between gap-3 border-t border-line pt-2">
+                <dt className="text-muted">الكونت</dt>
+                <dd>
+                  <Link href={`/admin/people/${v.user_id}`} className="font-bold text-brand hover:underline">
+                    شوف الشخص ←
+                  </Link>
+                </dd>
+              </div>
+            )}
+          </dl>
+        </Card>
+      </div>
+
+      <Card title="خطوة بخطوة" hint={`${data.views.length} صفحة`}>
+        <ol className="relative space-y-3 border-s-2 border-line ps-4">
+          {data.views.map((w, i) => {
+            const until = data.views[i + 1] ? at(data.views[i + 1]!.entered_at) : Infinity;
+            const from = i === 0 ? -Infinity : at(w.entered_at);
+            const sigs = data.signals.filter((s) => at(s.at) >= from && at(s.at) < until);
+            const last = i === data.views.length - 1;
+            return (
+              <li key={i} className="relative">
+                <span className="absolute -start-[1.4rem] top-2 size-2.5 rounded-full bg-brand ring-4 ring-surface" aria-hidden />
+                <p className="flex items-baseline gap-2">
+                  <When className="shrink-0 text-[0.6875rem] text-muted">{hms(w.entered_at)}</When>
+                  <b className="min-w-0 flex-1 truncate text-[0.875rem] text-ink"><Bidi>{screenName(w.route, w.screen)}</Bidi></b>
+                  <span className="shrink-0 rounded-full bg-canvas px-2 py-0.5 text-[0.6875rem] font-bold">
+                    <Num><D ms={w.ms} /></Num>
+                  </span>
+                </p>
+                {(w.taps.length > 0 || sigs.length > 0) && (
+                  <ul className="mt-1 space-y-0.5 text-[0.75rem]">
+                    {[
+                      ...w.taps.map((tp) => ({ t: at(tp.at), node: <TapLine tap={tp} after={at(tp.at) - at(w.entered_at)} /> })),
+                      ...sigs.map((s) => ({
+                        t: at(s.at),
+                        node: (
+                          <span className={`flex gap-1.5 ${s.name === "form_error" ? "text-coral" : "text-brand-deep"}`}>
+                            <When className="w-9 shrink-0 text-muted">+{Math.max(0, Math.round((at(s.at) - at(w.entered_at)) / 1000))}ث</When>
+                            <b className="shrink-0 font-semibold">{signalName(s.name)}</b>
+                            {s.detail && <span className="min-w-0 truncate">{s.detail}</span>}
+                          </span>
+                        ),
+                      })),
+                    ]
+                      .sort((a, b) => a.t - b.t)
+                      .map((x, j) => (
+                        <li key={j}>{x.node}</li>
+                      ))}
+                  </ul>
+                )}
+                {last && <p className="mt-1.5 text-[0.75rem] font-bold text-muted">{w.left_at ? <>خرج <When>{hm(w.left_at)}</When></> : "مازال هوني"}</p>}
+              </li>
+            );
+          })}
+        </ol>
+      </Card>
+    </div>
   );
 }
 
@@ -587,7 +594,7 @@ function Visit({ data, back }: { data: VisitDetail; back: string }) {
 function TapLine({ tap, after }: { tap: Tap; after: number }) {
   return (
     <span className={`flex items-center gap-1.5 ${tap.rage ? "text-coral" : tap.dead ? "text-muted" : "text-body"}`}>
-      <span className="w-9 shrink-0 text-muted tabular-nums">+{Math.max(0, Math.round(after / 1000))}ث</span>
+      <When className="w-9 shrink-0 text-muted">+{Math.max(0, Math.round(after / 1000))}ث</When>
       {tap.rage ? <Flame className="size-3 shrink-0" /> : tap.dead ? <TriangleAlert className="size-3 shrink-0" /> : <MousePointerClick className="size-3 shrink-0 text-faint" />}
       <span className="min-w-0 truncate">{tap.target ?? (tap.dead ? "ضربة في الفارغ" : tap.kind === "backdrop" ? "سكّر النافذة" : "—")}</span>
       {tap.external && <ExternalLink className="size-3 shrink-0 text-brand" />}
@@ -603,46 +610,52 @@ function hostOf(url: string): string {
   }
 }
 
+/* ── الخريطة ────────────────────────────────────────────────────────── */
+
 function HeatTab({ pages, heatKey, heat, pick }: { pages: PageRow[]; heatKey: string; heat: Heat | null; pick: (key: string) => string }) {
   const [route, screen] = split(heatKey);
   const name = screenName(route, screen);
-  // every screen that had visits, the most seen first — and the one asked for even if nobody saw it yet
   const keys = pages.map((p) => keyOf(p.route, p.screen));
   if (!keys.includes(heatKey)) keys.unshift(heatKey);
   return (
-    <>
-      <div className="-mx-1 mt-1 flex gap-1.5 overflow-x-auto px-1 pb-1.5">
-        {keys.map((k) => {
-          const [r, s] = split(k);
-          return (
-            <Link key={k} href={pick(k)} className={`shrink-0 rounded-full px-3 py-1 text-[0.75rem] font-bold ${k === heatKey ? "bg-ink text-white" : "bg-surface text-body shadow-card"}`}>
-              {screenName(r, s)}
-            </Link>
-          );
-        })}
+    <div className="grid gap-4 xl:grid-cols-[1fr_22rem]">
+      <div className="min-w-0 space-y-4">
+        <Card title="الصفحة" pad>
+          <div className="flex flex-wrap gap-1.5">
+            {keys.map((k) => {
+              const [r, s] = split(k);
+              return (
+                <Link key={k} href={pick(k)} className={`inline-flex h-8 items-center rounded-[0.5rem] px-2.5 text-[0.75rem] font-bold transition-colors ${k === heatKey ? "bg-ink text-white" : "border border-line bg-surface text-body hover:border-brand hover:text-brand"}`}>
+                  <Bidi>{screenName(r, s)}</Bidi>
+                </Link>
+              );
+            })}
+          </div>
+        </Card>
+        <Card title="شنوّة ضربو" hint="الأكثر أوّلا" pad={false}>
+          {!heat || heat.top.length === 0 ? (
+            <Empty>حتّى ضربة على الصفحة هاذي.</Empty>
+          ) : (
+            <Table head={["وين ضربو", "مرّات", "بالغشّ"]}>
+              {heat.top.map((x, i) => (
+                <Row key={i}>
+                  <Cell strong={!x.dead} muted={x.dead}>
+                    <span className="block truncate">{x.target === "—" ? (x.dead ? "ضربة في الفارغ" : x.kind === "backdrop" ? "سكّر النافذة" : "—") : x.target}</span>
+                  </Cell>
+                  <Cell n strong>
+                    {x.n}
+                  </Cell>
+                  <Cell n>{x.rage > 0 ? <span className="inline-flex items-center gap-1 font-bold text-coral"><Flame className="size-3.5" />{x.rage}</span> : "—"}</Cell>
+                </Row>
+              ))}
+            </Table>
+          )}
+        </Card>
       </div>
-      <HeatMap key={heatKey} taps={heat?.taps ?? []} shot={slug(route, screen)} label={name} caption={`${heat?.views ?? 0} مرّة · ${dur(heat?.ms ?? 0)} في المعدّل · ${heat?.taps.length ?? 0} ضربة`} />
-      <Card title="شنوّة ضربو" hint="الأكثر أوّلا">
-        {!heat || heat.top.length === 0 ? (
-          <p className="mt-1.5 text-[0.875rem] text-muted">حتّى ضربة على الصفحة هاذي.</p>
-        ) : (
-          <ul className="mt-1.5 space-y-1.5">
-            {heat.top.map((x, i) => (
-              <li key={i} className="flex items-center gap-2 text-[0.8125rem]">
-                <span className="num w-8 shrink-0 text-center font-bold">{x.n}</span>
-                <span className={`min-w-0 flex-1 truncate font-semibold ${x.dead ? "text-muted" : ""}`}>
-                  {x.target === "—" ? (x.dead ? "ضربة في الفارغ" : x.kind === "backdrop" ? "سكّر النافذة" : "—") : x.target}
-                </span>
-                {x.rage > 0 && (
-                  <span className="num flex shrink-0 items-center gap-0.5 text-[0.75rem] font-bold text-coral">
-                    <Flame className="size-3.5" /> {x.rage}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+
+      <Card title={name} hint={`${heat?.views ?? 0} مرّة`} pad>
+        <HeatMap key={heatKey} taps={heat?.taps ?? []} shot={slug(route, screen)} label={name} caption={`${dur(heat?.ms ?? 0)} في المعدّل · ${heat?.taps.length ?? 0} ضربة`} />
       </Card>
-    </>
+    </div>
   );
 }

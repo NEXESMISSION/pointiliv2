@@ -10,7 +10,7 @@ import { markSeen } from "@/app/actions";
  * also remembers it, for a page the browser brings back from its history
  * (it would carry the list as it was).
  */
-export type Note = "coach" | "logo_tip" | "card_hello";
+export type Note = "coach" | "logo_tip" | "card_hello" | "offer";
 
 const here = new Set<string>();
 /** false while the first page wakes up (it shows what the server decided), true after */

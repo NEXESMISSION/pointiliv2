@@ -38,6 +38,8 @@ const shot = async (page, name, wait = 900) => {
   await page.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((e) => (e.style.display = "none")));
   await page.screenshot({ path: `${OUT}/${name}.png` });
   // the page, and every page frame (a <main>, the card questions' form): none may hold more than the screen
+  // — except the founder's console, which is a desk, not a phone screen: it scrolls on purpose
+  if (page.url().includes("/admin")) return void console.log("  ·", name, "(console: scrolls on purpose)");
   const over = await page.evaluate(() =>
     Math.max(document.documentElement.scrollHeight - innerHeight, ...[...document.querySelectorAll("main, body > form, main form.h-dvh")].map((m) => m.scrollHeight - m.clientHeight), 0),
   );
@@ -121,11 +123,12 @@ try {
   await o.getByText("الكارط متاعك حاضرة").waitFor();
   await shot(o, "04-owner-card", 1200);
   // the button breathes: Playwright never finds it "stable", so the click is forced
-  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), o.locator('button[type="submit"]').click({ force: true })]);
-  // the first code comes with a bravo, then a tip: try it with another phone
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }), o.locator('button[type="submit"]').click({ force: true })]);
+  // the card is ready: the bravo meets them on their own home and asks for one
+  // thing — press «ورّي الكود». That is what opens the counter, and its note.
   await o.getByText("برافو").waitFor({ timeout: 30000 });
   await shot(o, "05a-bravo", 1400);
-  await o.getByRole("button", { name: "ورّيني" }).click();
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), o.getByRole("button", { name: "ورّي الكود" }).click()]);
   await o.getByText("عندك تليفون آخر").waitFor({ timeout: 20000 });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05b-tip", 900);
@@ -141,8 +144,6 @@ try {
   await shot(o, "05-counter", 1200);
   await o.reload({ waitUntil: "load" });
   await never(o, "the bravo (reload)", o.getByText("برافو"));
-  await o.goto(BASE + "/shop/qr?welcome=1", { waitUntil: "load" });
-  await never(o, "the bravo (its old address)", o.getByText("برافو"));
   await o.goto(BASE + "/shop/qr", { waitUntil: "load" });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
 
@@ -215,6 +216,13 @@ try {
   await shot(o, "17-owner-home");
   await o.reload({ waitUntil: "load" });
   await never(o, "the logo tip (reload)", o.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
+  // one note a visit: after the logo tip, the offer (a new shop's first 48 hours), then the news
+  const offer = o.getByRole("dialog", { name: "عام كامل + 3 شهور بلاش" });
+  await offer.waitFor({ timeout: 20000 });
+  await shot(o, "17f-offer", 1300);
+  await o.getByRole("button", { name: "من بعد" }).click();
+  await o.reload({ waitUntil: "load" });
+  await never(o, "the offer (reload)", offer, 1800);
   const news = o.getByRole("dialog", { name: NEWS_TITLE });
   await news.waitFor({ timeout: 20000 });
   await shot(o, "17e-news", 700);
@@ -222,6 +230,9 @@ try {
   await o.waitForURL("**/shop/setup?edit=1", { timeout: 20000 });
   await o.goto(BASE + "/shop", { waitUntil: "load" });
   await never(o, "the news (back home)", news);
+  // the welcome's own address, now that every note on this screen has had its turn
+  await o.goto(BASE + "/shop?welcome=1", { waitUntil: "load" });
+  await never(o, "the bravo (its old address)", o.getByText("برافو"));
   {
     // the same owner on another phone: the notes were written on the person, not on the first phone
     const other = await (await browser.newContext(phone)).newPage();
@@ -231,14 +242,19 @@ try {
     await Promise.all([other.waitForURL("**/shop", { timeout: 60000 }), other.locator('button[type="submit"]').click()]);
     await never(other, "the logo tip (another phone)", other.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
     await never(other, "the news (another phone)", other.getByRole("dialog", { name: NEWS_TITLE }), 500);
-    await other.goto(BASE + "/shop/qr?welcome=1", { waitUntil: "load" });
+    await never(other, "the offer (another phone)", other.getByRole("dialog", { name: "عام كامل + 3 شهور بلاش" }), 300);
+    await other.goto(BASE + "/shop?welcome=1", { waitUntil: "load" });
     await never(other, "the bravo (another phone)", other.getByText("برافو"));
     await other.context().close();
   }
   // «عندك سؤال؟»: call, WhatsApp, the videos
+  // the dev server's badge sits on this corner (not in production)
+  await o.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((e) => (e.style.display = "none")));
   await o.getByRole("button", { name: "عندك سؤال؟" }).click();
   await o.getByRole("dialog", { name: "عندك سؤال؟" }).waitFor();
   await shot(o, "17c-help", 600);
+  await o.goto(BASE + "/shop/stats", { waitUntil: "load" });
+  await shot(o, "18-owner-stats");
   await o.goto(BASE + "/shop/customers", { waitUntil: "load" });
   await shot(o, "19-owner-customers");
   // changing the card: one line says what happens to the customers on their way
@@ -287,13 +303,15 @@ try {
   await a.getByRole("button", { name: "المحل (الإسم واللوغو)" }).click();
   await a.locator('input[name="cta_label"]').fill("جرّبها توّا");
   await shot(a, "27c-news-new", 400);
-  await a.goto(`${BASE}/admin`, { waitUntil: "load" });
+  await a.goto(`${BASE}/admin/shops`, { waitUntil: "load" });
+  await shot(a, "21-admin-shops");
   await a.locator('a[href^="/admin/shops/"]').first().click();
   await a.waitForURL("**/admin/shops/**");
-  await shot(a, "21-admin-shop");
-  await a.goto(BASE + "/admin?tab=people", { waitUntil: "load" });
+  await shot(a, "21b-admin-shop");
+  await a.goto(BASE + "/admin/people", { waitUntil: "load" });
   await shot(a, "22-admin-people");
-  await a.goto(BASE + "/admin?tab=people&q=" + encodeURIComponent("سامي"), { waitUntil: "load" });
+  // a customer, not an admin: only they have the password and delete tools
+  await a.goto(BASE + "/admin/people?q=" + encodeURIComponent("سامي"), { waitUntil: "load" });
   await a.locator('a[href^="/admin/people/"]').first().click();
   await a.waitForURL("**/admin/people/**");
   await shot(a, "23-admin-person");

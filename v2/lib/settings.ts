@@ -4,7 +4,9 @@ import { service } from "@/lib/supabase";
 
 /** A YouTube link as the app plays it: the video's id, and whether it stands up (a Short). */
 export type Video = { id: string; label: string; vertical: boolean; url: string };
-export type Settings = { supportPhone: string | null; video1: Video | null; video2: Video | null; raw: Record<string, string> };
+/** Where the owners pay: the card page (Dodo Payments), D17, the bank account, the post office. */
+export type PayDetails = { card: string | null; d17: string | null; name: string | null; bank: string | null; rib: string | null; mandat: string | null };
+export type Settings = { supportPhone: string | null; video1: Video | null; video2: Video | null; pay: PayDetails; raw: Record<string, string> };
 
 /** youtu.be/ID, youtube.com/watch?v=ID, /shorts/ID, /embed/ID, /live/ID → ID (11 letters), else null. */
 export function youtubeId(url: string): string | null {
@@ -58,6 +60,14 @@ export async function getSettings(fresh = false): Promise<Settings> {
     supportPhone: phone(raw.support_phone) ?? phone(process.env.SUPPORT_WHATSAPP) ?? phone(process.env.ADMIN_PHONES?.split(",")[0]),
     video1: video(raw.video1_url, raw.video1_label, "كيفاش تخدم Pointili؟"),
     video2: video(raw.video2_url, raw.video2_label, "فيديو ثاني"),
+    pay: {
+      card: /^https:\/\//.test(raw.pay_card_url ?? "") ? raw.pay_card_url! : null,
+      d17: raw.pay_d17?.trim() || null,
+      name: raw.pay_name?.trim() || null,
+      bank: raw.pay_bank?.trim() || null,
+      rib: raw.pay_rib?.trim() || null,
+      mandat: raw.pay_mandat?.trim() || null,
+    },
     raw,
   };
 }

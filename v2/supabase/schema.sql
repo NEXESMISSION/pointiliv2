@@ -30,6 +30,25 @@ create table if not exists public.people (
   created_at  timestamptz not null default now()
 );
 
+-- every person's own code: 6 digits, shown with its QR in the wallet — the
+-- shop types it (or scans it) to give a tampon; and the founder's test
+-- accounts, kept out of the numbers
+alter table public.people add column if not exists code text;
+alter table public.people add column if not exists is_tester boolean not null default false;
+create unique index if not exists people_code_idx on public.people (code);
+create or replace function public.new_person_code() returns text
+language plpgsql volatile set search_path = '' as $$
+declare v text;
+begin
+  loop
+    v := lpad((floor(random() * 1000000))::int::text, 6, '0');
+    exit when not exists (select 1 from public.people where code = v);
+  end loop;
+  return v;
+end $$;
+alter table public.people alter column code set default public.new_person_code();
+update public.people set code = public.new_person_code() where code is null;
+
 -- the one-time notes this person has seen (the bravo after the first card,
 -- the card's hello, the logo tip): kept here, not on the phone, so none ever
 -- shows twice — not after a reload, not on another phone
@@ -47,6 +66,27 @@ create table if not exists public.shops (
   paused      boolean not null default false,
   created_at  timestamptz not null default now()
 );
+
+-- the year paid for: until when (null: not paid yet); the offer's clock starts the first time the owner sees it
+alter table public.shops add column if not exists paid_until timestamptz;
+alter table public.shops add column if not exists offer_at timestamptz;
+
+-- an owner's payment: the way they chose, then the founder's word (paid or not);
+-- 15 months for the price of 12 when it came within 48 hours of opening the shop
+create table if not exists public.payments (
+  id          uuid primary key default gen_random_uuid(),
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  method      text not null,
+  amount      int not null default 120,
+  months      int not null default 12 check (months between 1 and 36),
+  status      text not null default 'pending' check (status in ('pending', 'paid', 'refused')),
+  created_at  timestamptz not null default now(),
+  decided_at  timestamptz
+);
+create index if not exists payments_shop_idx on public.payments (shop_id, created_at desc);
+-- the ways: the five, and "contact" (the owner called or wrote on WhatsApp to pay)
+alter table public.payments drop constraint if exists payments_method_check;
+alter table public.payments add constraint payments_method_check check (method in ('card', 'd17', 'virement', 'versement', 'mandat', 'contact'));
 
 -- the shop's logo (optional): a picture in the public «logos» box, set by the owner
 alter table public.shops add column if not exists logo text check (logo is null or (logo ~ '^https://' and char_length(logo) <= 300));
@@ -110,6 +150,11 @@ create table if not exists public.settings (
   value       text not null default '' check (char_length(value) <= 300),
   updated_at  timestamptz not null default now()
 );
+-- the founder's payment details (where the owners pay), kept with the other settings
+alter table public.settings drop constraint if exists settings_key_check;
+alter table public.settings add constraint settings_key_check check (key in (
+  'support_phone', 'video1_url', 'video1_label', 'video2_url', 'video2_label',
+  'pay_card_url', 'pay_d17', 'pay_name', 'pay_bank', 'pay_rib', 'pay_mandat'));
 
 -- ═══ traffic: who came, from where, what they did, how long, where they left
 -- a visit is one sitting (30 minutes of quiet ends it); a view is one screen
@@ -213,6 +258,10 @@ create table if not exists public.news_views (
   primary key (news_id, person_id)
 );
 create index if not exists news_views_person_idx on public.news_views (person_id, seen_at desc);
+-- a small tour: a few steps, each a picture, a title and a few words (the card's button comes last)
+alter table public.news add column if not exists steps jsonb check (steps is null or jsonb_typeof(steps) = 'array');
+-- for the test accounts only (a news piece tried before it goes to everyone)
+alter table public.news add column if not exists only_testers boolean not null default false;
 
 -- cards and gifts from before cards were promises
 update public.cards c set goal = s.goal, gift = s.gift from public.shops s where s.id = c.shop_id and c.goal is null and s.goal is not null;
@@ -221,7 +270,7 @@ update public.moments m set gift = c.gift from public.cards c where c.id = m.car
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -326,7 +375,7 @@ begin
   end if;
   select * into s from public.shops where owner_id = v_uid;
   return jsonb_build_object(
-    'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen),
+    'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
       'signal', s.signal, 'logo', s.logo) end);
@@ -337,7 +386,7 @@ create or replace function public.see(p_key text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then return public.err('not_signed_in'); end if;
-  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello') then return public.err('invalid'); end if;
+  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer') then return public.err('invalid'); end if;
   update public.people set seen = array_append(seen, p_key) where id = auth.uid() and not (p_key = any (seen));
   return jsonb_build_object('ok', true);
 end $$;
@@ -435,6 +484,40 @@ begin
                        order by m.created_at desc)
       from (select * from public.moments where shop_id = s.id order by created_at desc limit 8) m
       join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb));
+end $$;
+
+-- the owner's numbers: today, this week, all of it, the last seven days one
+-- by one, and the customers who come back the most
+create or replace function public.shop_stats() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return jsonb_build_object('ok', true,
+    'customers',  (select count(*) from public.cards where shop_id = s.id),
+    'stamps',     (select count(*) from public.moments where shop_id = s.id and kind = 'stamp'),
+    'today',      (select count(*) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
+    'week',       (select count(*) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today() - interval '6 days'),
+    'given',      (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is not null),
+    'waiting',    (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is null),
+    -- a customer who came back: more than one tampon on their card
+    'returning',  (select count(*) from public.cards where shop_id = s.id and stamps > 1),
+    'new_week',   (select count(*) from public.cards where shop_id = s.id and created_at >= public.tunis_today() - interval '6 days'),
+    'days', coalesce((
+      select jsonb_agg(jsonb_build_object('day', d::date, 'stamps', (
+        select count(*) from public.moments m
+        where m.shop_id = s.id and m.kind = 'stamp'
+          and m.created_at >= d and m.created_at < d + interval '1 day')) order by d)
+      from generate_series(public.tunis_today() - interval '6 days', public.tunis_today(), interval '1 day') d), '[]'::jsonb),
+    'top', coalesce((
+      select jsonb_agg(x) from (
+        select jsonb_build_object('name', nullif(split_part(p.name, ' ', 1), ''), 'stamps', c.stamps,
+                                  'goal', coalesce(c.goal, s.goal), 'gifts', c.gifts, 'last_at', c.last_at) as x
+        from public.cards c left join public.people p on p.id = c.user_id
+        where c.shop_id = s.id
+        order by c.stamps desc, c.last_at desc nulls last
+        limit 8) q), '[]'::jsonb));
 end $$;
 
 -- the owner's customers, the latest visit first
@@ -759,6 +842,153 @@ begin
       from public.cards c join public.shops s on s.id = c.shop_id where c.user_id = p.id), '[]'::jsonb));
 end $$;
 
+-- ═══ the shop gives the tampon itself ══════════════════════════════════════
+-- the customer behind a code (typed, or scanned from their wallet) or a
+-- phone number: 6 digits are a code, 8 (or 216 + 8) a number
+create or replace function public.person_of(p_who text) returns uuid
+language plpgsql stable security definer set search_path = '' as $$
+declare d text := regexp_replace(coalesce(p_who, ''), '\D', '', 'g'); v uuid;
+begin
+  if length(d) = 6 then select id into v from public.people where code = d;
+  elsif length(d) = 8 then select id into v from public.people where phone = '+216' || d;
+  elsif length(d) = 11 and d like '216%' then select id into v from public.people where phone = '+' || d;
+  end if;
+  return v;
+end $$;
+
+-- who a code is, for the shop about to give them a tampon: the first name and their card here
+create or replace function public.customer_at(p_who text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_uid uuid := auth.uid(); s public.shops%rowtype; v_person uuid; c public.cards%rowtype; v_name text;
+begin
+  if v_uid is null then return public.err('not_signed_in'); end if;
+  select * into s from public.shops where owner_id = v_uid;
+  if s.id is null then return public.err('no_shop'); end if;
+  if not public.try_once('look:' || v_uid, 60, 10) then return public.err('too_many'); end if;
+  v_person := public.person_of(p_who);
+  if v_person is null then return public.err('unknown'); end if;
+  if v_person = v_uid then return public.err('own_shop'); end if;
+  select split_part(coalesce(nullif(trim(name), ''), ''), ' ', 1) into v_name from public.people where id = v_person;
+  select * into c from public.cards where shop_id = s.id and user_id = v_person;
+  return jsonb_build_object('ok', true, 'name', nullif(v_name, ''),
+    'card', case when c.id is null then null else public.card_view(c.id) end);
+end $$;
+
+-- the tampon, given by the shop: the same rules as a scan (one an hour, the
+-- card's promise, the gift at the goal); thirty tries in ten minutes at most
+create or replace function public.give_stamp(p_who text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_uid uuid := auth.uid();
+  s public.shops%rowtype;
+  c public.cards%rowtype;
+  v_person uuid;
+  v_name text;
+  v_gift boolean := false;
+  v_waiting boolean;
+begin
+  if v_uid is null then return public.err('not_signed_in'); end if;
+  select * into s from public.shops where owner_id = v_uid;
+  if s.id is null then return public.err('no_shop'); end if;
+  if s.goal is null then return public.err('no_card'); end if;
+  if s.paused then return public.err('paused'); end if;
+  if not public.try_once('give:' || v_uid, 30, 10) then return public.err('too_many'); end if;
+  v_person := public.person_of(p_who);
+  if v_person is null then return public.err('unknown'); end if;
+  if v_person = v_uid then return public.err('own_shop'); end if;
+  select split_part(coalesce(nullif(trim(name), ''), ''), ' ', 1) into v_name from public.people where id = v_person;
+
+  insert into public.cards (shop_id, user_id, goal, gift) values (s.id, v_person, s.goal, s.gift) on conflict (shop_id, user_id) do nothing;
+  select * into c from public.cards where shop_id = s.id and user_id = v_person for update;
+  if c.last_at is not null and c.last_at > now() - interval '60 minutes' then
+    return public.err('too_soon', jsonb_build_object('next_at', c.last_at + interval '60 minutes', 'name', nullif(v_name, ''), 'card', public.card_view(c.id)));
+  end if;
+
+  v_waiting := public.waits(c.id);
+  update public.cards set
+    goal = case when (stamps = 0 and not v_waiting) or goal is null then s.goal else goal end,
+    gift = case when (stamps = 0 and not v_waiting) or gift is null then s.gift else gift end,
+    stamps = stamps + 1, last_at = now()
+  where id = c.id returning * into c;
+  insert into public.moments (shop_id, card_id, kind) values (s.id, c.id, 'stamp');
+  if c.stamps >= c.goal and not v_waiting then
+    insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
+    v_gift := true;
+  end if;
+  return jsonb_build_object('ok', true, 'gift', v_gift, 'name', nullif(v_name, ''), 'card', public.card_view(c.id));
+end $$;
+
+-- ═══ paying for the year ═══════════════════════════════════════════════════
+-- the shop's year: paid until when, the offer's end (48 hours from the first
+-- time the owner sees it: 3 more months), and the last payment asked
+create or replace function public.my_payment() returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_uid uuid := auth.uid(); s public.shops%rowtype; y public.payments%rowtype;
+begin
+  if v_uid is null then return null; end if;
+  select * into s from public.shops where owner_id = v_uid;
+  if s.id is null then return null; end if;
+  if s.offer_at is null and (s.paid_until is null or s.paid_until < now()) then
+    update public.shops set offer_at = now() where id = s.id returning * into s;
+  end if;
+  select * into y from public.payments where shop_id = s.id order by created_at desc limit 1;
+  return jsonb_build_object(
+    'paid_until', s.paid_until,
+    'paid', s.paid_until is not null and s.paid_until > now(),
+    'offer_until', s.offer_at + interval '48 hours',
+    'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
+    'last', case when y.id is null then null else jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'status', y.status, 'at', y.created_at) end);
+end $$;
+
+-- the owner chose a way to pay and says it is sent: one waiting at a time
+create or replace function public.pay_request(p_method text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_uid uuid := auth.uid(); s public.shops%rowtype; v_months int; v_id uuid;
+begin
+  if v_uid is null then return public.err('not_signed_in'); end if;
+  select * into s from public.shops where owner_id = v_uid;
+  if s.id is null then return public.err('no_shop'); end if;
+  if p_method is null or p_method not in ('card', 'd17', 'virement', 'versement', 'mandat', 'contact') then return public.err('invalid'); end if;
+  v_months := case when s.offer_at is not null and now() <= s.offer_at + interval '48 hours' then 15 else 12 end;
+  select id into v_id from public.payments where shop_id = s.id and status = 'pending' order by created_at desc limit 1;
+  if v_id is null then
+    insert into public.payments (shop_id, method, months) values (s.id, p_method, v_months) returning id into v_id;
+  else
+    update public.payments set method = p_method, created_at = now() where id = v_id;
+  end if;
+  return jsonb_build_object('ok', true, 'id', v_id, 'months', v_months);
+end $$;
+
+-- the founder's list: every payment asked, the newest first, with the shop and its owner
+create or replace function public.admin_payments() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'id', y.id, 'method', y.method, 'amount', y.amount, 'months', y.months, 'status', y.status, 'at', y.created_at, 'decided_at', y.decided_at,
+      'shop', jsonb_build_object('id', s.id, 'name', s.name, 'paid_until', s.paid_until, 'logo', s.logo, 'kind', s.kind, 'color', s.color),
+      'owner', jsonb_build_object('name', p.name, 'phone', p.phone, 'tester', p.is_tester)) order by y.created_at desc)
+    from public.payments y join public.shops s on s.id = y.shop_id left join public.people p on p.id = s.owner_id
+  ), '[]'::jsonb);
+end $$;
+
+-- the founder's word on a payment: paid (the shop's year starts, or goes on) or not
+create or replace function public.admin_payment_decide(p_id uuid, p_paid boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare y public.payments%rowtype;
+begin
+  perform public.require_admin();
+  select * into y from public.payments where id = p_id for update;
+  if y.id is null then return public.err('invalid'); end if;
+  if y.status <> 'pending' then return public.err('done'); end if;
+  update public.payments set status = case when p_paid then 'paid' else 'refused' end, decided_at = now() where id = p_id;
+  if p_paid then
+    update public.shops set paid_until = greatest(coalesce(paid_until, now()), now()) + make_interval(months => y.months) where id = y.shop_id;
+  end if;
+  return jsonb_build_object('ok', true);
+end $$;
+
 -- ═══ news: the owner's side ════════════════════════════════════════════════
 -- the one piece of news to show this owner now, or null: live, published
 -- after their shop opened (a new owner gets no old news), never shown to
@@ -772,10 +1002,11 @@ begin
   if v_opened is null then return null; end if;
   if exists (select 1 from public.news_views where person_id = v_uid and seen_at >= public.tunis_today()) then return null; end if;
   return (
-    select jsonb_build_object('id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href)
+    select jsonb_build_object('id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href, 'steps', n.steps)
     from public.news n
     where n.active and n.published_at <= now() and n.published_at > v_opened
       and (n.only_people is null or v_uid = any (n.only_people))
+      and (not n.only_testers or exists (select 1 from public.people t where t.id = v_uid and t.is_tester))
       and not exists (select 1 from public.news_views w where w.news_id = n.id and w.person_id = v_uid)
     order by n.published_at desc
     limit 1);
@@ -808,21 +1039,22 @@ end $$;
 -- published (the founder's own shops too, marked admin — left out of the counts)
 create or replace function public.news_audience(p_id uuid) returns table (person_id uuid, name text, phone text, shop text, admin boolean)
 language sql stable security definer set search_path = '' as $$
-  select p.id, p.name, p.phone, s.name, p.is_admin
+  select p.id, p.name, p.phone, s.name, p.is_admin or p.is_tester
   from public.news n
   join public.shops s on s.created_at < n.published_at
   join public.people p on p.id = s.owner_id
-  where n.id = p_id and (n.only_people is null or p.id = any (n.only_people))
+  where n.id = p_id and (n.only_people is null or p.id = any (n.only_people)) and (not n.only_testers or p.is_tester)
 $$;
 
-create or replace function public.admin_news_save(p_title text, p_body text, p_icon text, p_cta_label text, p_cta_href text, p_only uuid[] default null) returns jsonb
+drop function if exists public.admin_news_save(text, text, text, text, text, uuid[]);
+create or replace function public.admin_news_save(p_title text, p_body text, p_icon text, p_cta_label text, p_cta_href text, p_only uuid[] default null, p_steps jsonb default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare v_id uuid;
 begin
   perform public.require_admin();
-  insert into public.news (title, body, icon, cta_label, cta_href, only_people)
+  insert into public.news (title, body, icon, cta_label, cta_href, only_people, steps)
   values (trim(p_title), coalesce(trim(p_body), ''), coalesce(nullif(trim(p_icon), ''), 'sparkles'),
-          nullif(trim(coalesce(p_cta_label, '')), ''), nullif(trim(coalesce(p_cta_href, '')), ''), p_only)
+          nullif(trim(coalesce(p_cta_label, '')), ''), nullif(trim(coalesce(p_cta_href, '')), ''), p_only, p_steps)
   returning id into v_id;
   return jsonb_build_object('ok', true, 'id', v_id);
 exception when check_violation then
@@ -835,7 +1067,7 @@ begin
   perform public.require_admin();
   return coalesce((
     select jsonb_agg(jsonb_build_object(
-      'id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href,
+      'id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href, 'steps', n.steps,
       'active', n.active, 'published_at', n.published_at, 'only', n.only_people is not null,
       'audience', (select count(*) from public.news_audience(n.id) a where not a.admin),
       'seen', (select count(*) from public.news_audience(n.id) a join public.news_views w on w.news_id = n.id and w.person_id = a.person_id where not a.admin),
@@ -852,7 +1084,7 @@ begin
   perform public.require_admin();
   return (
     select jsonb_build_object(
-      'id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href,
+      'id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href, 'steps', n.steps,
       'active', n.active, 'published_at', n.published_at, 'only', n.only_people is not null,
       'people', coalesce((
         select jsonb_agg(jsonb_build_object('id', a.person_id, 'name', a.name, 'phone', a.phone, 'shop', a.shop, 'admin', a.admin,
@@ -1138,15 +1370,17 @@ where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
   and not (p.seen @> case when s.goal is not null then array['card_hello', 'coach', 'logo_tip'] else array['card_hello', 'logo_tip'] end);
 
 grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text),
-  public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(),
+  public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text), public.admin_person(uuid),
   public.admin_set_setting(text, text), public.admin_traffic(int, boolean), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean),
   public.news_next(), public.news_seen(uuid), public.news_clicked(uuid),
-  public.admin_news_save(text, text, text, text, text, uuid[]), public.admin_news_list(), public.admin_news(uuid),
-  public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid) to authenticated;
+  public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),
+  public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),
+  public.customer_at(text), public.give_stamp(text),
+  public.my_payment(), public.pay_request(text), public.admin_payments(), public.admin_payment_decide(uuid, boolean) to authenticated;
 grant execute on all functions in schema public to service_role;
 
 -- nothing a visitor without an account can call

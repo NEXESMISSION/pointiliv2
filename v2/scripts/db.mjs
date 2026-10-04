@@ -49,6 +49,9 @@ async function logosBucket() {
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const t0 = Date.now();
   await sql(readFileSync("supabase/schema.sql", "utf8"));
+  // a brand-new function is in the database but not yet in the API's own list
+  // of what it will serve: without this, the app gets a 404 from it for a while
+  await sql("select pg_notify('pgrst', 'reload schema')");
   console.log(`✓ schema.sql (${Date.now() - t0} ms)`);
   await logosBucket();
 

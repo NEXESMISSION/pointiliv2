@@ -20,6 +20,7 @@ const POPULAR = ["cafe", "juice", "bakery", "pastry", "restaurant", "fastfood", 
  */
 export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?: string; kind?: string; logo?: string | null; next?: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(openShop, null);
+  const [logoBusy, setLogoBusy] = useState(false);
   const [shopName, setShopName] = useState(name);
   const [mark, setMark] = useState(logo ?? "");
   const [logoError, setLogoError] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?:
             aria-invalid={state?.field === "name"}
             className={`block h-[3.5rem] min-w-0 flex-1 px-4 text-[17px] text-ink outline-none placeholder:text-faint ${boxLook} ${boxFocus}`}
           />
-          <LogoPicker value={mark} onChange={setMark} onError={setLogoError} />
+          <LogoPicker value={mark} onChange={setMark} onError={setLogoError} onBusy={setLogoBusy} />
         </div>
         {state?.field === "name" && state.error && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{state.error}</span>}
         {logoError && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{logoError}</span>}
@@ -88,8 +89,8 @@ export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?:
       {next && <input type="hidden" name="next" value={next} />}
       {state?.error && !state.field && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
       <div className="mt-[3.5dvh]">
-        <Btn type="submit" disabled={pending}>
-          {pending ? t.checking : t.next}
+        <Btn type="submit" disabled={pending || logoBusy}>
+          {pending ? t.checking : logoBusy ? t.logoWait : t.next}
         </Btn>
       </div>
     </form>

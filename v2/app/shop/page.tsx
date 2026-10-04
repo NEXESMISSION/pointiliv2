@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, QrCode } from "lucide-react";
+import { ChevronLeft, QrCode, ScanLine } from "lucide-react";
 import { GiveButton } from "@/components/GiveButton";
 import { HelpButton } from "@/components/Help";
 import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
+import { OfferPopup, PayBanner, type Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
+import { ShopWelcome } from "@/components/ShopWelcome";
 import { Icon3D } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import type { News } from "@/lib/news";
@@ -28,27 +30,31 @@ const time = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour:
 
 /**
  * The owner's home, on one screen whatever the phone, and filling it: the
- * shop, the code one tap away (bigger on a taller phone), the gifts to hand
+ * shop, the code one tap away (bigger on a taller phone) with the camera for
+ * a customer's own code beside it, the gifts to hand
  * over, today in three numbers, the four places to go — and who came lately
  * in a box that takes all the room left, scrolling inside it. Before the
  * first customer, that box says how it goes, in three steps.
  */
-export default async function ShopHome() {
+export default async function ShopHome({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const me = await getMe();
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
-  const [home, help, news] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next")]);
-  // one popup at a time: a new owner's logo tip first, the news on a later visit
-  const logoTip = !(me.seen ?? []).includes("logo_tip");
+  const [home, help, news, pay, { welcome }] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), searchParams]);
+  const seen = me.seen ?? [];
+  const paid = !!pay?.paid;
+  const offer = !!pay?.offer;
+  // one note a visit, and the brand-new owner's welcome comes before them all:
+  // on their first visit the logo tip and the offer are both unseen too, and
+  // two overlays on one screen is one too many
+  const coachNow = welcome === "1" && !seen.includes("coach");
+  const logoTip = !coachNow && !seen.includes("logo_tip");
+  const offerNote = !coachNow && !logoTip && offer && !seen.includes("offer") && !(pay?.last?.status === "pending" && pay.last.method !== "contact");
   const first = (me.name ?? "").split(" ")[0];
-  const tiles = [
-    { icon: "fire", value: home?.today ?? 0, label: t.numToday },
-    { icon: "people", value: home?.visitors_today ?? 0, label: t.numVisitors },
-    { icon: "gift", value: home?.given_today ?? 0, label: t.numGifts },
-  ];
   const options = [
+    { href: "/shop/stats", mark: <Icon3D name="chart" size={30} />, label: t.statsTitle },
     { href: "/shop/customers", mark: <Icon3D name="people" size={30} />, label: t.customersTitle },
     { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
     {
@@ -65,9 +71,12 @@ export default async function ShopHome() {
     { href: "/me", mark: <Icon3D name="wave" size={30} />, label: t.account },
   ];
   const recent = home?.recent ?? [];
+  // more than two gifts waiting: they scroll inside their own box
+  const manyGifts = (home?.waiting.length ?? 0) > 2;
 
   return (
-    <main className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden px-5">
+    // nothing is clipped: on a phone too short for it all, the page scrolls as a whole
+    <main className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col px-5">
       <header className="flex items-center gap-3 pt-3">
         <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-full shadow-card" style={{ background: shop.color }}>
           <ShopMark shop={shop} size={30} />
@@ -85,14 +94,16 @@ export default async function ShopHome() {
       </header>
 
       {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.875rem] font-semibold text-coral">{t.pausedBanner}</p>}
+      {!paid && pay && <PayBanner pay={pay} offer={offer} />}
 
-      {/* the one thing an owner opens all day: bigger when the phone is taller */}
+      {/* the one thing an owner opens all day — and beside it, the camera for a customer's own code */}
+      <div className="mt-[2.2dvh] flex shrink-0 gap-2">
       <Link
         href="/shop/qr"
-        className="press relative mt-[2.2dvh] flex shrink-0 items-center gap-4 overflow-hidden rounded-[1.625rem] px-5 py-[clamp(1rem,2.9dvh,1.75rem)] text-white"
+        className="press relative flex min-w-0 flex-1 items-center gap-3 overflow-hidden rounded-[1.625rem] px-4 py-[clamp(0.875rem,2.6dvh,1.75rem)] text-white"
         style={{
           background: `linear-gradient(150deg, color-mix(in oklab, ${shop.color} 72%, white) -20%, ${shop.color} 45%, color-mix(in oklab, ${shop.color} 68%, black) 120%)`,
-          boxShadow: `0 18px 40px -18px color-mix(in oklab, ${shop.color} 80%, black)`,
+          boxShadow: `0 6px 14px -10px color-mix(in oklab, ${shop.color} 70%, black)`,
         }}
       >
         <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_80%_at_0%_0%,rgb(255_255_255/0.28),transparent_55%)]" aria-hidden />
@@ -101,13 +112,24 @@ export default async function ShopHome() {
         </span>
         <span className="relative min-w-0">
           <span className="block text-[1.375rem] font-bold leading-tight">{t.showCode}</span>
-          <span className="block truncate text-[0.8438rem] text-white/85">{t.showCodeHint}</span>
+          <span className="line-clamp-2 text-balance text-[0.8125rem] leading-snug text-white/85">{t.showCodeHint}</span>
         </span>
       </Link>
+      <Link href="/shop/collect?by=scan" className="press flex w-[5.5rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-[1.625rem] bg-surface shadow-card" aria-label={t.collectScan}>
+        <ScanLine className="size-8" style={{ color: shop.color }} strokeWidth={2.2} />
+        <span className="text-[0.875rem] font-bold">{t.collectScanShort}</span>
+      </Link>
+      </div>
 
-      {/* gifts to hand over: two show, more scroll inside */}
+      {/* gifts to hand over: up to two show whole; more scroll inside a box (with
+          room inside it for the cards' shadows: no pale band), cut through the
+          middle of a card so it reads as a list — one and a half on a short
+          phone, two and a bit on a tall one */}
       {home && home.waiting.length > 0 && (
-        <div className="mt-3 max-h-[8.5rem] shrink-0 space-y-2 overflow-y-auto overscroll-contain">
+        <div
+          data-list={manyGifts ? "" : undefined}
+          className={`shrink-0 space-y-2 ${manyGifts ? "-mx-3 -mb-3 mt-2 max-h-[7.25rem] overflow-y-auto overscroll-contain px-3 pb-3 pt-1 [@media(min-height:700px)]:max-h-[11.5rem]" : "mt-3"}`}
+        >
           {home.waiting.map((g) => (
             <div key={g.id} className="flex animate-rise items-center gap-3 rounded-[1.25rem] bg-surface p-3 shadow-card">
               <Icon3D name="gift" size={34} className="shrink-0" />
@@ -121,36 +143,24 @@ export default async function ShopHome() {
         </div>
       )}
 
-      {/* today, in three numbers */}
-      <div className="mt-[2dvh] grid shrink-0 grid-cols-3 gap-2">
-        {tiles.map((x) => (
-          <div key={x.label} className="rounded-[1.125rem] bg-surface px-2.5 py-[clamp(0.625rem,1.5dvh,0.95rem)] shadow-card">
-            <span className="flex items-center gap-1.5">
-              <Icon3D name={x.icon} size={22} className="shrink-0" />
-              <span className="num text-[1.25rem] font-bold leading-none">{x.value}</span>
-            </span>
-            <span className="mt-1 block truncate text-[0.75rem] text-muted">{x.label}</span>
-          </div>
-        ))}
-      </div>
-
       {/* the four places to go, in one row */}
-      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-4 gap-2">
+      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-5 gap-1.5">
         {options.map((o) => (
-          <Link key={o.href} id={o.id} href={o.href} className="press flex flex-col items-center gap-1 rounded-[1.125rem] bg-surface px-1 py-[clamp(0.75rem,1.9dvh,1.15rem)] shadow-card">
+          <Link key={o.href} id={o.id} href={o.href} className="press flex flex-col items-center gap-1 rounded-[1.125rem] bg-surface px-0.5 py-[clamp(0.75rem,1.9dvh,1.15rem)] shadow-card">
             {o.mark}
-            <span className="w-full truncate text-center text-[0.8125rem] font-bold">{o.label}</span>
+            <span className="w-full truncate text-center text-[0.75rem] font-bold">{o.label}</span>
           </Link>
         ))}
       </nav>
 
-      {/* who came lately: a box that takes all the room left */}
-      <section className="mt-[2dvh] flex min-h-0 flex-1 flex-col pb-3">
+      {/* who came lately: a box that takes all the room left, never less than a row
+          and the link; before the first customer, as tall as its three steps */}
+      <section className={`mt-[2dvh] flex flex-1 flex-col pb-3 ${recent.length > 0 ? "min-h-[9.5rem]" : ""}`}>
         <h2 className="mb-2 px-0.5 text-[0.9375rem] font-bold">{t.lately}</h2>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.25rem] bg-surface shadow-card">
+        <div className={`flex flex-1 flex-col rounded-[1.25rem] bg-surface shadow-card ${recent.length > 0 ? "min-h-0 overflow-hidden" : ""}`}>
           {recent.length > 0 ? (
             <>
-              <ul className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain">
+              <ul data-list className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain">
                 {recent.map((r) => (
                   <li key={r.id} className="flex items-center gap-3 px-3.5 py-2.5">
                     {r.kind === "stamp" ? (
@@ -175,27 +185,27 @@ export default async function ShopHome() {
             </>
           ) : (
             // before the first customer: how it goes, in three steps
-            <div className="m-auto flex w-full max-w-[19rem] flex-col items-center overflow-y-auto px-4 py-4 text-center">
-              <Icon3D name="phone" size={56} className="animate-float" />
-              <h3 className="mt-2 text-[1.0625rem] font-bold">{t.customersEmpty}</h3>
-              <ol className="mt-3 w-full space-y-2 text-start">
+            <div className="m-auto flex w-full max-w-[17rem] flex-col items-center px-4 py-4 text-center">
+              <Icon3D name="phone" size={48} className="animate-float" />
+              <h3 className="mt-1.5 text-[1rem] font-bold">{t.customersEmpty}</h3>
+              <p className="mt-1 text-balance text-[0.8125rem] leading-snug text-muted">{t.customersEmptyBody}</p>
+              <ol className="mt-3 w-full space-y-1.5 text-start">
                 {t.firstSteps.map((s, i) => (
                   <li key={s} className="flex items-center gap-2.5">
-                    <span className="num grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.8125rem] font-bold text-brand">{i + 1}</span>
-                    <span className="text-[0.9062rem] font-semibold">{s}</span>
+                    <span className="num grid size-6 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.75rem] font-bold text-brand">{i + 1}</span>
+                    <span className="text-[0.875rem] font-semibold">{s}</span>
                   </li>
                 ))}
               </ol>
-              <Link href="/shop/qr" className="press mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-[0.9062rem] font-bold text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
-                <QrCode className="size-4" /> {t.showCode}
-              </Link>
             </div>
           )}
         </div>
       </section>
 
       <LogoTip shopId={shop.id} logo={shop.logo ?? null} show={logoTip} />
-      <NewsPopup news={logoTip ? null : (news ?? null)} who={me.id} />
+      {offerNote && pay?.offer_until && <OfferPopup shopId={shop.id} offerUntil={pay.offer_until} />}
+      <ShopWelcome name={first} shopId={shop.id} show={coachNow} />
+      <NewsPopup news={coachNow || logoTip || offerNote ? null : (news ?? null)} who={me.id} />
     </main>
   );
 }

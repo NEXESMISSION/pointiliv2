@@ -19,9 +19,9 @@ export function AdminPersonActions({ id, name, phone }: { id: string; name: stri
   const wa = phone && password ? `https://wa.me/216${digits(phone)}?text=${encodeURIComponent(fill(t.aResetMsg, { name: name || "", password }))}` : null;
 
   return (
-    <div className="mb-[2dvh] mt-[1.8dvh] shrink-0 space-y-2">
+    <div className="space-y-2">
       {password ? (
-        <div className="animate-pop rounded-[1.375rem] bg-surface p-4 text-center shadow-card">
+        <div className="animate-pop rounded-[1rem] border border-line bg-surface p-4 text-center">
           <p className="text-[0.8438rem] font-semibold text-muted">{t.aResetDone}</p>
           <p className="num mt-1 text-[2.125rem] font-bold tracking-[0.14em]" dir="ltr">
             {password}
@@ -29,12 +29,12 @@ export function AdminPersonActions({ id, name, phone }: { id: string; name: stri
           <p className="mt-1 text-[0.8438rem] text-muted">{t.aResetHint}</p>
           <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
             {wa && (
-              <a href={wa} target="_blank" rel="noreferrer" className="press flex h-12 items-center justify-center gap-2 rounded-[1rem] bg-[#25D366] text-[0.9688rem] font-bold text-white">
-                <MessageCircle className="size-5" /> {t.aResetSend}
+              <a href={wa} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-[0.625rem] bg-[#25D366] text-[0.875rem] font-bold text-white">
+                <MessageCircle className="size-4" /> {t.aResetSend}
               </a>
             )}
-            <button type="button" onClick={() => void navigator.clipboard?.writeText(password)} className="press grid h-12 w-12 place-items-center rounded-[1rem] bg-brand-soft text-brand" aria-label="copy">
-              <Copy className="size-5" />
+            <button type="button" onClick={() => void navigator.clipboard?.writeText(password)} className="grid h-10 w-10 place-items-center rounded-[0.625rem] bg-brand-soft text-brand" aria-label="copy">
+              <Copy className="size-4" />
             </button>
           </div>
         </div>
@@ -49,28 +49,28 @@ export function AdminPersonActions({ id, name, phone }: { id: string; name: stri
               if (res.ok && res.password) setPassword(res.password);
             })
           }
-          className="press flex h-[3.375rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0312rem] font-semibold text-ink shadow-card disabled:opacity-60"
+          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[0.625rem] border border-line bg-surface text-[0.8438rem] font-semibold text-body transition-colors hover:border-brand hover:text-brand disabled:opacity-60"
         >
-          <KeyRound className="size-5" /> {t.aReset}
+          <KeyRound className="size-4" /> {t.aReset}
         </button>
       )}
       {failed && <p className="rounded-2xl bg-coral-soft px-4 py-3 text-center text-[0.9062rem] font-medium text-coral">{t.errNetwork}</p>}
 
       {ask ? (
-        <div className="rounded-[1.25rem] bg-coral-soft p-4 text-center">
+        <div className="rounded-[1rem] bg-coral-soft p-4 text-center">
           <p className="text-[0.9375rem] font-semibold text-coral">{t.aDeletePersonConfirm}</p>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => setAsk(false)} className="press h-12 rounded-[1rem] bg-surface font-semibold">
+            <button type="button" onClick={() => setAsk(false)} className="h-9 rounded-[0.625rem] bg-surface text-[0.8438rem] font-semibold">
               {t.back}
             </button>
-            <button type="button" disabled={pending} onClick={() => start(() => adminDeletePerson(id))} className="press h-12 rounded-[1rem] bg-coral font-bold text-white disabled:opacity-60">
+            <button type="button" disabled={pending} onClick={() => start(() => adminDeletePerson(id))} className="h-9 rounded-[0.625rem] bg-coral text-[0.8438rem] font-bold text-white disabled:opacity-60">
               {t.aDeletePerson}
             </button>
           </div>
         </div>
       ) : (
-        <button type="button" onClick={() => setAsk(true)} className="press flex h-[3.125rem] w-full items-center justify-center gap-2 text-[0.9688rem] font-semibold text-coral">
-          <Trash2 className="size-5" /> {t.aDeletePerson}
+        <button type="button" onClick={() => setAsk(true)} className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[0.625rem] text-[0.8438rem] font-semibold text-coral hover:bg-coral-soft">
+          <Trash2 className="size-4" /> {t.aDeletePerson}
         </button>
       )}
     </div>

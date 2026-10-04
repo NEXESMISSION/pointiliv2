@@ -61,7 +61,8 @@ export function KindPicker({ value, onPick, onClose }: { value: string; onPick: 
           />
         </label>
       </div>
-      <div className="flex-1 overflow-y-auto overscroll-contain">
+      {/* the one list that scrolls: every kind, in its groups */}
+      <div data-list className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="safe-b mx-auto w-full max-w-md px-5 pb-10">
           {groups.length === 0 && (
             <div className="mt-6 text-center">

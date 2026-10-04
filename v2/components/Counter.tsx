@@ -54,8 +54,12 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null }; welcome?: string | null }) {
-  const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() => (welcome != null && !seenBefore("coach", shop.id) ? "bravo" : null));
+export function Counter({ shop, welcome, tip }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null }; welcome?: string | null; tip?: boolean }) {
+  // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
+  // already happened there and only the note about the code is left
+  const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
+    tip && !seenBefore("coach", shop.id) ? "tip" : welcome != null && !seenBefore("coach", shop.id) ? "bravo" : null,
+  );
   // the name, kept: the address drops ?welcome at once
   const [name] = useState(welcome);
   const [code, setCode] = useState<Code | null>(null);
@@ -185,11 +189,12 @@ export function Counter({ shop, welcome }: { shop: { id: string; name: string; k
     };
   }, [tick, paused, live]);
 
-  // the bravo is once in a lifetime: written down the moment it shows, and the
-  // address loses ?welcome, so neither a reload nor the back button brings it back
+  // the coaching is once in a lifetime, whichever half shows: written down the
+  // moment it appears, and the address loses its flag, so neither a reload nor
+  // the back button brings it back
   const claimed = useRef(false);
   useEffect(() => {
-    if (coach !== "bravo" || claimed.current) return;
+    if ((coach !== "bravo" && coach !== "tip") || claimed.current) return;
     claimed.current = true;
     shown("coach", shop.id);
     window.history.replaceState(null, "", "/shop/qr");
@@ -220,8 +225,10 @@ export function Counter({ shop, welcome }: { shop: { id: string; name: string; k
 
   const latest = flashes[flashes.length - 1];
   const gift = gifts[0];
-  // the code's size: the screen's width or height, whichever is shorter — smaller when a gift needs room under it
-  const qr = gift ? "min(60vw, 32dvh, 22rem)" : "min(78vw, 48dvh, 30rem)";
+  // the code's size: as wide as the screen lets it, smaller when a gift needs room under it. On a
+  // short screen its box gives way to the rest (the only thing in the column that does), and the
+  // code inside stays square at whatever the box has left: as large as it can be, never covered
+  const qr = gift ? "min(60vw, 22rem)" : "min(78vw, 30rem)";
 
   return (
     <div
@@ -273,29 +280,31 @@ export function Counter({ shop, welcome }: { shop: { id: string; name: string; k
           !gift && <h1 className="text-center text-[clamp(1.6rem,4.6dvh,2.6rem)] font-bold leading-tight">{t.counterTitle}</h1>
         )}
 
-        <div className="relative aspect-square shrink-0 transition-[width] duration-500" style={{ width: qr }}>
-          {flashes.map((f) => (
-            <span key={f.id} className="absolute inset-0 rounded-[2.125rem] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
-          ))}
-          <div className="absolute inset-0 rounded-[2.125rem] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
-            {paused ? (
-              <div className="grid size-full place-items-center p-6 text-center">
-                <p className="text-[1.1875rem] font-bold text-ink">{t.pausedBanner}</p>
-              </div>
-            ) : code ? (
-              <div key={code.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-25" : ""}`} dangerouslySetInnerHTML={{ __html: code.svg }} role="img" aria-label={t.counterTitle} data-qr="1" />
-            ) : (
-              <div className="grid size-full place-items-center">
-                <span className="size-12 animate-spin rounded-full border-4 border-line border-t-brand" />
-              </div>
-            )}
-            {offline && (
-              <div className="absolute inset-0 grid place-items-center">
-                <p className="flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[0.9375rem] font-semibold text-white">
-                  <WifiOff className="size-5" /> {t.reconnecting}
-                </p>
-              </div>
-            )}
+        <div className="flex min-h-0 shrink items-center justify-center transition-[width,height] duration-500 [container-type:size]" style={{ width: qr, height: qr }}>
+          <div className="relative aspect-square" style={{ width: "min(100cqw, 100cqh)" }}>
+            {flashes.map((f) => (
+              <span key={f.id} className="absolute inset-0 rounded-[2.125rem] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
+            ))}
+            <div className="absolute inset-0 rounded-[2.125rem] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
+              {paused ? (
+                <div className="grid size-full place-items-center p-6 text-center">
+                  <p className="text-[1.1875rem] font-bold text-ink">{t.pausedBanner}</p>
+                </div>
+              ) : code ? (
+                <div key={code.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-25" : ""}`} dangerouslySetInnerHTML={{ __html: code.svg }} role="img" aria-label={t.counterTitle} data-qr="1" />
+              ) : (
+                <div className="grid size-full place-items-center">
+                  <span className="size-12 animate-spin rounded-full border-4 border-line border-t-brand" />
+                </div>
+              )}
+              {offline && (
+                <div className="absolute inset-0 grid place-items-center">
+                  <p className="flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-[0.9375rem] font-semibold text-white">
+                    <WifiOff className="size-5" /> {t.reconnecting}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

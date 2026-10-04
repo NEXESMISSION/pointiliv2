@@ -41,7 +41,10 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
           <span className="grid size-[2.875rem] shrink-0 place-items-center overflow-hidden rounded-[0.9375rem] bg-white/20 backdrop-blur-sm">
             <ShopMark shop={shop} size={30} />
           </span>
-          <span className="min-w-0 flex-1 truncate text-[1.125rem] font-bold leading-tight">{shop.name}</span>
+          {/* a name in Latin letters too long for the card loses its end, never its start: «Pâtisserie El Me…» */}
+          <span dir="auto" className="min-w-0 flex-1 truncate text-right text-[1.125rem] font-bold leading-tight">
+            {shop.name}
+          </span>
           <span className="num shrink-0 leading-none">
             <span className="text-[2rem] font-bold">{done}</span>
             <span className="text-[1rem] font-semibold text-white/70">/{goal}</span>
