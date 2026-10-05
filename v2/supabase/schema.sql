@@ -54,6 +54,16 @@ update public.people set code = public.new_person_code() where code is null;
 -- shows twice — not after a reload, not on another phone
 alter table public.people add column if not exists seen text[] not null default '{}';
 
+-- the machines' accounts (the walk, the sizes, the rule checks): a script
+-- writes its number here BEFORE it makes the account, so the console never
+-- shows one among the real shops — not even while a run is going. The script
+-- takes the line away with the account; a line still here with its account is
+-- a leftover (a run cut off), swept from the console's «التجربة» page.
+create table if not exists public.robots (
+  phone    text primary key check (phone ~ '^\+216[0-9]{8}$'),
+  made_at  timestamptz not null default now()
+);
+
 create table if not exists public.shops (
   id          uuid primary key default gen_random_uuid(),
   owner_id    uuid not null unique references auth.users (id) on delete cascade,
@@ -279,7 +289,7 @@ update public.moments m set gift = c.gift from public.cards c where c.id = m.car
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -776,42 +786,83 @@ begin
   if not public.is_admin() then raise exception 'not_admin' using errcode = '42501'; end if;
 end $$;
 
+-- three kinds of account, for the founder's eyes:
+--   · real: an owner or a customer out there;
+--   · test: the founder's own (an admin) and the ones marked as a test
+--     (is_tester) — shown apart, under «التجربة», out of every number;
+--   · robot: made by a script (its number is on the robots list) — never
+--     shown to a real founder at all.
+-- (known by the login itself — its number is in the login's address — because a
+-- person's row can exist without its phone: set_name() makes one that way)
+drop function if exists public.is_robot(text);
+create or replace function public.is_robot(p_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from auth.users u join public.robots r
+      on r.phone in (u.raw_app_meta_data ->> 'phone', '+' || split_part(u.email, '@', 1))
+    where u.id = p_id)
+$$;
+-- a script's own admin (the walk's) sees everything, the way the console was
+-- before: its checks open the shops and the accounts the same run made
+create or replace function public.sees_robots() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select public.is_robot(auth.uid())
+$$;
+
 create or replace function public.admin_overview() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
+declare v_all boolean;
 begin
   perform public.require_admin();
-  return jsonb_build_object(
-    'shops', (select count(*) from public.shops),
-    'live', (select count(*) from public.shops where goal is not null and not paused),
-    'paused', (select count(*) from public.shops where paused),
-    'customers', (select count(distinct user_id) from public.cards),
-    'people', (select count(*) from public.people),
-    'stamps', (select count(*) from public.moments where kind = 'stamp'),
-    'today', (select count(*) from public.moments where kind = 'stamp' and created_at >= public.tunis_today()),
-    'given', (select count(*) from public.moments where kind = 'gift' and given_at is not null),
-    'waiting', (select count(*) from public.moments where kind = 'gift' and given_at is null),
-    'week', coalesce((
-      select jsonb_agg(jsonb_build_object('day', d.day, 'stamps', coalesce(x.n, 0)) order by d.day)
-      from (select ((now() at time zone 'Africa/Tunis')::date - g)::date as day from generate_series(0, 6) g) d
-      left join (select (created_at at time zone 'Africa/Tunis')::date as day, count(*) n from public.moments
-                 where kind = 'stamp' and created_at >= now() - interval '8 days' group by 1) x on x.day = d.day), '[]'::jsonb));
+  v_all := public.sees_robots();
+  return (
+    with real_people as (
+      select p.id from public.people p where v_all or not (p.is_admin or p.is_tester or public.is_robot(p.id))
+    ), real_shops as (
+      select s.id, s.goal, s.paused from public.shops s where v_all or s.owner_id in (select id from real_people)
+    ), real_moments as (
+      select m.kind, m.created_at, m.given_at from public.moments m where v_all or m.shop_id in (select id from real_shops)
+    )
+    select jsonb_build_object(
+      'shops', (select count(*) from real_shops),
+      'live', (select count(*) from real_shops where goal is not null and not paused),
+      'paused', (select count(*) from real_shops where paused),
+      'customers', (select count(distinct c.user_id) from public.cards c
+                    where v_all or (c.shop_id in (select id from real_shops) and c.user_id in (select id from real_people))),
+      'people', (select count(*) from real_people),
+      'stamps', (select count(*) from real_moments where kind = 'stamp'),
+      'today', (select count(*) from real_moments where kind = 'stamp' and created_at >= public.tunis_today()),
+      'given', (select count(*) from real_moments where kind = 'gift' and given_at is not null),
+      'waiting', (select count(*) from real_moments where kind = 'gift' and given_at is null),
+      'tests', (select count(*) from public.shops s join public.people p on p.id = s.owner_id
+                where (p.is_admin or p.is_tester) and not public.is_robot(p.id)),
+      'week', coalesce((
+        select jsonb_agg(jsonb_build_object('day', d.day, 'stamps', coalesce(x.n, 0)) order by d.day)
+        from (select ((now() at time zone 'Africa/Tunis')::date - g)::date as day from generate_series(0, 6) g) d
+        left join (select (created_at at time zone 'Africa/Tunis')::date as day, count(*) n from real_moments
+                   where kind = 'stamp' and created_at >= now() - interval '8 days' group by 1) x on x.day = d.day), '[]'::jsonb)));
 end $$;
 
-create or replace function public.admin_shops(p_q text default null) returns jsonb
+-- the shops: the real ones, or (p_tests) the test ones — never both in one list
+drop function if exists public.admin_shops(text);
+create or replace function public.admin_shops(p_q text default null, p_tests boolean default false) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
-declare v_like text := '%' || replace(replace(coalesce(trim(p_q), ''), '%', ''), '_', '') || '%';
+declare v_like text := '%' || replace(replace(coalesce(trim(p_q), ''), '%', ''), '_', '') || '%'; v_all boolean;
 begin
   perform public.require_admin();
+  v_all := public.sees_robots();
   return coalesce((
     select jsonb_agg(jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused,
       'created_at', s.created_at, 'owner', jsonb_build_object('name', p.name, 'phone', p.phone),
+      'test', coalesce(p.is_admin or p.is_tester, false),
       'customers', (select count(*) from public.cards c where c.shop_id = s.id),
       'stamps', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
       'today', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp' and m.created_at >= public.tunis_today()),
       'last_at', (select max(m.created_at) from public.moments m where m.shop_id = s.id)) order by s.created_at desc)
     from public.shops s left join public.people p on p.id = s.owner_id
-    where p_q is null or trim(p_q) = '' or s.name ilike v_like or coalesce(p.phone, '') like v_like or coalesce(p.name, '') ilike v_like
+    where (p_q is null or trim(p_q) = '' or s.name ilike v_like or coalesce(p.phone, '') like v_like or coalesce(p.name, '') ilike v_like)
+      and (v_all or (not public.is_robot(s.owner_id) and coalesce(p.is_admin or p.is_tester, false) = coalesce(p_tests, false)))
   ), '[]'::jsonb);
 end $$;
 
@@ -824,7 +875,8 @@ begin
   if s.id is null then return null; end if;
   return jsonb_build_object(
     'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused, 'created_at', s.created_at,
-    'owner', (select jsonb_build_object('name', p.name, 'phone', p.phone) from public.people p where p.id = s.owner_id),
+    'owner', (select jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone, 'tester', p.is_tester, 'admin', p.is_admin, 'robot', public.is_robot(p.id))
+              from public.people p where p.id = s.owner_id),
     'customers', (select count(*) from public.cards where shop_id = s.id),
     'stamps', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp'),
     'today', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
@@ -861,20 +913,24 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
-create or replace function public.admin_people(p_q text default null) returns jsonb
+-- the accounts: the real ones, or (p_tests) the test ones
+drop function if exists public.admin_people(text);
+create or replace function public.admin_people(p_q text default null, p_tests boolean default false) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
-declare v_like text := '%' || replace(replace(coalesce(trim(p_q), ''), '%', ''), '_', '') || '%';
+declare v_like text := '%' || replace(replace(coalesce(trim(p_q), ''), '%', ''), '_', '') || '%'; v_all boolean;
 begin
   perform public.require_admin();
+  v_all := public.sees_robots();
   return coalesce((
     select jsonb_agg(item order by created_at desc) from (
       select p.created_at, jsonb_build_object(
-        'id', p.id, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'created_at', p.created_at,
+        'id', p.id, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'tester', p.is_tester, 'created_at', p.created_at,
         'shop', (select s.name from public.shops s where s.owner_id = p.id),
         'cards', (select count(*) from public.cards c where c.user_id = p.id),
         'stamps', (select count(*) from public.moments m join public.cards c on c.id = m.card_id where c.user_id = p.id and m.kind = 'stamp')) as item
       from public.people p
-      where p_q is null or trim(p_q) = '' or p.name ilike v_like or coalesce(p.phone, '') like v_like
+      where (p_q is null or trim(p_q) = '' or p.name ilike v_like or coalesce(p.phone, '') like v_like)
+        and (v_all or (not public.is_robot(p.id) and (p.is_admin or p.is_tester) = coalesce(p_tests, false)))
       order by p.created_at desc limit 300
     ) x
   ), '[]'::jsonb);
@@ -889,13 +945,48 @@ begin
   select * into p from public.people where id = p_id;
   if p.id is null then return null; end if;
   return jsonb_build_object(
-    'id', p.id, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'created_at', p.created_at,
+    'id', p.id, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'tester', p.is_tester, 'robot', public.is_robot(p.id), 'created_at', p.created_at,
     'shop', (select jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo) from public.shops s where s.owner_id = p.id),
     'cards', coalesce((
       select jsonb_agg(jsonb_build_object('shop', s.name, 'kind', s.kind, 'color', s.color, 'stamps', c.stamps,
                                           'goal', coalesce(c.goal, s.goal), 'gifts', c.gifts, 'last_at', c.last_at)
                        order by c.last_at desc nulls last)
       from public.cards c join public.shops s on s.id = c.shop_id where c.user_id = p.id), '[]'::jsonb));
+end $$;
+
+-- the founder's word on an account: a test (kept apart from the real ones, out
+-- of the numbers) or a real one again
+create or replace function public.admin_set_tester(p_id uuid, p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  update public.people set is_tester = coalesce(p_on, false) where id = p_id;
+  if not found then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- the machines' leftovers: accounts whose number is still on the robots list
+-- (a run cut off before it cleaned up)
+create or replace function public.admin_robots() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return jsonb_build_object(
+    'accounts', (select count(*) from auth.users u where public.is_robot(u.id)),
+    'shops', (select count(*) from public.shops s where public.is_robot(s.owner_id)),
+    'oldest', (select min(r.made_at) from public.robots r join auth.users u on '+' || split_part(u.email, '@', 1) = r.phone));
+end $$;
+
+-- …and the sweep: every robot account goes (its shop, its cards, its login), and the list is emptied of the gone
+create or replace function public.admin_sweep_robots() returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_n int;
+begin
+  perform public.require_admin();
+  delete from auth.users u where public.is_robot(u.id);
+  get diagnostics v_n = row_count;
+  delete from public.robots r where not exists (select 1 from auth.users u where '+' || split_part(u.email, '@', 1) = r.phone);
+  return jsonb_build_object('ok', true, 'removed', v_n);
 end $$;
 
 -- ═══ the shop gives the tampon itself ══════════════════════════════════════
@@ -1036,6 +1127,7 @@ begin
       'shop', jsonb_build_object('id', s.id, 'name', s.name, 'paid_until', s.paid_until, 'logo', s.logo, 'kind', s.kind, 'color', s.color),
       'owner', jsonb_build_object('name', p.name, 'phone', p.phone, 'tester', p.is_tester)) order by y.created_at desc)
     from public.payments y join public.shops s on s.id = y.shop_id left join public.people p on p.id = s.owner_id
+    where public.sees_robots() or not public.is_robot(s.owner_id)
   ), '[]'::jsonb);
 end $$;
 
@@ -1102,10 +1194,11 @@ end $$;
 
 -- ═══ news: the founder's side ══════════════════════════════════════════════
 -- the owners a piece of news is for: every shop opened before it was
--- published (the founder's own shops too, marked admin — left out of the counts)
+-- published (the founder's own shops too, marked admin — left out of the counts;
+-- a script's shops as well, except in the eyes of that script's own founder)
 create or replace function public.news_audience(p_id uuid) returns table (person_id uuid, name text, phone text, shop text, admin boolean)
 language sql stable security definer set search_path = '' as $$
-  select p.id, p.name, p.phone, s.name, p.is_admin or p.is_tester
+  select p.id, p.name, p.phone, s.name, p.is_admin or p.is_tester or (public.is_robot(p.id) and not public.sees_robots())
   from public.news n
   join public.shops s on s.created_at < n.published_at
   join public.people p on p.id = s.owner_id
@@ -1442,8 +1535,9 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
-  public.admin_overview(), public.admin_shops(text), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
-  public.admin_delete_shop(uuid), public.admin_people(text), public.admin_person(uuid),
+  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
+  public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
+  public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),
   public.admin_set_setting(text, text), public.admin_traffic(int, boolean), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean),
   public.news_next(), public.news_seen(uuid), public.news_clicked(uuid),
   public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),

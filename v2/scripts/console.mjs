@@ -14,6 +14,7 @@ import { mkdirSync } from "node:fs";
 import { config } from "dotenv";
 import { chromium } from "playwright-core";
 import { createClient } from "@supabase/supabase-js";
+import { robot, unrobot } from "./robots.mjs";
 
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
@@ -29,8 +30,11 @@ const pick = (a) => a[Math.floor(rnd() * a.length)];
 const phoneNo = () => `9${String(Math.floor(rnd() * 1e7)).padStart(7, "0")}`;
 const ago = (h) => new Date(Date.now() - h * 3600_000).toISOString();
 
+const phones = [];
 async function person(name, { admin = false } = {}) {
-  const phone = phoneNo();
+  // a robot: on the list before it exists, so the founder's console never shows it (scripts/robots.mjs)
+  const phone = await robot(db, phoneNo());
+  phones.push(phone);
   const { data, error } = await db.auth.admin.createUser({ email: `216${phone}@phone.pointidi.app`, password: `${TAG}-123456`, email_confirm: true, app_metadata: { phone: `+216${phone}` } });
   if (error) throw error;
   await db.from("people").upsert({ id: data.user.id, name, phone: `+216${phone}`, is_admin: admin });
@@ -161,6 +165,7 @@ try {
   console.log("· cleaning up");
   for (const id of made.shops) await db.from("shops").delete().eq("id", id);
   for (const id of made.users) await db.auth.admin.deleteUser(id).catch(() => {});
+  await unrobot(db, phones);
 }
 
 console.log(problems.length ? `\n${problems.length} problem(s):\n` + problems.map((p) => "  · " + p).join("\n") : "\nno problems");

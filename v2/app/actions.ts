@@ -284,6 +284,21 @@ export async function adminPause(id: string, paused: boolean): Promise<boolean> 
   return !!res?.ok;
 }
 
+/** The founder's word on an account: a test (apart from the real ones, out of the numbers) or a real one again. */
+export async function adminSetTester(id: string, on: boolean): Promise<boolean> {
+  if (!UUID.test(id)) return false;
+  const res = await call<{ ok: boolean }>("admin_set_tester", { p_id: id, p_on: on });
+  revalidatePath("/admin", "layout");
+  return !!res?.ok;
+}
+
+/** The scripts' leftover accounts, swept: how many went (null: it did not work). */
+export async function adminSweepRobots(): Promise<number | null> {
+  const res = await call<{ ok: boolean; removed?: number }>("admin_sweep_robots");
+  revalidatePath("/admin", "layout");
+  return res?.ok ? (res.removed ?? 0) : null;
+}
+
 export async function adminDelete(id: string) {
   const { data: shop } = UUID.test(id) ? await service().from("shops").select("owner_id").eq("id", id).maybeSingle() : { data: null };
   const res = await call<{ ok: boolean }>("admin_delete_shop", { p_id: id });

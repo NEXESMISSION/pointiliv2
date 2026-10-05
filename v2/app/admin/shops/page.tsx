@@ -1,5 +1,5 @@
 import { ShopMark } from "@/components/ShopMark";
-import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
+import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { pretty } from "@/lib/phone";
 import { t } from "@/lib/t";
@@ -12,15 +12,35 @@ const TZ = "Africa/Tunis";
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(iso));
 
 /** Every shop, one row each, with the numbers that say whether it is alive. */
-export default async function AdminShops({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q = "" } = await searchParams;
-  const shops = (await call<ShopRow[]>("admin_shops", { p_q: q || null })) ?? [];
+export default async function AdminShops({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string }> }) {
+  const { q = "", tests } = await searchParams;
+  // the real shops, or the test ones (the founder's own and the ones marked): never in one list
+  const onTests = tests === "1";
+  const [shops, other] = await Promise.all([
+    call<ShopRow[]>("admin_shops", { p_q: q || null, p_tests: onTests }).then((r) => r ?? []),
+    call<ShopRow[]>("admin_shops", { p_q: null, p_tests: !onTests }).then((r) => r ?? []),
+  ]);
   const live = shops.filter((s) => !s.paused).length;
   const noCard = shops.filter((s) => !s.goal).length;
   const quiet = shops.filter((s) => !s.today).length;
 
   return (
-    <Page title={t.aShops} hint="كل محل والأرقام متاعو" actions={<Find action="/admin/shops" value={q} placeholder={t.aSearch} />}>
+    <Page
+      title={t.aShops}
+      hint={onTests ? t.aTestsHint : "كل محل والأرقام متاعو"}
+      actions={
+        <>
+          <Segments
+            now={onTests ? "tests" : "real"}
+            items={[
+              { id: "real", label: `${t.aReal} · ${onTests ? other.length : shops.length}`, href: "/admin/shops" },
+              { id: "tests", label: `${t.aTests} · ${onTests ? shops.length : other.length}`, href: "/admin/shops?tests=1" },
+            ]}
+          />
+          <Find action="/admin/shops" value={q} placeholder={t.aSearch} hidden={onTests ? { tests: "1" } : undefined} />
+        </>
+      }
+    >
       <Stats cols={4}>
         <Stat label={t.aShops} value={shops.length} sub={q ? "من اللّوجان" : "في الكل"} />
         <Stat label="يخدمو" value={live} sub={shops.length - live ? `${shops.length - live} موقّفين` : t.aAllLive} tone="mint" />

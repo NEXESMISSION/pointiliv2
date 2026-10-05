@@ -1,8 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Copy, KeyRound, MessageCircle, Trash2 } from "lucide-react";
-import { adminDeletePerson, adminResetPassword } from "@/app/actions";
+import { Copy, FlaskConical, KeyRound, MessageCircle, Trash2 } from "lucide-react";
+import { adminDeletePerson, adminResetPassword, adminSetTester } from "@/app/actions";
 import { digits } from "@/lib/phone";
 import { fill, t } from "@/lib/t";
 
@@ -11,8 +12,9 @@ import { fill, t } from "@/lib/t";
  * forgot theirs (eight digits, shown once, sent on WhatsApp in one tap), and
  * deleting the account.
  */
-export function AdminPersonActions({ id, name, phone }: { id: string; name: string; phone: string | null }) {
+export function AdminPersonActions({ id, name, phone, tester }: { id: string; name: string; phone: string | null; tester: boolean }) {
   const [pending, start] = useTransition();
+  const router = useRouter();
   const [password, setPassword] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [ask, setAsk] = useState(false);
@@ -20,6 +22,20 @@ export function AdminPersonActions({ id, name, phone }: { id: string; name: stri
 
   return (
     <div className="space-y-2">
+      {/* a test or a real one: a test sits apart from the real accounts, out of the numbers */}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            await adminSetTester(id, !tester);
+            router.refresh();
+          })
+        }
+        className={`flex h-9 w-full items-center justify-center gap-1.5 rounded-[0.625rem] text-[0.8438rem] font-semibold transition-colors disabled:opacity-60 ${tester ? "bg-brand-soft text-brand hover:bg-brand hover:text-white" : "border border-line bg-surface text-body hover:border-brand hover:text-brand"}`}
+      >
+        <FlaskConical className="size-4" /> {tester ? t.aMarkReal : t.aMarkTest}
+      </button>
       {password ? (
         <div className="animate-pop rounded-[1rem] border border-line bg-surface p-4 text-center">
           <p className="text-[0.8438rem] font-semibold text-muted">{t.aResetDone}</p>

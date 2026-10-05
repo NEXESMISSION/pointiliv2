@@ -12,7 +12,7 @@ export const metadata = { title: "محل" };
 
 type Shop = {
   id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; gift: string | null; paused: boolean; created_at: string;
-  owner: { name: string; phone: string | null } | null;
+  owner: { id: string; name: string; phone: string | null; tester: boolean; admin: boolean } | null;
   customers: number; stamps: number; today: number; given: number; waiting: number;
   recent: { at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; phone: string | null }[];
   top: { name: string | null; phone: string | null; stamps: number; gifts: number; goal: number | null }[];
@@ -50,6 +50,7 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                 <p className="flex items-center gap-1.5">
                   <b className="truncate text-[1.0625rem] text-ink">{s.name}</b>
                   {s.paused && <Pill tone="coral">{t.aPaused}</Pill>}
+                  {(s.owner?.tester || s.owner?.admin) && <Pill>{t.aTestBadge}</Pill>}
                 </p>
                 <p className="truncate text-[0.8125rem] text-muted">{t.kinds[s.kind as keyof typeof t.kinds] ?? s.kind}</p>
               </div>
@@ -84,7 +85,7 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
             )}
           </Card>
 
-          <AdminShopActions id={s.id} paused={s.paused} />
+          <AdminShopActions id={s.id} paused={s.paused} owner={s.owner ? { id: s.owner.id, tester: s.owner.tester, admin: s.owner.admin } : null} />
         </div>
 
         <div className="min-w-0 space-y-4">

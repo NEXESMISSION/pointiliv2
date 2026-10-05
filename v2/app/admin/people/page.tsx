@@ -1,24 +1,44 @@
-import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
+import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { pretty } from "@/lib/phone";
 import { t } from "@/lib/t";
 
 export const metadata = { title: "الكونتات" };
 
-type PersonRow = { id: string; name: string; phone: string | null; admin: boolean; created_at: string; shop: string | null; cards: number; stamps: number };
+type PersonRow = { id: string; name: string; phone: string | null; admin: boolean; tester?: boolean; created_at: string; shop: string | null; cards: number; stamps: number };
 
 const TZ = "Africa/Tunis";
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", year: "2-digit", timeZone: TZ }).format(new Date(iso));
 
 /** Every account: the owners, the customers, and you. */
-export default async function AdminPeople({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q = "" } = await searchParams;
-  const people = (await call<PersonRow[]>("admin_people", { p_q: q || null })) ?? [];
+export default async function AdminPeople({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string }> }) {
+  const { q = "", tests } = await searchParams;
+  // the real accounts, or the test ones (the founder's own and the ones marked): never in one list
+  const onTests = tests === "1";
+  const [people, other] = await Promise.all([
+    call<PersonRow[]>("admin_people", { p_q: q || null, p_tests: onTests }).then((r) => r ?? []),
+    call<PersonRow[]>("admin_people", { p_q: null, p_tests: !onTests }).then((r) => r ?? []),
+  ]);
   const owners = people.filter((p) => p.shop).length;
   const withCards = people.filter((p) => p.cards > 0).length;
 
   return (
-    <Page title={t.aPeople} hint="كل واحد عندو كونت في Pointili" actions={<Find action="/admin/people" value={q} placeholder={t.aSearch} />}>
+    <Page
+      title={t.aPeople}
+      hint={onTests ? t.aTestsHint : "كل واحد عندو كونت في Pointili"}
+      actions={
+        <>
+          <Segments
+            now={onTests ? "tests" : "real"}
+            items={[
+              { id: "real", label: `${t.aReal} · ${onTests ? other.length : people.length}`, href: "/admin/people" },
+              { id: "tests", label: `${t.aTests} · ${onTests ? people.length : other.length}`, href: "/admin/people?tests=1" },
+            ]}
+          />
+          <Find action="/admin/people" value={q} placeholder={t.aSearch} hidden={onTests ? { tests: "1" } : undefined} />
+        </>
+      }
+    >
       <Stats cols={4}>
         <Stat label="كونتات" value={people.length} sub={q ? "من اللّوجان" : "في الكل"} />
         <Stat label="موالي محلات" value={owners} />
@@ -39,6 +59,7 @@ export default async function AdminPeople({ searchParams }: { searchParams: Prom
                     <span className="flex min-w-0 items-center gap-1.5">
                       <b className="truncate font-semibold text-ink">{p.name || t.someone}</b>
                       {p.admin && <Pill tone="ink">{t.aAdminBadge}</Pill>}
+                      {p.tester && <Pill>{t.aTestBadge}</Pill>}
                     </span>
                   </span>
                 </Cell>

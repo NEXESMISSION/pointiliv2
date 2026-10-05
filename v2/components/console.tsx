@@ -53,7 +53,7 @@ export function Page({ title, hint, actions, children }: { title: string; hint?:
           <h1 className="text-[1.625rem] font-bold leading-tight text-ink">{title}</h1>
           {hint && <p className="mt-1 text-[0.875rem] text-muted">{hint}</p>}
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+        {actions && <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </header>
       {children}
     </>

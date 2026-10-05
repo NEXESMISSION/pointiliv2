@@ -19,6 +19,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { config } from "dotenv";
 import { chromium } from "playwright-core";
 import { createClient } from "@supabase/supabase-js";
+import { robot, unrobot } from "./robots.mjs";
 
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
@@ -57,8 +58,11 @@ const HOUR = 3600_000;
 
 // ── the people this run needs ──────────────────────────────────────────────
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
+const phones = [];
 async function person(name, extra = {}) {
-  const d = phoneNo();
+  // a robot: on the list before it exists, so the founder's console never shows it (scripts/robots.mjs)
+  const d = await robot(admin, phoneNo());
+  phones.push(d);
   const { data, error } = await admin.auth.admin.createUser({ email: `216${d}@phone.pointidi.app`, password: PASS, email_confirm: true, app_metadata: { phone: `+216${d}` } });
   if (error) throw error;
   const id = data.user.id;
@@ -445,6 +449,7 @@ try {
     await admin.from("shops").delete().eq("owner_id", id);
     await admin.auth.admin.deleteUser(id);
   }
+  await unrobot(admin, phones);
   console.log(`\n${bad} of ${report.length} screens have something wrong — ${OUT}/report.json (accounts removed)`);
 }
 if (bad) process.exitCode = 1;

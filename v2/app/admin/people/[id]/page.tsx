@@ -12,7 +12,7 @@ import { kindIcon, t } from "@/lib/t";
 export const metadata = { title: "كونت" };
 
 type Person = {
-  id: string; name: string; phone: string | null; admin: boolean; created_at: string;
+  id: string; name: string; phone: string | null; admin: boolean; tester: boolean; created_at: string;
   shop: { id: string; name: string; kind: string; color: string; logo: string | null } | null;
   cards: { shop: string; kind: string; color: string; stamps: number; goal: number | null; gifts: number; last_at: string | null }[];
 };
@@ -49,6 +49,7 @@ export default async function AdminPerson({ params }: { params: Promise<{ id: st
                 <p className="flex items-center gap-1.5">
                   <b className="truncate text-[1.0625rem] text-ink">{p.name || t.someone}</b>
                   {p.admin && <Pill tone="ink">{t.aAdminBadge}</Pill>}
+                  {p.tester && <Pill>{t.aTestBadge}</Pill>}
                 </p>
                 <p className="text-[0.8125rem] text-muted">{p.phone ? <Num>{pretty(p.phone)}</Num> : "بلا نومرو"}</p>
               </div>
@@ -72,7 +73,7 @@ export default async function AdminPerson({ params }: { params: Promise<{ id: st
             </Card>
           )}
 
-          {p.admin ? <p className="rounded-[1rem] border border-line bg-canvas px-4 py-3 text-center text-[0.875rem] font-medium text-muted">{t.aIsAdmin}</p> : <AdminPersonActions id={p.id} name={p.name} phone={p.phone} />}
+          {p.admin ? <p className="rounded-[1rem] border border-line bg-canvas px-4 py-3 text-center text-[0.875rem] font-medium text-muted">{t.aIsAdmin}</p> : <AdminPersonActions id={p.id} name={p.name} phone={p.phone} tester={p.tester} />}
         </div>
 
         <div className="min-w-0 space-y-4">

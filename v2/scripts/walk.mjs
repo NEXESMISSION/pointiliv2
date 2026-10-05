@@ -12,6 +12,7 @@ import { mkdirSync } from "node:fs";
 import { config } from "dotenv";
 import { chromium } from "playwright-core";
 import { createClient } from "@supabase/supabase-js";
+import { robot, unrobot } from "./robots.mjs";
 
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
@@ -21,8 +22,9 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUP
 // walking the local server again and again: its sign-up and sign-in counters start from zero
 if (/localhost|127\.0\.0\.1/.test(BASE)) for (const ip of ["local", "::1", "127.0.0.1"]) for (const key of [`join-ip:${ip}`, `login-ip:${ip}`]) await admin.rpc("forget_tries", { p_key: key });
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
-const ownerPhone = phoneNo();
-const customerPhone = phoneNo();
+// robots, all three: on the list before they exist, so the founder's console never shows them (scripts/robots.mjs)
+const ownerPhone = await robot(admin, phoneNo());
+const customerPhone = await robot(admin, phoneNo());
 let bossPhone = null;
 // a piece of news for this walk's owner only (no real owner ever sees it)
 const NEWS_TITLE = "جديد: اللوغو متاعك على الكارط";
@@ -289,7 +291,7 @@ try {
   await shot(o, "16b-owner-account");
 
   // ── the founder's console, through a throwaway admin ──
-  bossPhone = phoneNo();
+  bossPhone = await robot(admin, phoneNo());
   const { data: bossUser } = await admin.auth.admin.createUser({ email: `216${bossPhone}@phone.pointidi.app`, password: "boss-walk-123", email_confirm: true, app_metadata: { phone: `+216${bossPhone}` } });
   await admin.from("people").upsert({ id: bossUser.user.id, name: "Boss", phone: `+216${bossPhone}`, is_admin: true });
   const a = await (await browser.newContext(phone)).newPage();
@@ -360,5 +362,6 @@ try {
       await admin.auth.admin.deleteUser(data.id);
     }
   }
+  await unrobot(admin, [ownerPhone, customerPhone, bossPhone]);
   console.log("cleaned up the walk's accounts");
 }

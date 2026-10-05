@@ -11,6 +11,7 @@ import { config } from "dotenv";
 import sharp from "sharp";
 import { chromium } from "playwright-core";
 import { createClient } from "@supabase/supabase-js";
+import { robot, unrobot } from "./robots.mjs";
 
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
@@ -23,8 +24,11 @@ const NOTES = ["card_hello", "coach", "logo_tip", "offer"];
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const made = [];
 
+const phones = [];
 async function person(name) {
-  const d = `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
+  // a robot: on the list before it exists, so the founder's console never shows it (scripts/robots.mjs)
+  const d = await robot(admin, `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`);
+  phones.push(d);
   const { data, error } = await admin.auth.admin.createUser({ email: `216${d}@phone.pointidi.app`, password: PASS, email_confirm: true, app_metadata: { phone: `+216${d}` } });
   if (error) throw error;
   made.push(data.user.id);
@@ -190,4 +194,5 @@ try {
     await admin.from("shops").delete().eq("owner_id", id);
     await admin.auth.admin.deleteUser(id);
   }
+  await unrobot(admin, phones);
 }

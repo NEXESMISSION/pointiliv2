@@ -7,6 +7,8 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import { sql } from "./db.mjs";
+import { robot, unrobot } from "./robots.mjs";
 
 config({ path: ".env.local", quiet: true });
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -30,8 +32,11 @@ let settingsBefore = null;
 const visitsMade = [];
 const newsMade = [];
 
+const phones = [];
 async function person(name) {
-  const digits = `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
+  // a robot: on the list before it exists, so the founder's console never shows it (scripts/robots.mjs)
+  const digits = await robot(admin, `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`);
+  phones.push(digits);
   const password = randomBytes(12).toString("base64url");
   const email = `216${digits}@phone.pointidi.app`;
   const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { phone: `+216${digits}` } });
@@ -264,6 +269,27 @@ try {
   await rpc(boss, "admin_set_paused", { p_id: found[0].id, p_paused: false });
   check("resumed, it makes codes again", (await rpc(owner, "new_code")).ok === true);
   check("the founder lists people, admins marked", (await rpc(boss, "admin_people", { p_q: "Boss" })).some((p) => p.admin));
+
+  console.log("\nReal accounts, test accounts, and the machines' own");
+  const myShop = (await rpc(owner, "me")).shop.id;
+  // the console as the real founder's own login sees it: their id in the claims, nobody is made up for this
+  const asFounder = async (fn, args) =>
+    (await sql(`select set_config('request.jwt.claims', json_build_object('sub', (select id from public.people where is_admin and not public.is_robot(id) order by created_at limit 1), 'role', 'authenticated')::text, true); select public.${fn}(${args}) as r`))[0].r;
+  const realShops = await asFounder("admin_shops", "null, false");
+  const testShops = await asFounder("admin_shops", "null, true");
+  check("a real founder's console never shows a robot's shop, among the real ones or the tests", ![...realShops, ...testShops].some((x) => x.id === myShop), realShops.length + testShops.length);
+  const seenPeople = [...(await asFounder("admin_people", "null, false")), ...(await asFounder("admin_people", "null, true"))];
+  check("…nor a robot's account", !seenPeople.some((p) => [owner.id, sami.id, boss.id].includes(p.id)));
+  check("…and the real shops carry no test, the tests nothing else", realShops.every((x) => !x.test) && testShops.every((x) => x.test));
+  // marking, seen through this run's own founder: a robot sees everything, each shop with its mark
+  const mark = async () => (await rpc(boss, "admin_shops", { p_q: null })).find((x) => x.id === myShop)?.test;
+  const unmarked = (await mark()) === false;
+  const marked = (await rpc(boss, "admin_set_tester", { p_id: owner.id, p_on: true })).ok && (await mark()) === true;
+  const back = (await rpc(boss, "admin_set_tester", { p_id: owner.id, p_on: false })).ok && (await mark()) === false;
+  check("the founder marks an account as a test, and back", unmarked && marked && back, { unmarked, marked, back });
+  check("a customer cannot mark an account", !!(await rpc(sami, "admin_set_tester", { p_id: owner.id, p_on: true })).error);
+  const robots = await rpc(boss, "admin_robots");
+  check("the founder sees how many robot accounts there are", robots.accounts >= 3 && robots.shops >= 1, robots);
   const rania = await rpc(boss, "admin_person", { p_id: p1.id });
   check("one person's page: the name, the cards", rania?.name === "Rania" && rania.cards.length === 1 && rania.cards[0].shop === "Promise Café", rania);
   check("a customer cannot open someone's page", !!(await rpc(sami, "admin_person", { p_id: p1.id })).error);
@@ -460,6 +486,7 @@ try {
   }
   for (const id of users) await admin.from("shops").delete().eq("owner_id", id);
   for (const id of users) await admin.auth.admin.deleteUser(id);
+  await unrobot(admin, phones);
   console.log(`\n${passed} passed, ${failed.length} failed (removed ${users.length} accounts)`);
   if (failed.length) process.exit(1);
 }
