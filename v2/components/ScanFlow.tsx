@@ -87,9 +87,13 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
 
       {/* the gift: one line to show at the counter, not a second card */}
       {gift && (
-        <p className="relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0312rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)] [@media(max-height:700px)]:mt-[1.4dvh] [@media(max-height:600px)]:py-2" style={after(420)}>
+        <a
+          href={`/c/${card.id}?show=1`}
+          className="press relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0312rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)] [@media(max-height:700px)]:mt-[1.4dvh] [@media(max-height:600px)]:py-2"
+          style={after(420)}
+        >
           <Icon3D name="gift" size={30} className="animate-float" /> {t.wonBody}
-        </p>
+        </a>
       )}
 
       <div className="mt-[3dvh] w-full animate-rise space-y-1.5 [@media(max-height:660px)]:mt-[2dvh]" style={after(500)}>

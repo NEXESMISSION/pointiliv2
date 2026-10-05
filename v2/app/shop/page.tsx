@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeft, QrCode, ScanLine } from "lucide-react";
-import { GiveButton } from "@/components/GiveButton";
 import { HelpButton } from "@/components/Help";
 import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
@@ -138,7 +137,10 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
                 <span className="block truncate text-[0.9375rem] font-bold">{fill(t.giftFor, { who: g.name ?? t.someone, gift: g.gift })}</span>
                 <span className="num block text-[0.75rem] text-muted">{time(g.at)}</span>
               </span>
-              <GiveButton id={g.id} />
+              {/* handed over by the customer's code, never by a tap alone */}
+              <Link href="/shop/collect?by=scan" className="press flex h-11 shrink-0 items-center gap-1.5 rounded-[1rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 text-[0.9375rem] font-bold text-white">
+                <ScanLine className="size-[1.125rem]" /> {t.collectScanShort}
+              </Link>
             </div>
           ))}
         </div>

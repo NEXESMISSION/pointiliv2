@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ArrowDown, Check, ChevronRight, WifiOff } from "lucide-react";
-import { give } from "@/app/actions";
+import { ArrowDown, Check, ChevronRight, ScanLine, WifiOff } from "lucide-react";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
@@ -44,8 +43,9 @@ function tuneIn(): SupabaseClient | null {
  * code itself never moves, so the next phone can scan at once) and a fresh
  * code takes its place at once: the next one is always made in advance, and
  * the database names the code the moment a phone takes it, so a used code
- * never stays on the screen. When a card fills up, the gift waits at the
- * bottom of the screen until the owner taps «عطيتو».
+ * never stays on the screen. When a card fills up, the gift shows at the
+ * bottom of the screen: the customer shows the gift's code on their phone,
+ * and the owner scans it («سكاني») to hand it over.
  *
  * It hears every scan at once over Supabase Realtime (the shop's own topic,
  * pinged by the database) and only then asks what happened; a slow question
@@ -71,8 +71,6 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
   const [paused, setPaused] = useState(!!shop.paused);
-  const [giving, setGiving] = useState(false);
-  const [giveFailed, setGiveFailed] = useState(false);
   const [live, setLive] = useState(false);
   const [party, setParty] = useState(0);
   const codeRef = useRef<Code | null>(null);
@@ -275,15 +273,6 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
     return () => clearTimeout(id);
   }, [coach]);
 
-  const hand = async (g: Gift) => {
-    setGiving(true);
-    setGiveFailed(false);
-    const ok = await give(g.id).catch(() => false);
-    setGiving(false);
-    if (ok) setGifts((list) => list.filter((x) => x.id !== g.id));
-    else setGiveFailed(true);
-  };
-
   useScreen(coach === "bravo" || coach === "leaving" ? "bravo" : coach === "tip" ? "tip" : "code");
 
   const latest = flashes[flashes.length - 1];
@@ -389,10 +378,10 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
               {fill(t.giftFor, { who: gift.name ?? t.someone, gift: gift.gift })}
             </p>
             <p className="mt-0.5 text-[0.9375rem] text-muted">{t.giveNow}</p>
-            <button type="button" disabled={giving} onClick={() => void hand(gift)} className="press mt-3 h-[3.4rem] w-full rounded-[1.25rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[1.1875rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(255_107_74/0.7)] disabled:opacity-60">
-              {t.given}
-            </button>
-            {giveFailed && <p className="mt-2 text-[0.875rem] font-medium text-coral">{t.errNetwork}</p>}
+            {/* handed over by the customer's code, never by a tap alone */}
+            <Link href="/shop/collect?by=scan" className="press mt-3 flex h-[3.4rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[1.1875rem] font-bold text-white">
+              <ScanLine className="size-6" /> {t.collectScanShort}
+            </Link>
             {gifts.length > 1 && <p className="num mt-1.5 text-[0.8125rem] text-muted">+{gifts.length - 1}</p>}
           </div>
         )}

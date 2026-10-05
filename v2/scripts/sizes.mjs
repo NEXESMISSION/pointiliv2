@@ -190,9 +190,19 @@ const SCREENS = [
   { name: "public-faq", path: "/faq", read: true },
   { name: "public-prix", path: "/prix", read: true },
 
-  { name: "customer-wallet", as: "customer", path: "/" },
+  { name: "customer-wallet", as: "customer", before: () => giftBack(), path: "/" },
+  {
+    name: "customer-gift-code",
+    as: "customer",
+    before: () => giftBack(),
+    path: "/",
+    act: async (p) => {
+      await p.getByRole("button", { name: /عندك كادو يستنّى فيك/ }).click({ timeout: 15000 });
+      await p.getByRole("dialog").waitFor({ timeout: 15000 });
+    },
+  },
   { name: "customer-mycode", as: "customer", path: "/", act: (p) => press(p, "الكود متاعي") },
-  { name: "customer-card-gift", as: "customer", path: () => `/c/${cardHere.id}` },
+  { name: "customer-card-gift", as: "customer", before: () => giftBack(), path: () => `/c/${cardHere.id}` },
   { name: "customer-card", as: "customer", path: () => `/c/${cardBarber}` },
   { name: "customer-me", as: "customer", path: "/me" },
   { name: "customer-scan", as: "customer", path: "/scan", wait: 2500 },
@@ -242,7 +252,7 @@ const SCREENS = [
     path: "/shop/collect?by=code",
     act: async (p) => {
       await p.getByRole("textbox").fill(customer.code);
-      await p.getByText("عندو كادو يستنّى").waitFor({ timeout: 20000 });
+      await p.getByRole("button", { name: "إيه، عطيه الكادو" }).waitFor({ timeout: 20000 });
     },
   },
   {
@@ -252,7 +262,7 @@ const SCREENS = [
     path: "/shop/collect?by=code",
     act: async (p) => {
       await p.getByRole("textbox").fill(customer.code);
-      await p.getByRole("button", { name: "عطيتو ✓" }).click({ timeout: 20000 });
+      await p.getByRole("button", { name: "إيه، عطيه الكادو" }).click({ timeout: 20000 });
       await p.getByRole("heading", { name: /خذا/ }).waitFor({ timeout: 20000 });
     },
     wait: 1400,

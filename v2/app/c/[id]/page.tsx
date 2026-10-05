@@ -1,8 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import { Gift } from "lucide-react";
+import QRCode from "qrcode";
+import { Gift, QrCode } from "lucide-react";
+import { MyCode } from "@/components/MyCode";
 import { Pass } from "@/components/Pass";
 import { Top } from "@/components/Top";
 import { Icon3D, Screen } from "@/components/ui";
+import { siteOrigin } from "@/lib/origin";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { fill, stampsN, t } from "@/lib/t";
@@ -13,13 +16,19 @@ type Card = CardView & { history: { kind: "stamp" | "gift"; at: string; given: b
 const when = (iso: string) =>
   new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
 
-/** One card: the stamps, the gift — and when it is ready, a screen to show at the counter. */
-export default async function CardPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+/** One card: the stamps, the gift — and when it is ready, its code to show at the counter (`?show=1` opens it). */
+export default async function CardPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ show?: string }> }) {
+  const [{ id }, { show }] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  if (!(await getMe())) redirect(`/login?next=/c/${id}`);
+  const me = await getMe();
+  if (!me) redirect(`/login?next=/c/${id}`);
   const card = await call<Card | null>("card", { p_id: id });
   if (!card) notFound();
+  // the gift waiting: the customer's own code is the gift's (the shop scans it, sees the gift, hands it over)
+  const svg =
+    card.ready && me.code
+      ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
+      : null;
 
   // A gift waiting fills the screen most. On a short screen (800px and less), and on any screen when the
   // shop's next card is announced too, the gift's box tightens (its picture beside the title) and the
@@ -66,7 +75,19 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
           <Icon3D name="gift" size={72} className={`relative animate-float ${look.pic}`} />
           <p className={`relative text-[1.375rem] font-bold ${look.title}`}>{t.ready}</p>
           <p className={`relative text-[1.625rem] font-bold ${look.gift}`}>{card.shop.gift}</p>
-          <p className={`relative text-[0.9375rem] text-white/85 ${look.hint}`}>{t.readyBody}</p>
+          {me.code && svg ? (
+            <MyCode
+              code={me.code}
+              svg={svg}
+              gift={card.shop.gift}
+              startOpen={show === "1"}
+              className={`press relative mx-auto mt-2 flex h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-[0.9688rem] font-bold text-coral ${look.hint}`}
+            >
+              <QrCode className="size-5" /> {t.giftShow}
+            </MyCode>
+          ) : (
+            <p className={`relative text-[0.9375rem] text-white/85 ${look.hint}`}>{t.readyBody}</p>
+          )}
         </div>
       )}
 

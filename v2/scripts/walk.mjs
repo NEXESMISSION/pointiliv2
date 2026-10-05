@@ -188,11 +188,22 @@ try {
   await c.goto(BASE + new URL(url2).pathname, { waitUntil: "load" });
   await c.getByText("ربحت").first().waitFor({ timeout: 30000 });
   await shot(c, "10-gift-won", 2200);
-  await o.getByRole("button", { name: "عطيتو ✓" }).waitFor({ timeout: 20000 });
+  // the gift's code, on the customer's phone, to show at the counter
+  await c.getByRole("link", { name: /ورّي الكود متاع الكادو/ }).click();
+  await c.getByRole("dialog", { name: /الكادو متاعك/ }).waitFor({ timeout: 30000 });
+  await shot(c, "10b-gift-code", 900);
+  // the counter shows who won, and the camera to hand it over (never a tap alone)
+  await o.getByRole("link", { name: "سكاني" }).waitFor({ timeout: 20000 });
   await shot(o, "11-counter-gift", 1200);
-  await o.getByRole("button", { name: "عطيتو ✓" }).click();
-  await o.waitForTimeout(1500);
-  await shot(o, "12-counter-given", 200);
+  // the owner types the code under the customer's QR: the question comes up, the gift is handed over
+  const { data: gifted } = await admin.from("people").select("code").eq("phone", `+216${customerPhone}`).single();
+  await o.goto(BASE + "/shop/collect?by=code", { waitUntil: "load" });
+  await o.getByRole("textbox").fill(gifted.code);
+  await o.getByRole("button", { name: "إيه، عطيه الكادو" }).waitFor({ timeout: 20000 });
+  await shot(o, "12-gift-question", 700);
+  await o.getByRole("button", { name: "إيه، عطيه الكادو" }).click();
+  await o.getByRole("heading", { name: /خذا/ }).waitFor({ timeout: 20000 });
+  await shot(o, "12-counter-given", 900);
 
   // ── the customer's other screens ──
   await c.goto(BASE + "/", { waitUntil: "load" });
