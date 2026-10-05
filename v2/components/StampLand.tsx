@@ -118,7 +118,9 @@ export function Confetti({ count = 40, delay = 0 }: { count?: number; delay?: nu
     <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden" aria-hidden>
       <style>{`@keyframes cf-fall { 0% { transform: translate3d(0,-12vh,0) rotate(0); opacity: 0; } 8% { opacity: 1; } 100% { transform: translate3d(var(--dx),105vh,0) rotate(var(--r)); opacity: 0.9; } }`}</style>
       {Array.from({ length: count }, (_, i) => {
-        const r = (n: number) => ((Math.sin(i * 9301 + n * 49297) + 1) / 2) % 1;
+        // rounded: Node's Math.sin and the phone's differ in the last digits, and the
+        // page must draw the same confetti the server wrote, or React complains
+        const r = (n: number) => Math.round((((Math.sin(i * 9301 + n * 49297) + 1) / 2) % 1) * 1e4) / 1e4;
         return (
           <span
             key={i}
