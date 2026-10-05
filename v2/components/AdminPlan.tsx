@@ -23,8 +23,9 @@ const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "
 /**
  * The founder's hand on a shop's access, once the owner paid by hand (cash,
  * D17, a transfer…): turn it on for so many months — from today, or from the
- * end of the year already running — or until a date; or stop it now. How it
- * was paid is noted with it. The owner's home says it once, plainly
+ * end of the year already running — or until a date; or stop it now. What
+ * came in and how go in the books (months added with no money have no way).
+ * The owner's home says it once, plainly
  * («الأبونمان متاعك تفعّل»), unless the box is unticked. Nothing is ever free.
  */
 export function AdminPlan({ shopId, paidUntil, paid }: { shopId: string; paidUntil: string | null; paid: boolean }) {
@@ -37,6 +38,8 @@ export function AdminPlan({ shopId, paidUntil, paid }: { shopId: string; paidUnt
   const [custom, setCustom] = useState("");
   const [until, setUntil] = useState("");
   const [method, setMethod] = useState<string | null>(null);
+  const [amount, setAmount] = useState<number | null>(null);
+  const [amountOther, setAmountOther] = useState("");
   const [note, setNote] = useState("");
   const [show, setShow] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,16 +48,20 @@ export function AdminPlan({ shopId, paidUntil, paid }: { shopId: string; paidUnt
   const customBad = custom !== "" && !(n >= 1 && n <= 120);
   // months turned on add onto a year still running, else they start today
   const from = paid ? paidUntil : null;
+  // what came in, in dinars: a pick, or typed
+  const sum = amountOther ? Number(amountOther) : amount;
 
   const save = () =>
     start(async () => {
       setError(null);
-      const res = await adminPlan(shopId, by === "until" ? "until" : "paid", by === "until" ? null : n, by === "until" ? until : null, note, show, method);
+      const res = await adminPlan(shopId, by === "until" ? "until" : "paid", by === "until" ? null : n, by === "until" ? until : null, note, show, sum === 0 ? null : method, sum);
       if (!res.ok) return setError(t.errNetwork);
       setOpen(false);
       setNote("");
       setCustom("");
       setMethod(null);
+      setAmount(null);
+      setAmountOther("");
       router.refresh();
     });
   const stop = () =>
@@ -152,20 +159,50 @@ export function AdminPlan({ shopId, paidUntil, paid }: { shopId: string; paidUnt
       )}
 
       <div>
-        <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanHow}</span>
+        <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanAmount}</span>
         <div className="flex flex-wrap gap-1.5">
-          {METHODS.map((m) => (
+          {[120, 0].map((a) => (
             <button
-              key={m.id}
+              key={a}
               type="button"
-              onClick={() => setMethod(method === m.id ? null : m.id)}
-              className={`h-8 rounded-full px-3 text-[0.8125rem] font-bold ${method === m.id ? "bg-ink text-white" : "bg-surface text-body ring-1 ring-line"}`}
+              onClick={() => {
+                setAmount(!amountOther && amount === a ? null : a);
+                setAmountOther("");
+              }}
+              className={`h-9 rounded-full px-3.5 text-[0.8438rem] font-bold ${!amountOther && amount === a ? "bg-mint text-white" : "bg-surface text-body ring-1 ring-line"}`}
             >
-              {m.label}
+              {a === 0 ? t.aPlanAmountExtra : `${a} ${t.payCurrency}`}
             </button>
           ))}
+          <input
+            value={amountOther}
+            onChange={(e) => setAmountOther(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            inputMode="numeric"
+            placeholder={t.aPlanAmountOther}
+            aria-label={t.aPlanAmountOther}
+            className={`h-9 w-[7.5rem] rounded-full bg-surface px-3 text-center text-[16px] ring-1 ${amountOther ? "ring-mint" : "ring-line"}`}
+          />
         </div>
       </div>
+
+      {/* months added with no money came no way at all */}
+      {sum !== 0 && (
+        <div>
+          <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanHow}</span>
+          <div className="flex flex-wrap gap-1.5">
+            {METHODS.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setMethod(method === m.id ? null : m.id)}
+                className={`h-8 rounded-full px-3 text-[0.8125rem] font-bold ${method === m.id ? "bg-ink text-white" : "bg-surface text-body ring-1 ring-line"}`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <label className="block">
         <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanNote}</span>

@@ -18,7 +18,7 @@ type Shop = {
   stamp_gap: number;
   plan: {
     paid_until: string | null; paid: boolean; offer_until: string | null; offer: boolean;
-    log: { id: number; kind: "paid" | "until" | "end"; months: number | null; until: string | null; note: string | null; method: string | null; shown: boolean; seen: string | null; at: string }[];
+    log: { id: number; kind: "paid" | "until" | "end"; months: number | null; until: string | null; note: string | null; method: string | null; amount: number | null; shown: boolean; seen: string | null; at: string }[];
     payments: { id: string; method: string; months: number; status: "pending" | "paid" | "refused"; at: string }[];
   };
   customers: number; stamps: number; today: number; given: number; waiting: number;
@@ -135,6 +135,7 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                             : l.kind === "until"
                               ? fill(t.aPlanLogUntil, { date: day(l.until ?? l.at) })
                               : fill(t.aPlanLogPaid, { d: monthsSaid(l.months ?? 0) })}
+                          {l.amount !== null && <span className="font-normal text-muted"> · {l.amount === 0 ? t.aPlanExtra : `${l.amount} ${t.payCurrency}`}</span>}
                           {l.method && <span className="font-normal text-muted"> · {l.method === "cash" ? t.aPlanCash : l.method === "d17" ? "D17" : l.method.charAt(0).toUpperCase() + l.method.slice(1)}</span>}
                         </span>
                         {l.note && <span className="block truncate text-[0.8125rem] text-muted">«{l.note}»</span>}

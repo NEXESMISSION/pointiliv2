@@ -97,8 +97,10 @@ create index if not exists payments_shop_idx on public.payments (shop_id, create
 
 -- every change of a shop's year by the founder: the owner paid by hand (cash,
 -- D17, a transfer…) and the founder turns the access on — so many months, or
--- until a date — or stops it. Nothing is free. `show_owner`: the owner's home
--- says it once (seen_at).
+-- until a date — or stops it; a payment the owner announced lands here too
+-- once the founder confirms it. `amount` is the founder's books: the dinars
+-- that came in for it (null: not noted; 0: months added with no money).
+-- `show_owner`: the owner's home says it once (seen_at).
 create table if not exists public.plan_log (
   id          bigint generated always as identity primary key,
   shop_id     uuid not null references public.shops (id) on delete cascade,
@@ -112,7 +114,8 @@ create table if not exists public.plan_log (
 );
 create index if not exists plan_log_shop_idx on public.plan_log (shop_id, created_at desc);
 alter table public.plan_log add column if not exists method text check (method is null or method in ('cash', 'd17', 'virement', 'versement', 'mandat'));
--- never a gift: the access is only ever turned on because the owner paid
+alter table public.plan_log add column if not exists amount int check (amount is null or amount between 0 and 100000);
+-- the kinds: months turned on, an end date, stopped (never called a gift)
 alter table public.plan_log drop constraint if exists plan_log_kind_check;
 alter table public.plan_log add constraint plan_log_kind_check check (kind in ('paid', 'until', 'end'));
 -- the ways: the five, and "contact" (the owner called or wrote on WhatsApp to pay)
@@ -935,7 +938,7 @@ begin
       'paid', s.paid_until is not null and s.paid_until > now(),
       'offer_until', s.offer_at + interval '48 hours',
       'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
-      'log', coalesce((select jsonb_agg(jsonb_build_object('id', l.id, 'kind', l.kind, 'months', l.months, 'until', l.until_at, 'note', l.note, 'method', l.method,
+      'log', coalesce((select jsonb_agg(jsonb_build_object('id', l.id, 'kind', l.kind, 'months', l.months, 'until', l.until_at, 'note', l.note, 'method', l.method, 'amount', l.amount,
                                                            'shown', l.show_owner, 'seen', l.seen_at, 'at', l.created_at) order by l.created_at desc)
                        from (select * from public.plan_log where shop_id = s.id order by created_at desc limit 20) l), '[]'::jsonb),
       'payments', coalesce((select jsonb_agg(jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'status', y.status, 'at', y.created_at) order by y.created_at desc)
@@ -1196,10 +1199,11 @@ begin
   ), '[]'::jsonb);
 end $$;
 
--- the founder's word on a payment: paid (the shop's year starts, or goes on) or not
+-- the founder's word on a payment: paid (the shop's year starts, or goes on) or
+-- not. Paid, it goes in the books, and the owner's home says it once
 create or replace function public.admin_payment_decide(p_id uuid, p_paid boolean) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare y public.payments%rowtype;
+declare y public.payments%rowtype; v_until timestamptz;
 begin
   perform public.require_admin();
   select * into y from public.payments where id = p_id for update;
@@ -1207,17 +1211,22 @@ begin
   if y.status <> 'pending' then return public.err('done'); end if;
   update public.payments set status = case when p_paid then 'paid' else 'refused' end, decided_at = now() where id = p_id;
   if p_paid then
-    update public.shops set paid_until = greatest(coalesce(paid_until, now()), now()) + make_interval(months => y.months) where id = y.shop_id;
+    update public.shops set paid_until = greatest(coalesce(paid_until, now()), now()) + make_interval(months => y.months) where id = y.shop_id
+    returning paid_until into v_until;
+    insert into public.plan_log (shop_id, kind, months, until_at, method, amount, show_owner)
+    values (y.shop_id, 'paid', y.months, v_until, case when y.method in ('d17', 'virement', 'versement', 'mandat') then y.method end, y.amount, true);
   end if;
   return jsonb_build_object('ok', true);
 end $$;
 
 -- the founder turns a shop's access on by hand, once the owner paid: so many
 -- months more (from today, or from the end of the year already paid), or until
--- a date; or stops it now. Written in plan_log with how it was paid;
+-- a date; or stops it now. Written in plan_log with how it was paid and what
+-- came in (`p_amount`, in dinars; 0 for months added with no money);
 -- `p_show`: the owner's home says it once («الأبونمان متاعك تفعّل»)
 drop function if exists public.admin_plan(uuid, text, int, timestamptz, text, boolean);
-create or replace function public.admin_plan(p_shop uuid, p_kind text, p_months int default null, p_until timestamptz default null, p_note text default null, p_show boolean default true, p_method text default null) returns jsonb
+drop function if exists public.admin_plan(uuid, text, int, timestamptz, text, boolean, text);
+create or replace function public.admin_plan(p_shop uuid, p_kind text, p_months int default null, p_until timestamptz default null, p_note text default null, p_show boolean default true, p_method text default null, p_amount int default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_until timestamptz; v_note text := nullif(trim(coalesce(p_note, '')), '');
 begin
@@ -1225,6 +1234,7 @@ begin
   select * into s from public.shops where id = p_shop for update;
   if s.id is null then return public.err('not_found'); end if;
   if p_method is not null and p_method not in ('cash', 'd17', 'virement', 'versement', 'mandat') then return public.err('invalid'); end if;
+  if p_amount is not null and p_amount not between 0 and 100000 then return public.err('invalid'); end if;
   if p_kind = 'paid' then
     if p_months is null or p_months not between 1 and 120 then return public.err('invalid'); end if;
     v_until := greatest(coalesce(s.paid_until, now()), now()) + make_interval(months => p_months);
@@ -1238,10 +1248,12 @@ begin
   end if;
   if v_note is not null and char_length(v_note) > 200 then return public.err('invalid'); end if;
   update public.shops set paid_until = v_until where id = s.id;
-  insert into public.plan_log (shop_id, kind, months, until_at, note, show_owner, method)
-  values (s.id, p_kind, case when p_kind = 'paid' then p_months end, v_until, v_note, coalesce(p_show, false) and p_kind <> 'end', case when p_kind <> 'end' then p_method end);
-  -- the access turned on settles the payment the owner said was coming
-  if p_kind in ('paid', 'until') then
+  -- months added with no money came no way at all
+  insert into public.plan_log (shop_id, kind, months, until_at, note, show_owner, method, amount)
+  values (s.id, p_kind, case when p_kind = 'paid' then p_months end, v_until, v_note, coalesce(p_show, false) and p_kind <> 'end',
+          case when p_kind <> 'end' and coalesce(p_amount, 1) > 0 then p_method end, case when p_kind <> 'end' then p_amount end);
+  -- money taken by hand settles the payment the owner said was coming
+  if p_kind in ('paid', 'until') and coalesce(p_amount, 1) > 0 then
     update public.payments set status = 'paid', decided_at = now() where shop_id = s.id and status = 'pending';
   end if;
   return jsonb_build_object('ok', true, 'paid_until', v_until);
@@ -1254,8 +1266,49 @@ declare s public.shops%rowtype;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
-  update public.plan_log set seen_at = now() where id = p_id and shop_id = s.id and seen_at is null;
+  -- this one and any older one: the newest said it all
+  update public.plan_log set seen_at = now() where id <= p_id and shop_id = s.id and seen_at is null;
   return jsonb_build_object('ok', true);
+end $$;
+
+-- the founder's books: every time a shop's access was turned on or stopped,
+-- with what came in for it — the real shops only (a script's admin sees
+-- everything). The dinars of this month and of this year (Tunis time), the
+-- months added with no money, the shops paid right now, and the payments the
+-- owners said are on their way.
+create or replace function public.admin_ledger() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v_all boolean; v_month timestamptz; v_year timestamptz;
+begin
+  perform public.require_admin();
+  v_all := public.sees_robots();
+  v_month := date_trunc('month', now() at time zone 'Africa/Tunis') at time zone 'Africa/Tunis';
+  v_year := date_trunc('year', now() at time zone 'Africa/Tunis') at time zone 'Africa/Tunis';
+  return (
+    with real_shops as (
+      select s.* from public.shops s left join public.people p on p.id = s.owner_id
+      where v_all or (not public.is_robot(s.owner_id) and not coalesce(p.is_admin or p.is_tester, false))
+    ), lines as (
+      select l.* from public.plan_log l where l.shop_id in (select id from real_shops)
+    )
+    select jsonb_build_object(
+      'month', coalesce((select sum(amount) from lines where created_at >= v_month), 0),
+      'year', coalesce((select sum(amount) from lines where created_at >= v_year), 0),
+      'all', coalesce((select sum(amount) from lines), 0),
+      'extra_months', coalesce((select sum(months) from lines where amount = 0), 0),
+      'paying', (select count(*) from real_shops where paid_until > now()),
+      'rows', coalesce((
+        select jsonb_agg(jsonb_build_object('id', l.id, 'at', l.created_at, 'kind', l.kind, 'months', l.months, 'until', l.until_at,
+                                            'amount', l.amount, 'method', l.method, 'note', l.note,
+                                            'shop', jsonb_build_object('id', s.id, 'name', s.name),
+                                            'owner', jsonb_build_object('name', nullif(p.name, ''), 'phone', p.phone)) order by l.created_at desc, l.id desc)
+        from lines l join public.shops s on s.id = l.shop_id left join public.people p on p.id = s.owner_id), '[]'::jsonb),
+      'waiting', coalesce((
+        select jsonb_agg(jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'amount', y.amount, 'at', y.created_at,
+                                            'shop', jsonb_build_object('id', s.id, 'name', s.name),
+                                            'owner', jsonb_build_object('name', nullif(p.name, ''), 'phone', p.phone)) order by y.created_at desc)
+        from public.payments y join real_shops s on s.id = y.shop_id left join public.people p on p.id = s.owner_id
+        where y.status = 'pending'), '[]'::jsonb)));
 end $$;
 
 -- ═══ news: the owner's side ════════════════════════════════════════════════
@@ -1644,7 +1697,7 @@ where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
 
 grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
   public.admin_save_card(uuid, int, text, text, int, boolean), public.admin_shop_edit(uuid, text, text),
-  public.admin_plan(uuid, text, int, timestamptz, text, boolean, text), public.plan_seen(bigint),
+  public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),

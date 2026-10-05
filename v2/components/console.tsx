@@ -215,6 +215,13 @@ export const CLink = ({ kind = "soft", className = "", href, children, title }: 
   </Link>
 );
 
+/** A file to save, like the books as a spreadsheet: a plain link, never prefetched. */
+export const CFile = ({ kind = "soft", className = "", href, children }: { kind?: keyof typeof btn; className?: string; href: string; children: ReactNode }) => (
+  <a href={href} download className={`${btnBase} ${btn[kind]} ${className}`}>
+    {children}
+  </a>
+);
+
 /** A switch made of links: the range of days, the two sides of a list. */
 export function Segments({ items, now }: { items: { id: string; label: string; href: string }[]; now: string }) {
   return (

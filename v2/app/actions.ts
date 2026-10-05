@@ -252,8 +252,8 @@ export async function adminPaymentDecide(id: string, paid: boolean): Promise<boo
   return !!res?.ok;
 }
 
-/** The owner paid by hand: the founder turns the access on (so many months, or until a date), or stops it. */
-export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null): Promise<{ ok: boolean }> {
+/** The owner paid by hand: the founder turns the access on (so many months, or until a date), or stops it — with what came in, for the books. */
+export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null, amount: number | null = null): Promise<{ ok: boolean }> {
   if (!UUID.test(shopId)) return { ok: false };
   const res = await call<{ ok: boolean }>("admin_plan", {
     p_shop: shopId,
@@ -264,6 +264,7 @@ export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", 
     p_note: note?.trim().slice(0, 200) || null,
     p_show: show,
     p_method: method && ["cash", "d17", "virement", "versement", "mandat"].includes(method) ? method : null,
+    p_amount: amount !== null && Number.isInteger(amount) && amount >= 0 && amount <= 100_000 ? amount : null,
   });
   revalidatePath(`/admin/shops/${shopId}`);
   revalidatePath("/admin/payments");
