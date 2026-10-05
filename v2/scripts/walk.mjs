@@ -104,10 +104,10 @@ try {
   await o.getByRole("button", { name: "قهوة" }).click();
   await Promise.all([o.waitForURL("**/shop/card", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   // the card, one question at a time: the hello, how many, which gift, how long between two, which colour, ready
-  await o.getByText("توّا نعملو مع بعضنا").waitFor({ timeout: 30000 });
+  await o.getByRole("heading", { name: /توّا نعملو مع بعضنا/ }).waitFor({ timeout: 30000 });
   await shot(o, "04a-card-hello", 1600);
   await o.reload({ waitUntil: "load" });
-  await never(o, "the card's hello (reload)", o.getByText("توّا نعملو مع بعضنا"), 1500);
+  await never(o, "the card's hello (reload)", o.getByRole("heading", { name: /توّا نعملو مع بعضنا/ }), 1500);
   await o.getByText("قدّاش من تامبون").first().waitFor({ timeout: 20000 });
   await o.getByRole("textbox", { name: "ولا اكتب العدد" }).fill("15");
   await shot(o, "04b2-card-goal-typed", 500);
