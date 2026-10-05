@@ -6,6 +6,7 @@ import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
 import { OfferPopup, PayBanner, type Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
+import { PlanOn } from "@/components/PlanOn";
 import { ShopWelcome } from "@/components/ShopWelcome";
 import { Icon3D } from "@/components/ui";
 import { getMe } from "@/lib/session";
@@ -50,7 +51,9 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   // two overlays on one screen is one too many
   const coachNow = welcome === "1" && !seen.includes("coach");
   const logoTip = !coachNow && !seen.includes("logo_tip");
-  const offerNote = !coachNow && !logoTip && offer && !seen.includes("offer") && !(pay?.last?.status === "pending" && pay.last.method !== "contact");
+  // what the founder just gave (a gift, a payment taken by hand, a new end date): said once
+  const grant = !coachNow && !logoTip ? (pay?.grant ?? null) : null;
+  const offerNote = !coachNow && !logoTip && !grant && offer && !seen.includes("offer") && !(pay?.last?.status === "pending" && pay.last.method !== "contact");
   const first = (me.name ?? "").split(" ")[0];
   const options = [
     { href: "/shop/stats", mark: <Icon3D name="chart" size={30} />, label: t.statsTitle },
@@ -208,7 +211,8 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
       <LogoTip shopId={shop.id} logo={shop.logo ?? null} show={logoTip} />
       {offerNote && pay?.offer_until && <OfferPopup shopId={shop.id} offerUntil={pay.offer_until} />}
       <ShopWelcome name={first} shopId={shop.id} show={coachNow} />
-      <NewsPopup news={coachNow || logoTip || offerNote ? null : (news ?? null)} who={me.id} />
+      {grant && <PlanOn grant={grant} />}
+      <NewsPopup news={coachNow || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
     </main>
   );
 }

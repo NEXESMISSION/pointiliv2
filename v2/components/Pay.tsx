@@ -14,6 +14,8 @@ export type Pay = {
   paid_until: string | null;
   paid: boolean;
   offer_until: string | null;
+  /** the access the founder just turned on, to say once (PlanOn) */
+  grant?: import("@/components/PlanOn").Grant | null;
   /** within the 48 hours, and not paid: the year counts 15 months */
   offer: boolean;
   last: { id: string; method: string; months: number; status: "pending" | "paid" | "refused"; at: string } | null;

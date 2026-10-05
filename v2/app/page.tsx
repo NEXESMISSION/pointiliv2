@@ -15,7 +15,7 @@ export default async function Home() {
     const [help, settings] = await Promise.all([getHelp(), getSettings()]);
     return (
       <>
-        <JsonLd data={orgJsonLd(settings.supportPhone)} />
+        <JsonLd data={orgJsonLd(settings.supportPhone, settings.social)} />
         <JsonLd data={faqJsonLd(FAQ.slice(0, 5).flatMap((f) => [{ q: f.q, a: f.a }, f.fr]))} />
         <Welcome video={help.video1} />
       </>

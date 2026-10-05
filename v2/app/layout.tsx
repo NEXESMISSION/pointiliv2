@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Readex_Pro } from "next/font/google";
+import { Pwa } from "@/components/InstallApp";
 import { Tracker } from "@/components/Tracker";
-import { PRICE, SITE } from "@/lib/seo";
+import { PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
 import "./globals.css";
 
 // One typeface for Arabic, French and the numbers.
 const readex = Readex_Pro({ subsets: ["arabic", "latin"], variable: "--font-readex", display: "swap" });
 
-const description = `Pointili: كارط فيديليتي ديجيتال للمحلات في تونس — الحريف يلمّ التامبونات في تليفونو ويرجعلك. Carte de fidélité digitale pour les commerces en Tunisie, sans application, ${PRICE} DT/an.`;
+const description = `Pointili: كارط فيديليتي ديجيتال للمحلات في تونس — الحريف يلمّ التامبونات في تليفونو ويرجعلك. Carte de fidélité digitale pour les commerces en Tunisie, sans application, ${PRICE} DT/an (${PRICE_MONTH} DT/mois).`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
@@ -18,6 +19,11 @@ export const metadata: Metadata = {
     "carte de fidélité",
     "carte de fidélité digitale",
     "carte de fidélité Tunisie",
+    "meilleur système de fidélité Tunisie",
+    "logiciel de fidélité Tunisie",
+    "application fidélité Tunisie",
+    "أحسن كارط فيديليتي في تونس",
+    "best loyalty program Tunisia",
     "programme de fidélité Tunisie",
     "fidélisation client Tunisie",
     "application fidélité commerce",
@@ -52,8 +58,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar-TN" dir="rtl" className={readex.variable}>
       <body className="min-h-dvh font-sans">
+        {/* Android's install prompt can come before the page wakes: kept here for the button */}
+        <script dangerouslySetInnerHTML={{ __html: "addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__pwaPrompt=e})" }} />
         {children}
         <Tracker />
+        <Pwa />
       </body>
     </html>
   );

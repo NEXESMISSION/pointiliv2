@@ -1,4 +1,4 @@
-import { FAQ, giftsOf, NICHES, PRICE, SITE } from "@/lib/seo";
+import { FAQ, giftsOf, NICHES, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 import { t } from "@/lib/t";
 
@@ -10,7 +10,7 @@ export async function GET() {
   const text = `# Pointili — carte de fidélité digitale en Tunisie / كارط فيديليتي ديجيتال في تونس
 
 Site: ${SITE}
-Prix / السوم: ${PRICE} TND par an et par commerce (${PRICE} د في العام)
+Prix / السوم: un seul abonnement, ${PRICE} TND par an et par commerce, soit ${PRICE_MONTH} TND par mois (${PRICE} د في العام، يعني ${PRICE_MONTH} د في الشهر)
 Contact: ${supportPhone ? `+${supportPhone} (téléphone, WhatsApp)` : SITE}
 
 ## Questions — أسئلة

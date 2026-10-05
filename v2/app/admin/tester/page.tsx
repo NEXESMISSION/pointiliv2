@@ -25,6 +25,8 @@ export default async function AdminTesterPage() {
         <p className="mb-3 text-[1.125rem] font-bold">
           <Num>{phone}</Num>
         </p>
+        {/* no sign-in to keep, and its password is not known here: the number signs up first */}
+        {s.state === "none" && !s.canMake && <p className="mb-3 rounded-[0.75rem] bg-brand-soft px-3 py-2 text-[0.875rem] font-medium text-brand-deep">{t.aTesterNoAccount}</p>}
         {s.ready ? <AdminTester /> : <p className="text-[0.875rem] text-coral">{t.aTesterMissing}</p>}
       </Card>
 

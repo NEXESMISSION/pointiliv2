@@ -1,18 +1,26 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Gift, Phone } from "lucide-react";
+import { AdminPlan } from "@/components/AdminPlan";
 import { AdminShopActions } from "@/components/AdminShopActions";
+import { AdminShopEdit } from "@/components/AdminShopEdit";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
-import { stampsN, t } from "@/lib/t";
+import { fill, monthsSaid, stampsN, t } from "@/lib/t";
 
 export const metadata = { title: "محل" };
 
 type Shop = {
   id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; gift: string | null; paused: boolean; created_at: string;
   owner: { id: string; name: string; phone: string | null; tester: boolean; admin: boolean } | null;
+  stamp_gap: number;
+  plan: {
+    paid_until: string | null; paid: boolean; offer_until: string | null; offer: boolean;
+    log: { id: number; kind: "paid" | "until" | "end"; months: number | null; until: string | null; note: string | null; method: string | null; shown: boolean; seen: string | null; at: string }[];
+    payments: { id: string; method: string; months: number; status: "pending" | "paid" | "refused"; at: string }[];
+  };
   customers: number; stamps: number; today: number; given: number; waiting: number;
   recent: { at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; phone: string | null }[];
   top: { name: string | null; phone: string | null; stamps: number; gifts: number; goal: number | null }[];
@@ -85,10 +93,63 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
             )}
           </Card>
 
+          <AdminShopEdit shop={{ id: s.id, name: s.name, kind: s.kind, goal: s.goal, gift: s.gift, stamp_gap: s.stamp_gap }} />
           <AdminShopActions id={s.id} paused={s.paused} owner={s.owner ? { id: s.owner.id, tester: s.owner.tester, admin: s.owner.admin } : null} />
         </div>
 
         <div className="min-w-0 space-y-4">
+          {/* the shop's year: where it stands, the founder's hand on it, and its story */}
+          <Card
+            title={t.aPlan}
+            actions={
+              s.plan.paid && s.plan.paid_until ? (
+                <Pill tone="mint">{fill(t.aPlanPaidUntil, { date: day(s.plan.paid_until) })}</Pill>
+              ) : s.plan.offer && s.plan.offer_until ? (
+                <Pill tone="brand">{fill(t.aPlanOffer, { date: when(s.plan.offer_until) })}</Pill>
+              ) : (
+                <Pill tone="coral">{t.aPlanNone}</Pill>
+              )
+            }
+          >
+            <AdminPlan shopId={s.id} paidUntil={s.plan.paid_until} paid={s.plan.paid} />
+            {(s.plan.log.length > 0 || s.plan.payments.some((y) => y.status === "pending")) && (
+              <div className="mt-4 border-t border-line pt-3">
+                <p className="mb-2 text-[0.8438rem] font-bold text-muted">{t.aPlanHistory}</p>
+                <ul className="space-y-1.5 text-[0.875rem]">
+                  {s.plan.payments
+                    .filter((y) => y.status === "pending")
+                    .map((y) => (
+                      <li key={y.id} className="flex items-center justify-between gap-3">
+                        <span className="font-semibold text-brand">
+                          {t.aPlanAsked} · {monthsSaid(y.months)}
+                        </span>
+                        <span className="text-[0.8125rem] text-muted">{when(y.at)}</span>
+                      </li>
+                    ))}
+                  {s.plan.log.map((l) => (
+                    <li key={l.id} className="flex items-center justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="font-semibold text-body">
+                          {l.kind === "end"
+                            ? t.aPlanLogEnd
+                            : l.kind === "until"
+                              ? fill(t.aPlanLogUntil, { date: day(l.until ?? l.at) })
+                              : fill(t.aPlanLogPaid, { d: monthsSaid(l.months ?? 0) })}
+                          {l.method && <span className="font-normal text-muted"> · {l.method === "cash" ? t.aPlanCash : l.method === "d17" ? "D17" : l.method.charAt(0).toUpperCase() + l.method.slice(1)}</span>}
+                        </span>
+                        {l.note && <span className="block truncate text-[0.8125rem] text-muted">«{l.note}»</span>}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2 text-[0.8125rem] text-muted">
+                        {l.shown && <Pill tone={l.seen ? "mint" : "grey"}>{l.seen ? t.aPlanSeen : t.aPlanNotSeen}</Pill>}
+                        {when(l.at)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Card>
+
           <Stats cols={5}>
             <Stat label={t.aCustomers} value={s.customers} />
             <Stat label={t.aToday} value={s.today} tone="brand" />

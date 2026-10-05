@@ -8,7 +8,7 @@ import { SITE } from "@/lib/seo";
  */
 export default function robots(): MetadataRoute.Robots {
   const closed = ["/admin", "/api/", "/shop/", "/me", "/c/", "/s/", "/u/", "/scan", "/wallet"];
-  const open = ["/", "/shop/new", "/faq", "/prix", "/llms.txt", "/llms-full.txt"];
+  const open = ["/", "/shop/new", "/faq", "/prix", "/guide", "/llms.txt", "/llms-full.txt"];
   const bots = ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "Claude-User", "Claude-SearchBot", "anthropic-ai", "PerplexityBot", "Perplexity-User", "Google-Extended", "Applebot-Extended", "Bingbot", "Googlebot", "meta-externalagent", "CCBot"];
   return {
     rules: [{ userAgent: "*", allow: open, disallow: closed }, ...bots.map((b) => ({ userAgent: b, allow: open, disallow: closed }))],

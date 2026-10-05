@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallApp } from "@/components/InstallApp";
 import { ChevronLeft } from "lucide-react";
 import { VideoPill, type HelpVideo } from "@/components/Help";
 import { Pass } from "@/components/Pass";
@@ -134,6 +135,7 @@ export function Welcome({ video }: { video?: HelpVideo | null }) {
         <Link href="/prix">الأسعار</Link>
         <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
         <Link href="/faq">أسئلة</Link>
+        <InstallApp where="welcome" look="link" />
       </nav>
     </main>
   );

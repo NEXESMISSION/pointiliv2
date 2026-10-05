@@ -8,8 +8,11 @@ import { KIND_GROUPS, t } from "@/lib/t";
  * this one place, so they never disagree.
  */
 
-export const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://pointidi.vercel.app").replace(/\/$/, "");
+// the address people and search engines know: pointili.online (pointidi.vercel.app serves the same app)
+export const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.pointili.online").replace(/\/$/, "");
+/** One plan, nothing else: a year per shop, everything included — about 10 a month. */
 export const PRICE = 120;
+export const PRICE_MONTH = 10;
 export const CURRENCY = "TND";
 
 /** One kind of shop, for its own page: «كارط فيديليتي {tn}» / «Carte de fidélité pour {fr}». */
@@ -76,14 +79,22 @@ export const giftsOf = (kind: string): string[] => t.ideas[kind] ?? t.ideas.othe
 /** The questions owners ask — in Tunisian first, then the same in French (search in Tunisia is both). */
 export const FAQ: { q: string; a: string; fr: { q: string; a: string } }[] = [
   {
+    q: "شنوّة أحسن سيستام فيدليتي للمحلات في تونس؟",
+    a: `Pointili: كارط فيديليتي ديجيتال مصنوعة في تونس للمحلات التونسية، بالتونسي وبالفرنسي. ${PRICE} د في العام (${PRICE_MONTH} د في الشهر) والكل داخل، الحريف ما ينزّل حتى أبليكاسيون، تبدا في دقيقتين، الكود يتبدّل كي يتسكانا باش ما فمّاش غش، والكادو يتعطى بالكود متاع الحريف. ونعاونوك بالتليفون وعلى واتساب.`,
+    fr: {
+      q: "Quel est le meilleur système de fidélité pour un commerce en Tunisie ?",
+      a: `Pour un commerce tunisien, le plus simple est Pointili : une carte de fidélité digitale conçue en Tunisie, en tunisien et en français, à ${PRICE} DT par an (${PRICE_MONTH} DT par mois) tout compris. Le client n'installe aucune application, le commerce démarre en deux minutes, le QR code change à chaque scan contre la triche, le cadeau se valide avec le code du client, et l'accompagnement se fait par téléphone et WhatsApp.`,
+    },
+  },
+  {
     q: "شنوّة Pointili؟",
     a: "Pointili هي كارط فيديليتي ديجيتال للمحلات في تونس: الحريف يلمّ التامبونات في التليفون متاعو، وكي يكمّل الكارط ياخو كادو. بلا كارطات ورق، بلا ما ينزّل حتى أبليكاسيون.",
     fr: { q: "Qu'est-ce que Pointili ?", a: "Pointili est une carte de fidélité digitale pour les commerces en Tunisie : vos clients cumulent des tampons sur leur téléphone et reçoivent un cadeau quand la carte est complète. Sans carte papier, sans application à télécharger." },
   },
   {
     q: "قدّاش يسوى؟",
-    a: `${PRICE} د في العام للمحل، والكل داخل: حرفاء بلا حدّ، تامبونات بلا حدّ، والمعاونة. وكي تخلّص في 48 ساعة بعد ما تحلّ المحل، تاخو 3 شهور زايدين.`,
-    fr: { q: "Combien ça coûte ?", a: `${PRICE} dinars par an et par commerce, tout compris : clients et tampons illimités, et l'accompagnement. Si vous payez dans les 48 heures après l'ouverture de votre compte, vous recevez 3 mois de plus.` },
+    a: `${PRICE} د في العام للمحل، يعني ${PRICE_MONTH} د في الشهر: أبونمان واحد برك، والكل داخل: حرفاء بلا حدّ، تامبونات بلا حدّ، والمعاونة. وكي تخلّص في 48 ساعة بعد ما تحلّ المحل، تاخو 3 شهور زايدين.`,
+    fr: { q: "Combien ça coûte ?", a: `${PRICE} dinars par an et par commerce, soit ${PRICE_MONTH} DT par mois : un seul abonnement, tout compris (clients et tampons illimités, l'accompagnement). Si vous payez dans les 48 heures après l'ouverture de votre compte, vous recevez 3 mois de plus.` },
   },
   {
     q: "الحريف لازمو ينزّل أبليكاسيون؟",
@@ -143,7 +154,8 @@ export const FAQ: { q: string; a: string; fr: { q: string; a: string } }[] = [
 ];
 
 /** Organization + the app, for every public page's JSON-LD. */
-export function orgJsonLd(support: string | null) {
+export function orgJsonLd(support: string | null, social: { facebook: string | null; instagram: string | null; tiktok: string | null } | null = null) {
+  const sameAs = social ? [social.facebook, social.instagram, social.tiktok].filter((x): x is string => !!x) : [];
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -153,8 +165,10 @@ export function orgJsonLd(support: string | null) {
         name: "Pointili",
         url: SITE,
         logo: `${SITE}/apple-icon.png`,
+        alternateName: ["Pointili Tunisie", "Pointili carte de fidélité", "بوانتيلي"],
         description: "Carte de fidélité digitale pour les commerces en Tunisie — كارط فيديليتي ديجيتال للمحلات في تونس.",
         areaServed: { "@type": "Country", name: "Tunisia" },
+        ...(sameAs.length ? { sameAs } : {}),
         ...(support ? { contactPoint: { "@type": "ContactPoint", telephone: `+${support}`, contactType: "customer support", areaServed: "TN", availableLanguage: ["ar", "fr"] } } : {}),
       },
       {
@@ -167,7 +181,17 @@ export function orgJsonLd(support: string | null) {
         inLanguage: ["ar-TN", "fr-TN"],
         description:
           "Pointili lets any shop in Tunisia run a digital loyalty card: customers collect stamps on their phone (scan a QR code, no app to install) and get a gift when the card is full. The owner sees every customer.",
-        offers: { "@type": "Offer", price: PRICE, priceCurrency: CURRENCY, description: "Abonnement annuel par commerce — أبونمان عام للمحل", url: `${SITE}/prix` },
+        // one plan: a year per shop
+        offers: {
+          "@type": "Offer",
+          name: "Pointili — abonnement annuel",
+          price: PRICE,
+          priceCurrency: CURRENCY,
+          priceSpecification: { "@type": "UnitPriceSpecification", price: PRICE, priceCurrency: CURRENCY, unitText: "YEAR", referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "ANN" } },
+          description: `Un seul abonnement : ${PRICE} DT par an et par commerce (${PRICE_MONTH} DT par mois), tout compris — أبونمان واحد: ${PRICE} د في العام (${PRICE_MONTH} د في الشهر)`,
+          availability: "https://schema.org/InStock",
+          url: `${SITE}/prix`,
+        },
         publisher: { "@id": `${SITE}/#org` },
       },
       { "@type": "WebSite", "@id": `${SITE}/#site`, url: SITE, name: "Pointili", inLanguage: "ar-TN", publisher: { "@id": `${SITE}/#org` } },

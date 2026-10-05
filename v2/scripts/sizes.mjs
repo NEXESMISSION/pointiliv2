@@ -238,6 +238,19 @@ const SCREENS = [
     },
     wait: 1200,
   },
+  {
+    name: "home-plan-on",
+    as: "owner",
+    // the founder turned the access on: said once, so a fresh word for each size
+    before: async () => {
+      const until = new Date(Date.now() + 730 * 86_400_000).toISOString();
+      await admin.from("shops").update({ paid_until: until }).eq("id", shop.id);
+      await admin.from("plan_log").insert({ shop_id: shop.id, kind: "paid", months: 24, until_at: until, note: "كان عندك أيّ سؤال كلّمني", method: "d17", show_owner: true });
+    },
+    path: "/shop",
+    wait: 1800,
+    after: () => admin.from("shops").update({ paid_until: null }).eq("id", shop.id),
+  },
   { name: "counter", as: "owner", path: "/shop/qr", wait: 1800 },
   { name: "counter-tip", as: "owner", before: () => notes(owner, ["card_hello", "logo_tip", "offer"]), path: "/shop/qr?tip=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "collect-scan", as: "owner", path: "/shop/collect?by=scan", wait: 2500 },
@@ -317,6 +330,16 @@ const SCREENS = [
   { name: "console", as: "boss", path: "/admin", read: true },
   { name: "console-shops", as: "boss", path: "/admin/shops", read: true },
   { name: "console-shop", as: "boss", path: () => `/admin/shops/${shop.id}`, read: true },
+  {
+    name: "console-shop-plan",
+    as: "boss",
+    path: () => `/admin/shops/${shop.id}`,
+    read: true,
+    act: async (p) => {
+      await press(p, "فعّل الأبونمان");
+      await p.getByText("كيفاش خلّص؟").scrollIntoViewIfNeeded();
+    },
+  },
   { name: "console-people", as: "boss", path: "/admin/people", read: true },
   { name: "console-traffic", as: "boss", path: "/admin/traffic", read: true },
   { name: "console-news", as: "boss", path: "/admin/news", read: true },

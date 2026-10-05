@@ -14,7 +14,8 @@ export function JsonLd({ data }: { data: object }) {
  * middle at a comfortable width, and the links to every page at the bottom —
  * so a visitor, a search engine and an AI assistant all find their way.
  */
-export function SiteFrame({ support, children }: { support: string | null; children: React.ReactNode }) {
+export function SiteFrame({ support, social, children }: { support: string | null; social?: { facebook: string | null; instagram: string | null; tiktok: string | null }; children: React.ReactNode }) {
+  const pages = social ? ([["Facebook", social.facebook], ["Instagram", social.instagram], ["TikTok", social.tiktok]] as const).filter(([, url]) => !!url) : [];
   const wa = support ? `https://wa.me/${support}?text=${encodeURIComponent("سلام، نحب نعرف أكثر على Pointili")}` : null;
   return (
     <div data-read className="min-h-dvh bg-canvas">
@@ -53,10 +54,22 @@ export function SiteFrame({ support, children }: { support: string | null; child
             <Link href="/faq" className="text-body hover:text-brand">
               أسئلة
             </Link>
+            <Link href="/guide" className="text-body hover:text-brand">
+              كيفاش تختار
+            </Link>
             <Link href="/shop/new" className="text-body hover:text-brand">
               حلّ محلّك
             </Link>
           </div>
+          {pages.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[0.875rem] font-semibold" dir="ltr">
+              {pages.map(([name, url]) => (
+                <a key={name} href={url!} target="_blank" rel="noreferrer me" className="text-muted hover:text-brand">
+                  {name}
+                </a>
+              ))}
+            </div>
+          )}
           <p className="mt-6 text-[0.75rem] text-faint">© Pointili · Tunisie</p>
         </div>
       </footer>

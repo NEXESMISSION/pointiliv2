@@ -15,8 +15,8 @@ export function AdminTester() {
   const go = (mode: "fresh" | "new" | "owner") =>
     start(async () => {
       setDone(null);
-      const ok = await adminTester(mode);
-      setDone(ok ? t.aTesterDone : t.errNetwork);
+      const res = await adminTester(mode).catch(() => "error" as const);
+      setDone(res === "ok" ? t.aTesterDone : res === "no_account" ? t.aTesterNoAccount : t.errNetwork);
       router.refresh();
     });
   const modes = [

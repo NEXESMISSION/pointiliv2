@@ -4,22 +4,22 @@ import { Check, Sparkles } from "lucide-react";
 import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
 import { Icon3D } from "@/components/ui";
-import { orgJsonLd, PRICE, SITE } from "@/lib/seo";
+import { orgJsonLd, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 import { t } from "@/lib/t";
 
 export const metadata: Metadata = {
-  title: `Prix — ${PRICE} DT par an · السوم: ${PRICE} د في العام`,
-  description: `Pointili coûte ${PRICE} dinars par an et par commerce, tout compris. Paiement par D17, virement, versement ou mandat. — ${PRICE} د في العام، الكل داخل.`,
+  title: `Prix — ${PRICE} DT par an (${PRICE_MONTH} DT/mois) · السوم: ${PRICE} د في العام`,
+  description: `Un seul abonnement : Pointili coûte ${PRICE} dinars par an et par commerce, soit ${PRICE_MONTH} DT par mois, tout compris. Paiement par D17, virement, versement ou mandat. — أبونمان واحد: ${PRICE} د في العام (${PRICE_MONTH} د في الشهر)، الكل داخل.`,
   alternates: { canonical: `${SITE}/prix` },
 };
 
 /** One price, everything in it, and the four ways to pay — finished by a call or a WhatsApp. */
 export default async function Prix() {
-  const { supportPhone } = await getSettings();
+  const { supportPhone, social } = await getSettings();
   return (
-    <SiteFrame support={supportPhone}>
-      <JsonLd data={orgJsonLd(supportPhone)} />
+    <SiteFrame support={supportPhone} social={social}>
+      <JsonLd data={orgJsonLd(supportPhone, social)} />
       <h1 className="text-[2rem] font-bold leading-tight">السوم</h1>
       <p className="mt-1 text-[1rem] font-semibold text-muted" dir="ltr">
         Prix de la carte de fidélité Pointili
@@ -35,6 +35,9 @@ export default async function Prix() {
               <span className="pb-2 text-[1.125rem] font-bold">
                 {t.payCurrency} <span className="font-semibold text-white/80">{t.payPer}</span>
               </span>
+            </p>
+            <p className="mt-1 text-[1rem] font-semibold text-white/85">
+              {`يعني ${PRICE_MONTH} د في الشهر · soit ${PRICE_MONTH} DT/mois`}
             </p>
           </div>
           <Icon3D name="crown" size={64} />
@@ -75,7 +78,7 @@ export default async function Prix() {
       <section className="mt-10 rounded-[1.25rem] bg-surface p-5 shadow-card" dir="ltr" lang="fr">
         <h2 className="text-[1.125rem] font-bold">En bref</h2>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted">
-          Pointili coûte {PRICE} dinars tunisiens par an et par commerce, tout compris : clients illimités, tampons illimités, votre logo sur la carte, et notre accompagnement. Si vous payez dans les 48 heures après l&apos;ouverture de votre compte, vous recevez 3 mois offerts (15 mois pour le prix de 12). Paiement par D17, virement, versement ou mandat postal : appelez-nous ou écrivez-nous sur WhatsApp et on finalise ensemble.
+          Pointili a un seul abonnement : {PRICE} dinars tunisiens par an et par commerce (soit {PRICE_MONTH} DT par mois), tout compris : clients illimités, tampons illimités, votre logo sur la carte, et notre accompagnement. Si vous payez dans les 48 heures après l&apos;ouverture de votre compte, vous recevez 3 mois offerts (15 mois pour le prix de 12). Paiement par D17, virement, versement ou mandat postal : appelez-nous ou écrivez-nous sur WhatsApp et on finalise ensemble.
         </p>
       </section>
 

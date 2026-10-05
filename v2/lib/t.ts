@@ -346,6 +346,14 @@ export const t = {
   aVideoLabel: "الكلام على البوتون",
   aVideoUrl: "لينك يوتيوب",
   aVideoBad: "اللينك هذا موش متاع يوتيوب",
+  aHelpCard: "المساعدة",
+  aHelpCardHint: "النومرو اللي يبان في «عندك سؤال؟»، في صفحة الخلاص وفي «نسيت كلمة السر»: تليفون وواتساب",
+  aVideosCard: "الفيديوات",
+  aVideosCardHint: "الأوّل يبان على الصفحة الأولى وفي «عندك سؤال؟»، والثاني في «عندك سؤال؟»",
+  aSocialCard: "الصفحات متاعنا",
+  aSocialCardHint: "تبان لتحت في صفحات السوم والأسئلة، وتقول لـGoogle وللـAI اللي هي صفحات Pointili",
+  aSocialBad: "اللينك هذا موش متاع {site}",
+  aTry: "جرّب",
   aSaved: "تسجّل",
   aTraffic: "الترافيك",
   // paying for the year: 120 a year; within 48 hours of opening, 3 more months
@@ -405,6 +413,44 @@ export const t = {
   payMonths: "{n} شهر",
   // the founder's payments
   aPayments: "الخلاص",
+  // the founder's hand on a shop's year
+  aPlan: "الأبونمان",
+  aPlanPaidUntil: "مخلّص حتى {date}",
+  aPlanOffer: "ما خلّصش · العرض يوفى {date}",
+  aPlanNone: "ما خلّصش",
+  aPlanGive: "فعّل الأبونمان",
+  aPlanByMonths: "بالشهور",
+  aPlanUntil: "لين نهار",
+  aPlanHow: "كيفاش خلّص؟ (موش لازم)",
+  aPlanCash: "كاش",
+  aPlanUntilAsk: "الأبونمان يوفى نهار",
+  aPlanMonths: "قدّاش",
+  aPlanCustom: "ولا عدد الشهور",
+  aPlanFromEnd: "يتزادو على الأبونمان اللي يوفى {date}",
+  aPlanFromToday: "يبداو من اليوم",
+  aPlanNote: "كلمة للمولى (موش لازم)",
+  aPlanNotePh: "مثلا: كان عندك أيّ سؤال كلّمني",
+  aPlanShow: "يبانلو في الأبليكاسيون إنّو الأبونمان تفعّل",
+  aPlanSave: "فعّل",
+  aPlanEnd: "وقّف الأبونمان",
+  aPlanEndConfirm: "توقّف الأبونمان متاع المحل هذا توّا؟",
+  aPlanHistory: "شنوّة صار في الأبونمان",
+  aPlanLogPaid: "تفعّل: {d}",
+  aPlanLogUntil: "تفعّل حتى {date}",
+  aPlanLogEnd: "توقّف",
+  aPlanSeen: "شافها",
+  aPlanNotSeen: "مازال ما شافهاش",
+  aPlanAsked: "قال باش يخلّص",
+  aEditShop: "بدّل المحل والكارط",
+  aShopKind: "نوع المحل",
+  aMoveOnWay: "اللي بداو الكارط يعدّيو للجديدة توّا",
+  // the access the founder just turned on, on the owner's home
+  grantTitle: "الأبونمان متاعك تفعّل",
+  grantPaidFor: "مخلّص {d}، حتى {date}",
+  grantUntil: "مخلّص حتى {date}",
+  // the user wants the thank-you in French ("more pro"); shown left-to-right, so the full stop stays at its end
+  grantThanks: "Merci pour votre confiance.",
+  grantOk: "باهي",
   aPaymentsHint: "الموالي اللي قالو خلّصو: ثبّت كي توصلك الفلوس، والأبونمان يتحسب وحدو",
   aPayConfirm: "وصلت ✓",
   aPayRefuse: "ما وصلتش",
@@ -432,7 +478,8 @@ export const t = {
   aTesterNone: "ما فمّاش كونت",
   aTesterAccount: "كونت بلا محل",
   aTesterShop: "عندو محل",
-  aTesterMissing: "زيد TESTER_PHONE و TESTER_PASSWORD في .env.local",
+  aTesterMissing: "زيد TESTER_PHONE في .env.local",
+  aTesterNoAccount: "النومرو هذا ما عندوش كونت: اعمل كونت بيه من الشاشة الأولى، وبعد رجّعو كيما تحب من هوني",
   aTesterDone: "تعمل ✓",
   // real accounts and test accounts, apart in the console; the scripts' own never show
   aReal: "الحقيقيين",
@@ -480,6 +527,9 @@ export const t = {
   popGiftGive: "إيه، عطيه الكادو",
   popGiftLater: "موش توّا",
   collectHanded: "{name} خذا {gift}",
+  // Pointili on the phone's home screen (Android offers it)
+  installApp: "حطّ Pointili في تليفونك",
+  installAppHint: "تحلّها من الشاشة كيما أي أبليكاسيون",
   myCode: "الكود متاعي",
   myCodeTitle: "الكود متاعك",
   myCodeHint: "ورّيه للمحل، ولا قولّو النومرو متاعك، ويزيدك التامبون",
@@ -778,6 +828,14 @@ export const customersN = (n: number) => counted(n, "حريف واحد", "زوز
 const squash = (x: string | null | undefined) => (x ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 export const sameGift = (a: string | null | undefined, b: string | null | undefined) => squash(a) === squash(b);
 export const giftsN = (n: number) => counted(n, "كادو واحد", "زوز كادوات", "كادوات", "كادو");
+/** شهر, شهرين, 3 شهور, عام, عام ونص, عامين, 3 سنين — a length the Tunisian way */
+export function monthsSaid(n: number): string {
+  if (n === 12) return "عام";
+  if (n === 18) return "عام ونص";
+  if (n === 24) return "عامين";
+  if (n % 12 === 0 && n <= 120) return `${n / 12} سنين`;
+  return counted(n, "شهر", "شهرين", "شهور", "شهر");
+}
 /** ساعة, زوز سوايع, 3 سوايع, 12 ساعة */
 export const hoursN = (n: number) => counted(n, "ساعة", "زوز سوايع", "سوايع", "ساعة");
 export const accountsN = (n: number) => counted(n, "كونت واحد", "زوز كونتات", "كونتات", "كونت");

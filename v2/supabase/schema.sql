@@ -94,6 +94,27 @@ create table if not exists public.payments (
   decided_at  timestamptz
 );
 create index if not exists payments_shop_idx on public.payments (shop_id, created_at desc);
+
+-- every change of a shop's year by the founder: the owner paid by hand (cash,
+-- D17, a transfer…) and the founder turns the access on — so many months, or
+-- until a date — or stops it. Nothing is free. `show_owner`: the owner's home
+-- says it once (seen_at).
+create table if not exists public.plan_log (
+  id          bigint generated always as identity primary key,
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  kind        text not null,
+  months      int check (months is null or months between 1 and 120),
+  until_at    timestamptz,
+  note        text check (note is null or char_length(note) <= 200),
+  show_owner  boolean not null default false,
+  seen_at     timestamptz,
+  created_at  timestamptz not null default now()
+);
+create index if not exists plan_log_shop_idx on public.plan_log (shop_id, created_at desc);
+alter table public.plan_log add column if not exists method text check (method is null or method in ('cash', 'd17', 'virement', 'versement', 'mandat'));
+-- never a gift: the access is only ever turned on because the owner paid
+alter table public.plan_log drop constraint if exists plan_log_kind_check;
+alter table public.plan_log add constraint plan_log_kind_check check (kind in ('paid', 'until', 'end'));
 -- the ways: the five, and "contact" (the owner called or wrote on WhatsApp to pay)
 alter table public.payments drop constraint if exists payments_method_check;
 alter table public.payments add constraint payments_method_check check (method in ('card', 'd17', 'virement', 'versement', 'mandat', 'contact'));
@@ -171,7 +192,8 @@ create table if not exists public.settings (
 alter table public.settings drop constraint if exists settings_key_check;
 alter table public.settings add constraint settings_key_check check (key in (
   'support_phone', 'video1_url', 'video1_label', 'video2_url', 'video2_label',
-  'pay_card_url', 'pay_d17', 'pay_name', 'pay_bank', 'pay_rib', 'pay_mandat'));
+  'pay_card_url', 'pay_d17', 'pay_name', 'pay_bank', 'pay_rib', 'pay_mandat',
+  'facebook_url', 'instagram_url', 'tiktok_url'));
 
 -- ═══ traffic: who came, from where, what they did, how long, where they left
 -- a visit is one sitting (30 minutes of quiet ends it); a view is one screen
@@ -289,7 +311,7 @@ update public.moments m set gift = c.gift from public.cards c where c.id = m.car
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -458,11 +480,11 @@ end $$;
 -- the gift at once for whoever already has enough). A gift waiting stays.
 drop function if exists public.save_card(int, text, text);
 drop function if exists public.save_card(int, text, text, int);
-create or replace function public.save_card(p_goal int, p_gift text, p_color text, p_gap int default null, p_move boolean default false) returns jsonb
+create or replace function public.card_apply(p_shop uuid, p_goal int, p_gift text, p_color text, p_gap int, p_move boolean) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_gift text := trim(coalesce(p_gift, '')); v_eased int; v_filled int; v_kept int; v_moved int := 0;
 begin
-  s := public.my_shop();
+  select * into s from public.shops where id = p_shop;
   if s.id is null then return public.err('no_shop'); end if;
   if p_goal is null or p_goal not between 3 and 30 then return public.err('invalid_goal'); end if;
   if char_length(v_gift) not between 2 and 60 then return public.err('invalid_gift'); end if;
@@ -493,6 +515,36 @@ begin
   where c.shop_id = s.id and c.stamps > 0 and not public.waits(c.id)
     and (c.goal is distinct from p_goal or not public.same_gift(c.gift, v_gift));
   return jsonb_build_object('ok', true, 'eased', v_eased, 'filled', v_filled, 'kept', v_kept, 'moved', v_moved);
+end $$;
+
+-- the owner's own card
+create or replace function public.save_card(p_goal int, p_gift text, p_color text, p_gap int default null, p_move boolean default false) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return public.card_apply(s.id, p_goal, p_gift, p_color, p_gap, p_move);
+end $$;
+
+-- the founder's hand on a shop: its card (the same rules as the owner's), its name and kind
+create or replace function public.admin_save_card(p_shop uuid, p_goal int, p_gift text, p_color text default null, p_gap int default null, p_move boolean default false) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return public.card_apply(p_shop, p_goal, p_gift, p_color, p_gap, p_move);
+end $$;
+
+create or replace function public.admin_shop_edit(p_shop uuid, p_name text, p_kind text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_name text := trim(coalesce(p_name, ''));
+begin
+  perform public.require_admin();
+  if char_length(v_name) not between 2 and 60 then return public.err('invalid_name'); end if;
+  if p_kind is null or not (p_kind = any (public.kinds())) then return public.err('invalid_kind'); end if;
+  update public.shops set name = v_name, kind = p_kind where id = p_shop;
+  if not found then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true);
 end $$;
 
 -- before a change of card is saved: what it would do to the customers. `way`:
@@ -877,6 +929,17 @@ begin
     'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused, 'created_at', s.created_at,
     'owner', (select jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone, 'tester', p.is_tester, 'admin', p.is_admin, 'robot', public.is_robot(p.id))
               from public.people p where p.id = s.owner_id),
+    'stamp_gap', s.stamp_gap,
+    'plan', jsonb_build_object(
+      'paid_until', s.paid_until,
+      'paid', s.paid_until is not null and s.paid_until > now(),
+      'offer_until', s.offer_at + interval '48 hours',
+      'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
+      'log', coalesce((select jsonb_agg(jsonb_build_object('id', l.id, 'kind', l.kind, 'months', l.months, 'until', l.until_at, 'note', l.note, 'method', l.method,
+                                                           'shown', l.show_owner, 'seen', l.seen_at, 'at', l.created_at) order by l.created_at desc)
+                       from (select * from public.plan_log where shop_id = s.id order by created_at desc limit 20) l), '[]'::jsonb),
+      'payments', coalesce((select jsonb_agg(jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'status', y.status, 'at', y.created_at) order by y.created_at desc)
+                            from (select * from public.payments where shop_id = s.id order by created_at desc limit 10) y), '[]'::jsonb)),
     'customers', (select count(*) from public.cards where shop_id = s.id),
     'stamps', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp'),
     'today', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
@@ -1092,6 +1155,8 @@ begin
   return jsonb_build_object(
     'paid_until', s.paid_until,
     'paid', s.paid_until is not null and s.paid_until > now(),
+    'grant', (select jsonb_build_object('id', l.id, 'kind', l.kind, 'months', l.months, 'until', l.until_at, 'note', l.note, 'method', l.method)
+              from public.plan_log l where l.shop_id = s.id and l.show_owner and l.seen_at is null order by l.created_at desc limit 1),
     'offer_until', s.offer_at + interval '48 hours',
     'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
     'last', case when y.id is null then null else jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'status', y.status, 'at', y.created_at) end);
@@ -1144,6 +1209,52 @@ begin
   if p_paid then
     update public.shops set paid_until = greatest(coalesce(paid_until, now()), now()) + make_interval(months => y.months) where id = y.shop_id;
   end if;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- the founder turns a shop's access on by hand, once the owner paid: so many
+-- months more (from today, or from the end of the year already paid), or until
+-- a date; or stops it now. Written in plan_log with how it was paid;
+-- `p_show`: the owner's home says it once («الأبونمان متاعك تفعّل»)
+drop function if exists public.admin_plan(uuid, text, int, timestamptz, text, boolean);
+create or replace function public.admin_plan(p_shop uuid, p_kind text, p_months int default null, p_until timestamptz default null, p_note text default null, p_show boolean default true, p_method text default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_until timestamptz; v_note text := nullif(trim(coalesce(p_note, '')), '');
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_shop for update;
+  if s.id is null then return public.err('not_found'); end if;
+  if p_method is not null and p_method not in ('cash', 'd17', 'virement', 'versement', 'mandat') then return public.err('invalid'); end if;
+  if p_kind = 'paid' then
+    if p_months is null or p_months not between 1 and 120 then return public.err('invalid'); end if;
+    v_until := greatest(coalesce(s.paid_until, now()), now()) + make_interval(months => p_months);
+  elsif p_kind = 'until' then
+    if p_until is null or p_until <= now() or p_until > now() + interval '10 years' then return public.err('invalid'); end if;
+    v_until := p_until;
+  elsif p_kind = 'end' then
+    v_until := now();
+  else
+    return public.err('invalid');
+  end if;
+  if v_note is not null and char_length(v_note) > 200 then return public.err('invalid'); end if;
+  update public.shops set paid_until = v_until where id = s.id;
+  insert into public.plan_log (shop_id, kind, months, until_at, note, show_owner, method)
+  values (s.id, p_kind, case when p_kind = 'paid' then p_months end, v_until, v_note, coalesce(p_show, false) and p_kind <> 'end', case when p_kind <> 'end' then p_method end);
+  -- the access turned on settles the payment the owner said was coming
+  if p_kind in ('paid', 'until') then
+    update public.payments set status = 'paid', decided_at = now() where shop_id = s.id and status = 'pending';
+  end if;
+  return jsonb_build_object('ok', true, 'paid_until', v_until);
+end $$;
+
+-- the owner saw the access the founder turned on: said once
+create or replace function public.plan_seen(p_id bigint) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  update public.plan_log set seen_at = now() where id = p_id and shop_id = s.id and seen_at is null;
   return jsonb_build_object('ok', true);
 end $$;
 
@@ -1532,6 +1643,8 @@ where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
   and not (p.seen @> case when s.goal is not null then array['card_hello', 'coach', 'logo_tip'] else array['card_hello', 'logo_tip'] end);
 
 grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
+  public.admin_save_card(uuid, int, text, text, int, boolean), public.admin_shop_edit(uuid, text, text),
+  public.admin_plan(uuid, text, int, timestamptz, text, boolean, text), public.plan_seen(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),

@@ -6,7 +6,21 @@ import { service } from "@/lib/supabase";
 export type Video = { id: string; label: string; vertical: boolean; url: string };
 /** Where the owners pay: the card page (Dodo Payments), D17, the bank account, the post office. */
 export type PayDetails = { card: string | null; d17: string | null; name: string | null; bank: string | null; rib: string | null; mandat: string | null };
-export type Settings = { supportPhone: string | null; video1: Video | null; video2: Video | null; pay: PayDetails; raw: Record<string, string> };
+/** Pointili's own pages (the footer links them; search engines and AI assistants learn they are Pointili's). */
+export type Social = { facebook: string | null; instagram: string | null; tiktok: string | null };
+export type Settings = { supportPhone: string | null; video1: Video | null; video2: Video | null; pay: PayDetails; social: Social; raw: Record<string, string> };
+
+/** An https link on that site only (facebook.com, instagram.com, tiktok.com), else null. */
+export function socialUrl(raw: string | undefined, host: "facebook.com" | "instagram.com" | "tiktok.com"): string | null {
+  const url = String(raw ?? "").trim();
+  if (!/^https:\/\/\S+$/.test(url)) return null;
+  try {
+    const h = new URL(url).hostname.replace(/^(www|m)\./, "");
+    return h === host || h.endsWith(`.${host}`) ? url : null;
+  } catch {
+    return null;
+  }
+}
 
 /** youtu.be/ID, youtube.com/watch?v=ID, /shorts/ID, /embed/ID, /live/ID → ID (11 letters), else null. */
 export function youtubeId(url: string): string | null {
@@ -68,6 +82,7 @@ export async function getSettings(fresh = false): Promise<Settings> {
       rib: raw.pay_rib?.trim() || null,
       mandat: raw.pay_mandat?.trim() || null,
     },
+    social: { facebook: socialUrl(raw.facebook_url, "facebook.com"), instagram: socialUrl(raw.instagram_url, "instagram.com"), tiktok: socialUrl(raw.tiktok_url, "tiktok.com") },
     raw,
   };
 }

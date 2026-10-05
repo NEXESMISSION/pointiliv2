@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 
 /** The questions owners ask, answered in Tunisian, then the same in French. */
 export default async function Faq() {
-  const { supportPhone } = await getSettings();
+  const { supportPhone, social } = await getSettings();
   const all = FAQ.flatMap((f) => [{ q: f.q, a: f.a }, f.fr]);
   return (
-    <SiteFrame support={supportPhone}>
+    <SiteFrame support={supportPhone} social={social}>
       <JsonLd data={faqJsonLd(all)} />
-      <JsonLd data={orgJsonLd(supportPhone)} />
+      <JsonLd data={orgJsonLd(supportPhone, social)} />
       <h1 className="text-[2rem] font-bold leading-tight">أسئلة على Pointili</h1>
       <p className="mt-1 text-[1rem] font-semibold text-muted" dir="ltr">
         Questions fréquentes

@@ -118,7 +118,30 @@ const slug = (route: string, screen: string | null) =>
 const SOURCES: Record<string, string> = { facebook: "فيسبوك", fb: "فيسبوك", instagram: "إنستغرام", ig: "إنستغرام", google: "Google", tiktok: "تيك توك", whatsapp: "واتساب", x: "X", direct: "مباشر" };
 const sourceName = (s: string | null) => SOURCES[(s ?? "direct").toLowerCase()] ?? s ?? "مباشر";
 const DEVICES: Record<string, string> = { phone: "تليفون", tablet: "تابلات", computer: "PC" };
-const SIGNALS: Record<string, string> = { video: "▶ شاف فيديو", video_close: "▶ سكّر الفيديو", help_open: "؟ حلّ «عندك سؤال؟»", form_error: "⚠ فورم ما تعدّاش", gift_won: "🎁 ربح كادو" };
+const SIGNALS: Record<string, string> = {
+  video: "▶ شاف فيديو",
+  video_close: "▶ سكّر الفيديو",
+  help_open: "؟ حلّ «عندك سؤال؟»",
+  form_error: "⚠ فورم ما تعدّاش",
+  gift_won: "🎁 ربح كادو",
+  pwa_shown: "📲 شاف «حطّ Pointili في تليفونك»",
+  pwa_click: "📲 نزل على «حطّ Pointili في تليفونك»",
+  pwa_accepted: "📲 قال إيه للتنزيل",
+  pwa_dismissed: "📲 قال لا للتنزيل",
+  pwa_installed: "📲 Pointili تحطّت في التليفون",
+  pwa_open: "📲 حلّ Pointili من الأبليكاسيون",
+  news: "📣 شاف خبر",
+  news_close: "📣 سكّر خبر",
+  news_click: "📣 نزل على زرّ الخبر",
+  offer: "🏷 العرض متاع 15 شهر",
+  pay: "💳 اختار كيفاش يخلّص",
+  plan_on: "✅ شاف إنّو الأبونمان تفعّل",
+  collect: "📷 عطى تامبون بالكود متاع الحريف",
+  collect_gift: "🎁 عطى كادو بالكود متاع الحريف",
+  collect_unknown: "📷 كود حريف موش موجود",
+  logo: "🖼 حطّ لوغو",
+  logo_tip: "🖼 شاف النصيحة متاع اللوغو",
+};
 const signalName = (n: string) => SIGNALS[n] ?? n;
 
 /**
@@ -243,6 +266,8 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
 function Overview({ data, days, heatHref }: { data: Traffic; days: number; heatHref: (key: string) => string }) {
   const max = Math.max(1, ...data.days.map((d) => d.visits));
   const stops = [...data.pages].filter((p) => p.exits > 0).sort((a, b) => b.exits - a.exits).slice(0, 7);
+  // one signal, all its details together (the install button's place, for one)
+  const sig = (name: string) => data.signals.filter((x) => x.name === name).reduce((n, x) => n + x.n, 0);
 
   return (
     <div className="space-y-4">
@@ -323,6 +348,16 @@ function Overview({ data, days, heatHref }: { data: Traffic; days: number; heatH
           <Bars rows={data.signals.slice(0, 10).map((s, i) => ({ key: String(i), label: signalName(s.name), sub: s.detail ? <Bidi>{s.detail}</Bidi> : null, n: s.n }))} />
         </Card>
       </div>
+
+      {/* Pointili on the phone (Android): the button seen, tapped, the app installed, the visits opened from it */}
+      <Card title="📲 Pointili في التليفونات" hint="الزرّ «حطّ Pointili في تليفونك»، على الأندرويد">
+        <Stats>
+          <Stat label="شافو الزرّ" value={sig("pwa_shown")} />
+          <Stat label="نزلو عليه" value={sig("pwa_click")} sub={<Pct a={sig("pwa_click")} b={sig("pwa_shown")} />} />
+          <Stat label="حطّوها في التليفون" value={Math.max(sig("pwa_installed"), sig("pwa_accepted"))} tone="mint" />
+          <Stat label="زيارات من الأبليكاسيون" value={sig("pwa_open")} tone="brand" />
+        </Stats>
+      </Card>
     </div>
   );
 }

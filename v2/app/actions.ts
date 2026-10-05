@@ -9,8 +9,8 @@ import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, phoneEmail, validPhone } from "@/lib/phone";
 import { NEWS_ICONS, newsHref } from "@/lib/news";
-import { youtubeId } from "@/lib/settings";
-import { t } from "@/lib/t";
+import { socialUrl, youtubeId } from "@/lib/settings";
+import { fill, t } from "@/lib/t";
 import type { CardView, FormState, ScanResult } from "@/lib/types";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
@@ -252,13 +252,53 @@ export async function adminPaymentDecide(id: string, paid: boolean): Promise<boo
   return !!res?.ok;
 }
 
+/** The owner paid by hand: the founder turns the access on (so many months, or until a date), or stops it. */
+export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null): Promise<{ ok: boolean }> {
+  if (!UUID.test(shopId)) return { ok: false };
+  const res = await call<{ ok: boolean }>("admin_plan", {
+    p_shop: shopId,
+    p_kind: kind,
+    p_months: months !== null && Number.isFinite(months) ? Math.round(months) : null,
+    // a date picked is the end of that day in Tunis
+    p_until: until && /^\d{4}-\d{2}-\d{2}$/.test(until) ? `${until}T23:59:00+01:00` : null,
+    p_note: note?.trim().slice(0, 200) || null,
+    p_show: show,
+    p_method: method && ["cash", "d17", "virement", "versement", "mandat"].includes(method) ? method : null,
+  });
+  revalidatePath(`/admin/shops/${shopId}`);
+  revalidatePath("/admin/payments");
+  return { ok: !!res?.ok };
+}
+
+/** The founder's hand on a shop's card: the same rules as the owner's. */
+export async function adminSaveCard(shopId: string, goal: number, gift: string, gap: number, move: boolean): Promise<boolean> {
+  if (!UUID.test(shopId)) return false;
+  const res = await call<{ ok: boolean }>("admin_save_card", { p_shop: shopId, p_goal: Math.round(goal), p_gift: gift.slice(0, 60), p_gap: Math.round(gap), p_move: move });
+  revalidatePath(`/admin/shops/${shopId}`);
+  return !!res?.ok;
+}
+
+/** The founder renames a shop, or changes its kind. */
+export async function adminShopEdit(shopId: string, name: string, kind: string): Promise<boolean> {
+  if (!UUID.test(shopId)) return false;
+  const res = await call<{ ok: boolean }>("admin_shop_edit", { p_shop: shopId, p_name: name.slice(0, 60), p_kind: kind });
+  revalidatePath(`/admin/shops/${shopId}`);
+  revalidatePath("/admin/shops");
+  return !!res?.ok;
+}
+
+/** The owner saw what the founder gave: said once. */
+export async function planSeen(id: number): Promise<void> {
+  if (Number.isInteger(id) && id > 0) await call("plan_seen", { p_id: id });
+}
+
 /** The test account, back to a starting point (lib/tester.ts): fresh, new (no shop), or an owner of three days. */
-export async function adminTester(mode: "fresh" | "new" | "owner"): Promise<boolean> {
-  if (!(await getMe())?.admin) return false;
+export async function adminTester(mode: "fresh" | "new" | "owner"): Promise<"ok" | "no_account" | "error"> {
+  if (!(await getMe())?.admin) return "error";
   const { resetTester } = await import("@/lib/tester");
-  const ok = await resetTester(mode);
+  const res = await resetTester(mode);
   revalidatePath("/admin/tester");
-  return ok;
+  return res;
 }
 
 /** A piece of news showed to this owner: written on them, once (who saw it, and when). */
@@ -365,13 +405,13 @@ export async function adminNewsDelete(id: string) {
 /** The founder's settings: the number owners call, the two videos (YouTube links checked here). */
 export async function adminSaveSettings(_: FormState, fd: FormData): Promise<FormState> {
   if (!(await getMe())?.admin) return { error: t.errNetwork };
-  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "pay_card_url", "pay_d17", "pay_name", "pay_bank", "pay_rib", "pay_mandat"] as const;
+  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "facebook_url", "instagram_url", "tiktok_url"] as const;
   const phone = str(fd, "support_phone");
-  const card = str(fd, "pay_card_url");
-  if (card && !/^https:\/\/\S+$/.test(card)) return { error: t.aNewsErrLink, field: "pay_card_url" };
-  const rib = str(fd, "pay_rib").replace(/\s/g, "");
-  if (rib && !/^\d{20}$/.test(rib)) return { error: t.aPayRib, field: "pay_rib" };
   if (phone && phone.replace(/\D/g, "").length < 8) return { error: t.errPhone, field: "support_phone" };
+  for (const [key, host] of [["facebook_url", "facebook.com"], ["instagram_url", "instagram.com"], ["tiktok_url", "tiktok.com"]] as const) {
+    const url = str(fd, key);
+    if (url && !socialUrl(url, host)) return { error: fill(t.aSocialBad, { site: host }), field: key };
+  }
   for (const key of ["video1_url", "video2_url"] as const) {
     const url = str(fd, key);
     if (url && !youtubeId(url)) return { error: t.aVideoBad, field: key };

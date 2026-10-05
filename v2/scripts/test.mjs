@@ -419,6 +419,30 @@ try {
   check("a payment decided cannot be decided again", (await rpc(boss, "admin_payment_decide", { p_id: req.id, p_paid: false })).error === "done");
   check("the offer is a one-time note", (await rpc(owner, "see", { p_key: "offer" })).ok);
 
+  console.log("\nThe founder's hand on a shop's year (access turned on by hand), and its card");
+  const planShop = (await rpc(owner, "me")).shop;
+  const before = (await rpc(owner, "my_payment")).paid_until;
+  check("an owner cannot turn his own access on", !!(await rpc(owner, "admin_plan", { p_shop: planShop.id, p_kind: "paid", p_months: 24 })).error);
+  check("months out of bounds are refused", (await rpc(boss, "admin_plan", { p_shop: planShop.id, p_kind: "paid", p_months: 500 })).error === "invalid");
+  check("nothing is a gift any more", (await rpc(boss, "admin_plan", { p_shop: planShop.id, p_kind: "gift", p_months: 12 })).error === "invalid");
+  const gave = await rpc(boss, "admin_plan", { p_shop: planShop.id, p_kind: "paid", p_months: 24, p_note: "يعيشك", p_show: true, p_method: "d17" });
+  const yearsMore = (Date.parse(gave.paid_until) - Date.parse(before)) / (365.25 * 86_400_000);
+  check("paid by hand, 2 years turned on add onto the year already paid", gave.ok && yearsMore > 1.95 && yearsMore < 2.05, [before, gave.paid_until]);
+  const told = (await rpc(owner, "my_payment")).grant;
+  check("…and the owner's home says it once, with how it was paid and the founder's word", told?.kind === "paid" && told.months === 24 && told.method === "d17" && told.note === "يعيشك", told);
+  check("…seen, it is not said again", (await rpc(owner, "plan_seen", { p_id: told.id })).ok && !(await rpc(owner, "my_payment")).grant);
+  const shopView = await rpc(boss, "admin_shop", { p_id: planShop.id });
+  check("the console shows the year and its story", shopView.plan?.paid === true && shopView.plan.log[0]?.kind === "paid" && shopView.plan.log[0].method === "d17" && !!shopView.plan.log[0].seen, shopView.plan);
+  const until = new Date(Date.now() + 40 * 86_400_000).toISOString();
+  check("an end date set by the founder", (await rpc(boss, "admin_plan", { p_shop: planShop.id, p_kind: "until", p_until: until, p_show: false })).ok && Math.abs(Date.parse((await rpc(owner, "my_payment")).paid_until) - Date.parse(until)) < 60_000);
+  check("…unticked, nothing to say to the owner", !(await rpc(owner, "my_payment")).grant);
+  check("the year stopped now", (await rpc(boss, "admin_plan", { p_shop: planShop.id, p_kind: "end" })).ok && (await rpc(owner, "my_payment")).paid === false);
+  check("the founder edits a shop's card with the owner's rules", (await rpc(boss, "admin_save_card", { p_shop: planShop.id, p_goal: planShop.goal, p_gift: planShop.gift, p_gap: 60 })).ok);
+  check("…and its name", (await rpc(boss, "admin_shop_edit", { p_shop: planShop.id, p_name: planShop.name, p_kind: planShop.kind })).ok);
+  check("a kind that does not exist is refused", (await rpc(boss, "admin_shop_edit", { p_shop: planShop.id, p_name: planShop.name, p_kind: "spaceship" })).error === "invalid_kind");
+  check("an owner cannot edit another way round the rules", !!(await rpc(owner, "admin_save_card", { p_shop: planShop.id, p_goal: 3, p_gift: "x x", p_gap: 0 })).error);
+  check("the card's inner rule is nobody's to call", !!(await rpc(owner, "card_apply", { p_shop: planShop.id, p_goal: 3, p_gift: "x x", p_color: null, p_gap: 0, p_move: false })).error);
+
   console.log("\nThe traffic: a visit from an ad, its screens, its taps");
   const vid = randomUUID();
   const welcome = randomUUID();
