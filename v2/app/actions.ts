@@ -204,10 +204,17 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
   // the wait between two tampons, in minutes (0: none; 1440: once a day); missing: as it was
   const gapRaw = str(fd, "gap");
   const gap = gapRaw === "" ? null : Math.round(Number(gapRaw));
-  const res = await call<{ ok: boolean; error?: string }>("save_card", { p_goal: goal, p_gift: gift, p_color: str(fd, "color"), p_gap: gap !== null && Number.isFinite(gap) ? gap : null });
+  // the customers on their way: they finish the card they started, unless the owner moves them to the new one now
+  const res = await call<{ ok: boolean; error?: string }>("save_card", { p_goal: goal, p_gift: gift, p_color: str(fd, "color"), p_gap: gap !== null && Number.isFinite(gap) ? gap : null, p_move: str(fd, "move") === "1" });
   if (!res?.ok) return { error: t.errNetwork };
   revalidatePath("/", "layout");
   redirect(inside(str(fd, "next")) ?? "/shop");
+}
+
+/** Before a change of card is saved: what it would do to the customers (on their way, eased, winning at once, a gift waiting). */
+export async function cardChange(goal: number, gift: string): Promise<{ ok: boolean; way?: number; eased?: number; win_now?: number; waiting?: number }> {
+  const res = await call<{ ok: boolean; way?: number; eased?: number; win_now?: number; waiting?: number }>("card_change", { p_goal: Math.round(goal), p_gift: String(gift).slice(0, 60) });
+  return res ?? { ok: false };
 }
 
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */

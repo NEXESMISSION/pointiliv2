@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { CardWizard } from "@/components/CardWizard";
 import { getMe } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
-import { call } from "@/lib/supabase";
 
 export const metadata = { title: "الكارط" };
 
@@ -12,8 +11,7 @@ export default async function ShopCard() {
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   const editing = !!me.shop.goal;
-  // the customers a change would touch: the last step tells the owner what happens to them
-  const [way, help] = await Promise.all([editing ? call<{ ok: boolean; n: number }>("in_progress") : Promise.resolve(null), getHelp()]);
+  const help = await getHelp();
   return (
     <CardWizard
       shop={me.shop}
@@ -21,7 +19,6 @@ export default async function ShopCard() {
       next={editing ? "/shop" : "/shop?welcome=1"}
       editing={editing}
       hello={!editing && !(me.seen ?? []).includes("card_hello")}
-      onTheWay={editing ? (way?.n ?? 0) : undefined}
       help={help}
     />
   );

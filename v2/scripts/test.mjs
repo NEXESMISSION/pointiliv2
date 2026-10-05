@@ -358,6 +358,22 @@ try {
   check("once a day: the next one tomorrow, at midnight in Tunis", nextDay.error === "too_soon" && ymd(dayAt) === ymd(new Date(Date.now() + 86_400_000)) && hhmm(dayAt) === "00:00", [nextDay.next_at, ymd(dayAt), hhmm(dayAt)]);
   check("back to an hour", (await saveWait(60)).ok && (await rpc(owner, "me")).shop.stamp_gap === 60);
 
+  console.log("\nChanging the card: the owner chooses for the customers on their way");
+  const sh = (await rpc(owner, "me")).shop;
+  // on her way: 4 tampons of a card of 6 coffees (the card she started)
+  await admin.from("cards").update({ stamps: 4, goal: 6, gift: "قهوة بلاش" }).eq("id", nourCard.id);
+  const preview = await rpc(owner, "card_change", { p_goal: 8, p_gift: "كرواسون بلاش" });
+  check("before saving, the owner sees who is on their way", preview.ok && preview.way >= 1 && preview.win_now === 0, preview);
+  check("…a customer cannot ask it", !!(await rpc(nour, "card_change", { p_goal: 5, p_gift: "x" })).error);
+  const keep = await rpc(owner, "save_card", { p_goal: 8, p_gift: "كرواسون بلاش", p_color: sh.color });
+  const nourKept = (await admin.from("cards").select("goal, gift").eq("id", nourCard.id).single()).data;
+  check("kept: the card they started stays theirs", keep.ok && nourKept.goal === 6 && nourKept.gift === "قهوة بلاش", nourKept);
+  const moved = await rpc(owner, "save_card", { p_goal: 4, p_gift: "كرواسون بلاش", p_color: sh.color, p_move: true });
+  const nourMoved = (await admin.from("cards").select("goal, gift, stamps").eq("id", nourCard.id).single()).data;
+  const wonNow = await rpc(owner, "customer_at", { p_who: nourMe.code });
+  check("moved: the new card now, their tampons kept, the gift at once with enough", moved.ok && moved.moved >= 1 && nourMoved.goal === 4 && nourMoved.stamps === 4 && wonNow.waiting?.gift === "كرواسون بلاش", [moved, nourMoved, wonNow.waiting]);
+  check("the card back as it was", (await rpc(owner, "save_card", { p_goal: sh.goal, p_gift: sh.gift, p_color: sh.color })).ok);
+
   console.log("\nPaying for the year");
   const pay0 = await rpc(owner, "my_payment");
   check("a new shop is not paid yet, and its offer runs 48 hours", pay0.paid_until === null && Date.parse(pay0.offer_until) > Date.now(), pay0);

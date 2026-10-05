@@ -439,10 +439,16 @@ end $$;
 --     card that it fills gets its gift waiting now;
 --   · on the way otherwise (more stamps, another gift): they finish the card
 --     they started; the new one is theirs after that gift.
+-- the owner's card: how many tampons, which gift, the colour, the wait. The
+-- customers on their way keep the card they started (an easier one — the
+-- same gift for fewer — reaches them at once) unless the owner says `move`:
+-- then everyone on their way takes the new card now, their tampons kept (and
+-- the gift at once for whoever already has enough). A gift waiting stays.
 drop function if exists public.save_card(int, text, text);
-create or replace function public.save_card(p_goal int, p_gift text, p_color text, p_gap int default null) returns jsonb
+drop function if exists public.save_card(int, text, text, int);
+create or replace function public.save_card(p_goal int, p_gift text, p_color text, p_gap int default null, p_move boolean default false) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare s public.shops%rowtype; v_gift text := trim(coalesce(p_gift, '')); v_eased int; v_filled int; v_kept int;
+declare s public.shops%rowtype; v_gift text := trim(coalesce(p_gift, '')); v_eased int; v_filled int; v_kept int; v_moved int := 0;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
@@ -454,6 +460,13 @@ begin
 
   update public.cards c set goal = p_goal, gift = v_gift
   where c.shop_id = s.id and c.stamps = 0 and not public.waits(c.id);
+
+  if coalesce(p_move, false) then
+    update public.cards c set goal = p_goal, gift = v_gift
+    where c.shop_id = s.id and c.stamps > 0 and not public.waits(c.id)
+      and (c.goal is distinct from p_goal or not public.same_gift(c.gift, v_gift));
+    get diagnostics v_moved = row_count;
+  end if;
 
   update public.cards c set goal = p_goal
   where c.shop_id = s.id and c.stamps > 0 and coalesce(c.goal, 999) > p_goal and public.same_gift(c.gift, v_gift) and not public.waits(c.id);
@@ -467,7 +480,28 @@ begin
   select count(*) into v_kept from public.cards c
   where c.shop_id = s.id and c.stamps > 0 and not public.waits(c.id)
     and (c.goal is distinct from p_goal or not public.same_gift(c.gift, v_gift));
-  return jsonb_build_object('ok', true, 'eased', v_eased, 'filled', v_filled, 'kept', v_kept);
+  return jsonb_build_object('ok', true, 'eased', v_eased, 'filled', v_filled, 'kept', v_kept, 'moved', v_moved);
+end $$;
+
+-- before a change of card is saved: what it would do to the customers. `way`:
+-- on their way with a card that differs; `eased`: of them, the same gift for
+-- fewer tampons (it reaches them anyway); `win_now`: of them, already enough
+-- tampons for the new goal (they would win at once if moved); `waiting`: a
+-- gift waiting, kept whatever happens
+create or replace function public.card_change(p_goal int, p_gift text) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_gift text := trim(coalesce(p_gift, ''));
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return (
+    select jsonb_build_object('ok', true,
+      'way', count(*) filter (where c.stamps > 0 and not w.waiting and (c.goal is distinct from p_goal or not public.same_gift(c.gift, v_gift))),
+      'eased', count(*) filter (where c.stamps > 0 and not w.waiting and coalesce(c.goal, 999) > p_goal and public.same_gift(c.gift, v_gift)),
+      'win_now', count(*) filter (where c.stamps > 0 and not w.waiting and c.stamps >= p_goal and (c.goal is distinct from p_goal or not public.same_gift(c.gift, v_gift))),
+      'waiting', count(*) filter (where w.waiting))
+    from public.cards c cross join lateral (select public.waits(c.id) as waiting) w
+    where c.shop_id = s.id);
 end $$;
 
 -- how many customers are on their way (stamps, no gift waiting): what a change of card would touch
@@ -1402,7 +1436,7 @@ from public.shops s
 where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
   and not (p.seen @> case when s.goal is not null then array['card_hello', 'coach', 'logo_tip'] else array['card_hello', 'logo_tip'] end);
 
-grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int),
+grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),

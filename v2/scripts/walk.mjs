@@ -126,8 +126,11 @@ try {
   await o.getByRole("button", { name: "كمّل" }).click();
   await o.getByText("الكارط متاعك حاضرة").waitFor();
   await shot(o, "04-owner-card", 1200);
-  // the button breathes: Playwright never finds it "stable", so the click is forced
-  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }), o.locator('button[type="submit"]').click({ force: true })]);
+  // the button breathes: Playwright never finds it "stable", so the click is forced; a sheet says how the card works first
+  await o.getByRole("button", { name: "حلّ الكود" }).click({ force: true });
+  await o.getByRole("dialog", { name: "هكّا تخدم الكارط متاعك" }).waitFor({ timeout: 20000 });
+  await shot(o, "04e-card-how", 700);
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }), o.getByRole("button", { name: "باهي، حلّ الكود" }).click()]);
   // the card is ready: the bravo meets them on their own home and asks for one
   // thing — press «ورّي الكود». That is what opens the counter, and its note.
   await o.getByText("برافو").waitFor({ timeout: 30000 });
@@ -276,8 +279,12 @@ try {
   await o.goto(BASE + "/shop/card", { waitUntil: "load" });
   await o.getByRole("button", { name: "8", exact: true }).click();
   for (let i = 0; i < 4; i++) await o.getByRole("button", { name: "كمّل" }).click();
-  await o.getByRole("status").waitFor();
-  await shot(o, "17b-card-change", 500);
+  // saving opens what changes, and the choice for the customers on their way
+  await o.getByRole("button", { name: "سجّل" }).click();
+  await o.getByRole("dialog", { name: "شنوّة يتبدّل؟" }).waitFor({ timeout: 20000 });
+  await o.getByText("الحرفاء الجدد").waitFor({ timeout: 20000 });
+  await shot(o, "17b-card-change", 700);
+  await o.getByRole("button", { name: "نرجع" }).click();
   await o.goto(BASE + "/me", { waitUntil: "load" });
   await shot(o, "16b-owner-account");
 

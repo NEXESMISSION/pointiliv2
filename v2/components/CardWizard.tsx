@@ -2,15 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Check, ChevronRight, Info } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { saveCard } from "@/app/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
 import { Pass } from "@/components/Pass";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
+import { CardConfirm } from "@/components/CardConfirm";
 import { Btn, Icon3D, boxLook } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
-import { customersN, fill, sameGift, t } from "@/lib/t";
+import { fill, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { waitSays } from "@/lib/when";
 import type { FormState } from "@/lib/types";
@@ -48,10 +49,11 @@ type Shop = { id: string; name: string; kind: string; goal: number | null; gift:
  * gift, how long a customer waits between two tampons, which colour), the
  * card itself changing above them; then the card
  * is ready. Changing the card later walks the same four questions, starting
- * from the card as it is, and the last step says what happens to the
- * customers already on their way (`onTheWay` of them).
+ * from the card as it is. Saving opens a sheet that says it plainly first: a
+ * new card, how it works; a change, what changes and what happens to the
+ * customers — the owner chooses for the ones on their way (CardConfirm).
  */
-export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay, help }: { shop: Shop; owner: string; next: string; editing: boolean; hello?: boolean; onTheWay?: number; help?: HelpSettings }) {
+export function CardWizard({ shop, owner, next, editing, hello = false, help }: { shop: Shop; owner: string; next: string; editing: boolean; hello?: boolean; help?: HelpSettings }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const router = useRouter();
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
@@ -68,6 +70,10 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
   const [gap, setGap] = useState(shop.stamp_gap ?? 60);
   const [hours, setHours] = useState(() => (shop.stamp_gap && !WAITS.includes(shop.stamp_gap) ? String(Math.round(shop.stamp_gap / 60)) : ""));
   const hoursBad = hours !== "" && !(Number(hours) >= 1 && Number(hours) <= 72);
+  // the sheet before saving: what the card does, what changes for whom (a change that changes nothing saves at once)
+  const [confirm, setConfirm] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const anyChange = goal !== shop.goal || gift.trim() !== (shop.gift ?? "").trim() || gap !== (shop.stamp_gap ?? 60) || color !== (shop.color || "").toUpperCase();
 
   useScreen(`${editing ? "edit-" : ""}${["hello", "goal", "gift", "wait", "color", "ready"][step] ?? "ready"}`);
   useEffect(() => {
@@ -96,9 +102,6 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  const changed = editing && (goal !== shop.goal || !sameGift(gift, shop.gift));
-  const easier = changed && goal < (shop.goal ?? 0) && sameGift(gift, shop.gift);
-  const note = !changed || onTheWay === undefined ? null : onTheWay === 0 ? t.cardNoteNone : fill(easier ? t.cardNoteEase : t.cardNoteKeep, { who: customersN(onTheWay) });
   const preview = { name: shop.name, kind: shop.kind, logo: shop.logo, goal, gift: gift.trim() || "…", color };
 
   if (step === 0) {
@@ -145,7 +148,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
   const canGo = step === GOAL ? !otherBad : step === GIFT ? gift.trim().length >= 2 : step === WAIT ? !hoursBad : true;
 
   return (
-    <form action={action} className="safe-t safe-b relative mx-auto flex min-h-dvh max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
+    <form ref={formRef} action={action} className="safe-t safe-b relative mx-auto flex min-h-dvh max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
       <style>{`
         @keyframes wz-in-next { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
         @keyframes wz-in-back { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
@@ -317,11 +320,6 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
           </div>
         )}
 
-        {step === READY && note && (
-          <p className="mt-[2dvh] flex gap-2.5 rounded-2xl bg-brand-soft px-4 py-3 text-[0.9062rem] font-medium leading-relaxed text-brand-deep" role="status">
-            <Info className="mt-0.5 size-[1.125rem] shrink-0" /> {note}
-          </p>
-        )}
         {state?.error && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
       </section>
       </div>
@@ -333,7 +331,8 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
             {t.next}
           </Btn>
         ) : (
-          <Btn key="send" type="submit" disabled={pending} className={editing ? "" : "animate-breathe"}>
+          // the card is not sent from here: the sheet says what it does first, and sends it
+          <Btn key="send" type="button" disabled={pending} onClick={() => (editing && !anyChange ? formRef.current?.requestSubmit() : setConfirm(true))} className={editing ? "" : "animate-breathe"}>
             {pending ? t.checking : editing ? t.save : t.cardDone}
           </Btn>
         )}
@@ -345,6 +344,15 @@ export function CardWizard({ shop, owner, next, editing, hello = false, onTheWay
       <input type="hidden" name="color" value={color} />
       <input type="hidden" name="gap" value={gap} />
       <input type="hidden" name="next" value={next} />
+      {confirm && step === READY && (
+        <CardConfirm
+          editing={editing}
+          before={editing && shop.goal ? { goal: shop.goal, gift: shop.gift ?? "", gap: shop.stamp_gap ?? 60, color: shop.color } : null}
+          after={{ goal, gift, gap, color }}
+          pending={pending}
+          onBack={() => setConfirm(false)}
+        />
+      )}
     </form>
   );
 }
