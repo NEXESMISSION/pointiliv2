@@ -553,8 +553,9 @@ end $$;
 -- before a change of card is saved: what it would do to the customers. `way`:
 -- on their way with a card that differs; `eased`: of them, the same gift for
 -- fewer tampons (it reaches them anyway); `win_now`: of them, already enough
--- tampons for the new goal (they would win at once if moved); `waiting`: a
--- gift waiting, kept whatever happens
+-- tampons for the new goal (they would win at once if moved); `win_eased`: of
+-- the eased ones, already enough (they win at once whatever the owner
+-- chooses); `waiting`: a gift waiting, kept whatever happens
 create or replace function public.card_change(p_goal int, p_gift text) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_gift text := trim(coalesce(p_gift, ''));
@@ -566,6 +567,7 @@ begin
       'way', count(*) filter (where c.stamps > 0 and not w.waiting and (c.goal is distinct from p_goal or not public.same_gift(c.gift, v_gift))),
       'eased', count(*) filter (where c.stamps > 0 and not w.waiting and coalesce(c.goal, 999) > p_goal and public.same_gift(c.gift, v_gift)),
       'win_now', count(*) filter (where c.stamps > 0 and not w.waiting and c.stamps >= p_goal and (c.goal is distinct from p_goal or not public.same_gift(c.gift, v_gift))),
+      'win_eased', count(*) filter (where c.stamps > 0 and not w.waiting and c.stamps >= p_goal and coalesce(c.goal, 999) > p_goal and public.same_gift(c.gift, v_gift)),
       'waiting', count(*) filter (where w.waiting))
     from public.cards c cross join lateral (select public.waits(c.id) as waiting) w
     where c.shop_id = s.id);

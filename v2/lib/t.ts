@@ -304,23 +304,38 @@ export const t = {
   cardPopNew3: "تنجم تبدّل الكارط وقتلّي تحب",
   cardPopNew3Sub: "واللي بداو ما يضيعولهم حتى تامبون",
   cardPopNewGo: "باهي، حلّ الكود",
-  cardPopEditTitle: "شنوّة يتبدّل؟",
+  // a change of card asks one thing, and only when it matters: customers in
+  // the middle of their card (they finish it, or they switch to the new one
+  // now), or customers the new card rewards at once. One customer or several:
+  // the verb follows («يكمّل» / «يكمّلو»)
+  cardPopWayTitle: "{who} في نصّ الكارط",
+  cardPopOne: {
+    ask: "شنوّة نعملو معاه؟",
+    keep: "يكمّل كارطو القديمة",
+    keepSub: "وبعدها ياخو الجديدة",
+    move: "يبدّل للجديدة توّا",
+    moveSub: "تامبوناتو يقعدو",
+    win: "{who} يربح الكادو توّا",
+    winSub: "تامبوناتو يكفّيو للكارط الجديدة",
+  },
+  cardPopMany: {
+    ask: "شنوّة نعملو معاهم؟",
+    keep: "يكمّلو كارطهم القديمة",
+    keepSub: "وبعدها ياخذو الجديدة",
+    move: "يبدّلو للجديدة توّا",
+    moveSub: "تامبوناتهم يقعدو",
+    win: "{who} يربحو الكادو توّا",
+    winSub: "تامبوناتهم يكفّيو للكارط الجديدة",
+  },
+  cardPopSave: "سجّل",
+  cardPopBack: "نرجع",
+  // the card's fields by name (the console's form)
   cardPopGoal: "التامبونات",
   cardPopGift: "الكادو",
   cardPopWait: "كل قدّاش",
-  cardPopColor: "اللون",
-  cardPopWaitAll: "{wait}، للحرفاء الكل من توّا",
-  cardPopNewOnes: "الحرفاء الجدد، واللي مازال ما بداوش، ياخذو الكارط الجديدة توّا",
-  cardPopEased: "اللي الجديدة أسهل عليهم ({who}) ياخذوها توّا",
-  cardPopWaiting: "{waiting}: كل حريف ياخو الكادو اللي ربحو",
-  cardPopWay: "{who} بداو الكارط القديمة:",
-  cardPopKeep: "يكمّلو كيما بداو",
-  cardPopKeepSub: "ياخذو الكادو القديم، وبعدو تبدالهم الجديدة",
-  cardPopMove: "يعدّيو للجديدة توّا",
-  cardPopMoveSub: "التامبونات اللي عندهم يبقاولهم.",
-  cardPopWinNow: "و{who} يربحو الكادو توّا.",
-  cardPopSave: "سجّل",
-  cardPopBack: "نرجع",
+  // a save whose answer never came back, and the card is still the old one
+  cardLost: "الكارط ما تسجّلتش. ثبّت الكونيكسيون وعاود.",
+  cardLostAgain: "عاود جرّب",
 
   // the counter
   counterTitle: "سكاني وخوذ تامبون",

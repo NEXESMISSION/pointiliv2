@@ -197,6 +197,12 @@ try {
   await c.getByRole("link", { name: /ورّي الكود متاع الكادو/ }).click();
   await c.getByRole("dialog", { name: /الكادو متاعك/ }).waitFor({ timeout: 30000 });
   await shot(c, "10b-gift-code", 900);
+  // the code itself: whole on the screen, big enough for a camera (its sheet once stayed cut inside the gift's box)
+  const giftQr = await c.evaluate(() => {
+    const r = document.querySelector('[role="dialog"] div.aspect-square')?.getBoundingClientRect();
+    return r ? { w: Math.round(r.width), top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), vw: innerWidth, vh: innerHeight } : null;
+  });
+  console.log(giftQr && giftQr.w >= 170 && giftQr.top >= 0 && giftQr.bottom <= giftQr.vh && giftQr.left >= 0 && giftQr.right <= giftQr.vw ? "  · the gift's code: whole on the screen ✓" : `  ! the gift's code is cut: ${JSON.stringify(giftQr)}`);
   // the counter shows who won, and the camera to hand it over (never a tap alone)
   await o.getByRole("link", { name: "سكاني" }).waitFor({ timeout: 20000 });
   await shot(o, "11-counter-gift", 1200);
@@ -277,16 +283,26 @@ try {
   await shot(o, "18-owner-stats");
   await o.goto(BASE + "/shop/customers", { waitUntil: "load" });
   await shot(o, "19-owner-customers");
-  // changing the card: one line says what happens to the customers on their way
+  // changing the card. A change no customer's card feels (the colour) is saved at once: no sheet, straight home
+  await o.goto(BASE + "/shop/card", { waitUntil: "load" });
+  for (let i = 0; i < 3; i++) await o.getByRole("button", { name: "كمّل" }).click();
+  await o.getByRole("button", { name: "#0891B2", exact: true }).click();
+  await o.getByRole("button", { name: "كمّل" }).click();
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 30000 }), o.getByRole("button", { name: "سجّل", exact: true }).click()]);
+  console.log("  · the colour alone: saved at once ✓");
+  // a customer in the middle of the card, and a harder card: one question, and the save goes all the way home
+  await admin.from("cards").update({ stamps: 2 }).eq("user_id", who.id);
   await o.goto(BASE + "/shop/card", { waitUntil: "load" });
   await o.getByRole("button", { name: "8", exact: true }).click();
   for (let i = 0; i < 4; i++) await o.getByRole("button", { name: "كمّل" }).click();
-  // saving opens what changes, and the choice for the customers on their way
-  await o.getByRole("button", { name: "سجّل" }).click();
-  await o.getByRole("dialog", { name: "شنوّة يتبدّل؟" }).waitFor({ timeout: 20000 });
-  await o.getByText("الحرفاء الجدد").waitFor({ timeout: 20000 });
+  await o.getByRole("button", { name: "سجّل", exact: true }).click();
+  const ask = o.getByRole("dialog", { name: "حريف واحد في نصّ الكارط" });
+  await ask.waitFor({ timeout: 20000 });
+  await ask.getByRole("radio", { name: /يبدّل للجديدة توّا/ }).click();
   await shot(o, "17b-card-change", 700);
-  await o.getByRole("button", { name: "نرجع" }).click();
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 30000 }), ask.getByRole("button", { name: "سجّل", exact: true }).click()]);
+  const { data: switched } = await admin.from("cards").select("stamps, goal").eq("user_id", who.id).single();
+  console.log(switched.goal === 8 && switched.stamps === 2 ? "  · the card changed: the customer switched to it, tampons kept ✓" : `  ! the customer's card after the change: ${JSON.stringify(switched)}`);
   await o.goto(BASE + "/me", { waitUntil: "load" });
   await shot(o, "16b-owner-account");
 

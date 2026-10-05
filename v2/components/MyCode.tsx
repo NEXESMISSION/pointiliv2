@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { QrCode, X } from "lucide-react";
 import { Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
+
+const never = () => () => {};
+/** In the browser (the page's body is there to hold a sheet), not while the server draws the page. */
+const useBrowser = () => useSyncExternalStore(never, () => true, () => false);
 
 /**
  * The customer's own code, one tap away: its QR for the shop's camera, and its
@@ -15,9 +20,15 @@ import { fill, t } from "@/lib/t";
  * shop scans it (or types it), sees the gift waiting, and hands it over. The
  * button that opens it is `children` (a banner, a button), or the small pill;
  * `startOpen` opens it at once (from the scan that just won it).
+ *
+ * The sheet is drawn on the page's body, not where its button sits: a button
+ * may live in a box that slid or popped in (the animation leaves a transform
+ * on it, and a transformed box holds its `fixed` children inside itself) or
+ * that clips what overflows — the sheet would be cut to that box, in its colours.
  */
 export function MyCode({ code, svg, gift, startOpen = false, className, children }: { code: string; svg: string; gift?: string | null; startOpen?: boolean; className?: string; children?: ReactNode }) {
   const [open, setOpen] = useState(startOpen);
+  const browser = useBrowser();
   useEffect(() => {
     if (!open) return;
     signal(gift ? "gift_code" : "my_code");
@@ -39,9 +50,9 @@ export function MyCode({ code, svg, gift, startOpen = false, className, children
           </>
         )}
       </button>
-      {open && (
+      {open && browser && createPortal(
         <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={gift ? fill(t.giftCodeTitle, { gift }) : t.myCodeTitle} onClick={() => setOpen(false)}>
-          <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-5 pt-3 text-center" style={{ animation: "code-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+          <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-5 pt-3 text-center text-ink" style={{ animation: "code-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
             <style>{`@keyframes code-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
             <div className="flex items-center justify-between">
               <span className="size-10" />
@@ -66,7 +77,8 @@ export function MyCode({ code, svg, gift, startOpen = false, className, children
             </p>
             <p className="mx-auto mt-1 max-w-[18rem] text-[0.9375rem] leading-relaxed text-muted">{gift ? t.giftCodeHint : t.myCodeHint}</p>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

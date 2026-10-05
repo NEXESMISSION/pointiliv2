@@ -3,15 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Check, ChevronRight } from "lucide-react";
-import { saveCard } from "@/app/actions";
+import { cardChange, saveCard } from "@/app/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
 import { Pass } from "@/components/Pass";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
-import { CardConfirm } from "@/components/CardConfirm";
+import { CardConfirm, type CardImpact } from "@/components/CardConfirm";
 import { Btn, Icon3D, boxLook } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
-import { fill, t } from "@/lib/t";
+import { fill, sameGift, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { waitSays } from "@/lib/when";
 import type { FormState } from "@/lib/types";
@@ -49,9 +49,10 @@ type Shop = { id: string; name: string; kind: string; goal: number | null; gift:
  * gift, how long a customer waits between two tampons, which colour), the
  * card itself changing above them; then the card
  * is ready. Changing the card later walks the same four questions, starting
- * from the card as it is. Saving opens a sheet that says it plainly first: a
- * new card, how it works; a change, what changes and what happens to the
- * customers — the owner chooses for the ones on their way (CardConfirm).
+ * from the card as it is. A first card is saved from a sheet that says how it
+ * works. A change is saved at once — unless it touches customers in the
+ * middle of their card: then one question first (CardConfirm): they finish
+ * the card they started, or they switch to the new one now.
  */
 export function CardWizard({ shop, owner, next, editing, hello = false, help }: { shop: Shop; owner: string; next: string; editing: boolean; hello?: boolean; help?: HelpSettings }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
@@ -70,10 +71,31 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
   const [gap, setGap] = useState(shop.stamp_gap ?? 60);
   const [hours, setHours] = useState(() => (shop.stamp_gap && !WAITS.includes(shop.stamp_gap) ? String(Math.round(shop.stamp_gap / 60)) : ""));
   const hoursBad = hours !== "" && !(Number(hours) >= 1 && Number(hours) <= 72);
-  // the sheet before saving: what the card does, what changes for whom (a change that changes nothing saves at once)
+  // the sheet before saving: a first card, how it works; a change, the one question (when there is one)
   const [confirm, setConfirm] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const anyChange = goal !== shop.goal || gift.trim() !== (shop.gift ?? "").trim() || gap !== (shop.stamp_gap ?? 60) || color !== (shop.color || "").toUpperCase();
+  // the rule itself changed (how many tampons, which gift): the only change a customer's card can feel
+  const ruleChanged = editing && (goal !== shop.goal || !sameGift(gift, shop.gift));
+  // what that change does to the customers in the middle of their card: asked as
+  // soon as the card is final (the last step), so «سجّل» has its answer at once
+  const asked = useRef<{ key: string; answer: Promise<CardImpact | null> } | null>(null);
+  const impactOf = (g: number, what: string) => {
+    const key = `${g}|${what}`;
+    if (asked.current?.key !== key) {
+      asked.current = {
+        key,
+        answer: cardChange(g, what)
+          .then((r) => (r.ok ? { ask: (r.way ?? 0) - (r.eased ?? 0), winKeep: r.win_eased ?? 0, winMove: r.win_now ?? 0 } : null))
+          .catch(() => null),
+      };
+    }
+    return asked.current.answer;
+  };
+  const [impact, setImpact] = useState<CardImpact | null>(null);
+  const [looking, setLooking] = useState(false);
+  // a save whose answer never came back, and the card is still the old one
+  const [lost, setLost] = useState(false);
 
   useScreen(`${editing ? "edit-" : ""}${["hello", "goal", "gift", "wait", "color", "ready"][step] ?? "ready"}`);
   useEffect(() => {
@@ -84,6 +106,65 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
     setBack(to < step);
     setStep(to);
   };
+
+  useEffect(() => {
+    if (step === READY && ruleChanged) void impactOf(goal, gift.trim());
+  }, [step, ruleChanged, goal, gift]);
+
+  const send = async () => {
+    // a first card: how it works, then the code
+    if (!editing) return setConfirm(true);
+    // nothing a customer's card feels (the colour, the wait, or nothing at all): saved at once
+    if (!ruleChanged) return formRef.current?.requestSubmit();
+    setLooking(true);
+    const found = await Promise.race([impactOf(goal, gift.trim()), new Promise<null>((r) => setTimeout(() => r(null), 6000))]);
+    setLooking(false);
+    // someone to choose for, or a gift won at once: the sheet. Nobody (or no
+    // answer): saved, and whoever started a card keeps it
+    if (found && (found.ask > 0 || found.winKeep > 0)) {
+      setImpact(found);
+      setConfirm(true);
+    } else formRef.current?.requestSubmit();
+  };
+
+  // A save's answer can die on the way back (a connection that drops in the
+  // middle of it): «لحظة…» would stay for good, the card saved or not — nobody
+  // knows. So after a while the screen asks the database itself, around the
+  // answer that is not coming: the card changed → on to the next screen; still
+  // the old one after half a minute → said plainly, with a way to try again.
+  useEffect(() => {
+    if (!pending) return;
+    const started = Date.now();
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const saved = async () => {
+      const stop = new AbortController();
+      const id = setTimeout(() => stop.abort(), 5000);
+      try {
+        const res = await fetch("/api/card", { cache: "no-store", signal: stop.signal });
+        const now = (res.ok ? await res.json() : null) as { ok?: boolean; goal: number | null; gift: string | null; gap: number; color: string } | null;
+        if (!now?.ok) return false;
+        return !anyChange || now.goal !== shop.goal || (now.gift ?? "") !== (shop.gift ?? "") || now.gap !== (shop.stamp_gap ?? 60) || now.color.toUpperCase() !== (shop.color || "").toUpperCase();
+      } catch {
+        return false;
+      } finally {
+        clearTimeout(id);
+      }
+    };
+    const look = async () => {
+      const yes = await saved();
+      if (!alive) return;
+      if (yes) window.location.assign(next);
+      else if (Date.now() - started > 30_000) setLost(true);
+      else timer = setTimeout(look, 3000);
+    };
+    timer = setTimeout(look, 8000);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending]);
 
   // the hello, written down the moment it shows: a reload or another phone goes straight to the first question
   const claimed = useRef(false);
@@ -330,10 +411,17 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
           <Btn key="next" type="button" disabled={!canGo} onClick={() => go(step + 1)}>
             {t.next}
           </Btn>
+        ) : lost ? (
+          <>
+            <p className="mb-2 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{t.cardLost}</p>
+            <Btn key="again" type="button" onClick={() => window.location.reload()}>
+              {t.cardLostAgain}
+            </Btn>
+          </>
         ) : (
-          // the card is not sent from here: the sheet says what it does first, and sends it
-          <Btn key="send" type="button" disabled={pending} onClick={() => (editing && !anyChange ? formRef.current?.requestSubmit() : setConfirm(true))} className={editing ? "" : "animate-breathe"}>
-            {pending ? t.checking : editing ? t.save : t.cardDone}
+          // a "button", never a "submit": the form is sent by the sheet, or from here once nothing is left to ask
+          <Btn key="send" type="button" disabled={pending || looking} onClick={() => void send()} className={editing ? "" : "animate-breathe"}>
+            {pending || looking ? t.checking : editing ? t.save : t.cardDone}
           </Btn>
         )}
       </div>
@@ -344,15 +432,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
       <input type="hidden" name="color" value={color} />
       <input type="hidden" name="gap" value={gap} />
       <input type="hidden" name="next" value={next} />
-      {confirm && step === READY && (
-        <CardConfirm
-          editing={editing}
-          before={editing && shop.goal ? { goal: shop.goal, gift: shop.gift ?? "", gap: shop.stamp_gap ?? 60, color: shop.color } : null}
-          after={{ goal, gift, gap, color }}
-          pending={pending}
-          onBack={() => setConfirm(false)}
-        />
-      )}
+      {confirm && !lost && step === READY && <CardConfirm editing={editing} after={{ goal, gift, gap }} impact={editing ? impact : null} pending={pending} onBack={() => setConfirm(false)} />}
     </form>
   );
 }

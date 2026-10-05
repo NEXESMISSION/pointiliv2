@@ -7,7 +7,15 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: __dirname,
   devIndicators: { position: "top-right" },
   poweredByHeader: false,
-  experimental: { optimizePackageImports: ["lucide-react"] },
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+    // `next dev` only: a server answer comes whole, in one piece. Left on (the
+    // default), half of it — React's debug notes — travels on the dev server's
+    // socket instead, and a tab whose socket went quiet (asleep in the
+    // background, reconnecting) waits for that half forever: a save lands in
+    // the database and the page stays on «لحظة…». The real site never had it.
+    reactDebugChannel: false,
+  },
   async headers() {
     return [
       {

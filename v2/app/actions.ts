@@ -211,9 +211,9 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
   redirect(inside(str(fd, "next")) ?? "/shop");
 }
 
-/** Before a change of card is saved: what it would do to the customers (on their way, eased, winning at once, a gift waiting). */
-export async function cardChange(goal: number, gift: string): Promise<{ ok: boolean; way?: number; eased?: number; win_now?: number; waiting?: number }> {
-  const res = await call<{ ok: boolean; way?: number; eased?: number; win_now?: number; waiting?: number }>("card_change", { p_goal: Math.round(goal), p_gift: String(gift).slice(0, 60) });
+/** Before a change of card is saved: what it would do to the customers (on their way, eased, winning at once — if moved, or whatever is chosen). */
+export async function cardChange(goal: number, gift: string): Promise<{ ok: boolean; way?: number; eased?: number; win_now?: number; win_eased?: number }> {
+  const res = await call<{ ok: boolean; way?: number; eased?: number; win_now?: number; win_eased?: number }>("card_change", { p_goal: Math.round(goal), p_gift: String(gift).slice(0, 60) });
   return res ?? { ok: false };
 }
 

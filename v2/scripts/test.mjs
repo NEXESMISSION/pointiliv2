@@ -389,7 +389,10 @@ try {
   // on her way: 4 tampons of a card of 6 coffees (the card she started)
   await admin.from("cards").update({ stamps: 4, goal: 6, gift: "قهوة بلاش" }).eq("id", nourCard.id);
   const preview = await rpc(owner, "card_change", { p_goal: 8, p_gift: "كرواسون بلاش" });
-  check("before saving, the owner sees who is on their way", preview.ok && preview.way >= 1 && preview.win_now === 0, preview);
+  check("before saving, the owner sees who is on their way", preview.ok && preview.way >= 1 && preview.win_now === 0 && preview.win_eased === 0, preview);
+  // the same gift for fewer tampons reaches her anyway — and with 4 of them she wins at once, whatever the owner chooses
+  const easier = await rpc(owner, "card_change", { p_goal: 3, p_gift: "قهوة بلاش" });
+  check("…and who an easier card rewards at once", easier.ok && easier.eased >= 1 && easier.win_eased >= 1 && easier.win_eased <= easier.win_now && easier.way - easier.eased >= 0, easier);
   check("…a customer cannot ask it", !!(await rpc(nour, "card_change", { p_goal: 5, p_gift: "x" })).error);
   const keep = await rpc(owner, "save_card", { p_goal: 8, p_gift: "كرواسون بلاش", p_color: sh.color });
   const nourKept = (await admin.from("cards").select("goal, gift").eq("id", nourCard.id).single()).data;

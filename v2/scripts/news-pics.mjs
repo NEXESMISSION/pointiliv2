@@ -183,7 +183,7 @@ try {
   await o.getByRole("button", { name: "10", exact: true }).click();
   for (let n = 0; n < 4; n++) await o.getByRole("button", { name: "كمّل", exact: true }).click();
   await o.getByRole("button", { name: "سجّل" }).click();
-  await o.getByText("يكمّلو كيما بداو").waitFor({ timeout: 20000 });
+  await o.getByText("يكمّلو كارطهم القديمة").waitFor({ timeout: 20000 });
   await o.waitForTimeout(800);
   const change = await o.getByRole("dialog").locator(":scope > div").boundingBox();
   const top = Math.max(0, Math.round(change.y));

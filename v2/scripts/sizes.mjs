@@ -131,7 +131,7 @@ const { data: news } = await admin
     pic: "/news/gift-code.webp",
     steps: [
       { icon: "camera", pic: "/news/gift-scan.webp", title: "انزل على «سكاني»", body: "وسكاني الكود اللي يورّيهولك، ولا اكتب الأرقام اللي تحتو" },
-      { icon: "gift", pic: "/news/card-change.webp", title: "تبدّل الكارط؟ إنت تختار للي بداو", body: "يكمّلو كيما بداو، ولا يعدّيو للجديدة توّا بالتامبونات متاعهم" },
+      { icon: "gift", pic: "/news/card-change.webp", title: "تبدّل الكارط؟ إنت تختار للي بداو", body: "يكمّلو كارطهم القديمة، ولا يبدّلو للجديدة توّا بالتامبونات متاعهم" },
     ],
   })
   .select("id")
@@ -208,6 +208,17 @@ const SCREENS = [
   },
   { name: "customer-mycode", as: "customer", path: "/", act: (p) => press(p, "الكود متاعي") },
   { name: "customer-card-gift", as: "customer", before: () => giftBack(), path: () => `/c/${cardHere.id}` },
+  // the gift's code opened from the card itself: its button sits in a box that pops in and clips — the sheet must not stay inside it
+  {
+    name: "customer-card-gift-code",
+    as: "customer",
+    before: () => giftBack(),
+    path: () => `/c/${cardHere.id}`,
+    act: async (p) => {
+      await p.getByRole("button", { name: /ورّي الكود متاع الكادو/ }).click({ timeout: 15000 });
+      await p.getByRole("dialog").waitFor({ timeout: 15000 });
+    },
+  },
   { name: "customer-card", as: "customer", path: () => `/c/${cardBarber}` },
   { name: "customer-me", as: "customer", path: "/me" },
   { name: "customer-scan", as: "customer", path: "/scan", wait: 2500 },
@@ -311,7 +322,7 @@ const SCREENS = [
     await p.getByRole("button", { name: "12", exact: true }).click();
     for (let n = 0; n < 4; n++) await press(p, "كمّل");
     await press(p, "سجّل");
-    await p.getByText("يكمّلو كيما بداو").waitFor({ timeout: 20000 });
+    await p.getByText("يكمّلو كارطهم القديمة").waitFor({ timeout: 20000 });
   } },
 
   { name: "wizard-hello", as: "fresh", before: () => notes(fresh, []), path: "/shop/card", wait: 1300 },

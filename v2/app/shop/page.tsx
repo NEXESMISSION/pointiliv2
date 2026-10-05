@@ -22,7 +22,6 @@ type Home = {
   today: number;
   visitors_today: number;
   given_today: number;
-  waiting: { id: number; at: string; name: string | null; gift: string }[];
   recent: { id: number; at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; stamps: number; goal: number; gift: string | null }[];
 };
 
@@ -31,10 +30,13 @@ const time = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour:
 /**
  * The owner's home, on one screen whatever the phone, and filling it: the
  * shop, the code one tap away (bigger on a taller phone) with the camera for
- * a customer's own code beside it, the gifts to hand
- * over, today in three numbers, the four places to go — and who came lately
+ * a customer's own code beside it, the places to go — and who came lately
  * in a box that takes all the room left, scrolling inside it. Before the
  * first customer, that box says how it goes, in three steps.
+ *
+ * A gift won is not a row to act on here: there is one way to hand it over,
+ * «سكاني» — the customer shows their code, the camera reads it, and the
+ * screen asks «تعطيهولو توّا؟». Who won what stays a line in «آخر حركة».
  */
 export default async function ShopHome({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const me = await getMe();
@@ -73,8 +75,6 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
     { href: "/me", mark: <Icon3D name="wave" size={30} />, label: t.account },
   ];
   const recent = home?.recent ?? [];
-  // more than two gifts waiting: they scroll inside their own box
-  const manyGifts = (home?.waiting.length ?? 0) > 2;
 
   return (
     // nothing is clipped: on a phone too short for it all, the page scrolls as a whole
@@ -123,31 +123,6 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
         <span className="text-[0.875rem] font-bold">{t.collectScanShort}</span>
       </Link>
       </div>
-
-      {/* gifts to hand over: up to two show whole; more scroll inside a box (with
-          room inside it for the cards' shadows: no pale band), cut through the
-          middle of a card so it reads as a list — one and a half on a short
-          phone, two and a bit on a tall one */}
-      {home && home.waiting.length > 0 && (
-        <div
-          data-list={manyGifts ? "" : undefined}
-          className={`shrink-0 space-y-2 ${manyGifts ? "-mx-3 -mb-3 mt-2 max-h-[7.25rem] overflow-y-auto overscroll-contain px-3 pb-3 pt-1 [@media(min-height:700px)]:max-h-[11.5rem]" : "mt-3"}`}
-        >
-          {home.waiting.map((g) => (
-            <div key={g.id} className="flex animate-rise items-center gap-3 rounded-[1.25rem] bg-surface p-3 shadow-card">
-              <Icon3D name="gift" size={34} className="shrink-0" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.9375rem] font-bold">{fill(t.giftFor, { who: g.name ?? t.someone, gift: g.gift })}</span>
-                <span className="num block text-[0.75rem] text-muted">{time(g.at)}</span>
-              </span>
-              {/* handed over by the customer's code, never by a tap alone */}
-              <Link href="/shop/collect?by=scan" className="press flex h-11 shrink-0 items-center gap-1.5 rounded-[1rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 text-[0.9375rem] font-bold text-white">
-                <ScanLine className="size-[1.125rem]" /> {t.collectScanShort}
-              </Link>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* the four places to go, in one row */}
       <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-5 gap-1.5">
