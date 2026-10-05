@@ -1,9 +1,9 @@
 import { t } from "@/lib/t";
 
-/** One step of a small tour: a picture, a title, a few words. */
-export type NewsStep = { icon: string; title: string; body: string };
+/** One step of a small tour: a picture, a title, a few words — and `pic`, the screen itself (public/news/…). */
+export type NewsStep = { icon: string; title: string; body: string; pic?: string | null };
 /** A piece of news for the owners, as the popup shows it (v2.news_next); `steps` make it a small tour. */
-export type News = { id: string; title: string; body: string; icon: string; cta_label: string | null; cta_href: string | null; steps?: NewsStep[] | null };
+export type News = { id: string; title: string; body: string; icon: string; cta_label: string | null; cta_href: string | null; steps?: NewsStep[] | null; pic?: string | null };
 
 /** The pictures a piece of news can wear (Fluent 3D, in public/3d). */
 export const NEWS_ICONS = ["sparkles", "gift", "camera", "ticket", "star", "bell", "trophy", "party", "chart", "people", "phone", "crown"] as const;

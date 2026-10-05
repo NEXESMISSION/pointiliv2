@@ -269,6 +269,8 @@ create index if not exists news_views_person_idx on public.news_views (person_id
 alter table public.news add column if not exists steps jsonb check (steps is null or jsonb_typeof(steps) = 'array');
 -- for the test accounts only (a news piece tried before it goes to everyone)
 alter table public.news add column if not exists only_testers boolean not null default false;
+-- the first slide's screen (a screenshot in public/news), like a step's `pic`
+alter table public.news add column if not exists pic text check (pic is null or pic ~ '^/news/[a-z0-9-]{2,60}\.(webp|png|jpg)$');
 
 -- cards and gifts from before cards were promises
 update public.cards c set goal = s.goal, gift = s.gift from public.shops s where s.id = c.shop_id and c.goal is null and s.goal is not null;
@@ -1066,7 +1068,7 @@ begin
   if v_opened is null then return null; end if;
   if exists (select 1 from public.news_views where person_id = v_uid and seen_at >= public.tunis_today()) then return null; end if;
   return (
-    select jsonb_build_object('id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href, 'steps', n.steps)
+    select jsonb_build_object('id', n.id, 'title', n.title, 'body', n.body, 'icon', n.icon, 'cta_label', n.cta_label, 'cta_href', n.cta_href, 'steps', n.steps, 'pic', n.pic)
     from public.news n
     where n.active and n.published_at <= now() and n.published_at > v_opened
       and (n.only_people is null or v_uid = any (n.only_people))

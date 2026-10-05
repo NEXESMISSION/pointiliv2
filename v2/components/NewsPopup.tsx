@@ -65,14 +65,19 @@ export function NewsPopup({ news, who }: { news: News | null; who: string }) {
     >
       <style>{`@keyframes news-in { from { opacity: 0; transform: translateY(22px) scale(0.96); } to { opacity: 1; transform: none; } }`}</style>
       <div className="w-full max-w-sm" style={{ animation: "news-in 480ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+        {/* every slide's picture loaded before it shows */}
         <span className="hidden" aria-hidden>
           {(news.steps ?? []).map((s, i) => (
             <Icon3D key={i} name={s.icon} size={52} />
           ))}
+          {[news.pic, ...(news.steps ?? []).map((s) => s.pic)].filter(Boolean).map((p) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={p!} src={p!} alt="" />
+          ))}
         </span>
         {(() => {
           // a small tour: the news itself first, then its steps; the button comes on the last
-          const slides = [{ icon: news.icon, title: news.title, body: news.body }, ...(news.steps ?? [])];
+          const slides = [{ icon: news.icon, title: news.title, body: news.body, pic: news.pic ?? null }, ...(news.steps ?? [])];
           const slide = slides[Math.min(at, slides.length - 1)]!;
           return (
             <NewsCard

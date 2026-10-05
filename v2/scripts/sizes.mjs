@@ -124,9 +124,10 @@ const { data: news } = await admin
     cta_label: "جرّب توّا",
     cta_href: "/shop/collect?by=scan",
     only_people: [owner.id],
+    pic: "/news/gift-code.webp",
     steps: [
-      { icon: "camera", title: "بوتون «سكاني» جديد", body: "جنب «ورّي الكود»: نزّل عليه وسكاني الكود اللي يورّيهولك الحريف في تليفونو." },
-      { icon: "phone", title: "ولا اكتب الكود متاعو", body: "الكاميرا ما خدمتش؟ اكتب الكود متاعو (6 أرقام) ولا النومرو متاعو، والتامبون يتسجّل." },
+      { icon: "camera", pic: "/news/gift-scan.webp", title: "انزل على «سكاني»", body: "وسكاني الكود اللي يورّيهولك، ولا اكتب الأرقام اللي تحتو" },
+      { icon: "gift", pic: "/news/card-change.webp", title: "تبدّل الكارط؟ إنت تختار للي بداو", body: "يكمّلو كيما بداو، ولا يعدّيو للجديدة توّا بالتامبونات متاعهم" },
     ],
   })
   .select("id")
@@ -220,6 +221,19 @@ const SCREENS = [
   { name: "home-logo-tip", as: "owner", before: () => notes(owner, ["card_hello", "coach", "offer"]), path: "/shop", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "home-offer", as: "owner", before: () => notes(owner, ["card_hello", "coach", "logo_tip"]), path: "/shop", wait: 2000, after: () => notes(owner, ALL_NOTES) },
   { name: "home-news", as: "owner", before: () => admin.from("news_views").delete().eq("person_id", owner.id), path: "/shop", wait: 1800 },
+  {
+    name: "home-news-slide",
+    as: "owner",
+    before: () => admin.from("news_views").delete().eq("person_id", owner.id),
+    path: "/shop",
+    act: async (p) => {
+      // this phone remembers the piece it showed: forget it, the database already did
+      await p.evaluate(() => localStorage.clear());
+      await p.reload({ waitUntil: "load" });
+      await p.getByRole("button", { name: "كمّل", exact: true }).click({ timeout: 20000 });
+    },
+    wait: 1200,
+  },
   { name: "counter", as: "owner", path: "/shop/qr", wait: 1800 },
   { name: "counter-tip", as: "owner", before: () => notes(owner, ["card_hello", "logo_tip", "offer"]), path: "/shop/qr?tip=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "collect-scan", as: "owner", path: "/shop/collect?by=scan", wait: 2500 },
