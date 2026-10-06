@@ -57,8 +57,10 @@ console.log("· building a demo world");
 const customers = [];
 for (const n of NAMES) customers.push(await person(`${n}`));
 
+let firstOwner = null;
 for (const [i, [name, kind, goal, gift, color]] of SHOPS.entries()) {
   const owner = await person(`مولى ${name}`);
+  firstOwner ??= owner.id;
   const { data: shop, error } = await db.from("shops").insert({ owner_id: owner.id, name, kind, goal: i === 5 ? null : goal, gift: i === 5 ? null : gift, color, paused: i === 4 }).select("id").single();
   if (error) throw error;
   made.shops.push(shop.id);
@@ -72,6 +74,26 @@ for (const [i, [name, kind, goal, gift, color]] of SHOPS.entries()) {
     if (gifts) await db.from("moments").insert({ shop_id: shop.id, card_id: card.id, kind: "gift", gift, given_at: ago(rnd() * 40), created_at: ago(rnd() * 48) });
   }
 }
+
+/* a couple of visits for the first owner, so the shop page's «كل مرّة دخل فيها»
+   has something real to draw: a visit is a row plus the screens it walked */
+async function visit(userId, hoursAgo, screens) {
+  const id = crypto.randomUUID();
+  const start = new Date(Date.now() - hoursAgo * 3600_000);
+  let at = start.getTime();
+  const rows = screens.map(([route, screen, secs]) => {
+    const row = { id: crypto.randomUUID(), visit_id: id, path: route, route, screen, entered_at: new Date(at).toISOString(), left_at: new Date(at + secs * 1000).toISOString(), active_ms: secs * 1000 };
+    at += secs * 1000;
+    return row;
+  });
+  await db.from("visits").insert({
+    id, visitor: `zz-${id.slice(0, 12)}`, user_id: userId, started_at: start.toISOString(), last_at: new Date(at).toISOString(),
+    landing: screens[0][0], source: hoursAgo > 40 ? "facebook" : "direct", device: "phone", os: "Android", browser: "Chrome", country: "TN", city: "Tunis",
+  });
+  await db.from("views").insert(rows);
+}
+await visit(firstOwner, 52, [["/", "welcome", 24], ["/shop/new", null, 61], ["/shop/setup", null, 48], ["/shop/card", "goal", 95]]);
+await visit(firstOwner, 3, [["/shop", null, 37], ["/shop/qr", null, 142], ["/shop/customers", null, 26]]);
 
 const boss = await person("Saif", { admin: true });
 for (const ip of ["local", "::1", "127.0.0.1"])

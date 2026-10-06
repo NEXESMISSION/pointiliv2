@@ -5,7 +5,7 @@ import { AdminPlan } from "@/components/AdminPlan";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
 import { ShopMark } from "@/components/ShopMark";
-import { Card, Cell, Empty, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
+import { Card, Cell, Empty, Lat, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
 import { fill, monthsSaid, stampsN, t } from "@/lib/t";
@@ -15,6 +15,10 @@ export const metadata = { title: "محل" };
 type Shop = {
   id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; gift: string | null; paused: boolean; created_at: string;
   owner: { id: string; name: string; phone: string | null; tester: boolean; admin: boolean } | null;
+  seen: {
+    created_at: string; first_at: string | null; last_at: string | null; n: number; ms: number;
+    visits: { id: string; at: string; end_at: string; ms: number; pages: number; device: string | null; os: string | null; browser: string | null; city: string | null; country: string | null; source: string }[];
+  } | null;
   stamp_gap: number;
   plan: {
     paid_until: string | null; paid: boolean; offer_until: string | null; offer: boolean;
@@ -29,6 +33,33 @@ type Shop = {
 const TZ = "Africa/Tunis";
 const when = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: TZ }).format(new Date(iso));
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).format(new Date(iso));
+/** To the second: «6 أكتوبر 2026، 19:06:altogether» — for the moment an account was opened. */
+const exact = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", timeZone: TZ }).format(new Date(iso));
+/** 45ث · 2د 10ث · 1س 5د — how long they actually stayed. */
+function dur(ms: number): string {
+  const sec = Math.round((ms || 0) / 1000);
+  if (sec < 60) return `${sec}ث`;
+  const m = Math.floor(sec / 60);
+  if (m < 60) return sec % 60 ? `${m}د ${sec % 60}ث` : `${m}د`;
+  return `${Math.floor(m / 60)}س ${m % 60}د`;
+}
+/** A line made of Arabic and Latin pieces: each Latin one sealed, so they keep their order. */
+const Parts = ({ of }: { of: (string | null | undefined)[] }) => {
+  const xs = (of.filter(Boolean) as string[]).filter((x) => x !== "?");
+  if (!xs.length) return <span className="text-faint">—</span>;
+  return (
+    <>
+      {xs.map((x, i) => (
+        <span key={i}>
+          {i > 0 && " · "}
+          {/^[؀-ۿ]/.test(x) ? x : <Lat>{x}</Lat>}
+        </span>
+      ))}
+    </>
+  );
+};
+const DEVICES: Record<string, string> = { phone: "تليفون", tablet: "تابلات", computer: "PC" };
+const SOURCES: Record<string, string> = { facebook: "فيسبوك", instagram: "إنستغرام", google: "Google", tiktok: "تيك توك", whatsapp: "واتساب", direct: "مباشر" };
 
 /** One shop: who owns it on the side, how it is doing in the middle. */
 export default async function AdminShop({ params }: { params: Promise<{ id: string }> }) {
@@ -67,7 +98,7 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
               <div className="flex justify-between gap-3">
                 <dt className="text-muted">{t.aCreated}</dt>
                 <dd className="text-end font-semibold text-body">
-                  <When>{day(s.created_at)}</When>
+                  <When>{when(s.created_at)}</When>
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
@@ -91,6 +122,27 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
             ) : (
               <p className="mt-1 text-[0.8125rem] text-faint">بلا نومرو</p>
             )}
+                {s.seen && (
+                  <dl className="mt-4 space-y-2 border-t border-line pt-3 text-[0.8125rem]">
+                    <div className="flex justify-between gap-3">
+                      <dt className="shrink-0 text-muted">{t.aSignedUp}</dt>
+                      <dd className="text-end font-semibold text-body">
+                        <When>{exact(s.seen.created_at)}</When>
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="shrink-0 text-muted">{t.aLastSeen}</dt>
+                      <dd className="text-end font-semibold text-body">{s.seen.last_at ? <When>{when(s.seen.last_at)}</When> : <span className="text-faint">{t.never}</span>}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="shrink-0 text-muted">{t.aVisits}</dt>
+                      <dd className="text-end font-semibold text-body">
+                        <When>{s.seen.n}</When>
+                        {s.seen.ms > 0 && <span className="text-muted"> · <When>{dur(s.seen.ms)}</When></span>}
+                      </dd>
+                    </div>
+                  </dl>
+                )}
           </Card>
 
           <AdminShopEdit shop={{ id: s.id, name: s.name, kind: s.kind, goal: s.goal, gift: s.gift, stamp_gap: s.stamp_gap }} />
@@ -158,6 +210,40 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
             <Stat label={t.aGiven} value={s.given} tone="coral" />
             <Stat label="كادو يستنّى" value={s.waiting} />
           </Stats>
+
+          {s.seen && (
+            <Card title={t.aVisitsTitle} hint={t.aVisitsHint} pad={false}>
+              {!s.seen.visits.length ? (
+                <Empty>{t.aNoVisits}</Empty>
+              ) : (
+                <Table head={[t.aVisitWhen, t.aVisitStayed, t.aVisitPages, t.aVisitPhone, t.aVisitPlace, t.aVisitFrom]} words={[3, 4, 5]}>
+                  {s.seen.visits.map((v) => (
+                    <Row key={v.id}>
+                      <Cell strong>
+                        <When>{when(v.at)}</When>
+                      </Cell>
+                      <Cell n strong>
+                        {v.ms > 0 ? dur(v.ms) : "—"}
+                      </Cell>
+                      <Cell n muted>
+                        {v.pages}
+                      </Cell>
+                      <Cell muted>
+                        <Parts of={[DEVICES[v.device ?? ""] ?? v.device, v.browser]} />
+                      </Cell>
+                      <Cell muted>
+                        <Parts of={[v.city, v.country]} />
+                      </Cell>
+                      <Cell muted>
+                        <Parts of={[SOURCES[v.source] ?? v.source]} />
+                      </Cell>
+                    </Row>
+                  ))}
+                </Table>
+              )}
+            </Card>
+          )}
+
 
           <div className="grid gap-4 2xl:grid-cols-2">
             <Card title={t.aTop} pad={false}>

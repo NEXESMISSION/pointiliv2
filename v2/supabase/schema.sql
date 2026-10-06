@@ -980,6 +980,26 @@ begin
                        from (select * from public.plan_log where shop_id = s.id order by created_at desc limit 20) l), '[]'::jsonb),
       'payments', coalesce((select jsonb_agg(jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'status', y.status, 'at', y.created_at) order by y.created_at desc)
                             from (select * from public.payments where shop_id = s.id order by created_at desc limit 10) y), '[]'::jsonb)),
+    -- the owner's own comings and goings, read off the traffic the app already
+    -- keeps: when the account was opened, when they were last here, and every
+    -- visit with how long they actually stayed (the sum of the time on each
+    -- screen, counted the same way the traffic page counts it)
+    'seen', (select jsonb_build_object(
+        'created_at', p.created_at,
+        'first_at', (select min(v.started_at) from public.visits v where v.user_id = p.id),
+        'last_at',  (select max(v.last_at) from public.visits v where v.user_id = p.id),
+        'n',        (select count(*) from public.visits v where v.user_id = p.id),
+        'ms',       (select coalesce(sum(w.active_ms), 0) from public.views w join public.visits v on v.id = w.visit_id where v.user_id = p.id),
+        'visits', coalesce((
+          select jsonb_agg(jsonb_build_object(
+                   'id', x.id, 'at', x.started_at, 'end_at', x.last_at, 'ms', x.ms, 'pages', x.pages,
+                   'device', x.device, 'os', x.os, 'browser', x.browser,
+                   'city', x.city, 'country', x.country, 'source', coalesce(x.source, 'direct')) order by x.started_at desc)
+          from (select v.*,
+                       (select count(*) from public.views w where w.visit_id = v.id) as pages,
+                       (select coalesce(sum(w.active_ms), 0) from public.views w where w.visit_id = v.id) as ms
+                from public.visits v where v.user_id = p.id order by v.started_at desc limit 30) x), '[]'::jsonb))
+      from public.people p where p.id = s.owner_id),
     'customers', (select count(*) from public.cards where shop_id = s.id),
     'stamps', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp'),
     'today', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
