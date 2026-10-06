@@ -252,24 +252,26 @@ export async function adminPaymentDecide(id: string, paid: boolean): Promise<boo
   return !!res?.ok;
 }
 
-/** The founder notes what the business spent: on what, how much (dinars, millimes if any), which day (today in Tunis when not said), its kind. */
-export async function adminExpenseAdd(what: string, amount: number, on: string | null, kind: string): Promise<{ ok: boolean }> {
+/** The founder writes a line in the books: what came in (in) or what the business spent (out) — on what, how much (dinars, millimes if any), which day (today in Tunis when not said), its kind. */
+export async function adminBookAdd(side: "in" | "out", what: string, amount: number, on: string | null, kind: string): Promise<{ ok: boolean }> {
   const sum = Number(amount);
-  if (!Number.isFinite(sum) || sum <= 0 || sum > 1_000_000) return { ok: false };
-  const res = await call<{ ok: boolean }>("admin_expense_add", {
+  if ((side !== "in" && side !== "out") || !Number.isFinite(sum) || sum <= 0 || sum > 1_000_000) return { ok: false };
+  const kinds = side === "in" ? ["sub", "service"] : ["ads", "tools", "print", "move", "people"];
+  const res = await call<{ ok: boolean }>("admin_book_add", {
+    p_side: side,
     p_what: String(what ?? "").trim().slice(0, 120),
     p_amount: Math.round(sum * 1000) / 1000,
     p_on: on && /^\d{4}-\d{2}-\d{2}$/.test(on) ? on : null,
-    p_kind: ["ads", "tools", "print", "move", "people"].includes(kind) ? kind : "other",
+    p_kind: kinds.includes(kind) ? kind : "other",
   });
   revalidatePath("/admin/payments");
   return { ok: !!res?.ok };
 }
 
-/** A line of the expenses taken back. */
-export async function adminExpenseDelete(id: number): Promise<boolean> {
+/** A line of the books taken back. */
+export async function adminBookDelete(id: number): Promise<boolean> {
   if (!Number.isInteger(id) || id <= 0) return false;
-  const res = await call<{ ok: boolean }>("admin_expense_delete", { p_id: id });
+  const res = await call<{ ok: boolean }>("admin_book_delete", { p_id: id });
   revalidatePath("/admin/payments");
   return !!res?.ok;
 }

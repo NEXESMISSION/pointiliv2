@@ -122,20 +122,24 @@ alter table public.plan_log add constraint plan_log_kind_check check (kind in ('
 alter table public.payments drop constraint if exists payments_method_check;
 alter table public.payments add constraint payments_method_check check (method in ('card', 'd17', 'virement', 'versement', 'mandat', 'contact'));
 
--- what the business itself spends (an ad, a tool, printing, a trip): the
--- founder's own lines for the books, in dinars (millimes allowed), on the day
--- it was paid. `robot`: written by a script's admin — never in the founder's
--- books, and swept with the script's accounts.
-create table if not exists public.expenses (
+-- the founder's own lines in the books, both sides: what came in that no
+-- shop's subscription wrote by itself (a service sold, a sponsor…), and what
+-- the business spent (an ad, a tool, printing, a trip). In dinars (millimes
+-- allowed), on the day it happened. `robot`: written by a script's admin —
+-- never in the founder's books, and swept with the script's accounts.
+-- (2026-10-06: the first shape, `expenses`, lived an hour, empty.)
+drop table if exists public.expenses;
+create table if not exists public.books (
   id          bigint generated always as identity primary key,
-  spent_on    date not null,
+  side        text not null check (side in ('in', 'out')),
+  on_day      date not null,
   amount      numeric(10,3) not null check (amount > 0 and amount <= 1000000),
   what        text not null check (char_length(what) between 2 and 120),
-  kind        text not null default 'other' check (kind in ('ads', 'tools', 'print', 'move', 'people', 'other')),
+  kind        text not null default 'other' check (kind in ('sub', 'service', 'other', 'ads', 'tools', 'print', 'move', 'people')),
   robot       boolean not null default false,
   created_at  timestamptz not null default now()
 );
-create index if not exists expenses_day_idx on public.expenses (spent_on desc, id desc);
+create index if not exists books_day_idx on public.books (on_day desc, id desc);
 
 -- the shop's logo (optional): a picture in the public «logos» box, set by the owner
 alter table public.shops add column if not exists logo text check (logo is null or (logo ~ '^https://' and char_length(logo) <= 300));
@@ -331,7 +335,7 @@ update public.moments m set gift = c.gift from public.cards c where c.id = m.car
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log', 'expenses'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log', 'books'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -1072,7 +1076,7 @@ begin
   get diagnostics v_n = row_count;
   delete from public.robots r where not exists (select 1 from auth.users u where '+' || split_part(u.email, '@', 1) = r.phone);
   -- and what a script wrote in the books
-  delete from public.expenses where robot;
+  delete from public.books where robot;
   return jsonb_build_object('ok', true, 'removed', v_n);
 end $$;
 
@@ -1292,75 +1296,82 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
--- the founder notes what the business spent: on what, how much, which day
--- (today in Tunis when not said; never a day to come), and its kind (one the
--- books do not know is «other»)
-create or replace function public.admin_expense_add(p_what text, p_amount numeric, p_on date default null, p_kind text default 'other') returns jsonb
+-- the founder writes a line in the books: which side (in: what came in, out:
+-- what the business spent), on what, how much, which day (today in Tunis
+-- when not said; never a day to come), and its kind (one the side does not
+-- know is «other»)
+drop function if exists public.admin_expense_add(text, numeric, date, text);
+drop function if exists public.admin_expense_delete(bigint);
+create or replace function public.admin_book_add(p_side text, p_what text, p_amount numeric, p_on date default null, p_kind text default 'other') returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare
   v_what text := trim(regexp_replace(coalesce(p_what, ''), '\s+', ' ', 'g'));
   v_today date := (now() at time zone 'Africa/Tunis')::date;
   v_on date := coalesce(p_on, (now() at time zone 'Africa/Tunis')::date);
+  v_kinds text[] := case when p_side = 'in' then array['sub', 'service'] else array['ads', 'tools', 'print', 'move', 'people'] end;
   v_id bigint;
 begin
   perform public.require_admin();
+  if p_side is null or p_side not in ('in', 'out') then return public.err('invalid'); end if;
   if char_length(v_what) not between 2 and 120 then return public.err('invalid'); end if;
   if p_amount is null or round(p_amount, 3) <= 0 or p_amount > 1000000 then return public.err('invalid'); end if;
   if v_on > v_today or v_on < v_today - 3660 then return public.err('invalid'); end if;
-  insert into public.expenses (spent_on, amount, what, kind, robot)
-  values (v_on, round(p_amount, 3), v_what, case when p_kind in ('ads', 'tools', 'print', 'move', 'people') then p_kind else 'other' end, public.sees_robots())
+  insert into public.books (side, on_day, amount, what, kind, robot)
+  values (p_side, v_on, round(p_amount, 3), v_what, case when p_kind = any (v_kinds) then p_kind else 'other' end, public.sees_robots())
   returning id into v_id;
   return jsonb_build_object('ok', true, 'id', v_id);
 end $$;
 
 -- a line taken back (a slip of the finger). A script's admin takes back its
 -- own lines only, the founder his
-create or replace function public.admin_expense_delete(p_id bigint) returns jsonb
+create or replace function public.admin_book_delete(p_id bigint) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
   perform public.require_admin();
-  delete from public.expenses where id = p_id and robot = public.sees_robots();
+  delete from public.books where id = p_id and robot = public.sees_robots();
   if not found then return public.err('not_found'); end if;
   return jsonb_build_object('ok', true);
 end $$;
 
--- the founder's books: every time a shop's access was turned on or stopped,
--- with what came in for it — the real shops only (a script's admin sees
--- everything). The dinars of this month and of this year (Tunis time), the
--- months added with no money, the shops paid right now, and the payments the
--- owners said are on their way. And the other side of the books: what the
--- business spent (this month, this year, since the start) with its lines, the
--- newest day first — a script's lines only for a script. `today`: the day in
--- Tunis, for the form that adds a line.
+-- the founder's books. What came in: every time a shop's access was turned
+-- on or stopped, with what came in for it — the real shops only (a script's
+-- admin sees everything) — and the lines he wrote himself. What went out: the
+-- lines he wrote. The dinars of this month, of this year (Tunis time) and
+-- since the start, each side; the months added with no money; the shops paid
+-- right now; the payments the owners said are on their way; his own lines,
+-- both sides, the newest day first (a script's lines only for a script);
+-- `today`: the day in Tunis, for the form that adds a line.
 create or replace function public.admin_ledger() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
-declare v_all boolean; v_month timestamptz; v_year timestamptz; v_today date;
+declare v_all boolean; v_month timestamptz; v_year timestamptz; v_today date; v_month_d date; v_year_d date;
 begin
   perform public.require_admin();
   v_all := public.sees_robots();
   v_month := date_trunc('month', now() at time zone 'Africa/Tunis') at time zone 'Africa/Tunis';
   v_year := date_trunc('year', now() at time zone 'Africa/Tunis') at time zone 'Africa/Tunis';
   v_today := (now() at time zone 'Africa/Tunis')::date;
+  v_month_d := date_trunc('month', v_today)::date;
+  v_year_d := date_trunc('year', v_today)::date;
   return (
     with real_shops as (
       select s.* from public.shops s left join public.people p on p.id = s.owner_id
       where v_all or (not public.is_robot(s.owner_id) and not coalesce(p.is_admin or p.is_tester, false))
     ), lines as (
       select l.* from public.plan_log l where l.shop_id in (select id from real_shops)
-    ), spent as (
-      select e.* from public.expenses e where v_all or not e.robot
+    ), mine as (
+      select b.* from public.books b where v_all or not b.robot
     )
     select jsonb_build_object(
       'today', v_today,
-      'spent_month', coalesce((select sum(amount) from spent where spent_on >= date_trunc('month', v_today)::date), 0),
-      'spent_year', coalesce((select sum(amount) from spent where spent_on >= date_trunc('year', v_today)::date), 0),
-      'spent_all', coalesce((select sum(amount) from spent), 0),
-      'expenses', coalesce((
-        select jsonb_agg(jsonb_build_object('id', e.id, 'on', e.spent_on, 'amount', e.amount, 'what', e.what, 'kind', e.kind) order by e.spent_on desc, e.id desc)
-        from spent e), '[]'::jsonb),
-      'month', coalesce((select sum(amount) from lines where created_at >= v_month), 0),
-      'year', coalesce((select sum(amount) from lines where created_at >= v_year), 0),
-      'all', coalesce((select sum(amount) from lines), 0),
+      'month', coalesce((select sum(amount) from lines where created_at >= v_month), 0) + coalesce((select sum(amount) from mine where side = 'in' and on_day >= v_month_d), 0),
+      'year', coalesce((select sum(amount) from lines where created_at >= v_year), 0) + coalesce((select sum(amount) from mine where side = 'in' and on_day >= v_year_d), 0),
+      'all', coalesce((select sum(amount) from lines), 0) + coalesce((select sum(amount) from mine where side = 'in'), 0),
+      'out_month', coalesce((select sum(amount) from mine where side = 'out' and on_day >= v_month_d), 0),
+      'out_year', coalesce((select sum(amount) from mine where side = 'out' and on_day >= v_year_d), 0),
+      'out_all', coalesce((select sum(amount) from mine where side = 'out'), 0),
+      'lines', coalesce((
+        select jsonb_agg(jsonb_build_object('id', b.id, 'side', b.side, 'on', b.on_day, 'amount', b.amount, 'what', b.what, 'kind', b.kind) order by b.on_day desc, b.id desc)
+        from mine b), '[]'::jsonb),
       'extra_months', coalesce((select sum(months) from lines where amount = 0), 0),
       'paying', (select count(*) from real_shops where paid_until > now()),
       'rows', coalesce((
@@ -1764,7 +1775,7 @@ where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
 grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
   public.admin_save_card(uuid, int, text, text, int, boolean), public.admin_shop_edit(uuid, text, text),
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
-  public.admin_expense_add(text, numeric, date, text), public.admin_expense_delete(bigint),
+  public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),

@@ -9,7 +9,7 @@ const ITEMS = [
   { href: "/admin", label: "الكونسول", icon: LayoutGrid, exact: true },
   { href: "/admin/shops", label: "المحلات", icon: Building2 },
   { href: "/admin/people", label: "الكونتات", icon: Users },
-  { href: "/admin/payments", label: "الخلاص", icon: Wallet },
+  { href: "/admin/payments", label: "الحسابات", icon: Wallet },
   { href: "/admin/traffic", label: "الترافيك", icon: BarChart3 },
   { href: "/admin/news", label: "الأخبار", icon: Megaphone },
   { href: "/admin/settings", label: "الريڤلاج", icon: Settings2 },

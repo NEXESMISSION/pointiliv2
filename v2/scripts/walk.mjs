@@ -343,21 +343,32 @@ try {
   await a.getByRole("button", { name: "المحل (الإسم واللوغو)" }).click();
   await a.locator('input[name="cta_label"]').fill("جرّبها توّا");
   await shot(a, "27c-news-new", 400);
-  // the books: an expense noted, counted in its line, and taken back (a script's line: never in the founder's own books)
+  // the books: an expense and a line of income written by hand, each in its list, then taken back (a script's lines: never in the founder's own books)
   await a.goto(`${BASE}/admin/payments`, { waitUntil: "load" });
   await a.getByPlaceholder("مثلا: سبونسور فيسبوك").fill("سبونسور فيسبوك");
   await a.getByRole("textbox", { name: "قدّاش؟ (د)" }).fill("47,35");
   await a.getByRole("radio", { name: "إشهار" }).click();
-  await a.getByRole("button", { name: "زيد المصروف" }).click();
+  await a.getByRole("button", { name: "سجّل", exact: true }).click();
   const spentLine = a.getByRole("row", { name: /سبونسور فيسبوك/ }).first();
   await spentLine.waitFor({ timeout: 20000 });
-  await shot(a, "28-books", 400);
   const spentSays = (await spentLine.textContent()).replace(/\s+/g, " ");
-  console.log(spentSays.includes("47,35") && spentSays.includes("إشهار") ? "  · an expense noted: its line is in the books ✓" : `  ! the expense's line says: ${spentSays}`);
-  await spentLine.getByRole("button", { name: "افسخ المصروف هذا" }).click();
-  await spentLine.getByRole("button", { name: "افسخ", exact: true }).click();
-  await spentLine.waitFor({ state: "detached", timeout: 20000 });
-  console.log("  · …and taken back ✓");
+  console.log(spentSays.includes("47,35") && spentSays.includes("إشهار") ? "  · an expense written: its line is in the books ✓" : `  ! the expense's line says: ${spentSays}`);
+  await a.getByRole("radio", { name: "دخل", exact: true }).click();
+  await a.getByPlaceholder("مثلا: خدمة لمحل").fill("خدمة طباعة لمحل");
+  await a.getByRole("textbox", { name: "قدّاش؟ (د)" }).fill("50");
+  await a.getByRole("radio", { name: "خدمة" }).click();
+  await a.getByRole("button", { name: "سجّل", exact: true }).click();
+  const earnedLine = a.getByRole("row", { name: /خدمة طباعة لمحل/ }).first();
+  await earnedLine.waitFor({ timeout: 20000 });
+  await shot(a, "28-books", 400);
+  const earnedSays = (await earnedLine.textContent()).replace(/\s+/g, " ");
+  console.log(earnedSays.includes("50") && earnedSays.includes("خدمة") ? "  · a line of income written: in the book with the subscriptions ✓" : `  ! the income's line says: ${earnedSays}`);
+  for (const row of [spentLine, earnedLine]) {
+    await row.getByRole("button", { name: "افسخ السطر هذا" }).click();
+    await row.getByRole("button", { name: "افسخ", exact: true }).click();
+    await row.waitFor({ state: "detached", timeout: 20000 });
+  }
+  console.log("  · …and both taken back ✓");
   await a.goto(`${BASE}/admin/shops`, { waitUntil: "load" });
   await shot(a, "21-admin-shops");
   await a.locator('a[href^="/admin/shops/"]').first().click();

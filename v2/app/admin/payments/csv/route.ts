@@ -14,7 +14,7 @@ type Line = {
   shop: { name: string };
   owner: { name: string | null; phone: string | null };
 };
-type Spent = { on: string; amount: number; what: string; kind: string };
+type Hand = { side: "in" | "out"; on: string; amount: number; what: string; kind: string };
 
 const TZ = "Africa/Tunis";
 // 2026-10-05: a date a spreadsheet reads as a date
@@ -30,34 +30,41 @@ const cell = (v: string | number | null) => {
 /**
  * The founder's books as a spreadsheet, the oldest line first. What came in:
  * one line each time a shop's access was turned on or stopped, with what
- * came in. `?book=expenses`: what went out, one line an expense. UTF-8 with
- * its mark, so Excel reads the Arabic right. The founder's only: the books
- * themselves refuse anyone else.
+ * came in, and the lines he wrote himself in their place. `?book=out`: what
+ * went out, one line an expense. UTF-8 with its mark, so Excel reads the
+ * Arabic right. The founder's only: the books themselves refuse anyone else.
  */
 export async function GET(request: NextRequest) {
-  const books = await call<{ rows: Line[]; expenses?: Spent[] }>("admin_ledger");
+  const books = await call<{ rows: Line[]; lines?: Hand[] }>("admin_ledger");
   if (!books) return new Response("Forbidden", { status: 403 });
-  const out = request.nextUrl.searchParams.get("book") === "expenses";
+  const hand = books.lines ?? [];
+  const out = request.nextUrl.searchParams.get("book") === "out";
   const head = out ? ["التاريخ", "على شنوّة", "النوع", "المبلغ (د)"] : ["التاريخ", "المحل", "المولى", "التليفون", "شنوّة", "شهور", "حتى", "المبلغ (د)", "كيفاش", "ملاحظة"];
-  const lines = out
-    ? [...(books.expenses ?? [])].reverse().map((e) => [e.on, e.what, t.aExpKinds[e.kind] ?? e.kind, e.amount].map(cell).join(","))
-    : [...books.rows].reverse().map((l) =>
-        [
-          iso(l.at),
-          l.shop.name,
-          l.owner.name,
-          // 48 020 806: the way a Tunisian writes it, and Excel keeps it as words
-          l.owner.phone ? spaced(l.owner.phone) : null,
-          l.kind === "end" ? t.aPlanLogEnd : l.amount === 0 ? `${monthsSaid(l.months ?? 0)} ${t.aPlanExtra}` : l.kind === "until" ? `${t.aPlanUntil} ${l.until ? iso(l.until) : ""}` : monthsSaid(l.months ?? 0),
-          l.months,
-          l.until ? iso(l.until) : null,
-          l.amount,
-          l.method ? (WAYS[l.method] ?? l.method) : null,
-          l.note,
-        ]
-          .map(cell)
-          .join(","),
-      );
+  let lines: string[];
+  if (out) {
+    lines = hand
+      .filter((h) => h.side === "out")
+      .reverse()
+      .map((h) => [h.on, h.what, t.aBookKinds[h.kind] ?? h.kind, h.amount].map(cell).join(","));
+  } else {
+    const plan = books.rows.map((l) => ({
+      at: iso(l.at),
+      cells: [
+        l.shop.name,
+        l.owner.name,
+        // 48 020 806: the way a Tunisian writes it, and Excel keeps it as words
+        l.owner.phone ? spaced(l.owner.phone) : null,
+        l.kind === "end" ? t.aPlanLogEnd : l.amount === 0 ? `${monthsSaid(l.months ?? 0)} ${t.aPlanExtra}` : l.kind === "until" ? `${t.aPlanUntil} ${l.until ? iso(l.until) : ""}` : monthsSaid(l.months ?? 0),
+        l.months,
+        l.until ? iso(l.until) : null,
+        l.amount,
+        l.method ? (WAYS[l.method] ?? l.method) : null,
+        l.note,
+      ] as (string | number | null)[],
+    }));
+    const byHand = hand.filter((h) => h.side === "in").map((h) => ({ at: h.on, cells: [h.what, null, null, `${t.aBookIn}: ${t.aBookKinds[h.kind] ?? h.kind}`, null, null, h.amount, null, null] as (string | number | null)[] }));
+    lines = [...plan, ...byHand].sort((x, y) => x.at.localeCompare(y.at)).map((r) => [r.at, ...r.cells].map(cell).join(","));
+  }
   const csv = "﻿" + [head.join(","), ...lines].join("\r\n") + "\r\n";
   return new Response(csv, {
     headers: {
