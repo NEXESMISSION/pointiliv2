@@ -20,7 +20,7 @@ mkdirSync(OUT, { recursive: true });
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 for (const ip of ["local", "::1", "127.0.0.1"]) await admin.rpc("forget_tries", { p_key: `login-ip:${ip}` });
 const PASS = "news-pics-2026";
-const NOTES = ["card_hello", "coach", "logo_tip", "offer"];
+const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push"];
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const made = [];
 

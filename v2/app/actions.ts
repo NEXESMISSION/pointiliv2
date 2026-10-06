@@ -4,6 +4,8 @@ import { randomBytes, randomInt } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath, updateTag } from "next/cache";
+import { after } from "next/server";
+import { sendPush } from "@/lib/push";
 import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
@@ -218,7 +220,7 @@ export async function cardChange(goal: number, gift: string): Promise<{ ok: bool
 }
 
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
-export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer"): Promise<void> {
+export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push"): Promise<void> {
   await call("see", { p_key: note });
 }
 
@@ -234,7 +236,22 @@ export async function customerAt(who: string): Promise<{ ok: boolean; error?: st
 /** The shop gives the tampon itself: the same rules as a scan (the shop's wait between two, the gift at the goal). */
 export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
   const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20) });
+  // the last tampon by the shop's hand: the customer's phone hears it, after the answer has left
+  if (res?.ok && res.gift && res.card) {
+    const card = res.card;
+    after(async () => {
+      const { data } = await service().from("cards").select("user_id").eq("id", card.id).maybeSingle();
+      if (data?.user_id) await sendPush(data.user_id, { title: fill(t.pushWonTitle, { gift: card.shop.gift ?? "" }), body: fill(t.pushWonBody, { shop: card.shop.name }), url: `/c/${card.id}?show=1`, tag: `gift-${card.id}` });
+    });
+  }
   return res ?? { ok: false, error: "network" };
+}
+
+/** The phone said «إيه، فكّروني»: written down, so the shop's reminders reach it. */
+export async function pushSubscribe(endpoint: string, p256dh: string, auth: string): Promise<boolean> {
+  if (!/^https:\/\//.test(endpoint) || endpoint.length > 2000) return false;
+  const res = await call<{ ok: boolean }>("push_subscribe", { p_endpoint: endpoint, p_p256dh: String(p256dh).slice(0, 200), p_auth: String(auth).slice(0, 100) });
+  return !!res?.ok;
 }
 
 /** The tampon just given by hand, taken back (the wrong customer, or twice): the card as it is after. */

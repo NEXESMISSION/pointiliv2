@@ -9,6 +9,35 @@ h1{font-size:22px;margin:0}p{margin:0;color:#6B6781;font-size:16px;line-height:1
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+// a word from the server (lib/push.ts): shown as it came — the title, the line, and where a tap lands
+self.addEventListener("push", (event) => {
+  let note = {};
+  try {
+    note = event.data ? event.data.json() : {};
+  } catch {
+    note = {};
+  }
+  event.waitUntil(
+    self.registration.showNotification(note.title || "Pointili", {
+      body: note.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: note.tag || "pointili",
+      renotify: true,
+      data: { url: note.url || "/" },
+    }),
+  );
+});
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      const open = list.find((c) => "navigate" in c);
+      return open ? open.navigate(url).then((c) => c && c.focus()) : self.clients.openWindow(url);
+    }),
+  );
+});
 self.addEventListener("fetch", (event) => {
   if (event.request.mode !== "navigate") return;
   event.respondWith(fetch(event.request).catch(() => new Response(OFFLINE, { headers: { "Content-Type": "text/html; charset=utf-8" } })));

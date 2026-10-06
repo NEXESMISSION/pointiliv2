@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { Gift, QrCode } from "lucide-react";
 import { MyCode } from "@/components/MyCode";
+import { PushAsk } from "@/components/PushAsk";
 import { Pass } from "@/components/Pass";
 import { Top } from "@/components/Top";
 import { Icon3D, Screen } from "@/components/ui";
@@ -90,6 +91,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           )}
         </div>
       )}
+
+      {/* once, on a card with a tampon on it: a word to this phone when the gift is near, or waiting */}
+      {(card.stamps > 0 || ready) && !(me.seen ?? []).includes("push") && <PushAsk shop={card.shop.name} />}
 
       <section className={`flex min-h-0 flex-1 flex-col ${look.story}`}>
         <h2 className="mb-2.5 px-0.5 text-[1.0625rem] font-bold">{t.history}</h2>

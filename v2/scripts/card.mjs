@@ -25,7 +25,7 @@ const BASE = process.env.BASE || "http://localhost:3200";
 const ONLY = (process.env.ONLY || "").split(",").filter(Boolean);
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 for (const ip of ["local", "::1", "127.0.0.1"]) await admin.rpc("forget_tries", { p_key: `login-ip:${ip}` });
-const NOTES = ["card_hello", "coach", "logo_tip", "offer"];
+const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push"];
 const password = randomBytes(9).toString("base64url");
 const made = [], phones = [];
 mkdirSync("shots/card", { recursive: true });

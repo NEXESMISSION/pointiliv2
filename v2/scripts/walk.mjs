@@ -184,6 +184,36 @@ try {
   await c.getByText("تامبون جديد!").waitFor({ timeout: 30000 });
   await shot(c, "08-stamped", 1800);
   await plusOne;
+  // the card asks once for a word to this phone: the phone's own question says yes (granted here), the browser's
+  // subscription is stood in for (no push service in a headless browser), and the phone is written down
+  await c.context().grantPermissions(["notifications"], { origin: BASE });
+  await c.context().addInitScript(() => {
+    const fake = { endpoint: "https://push.example/walk/" + Math.random().toString(36).slice(2) + "x".repeat(30), toJSON() { return { endpoint: this.endpoint, keys: { p256dh: "p".repeat(40), auth: "a".repeat(16) } }; } };
+    if (window.PushManager) {
+      PushManager.prototype.subscribe = async () => fake;
+      PushManager.prototype.getSubscription = async () => null;
+    }
+  });
+  // a fresh page load, so the stand-in is in place (a link's own navigation keeps the page)
+  const cardHref = await c.getByRole("link", { name: "شوف الكارط" }).getAttribute("href");
+  await c.goto(BASE + cardHref, { waitUntil: "load" });
+  await c.getByRole("button", { name: "إيه، فكّروني" }).waitFor({ timeout: 20000 });
+  await shot(c, "08b-card-ask", 600);
+  await c.getByRole("button", { name: "إيه، فكّروني" }).click();
+  await c.getByRole("button", { name: "إيه، فكّروني" }).waitFor({ state: "detached", timeout: 20000 });
+  {
+    // the answer is written down right after the screen moves on: a few tries
+    let me, phones;
+    for (let i = 0; i < 10; i++) {
+      me = (await admin.from("people").select("id, seen").eq("phone", `+216${customerPhone}`).single()).data;
+      phones = (await admin.from("push_subs").select("endpoint").eq("user_id", me.id)).data;
+      if (phones?.length === 1 && me.seen.includes("push")) break;
+      await c.waitForTimeout(500);
+    }
+    console.log(phones?.length === 1 && me.seen.includes("push") ? "  · the phone written down for the reminders, asked once ✓" : `  ! the phone: ${JSON.stringify(phones)} · seen ${JSON.stringify(me.seen)}`);
+  }
+  await c.reload({ waitUntil: "load" });
+  await never(c, "the phone's question (reload)", c.getByRole("button", { name: "إيه، فكّروني" }));
 
   // ── the card fills up ──
   const { data: who } = await admin.from("people").select("id").eq("phone", `+216${customerPhone}`).single();

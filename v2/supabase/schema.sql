@@ -141,6 +141,20 @@ create table if not exists public.books (
 );
 create index if not exists books_day_idx on public.books (on_day desc, id desc);
 
+-- a customer's phone that said «إيه، فكّروني»: where a word reaches it (the
+-- browser's own address and keys). One line a phone; a person may have a few
+create table if not exists public.push_subs (
+  id          bigint generated always as identity primary key,
+  user_id     uuid not null references auth.users (id) on delete cascade,
+  endpoint    text not null unique check (char_length(endpoint) between 20 and 2000),
+  p256dh      text not null check (char_length(p256dh) between 20 and 200),
+  auth        text not null check (char_length(auth) between 10 and 100),
+  created_at  timestamptz not null default now()
+);
+create index if not exists push_subs_user_idx on public.push_subs (user_id);
+-- a card reminded: once a month at most
+alter table public.cards add column if not exists reminded_at timestamptz;
+
 -- the shop's logo (optional): a picture in the public «logos» box, set by the owner
 alter table public.shops add column if not exists logo text check (logo is null or (logo ~ '^https://' and char_length(logo) <= 300));
 
@@ -335,7 +349,7 @@ update public.moments m set gift = c.gift from public.cards c where c.id = m.car
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log', 'books'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log', 'books', 'push_subs'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -462,7 +476,7 @@ create or replace function public.see(p_key text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then return public.err('not_signed_in'); end if;
-  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer') then return public.err('invalid'); end if;
+  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push') then return public.err('invalid'); end if;
   update public.people set seen = array_append(seen, p_key) where id = auth.uid() and not (p_key = any (seen));
   return jsonb_build_object('ok', true);
 end $$;
@@ -1190,6 +1204,57 @@ begin
   return jsonb_build_object('ok', true, 'card', public.card_view(c.id));
 end $$;
 
+-- ═══ a word to the customer's phone ════════════════════════════════════════
+-- the phone said «إيه، فكّروني»: written down (again, if it is the same
+-- address: the keys may be new)
+create or replace function public.push_subscribe(p_endpoint text, p_p256dh text, p_auth text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_uid uuid := auth.uid();
+begin
+  if v_uid is null then return public.err('not_signed_in'); end if;
+  if p_endpoint !~ '^https://' or char_length(p_endpoint) > 2000 or char_length(coalesce(p_p256dh, '')) not between 20 and 200 or char_length(coalesce(p_auth, '')) not between 10 and 100 then return public.err('invalid'); end if;
+  if not public.try_once('push:' || v_uid, 20, 60) then return public.err('too_many'); end if;
+  insert into public.push_subs (user_id, endpoint, p256dh, auth) values (v_uid, p_endpoint, p_p256dh, p_auth)
+  on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- the phone takes its word back
+create or replace function public.push_unsubscribe(p_endpoint text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  delete from public.push_subs where endpoint = p_endpoint and user_id = auth.uid();
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- (the morning's clock, through the server only) who to remind today: a
+-- customer with a phone written down, whose card in a running, paid shop is on
+-- its way — a tampon at least, none for two weeks, the last within two months
+-- — or holds a gift for three days; and not reminded these thirty days
+create or replace function public.push_reminders() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+      'user_id', c.user_id, 'card', c.id, 'shop', s.name,
+      'left', greatest(coalesce(c.goal, s.goal) - c.stamps, 0), 'gift', coalesce(c.gift, s.gift),
+      'kind', case when w.waiting then 'gift' else 'near' end)), '[]'::jsonb)
+  from public.cards c join public.shops s on s.id = c.shop_id
+  cross join lateral (select public.waits(c.id) as waiting) w
+  where exists (select 1 from public.push_subs p where p.user_id = c.user_id)
+    and not s.paused and s.paid_until > now() and s.goal is not null
+    and (c.reminded_at is null or c.reminded_at < now() - interval '30 days')
+    and ((w.waiting and c.last_at < now() - interval '3 days')
+      or (not w.waiting and c.stamps >= 1 and c.last_at between now() - interval '60 days' and now() - interval '14 days'))
+$$;
+
+-- a card reminded today
+create or replace function public.push_remembered(p_card uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.cards set reminded_at = now() where id = p_card;
+  return jsonb_build_object('ok', found);
+end $$;
+
 -- ═══ paying for the year ═══════════════════════════════════════════════════
 -- the shop's year: paid until when, the offer's end (48 hours from the first
 -- time the owner sees it: 3 more months), and the last payment asked
@@ -1810,7 +1875,7 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.news_next(), public.news_seen(uuid), public.news_clicked(uuid),
   public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),
   public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),
-  public.customer_at(text), public.give_stamp(text),
+  public.customer_at(text), public.give_stamp(text), public.push_subscribe(text, text, text), public.push_unsubscribe(text),
   public.my_payment(), public.pay_request(text), public.admin_payments(), public.admin_payment_decide(uuid, boolean) to authenticated;
 grant execute on all functions in schema public to service_role;
 

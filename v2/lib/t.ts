@@ -582,6 +582,17 @@ export const t = {
   collectSoon: "خذا التامبون متاعو. يرجع {when}",
   collectOwn: "هذا الكود متاعك إنت",
   collectNext: "حريف آخر",
+  // a word to the customer's phone: asked once on a card with a tampon on it; then the reminders
+  pushAskTitle: "نفكّروك كي يقرب الكادو؟",
+  pushAskBody: "كلمة على تليفونك كي يبقالك شويّة في {shop}، وكي الكادو يولّي حاضر.",
+  pushAskYes: "إيه، فكّروني",
+  pushAskNo: "موش توّا",
+  pushWonTitle: "ربحت {gift}!",
+  pushWonBody: "في {shop}. ورّي الكود متاعك في الكاسة وخوذو.",
+  pushNearTitle: "{shop} يسلّم عليك",
+  pushNearBody: "مازالولك {n} باش تربح {gift}.",
+  pushWaitingTitle: "الكادو متاعك يستنّى فيك",
+  pushWaitingBody: "{gift} في {shop}. ورّي الكود متاعك في الكاسة.",
   // a tampon given by hand, taken back (ten minutes)
   collectUndo: "غلطت؟ رجّع التامبون",
   collectUndoAsk: "ترجّع التامبون لـ{name}؟",

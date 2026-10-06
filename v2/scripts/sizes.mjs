@@ -51,7 +51,7 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",").map((s) => s.trim())
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const anonDb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
 const PASS = "sizes-check-2026";
-const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer"];
+const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push"];
 const made = [];
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const HOUR = 3600_000;
@@ -230,6 +230,8 @@ const SCREENS = [
     },
   },
   { name: "customer-card", as: "customer", path: () => `/c/${cardBarber}` },
+  // the card asks once for a word to this phone
+  { name: "customer-card-push", as: "customer", before: () => notes(customer, ["card_hello", "coach", "logo_tip", "offer"]), path: () => `/c/${cardBarber}`, after: () => notes(customer, ALL_NOTES) },
   { name: "customer-me", as: "customer", path: "/me" },
   { name: "customer-scan", as: "customer", path: "/scan", wait: 2500 },
   {

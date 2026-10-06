@@ -395,6 +395,38 @@ try {
   await admin.from("cards").update({ stamps: 0, last_at: null }).eq("id", nourCard.id);
   await admin.from("moments").delete().eq("card_id", nourCard.id).eq("kind", "stamp");
 
+  console.log("\nA word to the customer's phone");
+  const pzEnd = "https://push.example/phone/" + "x".repeat(40);
+  const pzSub = { p_endpoint: pzEnd, p_p256dh: "p".repeat(40), p_auth: "a".repeat(16) };
+  const pzPhones = async () => (await admin.from("push_subs").select("id").eq("user_id", nour.id)).data.length;
+  check("the phone written down", (await rpc(nour, "push_subscribe", pzSub)).ok && (await pzPhones()) === 1);
+  check("…the same phone again: still one line", (await rpc(nour, "push_subscribe", pzSub)).ok && (await pzPhones()) === 1);
+  check("an address that is no address is refused", (await rpc(nour, "push_subscribe", { ...pzSub, p_endpoint: "http://push.example/plain" })).error === "invalid");
+  const pzShop = (await rpc(owner, "me")).shop;
+  const pzPaid = (await admin.from("shops").select("paid_until").eq("id", pzShop.id).single()).data.paid_until;
+  await admin.from("shops").update({ paid_until: new Date(Date.now() + 30 * 86_400_000).toISOString() }).eq("id", pzShop.id);
+  const pzAgo = (days) => new Date(Date.now() - days * 86_400_000).toISOString();
+  const pzDue = async () => ((await admin.rpc("push_reminders")).data ?? []).filter((d) => d.card === nourCard.id);
+  await admin.from("cards").update({ stamps: 2, last_at: pzAgo(20), reminded_at: null }).eq("id", nourCard.id);
+  const pzNear = await pzDue();
+  check("a card on its way, quiet for twenty days: reminded, with what is left", pzNear.length === 1 && pzNear[0].kind === "near" && pzNear[0].left === (nourCard.goal ?? 0) - 2 && pzNear[0].shop === pzShop.name && pzNear[0].user_id === nour.id, pzNear);
+  check("…once reminded, not again this month", (await admin.rpc("push_remembered", { p_card: nourCard.id })).data?.ok === true && (await pzDue()).length === 0);
+  await admin.from("cards").update({ last_at: pzAgo(3), reminded_at: null }).eq("id", nourCard.id);
+  check("three days quiet: left alone", (await pzDue()).length === 0);
+  await admin.from("cards").update({ last_at: pzAgo(90), reminded_at: null }).eq("id", nourCard.id);
+  check("three months quiet: left alone too", (await pzDue()).length === 0);
+  await admin.from("cards").update({ last_at: pzAgo(4), reminded_at: null }).eq("id", nourCard.id);
+  const { data: pzGift } = await admin.from("moments").insert({ shop_id: pzShop.id, card_id: nourCard.id, kind: "gift", gift: pzShop.gift }).select("id").single();
+  const pzWait = await pzDue();
+  check("a gift waiting four days: reminded of it", pzWait.length === 1 && pzWait[0].kind === "gift" && pzWait[0].gift === pzShop.gift, pzWait);
+  await admin.from("shops").update({ paused: true }).eq("id", pzShop.id);
+  check("a shop paused: its customers left alone", (await pzDue()).length === 0);
+  await admin.from("shops").update({ paused: false }).eq("id", pzShop.id);
+  check("the phone taken back: nothing to send to", (await rpc(nour, "push_unsubscribe", { p_endpoint: pzEnd })).ok && (await pzPhones()) === 0 && (await pzDue()).length === 0);
+  await admin.from("moments").delete().eq("id", pzGift.id);
+  await admin.from("cards").update({ stamps: 0, last_at: null, reminded_at: null }).eq("id", nourCard.id);
+  await admin.from("shops").update({ paid_until: pzPaid }).eq("id", pzShop.id);
+
   console.log("\nThe shop chooses the wait between two tampons");
   const card0 = (await rpc(owner, "me")).shop;
   const saveWait = (gap) => rpc(owner, "save_card", { p_goal: card0.goal, p_gift: card0.gift, p_color: card0.color, p_gap: gap });
