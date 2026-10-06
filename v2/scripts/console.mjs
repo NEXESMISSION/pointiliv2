@@ -128,19 +128,18 @@ async function check(name, url, wait = 1100) {
       const b = el.getBoundingClientRect();
       if (b.width && (b.right > innerWidth + 1 || b.left < -1)) wide.push(`${el.tagName.toLowerCase()}.${(el.className || "").toString().split(" ")[0]}`);
     }
-    // What actually reorders on screen: TWO OR MORE Latin runs with a neutral
-    // between them inside an Arabic line — the runs swap places. One Latin
-    // word among Arabic is laid out right by the browser, so it is no bug.
-    // A line that opens on a neutral before Latin ("/wallet · …") is the
-    // other one: the slash jumps to the far end.
+    // What actually reorders on screen. Latin runs do NOT swap among
+    // themselves inside an Arabic line: neutrals between two Latin runs take
+    // the Latin direction, so «Safari · Tunis» and «saif test» each resolve as
+    // one left-to-right block in their logical order. What does move is a
+    // NEUTRAL at the edge — a line opening on «/» or «.» before Latin, like
+    // «/wallet · كارطات الحريف», where the slash jumps to the far end.
     const loose = [];
     for (const el of document.querySelectorAll("main td, main dd, main p, main span, main b")) {
       if (el.children.length) continue;
       const txt = (el.textContent || "").trim();
       if (!/[؀-ۿ]/.test(txt)) continue;
-      const runs = txt.match(/[A-Za-z][A-Za-z._-]*(?:[ ]+[A-Za-z][A-Za-z._-]*)*/g) || [];
-      const opensNeutral = /^[/\.:#·+-]/.test(txt) && /[A-Za-z]/.test(txt);
-      if (runs.length < 2 && !opensNeutral) continue;
+      if (!/^[/\.:#·+-]/.test(txt) || !/[A-Za-z]/.test(txt)) continue;
       if (el.closest("bdi, .num, .lat, [dir='ltr']")) continue;
       loose.push(txt.slice(0, 44));
     }
