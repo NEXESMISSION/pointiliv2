@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel فيسبوك في Pointili</title>
+<meta name="description" content="الـ Pixel متاع فيسبوك في Pointili: شنوّة هو، كيفاش يخدم بالتفصيل، شنوّة يبعث من السيت، وشنوّة ركّبنا في الكود.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* white mode only, the same ledger as plan.html: white paper, hairline rules, mono for code and numbers, violet for what matters */
+  :root {
+    --paper: #FFFFFF; --sheet: #FFFFFF; --ink: #17141F; --body: #3F3A4C; --muted: #77718A;
+    --rule: #E6E2F0; --rule-soft: #F2F0F8; --violet: #6535E0; --violet-dim: #F1ECFD;
+    --moss: #146B44; --moss-dim: #E8F5EE; --amber: #8A5A06; --amber-dim: #FDF5E6;
+    --danger: #B3261E; --danger-dim: #FDEDEB; --code: #F6F5FA;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--body);
+    font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; font-size: 17px; line-height: 1.8;
+    padding-inline: 16px; padding-block: 0 80px; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1, h2, h3 { color: var(--ink); margin: 0; text-wrap: balance; line-height: 1.35; }
+  h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 700; }
+  h2 { font-size: clamp(21px, 3.2vw, 26px); font-weight: 700; }
+  h3 { font-size: 18px; font-weight: 600; }
+  p { margin: 0; }
+  strong { color: var(--ink); font-weight: 600; }
+  .lat, code, .mono { direction: ltr; unicode-bidi: isolate; }
+  code, .mono { font-family: "IBM Plex Mono", monospace; font-size: 0.86em; color: var(--ink); }
+  code { background: var(--code); border: 1px solid var(--rule); border-radius: 6px; padding: 1px 6px; }
+  a { color: var(--violet); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--violet) 35%, transparent); }
+
+  header { padding-block: 52px 28px; border-bottom: 2px solid var(--ink); display: grid; gap: 14px; }
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); direction: ltr; text-align: right; }
+  header p { font-size: 18.5px; max-width: 62ch; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14.5px; color: var(--muted); }
+  .facts b { color: var(--ink); font-weight: 600; }
+
+  section { padding-block: 36px 6px; border-bottom: 1px solid var(--rule); display: grid; gap: 16px; }
+  section:last-of-type { border-bottom: 0; }
+  .num { font-family: "IBM Plex Mono", monospace; color: var(--violet); font-weight: 600; margin-inline-end: 8px; }
+
+  .tldr { background: var(--violet-dim); border: 1px solid color-mix(in srgb, var(--violet) 22%, transparent); border-radius: 16px; padding: 18px 20px; display: grid; gap: 8px; }
+  .tldr p { color: var(--ink); }
+
+  .grid3 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .card { border: 1px solid var(--rule); border-radius: 14px; padding: 16px 18px; display: grid; gap: 6px; background: var(--sheet); }
+  .card h3 { font-size: 16.5px; }
+  .card p { font-size: 15.5px; }
+
+  /* the flow: one box per step, numbered, read from the start side */
+  .flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: step; }
+  .flow li { counter-increment: step; position: relative; border: 1px solid var(--rule); border-radius: 14px; padding: 14px 18px 14px 18px; padding-inline-start: 58px; background: var(--sheet); }
+  .flow li::before { content: counter(step); position: absolute; inset-inline-start: 16px; top: 14px; width: 28px; height: 28px; border-radius: 50%; background: var(--violet); color: #fff; font-family: "IBM Plex Mono", monospace; font-size: 14px; font-weight: 600; display: grid; place-items: center; }
+  .flow li + li::after { content: ""; position: absolute; inset-inline-start: 29px; top: -11px; width: 2px; height: 10px; background: var(--rule); }
+  .flow p { font-size: 15.5px; }
+  .flow .mono { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: start; vertical-align: top; padding: 10px 10px; border-bottom: 1px solid var(--rule); }
+  th { font-size: 13px; color: var(--muted); font-weight: 600; border-bottom: 1.5px solid var(--ink); }
+  td.ev { font-family: "IBM Plex Mono", monospace; font-size: 13.5px; color: var(--ink); white-space: nowrap; direction: ltr; text-align: right; }
+  tr.key td { background: var(--moss-dim); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 1px 9px; background: var(--moss); color: #fff; margin-inline-start: 6px; }
+  .scroll { overflow-x: auto; }
+
+  .note { border-radius: 14px; padding: 14px 18px; display: grid; gap: 6px; font-size: 15.5px; }
+  .note.ok { background: var(--moss-dim); border: 1px solid color-mix(in srgb, var(--moss) 25%, transparent); }
+  .note.warn { background: var(--amber-dim); border: 1px solid color-mix(in srgb, var(--amber) 25%, transparent); }
+  .note h3 { font-size: 16px; }
+
+  ul.list { margin: 0; padding-inline-start: 22px; display: grid; gap: 6px; }
+  pre { margin: 0; background: var(--code); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; overflow-x: auto; direction: ltr; text-align: left; font-family: "IBM Plex Mono", monospace; font-size: 13px; line-height: 1.6; color: var(--ink); }
+  .files { display: grid; gap: 8px; }
+  .file { border: 1px solid var(--rule); border-radius: 12px; padding: 12px 16px; display: grid; gap: 4px; }
+  .file .mono { font-size: 13.5px; font-weight: 600; text-align: right; }
+  .file p { font-size: 15px; }
+  footer { padding-top: 26px; font-size: 13.5px; color: var(--muted); }
+
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    th:nth-child(3), td:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Pointili · Meta Pixel · 06/10/2026</div>
+  <h1>الـ Pixel متاع فيسبوك في Pointili</h1>
+  <p>شنوّة هو، علاش يلزمنا، كيفاش يخدم من أوّل ما الواحد يشوف الإعلان لين يعمل الكونت، وشنوّة ركّبنا بالضبط في الكود متاع السيت.</p>
+  <div class="facts">
+    <span>الـ Pixel: <b>Pointili site</b></span>
+    <span>الـ ID: <b class="mono">1465380232102710</b></span>
+    <span>الحساب: <b>DigiPlus</b></span>
+    <span>السيت: <b class="lat">www.pointili.online</b></span>
+  </div>
+</header>
+
+<section>
+  <div class="tldr">
+    <p><strong>باختصار:</strong> الـ Pixel كود صغير في السيت متاعنا. كي واحد يجي من الإعلان، الكود يقول لفيسبوك شنوّة عمل خطوة بخطوة: حلّ الصفحة، شاف السوم، حلّ «حلّ محلّك»، عمل الكونت…</p>
+    <p>فيسبوك يستعمل هذا باش <strong>يقيس</strong> قدّاش كلّفك كل كونت، و<strong>يتعلّم</strong> شكون الناس اللي يعملو كونت بالحق باش يورّي الإعلان لناس كيفهم.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">01</span>علاش يلزمنا؟</h2>
+  <div class="grid3">
+    <div class="card">
+      <h3>فيسبوك يلوّج على الناس الصحاح</h3>
+      <p>بلا Pixel، فيسبوك يعرف كان شكون نزل على الإعلان. بالـ Pixel يعرف شكون عمل كونت، فيولّي يورّي الإعلان لمولى محلات كيفهم، موش لناس تنزل وتمشي.</p>
+    </div>
+    <div class="card">
+      <h3>تعرف أنهي إعلان يجيب</h3>
+      <p>في Ads Manager تشوف «Results» و«Cost per result»: قدّاش من كونت جاب كل إعلان وقدّاش كلّفك الكونت الواحد. تقصّ اللي ما يخدمش وتزيد في اللي يجيب.</p>
+    </div>
+    <div class="card">
+      <h3>ترجع للناس اللي جاو</h3>
+      <p>تنجم تعمل جمهور «جاو للسيت وما عملوش كونت» وتورّيلهم إعلان ثاني، ولا جمهور «Lookalike»: ناس يشبهو للي عملو كونت.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>كيفاش يخدم، خطوة بخطوة</h2>
+  <ol class="flow">
+    <li>
+      <p><strong>الواحد يشوف الإعلان وينزل عليه.</strong> فيسبوك يحلّ السيت ويزيد في الرابط حاجتين: <code>fbclid</code> (رقم النزلة على الإعلان) و الـ UTM اللي حطّيناهم.</p>
+      <span class="mono">www.pointili.online/?utm_source=facebook&amp;utm_medium=paid&amp;utm_campaign=…&amp;fbclid=…</span>
+    </li>
+    <li>
+      <p><strong>السيت يتحلّ والكود متاعنا يخدم.</strong> يحمّل السكريبت متاع فيسبوك <code>fbevents.js</code> ويعطيه الـ ID متاع الـ Pixel.</p>
+      <span class="mono">fbq('init', '1465380232102710')</span>
+    </li>
+    <li>
+      <p><strong>فيسبوك يحطّ cookies في التليفون.</strong> <code>_fbp</code> يعرّف التليفون هذا، و <code>_fbc</code> يحفظ الـ fbclid (يعني «هذا جا من الإعلان الفلاني»).</p>
+    </li>
+    <li>
+      <p><strong>كل خطوة يعملها، التليفون يبعث «حدث» لفيسبوك.</strong> مثلا كي يحلّ الصفحة: PageView. كي يعمل الكونت: CompleteRegistration. كل حدث هو طلب صغير لـ <code>facebook.com/tr</code> فيه الـ ID واسم الحدث والصفحة.</p>
+      <span class="mono">facebook.com/tr/?id=1465380232102710&amp;ev=PageView&amp;dl=https://www.pointili.online/</span>
+    </li>
+    <li>
+      <p><strong>فيسبوك يربط الحدث بالشخص.</strong> بالـ cookies وبالكونت فيسبوك اللي محلول في نفس التليفون، يعرف اللي هذا هو نفس الشخص اللي نزل على الإعلان. يحسبها للإعلان كان صارت في <strong>7 أيام من النزلة</strong> ولا نهار من ما شاف الإعلان.</p>
+    </li>
+    <li>
+      <p><strong>Ads Manager يورّيك النتيجة، والخوارزمية تتعلّم.</strong> الحملة متاعنا تفتّش على <strong>CompleteRegistration</strong>. كل ما يجيو كونتات أكثر، فيسبوك يفهم أكثر شكون يلزمو يورّيلو. يلزمها بين 3 و 5 أيام وفي حدود 50 كونت في الجمعة باش «تخرج من التعلّم».</p>
+    </li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="num">03</span>الأحداث اللي يبعثها السيت متاعنا</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>الحدث</th><th>وقتاش يتبعث</th><th>وين</th></tr></thead>
+      <tbody>
+        <tr><td class="ev">PageView</td><td>كل صفحة يحلّها (الصفحات العامّة وصفحات المحل)</td><td class="mono">/ · /prix · /shop…</td></tr>
+        <tr><td class="ev">ViewContent</td><td>كي يشوف السوم (مع القيمة 120 د)، الدليل ولا الأسئلة</td><td class="mono">/prix · /guide · /faq</td></tr>
+        <tr><td class="ev">Lead</td><td>كي يحلّ صفحة «حلّ محلّك» — مرّة وحدة برك في التليفون</td><td class="mono">/shop/new</td></tr>
+        <tr class="key"><td class="ev">CompleteRegistration</td><td>كي يعمل الكونت ويوصل لصفحة المحل — مرّة وحدة <span class="tag">هذا اللي الحملة تفتّش عليه</span></td><td class="mono">/shop/setup</td></tr>
+        <tr><td class="ev">CardCreated</td><td>كي يكمّل الكارط متاعو (البرافو) — مرّة وحدة</td><td class="mono">/shop?welcome=1</td></tr>
+        <tr><td class="ev">Contact</td><td>كي ينزل على واتساب ولا على التليفون متاعنا</td><td class="mono">wa.me · tel:</td></tr>
+        <tr><td class="ev">Purchase</td><td>كي الأبونمان متاعو يتفعّل، مع المبلغ (120 د)</td><td class="mono">/shop</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>الأحداث اللي «مرّة وحدة» يتسجّلو في التليفون، باش واحد يحلّ الصفحة عشرة مرّات يتحسب lead واحد، موش عشرة.</p>
+</section>
+
+<section>
+  <h2><span class="num">04</span>وين ما يخدمش (بالقصد)</h2>
+  <ul class="list">
+    <li><strong>كان على <span class="lat">www.pointili.online</span></strong>. لا على الـ localhost، لا على <span class="lat">pointidi.vercel.app</span>، لا على التجارب: الأرقام تبقى نظيفة.</li>
+    <li><strong>موش في الكونسول</strong> <code>/admin</code>، و<strong>موش في أي ناڤيقاتور حلّيت فيه الكونسول</strong>: زياراتك إنت ما تتحسبش. باش تجرّب، استعمل <strong>fenêtre privée</strong> ولا تليفون آخر.</li>
+    <li><strong>موش في صفحات الحريف</strong> (السكان، الكارط، الـ wallet، الكونت متاعو)، ولا في <code>/login</code> و <code>/forgot</code> و <code>/privacy</code>: الإعلانات لمولى المحلات، موش للحرفاء.</li>
+    <li><strong>فيسبوك ما يقرا حتى حاجة وحدو</strong> (<code>autoConfig</code> مطفي): يتبعث كان الأحداث اللي فوق.</li>
+    <li><strong>ما نبعثو حتى معلومة شخصية</strong>: لا نومرو، لا اسم، لا كلمة سر. كان اسم الحدث والصفحة.</li>
+    <li>صفحة <a class="lat" href="https://www.pointili.online/privacy">/privacy</a> تفسّر هذا للناس، بالعربي وبالفرنسي (فيسبوك يطلبها).</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">05</span>شنوّة ركّبنا في الكود</h2>
+  <div class="files">
+    <div class="file"><span class="mono">v2/lib/pixel.ts</span><p>القلب: يحمّل <code>fbevents.js</code> مرّة وحدة، يعمل <code>init</code> بالـ ID، يقرّر إذا الصفحة هذي تنجم تحكي مع فيسبوك ولا لا، ويبعث الأحداث. الأحداث اللي تطلب قبل ما الكود يوجد تستنّى ويتبعثو بعد.</p></div>
+    <div class="file"><span class="mono">v2/components/MetaPixel.tsx</span><p>محطوط في الـ layout متاع السيت الكل: يبعث PageView في كل صفحة، والحدث متاع الصفحة (السوم، «حلّ محلّك»، الكونت)، و Contact كي ينزل على واتساب ولا تليفون.</p></div>
+    <div class="file"><span class="mono">v2/components/ShopWelcome.tsx · v2/components/PlanOn.tsx</span><p>CardCreated كي يكمّل الكارط، و Purchase كي يتفعّل الأبونمان (مع المبلغ).</p></div>
+    <div class="file"><span class="mono">v2/components/FounderMark.tsx</span><p>كي تحلّ الكونسول، يعلّم الناڤيقاتور متاعك باش الـ Pixel ما يحسبكش.</p></div>
+    <div class="file"><span class="mono">/admin/settings → «فيسبوك (الإعلانات)»</span><p>الـ Pixel ID (وكود تأكيد الدومين كان تحب) يتحطّو من الكونسول، بلا ما نعاودو نحطّو السيت. الـ ID متاعنا محطوط: <span class="mono">1465380232102710</span>.</p></div>
+    <div class="file"><span class="mono">v2/app/privacy/page.tsx</span><p>صفحة الخصوصية، مربوطة من لوطة السيت.</p></div>
+  </div>
+  <p>هكّا يبان الكود اللي يبعث الحدث كي واحد يعمل الكونت:</p>
+<pre>// v2/components/MetaPixel.tsx (مختصر)
+useEffect(() =&gt; {
+  if (!id || !pixelHere(path)) return;   // only www.pointili.online, never the founder
+  startPixel(id);                         // loads fbevents.js, fbq('init', id)
+  pixel("PageView");
+  if (path === "/prix") pixel("ViewContent", { value: 120, currency: "TND" });
+  else if (path === "/shop/new") pixelOnce("Lead");
+  else if (path === "/shop/setup") pixelOnce("CompleteRegistration");
+}, [id, path]);</pre>
+  <div class="note ok">
+    <h3>تجرّب على السيت الحقيقي: يخدم ✓</h3>
+    <p>جرّبناه نهار 06/10 بتليفون عادي: الصفحة الأولى بعثت <code>PageView</code> لـ <code>facebook.com/tr</code> بالـ ID <span class="mono">1465380232102710</span>، و <code>/prix</code> بعثت ViewContent (120 TND)، و <code>/shop/new</code> بعثت Lead.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>«Your Meta Pixel is not active»: شنوّة معناها؟</h2>
+  <p>معناها برك: <strong>فيسبوك ما وصلو حتى حدث مازال</strong> من الـ Pixel هذا. عملناه اليوم، وحتى واحد ما حلّ السيت بيه قبل. موش غلطة في الكود.</p>
+  <div class="note warn">
+    <h3>شنوّة صار وشنوّة يصير</h3>
+    <p>بعثنالو أوّل PageView حقيقي نهار 06/10. فيسبوك يحتاج عادة <strong>بين 20 و 30 دقيقة</strong> باش يورّيه في Events Manager، ومن بعد الإشارة الحمراء تولّي خضراء «Active». كي تبدا الحملة، كل زيارة تزيد.</p>
+  </div>
+  <h3>كيفاش تتأكّد بروحك</h3>
+  <ul class="list">
+    <li>حلّ <strong>Events Manager</strong> ← <strong>Pointili site</strong> ← <strong>Overview</strong>: لازم تشوف PageView في «All activity».</li>
+    <li>ولا: <strong>Test events</strong> ← حطّ <span class="lat">www.pointili.online</span> ← حلّ السيت في <strong>fenêtre privée</strong> ← الأحداث يبانو في نفس الوقت.</li>
+    <li>ولا زيد extension «Meta Pixel Helper» في Chrome: تورّيك الأحداث في كل صفحة.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">07</span>نصايح للحملة</h2>
+  <ul class="list">
+    <li><strong>ما تبدّل حتى شي 3 لـ 5 أيام</strong> بعد ما تحطّها: كل تبديل كبير يرجّعها للتعلّم من الأوّل.</li>
+    <li>بـ 5 $ في النهار، صعيب توصل 50 كونت في الجمعة. كان بعد 4-5 أيام النتائج قليلة برشا، بدّل الهدف من <strong>CompleteRegistration</strong> لـ <strong>Lead</strong> (حلّ «حلّ محلّك»)، يجي أكثر وفيسبوك يتعلّم أسرع.</li>
+    <li>الأرقام متاعنا الحقيقية تلقاهم زادة في <span class="lat">/admin/traffic</span>: منين جاو (UTM)، شنوّة حلّو، وين وقفو. فيسبوك ينجم يغلط شويّة، الكونسول متاعنا لا.</li>
+    <li>من بعد، كان تحب أرقام أدقّ: نزيدو <strong>Conversions API</strong> (السيرفر يبعث الأحداث هو زادة)، يعاون كي الناڤيقاتور يمنع الـ cookies.</li>
+  </ul>
+</section>
+
+<footer>Pointili · ملف داخلي · 06/10/2026</footer>
+</div>
+</body>
+</html>
