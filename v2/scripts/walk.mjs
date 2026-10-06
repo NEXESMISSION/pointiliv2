@@ -215,6 +215,17 @@ try {
   await o.getByRole("button", { name: "إيه، عطيه الكادو" }).click();
   await o.getByRole("heading", { name: /خذا/ }).waitFor({ timeout: 20000 });
   await shot(o, "12-counter-given", 900);
+  // a tampon given by hand right after (the wait between two tampons set aside), then taken back: a slip of the finger has a way out for ten minutes
+  await admin.from("cards").update({ last_at: new Date(Date.now() - 2 * 3600_000).toISOString() }).eq("user_id", who.id);
+  await o.getByRole("button", { name: /زيد تامبون/ }).click();
+  await o.getByRole("button", { name: "غلطت؟ رجّع التامبون" }).waitFor({ timeout: 20000 });
+  await o.getByRole("button", { name: "غلطت؟ رجّع التامبون" }).click();
+  await shot(o, "12b-undo-ask", 500);
+  await o.getByRole("button", { name: "إيه، رجّعو" }).click();
+  await o.getByRole("heading", { name: "رجع التامبون" }).waitFor({ timeout: 20000 });
+  await shot(o, "12c-undone", 700);
+  const { data: afterUndo } = await admin.from("cards").select("stamps").eq("user_id", who.id).single();
+  console.log(afterUndo.stamps === 0 ? "  · the tampon taken back: the card as before ✓" : `  ! after the undo the card has ${afterUndo.stamps} tampons`);
 
   // ── the customer's other screens ──
   await c.goto(BASE + "/", { waitUntil: "load" });

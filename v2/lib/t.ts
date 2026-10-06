@@ -582,6 +582,13 @@ export const t = {
   collectSoon: "خذا التامبون متاعو. يرجع {when}",
   collectOwn: "هذا الكود متاعك إنت",
   collectNext: "حريف آخر",
+  // a tampon given by hand, taken back (ten minutes)
+  collectUndo: "غلطت؟ رجّع التامبون",
+  collectUndoAsk: "ترجّع التامبون لـ{name}؟",
+  collectUndoYes: "إيه، رجّعو",
+  collectUndone: "رجع التامبون",
+  collectUndoneBody: "الكارط رجعت كيما كانت",
+  collectUndoLate: "فات الوقت، ما عادش يرجع",
   collectScanHint: "حط الكود متاع الحريف في وسط الإيكران",
   collectNoShop: "الكود هذا يخدم كان للمحلات",
   collectFirst: "أوّل مرّة عندك",

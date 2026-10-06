@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, X } from "lucide-react";
-import { customerAt, give as handOver, giveStamp, type WaitingGift } from "@/app/actions";
+import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
+import { customerAt, give as handOver, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
 import { Pass } from "@/components/Pass";
 import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
@@ -20,7 +20,8 @@ type Step =
   | { kind: "error"; text: string }
   | { kind: "found"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
   | { kind: "giving"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
-  | { kind: "done"; name: string | null; card: CardView; gift: boolean; waiting: WaitingGift | null }
+  | { kind: "done"; name: string | null; card: CardView; gift: boolean; waiting: WaitingGift | null; moment: number | null }
+  | { kind: "undone"; name: string | null; card: CardView }
   | { kind: "soon"; name: string | null; at: string; card?: CardView; waiting: WaitingGift | null }
   | { kind: "handed"; name: string | null; gift: string; card: CardView | null; waiting: WaitingGift | null };
 
@@ -132,7 +133,7 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
     const res = await giveStamp(digits).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
     if (res.ok && res.card) {
       navigator.vibrate?.(60);
-      setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null });
+      setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null, moment: res.moment ?? null });
       signal("collect", `${mode}${res.gift ? " · gift" : ""}`);
       if (res.gift) ask(res.waiting, true);
     } else if (res.error === "too_soon" && res.next_at) {
@@ -167,10 +168,29 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
     });
   };
 
+  // the tampon just given, taken back: a slip of the finger (the wrong customer, twice). Asked once; ten minutes
+  const [undo, setUndo] = useState<"no" | "ask" | "busy">("no");
+  const [undoSaid, setUndoSaid] = useState<string | null>(null);
+  const takeBack = async () => {
+    if (step.kind !== "done" || !step.moment) return;
+    setUndo("busy");
+    const res = await unstamp(step.moment).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof unstamp>>);
+    if (res.ok && res.card) {
+      signal("collect_undo", mode);
+      setUndo("no");
+      setStep({ kind: "undone", name: step.name, card: res.card });
+    } else {
+      setUndo("no");
+      setUndoSaid(res.error === "too_late" || res.error === "not_last" ? t.collectUndoLate : t.errNetwork);
+    }
+  };
+
   const again = () => {
     asked.current = "";
     later.current = null;
     setPop(null);
+    setUndo("no");
+    setUndoSaid(null);
     setDigits("");
     setStep({ kind: "idle" });
     setRound((r) => r + 1);
@@ -255,6 +275,45 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
               <Pass shop={step.card.shop} stamps={step.card.stamps} fresh />
             </div>
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
+            <div className="mt-[3dvh] w-full space-y-2">
+              <Btn type="button" onClick={again}>
+                <RotateCcw className="size-5" /> {t.collectNext}
+              </Btn>
+              <Link href="/shop" className="block py-2 text-center text-[0.9375rem] font-semibold text-muted">
+                {t.done}
+              </Link>
+            </div>
+            {/* a slip of the finger: the tampon goes back, for ten minutes */}
+            {step.moment && !undoSaid && undo === "no" && (
+              <button type="button" onClick={() => setUndo("ask")} className="press mt-1 py-1.5 text-[0.875rem] font-semibold text-muted underline-offset-4 hover:underline">
+                {t.collectUndo}
+              </button>
+            )}
+            {step.moment && !undoSaid && undo !== "no" && (
+              <div className="mt-2 w-full rounded-[1.125rem] bg-coral-soft px-4 py-3 text-center">
+                <p className="text-[0.9375rem] font-semibold text-coral">{fill(t.collectUndoAsk, { name: who })}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button type="button" disabled={undo === "busy"} onClick={() => setUndo("no")} className="press h-10 rounded-[0.875rem] bg-surface text-[0.9062rem] font-semibold">
+                    {t.back}
+                  </button>
+                  <button type="button" disabled={undo === "busy"} onClick={() => void takeBack()} className="press h-10 rounded-[0.875rem] bg-coral text-[0.9062rem] font-bold text-white disabled:opacity-60">
+                    {undo === "busy" ? t.checking : t.collectUndoYes}
+                  </button>
+                </div>
+              </div>
+            )}
+            {undoSaid && <p className="mt-2 text-[0.875rem] font-semibold text-coral">{undoSaid}</p>}
+          </div>
+        ) : step.kind === "undone" ? (
+          <div className="my-auto flex flex-col items-center text-center">
+            <span className="grid size-[clamp(3.5rem,10dvh,5rem)] animate-pop place-items-center rounded-full bg-ink/[0.08] text-ink">
+              <Undo2 className="size-9" strokeWidth={2.5} />
+            </span>
+            <h2 className="mt-3 text-[1.625rem] font-bold">{t.collectUndone}</h2>
+            <p className="mt-1 text-[0.9375rem] text-muted">{t.collectUndoneBody}</p>
+            <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
+              <Pass shop={step.card.shop} stamps={step.card.stamps} />
+            </div>
             <div className="mt-[3dvh] w-full space-y-2">
               <Btn type="button" onClick={again}>
                 <RotateCcw className="size-5" /> {t.collectNext}
@@ -377,7 +436,7 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
         />
       )}
 
-      {mode === "code" && step.kind !== "done" && step.kind !== "handed" && (
+      {mode === "code" && step.kind !== "done" && step.kind !== "handed" && step.kind !== "undone" && (
         <Link href="/shop/qr" className="mb-[2dvh] flex shrink-0 items-center justify-center gap-1.5 text-[0.875rem] font-semibold text-brand">
           <QrCode className="size-4" /> {t.collectOr}
         </Link>

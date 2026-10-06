@@ -1134,6 +1134,7 @@ declare
   v_name text;
   v_gift boolean := false;
   v_waiting boolean;
+  v_moment bigint;
 begin
   if v_uid is null then return public.err('not_signed_in'); end if;
   select * into s from public.shops where owner_id = v_uid;
@@ -1158,12 +1159,35 @@ begin
     gift = case when (stamps = 0 and not v_waiting) or gift is null then s.gift else gift end,
     stamps = stamps + 1, last_at = now()
   where id = c.id returning * into c;
-  insert into public.moments (shop_id, card_id, kind) values (s.id, c.id, 'stamp');
+  insert into public.moments (shop_id, card_id, kind) values (s.id, c.id, 'stamp') returning id into v_moment;
   if c.stamps >= c.goal and not v_waiting then
     insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
     v_gift := true;
   end if;
-  return jsonb_build_object('ok', true, 'gift', v_gift, 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id));
+  return jsonb_build_object('ok', true, 'gift', v_gift, 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id), 'moment', v_moment);
+end $$;
+
+-- a tampon taken back: the shop gave it by hand to the wrong customer, or
+-- twice. Only the card's latest tampon, within ten minutes; the gift it had
+-- just filled goes with it while it waits — one already handed over is too
+-- late, and so is the tampon under it. The card's last visit steps back too.
+create or replace function public.unstamp(p_moment bigint) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; m public.moments%rowtype; c public.cards%rowtype; v_prev timestamptz;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  select * into m from public.moments where id = p_moment and shop_id = s.id and kind = 'stamp' for update;
+  if m.id is null then return public.err('not_found'); end if;
+  if m.created_at < now() - interval '10 minutes' then return public.err('too_late'); end if;
+  select * into c from public.cards where id = m.card_id for update;
+  if exists (select 1 from public.moments x where x.card_id = c.id and x.kind = 'stamp' and x.id > m.id) then return public.err('not_last'); end if;
+  if exists (select 1 from public.moments g where g.card_id = c.id and g.kind = 'gift' and g.id > m.id and g.given_at is not null) then return public.err('too_late'); end if;
+  delete from public.moments g where g.card_id = c.id and g.kind = 'gift' and g.id > m.id and g.given_at is null;
+  delete from public.moments where id = m.id;
+  select max(created_at) into v_prev from public.moments where card_id = c.id and kind = 'stamp';
+  update public.cards set stamps = greatest(stamps - 1, 0), last_at = v_prev where id = c.id returning * into c;
+  return jsonb_build_object('ok', true, 'card', public.card_view(c.id));
 end $$;
 
 -- ═══ paying for the year ═══════════════════════════════════════════════════
@@ -1777,7 +1801,7 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
-  public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
+  public.new_code(), public.counter(uuid, timestamptz), public.give(bigint), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),

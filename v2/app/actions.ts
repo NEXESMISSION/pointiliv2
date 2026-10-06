@@ -232,8 +232,15 @@ export async function customerAt(who: string): Promise<{ ok: boolean; error?: st
 }
 
 /** The shop gives the tampon itself: the same rules as a scan (the shop's wait between two, the gift at the goal). */
-export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null }> {
-  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null }>("give_stamp", { p_who: String(who).slice(0, 20) });
+export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
+  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20) });
+  return res ?? { ok: false, error: "network" };
+}
+
+/** The tampon just given by hand, taken back (the wrong customer, or twice): the card as it is after. */
+export async function unstamp(moment: number): Promise<{ ok: boolean; error?: string; card?: CardView }> {
+  if (!Number.isInteger(moment) || moment <= 0) return { ok: false, error: "invalid" };
+  const res = await call<{ ok: boolean; error?: string; card?: CardView }>("unstamp", { p_moment: moment });
   return res ?? { ok: false, error: "network" };
 }
 
