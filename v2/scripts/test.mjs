@@ -31,6 +31,7 @@ const users = [];
 let settingsBefore = null;
 const visitsMade = [];
 const newsMade = [];
+const expensesMade = [];
 
 const phones = [];
 async function person(name) {
@@ -451,6 +452,33 @@ try {
   check("…unticked, nothing to say to the owner", !(await rpc(owner, "my_payment")).grant);
   check("the year stopped now", (await rpc(boss, "admin_plan", { p_shop: planShop.id, p_kind: "end" })).ok && (await rpc(owner, "my_payment")).paid === false);
   check("the founder edits a shop's card with the owner's rules", (await rpc(boss, "admin_save_card", { p_shop: planShop.id, p_goal: planShop.goal, p_gift: planShop.gift, p_gap: 60 })).ok);
+
+  console.log("\nThe books: what the business spends");
+  const tunisDay = (ms = 0) => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Tunis" }).format(new Date(Date.now() + ms));
+  const near = (a, b) => Math.abs(a - b) < 0.0005;
+  const booksBefore = await rpc(boss, "admin_ledger");
+  const spent = await rpc(boss, "admin_expense_add", { p_what: "  سبونسور   فيسبوك ", p_amount: 47.3504, p_kind: "ads" });
+  const longAgo = await rpc(boss, "admin_expense_add", { p_what: "طباعة ستيكرات", p_amount: 30, p_on: "2025-03-10", p_kind: "print" });
+  const oddKind = await rpc(boss, "admin_expense_add", { p_what: "قهوة مع كليان", p_amount: 4.5, p_kind: "whatever" });
+  for (const x of [spent, longAgo, oddKind]) if (x.id) expensesMade.push(x.id);
+  const booksAfter = await rpc(boss, "admin_ledger");
+  const line = (id) => (booksAfter.expenses ?? []).find((e) => e.id === id);
+  check("an expense noted: today in Tunis, its words tidied, three figures after the point", spent.ok && line(spent.id)?.on === tunisDay() && line(spent.id).what === "سبونسور فيسبوك" && line(spent.id).amount === 47.35 && line(spent.id).kind === "ads", line(spent.id));
+  check("…counted this month and this year", near(booksAfter.spent_month - booksBefore.spent_month, 51.85) && near(booksAfter.spent_year - booksBefore.spent_year, 51.85), [booksBefore.spent_month, booksAfter.spent_month, booksAfter.spent_year]);
+  check("…a day long gone keeps its day: in the total, out of this year", longAgo.ok && line(longAgo.id)?.on === "2025-03-10" && near(booksAfter.spent_all - booksBefore.spent_all, 81.85), [line(longAgo.id), booksAfter.spent_all]);
+  check("…a kind the books do not know is «other»", oddKind.ok && line(oddKind.id)?.kind === "other", line(oddKind.id));
+  check("…the newest day first, and today's date comes with the books", booksAfter.today === tunisDay() && booksAfter.expenses.findIndex((e) => e.id === longAgo.id) > booksAfter.expenses.findIndex((e) => e.id === spent.id), booksAfter.today);
+  check(
+    "nothing, a word too short, a day to come: refused",
+    (await rpc(boss, "admin_expense_add", { p_what: "حاجة", p_amount: 0 })).error === "invalid" &&
+      (await rpc(boss, "admin_expense_add", { p_what: "x", p_amount: 5 })).error === "invalid" &&
+      (await rpc(boss, "admin_expense_add", { p_what: "غدوة", p_amount: 5, p_on: tunisDay(2 * 86_400_000) })).error === "invalid",
+  );
+  check("an owner cannot write in the books, nor a customer take a line back", !!(await rpc(owner, "admin_expense_add", { p_what: "حاجة", p_amount: 5 })).error && !!(await rpc(sami, "admin_expense_delete", { p_id: spent.id })).error);
+  const { data: robotLine } = await admin.from("expenses").select("robot").eq("id", spent.id).single();
+  check("a script's line is marked: the founder's books never show it", robotLine?.robot === true, robotLine);
+  check("a line taken back leaves the books", (await rpc(boss, "admin_expense_delete", { p_id: spent.id })).ok && !((await rpc(boss, "admin_ledger")).expenses ?? []).some((e) => e.id === spent.id));
+  check("…twice is not found", (await rpc(boss, "admin_expense_delete", { p_id: spent.id })).error === "not_found");
   check("…and its name", (await rpc(boss, "admin_shop_edit", { p_shop: planShop.id, p_name: planShop.name, p_kind: planShop.kind })).ok);
   check("a kind that does not exist is refused", (await rpc(boss, "admin_shop_edit", { p_shop: planShop.id, p_name: planShop.name, p_kind: "spaceship" })).error === "invalid_kind");
   check("an owner cannot edit another way round the rules", !!(await rpc(owner, "admin_save_card", { p_shop: planShop.id, p_goal: 3, p_gift: "x x", p_gap: 0 })).error);
@@ -518,6 +546,7 @@ try {
   for (const id of visitsMade) await admin.from("visits").delete().eq("id", id);
   for (const id of newsMade) await admin.from("news").delete().eq("id", id);
   if (settingsBefore) {
+  for (const id of expensesMade) await admin.from("expenses").delete().eq("id", id);
     await admin.from("settings").delete().neq("key", "");
     if (settingsBefore.length) await admin.from("settings").insert(settingsBefore);
   }

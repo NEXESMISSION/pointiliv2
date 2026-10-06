@@ -343,6 +343,21 @@ try {
   await a.getByRole("button", { name: "المحل (الإسم واللوغو)" }).click();
   await a.locator('input[name="cta_label"]').fill("جرّبها توّا");
   await shot(a, "27c-news-new", 400);
+  // the books: an expense noted, counted in its line, and taken back (a script's line: never in the founder's own books)
+  await a.goto(`${BASE}/admin/payments`, { waitUntil: "load" });
+  await a.getByPlaceholder("مثلا: سبونسور فيسبوك").fill("سبونسور فيسبوك");
+  await a.getByRole("textbox", { name: "قدّاش؟ (د)" }).fill("47,35");
+  await a.getByRole("radio", { name: "إشهار" }).click();
+  await a.getByRole("button", { name: "زيد المصروف" }).click();
+  const spentLine = a.getByRole("row", { name: /سبونسور فيسبوك/ }).first();
+  await spentLine.waitFor({ timeout: 20000 });
+  await shot(a, "28-books", 400);
+  const spentSays = (await spentLine.textContent()).replace(/\s+/g, " ");
+  console.log(spentSays.includes("47,35") && spentSays.includes("إشهار") ? "  · an expense noted: its line is in the books ✓" : `  ! the expense's line says: ${spentSays}`);
+  await spentLine.getByRole("button", { name: "افسخ المصروف هذا" }).click();
+  await spentLine.getByRole("button", { name: "افسخ", exact: true }).click();
+  await spentLine.waitFor({ state: "detached", timeout: 20000 });
+  console.log("  · …and taken back ✓");
   await a.goto(`${BASE}/admin/shops`, { waitUntil: "load" });
   await shot(a, "21-admin-shops");
   await a.locator('a[href^="/admin/shops/"]').first().click();

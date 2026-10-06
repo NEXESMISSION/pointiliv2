@@ -252,6 +252,28 @@ export async function adminPaymentDecide(id: string, paid: boolean): Promise<boo
   return !!res?.ok;
 }
 
+/** The founder notes what the business spent: on what, how much (dinars, millimes if any), which day (today in Tunis when not said), its kind. */
+export async function adminExpenseAdd(what: string, amount: number, on: string | null, kind: string): Promise<{ ok: boolean }> {
+  const sum = Number(amount);
+  if (!Number.isFinite(sum) || sum <= 0 || sum > 1_000_000) return { ok: false };
+  const res = await call<{ ok: boolean }>("admin_expense_add", {
+    p_what: String(what ?? "").trim().slice(0, 120),
+    p_amount: Math.round(sum * 1000) / 1000,
+    p_on: on && /^\d{4}-\d{2}-\d{2}$/.test(on) ? on : null,
+    p_kind: ["ads", "tools", "print", "move", "people"].includes(kind) ? kind : "other",
+  });
+  revalidatePath("/admin/payments");
+  return { ok: !!res?.ok };
+}
+
+/** A line of the expenses taken back. */
+export async function adminExpenseDelete(id: number): Promise<boolean> {
+  if (!Number.isInteger(id) || id <= 0) return false;
+  const res = await call<{ ok: boolean }>("admin_expense_delete", { p_id: id });
+  revalidatePath("/admin/payments");
+  return !!res?.ok;
+}
+
 /** The owner paid by hand: the founder turns the access on (so many months, or until a date), or stops it — with what came in, for the books. */
 export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null, amount: number | null = null): Promise<{ ok: boolean }> {
   if (!UUID.test(shopId)) return { ok: false };

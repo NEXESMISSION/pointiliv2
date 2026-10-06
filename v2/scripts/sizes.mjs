@@ -140,6 +140,15 @@ const { data: news } = await admin
 if (news?.id) await admin.from("news_views").insert({ news_id: news.id, person_id: owner.id });
 // the founder, for the console
 const boss = await person("Saif", { is_admin: true });
+// two lines in the books' expenses (a script's: the founder's own books never show them)
+const tunisToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Tunis" }).format(new Date());
+const { data: spentLines } = await admin
+  .from("expenses")
+  .insert([
+    { spent_on: tunisToday, amount: 47.35, what: "سبونسور فيسبوك", kind: "ads", robot: true },
+    { spent_on: tunisToday, amount: 30, what: "طباعة ستيكرات الكود", kind: "print", robot: true },
+  ])
+  .select("id");
 
 // ── signing in once each, then the cookie is reused at every size ────────────
 const browser = await chromium.launch({
@@ -479,6 +488,7 @@ try {
   writeFileSync(`${OUT}/report.json`, JSON.stringify(report, null, 1));
   await browser.close();
   if (news?.id) await admin.from("news").delete().eq("id", news.id);
+  for (const x of spentLines ?? []) await admin.from("expenses").delete().eq("id", x.id);
   for (const id of made) {
     await admin.from("shops").delete().eq("owner_id", id);
     await admin.auth.admin.deleteUser(id);
