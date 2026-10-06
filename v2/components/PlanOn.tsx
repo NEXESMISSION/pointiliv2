@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { planSeen } from "@/app/actions";
 import { Btn, Icon3D } from "@/components/ui";
+import { pixel } from "@/lib/pixel";
 import { signal } from "@/lib/track";
 import { fill, monthsSaid, t } from "@/lib/t";
 
-export type Grant = { id: number; kind: "paid" | "until" | "end"; months: number | null; until: string; note: string | null; method?: string | null };
+export type Grant = { id: number; kind: "paid" | "until" | "end"; months: number | null; until: string; note: string | null; method?: string | null; amount?: number | null };
 
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Tunis" }).format(new Date(iso));
 
@@ -24,6 +25,8 @@ export function PlanOn({ grant }: { grant: Grant }) {
     if (said.current) return;
     said.current = true;
     signal("plan_on", grant.months ? `${grant.months}` : grant.kind);
+    // what came in, for the ad that brought this owner (months added with no money are not a sale)
+    if (grant.amount) pixel("Purchase", { value: grant.amount, currency: "TND", content_name: "abonnement" });
     void planSeen(grant.id).catch(() => {});
   }, [grant]);
   if (!open) return null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { MessageCircle, Phone, Play } from "lucide-react";
+import { ExternalLink, MessageCircle, Phone, Play } from "lucide-react";
 import { adminSaveSettings } from "@/app/actions";
 import { Btn, boxLook, boxFocus } from "@/components/ui";
 import { t } from "@/lib/t";
@@ -86,8 +86,9 @@ function VideoBox({ n, raw, err }: { n: 1 | 2; raw: Record<string, string>; err:
  * The founder's settings, each with where it shows: the number owners call
  * (and write to on WhatsApp), the two videos with their pictures, and
  * Pointili's own pages (in the reading pages' footer, and told to search
- * engines and AI assistants). Nothing about cards or bank details: owners pay
- * by a call or a WhatsApp.
+ * engines and AI assistants), and Facebook's pixel for the ads (its number,
+ * and the code that proves the domain is ours). Nothing about cards or bank
+ * details: owners pay by a call or a WhatsApp.
  */
 export function AdminSettingsForm({ raw }: { raw: Record<string, string> }) {
   const [state, action, pending] = useActionState<FormState, FormData>(adminSaveSettings, null);
@@ -121,6 +122,14 @@ export function AdminSettingsForm({ raw }: { raw: Record<string, string> }) {
         <Box name="facebook_url" label="Facebook" value={raw.facebook_url ?? ""} placeholder="https://www.facebook.com/…" ltr error={err("facebook_url")} />
         <Box name="instagram_url" label="Instagram" value={raw.instagram_url ?? ""} placeholder="https://www.instagram.com/…" ltr error={err("instagram_url")} />
         <Box name="tiktok_url" label="TikTok" value={raw.tiktok_url ?? ""} placeholder="https://www.tiktok.com/@…" ltr error={err("tiktok_url")} />
+      </Part>
+
+      <Part title={t.aPixelCard} hint={t.aPixelCardHint}>
+        <Box name="meta_pixel" label={t.aPixelId} value={raw.meta_pixel ?? ""} placeholder="123456789012345" ltr error={err("meta_pixel")} />
+        <Box name="fb_domain_verify" label={t.aFbVerify} value={raw.fb_domain_verify ?? ""} placeholder="abc123def456ghi789jkl0mnopqrs" ltr error={err("fb_domain_verify")} />
+        <a href="https://business.facebook.com/events_manager2" target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-soft px-3.5 text-[0.8438rem] font-bold text-brand">
+          <ExternalLink className="size-4" /> {t.aPixelWhere}
+        </a>
       </Part>
 
       {state?.error && !state.field && <p className="rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}

@@ -211,7 +211,9 @@ alter table public.settings drop constraint if exists settings_key_check;
 alter table public.settings add constraint settings_key_check check (key in (
   'support_phone', 'video1_url', 'video1_label', 'video2_url', 'video2_label',
   'pay_card_url', 'pay_d17', 'pay_name', 'pay_bank', 'pay_rib', 'pay_mandat',
-  'facebook_url', 'instagram_url', 'tiktok_url'));
+  'facebook_url', 'instagram_url', 'tiktok_url',
+  -- the ads: Facebook's pixel, and the code that tells Facebook the domain is ours
+  'meta_pixel', 'fb_domain_verify'));
 
 -- ═══ traffic: who came, from where, what they did, how long, where they left
 -- a visit is one sitting (30 minutes of quiet ends it); a view is one screen
@@ -1069,10 +1071,10 @@ begin
   delete from auth.users u where public.is_robot(u.id);
   get diagnostics v_n = row_count;
   delete from public.robots r where not exists (select 1 from auth.users u where '+' || split_part(u.email, '@', 1) = r.phone);
-  return jsonb_build_object('ok', true, 'removed', v_n);
-end $$;
   -- and what a script wrote in the books
   delete from public.expenses where robot;
+  return jsonb_build_object('ok', true, 'removed', v_n);
+end $$;
 
 -- ═══ the shop gives the tampon itself ══════════════════════════════════════
 -- the customer behind a code (typed, or scanned from their wallet) or a
@@ -1177,7 +1179,7 @@ begin
   return jsonb_build_object(
     'paid_until', s.paid_until,
     'paid', s.paid_until is not null and s.paid_until > now(),
-    'grant', (select jsonb_build_object('id', l.id, 'kind', l.kind, 'months', l.months, 'until', l.until_at, 'note', l.note, 'method', l.method)
+    'grant', (select jsonb_build_object('id', l.id, 'kind', l.kind, 'months', l.months, 'until', l.until_at, 'note', l.note, 'method', l.method, 'amount', l.amount)
               from public.plan_log l where l.shop_id = s.id and l.show_owner and l.seen_at is null order by l.created_at desc limit 1),
     'offer_until', s.offer_at + interval '48 hours',
     'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
@@ -1290,8 +1292,6 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
--- the founder's books: every time a shop's access was turned on or stopped,
--- with what came in for it — the real shops only (a script's admin sees
 -- the founder notes what the business spent: on what, how much, which day
 -- (today in Tunis when not said; never a day to come), and its kind (one the
 -- books do not know is «other»)
@@ -1324,6 +1324,8 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
+-- the founder's books: every time a shop's access was turned on or stopped,
+-- with what came in for it — the real shops only (a script's admin sees
 -- everything). The dinars of this month and of this year (Tunis time), the
 -- months added with no money, the shops paid right now, and the payments the
 -- owners said are on their way. And the other side of the books: what the
@@ -1338,19 +1340,17 @@ begin
   v_all := public.sees_robots();
   v_month := date_trunc('month', now() at time zone 'Africa/Tunis') at time zone 'Africa/Tunis';
   v_year := date_trunc('year', now() at time zone 'Africa/Tunis') at time zone 'Africa/Tunis';
+  v_today := (now() at time zone 'Africa/Tunis')::date;
   return (
     with real_shops as (
-  v_today := (now() at time zone 'Africa/Tunis')::date;
       select s.* from public.shops s left join public.people p on p.id = s.owner_id
       where v_all or (not public.is_robot(s.owner_id) and not coalesce(p.is_admin or p.is_tester, false))
     ), lines as (
       select l.* from public.plan_log l where l.shop_id in (select id from real_shops)
-    )
-    select jsonb_build_object(
     ), spent as (
       select e.* from public.expenses e where v_all or not e.robot
-      'month', coalesce((select sum(amount) from lines where created_at >= v_month), 0),
-      'year', coalesce((select sum(amount) from lines where created_at >= v_year), 0),
+    )
+    select jsonb_build_object(
       'today', v_today,
       'spent_month', coalesce((select sum(amount) from spent where spent_on >= date_trunc('month', v_today)::date), 0),
       'spent_year', coalesce((select sum(amount) from spent where spent_on >= date_trunc('year', v_today)::date), 0),
@@ -1358,6 +1358,8 @@ begin
       'expenses', coalesce((
         select jsonb_agg(jsonb_build_object('id', e.id, 'on', e.spent_on, 'amount', e.amount, 'what', e.what, 'kind', e.kind) order by e.spent_on desc, e.id desc)
         from spent e), '[]'::jsonb),
+      'month', coalesce((select sum(amount) from lines where created_at >= v_month), 0),
+      'year', coalesce((select sum(amount) from lines where created_at >= v_year), 0),
       'all', coalesce((select sum(amount) from lines), 0),
       'extra_months', coalesce((select sum(months) from lines where amount = 0), 0),
       'paying', (select count(*) from real_shops where paid_until > now()),
@@ -1762,9 +1764,9 @@ where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
 grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
   public.admin_save_card(uuid, int, text, text, int, boolean), public.admin_shop_edit(uuid, text, text),
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
+  public.admin_expense_add(text, numeric, date, text), public.admin_expense_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(), public.counter(uuid, timestamptz), public.give(bigint),
-  public.admin_expense_add(text, numeric, date, text), public.admin_expense_delete(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),

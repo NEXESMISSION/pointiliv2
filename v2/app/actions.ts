@@ -9,7 +9,7 @@ import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, phoneEmail, validPhone } from "@/lib/phone";
 import { NEWS_ICONS, newsHref } from "@/lib/news";
-import { socialUrl, youtubeId } from "@/lib/settings";
+import { domainCode, pixelId, socialUrl, youtubeId } from "@/lib/settings";
 import { fill, t } from "@/lib/t";
 import type { CardView, FormState, ScanResult } from "@/lib/types";
 
@@ -428,7 +428,7 @@ export async function adminNewsDelete(id: string) {
 /** The founder's settings: the number owners call, the two videos (YouTube links checked here). */
 export async function adminSaveSettings(_: FormState, fd: FormData): Promise<FormState> {
   if (!(await getMe())?.admin) return { error: t.errNetwork };
-  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "facebook_url", "instagram_url", "tiktok_url"] as const;
+  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "facebook_url", "instagram_url", "tiktok_url", "meta_pixel", "fb_domain_verify"] as const;
   const phone = str(fd, "support_phone");
   if (phone && phone.replace(/\D/g, "").length < 8) return { error: t.errPhone, field: "support_phone" };
   for (const [key, host] of [["facebook_url", "facebook.com"], ["instagram_url", "instagram.com"], ["tiktok_url", "tiktok.com"]] as const) {
@@ -439,6 +439,9 @@ export async function adminSaveSettings(_: FormState, fd: FormData): Promise<For
     const url = str(fd, key);
     if (url && !youtubeId(url)) return { error: t.aVideoBad, field: key };
   }
+  // Facebook's pixel: its number, and the domain's code (only what is between content="…")
+  if (str(fd, "meta_pixel") && !pixelId(str(fd, "meta_pixel"))) return { error: t.aPixelBad, field: "meta_pixel" };
+  if (str(fd, "fb_domain_verify") && !domainCode(str(fd, "fb_domain_verify"))) return { error: t.aFbVerifyBad, field: "fb_domain_verify" };
   for (const key of keys) {
     const res = await call<{ ok: boolean }>("admin_set_setting", { p_key: key, p_value: str(fd, key) });
     if (!res?.ok) return { error: t.errNetwork };

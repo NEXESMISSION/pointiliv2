@@ -303,6 +303,7 @@ try {
   const saved = (await admin.from("settings").select("value").eq("key", "support_phone").single()).data;
   check("…trimmed", saved?.value === "+216 22 000 111", saved);
   check("a setting that does not exist is refused", (await rpc(boss, "admin_set_setting", { p_key: "colour", p_value: "red" })).error === "invalid");
+  check("the ads' pixel and the domain's code are settings", (await rpc(boss, "admin_set_setting", { p_key: "meta_pixel", p_value: "123456789012345" })).ok && (await rpc(boss, "admin_set_setting", { p_key: "fb_domain_verify", p_value: "abcdefghij0123456789" })).ok);
   check("an owner cannot change the settings", !!(await rpc(owner, "admin_set_setting", { p_key: "support_phone", p_value: "1" })).error);
   check("a browser cannot read the settings table", ((await sami.client.from("settings").select("key")).data ?? []).length === 0);
 
@@ -451,7 +452,6 @@ try {
   check("an end date set by the founder", (await rpc(boss, "admin_plan", { p_shop: planShop.id, p_kind: "until", p_until: until, p_show: false })).ok && Math.abs(Date.parse((await rpc(owner, "my_payment")).paid_until) - Date.parse(until)) < 60_000);
   check("…unticked, nothing to say to the owner", !(await rpc(owner, "my_payment")).grant);
   check("the year stopped now", (await rpc(boss, "admin_plan", { p_shop: planShop.id, p_kind: "end" })).ok && (await rpc(owner, "my_payment")).paid === false);
-  check("the founder edits a shop's card with the owner's rules", (await rpc(boss, "admin_save_card", { p_shop: planShop.id, p_goal: planShop.goal, p_gift: planShop.gift, p_gap: 60 })).ok);
 
   console.log("\nThe books: what the business spends");
   const tunisDay = (ms = 0) => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Tunis" }).format(new Date(Date.now() + ms));
@@ -479,6 +479,7 @@ try {
   check("a script's line is marked: the founder's books never show it", robotLine?.robot === true, robotLine);
   check("a line taken back leaves the books", (await rpc(boss, "admin_expense_delete", { p_id: spent.id })).ok && !((await rpc(boss, "admin_ledger")).expenses ?? []).some((e) => e.id === spent.id));
   check("…twice is not found", (await rpc(boss, "admin_expense_delete", { p_id: spent.id })).error === "not_found");
+  check("the founder edits a shop's card with the owner's rules", (await rpc(boss, "admin_save_card", { p_shop: planShop.id, p_goal: planShop.goal, p_gift: planShop.gift, p_gap: 60 })).ok);
   check("…and its name", (await rpc(boss, "admin_shop_edit", { p_shop: planShop.id, p_name: planShop.name, p_kind: planShop.kind })).ok);
   check("a kind that does not exist is refused", (await rpc(boss, "admin_shop_edit", { p_shop: planShop.id, p_name: planShop.name, p_kind: "spaceship" })).error === "invalid_kind");
   check("an owner cannot edit another way round the rules", !!(await rpc(owner, "admin_save_card", { p_shop: planShop.id, p_goal: 3, p_gift: "x x", p_gap: 0 })).error);
@@ -545,8 +546,8 @@ try {
 } finally {
   for (const id of visitsMade) await admin.from("visits").delete().eq("id", id);
   for (const id of newsMade) await admin.from("news").delete().eq("id", id);
-  if (settingsBefore) {
   for (const id of expensesMade) await admin.from("expenses").delete().eq("id", id);
+  if (settingsBefore) {
     await admin.from("settings").delete().neq("key", "");
     if (settingsBefore.length) await admin.from("settings").insert(settingsBefore);
   }

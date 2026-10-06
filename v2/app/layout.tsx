@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Readex_Pro } from "next/font/google";
 import { Pwa } from "@/components/InstallApp";
+import { MetaPixel } from "@/components/MetaPixel";
 import { Tracker } from "@/components/Tracker";
 import { PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
+import { getSettings } from "@/lib/settings";
 import "./globals.css";
 
 // One typeface for Arabic, French and the numbers.
@@ -54,6 +56,12 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#F4F3F9" };
 
+/** Facebook's pixel, with its number from the console's settings (none set: nothing). */
+async function Pixel() {
+  const { meta } = await getSettings();
+  return <MetaPixel id={meta.pixel} />;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar-TN" dir="rtl" className={readex.variable}>
@@ -63,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Tracker />
         <Pwa />
+        <Pixel />
       </body>
     </html>
   );

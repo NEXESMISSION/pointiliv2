@@ -60,6 +60,9 @@ export function SiteFrame({ support, social, children }: { support: string | nul
             <Link href="/shop/new" className="text-body hover:text-brand">
               حلّ محلّك
             </Link>
+            <Link href="/privacy" className="text-muted hover:text-brand">
+              الخصوصية
+            </Link>
           </div>
           {pages.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[0.875rem] font-semibold" dir="ltr">

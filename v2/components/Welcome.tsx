@@ -50,7 +50,8 @@ function Zellige({ color, id }: { color: string; id: string }) {
  */
 export function Welcome({ video }: { video?: HelpVideo | null }) {
   return (
-    <main className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-center overflow-hidden bg-[#FBF6EF] px-5 safe-t safe-b max-[448px]:max-w-none">
+    // data-welcome: the front door as a stranger sees it (Facebook's pixel counts this one, not a customer's wallet)
+    <main data-welcome className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-center overflow-hidden bg-[#FBF6EF] px-5 safe-t safe-b max-[448px]:max-w-none">
       <Mark screen="welcome" />
       {/* a corner of Sidi Bou Said, behind everything */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -135,6 +136,8 @@ export function Welcome({ video }: { video?: HelpVideo | null }) {
         <Link href="/prix">الأسعار</Link>
         <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
         <Link href="/faq">أسئلة</Link>
+        <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
+        <Link href="/privacy">الخصوصية</Link>
         <InstallApp where="welcome" look="link" />
       </nav>
     </main>

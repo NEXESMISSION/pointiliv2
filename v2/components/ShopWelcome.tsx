@@ -6,6 +6,7 @@ import { QrCode } from "lucide-react";
 import { Icon3D } from "@/components/ui";
 import { useScreen } from "@/components/Tracker";
 import { seenBefore, shown } from "@/lib/once";
+import { pixelOnce } from "@/lib/pixel";
 import { fill, t } from "@/lib/t";
 
 /**
@@ -31,6 +32,8 @@ export function ShopWelcome({ name, shopId, show }: { name: string; shopId: stri
   useEffect(() => {
     if (!open || claimed.current) return;
     claimed.current = true;
+    // the card is made: for Facebook's pixel, the owner is in for real
+    pixelOnce("CardCreated");
     window.history.replaceState(null, "", "/shop");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 import { ConsoleNav } from "@/components/ConsoleNav";
+import { FounderMark } from "@/components/FounderMark";
 import { getMe } from "@/lib/session";
 
 export const metadata = { robots: { index: false } };
@@ -48,6 +49,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
       <main className="min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-7">
         <div className="mx-auto max-w-[80rem]">{children}</div>
       </main>
+      <FounderMark />
     </div>
   );
 }
