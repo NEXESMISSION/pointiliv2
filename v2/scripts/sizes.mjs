@@ -11,6 +11,7 @@
  *
  *   node scripts/sizes.mjs                       (from v2/, dev server on :3200)
  *   SIZES=354x610d,360x540 ONLY=wizard,home node scripts/sizes.mjs
+ *   UA="… FBAN/FBIOS …" ONLY=counter-tip,customer-me node scripts/sizes.mjs   (as Facebook's browser)
  *
  * ONLY keeps the screens whose name starts with one of the words. It makes
  * its own throwaway accounts and deletes them at the end.
@@ -455,6 +456,8 @@ try {
           isMobile: mobile,
           hasTouch: mobile,
           locale: "ar-TN",
+          // UA=… shows the screens as a given browser sees them (Facebook's own, for the ads)
+          ...(process.env.UA ? { userAgent: process.env.UA } : {}),
           storageState: as ? states[as] : undefined,
           permissions: ["camera"],
         });

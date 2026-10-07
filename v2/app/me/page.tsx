@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { InstallApp } from "@/components/InstallApp";
+import { InstallApp, OpenOutside } from "@/components/InstallApp";
 import { redirect } from "next/navigation";
 import { ChevronLeft, LogOut } from "lucide-react";
 import { logout } from "@/app/actions";
@@ -53,6 +53,8 @@ export default async function Account() {
         ))}
       </div>
       <InstallApp where="account" look="row" className="mt-[2dvh]" />
+      {/* never both: Facebook's browser offers no install */}
+      <OpenOutside where="account" className="mt-[2dvh]" />
       <form action={logout} className="mt-[3dvh]">
         <button type="submit" className="press flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0625rem] font-semibold text-coral shadow-card">
           <LogOut className="size-5" /> {t.logout}

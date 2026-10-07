@@ -74,3 +74,31 @@ export async function installApp(where: string) {
   deferred = null;
   notify();
 }
+
+/**
+ * Facebook's or Instagram's own browser, where the ads open: nothing can be
+ * installed from it, and the account stays shut inside that app — the next
+ * day, in Chrome, the owner is a stranger. (2026-10-07: 90% of the ad's
+ * visits came this way, and 21 of the 27 shops never came back.)
+ */
+export function inAppBrowser(): boolean {
+  return typeof navigator !== "undefined" && /FBAN|FBAV|FB_IAB|Instagram/i.test(navigator.userAgent);
+}
+
+export const isIphone = (): boolean => typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+/** The same address in the phone's own browser: Chrome on Android (an intent), Safari on an iPhone (iOS 17 and later). */
+export function outsideHref(path: string): string {
+  const host = location.host;
+  if (isIphone()) return `x-safari-https://${host}${path}`;
+  return `intent://${host}${path}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(`https://${host}${path}`)};end`;
+}
+
+/** In one of those browsers — known on the phone only, never on the server, so the page renders the same first. */
+export function useInApp(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    inAppBrowser,
+    () => false,
+  );
+}

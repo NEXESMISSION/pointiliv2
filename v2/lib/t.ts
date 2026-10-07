@@ -613,6 +613,10 @@ export const t = {
   // Pointili on the phone's home screen (Android offers it)
   installApp: "حطّ Pointili في تليفونك",
   installAppHint: "تحلّها من الشاشة كيما أي أبليكاسيون",
+  // in Facebook's or Instagram's own browser: the phone's browser keeps the account, and installs
+  openOutside: "حلّ Pointili في {browser}",
+  openOutsideHint: "هكا تلقاها ديما، وتنجم تحطّها في تليفونك",
+  openOutsideStuck: "ما تحلّتش؟ اضغط ⋯ الفوق واختار «Open in browser»",
   myCode: "الكود متاعي",
   myCodeTitle: "الكود متاعك",
   myCodeHint: "ورّيه للمحل، ولا قولّو النومرو متاعك، ويزيدك التامبون",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ArrowDown, Check, ChevronRight, ScanLine, WifiOff } from "lucide-react";
+import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
@@ -327,6 +328,8 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
             >
               {t.coachTipOk}
             </button>
+            {/* the owner who signed up from an ad, inside Facebook: the moment to take Pointili out of it */}
+            <OpenOutside where="coach" look="line" className="mt-1.5" />
           </div>
         ) : (
           !gift && <h1 className="text-center text-[clamp(1.6rem,4.6dvh,2.6rem)] font-bold leading-tight">{t.counterTitle}</h1>
