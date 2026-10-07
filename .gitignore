@@ -36,3 +36,6 @@ social/carousels/review/
 # numbers, faces and private messages, and never goes in a public repo
 /social/business/crm/data.js
 /social/business/crm/avatars.jpg
+
+# reports built from the real leads (shop names, owners, phones, what each did): local only, like the CRM data
+/social/business/reports/
