@@ -240,7 +240,9 @@ alter table public.settings add constraint settings_key_check check (key in (
   'pay_card_url', 'pay_d17', 'pay_name', 'pay_bank', 'pay_rib', 'pay_mandat',
   'facebook_url', 'instagram_url', 'tiktok_url',
   -- the ads: Facebook's pixel, and the code that tells Facebook the domain is ours
-  'meta_pixel', 'fb_domain_verify'));
+  'meta_pixel', 'fb_domain_verify',
+  -- the visits as videos: Microsoft Clarity's project id
+  'clarity_id'));
 
 -- ═══ traffic: who came, from where, what they did, how long, where they left
 -- a visit is one sitting (30 minutes of quiet ends it); a view is one screen

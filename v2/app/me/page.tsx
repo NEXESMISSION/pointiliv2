@@ -35,7 +35,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
           <div>
             <p className="mb-1.5 px-1 text-[0.875rem] font-semibold text-muted">{t.phone}</p>
             <p className="rounded-[1.125rem] bg-surface px-4 py-4 text-[1.0625rem] shadow-card">
-              <span dir="ltr" className="num inline-block">
+              <span dir="ltr" className="num inline-block" data-clarity-mask="true">
                 +216 {spaced(me.phone)}
               </span>
             </p>

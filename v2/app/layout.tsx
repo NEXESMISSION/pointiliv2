@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Readex_Pro } from "next/font/google";
 import { Pwa } from "@/components/InstallApp";
+import { Clarity } from "@/components/Clarity";
 import { MetaPixel } from "@/components/MetaPixel";
 import { Tracker } from "@/components/Tracker";
 import { PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
@@ -56,10 +57,15 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#F4F3F9" };
 
-/** Facebook's pixel, with its number from the console's settings (none set: nothing). */
+/** Facebook's pixel and Microsoft Clarity, with their ids from the console's settings (none set: nothing). */
 async function Pixel() {
-  const { meta } = await getSettings();
-  return <MetaPixel id={meta.pixel} />;
+  const { meta, clarity } = await getSettings();
+  return (
+    <>
+      <MetaPixel id={meta.pixel} />
+      <Clarity id={clarity} />
+    </>
+  );
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

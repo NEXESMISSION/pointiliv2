@@ -68,11 +68,13 @@ export function MyCode({ code, svg, gift, startOpen = false, className, children
             ) : (
               <h2 className="mt-1 text-[1.375rem] font-bold">{t.myCodeTitle}</h2>
             )}
+            {/* the person's own code and its QR: never in a visit's video */}
             <div
+              data-clarity-mask="true"
               className={`mx-auto mt-[2dvh] aspect-square w-[min(68vw,36dvh,17rem)] rounded-[1.75rem] bg-white p-[6%] [&>svg]:size-full ${gift ? "shadow-[0_0_0_4px_#ff6b4a]" : "shadow-[0_20px_44px_-20px_rgb(20_16_40/0.45)]"}`}
               dangerouslySetInnerHTML={{ __html: svg }}
             />
-            <p dir="ltr" className="num mt-[2dvh] text-[2.25rem] font-bold tracking-[0.18em]">
+            <p dir="ltr" data-clarity-mask="true" className="num mt-[2dvh] text-[2.25rem] font-bold tracking-[0.18em]">
               {code.slice(0, 3)} {code.slice(3)}
             </p>
             <p className="mx-auto mt-1 max-w-[18rem] text-[0.9375rem] leading-relaxed text-muted">{gift ? t.giftCodeHint : t.myCodeHint}</p>

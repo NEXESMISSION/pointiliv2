@@ -132,6 +132,18 @@ export function AdminSettingsForm({ raw }: { raw: Record<string, string> }) {
         </a>
       </Part>
 
+      <Part title={t.aClarityCard} hint={t.aClarityCardHint}>
+        <Box name="clarity_id" label={t.aClarityId} value={raw.clarity_id ?? ""} placeholder="abcd1234ef" ltr error={err("clarity_id")} />
+        <a
+          href={raw.clarity_id ? `https://clarity.microsoft.com/projects/view/${raw.clarity_id}/impressions` : "https://clarity.microsoft.com/"}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand-soft px-3.5 text-[0.8438rem] font-bold text-brand"
+        >
+          <ExternalLink className="size-4" /> {raw.clarity_id ? t.aClarityOpen : t.aClarityWhere}
+        </a>
+      </Part>
+
       {state?.error && !state.field && <p className="rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
       <Btn type="submit" disabled={pending}>
         {pending ? t.checking : saved ? `${t.aSaved} ✓` : t.save}

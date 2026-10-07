@@ -10,12 +10,19 @@ export type PayDetails = { card: string | null; d17: string | null; name: string
 export type Social = { facebook: string | null; instagram: string | null; tiktok: string | null };
 /** The ads: Facebook's pixel (its number) and the code that tells Facebook the domain is Pointili's. */
 export type Meta = { pixel: string | null; domainCode: string | null };
-export type Settings = { supportPhone: string | null; video1: Video | null; video2: Video | null; pay: PayDetails; social: Social; meta: Meta; raw: Record<string, string> };
+export type Settings = { supportPhone: string | null; video1: Video | null; video2: Video | null; pay: PayDetails; social: Social; meta: Meta; clarity: string | null; raw: Record<string, string> };
 
 /** A pixel's number, as Events Manager shows it (15 or 16 digits), else null. */
 export function pixelId(raw: string | undefined): string | null {
   const id = String(raw ?? "").replace(/\s/g, "");
   return /^\d{10,20}$/.test(id) ? id : null;
+}
+
+/** Microsoft Clarity's project id (what clarity.ms/tag/… carries — the whole snippet pasted works too), else null. */
+export function clarityId(raw: string | undefined): string | null {
+  const s = String(raw ?? "").trim();
+  const id = s.match(/clarity\.ms\/tag\/([A-Za-z0-9]+)/)?.[1] ?? s.match(/["']script["']\s*,\s*["']([A-Za-z0-9]+)["']/)?.[1] ?? s;
+  return /^[A-Za-z0-9]{6,20}$/.test(id) ? id : null;
 }
 
 /** The domain's code: what sits between content="…" in Facebook's meta tag (a whole tag pasted works too), else null. */
@@ -99,6 +106,7 @@ export async function getSettings(fresh = false): Promise<Settings> {
     },
     social: { facebook: socialUrl(raw.facebook_url, "facebook.com"), instagram: socialUrl(raw.instagram_url, "instagram.com"), tiktok: socialUrl(raw.tiktok_url, "tiktok.com") },
     meta: { pixel: pixelId(raw.meta_pixel), domainCode: domainCode(raw.fb_domain_verify) },
+    clarity: clarityId(raw.clarity_id),
     raw,
   };
 }

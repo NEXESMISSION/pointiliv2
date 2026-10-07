@@ -145,7 +145,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
         <div className={`flex flex-1 flex-col rounded-[1.25rem] bg-surface shadow-card ${recent.length > 0 ? "min-h-0 overflow-hidden" : ""}`}>
           {recent.length > 0 ? (
             <>
-              <ul data-list className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain">
+              <ul data-list data-clarity-mask="true" className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain">
                 {recent.map((r) => (
                   <li key={r.id} className="flex items-center gap-3 px-3.5 py-2.5">
                     {r.kind === "stamp" ? (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, ExternalLink, Flame, MousePointerClick, TriangleAlert } from "lucide-react";
 import { HeatMap, type HeatTap } from "@/components/HeatMap";
 import { Bars, Bidi, Card, Cell, Empty, Lat, Num, Page, Pill, Row, Segments, Stat, Stats, Table, When } from "@/components/console";
+import { getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 
 export const metadata = { title: "الترافيك" };
@@ -205,7 +206,7 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
     return `/admin/traffic${s ? `?${s}` : ""}`;
   };
 
-  const data = await call<Traffic>("admin_traffic", { p_days: days, p_all: all });
+  const [data, { clarity }] = await Promise.all([call<Traffic>("admin_traffic", { p_days: days, p_all: all }), getSettings()]);
   const visit = tab === "visits" && visitId ? await call<VisitDetail>("admin_visit", { p_id: visitId }) : null;
   const pages = data?.pages ?? [];
   const heatKey = tab === "heat" ? (sp.h ?? (pages[0] ? keyOf(pages[0].route, pages[0].screen) : "/:welcome")) : null;
@@ -227,6 +228,17 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
             <span className={`grid size-4 place-items-center rounded-[0.25rem] text-[0.625rem] ${all ? "bg-white text-ink" : "ring-1 ring-faint"}`}>{all ? "✓" : ""}</span>
             مع زياراتي
           </Link>
+          {/* every visit as a video, in Microsoft Clarity (set in the console's settings) */}
+          {clarity && (
+            <a
+              href={`https://clarity.microsoft.com/projects/view/${clarity}/impressions`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-brand px-3.5 text-[0.8438rem] font-bold text-white hover:opacity-90"
+            >
+              ▶ فيديوهات الزيارات
+            </a>
+          )}
         </>
       }
     >

@@ -38,6 +38,13 @@ const PARTS: { title: string; body: string[]; fr: string }[] = [
     fr: "Quand vous venez d'une de nos publicités Facebook ou Instagram, le site indique à Facebook (pixel Meta) les étapes accomplies : page vue, compte créé, carte créée. Facebook s'en sert pour mesurer nos publicités et les montrer à des personnes semblables, et dépose ses propres cookies. Cela ne concerne que les pages publiques et l'espace commerçant, jamais la collecte de tampons. Vous pouvez le refuser dans les paramètres publicitaires de Facebook.",
   },
   {
+    title: "فيديو الزيارة",
+    body: [
+      "باش نفهمو وين الناس تتلفّت في السيت، Microsoft Clarity يسجّل الزيارة كيما فيديو: وين نزلت، قدّاش هبطت، وين وقفت. اللي تكتبو والنوامر والأسامي ما يتسجّلوش. نستعملو كان باش نحسّنو Pointili.",
+    ],
+    fr: "Pour comprendre où les visiteurs bloquent, Microsoft Clarity enregistre la visite comme une vidéo : touches, défilement, arrêts. Ce que vous tapez, les numéros et les noms sont masqués. Nous l'utilisons uniquement pour améliorer Pointili.",
+  },
+  {
     title: "تمسح الكونت",
     body: ["ابعثلنا على واتساب ونمسحولك الكونت والمعلومات متاعك الكل."],
     fr: "Écrivez-nous sur WhatsApp et nous effaçons votre compte et toutes vos données.",

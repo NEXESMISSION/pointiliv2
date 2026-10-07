@@ -11,7 +11,7 @@ import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, phoneEmail, validPhone } from "@/lib/phone";
 import { NEWS_ICONS, newsHref } from "@/lib/news";
-import { domainCode, pixelId, socialUrl, youtubeId } from "@/lib/settings";
+import { clarityId, domainCode, pixelId, socialUrl, youtubeId } from "@/lib/settings";
 import { fill, t } from "@/lib/t";
 import type { CardView, FormState, ScanResult } from "@/lib/types";
 
@@ -454,7 +454,7 @@ export async function adminNewsDelete(id: string) {
 /** The founder's settings: the number owners call, the two videos (YouTube links checked here). */
 export async function adminSaveSettings(_: FormState, fd: FormData): Promise<FormState> {
   if (!(await getMe())?.admin) return { error: t.errNetwork };
-  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "facebook_url", "instagram_url", "tiktok_url", "meta_pixel", "fb_domain_verify"] as const;
+  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "facebook_url", "instagram_url", "tiktok_url", "meta_pixel", "fb_domain_verify", "clarity_id"] as const;
   const phone = str(fd, "support_phone");
   if (phone && phone.replace(/\D/g, "").length < 8) return { error: t.errPhone, field: "support_phone" };
   for (const [key, host] of [["facebook_url", "facebook.com"], ["instagram_url", "instagram.com"], ["tiktok_url", "tiktok.com"]] as const) {
@@ -468,8 +468,11 @@ export async function adminSaveSettings(_: FormState, fd: FormData): Promise<For
   // Facebook's pixel: its number, and the domain's code (only what is between content="…")
   if (str(fd, "meta_pixel") && !pixelId(str(fd, "meta_pixel"))) return { error: t.aPixelBad, field: "meta_pixel" };
   if (str(fd, "fb_domain_verify") && !domainCode(str(fd, "fb_domain_verify"))) return { error: t.aFbVerifyBad, field: "fb_domain_verify" };
+  // Microsoft Clarity: its project id, or its whole snippet pasted (only the id is kept)
+  if (str(fd, "clarity_id") && !clarityId(str(fd, "clarity_id"))) return { error: t.aClarityBad, field: "clarity_id" };
   for (const key of keys) {
-    const res = await call<{ ok: boolean }>("admin_set_setting", { p_key: key, p_value: str(fd, key) });
+    const value = key === "clarity_id" ? (clarityId(str(fd, key)) ?? "") : str(fd, key);
+    const res = await call<{ ok: boolean }>("admin_set_setting", { p_key: key, p_value: value });
     if (!res?.ok) return { error: t.errNetwork };
   }
   updateTag("settings");

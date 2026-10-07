@@ -374,6 +374,13 @@ export const t = {
   aPixelId: "Pixel ID",
   aPixelBad: "الـ Pixel ID أرقام برك (من Events Manager)",
   aPixelWhere: "وين نلقاه؟",
+  // the visits as videos: Microsoft Clarity
+  aClarityCard: "فيديوهات الزيارات",
+  aClarityCardHint: "Microsoft Clarity، ما يتخلّصش: كل زيارة تولّي فيديو تشوف فيه وين نزلو، وين هبطو ووين وقفو، والحرارة متاع كل صفحة. اللي يكتبوه والنوامر ما يتسجّلوش. يخدم كان على www.pointili.online، وزياراتك إنت لا.",
+  aClarityId: "Project ID متاع Clarity (ولا الكود الكل)",
+  aClarityBad: "ما لقيناش الـ Project ID: انسخو من Clarity (Settings ← Setup)",
+  aClarityWhere: "اعمل projet في Clarity",
+  aClarityOpen: "شوف الفيديوهات",
   aFbVerify: "كود تأكيد الدومين (موش لازم)",
   aFbVerifyBad: "الكود هذا موش صحيح: انسخ كان اللي بين \"content\"",
   privacy: "الخصوصية",
@@ -973,7 +980,7 @@ export function agoSaid(ms: number): string {
   if (d < 30) return `من ${counted(d, "نهار", "يومين", "أيّام", "يوم")}`;
   const mo = Math.floor(d / 30);
   if (mo < 12) return `من ${counted(mo, "شهر", "شهرين", "شهور", "شهر")}`;
-  return `من ${counted(Math.floor(d / 365), "عام", "عامين", "سنين", "عام")}`;
+  return `من ${counted(Math.floor(mo / 12), "عام", "عامين", "سنين", "عام")}`;
 }
 export const accountsN = (n: number) => counted(n, "كونت واحد", "زوز كونتات", "كونتات", "كونت");
 export const liveN = (n: number) => counted(n, "واحد يخدم", "زوز يخدمو", "يخدمو", "يخدمو");
