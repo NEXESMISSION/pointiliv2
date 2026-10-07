@@ -104,12 +104,18 @@ export const Stats = ({ children, cols = 4 }: { children: ReactNode; cols?: 3 | 
  * Every list in the console is this table: a head that stays, rows that light up.
  * A head sits over its column the way the column reads: the first one and the
  * `words` columns at the start, the numbers at the end.
+ *
+ * On a phone (under 768px) the same table turns into a stack of cards, one a
+ * row: the first cell is the card's title, every other cell a line «its head …
+ * its value» — the head's word travels down to each cell as `data-label`, and
+ * globals.css draws it. Nothing spills sideways, nothing is cut.
  */
 export function Table({ head, words = [], children, className = "" }: { head: ReactNode[]; words?: number[]; children: ReactNode; className?: string }) {
+  const labels = head.map((h, i) => (i > 0 && typeof h === "string" && h.trim() ? h : undefined));
   return (
     // a wide table scrolls sideways inside its own box, never the page
     <div data-list className={`overflow-x-auto ${className}`}>
-      <table className="w-full border-collapse text-[0.875rem]">
+      <table className="ctable w-full border-collapse text-[0.875rem]">
         <thead>
           <tr className="border-b border-line">
             {head.map((h, i) => (
@@ -119,34 +125,35 @@ export function Table({ head, words = [], children, className = "" }: { head: Re
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-line">{children}</tbody>
+        <tbody className="divide-y divide-line">{Children.map(children, (row) => (isValidElement<RowProps>(row) && row.type === Row ? cloneElement(row, { labels }) : row))}</tbody>
       </table>
     </div>
   );
 }
 
-type CellProps = { children: ReactNode; n?: boolean; strong?: boolean; muted?: boolean; className?: string; href?: string; lead?: boolean };
+type CellProps = { children: ReactNode; n?: boolean; strong?: boolean; muted?: boolean; className?: string; href?: string; lead?: boolean; label?: string };
+type RowProps = { children: ReactNode; href?: string; labels?: (string | undefined)[] };
 
 /**
  * A row that opens something: the whole row is the link's hit area. An <a>
  * cannot wrap <td>s, and a cell of its own for the link would push every
  * column one step off its head — so each cell carries the link over itself.
  */
-export function Row({ children, href }: { children: ReactNode; href?: string }) {
-  if (!href) return <tr className="transition-colors hover:bg-canvas/70">{children}</tr>;
+export function Row({ children, href, labels }: RowProps) {
   const cells = Children.toArray(children);
   const first = cells.findIndex((c) => isValidElement(c) && c.type === Cell);
+  // each cell learns its head's word (for the phone) and, in a row that opens something, the row's link
   return (
-    <tr className="group cursor-pointer transition-colors hover:bg-canvas/70">
-      {cells.map((c, i) => (isValidElement<CellProps>(c) && c.type === Cell ? cloneElement(c, { href, lead: i === first }) : c))}
+    <tr className={`transition-colors hover:bg-canvas/70 ${href ? "group cursor-pointer" : ""}`}>
+      {cells.map((c, i) => (isValidElement<CellProps>(c) && c.type === Cell ? cloneElement(c, { label: labels?.[i], ...(href ? { href, lead: i === first } : {}) }) : c))}
     </tr>
   );
 }
 
 /** A cell: words by default, `n` for a number (end-aligned, tabular). In a row that opens something, it carries the row's link. */
-export function Cell({ children, n, strong, muted, className = "", href, lead }: CellProps) {
+export function Cell({ children, n, strong, muted, className = "", href, lead, label }: CellProps) {
   return (
-    <td className={`px-4 py-2.5 ${href ? "relative" : ""} ${n ? "whitespace-nowrap text-end" : "text-start"} ${strong ? "font-semibold text-ink" : muted ? "text-muted" : "text-body"} ${className}`}>
+    <td data-label={label} className={`px-4 py-2.5 ${href ? "relative" : ""} ${n ? "whitespace-nowrap text-end" : "text-start"} ${strong ? "font-semibold text-ink" : muted ? "text-muted" : "text-body"} ${className}`}>
       {/* the row's link, over the whole cell: one stop for the keyboard, on the row's first cell */}
       {href && <Link href={href} className="absolute inset-0 z-[1]" aria-label=" " tabIndex={lead ? undefined : -1} aria-hidden={lead ? undefined : true} prefetch={lead ? undefined : false} />}
       {/* auto direction: a count reads the same either way, a date does not */}
