@@ -62,7 +62,8 @@ export default async function ShopPay() {
                 </span>
               </div>
             )}
-            <ul className="relative mt-3 space-y-1.5">
+            {/* the smallest phones keep the price and the ways to pay: the perks step aside */}
+            <ul className="relative mt-3 space-y-1.5 [@media(max-height:500px)]:hidden">
               {t.payPerks.map((p) => (
                 <li key={p} className="flex items-start gap-2 text-[0.875rem] text-white/95">
                   <Check className="mt-0.5 size-4 shrink-0" strokeWidth={3} /> {p}
@@ -76,7 +77,7 @@ export default async function ShopPay() {
               <Check className="size-5" strokeWidth={3} /> {fill(t.payPaidUntil, { date: day(pay.paid_until) })}
             </p>
           ) : (
-            <PayMethods support={settings.supportPhone} shop={me.shop.name} months={months} />
+            <PayMethods support={settings.supportPhone} shop={me.shop.name} months={months} details={settings.pay} />
           )}
         </div>
       </div>

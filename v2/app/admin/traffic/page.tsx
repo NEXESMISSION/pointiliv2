@@ -132,6 +132,10 @@ const SIGNALS: Record<string, string> = {
   pwa_open: "📲 حلّ Pointili من الأبليكاسيون",
   pwa_out_shown: "↗ شاف «حلّ Pointili في Chrome» (في متصفّح فيسبوك)",
   pwa_out_tap: "↗ نزل على «حلّ Pointili في Chrome»",
+  pwa_later: "📲 قال «موش توّا» للتنزيل",
+  pwa_ios_shown: "📲 آيفون: شاف «حطّ Pointili في تليفونك»",
+  pwa_ios_open: "📲 آيفون: حلّ الشرح",
+  pwa_ios_done: "📲 آيفون: كمّل الشرح للآخر",
   news: "📣 شاف خبر",
   news_close: "📣 سكّر خبر",
   news_click: "📣 نزل على زرّ الخبر",
@@ -352,14 +356,16 @@ function Overview({ data, days, heatHref }: { data: Traffic; days: number; heatH
       </div>
 
       {/* Pointili on the phone (Android): the button seen, tapped, the app installed, the visits opened from it */}
-      <Card title="📲 Pointili في التليفونات" hint="الزرّ «حطّ Pointili في تليفونك» على الأندرويد، و«حلّ Pointili في Chrome» في متصفّح فيسبوك وإنستغرام">
-        <Stats cols={6}>
+      <Card title="📲 Pointili في التليفونات" hint="الزرّ «حطّ Pointili في تليفونك» على الأندرويد، و«حلّ Pointili في Chrome» في متصفّح فيسبوك وإنستغرام، والشرح على الآيفون">
+        <Stats cols={4}>
           <Stat label="شافو الزرّ" value={sig("pwa_shown")} />
           <Stat label="نزلو عليه" value={sig("pwa_click")} sub={<Pct a={sig("pwa_click")} b={sig("pwa_shown")} />} />
           <Stat label="حطّوها في التليفون" value={Math.max(sig("pwa_installed"), sig("pwa_accepted"))} tone="mint" />
           <Stat label="زيارات من الأبليكاسيون" value={sig("pwa_open")} tone="brand" />
-          <Stat label="في فيسبوك: شافو «حلّ في Chrome»" value={sig("pwa_out_shown")} />
+          <Stat label="شافو «حلّ في Chrome»" value={sig("pwa_out_shown")} />
           <Stat label="خرجو لـ Chrome / Safari" value={sig("pwa_out_tap")} sub={<Pct a={sig("pwa_out_tap")} b={sig("pwa_out_shown")} />} />
+          <Stat label="آيفون: شافو الشرح" value={sig("pwa_ios_shown")} />
+          <Stat label="آيفون: كمّلوه للآخر" value={sig("pwa_ios_done")} sub={<Pct a={sig("pwa_ios_done")} b={sig("pwa_ios_shown")} />} tone="mint" />
         </Stats>
       </Card>
     </div>

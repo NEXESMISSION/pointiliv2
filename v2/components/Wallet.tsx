@@ -1,6 +1,7 @@
 import Link from "next/link";
 import QRCode from "qrcode";
 import { ChevronRight, QrCode, ScanLine } from "lucide-react";
+import { InstallApp, InstallPopup } from "@/components/InstallApp";
 import { MyCode } from "@/components/MyCode";
 import { Pass } from "@/components/Pass";
 import { Mark } from "@/components/Tracker";
@@ -24,6 +25,8 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
   return (
     <Screen>
       <Mark screen="wallet" />
+      {/* Pointili on the home screen, asked once where Android's Chrome offers it (the customer's own home only) */}
+      {!back && <InstallPopup where="wallet" who={me.id} show={!(me.seen ?? []).includes("install")} />}
       <header className="flex shrink-0 items-center justify-between pt-2">
         {back ? (
           <Link href={back} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
@@ -42,6 +45,8 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
           {t.hello} <Icon3D name="wave" size={22} />
         </p>
         <h1 className="mt-0.5 truncate text-[2rem] font-bold leading-tight">{back ? t.myCards : first || t.myCards}</h1>
+        {/* Pointili on the home screen: Android's own dialog, or on an iPhone the guide to the three taps */}
+        {!back && <InstallApp where="wallet" className="mt-2 h-9 text-[0.8438rem]" />}
       </div>
 
       {/* a gift waiting: its code, to show at the counter (the shop scans it and hands the gift over) */}

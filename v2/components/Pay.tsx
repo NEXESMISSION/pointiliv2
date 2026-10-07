@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, Clock, Sparkles, X } from "lucide-react";
+import { Check, ChevronLeft, Clock, Hourglass, Phone, Sparkles, X } from "lucide-react";
 import { Confetti } from "@/components/StampLand";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
 import { signal } from "@/lib/track";
-import { t } from "@/lib/t";
+import { fill, t } from "@/lib/t";
 
 /** The shop's year, as the server tells it (v2.my_payment). */
 export type Pay = {
@@ -18,6 +18,12 @@ export type Pay = {
   grant?: import("@/components/PlanOn").Grant | null;
   /** within the 48 hours, and not paid: the year counts 15 months */
   offer: boolean;
+  /** the trial's end (3 days from the opening; 7 for the shops opened before 7 Oct 2026) */
+  trial_until?: string | null;
+  /** past the trial, the year not turned on: the counter gives nothing */
+  shut?: boolean;
+  /** the founder's own shop or a test account: no trial, never stopped */
+  exempt?: boolean;
   last: { id: string; method: string; months: number; status: "pending" | "paid" | "refused"; at: string } | null;
 };
 
@@ -82,6 +88,52 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
         {t.payBannerCta} <ChevronLeft className="size-3.5" />
       </span>
     </Link>
+  );
+}
+
+/**
+ * The trial on the owner's home, until the year is turned on: «التجربة: مازال
+ * 2 يوم · 05:12:33», ticking, the way to the year — and a call to the founder,
+ * who turns it on. Once it is over (or the clock reaches zero on screen) the
+ * same line turns red: the counter gives nothing until then. A payment
+ * waiting for the founder's word says only that.
+ */
+export function TrialBanner({ pay, offer, phone }: { pay: Pay; offer: boolean; phone: string | null }) {
+  const left = useLeft(pay.trial_until ?? new Date().toISOString());
+  if (pay.last?.status === "pending" && pay.last.method !== "contact") return <PayBanner pay={pay} offer={offer} />;
+  const over = !!pay.shut || left.over;
+  const days = Math.floor(left.h / 24);
+  const call = phone ? (
+    <a
+      href={`tel:+${phone}`}
+      onClick={() => signal("trial_call", over ? "over" : "running")}
+      className={`press flex shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.875rem] font-bold text-white ${over ? "bg-coral" : "bg-brand"}`}
+      aria-label={t.helpCall}
+    >
+      <Phone className="size-4" /> {t.helpCall}
+    </a>
+  ) : null;
+  return (
+    <div className="mt-3 flex shrink-0 items-stretch gap-2">
+      <Link href="/shop/pay" className={`press flex min-w-0 flex-1 items-center gap-2 rounded-full py-2 pe-3 ps-3.5 ${over ? "bg-coral-soft text-coral" : "bg-surface shadow-card"}`}>
+        <Hourglass className={`size-4 shrink-0 ${over ? "" : "text-brand"}`} />
+        {over ? (
+          <span className="min-w-0 flex-1 truncate text-[0.875rem] font-bold">{t.trialOverTitle}</span>
+        ) : (
+          <span className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold text-body">
+            {t.trialLeft}{" "}
+            <b className="font-bold text-ink">
+              {days > 0 && <>{fill(t.trialDays, { n: days })} · </>}
+              <bdi className="num" suppressHydrationWarning>
+                {two(left.h % 24)}:{two(left.m)}:{two(left.s)}
+              </bdi>
+            </b>
+          </span>
+        )}
+        <ChevronLeft className="size-4 shrink-0 opacity-60" />
+      </Link>
+      {call}
+    </div>
   );
 }
 

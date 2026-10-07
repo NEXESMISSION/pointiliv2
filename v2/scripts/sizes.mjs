@@ -52,7 +52,7 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",").map((s) => s.trim())
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const anonDb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
 const PASS = "sizes-check-2026";
-const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push"];
+const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install"];
 const made = [];
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const HOUR = 3600_000;
@@ -95,7 +95,8 @@ for (const ip of ["local", "::1", "127.0.0.1"]) for (const key of [`join-ip:${ip
 console.log("setting up…");
 // the owner, an established café with customers, a gift to hand over, the offer running
 const owner = await person("سامي بن عمر");
-const shop = await shopOf(owner, { name: "Pâtisserie El Medina", goal: 8, gift: "قهوة بلاش", created_at: ago(5 * 86_400_000), offer_at: ago(HOUR) });
+// (opened five days ago on a 7-day trial: two days left on its clock; «-shut» screens end it)
+const shop = await shopOf(owner, { name: "Pâtisserie El Medina", goal: 8, gift: "قهوة بلاش", created_at: ago(5 * 86_400_000), offer_at: ago(HOUR), trial_days: 7 });
 const names = ["نور الهدى", "محمد أمين", "ياسمين", "أحمد", "سلمى", "خليل", "مريم", "يوسف"];
 const regulars = [];
 for (const [i, n] of names.entries()) {
@@ -276,6 +277,9 @@ const SCREENS = [
     after: () => admin.from("shops").update({ paid_until: null }).eq("id", shop.id),
   },
   { name: "counter", as: "owner", path: "/shop/qr", wait: 1800 },
+  // the trial over and the year not on: the home's line turns red, the code's place says why, with a call
+  { name: "home-shut", as: "owner", before: () => admin.from("shops").update({ trial_days: 3 }).eq("id", shop.id), path: "/shop", wait: 1500, after: () => admin.from("shops").update({ trial_days: 7 }).eq("id", shop.id) },
+  { name: "counter-shut", as: "owner", before: () => admin.from("shops").update({ trial_days: 3 }).eq("id", shop.id), path: "/shop/qr", wait: 2500, after: () => admin.from("shops").update({ trial_days: 7 }).eq("id", shop.id) },
   { name: "counter-tip", as: "owner", before: () => notes(owner, ["card_hello", "logo_tip", "offer"]), path: "/shop/qr?tip=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "collect-scan", as: "owner", path: "/shop/collect?by=scan", wait: 2500 },
   { name: "collect-code", as: "owner", path: "/shop/collect?by=code" },

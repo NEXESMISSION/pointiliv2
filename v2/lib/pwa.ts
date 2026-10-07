@@ -94,6 +94,19 @@ export function outsideHref(path: string): string {
   return `intent://${host}${path}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(`https://${host}${path}`)};end`;
 }
 
+/**
+ * An iPhone's own browser (Safari, or Chrome on an iPhone), not yet on the
+ * home screen: there is no install prompt there, only «Sur l'écran d'accueil»
+ * by hand — so a guide shows how. Never in Facebook's browser.
+ */
+export function useIosBrowser(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => isIphone() && !inAppBrowser() && !standalone(),
+    () => false,
+  );
+}
+
 /** In one of those browsers — known on the phone only, never on the server, so the page renders the same first. */
 export function useInApp(): boolean {
   return useSyncExternalStore(

@@ -77,6 +77,7 @@ function GiftPop({ who, w, won, busy, onGive, onLater }: { who: string; w: Waiti
 function errorText(code?: string): string {
   if (code === "own_shop") return t.collectOwn;
   if (code === "paused") return t.pausedBanner;
+  if (code === "shut") return `${t.trialOverTitle}. ${t.trialOverBody}`;
   if (code === "too_many") return t.errTooMany;
   if (code === "no_shop" || code === "no_card") return t.collectNoShop;
   return t.errNetwork;

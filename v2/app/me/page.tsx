@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { InstallApp, OpenOutside } from "@/components/InstallApp";
+import { InstallApp, InstallPopup, OpenOutside } from "@/components/InstallApp";
 import { redirect } from "next/navigation";
 import { ChevronLeft, LogOut } from "lucide-react";
 import { logout } from "@/app/actions";
@@ -14,9 +14,10 @@ import { kindIcon, t } from "@/lib/t";
 export const metadata = { title: "الكونت" };
 
 /** The account: the name, the number, a new password — and the other side of Pointili, one tap away. */
-export default async function Account() {
-  const me = await getMe();
-  if (!me) redirect("/login?next=/me");
+export default async function Account({ searchParams }: { searchParams: Promise<{ install?: string }> }) {
+  const [me, { install }] = await Promise.all([getMe(), searchParams]);
+  // come out of Facebook's browser to install (/me?install=1): the address survives the login
+  if (!me) redirect(install === "1" ? "/login?next=%2Fme%3Finstall%3D1" : "/login?next=/me");
   // a customer may open a shop; an owner (or the founder) also collects stamps elsewhere;
   // the founder's own shop, if any, is one tap away from the console
   const links = [
@@ -55,6 +56,8 @@ export default async function Account() {
       <InstallApp where="account" look="row" className="mt-[2dvh]" />
       {/* never both: Facebook's browser offers no install */}
       <OpenOutside where="account" className="mt-[2dvh]" />
+      {/* out of Facebook's browser to install: Chrome's offer asked at once */}
+      <InstallPopup where="account" who={me.id} show={install === "1"} force={install === "1"} />
       <form action={logout} className="mt-[3dvh]">
         <button type="submit" className="press flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0625rem] font-semibold text-coral shadow-card">
           <LogOut className="size-5" /> {t.logout}

@@ -2,14 +2,22 @@ import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { pretty } from "@/lib/phone";
-import { t } from "@/lib/t";
+import { fill, t } from "@/lib/t";
 
 export const metadata = { title: "المحلات" };
 
-type ShopRow = { id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; paused: boolean; created_at: string; owner: { name: string; phone: string | null }; customers: number; stamps: number; today: number; last_at: string | null };
+type ShopRow = { id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; paused: boolean; created_at: string; paid: boolean; shut: boolean; trial_hours: number; test?: boolean; owner: { name: string; phone: string | null }; customers: number; stamps: number; today: number; last_at: string | null };
 
 const TZ = "Africa/Tunis";
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(iso));
+
+/** The shop's year at a glance: paid, in its trial (and how long is left), or stopped at the trial's end. */
+function PlanPill({ paid, shut, hours, test }: { paid: boolean; shut: boolean; hours: number; test?: boolean }) {
+  if (test) return null;
+  if (paid) return <Pill tone="mint">{t.aPlanPaid}</Pill>;
+  if (shut) return <Pill tone="coral">{t.aTrialOver}</Pill>;
+  return <Pill tone="brand">{hours >= 24 ? fill(t.aTrialDays, { n: Math.floor(hours / 24) }) : fill(t.aTrialHours, { n: hours })}</Pill>;
+}
 
 /** Every shop, one row each, with the numbers that say whether it is alive. */
 export default async function AdminShops({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string }> }) {
@@ -65,6 +73,7 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                         <b className="truncate font-semibold text-ink">{s.name}</b>
                         {s.paused && <Pill tone="coral">{t.aPaused}</Pill>}
                         {!s.goal && <Pill>{t.aNoCard}</Pill>}
+                        <PlanPill paid={s.paid} shut={s.shut} hours={s.trial_hours} test={s.test} />
                       </span>
                       <span className="block truncate text-[0.75rem] text-muted">{t.kinds[s.kind as keyof typeof t.kinds] ?? s.kind}</span>
                     </span>

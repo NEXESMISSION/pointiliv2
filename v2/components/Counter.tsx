@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ArrowDown, Check, ChevronRight, ScanLine, WifiOff } from "lucide-react";
+import { ArrowDown, Check, ChevronRight, Phone, ScanLine, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
+import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 
 type Code = { id: string; svg: string; expiresLocal: number };
@@ -59,7 +60,7 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome, tip }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null }; welcome?: string | null; tip?: boolean }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -71,7 +72,9 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
-  const [paused, setPaused] = useState(!!shop.paused);
+  const [paused, setPaused] = useState(!!shop.paused || !!shutAtFirst);
+  // stopped at the trial's end (not by the founder's switch): the code's place says so, with a call
+  const [shut, setShut] = useState(!!shutAtFirst);
   const [live, setLive] = useState(false);
   const [party, setParty] = useState(0);
   const codeRef = useRef<Code | null>(null);
@@ -86,7 +89,11 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
   const fetchCode = useCallback(async (): Promise<Code | "paused"> => {
     const res = await fetch("/api/code", { method: "POST", cache: "no-store" });
     const j = await res.json();
-    if (j.error === "paused") return "paused";
+    if (j.error === "paused" || j.error === "shut") {
+      setShut(j.error === "shut");
+      return "paused";
+    }
+    setShut(false);
     if (!j.ok) throw new Error(j.error ?? "network");
     const offset = Date.parse(j.server_now) - Date.now();
     return { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset };
@@ -341,7 +348,20 @@ export function Counter({ shop, welcome, tip }: { shop: { id: string; name: stri
               <span key={f.id} className="absolute inset-0 rounded-[2.125rem] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
             ))}
             <div className="absolute inset-0 rounded-[2.125rem] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
-              {paused ? (
+              {paused && shut ? (
+                // the trial is over: the founder turns the year on, a call away
+                <div className="grid size-full place-items-center p-[8%] text-center text-ink">
+                  <div>
+                    <p className="text-[clamp(1.0625rem,5cqw,1.375rem)] font-bold">{t.trialOverTitle}</p>
+                    <p className="mt-1.5 text-balance text-[clamp(0.8125rem,3.6cqw,0.9375rem)] leading-snug text-body">{t.trialOverBody}</p>
+                    {phone && (
+                      <a href={`tel:+${phone}`} onClick={() => signal("trial_call", "counter")} className="press mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-[0.9375rem] font-bold text-white">
+                        <Phone className="size-4" /> {t.helpCall}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ) : paused ? (
                 <div className="grid size-full place-items-center p-6 text-center">
                   <p className="text-[1.1875rem] font-bold text-ink">{t.pausedBanner}</p>
                 </div>

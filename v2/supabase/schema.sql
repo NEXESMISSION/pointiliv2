@@ -81,6 +81,15 @@ create table if not exists public.shops (
 alter table public.shops add column if not exists paid_until timestamptz;
 alter table public.shops add column if not exists offer_at timestamptz;
 
+-- the trial: a shop works this many days from its opening, then waits for its
+-- year (paid_until, turned on by the founder). The shops opened before
+-- 2026-10-07 keep 7 days; from then on, 3. (The column came with 7 for the
+-- rows already there, and 3 is the default for every new one.)
+alter table public.shops add column if not exists trial_days int not null default 7;
+alter table public.shops alter column trial_days set default 3;
+alter table public.shops drop constraint if exists shops_trial_days_check;
+alter table public.shops add constraint shops_trial_days_check check (trial_days between 0 and 365);
+
 -- an owner's payment: the way they chose, then the founder's word (paid or not);
 -- 15 months for the price of 12 when it came within 48 hours of opening the shop
 create table if not exists public.payments (
@@ -476,7 +485,7 @@ create or replace function public.see(p_key text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then return public.err('not_signed_in'); end if;
-  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push') then return public.err('invalid'); end if;
+  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push', 'install') then return public.err('invalid'); end if;
   update public.people set seen = array_append(seen, p_key) where id = auth.uid() and not (p_key = any (seen));
   return jsonb_build_object('ok', true);
 end $$;
@@ -707,6 +716,16 @@ begin
     'gifts', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is not null));
 end $$;
 
+-- a shop past its trial, its year not turned on: no code at the counter, no
+-- tampon by the customer's code, until the founder turns the year on. The
+-- founder's own shop and the test accounts never stop.
+create or replace function public.shut(s public.shops) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select (s.paid_until is null or s.paid_until <= now())
+     and now() >= s.created_at + make_interval(days => s.trial_days)
+     and not exists (select 1 from public.people p where p.id = s.owner_id and (p.is_admin or p.is_tester))
+$$;
+
 -- ═══ the counter: a code that works once ═══════════════════════════════════
 create or replace function public.new_code() returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -716,6 +735,7 @@ begin
   if s.id is null then return public.err('no_shop'); end if;
   if s.goal is null then return public.err('no_card'); end if;
   if s.paused then return public.err('paused'); end if;
+  if public.shut(s) then return public.err('shut'); end if;
   if (select count(*) from public.codes where shop_id = s.id and created_at > now() - interval '10 minutes') > 400 then
     return public.err('slow_down');
   end if;
@@ -793,7 +813,8 @@ begin
   end if;
   if k.used_at is not null or k.held_hash is not null then return public.err('used'); end if;
   if k.expires_at <= now() then return public.err('expired'); end if;
-  if s.paused then return public.err('paused'); end if;
+  -- past its trial, to the customer the shop is simply stopped
+  if s.paused or public.shut(s) then return public.err('paused'); end if;
   update public.codes set held_hash = public.sha(p_hold), held_until = now() + interval '20 minutes' where id = k.id;
   return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo);
 end $$;
@@ -830,7 +851,7 @@ begin
   end if;
   if s.owner_id = v_uid then return public.err('own_shop'); end if;
   if s.goal is null then return public.err('no_card'); end if;
-  if s.paused then return public.err('paused', jsonb_build_object('shop', s.name)); end if;
+  if s.paused or public.shut(s) then return public.err('paused', jsonb_build_object('shop', s.name)); end if;
 
   insert into public.people (id) values (v_uid) on conflict (id) do nothing;
   insert into public.cards (shop_id, user_id, goal, gift) values (s.id, v_uid, s.goal, s.gift) on conflict (shop_id, user_id) do nothing;
@@ -947,6 +968,9 @@ begin
     select jsonb_agg(jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused,
       'created_at', s.created_at, 'owner', jsonb_build_object('name', p.name, 'phone', p.phone),
+      -- the year, or the trial and its end
+      'paid', s.paid_until is not null and s.paid_until > now(), 'shut', public.shut(s),
+      'trial_hours', greatest(0, ceil(extract(epoch from (s.created_at + make_interval(days => s.trial_days) - now())) / 3600))::int,
       'test', coalesce(p.is_admin or p.is_tester, false),
       'customers', (select count(*) from public.cards c where c.shop_id = s.id),
       'stamps', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
@@ -1175,6 +1199,7 @@ begin
   if s.id is null then return public.err('no_shop'); end if;
   if s.goal is null then return public.err('no_card'); end if;
   if s.paused then return public.err('paused'); end if;
+  if public.shut(s) then return public.err('shut'); end if;
   if not public.try_once('give:' || v_uid, 30, 10) then return public.err('too_many'); end if;
   v_person := public.person_of(p_who);
   if v_person is null then return public.err('unknown'); end if;
@@ -1296,6 +1321,10 @@ begin
               from public.plan_log l where l.shop_id = s.id and l.show_owner and l.seen_at is null order by l.created_at desc limit 1),
     'offer_until', s.offer_at + interval '48 hours',
     'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
+    -- the trial's end (its clock on the owner's home), and whether it is over
+    'trial_until', s.created_at + make_interval(days => s.trial_days),
+    'shut', public.shut(s),
+    'exempt', exists (select 1 from public.people p where p.id = s.owner_id and (p.is_admin or p.is_tester)),
     'last', case when y.id is null then null else jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'status', y.status, 'at', y.created_at) end);
 end $$;
 

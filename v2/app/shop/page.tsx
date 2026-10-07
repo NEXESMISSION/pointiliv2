@@ -4,7 +4,8 @@ import { ChevronLeft, QrCode, ScanLine } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
-import { OfferPopup, PayBanner, type Pay } from "@/components/Pay";
+import { InstallPopup, OpenOutside } from "@/components/InstallApp";
+import { OfferPopup, PayBanner, TrialBanner, type Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
 import { PlanOn } from "@/components/PlanOn";
 import { ShopWelcome } from "@/components/ShopWelcome";
@@ -97,7 +98,10 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
       </header>
 
       {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.875rem] font-semibold text-coral">{t.pausedBanner}</p>}
-      {!paid && pay && <PayBanner pay={pay} offer={offer} />}
+      {/* the trial's clock and a call, until the year is turned on (the founder's own and the tests: just the price) */}
+      {!paid && pay && (pay.exempt || !pay.trial_until ? <PayBanner pay={pay} offer={offer} /> : <TrialBanner pay={pay} offer={offer} phone={help.phone} />)}
+      {/* in Facebook's own browser: the way out to the phone's browser, where Pointili stays */}
+      <OpenOutside where="home" look="line" className="mt-1" />
 
       {/* the one thing an owner opens all day — and beside it, the camera for a customer's own code */}
       <div className="mt-[2.2dvh] flex shrink-0 gap-2">
@@ -188,6 +192,8 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
       <ShopWelcome name={first} shopId={shop.id} show={coachNow} />
       {grant && <PlanOn grant={grant} />}
       <NewsPopup news={coachNow || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
+      {/* Pointili on the home screen, asked once where Android's Chrome offers it — never over another note */}
+      <InstallPopup where="home" who={shop.id} show={!coachNow && !logoTip && !offerNote && !grant && !news && !seen.includes("install")} />
     </main>
   );
 }

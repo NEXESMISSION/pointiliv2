@@ -72,6 +72,7 @@ try {
   await rpc(owner, "see", { p_key: "logo_tip" });
   check("…once, however often it is said", (await rpc(owner, "me")).seen.length === 1);
   check("a note that does not exist is refused", (await rpc(owner, "see", { p_key: "popup" })).error === "invalid");
+  check("the install sheet is a one-time note too", (await rpc(owner, "see", { p_key: "install" })).ok && (await rpc(owner, "me")).seen.includes("install"));
   const nobody = createClient(URL_, ANON, { auth: { persistSession: false } });
   check("nobody signed in cannot mark notes", !!(await nobody.rpc("see", { p_key: "coach" })).error);
   const logoUrl = `${URL_}/storage/v1/object/public/logos/${owner.id}/test.webp`;
@@ -269,6 +270,22 @@ try {
   check("the owner sees it paused", (await rpc(owner, "me")).shop.paused === true);
   await rpc(boss, "admin_set_paused", { p_id: found[0].id, p_paused: false });
   check("resumed, it makes codes again", (await rpc(owner, "new_code")).ok === true);
+
+  // the trial: 3 days from the opening (7 for the shops opened before 7 Oct 2026), then nothing until the founder turns the year on
+  const trial = (await admin.from("shops").select("id, trial_days, created_at, paid_until").eq("id", found[0].id).single()).data;
+  check("a new shop's trial is 3 days", trial.trial_days === 3, trial);
+  const trPay = await rpc(owner, "my_payment");
+  check("the owner's home knows the trial's end", !!trPay.trial_until && trPay.shut === false && trPay.exempt === false, trPay);
+  const trCode = await rpc(owner, "new_code");
+  await admin.from("shops").update({ created_at: new Date(Date.now() - 4 * 86_400_000).toISOString(), paid_until: null }).eq("id", trial.id);
+  check("past its trial, the shop makes no code", (await rpc(owner, "new_code")).error === "shut");
+  check("past its trial, the owner's home says it", (await rpc(owner, "my_payment")).shut === true);
+  check("past its trial, a code already on screen gives nothing", (await rpc(sami, "stamp", { p_token: trCode.token })).error === "paused");
+  check("past its trial, no tampon by the customer's code either", (await rpc(owner, "give_stamp", { p_who: (await rpc(sami, "me")).code })).error === "shut");
+  check("the console marks it stopped", ((await rpc(boss, "admin_shops", { p_q: "Café Test" })) ?? []).find((x) => x.id === trial.id)?.shut === true);
+  await admin.from("shops").update({ paid_until: new Date(Date.now() + 86_400_000).toISOString() }).eq("id", trial.id);
+  check("its year turned on, it makes codes again", (await rpc(owner, "new_code")).ok === true);
+  await admin.from("shops").update({ created_at: trial.created_at, paid_until: trial.paid_until }).eq("id", trial.id);
   check("the founder lists people, admins marked", (await rpc(boss, "admin_people", { p_q: "Boss" })).some((p) => p.admin));
 
   console.log("\nReal accounts, test accounts, and the machines' own");

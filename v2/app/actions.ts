@@ -220,7 +220,7 @@ export async function cardChange(goal: number, gift: string): Promise<{ ok: bool
 }
 
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
-export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push"): Promise<void> {
+export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push" | "install"): Promise<void> {
   await call("see", { p_key: note });
 }
 
