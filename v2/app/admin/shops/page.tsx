@@ -1,3 +1,4 @@
+import { Ago } from "@/components/Ago";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
@@ -93,10 +94,11 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                 <Cell n>{s.today}</Cell>
                 <Cell n>{s.stamps}</Cell>
                 <Cell n muted>
-                  {s.last_at ? day(s.last_at) : "—"}
+                  {s.last_at ? <Ago at={s.last_at} /> : "—"}
                 </Cell>
                 <Cell n muted>
-                  {day(s.created_at)}
+                  <Ago at={s.created_at} className="block" />
+                  <span className="block text-[0.6875rem]">{day(s.created_at)}</span>
                 </Cell>
               </Row>
             ))}

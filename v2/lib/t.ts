@@ -962,6 +962,19 @@ export function monthsSaid(n: number): string {
 }
 /** ساعة, زوز سوايع, 3 سوايع, 12 ساعة */
 export const hoursN = (n: number) => counted(n, "ساعة", "زوز سوايع", "سوايع", "ساعة");
+/** How long ago, the Tunisian way: توّا, من 5 دقايق, من ساعة, من زوز سوايع, من نهار, من 3 أيّام, من شهرين, من عام */
+export function agoSaid(ms: number): string {
+  const m = Math.floor(Math.max(0, ms) / 60000);
+  if (m < 1) return "توّا";
+  if (m < 60) return `من ${counted(m, "دقيقة", "زوز دقايق", "دقايق", "دقيقة")}`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `من ${hoursN(h)}`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `من ${counted(d, "نهار", "يومين", "أيّام", "يوم")}`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `من ${counted(mo, "شهر", "شهرين", "شهور", "شهر")}`;
+  return `من ${counted(Math.floor(d / 365), "عام", "عامين", "سنين", "عام")}`;
+}
 export const accountsN = (n: number) => counted(n, "كونت واحد", "زوز كونتات", "كونتات", "كونت");
 export const liveN = (n: number) => counted(n, "واحد يخدم", "زوز يخدمو", "يخدمو", "يخدمو");
 export const pausedN = (n: number) => counted(n, "واحد موقّف", "زوز موقّفين", "موقّفين", "موقّفين");

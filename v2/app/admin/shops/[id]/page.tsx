@@ -4,6 +4,7 @@ import { ChevronRight, Gift, Phone } from "lucide-react";
 import { AdminPlan } from "@/components/AdminPlan";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
+import { Ago } from "@/components/Ago";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Lat, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
 import { call } from "@/lib/supabase";
@@ -98,7 +99,10 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
               <div className="flex justify-between gap-3">
                 <dt className="text-muted">{t.aCreated}</dt>
                 <dd className="text-end font-semibold text-body">
-                  <When>{when(s.created_at)}</When>
+                  <Ago at={s.created_at} />
+                  <span className="block text-[0.75rem] font-normal text-muted">
+                    <When>{when(s.created_at)}</When>
+                  </span>
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
@@ -127,12 +131,26 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                     <div className="flex justify-between gap-3">
                       <dt className="shrink-0 text-muted">{t.aSignedUp}</dt>
                       <dd className="text-end font-semibold text-body">
-                        <When>{exact(s.seen.created_at)}</When>
+                        <Ago at={s.seen.created_at} />
+                        <span className="block text-[0.75rem] font-normal text-muted">
+                          <When>{exact(s.seen.created_at)}</When>
+                        </span>
                       </dd>
                     </div>
                     <div className="flex justify-between gap-3">
                       <dt className="shrink-0 text-muted">{t.aLastSeen}</dt>
-                      <dd className="text-end font-semibold text-body">{s.seen.last_at ? <When>{when(s.seen.last_at)}</When> : <span className="text-faint">{t.never}</span>}</dd>
+                      <dd className="text-end font-semibold text-body">
+                        {s.seen.last_at ? (
+                          <>
+                            <Ago at={s.seen.last_at} />
+                            <span className="block text-[0.75rem] font-normal text-muted">
+                              <When>{when(s.seen.last_at)}</When>
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-faint">{t.never}</span>
+                        )}
+                      </dd>
                     </div>
                     <div className="flex justify-between gap-3">
                       <dt className="shrink-0 text-muted">{t.aVisits}</dt>
@@ -220,7 +238,10 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                   {s.seen.visits.map((v) => (
                     <Row key={v.id}>
                       <Cell strong>
-                        <When>{when(v.at)}</When>
+                        <Ago at={v.at} />
+                        <span className="block text-[0.75rem] font-normal text-muted">
+                          <When>{when(v.at)}</When>
+                        </span>
                       </Cell>
                       <Cell n strong>
                         {v.ms > 0 ? dur(v.ms) : "—"}
@@ -286,7 +307,10 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                         <span className="block truncate">{r.name ?? (r.phone ? <Num>{r.phone}</Num> : t.someone)}</span>
                       </Cell>
                       <Cell n muted>
-                        {when(r.at)}
+                        <Ago at={r.at} className="font-semibold text-body" />
+                        <span className="block text-[0.75rem]">
+                          <When>{when(r.at)}</When>
+                        </span>
                       </Cell>
                     </Row>
                   ))}
