@@ -118,9 +118,11 @@ async function check(name, url, wait = 1100) {
   await page.goto(`${BASE}${url}`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(wait);
   await page.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((e) => (e.style.display = "none")));
-  // every page must BE the console: the rail is there, and we were not bounced
+  // every page must BE the console: its way around is there, and we were not bounced
   if (!page.url().includes("/admin")) throw new Error(`${name}: bounced to ${page.url()}`);
-  if ((await page.locator("aside nav").count()) === 0) throw new Error(`${name}: no console rail on ${page.url()}`);
+  // the console's way around must be on the page — a rail on a screen, a bar on a phone.
+  // Asked for by what it links to, not where it sits, so a redesign does not read as a failure.
+  if ((await page.locator("nav a[href='/admin/shops']").count()) === 0) throw new Error(`${name}: no console nav on ${page.url()}`);
   const r = await page.evaluate(() => {
     const doc = document.documentElement;
     const wide = [];
