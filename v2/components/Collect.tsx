@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
 import { customerAt, give as handOver, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
 import { Pass } from "@/components/Pass";
+import { TryItButton, type DemoShop } from "@/components/TryIt";
 import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
 import { Btn, Icon3D } from "@/components/ui";
@@ -18,6 +19,7 @@ type Step =
   | { kind: "looking" }
   | { kind: "unknown" }
   | { kind: "error"; text: string }
+  | { kind: "own" }
   | { kind: "found"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
   | { kind: "giving"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
   | { kind: "done"; name: string | null; card: CardView; gift: boolean; waiting: WaitingGift | null; moment: number | null }
@@ -93,7 +95,7 @@ function errorText(code?: string): string {
  * code in their wallet is the same one), and a question comes up — give it
  * now, or not now.
  */
-export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: string }) {
+export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset?: string; shop?: DemoShop }) {
   const [mode, setMode] = useState(by);
   const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
   const [step, setStep] = useState<Step>({ kind: "idle" });
@@ -122,10 +124,14 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
       else if (res.error === "unknown") {
         setStep({ kind: "unknown" });
         signal("collect_unknown", mode);
+      } else if (res.error === "own_shop" && shop) {
+        // the owner typed (or scanned) their own code: not a mistake to scold, the moment to show the customer's side
+        setStep({ kind: "own" });
+        signal("collect_own", mode);
       } else setStep({ kind: "error", text: errorText(res.error) });
     }, 220);
     return () => clearTimeout(id);
-  }, [digits, mode]);
+  }, [digits, mode, shop]);
 
   const give = async () => {
     if (step.kind !== "found" && step.kind !== "handed") return;
@@ -381,6 +387,15 @@ export function Collect({ by, preset = "" }: { by: "scan" | "code"; preset?: str
                   <Link href="/shop/qr" className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-[0.875rem] font-bold text-brand shadow-card">
                     <QrCode className="size-4" /> {t.showCode}
                   </Link>
+                </div>
+              )}
+              {step.kind === "own" && shop && (
+                <div className="rounded-[1.375rem] bg-brand-soft px-4 py-3.5 text-center">
+                  <p className="text-[1rem] font-bold text-ink">{t.collectOwnTry}</p>
+                  <p className="mt-1 text-[0.875rem] text-body">{t.collectOwnTryBody}</p>
+                  <TryItButton shop={shop} className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-[0.875rem] font-bold text-white">
+                    {t.trySee}
+                  </TryItButton>
                 </div>
               )}
               {step.kind === "error" && (

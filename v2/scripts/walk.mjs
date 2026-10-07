@@ -151,6 +151,16 @@ try {
   await o.waitForURL((u) => u.pathname === "/shop/qr" && !u.search, { timeout: 20000 });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05-counter", 1200);
+  // alone with one phone: the customer's side, replayed from the counter's pill (the home's three steps open the same)
+  await o.getByRole("button", { name: "شوف شنوّة يشوف الحريف" }).click();
+  const demo = o.getByRole("dialog", { name: "هكّا يشوفها الحريف" });
+  await demo.waitFor({ timeout: 20000 });
+  for (let i = 0; i < 4; i++) {
+    await shot(o, `05c-try-${i + 1}`, 700);
+    await demo.getByRole("button", { name: i === 3 ? "فهمت" : "كمّل", exact: true }).click();
+  }
+  await demo.waitFor({ state: "detached", timeout: 10000 });
+  console.log("  · the customer's side, replayed in four beats ✓");
   await o.reload({ waitUntil: "load" });
   await never(o, "the bravo (reload)", o.getByText("برافو"));
   await o.goto(BASE + "/shop/qr", { waitUntil: "load" });
@@ -324,6 +334,22 @@ try {
   await shot(o, "18-owner-stats");
   await o.goto(BASE + "/shop/customers", { waitUntil: "load" });
   await shot(o, "19-owner-customers");
+  // a customer's row opens: the card as it stands, the last visit
+  await o.getByRole("button", { name: /سامي/ }).first().click();
+  await o.getByRole("dialog").waitFor({ timeout: 20000 });
+  await shot(o, "19b-customer", 700);
+  await o.keyboard.press("Escape");
+  await o.getByRole("dialog").waitFor({ state: "detached", timeout: 10000 });
+  // the owner types their own code under «سكاني»: not an error, the customer's side to see
+  const { data: ownerRow } = await admin.from("people").select("code").eq("phone", `+216${ownerPhone}`).single();
+  await o.goto(BASE + "/shop/collect?by=code", { waitUntil: "load" });
+  await o.getByRole("textbox").fill(ownerRow.code);
+  await o.getByText("هذا الكود متاعك إنت").waitFor({ timeout: 20000 });
+  await shot(o, "19c-own-code", 600);
+  await o.getByRole("button", { name: "شوف شنوّة يشوف الحريف" }).click();
+  await o.getByRole("dialog", { name: "هكّا يشوفها الحريف" }).waitFor({ timeout: 20000 });
+  await o.keyboard.press("Escape");
+  console.log("  · the owner's own code opens the customer's side ✓");
   // changing the card. A change no customer's card feels (the colour) is saved at once: no sheet, straight home
   await o.goto(BASE + "/shop/card", { waitUntil: "load" });
   for (let i = 0; i < 3; i++) await o.getByRole("button", { name: "كمّل" }).click();

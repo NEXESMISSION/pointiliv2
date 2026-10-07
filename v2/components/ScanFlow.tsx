@@ -24,7 +24,24 @@ const CARD = "w-full max-w-[min(100%,50dvh)]";
 const CARD_GIFT = "w-full max-w-[min(100%,44dvh)]";
 const CARD_GIFT_LONG = "w-full max-w-[min(100%,44dvh)] [@media(max-height:700px)]:max-w-[min(100%,36dvh)]";
 
-/** Scan → the tampon lands. One POST, then the answer. */
+/** The answer this phone got for a code, kept for the tab: the back button brings the «stamped» screen back, not a second scan of a code already used. */
+const kept = (token: string): ScanResult | null => {
+  try {
+    const raw = sessionStorage.getItem(`pt_scan:${token}`);
+    return raw ? (JSON.parse(raw) as ScanResult) : null;
+  } catch {
+    return null;
+  }
+};
+const keep = (token: string, r: ScanResult) => {
+  try {
+    if (r.kind === "stamped") sessionStorage.setItem(`pt_scan:${token}`, JSON.stringify(r));
+  } catch {
+    /* a browser that keeps nothing: the back button scans again */
+  }
+};
+
+/** Scan → the tampon lands. One POST, then the answer — kept, so coming back to this page shows it again. */
 export function ScanFlow({ token }: { token: string }) {
   const [res, setRes] = useState<ScanResult | null>(null);
   const started = useRef(false);
@@ -33,8 +50,15 @@ export function ScanFlow({ token }: { token: string }) {
     // React dev mode runs effects twice; a code is sent once
     if (started.current) return;
     started.current = true;
+    const before = kept(token);
+    if (before) {
+      // the kept answer, shown after this tick (an effect sets no state on its own)
+      void Promise.resolve().then(() => setRes(before));
+      return;
+    }
     scan(token)
       .then((r) => {
+        keep(token, r);
         setRes(r);
         if (r.kind === "stamped" && r.gift) signal("gift_won", r.card.shop.name);
       })

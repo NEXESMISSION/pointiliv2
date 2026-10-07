@@ -6,7 +6,7 @@ import { fill, stampsN, t } from "@/lib/t";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-type Due = { user_id: string; card: string; shop: string; left: number; gift: string; kind: "near" | "gift" };
+type Due = { user_id: string; card: string; shop: string; left: number; gift: string; kind: "near" | "gift" | "owner" };
 
 /**
  * Every morning (vercel.json): the customers to remind, each on their own
@@ -22,12 +22,15 @@ export async function GET(request: NextRequest) {
   const due = (data ?? []) as Due[];
   let sent = 0;
   for (const d of due) {
+    // an owner: the card made, never shown — the code, one tap away; a customer: the gift, or what is left
     const note =
-      d.kind === "gift"
-        ? { title: t.pushWaitingTitle, body: fill(t.pushWaitingBody, { gift: d.gift, shop: d.shop }), url: `/c/${d.card}?show=1`, tag: `gift-${d.card}` }
-        : { title: fill(t.pushNearTitle, { shop: d.shop }), body: fill(t.pushNearBody, { n: stampsN(d.left), gift: d.gift }), url: `/c/${d.card}`, tag: `near-${d.card}` };
+      d.kind === "owner"
+        ? { title: fill(t.pushOwnerTitle, { shop: d.shop }), body: t.pushOwnerBody, url: "/shop/qr", tag: `owner-${d.card}` }
+        : d.kind === "gift"
+          ? { title: t.pushWaitingTitle, body: fill(t.pushWaitingBody, { gift: d.gift, shop: d.shop }), url: `/c/${d.card}?show=1`, tag: `gift-${d.card}` }
+          : { title: fill(t.pushNearTitle, { shop: d.shop }), body: fill(t.pushNearBody, { n: stampsN(d.left), gift: d.gift }), url: `/c/${d.card}`, tag: `near-${d.card}` };
     sent += await sendPush(d.user_id, note);
-    await service().rpc("push_remembered", { p_card: d.card });
+    await service().rpc(d.kind === "owner" ? "push_nudged" : "push_remembered", d.kind === "owner" ? { p_shop: d.card } : { p_card: d.card });
   }
   return NextResponse.json({ ok: true, due: due.length, sent });
 }

@@ -8,6 +8,8 @@ import { InstallPopup, OpenOutside } from "@/components/InstallApp";
 import { OfferPopup, PayBanner, TrialBanner, type Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
 import { PlanOn } from "@/components/PlanOn";
+import { PushAsk } from "@/components/PushAsk";
+import { TryItButton } from "@/components/TryIt";
 import { ShopWelcome } from "@/components/ShopWelcome";
 import { Icon3D } from "@/components/ui";
 import { getMe } from "@/lib/session";
@@ -93,7 +95,10 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
             </span>
             <HelpButton help={help} small />
           </span>
-          <span className="block truncate text-[1.4375rem] font-bold leading-tight">{shop.name}</span>
+          {/* the name opens the shop's own page: owners kept tapping it */}
+          <Link href="/shop/setup?edit=1" className="block truncate text-[1.4375rem] font-bold leading-tight">
+            {shop.name}
+          </Link>
         </span>
       </header>
 
@@ -174,14 +179,20 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
               <Icon3D name="phone" size={48} className="animate-float" />
               <h3 className="mt-1.5 text-[1rem] font-bold">{t.customersEmpty}</h3>
               <p className="mt-1 text-balance text-[0.8125rem] leading-snug text-muted">{t.customersEmptyBody}</p>
-              <ol className="mt-3 w-full space-y-1.5 text-start">
-                {t.firstSteps.map((s, i) => (
-                  <li key={s} className="flex items-center gap-2.5">
-                    <span className="num grid size-6 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.75rem] font-bold text-brand">{i + 1}</span>
-                    <span className="text-[0.875rem] font-semibold">{s}</span>
-                  </li>
-                ))}
-              </ol>
+              {/* the three steps open the customer's side, replayed (owners kept tapping them) */}
+              <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal: shop.goal, gift: shop.gift }} className="press mt-3 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-start">
+                <ol className="space-y-1.5">
+                  {t.firstSteps.map((s, i) => (
+                    <li key={s} className="flex items-center gap-2.5">
+                      <span className="num grid size-6 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.75rem] font-bold text-brand">{i + 1}</span>
+                      <span className="text-[0.875rem] font-semibold">{s}</span>
+                    </li>
+                  ))}
+                </ol>
+                <span className="mt-2 block text-center text-[0.8125rem] font-bold text-brand">{t.tryLobby} ←</span>
+              </TryItButton>
+              {/* a card made at night, no customer yet: a word tomorrow morning (asked once) */}
+              {!seen.includes("push") && <PushAsk shop={shop.name} title={t.pushOwnerAskTitle} body={fill(t.pushOwnerAskBody, { shop: shop.name })} compact />}
             </div>
           )}
         </div>

@@ -13,7 +13,7 @@ export default async function ShopQr({ searchParams }: { searchParams: Promise<{
   if (!me.shop.goal) redirect("/shop/card");
   return (
     <Counter
-      shop={{ id: me.shop.id, name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused, signal: me.shop.signal, logo: me.shop.logo }}
+      shop={{ id: me.shop.id, name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused, signal: me.shop.signal, logo: me.shop.logo, goal: me.shop.goal, gift: me.shop.gift }}
       welcome={welcome && !(me.seen ?? []).includes("coach") ? ((me.name ?? "").split(" ")[0] ?? "") : null}
       tip={tip === "1"}
       // past the trial the code's place says so (the code itself is refused), with a call to this number

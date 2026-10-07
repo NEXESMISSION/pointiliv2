@@ -10,5 +10,5 @@ export default async function ShopCollect({ searchParams }: { searchParams: Prom
   if (!me) redirect("/login?next=/shop/collect");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
-  return <Collect by={by === "scan" ? "scan" : "code"} />;
+  return <Collect by={by === "scan" ? "scan" : "code"} shop={{ name: me.shop.name, kind: me.shop.kind, color: me.shop.color, logo: me.shop.logo, goal: me.shop.goal, gift: me.shop.gift }} />;
 }

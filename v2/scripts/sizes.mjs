@@ -117,6 +117,9 @@ const { data: cardHere } = await admin.from("cards").select("id").eq("shop_id", 
 const fresh = await person("خليل", { seen: [] });
 await shopOf(fresh, { name: "Café Jasmin", goal: null, gift: null });
 const noShop = await person("رحمة", { seen: [] });
+// an owner alone: the card made, no customer yet (the home's three steps, the morning word)
+const lonely = await person("منير", { seen: ["card_hello", "coach", "logo_tip", "offer"] });
+await shopOf(lonely, { name: "Café Lone", goal: 8, gift: "قهوة بلاش" });
 // someone to give a tampon to, by code, on every size
 const takers = [];
 for (const [i] of SIZES.entries()) takers.push(await person(`حريف ${i + 1}`));
@@ -277,6 +280,8 @@ const SCREENS = [
     after: () => admin.from("shops").update({ paid_until: null }).eq("id", shop.id),
   },
   { name: "counter", as: "owner", path: "/shop/qr", wait: 1800 },
+  { name: "home-empty", as: "lonely", path: "/shop", wait: 1200 },
+  { name: "home-empty-try", as: "lonely", path: "/shop", act: async (p) => { await p.getByRole("button", { name: /جرّب بروحك/ }).click(); await p.getByRole("dialog", { name: "هكّا يشوفها الحريف" }).waitFor({ timeout: 15000 }); for (let n = 0; n < 2; n++) await p.getByRole("button", { name: "كمّل", exact: true }).click(); }, wait: 1200 },
   // the trial over and the year not on: the home's line turns red, the code's place says why, with a call
   { name: "home-shut", as: "owner", before: () => admin.from("shops").update({ trial_days: 3 }).eq("id", shop.id), path: "/shop", wait: 1500, after: () => admin.from("shops").update({ trial_days: 7 }).eq("id", shop.id) },
   { name: "counter-shut", as: "owner", before: () => admin.from("shops").update({ trial_days: 3 }).eq("id", shop.id), path: "/shop/qr", wait: 2500, after: () => admin.from("shops").update({ trial_days: 7 }).eq("id", shop.id) },
@@ -378,7 +383,7 @@ function SCREENS_AS() {
   return SCREENS.map((s) => s.as).filter(Boolean);
 }
 const needed = new Set(SCREENS_AS());
-for (const [key, who] of Object.entries({ owner, customer, fresh, noShop, boss })) if (needed.has(key)) states[key] = await signIn(who);
+for (const [key, who] of Object.entries({ owner, customer, fresh, noShop, boss, lonely })) if (needed.has(key)) states[key] = await signIn(who);
 
 // what is wrong on the screen as it stands
 function measure([read, tiny]) {

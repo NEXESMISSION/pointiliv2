@@ -27,7 +27,7 @@ function keyBytes(b64: string): Uint8Array<ArrayBuffer> {
  * not even asked), and it is not asked again. Either answer is one-time
  * (people.seen), so another phone of the same person is asked afresh.
  */
-export function PushAsk({ shop }: { shop: string }) {
+export function PushAsk({ shop, title, body, compact }: { shop: string; title?: string; body?: string; compact?: boolean }) {
   const can = useCanPush();
   const [state, setState] = useState<"ask" | "busy" | "gone">("ask");
   if (!can || state === "gone") return null;
@@ -53,18 +53,18 @@ export function PushAsk({ shop }: { shop: string }) {
   };
 
   return (
-    <div className="mt-3 flex shrink-0 items-center gap-3 rounded-[1.375rem] bg-surface p-3.5 shadow-card" role="region" aria-label={t.pushAskTitle}>
-      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
-        <BellRing className="size-5" />
+    <div className={`flex shrink-0 items-center gap-3 rounded-[1.375rem] bg-surface shadow-card ${compact ? "mt-2 w-full p-3 text-start" : "mt-3 p-3.5"}`} role="region" aria-label={title ?? t.pushAskTitle}>
+      <span className={`grid shrink-0 place-items-center rounded-full bg-brand-soft text-brand ${compact ? "size-9" : "size-11"}`}>
+        <BellRing className={compact ? "size-4" : "size-5"} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[0.9688rem] font-bold leading-snug">{t.pushAskTitle}</span>
-        <span className="mt-0.5 block text-[0.8125rem] leading-snug text-muted">{fill(t.pushAskBody, { shop })}</span>
+        <span className={`block font-bold leading-snug ${compact ? "text-[0.875rem]" : "text-[0.9688rem]"}`}>{title ?? t.pushAskTitle}</span>
+        <span className={`mt-0.5 block leading-snug text-muted ${compact ? "text-[0.75rem]" : "text-[0.8125rem]"}`}>{body ?? fill(t.pushAskBody, { shop })}</span>
         <span className="mt-2 flex gap-1.5">
-          <button type="button" disabled={state === "busy"} onClick={() => void yes()} className="press h-9 rounded-full bg-brand px-4 text-[0.875rem] font-bold text-white disabled:opacity-60">
+          <button type="button" disabled={state === "busy"} onClick={() => void yes()} className={`press rounded-full bg-brand font-bold text-white disabled:opacity-60 ${compact ? "h-8 px-3 text-[0.8125rem]" : "h-9 px-4 text-[0.875rem]"}`}>
             {state === "busy" ? t.checking : t.pushAskYes}
           </button>
-          <button type="button" disabled={state === "busy"} onClick={() => done("later")} className="press h-9 rounded-full px-3 text-[0.875rem] font-semibold text-muted">
+          <button type="button" disabled={state === "busy"} onClick={() => done("later")} className={`press rounded-full font-semibold text-muted ${compact ? "h-8 px-2.5 text-[0.8125rem]" : "h-9 px-3 text-[0.875rem]"}`}>
             {t.pushAskNo}
           </button>
         </span>

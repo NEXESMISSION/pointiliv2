@@ -23,7 +23,8 @@ const field = "h-10 w-full rounded-[0.625rem] border border-line bg-surface px-3
  */
 export function AdminBookAdd({ today }: { today: string }) {
   const router = useRouter();
-  const [pending, start] = useTransition();
+  // busy only while the line is written: the list refreshes on its own, and the next line can be typed at once
+  const [pending, setPending] = useState(false);
   const [side, setSide] = useState<Side>("out");
   const [what, setWhat] = useState("");
   const [amount, setAmount] = useState("");
@@ -37,22 +38,28 @@ export function AdminBookAdd({ today }: { today: string }) {
     setSide(s);
     if (!KINDS[s].includes(kind)) setKind("other");
   };
-  const save = () =>
-    start(async () => {
-      setError(null);
+  const save = async () => {
+    setPending(true);
+    setError(null);
+    try {
       const res = await adminBookAdd(side, what, sum, on, kind);
       if (!res.ok) return setError(t.errNetwork);
       setWhat("");
       setAmount("");
       router.refresh();
-    });
+    } catch {
+      setError(t.errNetwork);
+    } finally {
+      setPending(false);
+    }
+  };
 
   return (
     <form
       className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
-        if (can && !pending) save();
+        if (can && !pending) void save();
       }}
     >
       <div className="grid gap-2 sm:grid-cols-[9.5rem_1fr_7.5rem_10rem]">

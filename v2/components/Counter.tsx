@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ArrowDown, Check, ChevronRight, Phone, ScanLine, WifiOff } from "lucide-react";
+import { ArrowDown, Check, ChevronRight, Eye, Phone, ScanLine, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
+import { TryItButton } from "@/components/TryIt";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
@@ -60,7 +61,7 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -392,6 +393,12 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
             <p className="max-w-xs text-center text-[0.9375rem] text-white/80">{t.counterHint}</p>
           )}
         </div>
+        {/* alone with one phone, the owner cannot scan their own screen: the customer's side, replayed here */}
+        {!gift && !paused && shop.goal && (
+          <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal: shop.goal, gift: shop.gift ?? "" }} className="press flex h-10 shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 text-[0.875rem] font-bold text-white">
+            <Eye className="size-4" /> {t.trySee}
+          </TryItButton>
+        )}
 
         {/* a gift to hand over: under the code, in the page, never over the code */}
         {gift && (
