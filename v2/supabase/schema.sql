@@ -1698,55 +1698,229 @@ exception when check_violation then
 end $$;
 
 -- ═══ the founder's traffic ═════════════════════════════════════════════════
--- p_all: with the founder's own visits and the robots (headless browsers, the
--- test walks, crawlers); without them by default
-create or replace function public.admin_traffic(p_days int default 7, p_all boolean default false) returns jsonb
+-- The stretch a traffic page looks at: the last p_days days (1 to 90), or the
+-- founder's own days, p_f.from to p_f.to (Tunis dates, both counted, 90 days
+-- at the most; a date that is not one: the last p_days days). p_day0 – p_day1:
+-- the days it shows as bars (a stretch of 7 days: today and the 6 before).
+create or replace function public.traffic_span(p_days int, p_f jsonb, out p_from timestamptz, out p_to timestamptz, out p_day0 date, out p_day1 date)
+language plpgsql stable set search_path = '' as $$
+declare v_a date; v_b date; v_n int := greatest(1, least(coalesce(p_days, 7), 90));
+begin
+  begin
+    if coalesce(p_f ->> 'from', '') ~ '^\d{4}-\d{2}-\d{2}$' then
+      v_a := (p_f ->> 'from')::date;
+      v_b := case when coalesce(p_f ->> 'to', '') ~ '^\d{4}-\d{2}-\d{2}$' then (p_f ->> 'to')::date else v_a end;
+    end if;
+  exception when others then
+    v_a := null;
+  end;
+  if v_a is not null then
+    if v_b < v_a then select v_b, v_a into v_a, v_b; end if;
+    v_a := greatest(v_a, v_b - 89);
+    p_from := v_a::timestamp at time zone 'Africa/Tunis';
+    p_to := (v_b + 1)::timestamp at time zone 'Africa/Tunis';
+    p_day0 := v_a;
+    p_day1 := v_b;
+  else
+    p_to := now();
+    p_from := now() - make_interval(days => v_n);
+    p_day1 := (now() at time zone 'Africa/Tunis')::date;
+    p_day0 := p_day1 - (v_n - 1);
+  end if;
+end $$;
+
+-- Every visit of a stretch, with what the traffic page's filters ask about it,
+-- and «misses»: the filters it fails (none: the page keeps it). A filter's own
+-- menu counts the visits that miss nothing but that filter: what each choice in
+-- it would give, the other filters kept. The filters (p_f), each one optional:
+--   src   where it came from (facebook, instagram, direct…), or «meta»: Facebook
+--         and Instagram together, the ads' visits with them (an fbclid)
+--   camp  the ad (utm_campaign)
+--   who   anon (no account), acct (an account, any), owner (a shop's), client (a card's, no shop)
+--   seen  new (the phone's first visit ever) or back
+--   dev, os, br, city   the phone, its system, its browser, the city (else the country)
+--   page  went through this page: a route, or route:screen
+--   did   did this: a signal's name, or rage (three taps on one spot), signup
+--         (made an account on this visit), shop (opened a shop on it)
+--   hour  began in this hour of the day (Tunis, 0 to 23)
+--   same  on the same phone as this visit (its id)
+-- p_all: with the founder's own visits (signed in as the founder, or on a
+-- phone the founder ever used the site on, or on a tester's account) and the
+-- robots'. Only the console's own functions call it (no grant).
+create or replace function public.traffic_visits(p_from timestamptz, p_to timestamptz, p_all boolean, p_f jsonb)
+returns table (id uuid, visitor text, user_id uuid, started_at timestamptz, last_at timestamptz, src text, camp text, meta boolean,
+               dev text, os text, br text, city text, hour int, back boolean, who text, keys text[], did text[], misses text[])
+language plpgsql stable set search_path = '' as $$
+#variable_conflict use_column
+declare
+  f jsonb := coalesce(p_f, '{}'::jsonb);
+  f_src text := nullif(f ->> 'src', '');
+  f_camp text := nullif(f ->> 'camp', '');
+  f_who text := nullif(f ->> 'who', '');
+  f_seen text := nullif(f ->> 'seen', '');
+  f_dev text := nullif(f ->> 'dev', '');
+  f_os text := nullif(f ->> 'os', '');
+  f_br text := nullif(f ->> 'br', '');
+  f_city text := nullif(f ->> 'city', '');
+  f_page text := nullif(f ->> 'page', '');
+  f_did text := nullif(f ->> 'did', '');
+  f_hour int := case when coalesce(f ->> 'hour', '') ~ '^\d{1,2}$' then (f ->> 'hour')::int end;
+  f_same text;
+begin
+  if coalesce(f ->> 'same', '') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+    -- a visit that is gone: nothing matches
+    select coalesce((select x.visitor from public.visits x where x.id = (f ->> 'same')::uuid), '') into f_same;
+  end if;
+  return query
+  with win as (
+    select x.* from public.visits x
+    where x.started_at >= p_from and x.started_at < p_to
+      and (p_all or not (x.is_admin or x.is_bot
+        or exists (select 1 from public.visits o where o.visitor = x.visitor and o.is_admin)
+        or exists (select 1 from public.people t where t.id = x.user_id and t.is_tester)))
+  ),
+  firsts as (select o.visitor, min(o.started_at) as at from public.visits o where o.visitor in (select win.visitor from win) group by o.visitor),
+  pg as (
+    select w.visit_id, array_agg(distinct kk.k) as ks
+    from public.views w join win on win.id = w.visit_id
+    cross join lateral (values (w.route), (w.route || coalesce(':' || w.screen, ''))) kk(k)
+    group by w.visit_id
+  ),
+  sg as (select s.visit_id, array_agg(distinct s.name) as ns from public.signals s join win on win.id = s.visit_id group by s.visit_id),
+  rg as (select distinct t.visit_id from public.taps t join win on win.id = t.visit_id where t.rage),
+  a as (
+    select win.id, win.visitor, win.user_id, win.started_at, win.last_at,
+      coalesce(win.source, 'direct') as src, win.campaign as camp,
+      win.fbclid or coalesce(win.source, '') in ('facebook', 'instagram', 'fb', 'ig') as meta,
+      coalesce(win.device, '?') as dev, coalesce(win.os, '?') as os, coalesce(win.browser, '?') as br,
+      coalesce(nullif(win.city, ''), win.country, '?') as city,
+      extract(hour from win.started_at at time zone 'Africa/Tunis')::int as hour,
+      win.started_at > firsts.at as back,
+      case when win.user_id is null then 'anon' when sh.id is not null then 'owner'
+           when exists (select 1 from public.cards c where c.user_id = win.user_id) then 'client' else 'acct' end as who,
+      coalesce(pg.ks, '{}'::text[]) as keys,
+      coalesce(sg.ns, '{}'::text[])
+        || case when rg.visit_id is not null then array['rage'] else '{}'::text[] end
+        || case when pe.created_at between win.started_at - interval '2 minutes' and win.last_at + interval '10 minutes' then array['signup'] else '{}'::text[] end
+        || case when sh.created_at between win.started_at - interval '2 minutes' and win.last_at + interval '10 minutes' then array['shop'] else '{}'::text[] end as did
+    from win
+    join firsts on firsts.visitor = win.visitor
+    left join public.people pe on pe.id = win.user_id
+    left join public.shops sh on sh.owner_id = win.user_id
+    left join pg on pg.visit_id = win.id
+    left join sg on sg.visit_id = win.id
+    left join rg on rg.visit_id = win.id
+  )
+  select a.id, a.visitor, a.user_id, a.started_at, a.last_at, a.src, a.camp, a.meta, a.dev, a.os, a.br, a.city, a.hour, a.back, a.who, a.keys, a.did,
+    array_remove(array[
+      case when f_src is not null and not (case when f_src = 'meta' then a.meta else a.src = f_src end) then 'src' end,
+      case when f_camp is not null and a.camp is distinct from f_camp then 'camp' end,
+      case when f_who is not null and not (a.who = f_who or (f_who = 'acct' and a.who <> 'anon')) then 'who' end,
+      case when f_seen is not null and a.back is distinct from (f_seen = 'back') then 'seen' end,
+      case when f_dev is not null and a.dev <> f_dev then 'dev' end,
+      case when f_os is not null and a.os <> f_os then 'os' end,
+      case when f_br is not null and a.br <> f_br then 'br' end,
+      case when f_city is not null and a.city <> f_city then 'city' end,
+      case when f_page is not null and not (f_page = any (a.keys)) then 'page' end,
+      case when f_did is not null and not (f_did = any (a.did)) then 'did' end,
+      case when f_hour is not null and a.hour <> f_hour then 'hour' end,
+      case when f_same is not null and a.visitor <> f_same then 'same' end
+    ], null)
+  from a;
+end $$;
+
+-- The traffic page, all of it, for one stretch and one set of filters (see
+-- traffic_visits): the numbers, each with the stretch just before it (the same
+-- filters, the same length); the days and the hours; where they came from, with
+-- the accounts and the shops each source made; the phones, the places, the
+-- pages, the two funnels; the visits themselves (p_limit, the newest first);
+-- and each filter's menu.
+drop function if exists public.admin_traffic(int, boolean);
+create or replace function public.admin_traffic(p_days int default 7, p_all boolean default false, p_f jsonb default '{}'::jsonb, p_limit int default 100) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
-declare v_from timestamptz := now() - make_interval(days => greatest(1, least(coalesce(p_days, 7), 90)));
+declare v_from timestamptz; v_to timestamptz; v_day0 date; v_day1 date; v_before timestamptz;
 begin
   perform public.require_admin();
+  select x.p_from, x.p_to, x.p_day0, x.p_day1 into v_from, v_to, v_day0, v_day1 from public.traffic_span(p_days, p_f) x;
+  v_before := v_from - (v_to - v_from);
   return (
-    with v as (select * from public.visits where started_at >= v_from and (p_all or (not is_admin and not is_bot))),
+    with t as (select * from public.traffic_visits(v_before, v_to, p_all, p_f)),
+    a as (select * from t where t.started_at >= v_from),
+    k as (select * from a where cardinality(a.misses) = 0),
+    b as (select * from t where t.started_at < v_from and cardinality(t.misses) = 0),
+    v as (select x.* from public.visits x join k on k.id = x.id),
     w as (
       select w.*, row_number() over (partition by w.visit_id order by w.entered_at desc) = 1 as last
-      from public.views w join v on v.id = w.visit_id
+      from public.views w join k on k.id = w.visit_id
     ),
-    pv as (select v.id, count(w.id) as pages, coalesce(sum(w.active_ms), 0) as ms from v left join w on w.visit_id = v.id group by v.id),
-    tp as (select tp.* from public.taps tp join v on v.id = tp.visit_id)
+    pv as (select k.id, count(w.id) as pages, coalesce(sum(w.active_ms), 0) as ms from k left join w on w.visit_id = k.id group by k.id),
+    bv as (select b.id, count(w.id) as pages, coalesce(sum(w.active_ms), 0) as ms from b left join public.views w on w.visit_id = b.id group by b.id),
+    tp as (select tp.* from public.taps tp join k on k.id = tp.visit_id),
+    tc as (select tp.visit_id, count(*) as n, count(*) filter (where tp.rage) as rage from tp group by tp.visit_id),
+    tr as (select w.visit_id, (array_agg(w.route || coalesce(':' || w.screen, '') order by w.entered_at))[1:14] as trail from w group by w.visit_id),
+    -- what each filter's menu offers, and how many visits each choice keeps
+    fv as (
+      select a.id, f.k, f.v from a
+      cross join lateral (values ('src', a.src), ('camp', a.camp), ('who', a.who), ('seen', case when a.back then 'back' else 'new' end),
+                                 ('dev', a.dev), ('os', a.os), ('br', a.br), ('city', a.city)) f(k, v)
+      where f.v is not null and a.misses <@ array[f.k]
+      union all select a.id, 'src', 'meta' from a where a.meta and a.misses <@ array['src']
+      union all select a.id, 'who', 'acct' from a where a.who in ('owner', 'client') and a.misses <@ array['who']
+      union all select a.id, 'page', u.v from a cross join lateral unnest(a.keys) u(v) where a.misses <@ array['page']
+      union all select a.id, 'did', u.v from a cross join lateral unnest(a.did) u(v) where a.misses <@ array['did']
+    )
     select jsonb_build_object(
-      'visitors', (select count(distinct visitor) from v),
-      'visits', (select count(*) from v),
+      'from', v_from, 'to', v_to,
+      'visitors', (select count(distinct k.visitor) from k),
+      'visits', (select count(*) from k),
       'views', (select count(*) from w),
-      'avg_ms', (select coalesce(avg(ms), 0)::bigint from pv),
-      'bounce', (select coalesce(avg(case when pages <= 1 then 1.0 else 0 end), 0) from pv),
+      'avg_ms', (select coalesce(avg(pv.ms), 0)::bigint from pv),
+      'bounce', (select coalesce(avg(case when pv.pages <= 1 then 1.0 else 0 end), 0) from pv),
       'taps', (select count(*) from tp),
-      'rage', (select count(*) from tp where rage),
-      'from_ads', (select count(*) from v where source in ('facebook', 'instagram', 'fb', 'ig') or fbclid),
-      'accounts', (select count(*) from public.people p where p.created_at >= v_from and not p.is_admin),
-      'shops', (select count(*) from public.shops s where s.created_at >= v_from),
-      'signed', (select count(*) from v where user_id is not null),
+      'rage', (select count(*) from tp where tp.rage),
+      'from_ads', (select count(*) from k where k.meta),
+      'accounts', (select count(distinct k.user_id) from k where 'signup' = any (k.did)),
+      'shops', (select count(distinct k.user_id) from k where 'shop' = any (k.did)),
+      'signed', (select count(*) from k where k.user_id is not null),
+      'before', jsonb_build_object(
+        'visitors', (select count(distinct b.visitor) from b),
+        'visits', (select count(*) from b),
+        'avg_ms', (select coalesce(avg(bv.ms), 0)::bigint from bv),
+        'bounce', (select coalesce(avg(case when bv.pages <= 1 then 1.0 else 0 end), 0) from bv),
+        'from_ads', (select count(*) from b where b.meta),
+        'accounts', (select count(distinct b.user_id) from b where 'signup' = any (b.did)),
+        'shops', (select count(distinct b.user_id) from b where 'shop' = any (b.did))),
       'video_s', (select coalesce(avg(substring(s.detail from '^(\d+)s')::int), 0)::int
-                  from public.signals s join v on v.id = s.visit_id where s.name = 'video_close' and s.detail ~ '^\d+s'),
+                  from public.signals s join k on k.id = s.visit_id where s.name = 'video_close' and s.detail ~ '^\d+s'),
       'signals', coalesce((
         select jsonb_agg(row_to_json(x) order by x.n desc) from (
           select s.name, case when s.name = 'video_close' then null else s.detail end as detail, count(*) as n, count(distinct s.visit_id) as visits
-          from public.signals s join v on v.id = s.visit_id group by 1, 2 order by n desc limit 25) x), '[]'::jsonb),
+          from public.signals s join k on k.id = s.visit_id group by 1, 2 order by n desc limit 25) x), '[]'::jsonb),
       'days', coalesce((
-        select jsonb_agg(jsonb_build_object('day', d.day, 'visits', coalesce(x.n, 0)) order by d.day)
-        from (select ((now() at time zone 'Africa/Tunis')::date - g)::date as day from generate_series(0, least(coalesce(p_days, 7), 30) - 1) g) d
-        left join (select (started_at at time zone 'Africa/Tunis')::date as day, count(*) n from v group by 1) x on x.day = d.day), '[]'::jsonb),
+        select jsonb_agg(jsonb_build_object('day', d.day, 'visits', coalesce(x.n, 0), 'accounts', coalesce(x.s, 0)) order by d.day)
+        from (select v_day0 + g as day from generate_series(0, v_day1 - v_day0) g) d
+        left join (select (k.started_at at time zone 'Africa/Tunis')::date as day, count(*) as n, count(distinct k.user_id) filter (where 'signup' = any (k.did)) as s
+                   from k group by 1) x on x.day = d.day), '[]'::jsonb),
+      -- the hours: their own filter left out, so every hour stays on the chart
+      'hours', (
+        select jsonb_agg(jsonb_build_object('h', h.h, 'visits', coalesce(x.n, 0), 'accounts', coalesce(x.s, 0)) order by h.h)
+        from generate_series(0, 23) h(h)
+        left join (select a.hour, count(*) as n, count(distinct a.user_id) filter (where 'signup' = any (a.did)) as s
+                   from a where a.misses <@ array['hour'] group by a.hour) x on x.hour = h.h),
       'sources', coalesce((
         select jsonb_agg(row_to_json(x) order by x.visits desc) from (
-          select coalesce(v.source, 'direct') as source, v.campaign, count(*) as visits, count(distinct v.visitor) as visitors,
-                 round(avg(pv.pages), 1) as pages, coalesce(avg(pv.ms), 0)::bigint as ms, count(v.user_id) as signed
-          from v join pv on pv.id = v.id group by 1, 2 order by visits desc limit 30) x), '[]'::jsonb),
+          select k.src as source, k.camp as campaign, count(*) as visits, count(distinct k.visitor) as visitors,
+                 round(avg(pv.pages), 1) as pages, coalesce(avg(pv.ms), 0)::bigint as ms, count(k.user_id) as signed,
+                 count(distinct k.user_id) filter (where 'signup' = any (k.did)) as accounts,
+                 count(distinct k.user_id) filter (where 'shop' = any (k.did)) as shops
+          from k join pv on pv.id = k.id group by k.src, k.camp order by visits desc limit 30) x), '[]'::jsonb),
       'devices', coalesce((
         select jsonb_agg(row_to_json(x) order by x.visits desc) from (
-          select coalesce(device, '?') as device, coalesce(os, '?') as os, coalesce(browser, '?') as browser, count(*) as visits
-          from v group by 1, 2, 3 order by visits desc limit 12) x), '[]'::jsonb),
+          select k.dev as device, k.os, k.br as browser, count(*) as visits
+          from k group by 1, 2, 3 order by visits desc limit 12) x), '[]'::jsonb),
       'places', coalesce((
         select jsonb_agg(row_to_json(x) order by x.visits desc) from (
-          select coalesce(country, '?') as country, coalesce(city, '') as city, count(*) as visits from v group by 1, 2 order by visits desc limit 12) x), '[]'::jsonb),
+          select coalesce(v.country, '?') as country, coalesce(v.city, '') as city, count(*) as visits from v group by 1, 2 order by visits desc limit 12) x), '[]'::jsonb),
       'pages', coalesce((
         select jsonb_agg(row_to_json(x) order by x.views desc) from (
           select w.route, w.screen, count(*) as views, count(distinct w.visit_id) as visits,
@@ -1769,20 +1943,28 @@ begin
             jsonb_build_object('step', '/join', 'visits', count(*) filter (where c1 and c2 and c3)),
             jsonb_build_object('step', 's:stamped', 'visits', count(*) filter (where c1 and c2 and c3 and c4))))
         from (
-          select visit_id,
-                 bool_or(route = '/' and coalesce(screen, 'welcome') = 'welcome') as o1, bool_or(route = '/shop/new') as o2,
-                 bool_or(route = '/shop/setup') as o3, bool_or(route = '/shop/card') as o4, bool_or(route = '/shop/qr') as o5,
-                 bool_or(route = '/s/[token]') as c1, bool_or(route = '/s/[token]' and screen = 'held') as c2,
-                 bool_or(route = '/join') as c3, bool_or(route = '/s/[token]' and screen = 'stamped') as c4
-          from w group by visit_id) f),
+          select w.visit_id,
+                 bool_or(w.route = '/' and coalesce(w.screen, 'welcome') = 'welcome') as o1, bool_or(w.route = '/shop/new') as o2,
+                 bool_or(w.route = '/shop/setup') as o3, bool_or(w.route = '/shop/card') as o4, bool_or(w.route = '/shop/qr') as o5,
+                 bool_or(w.route = '/s/[token]') as c1, bool_or(w.route = '/s/[token]' and w.screen = 'held') as c2,
+                 bool_or(w.route = '/join') as c3, bool_or(w.route = '/s/[token]' and w.screen = 'stamped') as c4
+          from w group by w.visit_id) f),
       'recent', coalesce((
         select jsonb_agg(row_to_json(x) order by x.started_at desc) from (
-          select v.id, v.started_at, coalesce(v.source, 'direct') as source, v.campaign, v.device, v.os, v.browser, v.country, v.city,
-                 v.landing, v.user_id is not null as signed, pv.pages, pv.ms,
-                 (select count(*) from tp where tp.visit_id = v.id) as taps,
-                 (select count(*) from tp where tp.visit_id = v.id and tp.rage) as rage,
-                 (select jsonb_agg(coalesce(w2.route || coalesce(':' || w2.screen, ''), '') order by w2.entered_at) from (select * from w where w.visit_id = v.id order by entered_at limit 14) w2) as trail
-          from v join pv on pv.id = v.id order by v.started_at desc limit 80) x), '[]'::jsonb)
+          select v.id, v.started_at, k.src as source, v.campaign, v.device, v.os, v.browser, v.country, v.city, v.landing,
+                 v.user_id is not null as signed, v.user_id, k.who, k.back, 'signup' = any (k.did) as signup, 'shop' = any (k.did) as opened,
+                 nullif(pe.name, '') as person, sh.id as shop_id, sh.name as shop,
+                 pv.pages, pv.ms, coalesce(tc.n, 0) as taps, coalesce(tc.rage, 0) as rage, to_jsonb(tr.trail) as trail
+          from v join k on k.id = v.id join pv on pv.id = v.id
+          left join tc on tc.visit_id = v.id left join tr on tr.visit_id = v.id
+          left join public.people pe on pe.id = v.user_id left join public.shops sh on sh.owner_id = v.user_id
+          order by v.started_at desc limit greatest(10, least(coalesce(p_limit, 100), 500))) x), '[]'::jsonb),
+      'options', coalesce((
+        select jsonb_object_agg(o.k, o.items) from (
+          select y.k, jsonb_agg(jsonb_build_object('v', y.v, 'n', y.n) order by y.n desc, y.v) as items
+          from (select fv.k, fv.v, count(distinct fv.id) as n, row_number() over (partition by fv.k order by count(distinct fv.id) desc, fv.v) as r
+                from fv group by fv.k, fv.v) y
+          where y.r <= 40 group by y.k) o), '{}'::jsonb)
     )
   );
 end $$;
@@ -1796,6 +1978,11 @@ begin
     select jsonb_build_object(
       'visit', to_jsonb(v) - 'visitor',
       'visits_before', (select count(*) from public.visits o where o.visitor = v.visitor and o.started_at < v.started_at),
+      'visits_after', (select count(*) from public.visits o where o.visitor = v.visitor and o.started_at > v.started_at),
+      -- whose visit it was, when signed in: the name, the phone to call, the shop
+      'who', (select jsonb_build_object('id', pe.id, 'name', nullif(pe.name, ''), 'phone', pe.phone,
+                                        'shop', (select jsonb_build_object('id', sh.id, 'name', sh.name) from public.shops sh where sh.owner_id = pe.id))
+              from public.people pe where pe.id = v.user_id),
       'views', coalesce((
         select jsonb_agg(jsonb_build_object('route', w.route, 'screen', w.screen, 'path', w.path, 'entered_at', w.entered_at, 'left_at', w.left_at,
                                             'ms', w.active_ms, 'vw', w.vw, 'vh', w.vh,
@@ -1809,33 +1996,39 @@ begin
   );
 end $$;
 
--- where fingers land on one screen: the taps, and what was tapped most
-create or replace function public.admin_heat(p_route text, p_screen text, p_days int default 30, p_all boolean default false) returns jsonb
+-- where fingers land on one screen: the taps, and what was tapped most — on the
+-- visits the traffic page's filters keep (see traffic_visits)
+drop function if exists public.admin_heat(text, text, int, boolean);
+create or replace function public.admin_heat(p_route text, p_screen text, p_days int default 30, p_all boolean default false, p_f jsonb default '{}'::jsonb) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
-declare v_from timestamptz := now() - make_interval(days => greatest(1, least(coalesce(p_days, 30), 90)));
+declare v_from timestamptz; v_to timestamptz;
 begin
   perform public.require_admin();
+  select x.p_from, x.p_to into v_from, v_to from public.traffic_span(p_days, p_f) x;
   return (
-    with t as (
-      select t.* from public.taps t join public.visits v on v.id = t.visit_id
-      where t.route = p_route and t.screen is not distinct from nullif(p_screen, '') and t.at >= v_from
-        and (p_all or (not v.is_admin and not v.is_bot))
-    ),
-    w as (
-      select w.* from public.views w join public.visits v on v.id = w.visit_id
-      where w.route = p_route and w.screen is not distinct from nullif(p_screen, '') and w.entered_at >= v_from
-        and (p_all or (not v.is_admin and not v.is_bot))
-    )
+    with k as (select x.id from public.traffic_visits(v_from, v_to, p_all, p_f) x where cardinality(x.misses) = 0),
+    t as (select t.* from public.taps t join k on k.id = t.visit_id where t.route = p_route and t.screen is not distinct from nullif(p_screen, '')),
+    w as (select w.* from public.views w join k on k.id = w.visit_id where w.route = p_route and w.screen is not distinct from nullif(p_screen, ''))
     select jsonb_build_object(
       'views', (select count(*) from w),
-      'ms', (select coalesce(avg(active_ms), 0)::bigint from w),
-      'taps', coalesce((select jsonb_agg(jsonb_build_array(round(x::numeric, 4), round(y::numeric, 4), case when rage then 2 when dead then 1 else 0 end)) from (select * from t order by at desc limit 4000) t2), '[]'::jsonb),
+      'ms', (select coalesce(avg(w.active_ms), 0)::bigint from w),
+      'taps', coalesce((select jsonb_agg(jsonb_build_array(round(t2.x::numeric, 4), round(t2.y::numeric, 4), case when t2.rage then 2 when t2.dead then 1 else 0 end))
+                        from (select * from t order by t.at desc limit 4000) t2), '[]'::jsonb),
       'top', coalesce((select jsonb_agg(row_to_json(x) order by x.n desc) from (
-        select coalesce(target, '—') as target, coalesce(kind, '') as kind, count(*) as n, count(*) filter (where rage) as rage, bool_or(dead) as dead
+        select coalesce(t.target, '—') as target, coalesce(t.kind, '') as kind, count(*) as n, count(*) filter (where t.rage) as rage, bool_or(t.dead) as dead
         from t group by 1, 2 order by n desc limit 15) x), '[]'::jsonb)
     )
   );
 end $$;
+
+-- (2026-10-08) a few visits from the ad came with its words encoded twice
+-- («POINTILI+TEST2+%7C+Site»), and a few counted pointili.online as a site of
+-- its own: read as written, and as direct. The beacon reads both right since.
+update public.visits set
+  campaign = case when campaign ~ '%[0-9A-Fa-f]{2}' then replace(replace(replace(campaign, '+', ' '), '%7C', '|'), '%20', ' ') else campaign end,
+  content = case when content ~ '%[0-9A-Fa-f]{2}' then replace(replace(replace(content, '+', ' '), '%7C', '|'), '%20', ' ') else content end
+where campaign ~ '%[0-9A-Fa-f]{2}' or content ~ '%[0-9A-Fa-f]{2}';
+update public.visits set source = 'direct' where source = 'pointili.online';
 
 -- who is on the site right now, as the console shows it. Online: a ping in the
 -- last 75 seconds that was not «away» (here: touched lately; idle: the page open,
@@ -2010,7 +2203,7 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),
-  public.admin_set_setting(text, text), public.admin_traffic(int, boolean), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean), public.admin_online(),
+  public.admin_set_setting(text, text), public.admin_traffic(int, boolean, jsonb, int), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean, jsonb), public.admin_online(),
   public.news_next(), public.news_seen(uuid), public.news_clicked(uuid),
   public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),
   public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),
