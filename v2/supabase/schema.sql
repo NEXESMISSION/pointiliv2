@@ -161,8 +161,9 @@ create table if not exists public.push_subs (
   created_at  timestamptz not null default now()
 );
 create index if not exists push_subs_user_idx on public.push_subs (user_id);
--- a card reminded: once a month at most
+-- a card reminded: once a month at most; a shop's owner nudged the morning after: once
 alter table public.cards add column if not exists reminded_at timestamptz;
+alter table public.shops add column if not exists nudged_at timestamptz;
 
 -- the shop's logo (optional): a picture in the public «logos» box, set by the owner
 alter table public.shops add column if not exists logo text check (logo is null or (logo ~ '^https://' and char_length(logo) <= 300));
@@ -275,6 +276,18 @@ create table if not exists public.visits (
 );
 create index if not exists visits_started_idx on public.visits (started_at desc);
 create index if not exists visits_visitor_idx on public.visits (visitor);
+-- where someone is right now: while a page of the site is on their screen the
+-- tracker says so every ~25 seconds (here: touched lately; idle: open, left
+-- alone — the counter on the till), and «away» the moment it is hidden or
+-- closed. Server time only. Kept apart from last_at, so a page left open
+-- never makes a visit look longer than it was.
+alter table public.visits add column if not exists here_at timestamptz;
+alter table public.visits add column if not exists here_since timestamptz;
+alter table public.visits add column if not exists here_state text;
+alter table public.visits add column if not exists here_path text;
+alter table public.visits drop constraint if exists visits_here_state_check;
+alter table public.visits add constraint visits_here_state_check check (here_state is null or here_state in ('here', 'idle', 'away'));
+create index if not exists visits_here_idx on public.visits (here_at desc) where here_at is not null;
 
 create table if not exists public.views (
   id          uuid primary key,
@@ -969,7 +982,7 @@ begin
   return coalesce((
     select jsonb_agg(jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused,
-      'created_at', s.created_at, 'owner', jsonb_build_object('name', p.name, 'phone', p.phone),
+      'created_at', s.created_at, 'owner', jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone),
       -- the year, or the trial and its end
       'paid', s.paid_until is not null and s.paid_until > now(), 'shut', public.shut(s),
       'trial_hours', greatest(0, ceil(extract(epoch from (s.created_at + make_interval(days => s.trial_days) - now())) / 3600))::int,
@@ -1013,7 +1026,8 @@ begin
     'seen', (select jsonb_build_object(
         'created_at', p.created_at,
         'first_at', (select min(v.started_at) from public.visits v where v.user_id = p.id),
-        'last_at',  (select max(v.last_at) from public.visits v where v.user_id = p.id),
+        -- last seen: a page on their screen counts too (the presence pings), so it never argues with «متّصل توّا»
+        'last_at',  (select greatest(max(v.last_at), max(v.here_at)) from public.visits v where v.user_id = p.id),
         'n',        (select count(*) from public.visits v where v.user_id = p.id),
         'ms',       (select coalesce(sum(w.active_ms), 0) from public.views w join public.visits v on v.id = w.visit_id where v.user_id = p.id),
         'visits', coalesce((
@@ -1279,20 +1293,40 @@ end $$;
 -- customer with a phone written down, whose card in a running, paid shop is on
 -- its way — a tampon at least, none for two weeks, the last within two months
 -- — or holds a gift for three days; and not reminded these thirty days
+-- …and the owners: a card made, no tampon yet after half a day to three
+-- days (made at night at home, never shown at the counter), the phone written
+-- down — one word, the morning after (`kind` owner, `card` the shop's id)
 create or replace function public.push_reminders() returns jsonb
 language sql stable security definer set search_path = '' as $$
-  select coalesce(jsonb_agg(jsonb_build_object(
-      'user_id', c.user_id, 'card', c.id, 'shop', s.name,
-      'left', greatest(coalesce(c.goal, s.goal) - c.stamps, 0), 'gift', coalesce(c.gift, s.gift),
-      'kind', case when w.waiting then 'gift' else 'near' end)), '[]'::jsonb)
-  from public.cards c join public.shops s on s.id = c.shop_id
-  cross join lateral (select public.waits(c.id) as waiting) w
-  where exists (select 1 from public.push_subs p where p.user_id = c.user_id)
-    and not s.paused and s.paid_until > now() and s.goal is not null
-    and (c.reminded_at is null or c.reminded_at < now() - interval '30 days')
-    and ((w.waiting and c.last_at < now() - interval '3 days')
-      or (not w.waiting and c.stamps >= 1 and c.last_at between now() - interval '60 days' and now() - interval '14 days'))
+  select coalesce(jsonb_agg(x.line), '[]'::jsonb) from (
+    select jsonb_build_object(
+        'user_id', c.user_id, 'card', c.id, 'shop', s.name,
+        'left', greatest(coalesce(c.goal, s.goal) - c.stamps, 0), 'gift', coalesce(c.gift, s.gift),
+        'kind', case when w.waiting then 'gift' else 'near' end) as line
+    from public.cards c join public.shops s on s.id = c.shop_id
+    cross join lateral (select public.waits(c.id) as waiting) w
+    where exists (select 1 from public.push_subs p where p.user_id = c.user_id)
+      and not s.paused and s.paid_until > now() and s.goal is not null
+      and (c.reminded_at is null or c.reminded_at < now() - interval '30 days')
+      and ((w.waiting and c.last_at < now() - interval '3 days')
+        or (not w.waiting and c.stamps >= 1 and c.last_at between now() - interval '60 days' and now() - interval '14 days'))
+    union all
+    select jsonb_build_object('user_id', s.owner_id, 'card', s.id, 'shop', s.name, 'left', 0, 'gift', coalesce(s.gift, ''), 'kind', 'owner')
+    from public.shops s
+    where s.goal is not null and not s.paused and s.nudged_at is null
+      and s.created_at between now() - interval '3 days' and now() - interval '12 hours'
+      and not exists (select 1 from public.moments m where m.shop_id = s.id and m.kind = 'stamp')
+      and exists (select 1 from public.push_subs p where p.user_id = s.owner_id)
+  ) x
 $$;
+
+-- an owner nudged
+create or replace function public.push_nudged(p_shop uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.shops set nudged_at = now() where id = p_shop;
+  return jsonb_build_object('ok', found);
+end $$;
 
 -- a card reminded today
 create or replace function public.push_remembered(p_card uuid) returns jsonb
@@ -1803,6 +1837,42 @@ begin
   );
 end $$;
 
+-- who is on the site right now, as the console shows it. Online: a ping in the
+-- last 75 seconds that was not «away» (here: touched lately; idle: the page open,
+-- untouched). Gone: seen in the last half hour, not now. One line per person —
+-- their liveliest visit (several phones: any one online makes them online) —
+-- plus how many strangers (no account) are on a page right now.
+create or replace function public.admin_online() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return jsonb_build_object(
+    'now', now(),
+    'people', coalesce((
+      select jsonb_agg(jsonb_build_object('user', x.user_id, 'state', x.state, 'path', x.here_path, 'since', x.here_since, 'at', x.here_at,
+                                          'name', p.name, 'phone', p.phone, 'shop', case when s.id is null then null else jsonb_build_object('id', s.id, 'name', s.name) end)
+                       order by (x.state = 'here') desc, (x.state = 'idle') desc, x.here_at desc)
+      from (
+        select distinct on (v.user_id) v.user_id, v.here_path, v.here_since, v.here_at,
+          case when v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds' then v.here_state else 'gone' end as state
+        from public.visits v
+        where v.user_id is not null and v.here_at > now() - interval '30 minutes' and not v.is_admin and not v.is_bot
+        order by v.user_id,
+          (v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds') desc,
+          (v.here_state = 'here') desc,
+          v.here_at desc
+      ) x
+      join public.people p on p.id = x.user_id
+      left join public.shops s on s.owner_id = x.user_id
+      -- the machines' accounts stay out, unless a machine is asking (its own run)
+      where not p.is_admin and (public.sees_robots() or not public.is_robot(p.id))
+    ), '[]'::jsonb),
+    'strangers', (select count(*) from public.visits v
+                  where v.user_id is null and v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds'
+                    and not v.is_admin and not v.is_bot)
+  );
+end $$;
+
 -- ═══ the server's own doors (service role only) ════════════════════════════
 -- the traffic beacon: one visit, its screens, its taps and its signals, in one go
 create or replace function public.track(p jsonb) returns void
@@ -1823,6 +1893,10 @@ begin
     user_id = coalesce(excluded.user_id, public.visits.user_id),
     is_admin = public.visits.is_admin or excluded.is_admin,
     is_bot = public.visits.is_bot or excluded.is_bot;
+  -- where the person is right now, sent with every batch too (the pings come between batches)
+  if coalesce(p -> 'here' ->> 'state', '') in ('here', 'idle', 'away') then
+    perform public.here(v_id, p -> 'here' ->> 'state', coalesce(p -> 'here' ->> 'path', ''), nullif(v ->> 'user_id', '')::uuid);
+  end if;
 
   insert into public.views (id, visit_id, path, route, screen, entered_at, left_at, active_ms, vw, vh, next_route)
   select (x ->> 'id')::uuid, v_id, left(x ->> 'path', 300), left(x ->> 'route', 120), nullif(left(x ->> 'screen', 60), ''),
@@ -1855,6 +1929,20 @@ begin
   -- old traffic goes after half a year
   if random() < 0.002 then delete from public.visits where started_at < now() - interval '180 days'; end if;
 end $$;
+-- the presence ping (server only, from /api/here): this visit's page is on a
+-- screen right now (here / idle), or just left it (away). A streak starts
+-- again after 75 quiet seconds — the moment someone came back.
+create or replace function public.here(p_visit uuid, p_state text, p_path text, p_user uuid) returns void
+language sql security definer set search_path = '' as $$
+  update public.visits set
+    here_since = case when p_state <> 'away' and (here_state is null or here_state = 'away' or here_at < now() - interval '75 seconds') then now() else here_since end,
+    here_at = now(),
+    here_state = p_state,
+    here_path = left(p_path, 300),
+    user_id = coalesce(user_id, p_user)
+  where id = p_visit and p_state in ('here', 'idle', 'away') and not is_admin;
+$$;
+
 -- one more try at something that has a limit: false when there were too many lately
 create or replace function public.try_once(p_key text, p_max int, p_minutes int) returns boolean
 language plpgsql security definer set search_path = '' as $$
@@ -1922,7 +2010,7 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),
-  public.admin_set_setting(text, text), public.admin_traffic(int, boolean), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean),
+  public.admin_set_setting(text, text), public.admin_traffic(int, boolean), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean), public.admin_online(),
   public.news_next(), public.news_seen(uuid), public.news_clicked(uuid),
   public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),
   public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),

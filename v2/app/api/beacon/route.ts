@@ -63,7 +63,7 @@ function source(utm: string | undefined, referrer: string | undefined, fbclid: b
 export async function POST(request: NextRequest) {
   const text = await request.text();
   if (text.length > 120_000) return new NextResponse(null, { status: 413 });
-  let body: { visit?: Record<string, unknown>; views?: unknown[]; taps?: unknown[]; signals?: unknown[] };
+  let body: { visit?: Record<string, unknown>; views?: unknown[]; taps?: unknown[]; signals?: unknown[]; here?: { state?: unknown; path?: unknown } | null };
   try {
     body = JSON.parse(text);
   } catch {
@@ -101,7 +101,12 @@ export async function POST(request: NextRequest) {
     is_bot: who.bot || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(host),
   };
 
-  const { error } = await service().rpc("track", { p: { visit, views: body.views ?? [], taps: body.taps ?? [], signals: body.signals ?? [] } });
+  // where the person is right now (the console's «متّصل توّا»): only the three words, and a path of the site
+  const here =
+    body.here && ["here", "idle", "away"].includes(String(body.here.state))
+      ? { state: String(body.here.state), path: typeof body.here.path === "string" && body.here.path.startsWith("/") ? body.here.path.slice(0, 300) : "" }
+      : null;
+  const { error } = await service().rpc("track", { p: { visit, views: body.views ?? [], taps: body.taps ?? [], signals: body.signals ?? [], here } });
   if (error) {
     console.error("[track]", error.message);
     return new NextResponse(null, { status: 400 });

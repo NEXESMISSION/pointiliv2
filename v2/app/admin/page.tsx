@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { OnlineNow } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, CLink, Empty, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
@@ -26,6 +27,8 @@ export default async function Console() {
 
   return (
     <Page title={t.admin} hint="كل شي في Pointili، من هوني">
+      {/* who is on the site right now: the first thing to know, live */}
+      <OnlineNow className="mb-4" />
       <Stats cols={5}>
         <Stat label={t.aShops} value={o?.shops ?? 0} sub={!o?.shops ? t.aNothing : paused ? `${liveN(live)} · ${pausedN(paused)}` : t.aAllLive} />
         <Stat label={t.aCustomers} value={o?.customers ?? 0} sub={accountsN(o?.people ?? 0)} />

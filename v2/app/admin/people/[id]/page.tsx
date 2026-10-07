@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, Phone } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageCircle, Phone } from "lucide-react";
 import { AdminPersonActions } from "@/components/AdminPersonActions";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
 import { Card, Cell, Empty, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
+import { Presence } from "@/components/Presence";
 import { kindIcon, t } from "@/lib/t";
 
 export const metadata = { title: "كونت" };
@@ -52,12 +53,18 @@ export default async function AdminPerson({ params }: { params: Promise<{ id: st
                   {p.tester && <Pill>{t.aTestBadge}</Pill>}
                 </p>
                 <p className="text-[0.8125rem] text-muted">{p.phone ? <Num>{pretty(p.phone)}</Num> : "بلا نومرو"}</p>
+                <Presence user={p.id} />
               </div>
             </div>
             {p.phone && (
-              <a href={`tel:+216${digits(p.phone)}`} className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-brand-soft px-3.5 text-[0.8438rem] font-bold text-brand hover:bg-brand hover:text-white">
-                <Phone className="size-4" /> {t.aCall}
-              </a>
+              <span className="mt-4 flex flex-wrap gap-2">
+                <a href={`tel:+216${digits(p.phone)}`} className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-brand px-3.5 text-[0.8438rem] font-bold text-white hover:bg-brand-deep">
+                  <Phone className="size-4" /> {t.aCall}
+                </a>
+                <a href={`https://wa.me/216${digits(p.phone)}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-[#25D366] px-3.5 text-[0.8438rem] font-bold text-white hover:opacity-90">
+                  <MessageCircle className="size-4" /> واتساب
+                </a>
+              </span>
             )}
           </Card>
 

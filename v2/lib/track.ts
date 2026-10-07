@@ -18,6 +18,13 @@
  * Everything goes out in batches to /api/beacon — every few seconds, and the
  * moment the page is hidden or closed — and the founder's own pages (/admin)
  * are not followed at all.
+ *
+ * Where the person is right now (the console's «متّصل توّا») rides along: every
+ * batch says it, and between batches a ping to /api/here every ~24 seconds
+ * while a page is on the screen — «here» when touched in the last 90 seconds,
+ * «idle» when open and left alone (the counter on the till) — and «away» the
+ * moment the page is hidden or closed. The pings never touch the visit's own
+ * times: a page left open does not make a visit longer.
  */
 
 type View = { id: string; path: string; route: string; screen: string | null; entered_at: string; left_at: string | null; active_ms: number; vw: number; vh: number; next: string | null };
@@ -31,6 +38,7 @@ const VISIT = "pt_s";
 const QUIET_MS = 30 * 60_000;
 const IDLE_MS = 90_000;
 const FLUSH_MS = 8_000;
+const PING_MS = 24_000;
 
 let started = false;
 let landed = false;
@@ -43,6 +51,8 @@ const dirty = new Map<string, View>();
 let taps: Tap[] = [];
 let signals: Signal[] = [];
 let recent: { t: number; x: number; y: number }[] = [];
+let pinged = 0;
+let told: string | null = null;
 
 const now = () => new Date().toISOString();
 const id = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ (Math.random() * 16) >> (+c / 4)).toString(16)));
@@ -61,6 +71,27 @@ const write = (k: string, v: string) => {
     /* private mode: the visit lives in memory */
   }
 };
+
+/** Where the person is: on a page of the site and touching it lately, on it but not touching it, or gone from it. */
+function hereNow(): "here" | "idle" | "away" {
+  if (!visible()) return "away";
+  return video || Date.now() - lastInput < IDLE_MS ? "here" : "idle";
+}
+
+/** «I am here» between two batches (only the presence: the visit's own times are left alone). */
+function ping(beacon: boolean) {
+  if (!visit || !view) return;
+  const state = hereNow();
+  pinged = Date.now();
+  told = state;
+  const body = JSON.stringify({ visit: visit.id, state, path: location.pathname });
+  try {
+    if (beacon && navigator.sendBeacon?.("/api/here", new Blob([body], { type: "application/json" }))) return;
+    void fetch("/api/here", { method: "POST", body, keepalive: true, headers: { "Content-Type": "application/json" } }).catch(() => {});
+  } catch {
+    /* the next ping carries on */
+  }
+}
 
 /** /s/AbC…, /c/<uuid> and the founder's pages → one name per kind of page. */
 export function routeOf(path: string): string {
@@ -255,13 +286,19 @@ function onTap(e: MouseEvent) {
   if (away) flush(true);
 }
 
-function flush(beacon: boolean) {
+/** `away`: the page is being hidden or closed — whatever the browser still says about it. */
+function flush(beacon: boolean, away = false) {
   if (!visit || (!dirty.size && !taps.length && !signals.length)) return;
   if (view) {
     settle(view);
     mark(view);
   }
-  const body = JSON.stringify({ visit: { id: visit.id, visitor, ...visit.info }, views: [...dirty.values()], taps, signals });
+  const here = view ? { state: away ? "away" : hereNow(), path: location.pathname } : null;
+  if (here) {
+    pinged = Date.now();
+    told = here.state;
+  }
+  const body = JSON.stringify({ visit: { id: visit.id, visitor, ...visit.info }, views: [...dirty.values()], taps, signals, here });
   dirty.clear();
   taps = [];
   signals = [];
@@ -286,7 +323,7 @@ export function startTracking() {
       view.since = null;
       view.left_at = now();
       mark(view);
-      flush(true);
+      flush(true, true);
     } else {
       ensureVisit();
       if (!view) return;
@@ -294,6 +331,8 @@ export function startTracking() {
       view.since = lastInput;
       view.left_at = null;
       mark(view);
+      // back on the screen: the console sees it now, not at the next batch
+      ping(false);
     }
   });
   addEventListener("pagehide", () => {
@@ -303,7 +342,8 @@ export function startTracking() {
       view.left_at = now();
       mark(view);
     }
-    flush(true);
+    // closing, or leaving for another site (WhatsApp, a call): gone now, even if the browser still calls the page visible
+    flush(true, true);
   });
   // a heartbeat while someone is looking: the time on screen gets there even if the phone kills the page
   setInterval(() => {
@@ -312,5 +352,7 @@ export function startTracking() {
       mark(view);
     }
     flush(false);
+    // between batches, on the screen: still here (or now left alone) — said every ~24 seconds, or at once when it changed
+    if (visible() && view && (Date.now() - pinged >= PING_MS || hereNow() !== told)) ping(false);
   }, FLUSH_MS);
 }

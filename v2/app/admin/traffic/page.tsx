@@ -295,7 +295,7 @@ function Overview({ data, days, heatHref }: { data: Traffic; days: number; heatH
         <Stat label="خرجو طول" value={pct(Math.round(data.bounce * 1000), 1000)} sub="من أوّل صفحة" />
         <Stat label="من فيسبوك" value={data.from_ads} sub={<>وإنستا · {pct(data.from_ads, data.visits)}</>} tone="brand" />
         <Stat label="كونتات جدد" value={data.accounts} sub={`${data.shops} محل جديد`} tone="mint" />
-        <Stat label="ضربات بالغشّ" value={data.rage} sub={`من ${data.taps} ضربة`} tone={data.rage ? "coral" : "ink"} />
+        <Stat label="ضربات نرفزة" value={data.rage} sub={`3 ضربات في بلاصة وحدة · من ${data.taps} ضربة`} tone={data.rage ? "coral" : "ink"} />
       </Stats>
 
       {days > 1 && (
@@ -343,7 +343,7 @@ function Overview({ data, days, heatHref }: { data: Traffic; days: number; heatH
                     <Bidi className="block truncate">{screenName(p.route, p.screen)}</Bidi>
                     {p.rage > 0 && (
                       <span className="block text-[0.75rem] font-normal text-coral">
-                        <Num>{p.rage}</Num> ضربة بالغشّ
+                        <Num>{p.rage}</Num> ضربة نرفزة
                       </span>
                     )}
                   </Cell>
@@ -421,7 +421,7 @@ function Pages({ pages, heatHref }: { pages: PageRow[]; heatHref: (key: string) 
   if (!pages.length) return <Empty>مازال حتّى زيارة.</Empty>;
   return (
     <Card pad={false}>
-      <Table head={["الصفحة", "مرّات", "زيارات", "الوقت", "خروج", "ضربات", "بالغشّ"]}>
+      <Table head={["الصفحة", "مرّات", "زيارات", "الوقت", "خروج", "ضربات", "نرفزة"]}>
         {pages.map((p) => (
           <Row key={keyOf(p.route, p.screen)} href={heatHref(keyOf(p.route, p.screen))}>
             <Cell strong>
@@ -694,7 +694,7 @@ function HeatTab({ pages, heatKey, heat, pick }: { pages: PageRow[]; heatKey: st
           {!heat || heat.top.length === 0 ? (
             <Empty>حتّى ضربة على الصفحة هاذي.</Empty>
           ) : (
-            <Table head={["وين ضربو", "مرّات", "بالغشّ"]}>
+            <Table head={["وين ضربو", "مرّات", "نرفزة"]}>
               {heat.top.map((x, i) => (
                 <Row key={i}>
                   <Cell strong={!x.dead} muted={x.dead}>

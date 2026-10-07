@@ -1,6 +1,7 @@
 import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { pretty } from "@/lib/phone";
+import { Presence, Reach } from "@/components/Presence";
 import { t } from "@/lib/t";
 
 export const metadata = { title: "الكونتات" };
@@ -56,15 +57,21 @@ export default async function AdminPeople({ searchParams }: { searchParams: Prom
                 <Cell>
                   <span className="flex min-w-0 items-center gap-2.5">
                     <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[0.875rem] font-bold text-white">{(p.name?.[0] ?? "؟").toUpperCase()}</span>
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      <b className="truncate font-semibold text-ink">{p.name || t.someone}</b>
-                      {p.admin && <Pill tone="ink">{t.aAdminBadge}</Pill>}
-                      {p.tester && <Pill>{t.aTestBadge}</Pill>}
+                    <span className="min-w-0">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <b className="truncate font-semibold text-ink">{p.name || t.someone}</b>
+                        {p.admin && <Pill tone="ink">{t.aAdminBadge}</Pill>}
+                        {p.tester && <Pill>{t.aTestBadge}</Pill>}
+                      </span>
+                      <Presence user={p.id} />
                     </span>
                   </span>
                 </Cell>
                 <Cell n muted>
-                  {p.phone ? <Num>{pretty(p.phone)}</Num> : "—"}
+                  <span className="inline-flex items-center gap-2.5">
+                    {p.phone ? <Num>{pretty(p.phone)}</Num> : "—"}
+                    {!p.admin && <Reach phone={p.phone} />}
+                  </span>
                 </Cell>
                 <Cell muted>
                   <span className="block truncate">{p.shop || "—"}</span>

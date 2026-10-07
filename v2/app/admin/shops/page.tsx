@@ -1,4 +1,5 @@
 import { Ago } from "@/components/Ago";
+import { OnlineCount, OnlineNow, Presence, Reach } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
@@ -7,7 +8,7 @@ import { fill, t } from "@/lib/t";
 
 export const metadata = { title: "المحلات" };
 
-type ShopRow = { id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; paused: boolean; created_at: string; paid: boolean; shut: boolean; trial_hours: number; test?: boolean; owner: { name: string; phone: string | null }; customers: number; stamps: number; today: number; last_at: string | null };
+type ShopRow = { id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; paused: boolean; created_at: string; paid: boolean; shut: boolean; trial_hours: number; test?: boolean; owner: { id: string; name: string; phone: string | null }; customers: number; stamps: number; today: number; last_at: string | null };
 
 const TZ = "Africa/Tunis";
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(iso));
@@ -50,7 +51,10 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
         </>
       }
     >
-      <Stats cols={4}>
+      {/* who is on the site right now, live, with a call beside each */}
+      {!onTests && <OnlineNow className="mb-4" />}
+      <Stats cols={5}>
+        <Stat label="متّصلين توّا" value={<OnlineCount />} sub="يتبدّل وحدو" tone="mint" />
         <Stat label={t.aShops} value={shops.length} sub={q ? "من اللّوجان" : "في الكل"} />
         <Stat label="يخدمو" value={live} sub={shops.length - live ? `${shops.length - live} موقّفين` : t.aAllLive} tone="mint" />
         <Stat label="ما عملوش الكارط" value={noCard} sub={noCard ? "ما ينجمو ياخذو حتى تامبون" : "الكل عملو الكارط"} tone={noCard ? "coral" : "ink"} />
@@ -77,16 +81,23 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                         <PlanPill paid={s.paid} shut={s.shut} hours={s.trial_hours} test={s.test} />
                       </span>
                       <span className="block truncate text-[0.75rem] text-muted">{t.kinds[s.kind as keyof typeof t.kinds] ?? s.kind}</span>
+                      <Presence user={s.owner.id} />
                     </span>
                   </span>
                 </Cell>
                 <Cell muted className="whitespace-nowrap">
-                  <span className="block truncate">{s.owner.name || t.aOwner}</span>
-                  {s.owner.phone && (
-                    <span className="block text-[0.75rem]">
-                      <Num>{pretty(s.owner.phone)}</Num>
+                  <span className="flex items-center gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate">{s.owner.name || t.aOwner}</span>
+                      {s.owner.phone && (
+                        <span className="block text-[0.75rem]">
+                          <Num>{pretty(s.owner.phone)}</Num>
+                        </span>
+                      )}
                     </span>
-                  )}
+                    {/* a call and a WhatsApp, over the row's own link */}
+                    <Reach phone={s.owner.phone} />
+                  </span>
                 </Cell>
                 <Cell n strong>
                   {s.customers}

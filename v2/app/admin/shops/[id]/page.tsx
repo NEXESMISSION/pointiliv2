@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, Gift, Phone } from "lucide-react";
+import { ChevronRight, Gift, MessageCircle, Phone } from "lucide-react";
 import { AdminPlan } from "@/components/AdminPlan";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
 import { Ago } from "@/components/Ago";
+import { Presence } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Lat, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
 import { call } from "@/lib/supabase";
@@ -114,14 +115,21 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
 
           <Card title={t.aOwner}>
             <p className="truncate text-[0.9375rem] font-bold text-ink">{s.owner?.name || t.someone}</p>
+            {/* on the site right now? live, every 15 seconds */}
+            <Presence user={s.owner?.id} className="mt-0.5" />
             {s.owner?.phone ? (
               <>
                 <p className="mt-0.5 text-[0.875rem] text-body">
                   <Num>{pretty(s.owner.phone)}</Num>
                 </p>
-                <a href={`tel:+216${digits(s.owner.phone)}`} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-brand-soft px-3.5 text-[0.8438rem] font-bold text-brand hover:bg-brand hover:text-white">
-                  <Phone className="size-4" /> {t.aCall}
-                </a>
+                <span className="mt-3 flex flex-wrap gap-2">
+                  <a href={`tel:+216${digits(s.owner.phone)}`} className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-brand px-3.5 text-[0.8438rem] font-bold text-white hover:bg-brand-deep">
+                    <Phone className="size-4" /> {t.aCall}
+                  </a>
+                  <a href={`https://wa.me/216${digits(s.owner.phone)}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-[#25D366] px-3.5 text-[0.8438rem] font-bold text-white hover:opacity-90">
+                    <MessageCircle className="size-4" /> واتساب
+                  </a>
+                </span>
               </>
             ) : (
               <p className="mt-1 text-[0.8125rem] text-faint">بلا نومرو</p>

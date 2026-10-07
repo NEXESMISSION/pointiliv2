@@ -286,6 +286,57 @@ try {
   await admin.from("shops").update({ paid_until: new Date(Date.now() + 86_400_000).toISOString() }).eq("id", trial.id);
   check("its year turned on, it makes codes again", (await rpc(owner, "new_code")).ok === true);
   await admin.from("shops").update({ created_at: trial.created_at, paid_until: trial.paid_until }).eq("id", trial.id);
+
+  // who is on the site right now: the presence pings (/api/here → here()), read by the console (admin_online)
+  console.log("\nWho is on the site right now");
+  const visitOf = async (user, extra = {}) => {
+    const vid = crypto.randomUUID();
+    await admin.from("visits").insert({ id: vid, visitor: `presence${vid.slice(0, 8)}`, user_id: user, ...extra });
+    return vid;
+  };
+  const onlineOf = async (user) => ((await rpc(boss, "admin_online"))?.people ?? []).find((x) => x.user === user);
+  const pVisit = await visitOf(owner.id);
+  await admin.rpc("here", { p_visit: pVisit, p_state: "here", p_path: "/shop/qr", p_user: owner.id });
+  let live = await onlineOf(owner.id);
+  check("an owner on the counter is online, at the counter", live?.state === "here" && live.path === "/shop/qr" && !!live.since && live.shop?.name === "Café Test" && "phone" in live, live);
+  const since = live?.since;
+  await admin.rpc("here", { p_visit: pVisit, p_state: "idle", p_path: "/shop/qr", p_user: owner.id });
+  live = await onlineOf(owner.id);
+  check("left alone, the page open: idle, the same sitting", live?.state === "idle" && live.since === since, live);
+  await admin.rpc("here", { p_visit: pVisit, p_state: "here", p_path: "/shop/customers", p_user: owner.id });
+  live = await onlineOf(owner.id);
+  check("touched again: here, where they are now", live?.state === "here" && live.path === "/shop/customers" && live.since === since, live);
+  await admin.rpc("here", { p_visit: pVisit, p_state: "away", p_path: "/shop/customers", p_user: owner.id });
+  check("the page hidden or closed: gone at once", (await onlineOf(owner.id))?.state === "gone");
+  await admin.rpc("here", { p_visit: pVisit, p_state: "here", p_path: "/shop", p_user: owner.id });
+  live = await onlineOf(owner.id);
+  check("back on the screen: online again, a new «since»", live?.state === "here" && live.since !== since, live);
+  await admin.from("visits").update({ here_at: new Date(Date.now() - 2 * 60_000).toISOString() }).eq("id", pVisit);
+  check("no ping for 75 seconds (the phone killed the page): gone", (await onlineOf(owner.id))?.state === "gone");
+  const visitRow = (await admin.from("visits").select("last_at, started_at").eq("id", pVisit).single()).data;
+  check("the pings never stretch the visit itself", visitRow.last_at === visitRow.started_at, visitRow);
+  // two phones: one online makes the person online
+  const pVisit2 = await visitOf(owner.id);
+  await admin.rpc("here", { p_visit: pVisit2, p_state: "idle", p_path: "/shop/qr", p_user: owner.id });
+  check("on two phones, the one online counts", (await onlineOf(owner.id))?.state === "idle");
+  // the shop page's «آخر مرّة» counts a page on the screen too
+  const seenNow = (await rpc(boss, "admin_shop", { p_id: found[0].id }))?.seen?.last_at;
+  check("«آخر مرّة» never older than the last ping", !!seenNow && Date.now() - Date.parse(seenNow) < 60_000, seenNow);
+  // a stranger (no account) is counted, a robot (headless, the local server) is not, the founder is never followed
+  const strangersBefore = (await rpc(boss, "admin_online")).strangers;
+  const sVisit = await visitOf(null);
+  await admin.rpc("here", { p_visit: sVisit, p_state: "here", p_path: "/", p_user: null });
+  check("a stranger on the front door is counted", (await rpc(boss, "admin_online")).strangers === strangersBefore + 1);
+  const bVisit = await visitOf(null, { is_bot: true });
+  await admin.rpc("here", { p_visit: bVisit, p_state: "here", p_path: "/", p_user: null });
+  check("a robot is not", (await rpc(boss, "admin_online")).strangers === strangersBefore + 1);
+  const aVisit = await visitOf(boss.id, { is_admin: true });
+  await admin.rpc("here", { p_visit: aVisit, p_state: "here", p_path: "/", p_user: boss.id });
+  check("the founder is never followed", !(await onlineOf(boss.id)) && !(await admin.from("visits").select("here_at").eq("id", aVisit).single()).data.here_at);
+  await admin.rpc("here", { p_visit: pVisit, p_state: "sleeping", p_path: "/", p_user: owner.id });
+  check("a state that does not exist changes nothing", (await admin.from("visits").select("here_state").eq("id", pVisit).single()).data.here_state === "here");
+  check("only the founder sees who is online", !!(await rpc(owner, "admin_online")).error && !!(await rpc(sami, "admin_online")).error);
+  await admin.from("visits").delete().in("id", [pVisit, pVisit2, sVisit, bVisit, aVisit]);
   check("the founder lists people, admins marked", (await rpc(boss, "admin_people", { p_q: "Boss" })).some((p) => p.admin));
 
   console.log("\nReal accounts, test accounts, and the machines' own");
@@ -440,6 +491,18 @@ try {
   check("a shop paused: its customers left alone", (await pzDue()).length === 0);
   await admin.from("shops").update({ paused: false }).eq("id", pzShop.id);
   check("the phone taken back: nothing to send to", (await rpc(nour, "push_unsubscribe", { p_endpoint: pzEnd })).ok && (await pzPhones()) === 0 && (await pzDue()).length === 0);
+  // the owner's morning word: a card made last night, never shown, the phone written down
+  const pzOwner = await person("منير");
+  const { data: pzLone } = await admin.from("shops").insert({ owner_id: pzOwner.id, name: "Café Lone", kind: "cafe", goal: 8, gift: "قهوة بلاش", created_at: pzAgo(0.8) }).select("id").single();
+  await rpc(pzOwner, "push_subscribe", { ...pzSub, p_endpoint: pzEnd + "owner" });
+  const pzOwnerDue = async () => ((await admin.rpc("push_reminders")).data ?? []).filter((d) => d.card === pzLone.id);
+  const pzNudge = await pzOwnerDue();
+  check("an owner with a card and no tampon since last night: one word in the morning", pzNudge.length === 1 && pzNudge[0].kind === "owner" && pzNudge[0].user_id === pzOwner.id && pzNudge[0].shop === "Café Lone", pzNudge);
+  check("…once nudged, no more", (await admin.rpc("push_nudged", { p_shop: pzLone.id })).data?.ok === true && (await pzOwnerDue()).length === 0);
+  await admin.from("shops").update({ nudged_at: null, created_at: pzAgo(5) }).eq("id", pzLone.id);
+  check("five days later it is too late to nudge", (await pzOwnerDue()).length === 0);
+  await admin.from("shops").update({ created_at: pzAgo(0.2) }).eq("id", pzLone.id);
+  check("and five hours after the card, too soon", (await pzOwnerDue()).length === 0);
   await admin.from("moments").delete().eq("id", pzGift.id);
   await admin.from("cards").update({ stamps: 0, last_at: null, reminded_at: null }).eq("id", nourCard.id);
   await admin.from("shops").update({ paid_until: pzPaid }).eq("id", pzShop.id);
@@ -602,7 +665,9 @@ try {
   check("…the welcome then the owner's door, in the funnel", tr.funnel?.owner[0].visits >= 1 && tr.funnel.owner[1].visits >= 1, tr.funnel);
   const welcomeRow = tr.pages?.find((x) => x.route === "/" && x.screen === "welcome");
   check("…the welcome screen with its taps", welcomeRow?.taps >= 2, welcomeRow);
-  check("…the refused form among what happened", tr.signals?.some((x) => x.name === "form_error"), tr.signals);
+  // (the top-25 list is the real traffic too: the refused form is looked for on its own visit)
+  const ownVisit = await rpc(boss, "admin_visit", { p_id: visit.id });
+  check("…the refused form among what happened", ownVisit?.signals?.some((x) => x.name === "form_error"), ownVisit?.signals);
   const trail = tr.recent?.find((x) => x.id === vid);
   check("…the visit's trail: welcome → /shop/new, 7.5 seconds", trail?.trail?.join(" → ") === "/:welcome → /shop/new" && Number(trail.ms) === 7500, trail);
   const one = await rpc(boss, "admin_visit", { p_id: vid });
