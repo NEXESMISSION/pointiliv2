@@ -39,16 +39,23 @@ export function AdminBookAdd({ today }: { today: string }) {
     if (!KINDS[s].includes(kind)) setKind("other");
   };
   const save = async () => {
+    // the line leaves the form the moment it is sent: the next one can be typed at once, and what
+    // is typed meanwhile is never wiped when the answer comes back — the list shows the line before
+    // the answer does (the page refreshes with it), so a founder on a roll is already typing by then.
+    // It comes back only if it was not written, and only into a field still empty.
+    const typed = { what, amount };
     setPending(true);
     setError(null);
+    setWhat("");
+    setAmount("");
     try {
-      const res = await adminBookAdd(side, what, sum, on, kind);
-      if (!res.ok) return setError(t.errNetwork);
-      setWhat("");
-      setAmount("");
+      const res = await adminBookAdd(side, typed.what, sum, on, kind);
+      if (!res.ok) throw new Error("not written");
       router.refresh();
     } catch {
       setError(t.errNetwork);
+      setWhat((w) => w || typed.what);
+      setAmount((v) => v || typed.amount);
     } finally {
       setPending(false);
     }

@@ -124,10 +124,20 @@ await shopOf(lonely, { name: "Café Lone", goal: 8, gift: "قهوة بلاش" })
 const takers = [];
 for (const [i] of SIZES.entries()) takers.push(await person(`حريف ${i + 1}`));
 // news for this owner only, a short tour
+const TOUR_TITLE = "توّا تنجم تسكاني الكود متاع الحريف";
+// a run cut short leaves its tour piece behind, aimed at a robot that the sweep then takes away:
+// any twin aimed only at robots or at nobody goes first (a piece for everyone is never the run's)
+for (const twin of (await admin.from("news").select("id, only_people").eq("title", TOUR_TITLE)).data ?? []) {
+  const who = twin.only_people ?? [];
+  if (!who.length) continue;
+  const real = (await admin.from("people").select("id").in("id", who)).data?.map((p) => p.id) ?? [];
+  const robot = await Promise.all(who.map(async (id) => (await admin.rpc("is_robot", { p_id: id })).data === true));
+  if (who.every((id, k) => !real.includes(id) || robot[k])) await admin.from("news").delete().eq("id", twin.id);
+}
 const { data: news } = await admin
   .from("news")
   .insert({
-    title: "توّا تنجم تسكاني الكود متاع الحريف",
+    title: TOUR_TITLE,
     body: "حريف ما عرفش يسكاني الكود متاعك؟ توّا إنت تنجم تزيدلو التامبون.",
     icon: "sparkles",
     cta_label: "جرّب توّا",
@@ -143,6 +153,18 @@ const { data: news } = await admin
   .single();
 // …already seen today, except on the screen that shows it
 if (news?.id) await admin.from("news_views").insert({ news_id: news.id, person_id: owner.id });
+// the screen that shows it: the owner has seen every other piece (days ago, so today's one-a-day rule
+// stays quiet) — whatever a peer publishes to everyone mid-run stays out of the picture — and not ours
+async function newsOnlyOurs() {
+  if (!news?.id) return;
+  const others = ((await admin.from("news").select("id")).data ?? []).map((n) => n.id).filter((id) => id !== news.id);
+  if (others.length) {
+    await admin
+      .from("news_views")
+      .upsert(others.map((news_id) => ({ news_id, person_id: owner.id, seen_at: ago(48 * HOUR) })), { onConflict: "news_id,person_id", ignoreDuplicates: true });
+  }
+  await admin.from("news_views").delete().eq("news_id", news.id).eq("person_id", owner.id);
+}
 // the founder, for the console
 const boss = await person("Saif", { is_admin: true });
 // three lines in the books by the founder's hand (a script's: the founder's own books never show them)
@@ -252,11 +274,11 @@ const SCREENS = [
   { name: "home-welcome", as: "owner", before: () => notes(owner, ["card_hello", "logo_tip", "offer"]), path: "/shop?welcome=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "home-logo-tip", as: "owner", before: () => notes(owner, ["card_hello", "coach", "offer"]), path: "/shop", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "home-offer", as: "owner", before: () => notes(owner, ["card_hello", "coach", "logo_tip"]), path: "/shop", wait: 2000, after: () => notes(owner, ALL_NOTES) },
-  { name: "home-news", as: "owner", before: () => admin.from("news_views").delete().eq("person_id", owner.id), path: "/shop", wait: 1800 },
+  { name: "home-news", as: "owner", before: newsOnlyOurs, path: "/shop", wait: 1800 },
   {
     name: "home-news-slide",
     as: "owner",
-    before: () => admin.from("news_views").delete().eq("person_id", owner.id),
+    before: newsOnlyOurs,
     path: "/shop",
     act: async (p) => {
       // this phone remembers the piece it showed: forget it, the database already did
@@ -482,11 +504,22 @@ try {
         await page.waitForTimeout(900);
         if (s.act) await s.act(page, i);
         await page.waitForTimeout(s.wait ?? 900);
-        await page.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((e) => (e.style.display = "none")));
+        // the dev server's own overlay is not the page: hidden before the picture — but an error in it,
+        // or a page left blank by one, is a failed screen, never a screen with nothing to measure
+        const broken = await page.evaluate(() => {
+          const said = [...document.querySelectorAll("nextjs-portal")].map((e) => e.shadowRoot?.textContent ?? "").join(" ");
+          document.querySelectorAll("nextjs-portal").forEach((e) => (e.style.display = "none"));
+          const err = said.match(/(Build Error|Runtime Error|Unhandled Runtime Error|Console Error|Module not found|Failed to compile)[^.]{0,120}/);
+          if (err) return `dev overlay: ${err[0].replace(/\s+/g, " ").trim()}`;
+          if (!document.body || !document.body.innerText.trim()) return "blank page";
+          return null;
+        });
         await page.screenshot({ path: `${OUT}/${size}/${s.name}.png` });
-        issues = await page.evaluate(measure, [!!s.read, height < 548]);
+        issues = broken ? [{ kind: "could not open", el: broken }] : await page.evaluate(measure, [!!s.read, height < 548]);
       } catch (e) {
-        issues = [{ kind: "could not open", el: String(e.message).split("\n")[0].slice(0, 160) }];
+        // the first line says what; the lines after it say why (what the click waited for, what stood in its way)
+        const said = String(e.message).split("\n");
+        issues = [{ kind: "could not open", el: [said[0], ...said.slice(1).filter((l) => /waiting for|resolved to|intercepts|not visible|hidden|retrying/.test(l))].slice(0, 5).map((l) => l.trim()).join(" | ").slice(0, 420) }];
       } finally {
         if (s.after) await Promise.resolve(s.after(i)).catch(() => {});
         await page.close();
