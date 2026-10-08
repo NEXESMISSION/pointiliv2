@@ -676,12 +676,43 @@ try {
   const heat = await rpc(boss, "admin_heat", { p_route: "/", p_screen: "welcome", p_days: 1, p_all: false });
   check("the welcome's heat: the tap where it landed, and the dead one marked", heat.taps?.some(([x, y, f]) => x === 0.5 && y === 0.76 && f === 0) && heat.taps.some(([, , f]) => f === 1), heat.taps?.slice(0, 4));
   check("…what was tapped, by its words", heat.top?.some((x) => x.target === "ادخل كمولى محل" && x.n >= 1), heat.top);
+
+  console.log("\nThe traffic's filters: each one keeps the visit or leaves it out");
+  const traffic = (f) => rpc(boss, "admin_traffic", { p_days: 1, p_all: false, p_f: f, p_limit: 500 });
+  const keeps = async (id, f) => ((await traffic(f)).recent ?? []).some((x) => x.id === id);
+  const hourThere = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Tunis", hour: "2-digit", hourCycle: "h23" }).format(new Date(ownVisit.visit.started_at)));
+  check("where from: Facebook and Instagram (the ads with them) keep it, direct does not", (await keeps(vid, { src: "meta" })) && (await keeps(vid, { src: "facebook" })) && !(await keeps(vid, { src: "direct" })));
+  check("…its ad keeps it, another ad does not", (await keeps(vid, { camp: "test-campaign" })) && !(await keeps(vid, { camp: "another-campaign" })));
+  check("…a page it went through keeps it (a route, or a route and its step), one it never saw does not", (await keeps(vid, { page: "/shop/new" })) && (await keeps(vid, { page: "/:welcome" })) && (await keeps(vid, { page: "/" })) && !(await keeps(vid, { page: "/shop/qr" })));
+  check("…what it did keeps it (the video, the refused form), what it never did does not", (await keeps(vid, { did: "form_error" })) && (await keeps(vid, { did: "video" })) && !(await keeps(vid, { did: "pwa_click" })) && !(await keeps(vid, { did: "signup" })));
+  check("…its phone, system, browser and city, together", (await keeps(vid, { dev: "phone", os: "Android", br: "Facebook", city: "Sfax" })) && !(await keeps(vid, { br: "Safari" })));
+  check("…no account and a first visit keep it; an owner or a phone that came back do not", (await keeps(vid, { who: "anon", seen: "new" })) && !(await keeps(vid, { who: "owner" })) && !(await keeps(vid, { seen: "back" })));
+  check("…the hour it began keeps it, another hour does not", (await keeps(vid, { hour: String(hourThere) })) && !(await keeps(vid, { hour: String((hourThere + 12) % 24) })));
+  check("…its own phone keeps it, a visit that does not exist keeps nothing", (await keeps(vid, { same: vid })) && !(await keeps(vid, { same: randomUUID() })));
+  check("…today as the founder's own days keeps it, two days of 2020 do not", (await keeps(vid, { from: tunisDay(), to: tunisDay() })) && !(await keeps(vid, { from: "2020-01-01", to: "2020-01-02" })));
+  const directOnly = await traffic({ src: "direct" });
+  check("a menu counts with the other filters kept but not its own: «direct» on, the Facebook line is still there", directOnly.options?.src?.some((x) => x.v === "meta" && x.n >= 1) && directOnly.options.src.some((x) => x.v === "facebook" && x.n >= 1) && !directOnly.recent.some((x) => x.id === vid), directOnly.options?.src);
+  check("…and the hours keep all 24, the stretch before comes with the numbers", tr.hours?.length === 24 && tr.hours.every((h) => Number.isInteger(h.visits)) && typeof tr.before?.visits === "number" && tr.days?.length === 1, { hours: tr.hours?.length, before: tr.before, days: tr.days });
+  const row = tr.recent?.find((x) => x.id === vid);
+  check("the visit's line says who: no account, a first time, nothing made", row?.who === "anon" && row.back === false && row.signup === false && row.opened === false && row.user_id === null, row);
+  // an owner's own first visit: the account and the shop made on it
+  const signedUp = randomUUID();
+  visitsMade.push(signedUp);
+  await admin.rpc("track", { p: { visit: { ...visit, id: signedUp, visitor: "testvisitor0002", user_id: owner.id }, views: [], taps: [], signals: [] } });
+  const { data: ownerRow } = await admin.from("people").select("created_at").eq("id", owner.id).single();
+  await admin.from("visits").update({ started_at: new Date(Date.parse(ownerRow.created_at) - 30_000).toISOString() }).eq("id", signedUp);
+  check("a visit on which the owner made the account and the shop: «did signup», «did shop», «who owner»", (await keeps(signedUp, { did: "signup" })) && (await keeps(signedUp, { did: "shop" })) && (await keeps(signedUp, { who: "owner" })) && (await keeps(signedUp, { who: "acct" })) && !(await keeps(signedUp, { who: "anon" })));
+  const made = await traffic({ did: "signup", same: signedUp });
+  check("…counted as an account and a shop made, with the shop's name on its line", made.accounts === 1 && made.shops === 1 && made.recent?.[0]?.shop === "Café Test" && made.recent[0].signup && made.recent[0].opened, { accounts: made.accounts, shops: made.shops, row: made.recent?.[0] });
+  const oneOwner = await rpc(boss, "admin_visit", { p_id: signedUp });
+  check("one visit says whose it was: the name, the phone, the shop", oneOwner.who?.id === owner.id && oneOwner.who.name === "Yasmine" && oneOwner.who.shop?.name === "Café Test" && "phone" in oneOwner.who, oneOwner.who);
   const mine = randomUUID();
   visitsMade.push(mine);
   await admin.rpc("track", { p: { visit: { ...visit, id: mine, is_admin: true }, views: [], taps: [], signals: [] } });
   const without = await rpc(boss, "admin_traffic", { p_days: 1, p_all: false });
   const withMine = await rpc(boss, "admin_traffic", { p_days: 1, p_all: true });
   check("the founder's own visits stay out unless asked", !without.recent.some((x) => x.id === mine) && withMine.recent.some((x) => x.id === mine));
+  check("…and so does every visit of a phone the founder used, before and after", !without.recent.some((x) => x.id === vid) && withMine.recent.some((x) => x.id === vid));
   check("a customer cannot read the traffic", !!(await rpc(sami, "admin_traffic", { p_days: 1, p_all: false })).error && !!(await rpc(sami, "admin_heat", { p_route: "/", p_screen: "welcome", p_days: 1, p_all: false })).error && !!(await rpc(sami, "admin_visit", { p_id: vid })).error);
   check("an owner cannot read the traffic", !!(await rpc(owner, "admin_traffic", { p_days: 7, p_all: true })).error);
 } catch (e) {
