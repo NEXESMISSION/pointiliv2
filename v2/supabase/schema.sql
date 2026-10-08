@@ -1357,7 +1357,8 @@ end $$;
 
 -- the tampon, given by the shop: the same rules as a scan (one an hour, the
 -- card's promise, the gift at the goal); thirty tries in ten minutes at most
-create or replace function public.give_stamp(p_who text) returns jsonb
+drop function if exists public.give_stamp(text);
+create or replace function public.give_stamp(p_who text, p_item bigint default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare
   v_uid uuid := auth.uid();
@@ -1376,6 +1377,16 @@ begin
   if s.paused then return public.err('paused'); end if;
   if public.shut(s) then return public.err('shut'); end if;
   if not public.try_once('give:' || v_uid, 30, 10) then return public.err('too_many'); end if;
+  -- the same question the counter asks, asked of the hand that gives it: a
+  -- shop that says what it sells may not write down a stamp for nothing
+  if s.items_on then
+    if p_item is null then return public.err('pick_item'); end if;
+    if not exists (select 1 from public.items where id = p_item and shop_id = s.id and rank < 999) then
+      return public.err('pick_item');
+    end if;
+  else
+    p_item := null;
+  end if;
   v_person := public.person_of(p_who);
   if v_person is null then return public.err('unknown'); end if;
   if v_person = v_uid then return public.err('own_shop'); end if;
@@ -1393,7 +1404,7 @@ begin
     gift = case when (stamps = 0 and not v_waiting) or gift is null then s.gift else gift end,
     stamps = stamps + 1, last_at = now()
   where id = c.id returning * into c;
-  insert into public.moments (shop_id, card_id, kind) values (s.id, c.id, 'stamp') returning id into v_moment;
+  insert into public.moments (shop_id, card_id, kind, item_id) values (s.id, c.id, 'stamp', p_item) returning id into v_moment;
   if c.stamps >= c.goal and not v_waiting then
     insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
     v_gift := true;
@@ -2384,7 +2395,7 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.news_next(), public.news_seen(uuid), public.news_clicked(uuid),
   public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),
   public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),
-  public.customer_at(text), public.give_stamp(text), public.push_subscribe(text, text, text), public.push_unsubscribe(text),
+  public.customer_at(text), public.give_stamp(text, bigint), public.push_subscribe(text, text, text), public.push_unsubscribe(text),
   public.my_payment(), public.pay_request(text), public.admin_payments(), public.admin_payment_decide(uuid, boolean) to authenticated;
 grant execute on all functions in schema public to service_role;
 

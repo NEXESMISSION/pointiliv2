@@ -250,8 +250,8 @@ export async function customerAt(who: string): Promise<{ ok: boolean; error?: st
 }
 
 /** The shop gives the tampon itself: the same rules as a scan (the shop's wait between two, the gift at the goal). */
-export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
-  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20) });
+export async function giveStamp(who: string, item: number | null = null): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
+  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20), p_item: item });
   // the last tampon by the shop's hand: the customer's phone hears it, after the answer has left
   if (res?.ok && res.gift && res.card) {
     const card = res.card;
@@ -267,6 +267,13 @@ export async function giveStamp(who: string): Promise<{ ok: boolean; error?: str
 export async function pushSubscribe(endpoint: string, p256dh: string, auth: string): Promise<boolean> {
   if (!/^https:\/\//.test(endpoint) || endpoint.length > 2000) return false;
   const res = await call<{ ok: boolean }>("push_subscribe", { p_endpoint: endpoint, p_p256dh: String(p256dh).slice(0, 200), p_auth: String(auth).slice(0, 100) });
+  return !!res?.ok;
+}
+
+/** This browser's word taken back — on the way out, so the next person to sign in on this phone never gets the last one's reminders. */
+export async function pushUnsubscribe(endpoint: string): Promise<boolean> {
+  if (!/^https:\/\//.test(endpoint) || endpoint.length > 2000) return false;
+  const res = await call<{ ok: boolean }>("push_unsubscribe", { p_endpoint: endpoint });
   return !!res?.ok;
 }
 

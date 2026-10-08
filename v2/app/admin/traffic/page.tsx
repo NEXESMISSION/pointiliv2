@@ -42,6 +42,8 @@ type VisitRow = {
   trail: string[] | null;
 };
 type Traffic = {
+  from: string;
+  to: string;
   visitors: number;
   visits: number;
   views: number;
@@ -91,6 +93,8 @@ const dayHm = (iso: string) => fmt({ day: "numeric", month: "short", hour: "2-di
 const weekday = (d: string) => fmt({ weekday: "short", day: "numeric" }).format(new Date(`${d}T12:00:00`));
 const dayName = (d: string) => fmt({ day: "numeric", month: "short" }).format(new Date(`${d}T12:00:00`));
 const two = (n: number) => String(n).padStart(2, "0");
+/** when the beacon began telling the installed app from a browser (visits.standalone): 8 Oct 2026, 00:40 in Tunis */
+const APP_SINCE = Date.parse("2026-10-07T23:40:00Z");
 /** 45ث · 2د 10ث · 1س 5د */
 function dur(ms: number): string {
   const s = Math.round((ms || 0) / 1000);
@@ -497,6 +501,9 @@ function Overview({ data, f, href, live }: { data: Traffic; f: Filters; href: Hr
   // one signal, all its details together (the install button's place, for one)
   const sig = (name: string) => data.signals.filter((x) => x.name === name).reduce((n, x) => n + x.n, 0);
   const hour = f.hour != null ? Number(f.hour) : null;
+  // the installed app is only known since APP_SINCE: a stretch before that would count every visit as «not the app»
+  const beforeFrom = Date.parse(data.from) - (Date.parse(data.to) - Date.parse(data.from));
+  const appBefore = beforeFrom >= APP_SINCE ? b.as_app : 0;
 
   return (
     <div className="space-y-4">
@@ -587,12 +594,12 @@ function Overview({ data, f, href, live }: { data: Traffic; f: Filters; href: Hr
       </div>
 
       {/* the plain question: is Pointili being opened as an app, or as a page in somebody's browser */}
-      <Card title="منين يخدمو بيها؟" hint="الأبليكاسيون المصوبة، ولّا صفحة في براوزر">
+      <Card title="منين يخدمو بيها؟" hint="أبليكاسيون ولّا براوزر">
         <Stats cols={3}>
           <Stat
             label="من الأبليكاسيون"
             value={data.as_app}
-            sub={<><Delta now={data.as_app} before={b.as_app} /><Pct a={data.as_app} b={data.visits} /> · {data.app_people} واحد</>}
+            sub={<><Delta now={data.as_app} before={appBefore} /><Pct a={data.as_app} b={data.visits} /> · {data.app_people} واحد</>}
             tone="mint"
           />
           <Stat label="من براوزر عادي" value={data.as_web} sub={<><Pct a={data.as_web} b={data.visits} /> · Chrome، Safari…</>} />

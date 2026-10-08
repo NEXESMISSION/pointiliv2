@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 
 export type Menu = { key: string; name: string; value: string | null; items: { v: string; n: number | null; label: string }[] };
@@ -20,10 +20,17 @@ export function TrafficFilters({ menus, query, from, to }: { menus: Menu[]; quer
   const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
-  const on = menus.filter((m) => m.value).length + (from ? 1 : 0);
+  // filters with no menu of their own (an hour tapped on the chart, one phone's visits) count too
+  const on = menus.filter((m) => m.value).length + (from ? 1 : 0) + (query.hour ? 1 : 0) + (query.same ? 1 : 0);
+
+  // the address as last asked for: two menus changed before the page comes back both stay
+  const asked = useRef(query);
+  useEffect(() => {
+    asked.current = query;
+  }, [query]);
 
   const go = (set: Record<string, string | null>) => {
-    const q = new URLSearchParams(query);
+    const q = new URLSearchParams(asked.current);
     for (const [k, v] of Object.entries(set)) {
       if (v) q.set(k, v);
       else q.delete(k);
@@ -31,6 +38,7 @@ export function TrafficFilters({ menus, query, from, to }: { menus: Menu[]; quer
     // a new question: back to the list's start, out of any one visit
     q.delete("v");
     q.delete("n");
+    asked.current = Object.fromEntries(q);
     const s = q.toString();
     start(() => router.push(`/admin/traffic${s ? `?${s}` : ""}`, { scroll: false }));
   };
@@ -77,30 +85,9 @@ export function TrafficFilters({ menus, query, from, to }: { menus: Menu[]; quer
         {/* the founder's own days: from one, up to another (the same, for one day) */}
         <span className={`${box} col-span-2 gap-1.5 px-2.5 ${from ? "border-brand bg-brand-soft text-brand" : "border-line bg-surface text-muted"}`}>
           من
-          <input
-            type="date"
-            dir="ltr"
-            value={from ?? ""}
-            onChange={(e) => {
-              const d = e.target.value || null;
-              go(d ? { from: d, to: to && to >= d ? to : d, d: null } : { from: null, to: null });
-            }}
-            aria-label="من نهار"
-            className="h-7 w-[8.25rem] bg-transparent text-[0.8125rem] text-body outline-none pointer-coarse:text-[16px]"
-          />
+          <DateBox key={`from:${from ?? ""}`} value={from} label="من نهار" apply={(d) => go(d ? { from: d, to: to && to >= d ? to : d, d: null } : { from: null, to: null })} />
           لين
-          <input
-            type="date"
-            dir="ltr"
-            value={to ?? ""}
-            min={from ?? undefined}
-            onChange={(e) => {
-              const d = e.target.value || null;
-              go(d ? { to: d, from: from && from <= d ? from : d, d: null } : { to: null });
-            }}
-            aria-label="لين نهار"
-            className="h-7 w-[8.25rem] bg-transparent text-[0.8125rem] text-body outline-none pointer-coarse:text-[16px]"
-          />
+          <DateBox key={`to:${to ?? ""}`} value={to} min={from} label="لين نهار" apply={(d) => go(d ? { to: d, from: from && from <= d ? from : d, d: null } : { to: null })} />
           {from && (
             <button type="button" onClick={() => go({ from: null, to: null })} aria-label="نحّي النهارات" className="grid size-6 place-items-center rounded-full hover:bg-brand/10">
               <X className="size-3.5" />
@@ -109,5 +96,49 @@ export function TrafficFilters({ menus, query, from, to }: { menus: Menu[]; quer
         </span>
       </div>
     </div>
+  );
+}
+
+/**
+ * One day, typed or picked. What is typed stays in the box (no page asked for
+ * on every key: «1» then «5» is the 15th, not the 1st and then the 5th); it is
+ * applied once the hand stops, or at once on Enter or on leaving the box.
+ * A new address brings a new box (its key), with the day that is now on.
+ */
+function DateBox({ value, min, label, apply }: { value: string | null; min?: string | null; label: string; apply: (day: string | null) => void }) {
+  const [v, setV] = useState(value ?? "");
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sent = useRef(value ?? "");
+  const applyRef = useRef(apply);
+  useEffect(() => {
+    applyRef.current = apply;
+  }, [apply]);
+  const flush = (day: string) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    if (day === sent.current) return;
+    sent.current = day;
+    applyRef.current(day || null);
+  };
+  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
+  return (
+    <input
+      type="date"
+      dir="ltr"
+      value={v}
+      min={min ?? undefined}
+      onChange={(e) => {
+        const day = e.target.value;
+        setV(day);
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => flush(day), 900);
+      }}
+      onBlur={() => flush(v)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") flush(v);
+      }}
+      aria-label={label}
+      className="h-7 w-[8.25rem] bg-transparent text-[0.8125rem] text-body outline-none pointer-coarse:text-[16px]"
+    />
   );
 }

@@ -118,10 +118,15 @@ function arrival(): Record<string, string | boolean | null> {
     utm_term: first ? q.get("utm_term") : null,
     fbclid: first && q.has("fbclid"),
     // the installed app or a browser tab: only the page itself can tell
-    standalone: typeof matchMedia === "function" && (matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: minimal-ui)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true),
+    standalone: standaloneNow(),
     screen: `${screen.width}x${screen.height}`,
     lang: navigator.language,
   };
+}
+
+/** Opened as the installed app (home screen), not in a browser tab. */
+function standaloneNow(): boolean {
+  return typeof matchMedia === "function" && (matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: minimal-ui)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
 }
 
 /** A page opened from an ad other than the one this visit came from starts a visit of its own. */
@@ -145,15 +150,20 @@ function ensureVisit(): Visit {
     }
   }
   const t = Date.now();
-  if (!visit || t - visit.last > QUIET_MS || newAd(visit)) {
+  // the installed app and the browser share one storage on Android: opening the
+  // app right after a browser visit is a sitting of its own, not the browser's
+  const otherDoor = !!visit && !landed && !!visit.info.standalone !== standaloneNow();
+  if (!visit || t - visit.last > QUIET_MS || newAd(visit) || otherDoor) {
     if (visit) {
-      // what the old sitting still owes goes out under its own name
-      if (view) {
+      // what the old sitting still owes goes out under its own name, as gone: it
+      // ended. A screen already closed (and sent) when the page was hidden is not
+      // sent again — that would stretch the old visit to now and show it online.
+      if (view && view.left_at == null) {
         settle(view);
-        view.left_at ??= now();
+        view.left_at = now();
         mark(view);
       }
-      flush(true);
+      flush(true, true);
     }
     visit = { id: id(), last: t, info: arrival() };
     // a screen left open through the quiet goes on as the new sitting's first one
@@ -333,8 +343,10 @@ export function startTracking() {
       view.since = lastInput;
       view.left_at = null;
       mark(view);
-      // back on the screen: the console sees it now, not at the next batch
-      ping(false);
+      // back on the screen: the console sees it now, not at the next batch — and
+      // a visit that has just begun (after the quiet) gets its row with it, which
+      // a ping alone could not make
+      flush(false);
     }
   });
   addEventListener("pagehide", () => {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
 import { customerAt, give as handOver, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
+import { PickItem, type Item } from "@/components/PickItem";
 import { Pass } from "@/components/Pass";
 import { TryItButton, type DemoShop } from "@/components/TryIt";
 import { Scanner } from "@/components/Scanner";
@@ -95,8 +96,11 @@ function errorText(code?: string): string {
  * code in their wallet is the same one), and a question comes up — give it
  * now, or not now.
  */
-export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset?: string; shop?: DemoShop }) {
+export function Collect({ by, preset = "", shop, items = [] }: { by: "scan" | "code"; preset?: string; shop?: DemoShop; items?: Item[] }) {
   const [mode, setMode] = useState(by);
+  // what this stamp is for, asked before the camera opens and forgotten
+  // after it is given, so the next customer is a new question
+  const [item, setItem] = useState<Item | null>(null);
   const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
   const [step, setStep] = useState<Step>({ kind: "idle" });
   const [round, setRound] = useState(0);
@@ -137,7 +141,7 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
     if (step.kind !== "found" && step.kind !== "handed") return;
     const { name, card } = step;
     setStep({ kind: "giving", name, card, waiting: null });
-    const res = await giveStamp(digits).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
+    const res = await giveStamp(digits, item?.id ?? null).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
     if (res.ok && res.card) {
       navigator.vibrate?.(60);
       setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null, moment: res.moment ?? null });
@@ -193,6 +197,7 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
   };
 
   const again = () => {
+    setItem(null);
     asked.current = "";
     later.current = null;
     setPop(null);
@@ -229,6 +234,22 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
   const name = "name" in step ? step.name : null;
   const who = name ?? t.someone;
 
+  // a shop that says what it sells answers first — here as at the counter, so
+  // a tampon given by hand is never written down against nothing
+  if (items.length > 0 && !item && step.kind === "idle") {
+    return (
+      <main className="safe-t safe-b relative mx-auto flex h-dvh w-full max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
+        <header className="flex shrink-0 items-center gap-3 pt-2">
+          <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
+            <ChevronRight className="size-5" />
+          </Link>
+          <h1 className="min-w-0 flex-1 truncate text-[1.375rem] font-bold">{t.collect}</h1>
+        </header>
+        <PickItem items={items} onPick={setItem} />
+      </main>
+    );
+  }
+
   return (
     <main className="safe-t safe-b relative mx-auto flex h-dvh w-full max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
       {((step.kind === "done" && step.gift) || step.kind === "handed") && <Confetti count={70} />}
@@ -237,6 +258,11 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
           <ChevronRight className="size-5" />
         </Link>
         <h1 className="min-w-0 flex-1 truncate text-[1.375rem] font-bold">{t.collect}</h1>
+        {item && (
+          <button type="button" onClick={() => setItem(null)} className="press flex shrink-0 items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[0.8438rem] font-bold shadow-card">
+            {item.name} <span className="text-muted">{t.changeItem}</span>
+          </button>
+        )}
       </header>
 
       {/* two ways: the camera, or the code typed */}
