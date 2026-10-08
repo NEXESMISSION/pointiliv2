@@ -1723,7 +1723,10 @@ language plpgsql stable security definer set search_path = '' as $$
 declare v_uid uuid := auth.uid(); v_opened timestamptz;
 begin
   if v_uid is null then return null; end if;
-  select created_at into v_opened from public.shops where owner_id = v_uid;
+  -- only somebody who is already set up and running: a shop with its card made.
+  -- Halfway through opening, nothing is «new» yet — it is all new — and a note
+  -- across the middle of it is an interruption, not news.
+  select created_at into v_opened from public.shops where owner_id = v_uid and goal is not null;
   if v_opened is null then return null; end if;
   if exists (select 1 from public.news_views where person_id = v_uid and seen_at >= public.tunis_today()) then return null; end if;
   return (
