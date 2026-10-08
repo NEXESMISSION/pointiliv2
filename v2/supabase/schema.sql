@@ -276,6 +276,9 @@ create table if not exists public.visits (
   is_admin    boolean not null default false,
   is_bot      boolean not null default false
 );
+-- opened from the home screen (the installed app) rather than a browser tab:
+-- only the page itself can tell, so the browser says so when the visit opens
+alter table public.visits add column if not exists standalone boolean not null default false;
 create index if not exists visits_started_idx on public.visits (started_at desc);
 create index if not exists visits_visitor_idx on public.visits (visitor);
 -- where someone is right now: while a page of the site is on their screen the
@@ -1094,6 +1097,8 @@ end $$;
 
 -- the shops: the real ones, or (p_tests) the test ones — never both in one list
 drop function if exists public.admin_shops(text);
+-- the shop list reads every owner's own visits (how interested they are)
+create index if not exists visits_user_idx on public.visits (user_id) where user_id is not null;
 create or replace function public.admin_shops(p_q text default null, p_tests boolean default false) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare v_like text := '%' || replace(replace(coalesce(trim(p_q), ''), '%', ''), '_', '') || '%'; v_all boolean;
@@ -1111,8 +1116,34 @@ begin
       'customers', (select count(*) from public.cards c where c.shop_id = s.id),
       'stamps', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
       'today', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp' and m.created_at >= public.tunis_today()),
-      'last_at', (select max(m.created_at) from public.moments m where m.shop_id = s.id)) order by s.created_at desc)
+      'last_at', (select max(m.created_at) from public.moments m where m.shop_id = s.id),
+      -- how interested the owner is, read off what they did, not what they said:
+      -- last seen, on the site right now, on how many days, for how long, the
+      -- payment page opened, Pointili put on the phone, the notifications on,
+      -- the demo watched; and the customers — «real» ones got a tampon more
+      -- than an hour after the shop opened (a shop in use), «early» ones only
+      -- within that first hour (a cousin at the owner's side, at sign-up)
+      'seen_at', o.seen_at, 'online', coalesce(o.online, false), 'visits', coalesce(o.visits, 0), 'days', coalesce(o.days, 0),
+      'ms', coalesce(ow.ms, 0), 'pay', coalesce(ow.pay, false), 'app', coalesce(og.app, false), 'tried', coalesce(og.tried, false),
+      'push', exists (select 1 from public.push_subs ps where ps.user_id = s.owner_id),
+      'real', coalesce(oc.real, 0), 'early', coalesce(oc.early, 0), 'real_stamps', coalesce(oc.stamps, 0)) order by s.created_at desc)
     from public.shops s left join public.people p on p.id = s.owner_id
+    left join lateral (
+      select greatest(max(v.last_at), max(v.here_at)) as seen_at, count(*) as visits,
+             count(distinct (v.started_at at time zone 'Africa/Tunis')::date) as days,
+             bool_or(v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds') as online
+      from public.visits v where v.user_id = s.owner_id) o on true
+    left join lateral (
+      select sum(w.active_ms) as ms, bool_or(w.route = '/shop/pay') as pay
+      from public.visits v join public.views w on w.visit_id = v.id where v.user_id = s.owner_id) ow on true
+    left join lateral (
+      select bool_or(g.name in ('pwa_installed', 'pwa_accepted', 'pwa_open')) as app, bool_or(g.name = 'tryit') as tried
+      from public.visits v join public.signals g on g.visit_id = v.id where v.user_id = s.owner_id) og on true
+    left join lateral (
+      select count(*) filter (where x.late > 0) as real, count(*) filter (where x.late = 0) as early, sum(x.late) as stamps
+      from (select (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'stamp' and m.created_at > s.created_at + interval '1 hour') as late
+            from public.cards c join public.people cp on cp.id = c.user_id
+            where c.shop_id = s.id and c.user_id <> s.owner_id and not (cp.is_admin or cp.is_tester or public.is_robot(cp.id))) x) oc on true
     where (p_q is null or trim(p_q) = '' or s.name ilike v_like or coalesce(p.phone, '') like v_like or coalesce(p.name, '') ilike v_like)
       and (v_all or (not public.is_robot(s.owner_id) and coalesce(p.is_admin or p.is_tester, false) = coalesce(p_tests, false)))
   ), '[]'::jsonb);
@@ -1868,9 +1899,10 @@ end $$;
 -- p_all: with the founder's own visits (signed in as the founder, or on a
 -- phone the founder ever used the site on, or on a tester's account) and the
 -- robots'. Only the console's own functions call it (no grant).
+drop function if exists public.traffic_visits(timestamptz, timestamptz, boolean, jsonb);
 create or replace function public.traffic_visits(p_from timestamptz, p_to timestamptz, p_all boolean, p_f jsonb)
 returns table (id uuid, visitor text, user_id uuid, started_at timestamptz, last_at timestamptz, src text, camp text, meta boolean,
-               dev text, os text, br text, city text, hour int, back boolean, who text, keys text[], did text[], misses text[])
+               dev text, os text, br text, app boolean, city text, hour int, back boolean, who text, keys text[], did text[], misses text[])
 language plpgsql stable set search_path = '' as $$
 #variable_conflict use_column
 declare
@@ -1913,7 +1945,7 @@ begin
     select win.id, win.visitor, win.user_id, win.started_at, win.last_at,
       coalesce(win.source, 'direct') as src, win.campaign as camp,
       win.fbclid or coalesce(win.source, '') in ('facebook', 'instagram', 'fb', 'ig') as meta,
-      coalesce(win.device, '?') as dev, coalesce(win.os, '?') as os, coalesce(win.browser, '?') as br,
+      coalesce(win.device, '?') as dev, coalesce(win.os, '?') as os, coalesce(win.browser, '?') as br, win.standalone as app,
       coalesce(nullif(win.city, ''), win.country, '?') as city,
       extract(hour from win.started_at at time zone 'Africa/Tunis')::int as hour,
       win.started_at > firsts.at as back,
@@ -1932,7 +1964,7 @@ begin
     left join sg on sg.visit_id = win.id
     left join rg on rg.visit_id = win.id
   )
-  select a.id, a.visitor, a.user_id, a.started_at, a.last_at, a.src, a.camp, a.meta, a.dev, a.os, a.br, a.city, a.hour, a.back, a.who, a.keys, a.did,
+  select a.id, a.visitor, a.user_id, a.started_at, a.last_at, a.src, a.camp, a.meta, a.dev, a.os, a.br, a.app, a.city, a.hour, a.back, a.who, a.keys, a.did,
     array_remove(array[
       case when f_src is not null and not (case when f_src = 'meta' then a.meta else a.src = f_src end) then 'src' end,
       case when f_camp is not null and a.camp is distinct from f_camp then 'camp' end,
@@ -2000,6 +2032,11 @@ begin
       'taps', (select count(*) from tp),
       'rage', (select count(*) from tp where tp.rage),
       'from_ads', (select count(*) from k where k.meta),
+      -- where they are using it from: the installed app, an ad's own browser, or the web
+      'as_app', (select count(*) from k where k.app),
+      'as_inapp', (select count(*) from k where not k.app and k.br in ('Facebook', 'Instagram', 'TikTok')),
+      'as_web', (select count(*) from k where not k.app and k.br not in ('Facebook', 'Instagram', 'TikTok')),
+      'app_people', (select count(distinct k.visitor) from k where k.app),
       'accounts', (select count(distinct k.user_id) from k where 'signup' = any (k.did)),
       'shops', (select count(distinct k.user_id) from k where 'shop' = any (k.did)),
       'signed', (select count(*) from k where k.user_id is not null),
@@ -2009,6 +2046,7 @@ begin
         'avg_ms', (select coalesce(avg(bv.ms), 0)::bigint from bv),
         'bounce', (select coalesce(avg(case when bv.pages <= 1 then 1.0 else 0 end), 0) from bv),
         'from_ads', (select count(*) from b where b.meta),
+        'as_app', (select count(*) from b where b.app),
         'accounts', (select count(distinct b.user_id) from b where 'signup' = any (b.did)),
         'shops', (select count(distinct b.user_id) from b where 'shop' = any (b.did))),
       'video_s', (select coalesce(avg(substring(s.detail from '^(\d+)s')::int), 0)::int
@@ -2196,12 +2234,13 @@ begin
   if v is null or coalesce(v ->> 'id', '') !~ '^[0-9a-f-]{36}$' then return; end if;
   v_id := (v ->> 'id')::uuid;
   insert into public.visits (id, visitor, user_id, landing, referrer, source, medium, campaign, content, term, fbclid,
-                             device, os, browser, screen, lang, country, city, is_admin, is_bot)
+                             device, os, browser, screen, lang, country, city, is_admin, is_bot, standalone)
   values (v_id, left(v ->> 'visitor', 64), nullif(v ->> 'user_id', '')::uuid, left(v ->> 'landing', 300), left(v ->> 'referrer', 300),
           left(v ->> 'source', 60), left(v ->> 'medium', 60), left(v ->> 'campaign', 120), left(v ->> 'content', 120), left(v ->> 'term', 120),
           coalesce((v ->> 'fbclid')::boolean, false), left(v ->> 'device', 20), left(v ->> 'os', 30), left(v ->> 'browser', 40),
           left(v ->> 'screen', 20), left(v ->> 'lang', 20), left(v ->> 'country', 4), left(v ->> 'city', 60),
-          coalesce((v ->> 'is_admin')::boolean, false), coalesce((v ->> 'is_bot')::boolean, false))
+          coalesce((v ->> 'is_admin')::boolean, false), coalesce((v ->> 'is_bot')::boolean, false),
+          coalesce((v ->> 'standalone')::boolean, false))
   on conflict (id) do update set
     last_at = now(),
     user_id = coalesce(excluded.user_id, public.visits.user_id),
