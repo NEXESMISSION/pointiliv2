@@ -205,6 +205,8 @@ create table if not exists public.codes (
 create index if not exists codes_shop_idx on public.codes (shop_id, created_at desc);
 -- the counter's private radio: Realtime topic "pointili:<signal>", told of every scan
 alter table public.shops add column if not exists signal text not null default encode(extensions.gen_random_bytes(16), 'hex');
+-- a shop may say what it sells; until it does, the counter never asks (see items, below)
+alter table public.shops add column if not exists items_on boolean not null default false;
 
 create table if not exists public.moments (
   id          bigint generated always as identity primary key,
@@ -492,7 +494,7 @@ begin
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal, 'logo', s.logo, 'stamp_gap', s.stamp_gap) end);
+      'signal', s.signal, 'logo', s.logo, 'stamp_gap', s.stamp_gap, 'items_on', s.items_on) end);
 end $$;
 
 -- a one-time note seen: added once to the person's list (unknown notes refused)
@@ -741,8 +743,117 @@ language sql stable security definer set search_path = '' as $$
      and not exists (select 1 from public.people p where p.id = s.owner_id and (p.is_admin or p.is_tester))
 $$;
 
+-- ═══ what the stamp was for ═══════════════════════════════════════════════
+--
+-- A shop may say what it sells. When it does, the counter asks which one
+-- before it shows a code at all — so a code never exists without an answer,
+-- and nothing can be written down against the wrong thing. A shop that says
+-- nothing works exactly as it always did: this whole section sleeps.
+
+create table if not exists public.items (
+  id          bigint generated always as identity primary key,
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  name        text not null check (char_length(btrim(name)) between 1 and 40),
+  rank        int not null default 0,
+  created_at  timestamptz not null default now()
+);
+create index if not exists items_shop_idx on public.items (shop_id, rank, id);
+alter table public.codes   add column if not exists item_id bigint references public.items (id) on delete set null;
+alter table public.moments add column if not exists item_id bigint references public.items (id) on delete set null;
+create index if not exists moments_item_idx on public.moments (item_id) where item_id is not null;
+
+-- the owner's own list
+create or replace function public.my_items() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', i.id, 'name', i.name) order by i.rank, i.id), '[]'::jsonb)
+  from public.items i join public.shops s on s.id = i.shop_id
+  where s.owner_id = auth.uid() and i.rank < 999
+$$;
+
+-- the list, rewritten whole: a name already known keeps its id, so its
+-- history holds. A name taken away is retired rather than deleted while a
+-- moment still points at it.
+create or replace function public.set_items(p_names text[]) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_name text; v_rank int := 0; v_keep bigint[] := '{}'; v_id bigint;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if coalesce(array_length(p_names, 1), 0) > 20 then return public.err('too_many'); end if;
+
+  foreach v_name in array coalesce(p_names, '{}') loop
+    v_name := btrim(v_name);
+    continue when v_name = '' or char_length(v_name) > 40;
+    select id into v_id from public.items where shop_id = s.id and lower(btrim(name)) = lower(v_name) limit 1;
+    if v_id is null then
+      insert into public.items (shop_id, name, rank) values (s.id, v_name, v_rank) returning id into v_id;
+    else
+      update public.items set name = v_name, rank = v_rank where id = v_id;
+    end if;
+    v_keep := v_keep || v_id;
+    v_rank := v_rank + 1;
+  end loop;
+
+  delete from public.items i where i.shop_id = s.id and not (i.id = any (v_keep))
+    and not exists (select 1 from public.moments m where m.item_id = i.id);
+  update public.items set rank = 999 where shop_id = s.id and not (id = any (v_keep));
+  -- an empty list cannot leave the counter asking a question with no answers
+  update public.shops set items_on = items_on and coalesce(array_length(v_keep, 1), 0) > 0 where id = s.id;
+  return jsonb_build_object('ok', true, 'items', public.my_items());
+end $$;
+
+-- the switch, kept apart from the list, so turning it off keeps the names
+create or replace function public.set_items_on(p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_n int;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  select count(*) into v_n from public.items where shop_id = s.id and rank < 999;
+  if p_on and v_n = 0 then return public.err('no_items'); end if;
+  update public.shops set items_on = p_on where id = s.id;
+  return jsonb_build_object('ok', true, 'on', p_on);
+end $$;
+
+-- Not «what sells most» — the till says that. What the till cannot say: of
+-- the people whose FIRST stamp was this thing, how many ever came again.
+create or replace function public.item_report(p_days int default 30) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_from timestamptz;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  v_from := now() - make_interval(days => greatest(1, least(365, coalesce(p_days, 30))));
+  return (
+    with stamps as (
+      select m.card_id, m.item_id, m.created_at from public.moments m
+      where m.shop_id = s.id and m.kind = 'stamp'
+    ),
+    firsts as (
+      select distinct on (card_id) card_id, item_id from stamps order by card_id, created_at
+    ),
+    backs as (
+      select f.item_id, count(*) as started,
+             count(*) filter (where (select count(*) from stamps x where x.card_id = f.card_id) > 1) as came_back
+      from firsts f group by f.item_id
+    )
+    select coalesce(jsonb_agg(jsonb_build_object(
+             'id', i.id, 'name', i.name,
+             'n', (select count(*) from stamps x where x.item_id = i.id and x.created_at >= v_from),
+             'started', coalesce(b.started, 0), 'came_back', coalesce(b.came_back, 0)
+           ) order by (select count(*) from stamps x where x.item_id = i.id and x.created_at >= v_from) desc, i.rank), '[]'::jsonb)
+    from public.items i left join backs b on b.item_id = i.id
+    where i.shop_id = s.id and i.rank < 999
+  );
+end $$;
+
 -- ═══ the counter: a code that works once ═══════════════════════════════════
-create or replace function public.new_code() returns jsonb
+-- The old new_code() took nothing. It is replaced rather than added beside,
+-- so PostgREST sees one function of this name; the default answers a call
+-- with no arguments, so a counter running the previous build keeps minting
+-- right through the deploy.
+drop function if exists public.new_code();
+create or replace function public.new_code(p_item bigint default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_token text; v_id uuid; v_exp timestamptz := now() + interval '60 seconds';
 begin
@@ -754,8 +865,18 @@ begin
   if (select count(*) from public.codes where shop_id = s.id and created_at > now() - interval '10 minutes') > 400 then
     return public.err('slow_down');
   end if;
+  -- the shop asks what it was for: no answer, no code. Not a rule the screen
+  -- is trusted to keep — the code simply is not made.
+  if s.items_on then
+    if p_item is null then return public.err('pick_item'); end if;
+    if not exists (select 1 from public.items where id = p_item and shop_id = s.id and rank < 999) then
+      return public.err('pick_item');
+    end if;
+  else
+    p_item := null;
+  end if;
   v_token := translate(encode(extensions.gen_random_bytes(24), 'base64'), '+/=', '-_');
-  insert into public.codes (shop_id, hash, expires_at) values (s.id, public.sha(v_token), v_exp) returning id into v_id;
+  insert into public.codes (shop_id, hash, expires_at, item_id) values (s.id, public.sha(v_token), v_exp, p_item) returning id into v_id;
   delete from public.codes where shop_id = s.id and used_at is null and held_hash is null and expires_at < now() - interval '1 day';
   return jsonb_build_object('ok', true, 'id', v_id, 'token', v_token, 'expires_at', v_exp);
 end $$;
@@ -884,7 +1005,7 @@ begin
     gift = case when (stamps = 0 and not v_waiting) or gift is null then s.gift else gift end,
     stamps = stamps + 1, last_at = now()
   where id = c.id returning * into c;
-  insert into public.moments (shop_id, card_id, kind) values (s.id, c.id, 'stamp');
+  insert into public.moments (shop_id, card_id, kind, item_id) values (s.id, c.id, 'stamp', k.item_id);
   if c.stamps >= c.goal and not v_waiting then
     insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
     v_gift := true;
@@ -2198,7 +2319,8 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
-  public.new_code(), public.counter(uuid, timestamptz), public.give(bigint), public.unstamp(bigint),
+  public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
+  public.counter(uuid, timestamptz), public.give(bigint), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),

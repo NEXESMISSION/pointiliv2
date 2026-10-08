@@ -64,6 +64,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
     { href: "/shop/stats", mark: <Icon3D name="chart" size={30} />, label: t.statsTitle },
     { href: "/shop/customers", mark: <Icon3D name="people" size={30} />, label: t.customersTitle },
     { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
+    { href: "/shop/items", mark: <Icon3D name="basket" size={30} />, label: t.itemsTile },
     {
       // the shop's own tile shows its logo: the logo tip lights this one
       href: "/shop/setup?edit=1",
@@ -133,8 +134,8 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
       </Link>
       </div>
 
-      {/* the four places to go, in one row */}
-      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-5 gap-1.5">
+      {/* the places to go, in one row — the row keeps its height however many it holds */}
+      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-6 gap-1.5">
         {options.map((o) => (
           <Link key={o.href} id={o.id} href={o.href} className="press flex flex-col items-center gap-1 rounded-[1.125rem] bg-surface px-0.5 py-[clamp(0.75rem,1.9dvh,1.15rem)] shadow-card">
             {o.mark}

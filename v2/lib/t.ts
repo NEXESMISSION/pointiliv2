@@ -112,6 +112,7 @@ export const t = {
   // the account
   account: "الكونت",
   save: "سجّل",
+  saving: "نسجّلو...",
   saved: "تسجّل",
 
   // the owner: open the shop
@@ -211,6 +212,23 @@ export const t = {
   cardGiftPh: "مثلا: قهوة بلاش",
   cardColor: "اللون",
   cardDone: "حلّ الكود",
+
+  // what the stamp was for: a shop that says what it sells is asked before the code
+  pickAsk: "على شنوّة التامبون؟",
+  pickHint: "اختار، وبعدها يطلع الكود",
+  codeFor: "الكود هذا على",
+  changeItem: "بدّل",
+  itemsTitle: "شنوّة تبيع؟",
+  itemsWhat: "اكتب أسماء اللي تبيع فيهم، واحد في كل سطر. كل تامبون يتسجّل على شنوّة كان.",
+  itemsPlaceholder: "قهوة\nكابوسان\nتي",
+  itemsOnePerLine: "واحد في كل سطر",
+  itemsCount: "حاجات",
+  itemsAskOn: "اسألني في الكونتوار",
+  itemsAskOnHint: "قبل ما يطلع الكود، نسألك على شنوّة",
+  itemsTooMany: "برشا. 20 وفا.",
+  itemsNoSave: "ما تسجّلتش. عاود.",
+  itemsWhatYouSell: "شنوّة تبيع",
+  itemsTile: "الحاجات",
   // the card, one question at a time
   wizOpened: "{shop} تحلّ في Pointili",
   wizTitle: "توّا نعملو مع بعضنا أوّل كارط فيديليتي متاعك",

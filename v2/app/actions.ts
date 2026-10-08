@@ -219,6 +219,16 @@ export async function cardChange(goal: number, gift: string): Promise<{ ok: bool
   return res ?? { ok: false };
 }
 
+/** What the shop sells, written whole: the names, then whether the counter asks. An empty list cannot leave the question on. */
+export async function saveItems(names: string[], on: boolean): Promise<{ ok: boolean; error?: string }> {
+  const clean = names.map((n) => n.trim()).filter(Boolean).slice(0, 20);
+  const res = await call<{ ok: boolean; error?: string }>("set_items", { p_names: clean });
+  if (!res?.ok) return { ok: false, error: res?.error ?? "network" };
+  await call("set_items_on", { p_on: on && clean.length > 0 });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
 export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push" | "install"): Promise<void> {
   await call("see", { p_key: note });
