@@ -585,7 +585,8 @@ function Overview({ data, f, href, live }: { data: Traffic; f: Filters; href: Hr
               key: String(i),
               label: signalName(s.name),
               sub: s.detail ? <Bidi>{s.detail}</Bidi> : null,
-              n: s.n,
+              // the visits that did it (what the list behind the link shows), not how many times
+              n: s.visits,
               href: href({ did: f.did === s.name ? null : s.name }),
               on: f.did === s.name,
             }))}

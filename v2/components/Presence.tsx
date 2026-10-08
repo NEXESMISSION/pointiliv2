@@ -95,6 +95,8 @@ export function whereSaid(path: string | null): string {
     [/^\/shop\/stats/, "في الأرقام"],
     [/^\/shop\/card/, "في الكارط"],
     [/^\/shop\/pay/, "في الخلاص"],
+    [/^\/shop\/items/, "في الحاجات"],
+    [/^\/shop\/settings/, "في الإعدادات"],
     [/^\/shop\/setup/, "في المحل متاعو"],
     [/^\/shop\/new/, "يسجّل"],
     [/^\/shop\/?$/, "في المحل"],
@@ -104,11 +106,14 @@ export function whereSaid(path: string | null): string {
     [/^\/(s\/|scan)/, "يسكاني كود"],
     [/^\/prix/, "يشوف الأسوام"],
     [/^\/(faq|guide)/, "يقرا الأسئلة"],
+    [/^\/u\//, "يشوف صفحة محل"],
+    [/^\/privacy/, "يقرا الخصوصية"],
     [/^\/(login|forgot)/, "يدخل للكونت"],
     [/^\/join/, "يحلّ كونت"],
     [/^\/$/, "الصفحة الأولى"],
   ];
-  return places.find(([re]) => re.test(p))?.[1] ?? p;
+  // a page with no name yet: its path, sealed, so its slash does not jump to the end of the Arabic line
+  return places.find(([re]) => re.test(p))?.[1] ?? `⁨${p}⁩`;
 }
 
 /** The dot: green and beating (here), amber (open, left alone), grey (gone). */
@@ -144,12 +149,12 @@ export function Presence({ user, className = "" }: { user: string | null | undef
   );
 }
 
-/** How many are on a page of the site right now (accounts and strangers): a number for a tile. */
-export function OnlineCount() {
+/** How many are on a page of the site right now (accounts and strangers) — or, `owners`, how many shops' owners: a number for a tile. */
+export function OnlineCount({ owners = false }: { owners?: boolean }) {
   const d = useOnline();
   if (!d) return <span className="text-faint">…</span>;
-  const n = d.people.filter((p) => p.state !== "gone").length;
-  return <>{n + d.strangers}</>;
+  const n = d.people.filter((p) => p.state !== "gone" && (!owners || p.shop)).length;
+  return <>{owners ? n : n + d.strangers}</>;
 }
 
 /** Call and WhatsApp, side by side: the founder's two ways to reach someone at once. */

@@ -200,7 +200,8 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
 
       {/* how interested they are, each tile a list of its own */}
       <Stats cols={6}>
-        <Stat label="متّصلين توّا" value={<OnlineCount />} sub="يتبدّل وحدو" tone="mint" />
+        {/* the owners on the site now, live (the same people as the «متّصلين توّا» list below, which is drawn once) */}
+        {!onTests && <Stat label="متّصلين توّا" value={<OnlineCount owners />} sub="أصحاب محلات · يتبدّل وحدو" tone="mint" />}
         {(["hot", "warm", "cold", "nocard", "paid"] as const).map((l) => {
           const n = scored.filter((x) => x.i.level === l).length;
           const sub = { hot: "عيّطلهم اليوم", warm: "تليفون ينجم يقلبها", cold: "شافو وخرجو", nocard: "ما ينجمو ياخذو حتى تامبون", paid: `من ${shops.length}` }[l];
@@ -278,8 +279,12 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                   </span>
                 </Cell>
                 <Cell>
-                  <span className="block min-w-[9rem] max-w-[15rem]" title={`${i.score} نقطة`}>
+                  <span className="block min-w-[9rem] max-w-[15rem]">
                     <Pill tone={LEVELS[i.level].tone}>{LEVELS[i.level].label}</Pill>
+                    {/* the score itself, in sight (a title would sit under the row's link, never seen) */}
+                    <span className="ms-1.5 text-[0.6875rem] font-semibold text-faint">
+                      <Num>{i.score}</Num>
+                    </span>
                     {i.why.length > 0 && <span className="mt-1 block text-[0.75rem] leading-snug text-muted">{i.why.slice(0, 3).join(" · ")}</span>}
                   </span>
                 </Cell>
@@ -292,7 +297,11 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                 </Cell>
                 <Cell n>
                   <span className={`block ${s.real ? "font-bold text-mint" : "text-muted"}`}>{s.real}</span>
-                  {s.early > 0 && <span className="block text-[0.6875rem] text-muted">+{s.early} كي حلّ</span>}
+                  {s.early > 0 && (
+                    <span className="block text-[0.6875rem] text-muted">
+                      <Num>{`+${s.early}`}</Num> كي حلّ
+                    </span>
+                  )}
                 </Cell>
                 <Cell n>
                   <span className="block font-semibold text-ink">{s.stamps}</span>
