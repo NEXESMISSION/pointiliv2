@@ -35,7 +35,7 @@ export function Items({ names, on }: { names: string[]; on: boolean }) {
     try {
       const r = await saveItems(lines, live);
       if (!r.ok) {
-        setErr(r.error === "too_many" ? t.itemsTooMany : t.itemsNoSave);
+        setErr(r.error === "too_many" ? t.itemsTooMany : r.error === "too_long" ? t.itemsTooLong : t.itemsNoSave);
         return;
       }
       router.push("/shop");
@@ -53,13 +53,15 @@ export function Items({ names, on }: { names: string[]; on: boolean }) {
       <h1 className="mt-2 text-[1.375rem] font-bold leading-tight">{t.itemsTitle}</h1>
       <p className="mt-1 text-[0.9375rem] leading-relaxed text-muted">{t.itemsWhat}</p>
 
+      {/* its size is in px, not rem: the page's root shrinks to 14px on a small
+          phone, and anything under 16px makes iOS zoom in on the first tap */}
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={7}
         dir="auto"
         placeholder={t.itemsPlaceholder}
-        className="mt-4 w-full rounded-[1.25rem] bg-surface p-4 text-[1.0625rem] leading-[2.1] ring-1 ring-line focus:outline-none focus:ring-2 focus:ring-brand"
+        className="mt-4 w-full rounded-[1.25rem] bg-surface p-4 text-[17px] leading-[2.1] ring-1 ring-line focus:outline-none focus:ring-2 focus:ring-brand"
       />
       <p className="mt-1.5 text-[0.8125rem] text-muted">{lines.length ? `${lines.length} ${t.itemsCount}` : t.itemsOnePerLine}</p>
 

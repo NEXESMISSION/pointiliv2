@@ -221,10 +221,16 @@ export async function cardChange(goal: number, gift: string): Promise<{ ok: bool
 
 /** What the shop sells, written whole: the names, then whether the counter asks. An empty list cannot leave the question on. */
 export async function saveItems(names: string[], on: boolean): Promise<{ ok: boolean; error?: string }> {
-  const clean = names.map((n) => n.trim()).filter(Boolean).slice(0, 20);
+  // say what cannot be kept instead of quietly dropping it: a list cut to
+  // twenty, or a name past forty characters, would otherwise come back from
+  // the server shorter than it was typed with nothing said about why
+  const clean = names.map((n) => n.trim()).filter(Boolean);
+  if (clean.length > 20) return { ok: false, error: "too_many" };
+  if (clean.some((n) => n.length > 40)) return { ok: false, error: "too_long" };
   const res = await call<{ ok: boolean; error?: string }>("set_items", { p_names: clean });
   if (!res?.ok) return { ok: false, error: res?.error ?? "network" };
-  await call("set_items_on", { p_on: on && clean.length > 0 });
+  const sw = await call<{ ok: boolean }>("set_items_on", { p_on: on && clean.length > 0 });
+  if (!sw?.ok) return { ok: false, error: "network" };
   revalidatePath("/", "layout");
   return { ok: true };
 }
