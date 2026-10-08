@@ -211,9 +211,17 @@ export function OnlineNow({ className = "" }: { className?: string }) {
                 <Link href={href} className="absolute inset-0 z-[1]" aria-label={title} />
                 <Dot state={p.state} />
                 <span className="min-w-0 flex-1">
+                  {/* each name sealed: «3RH Coffe» and «ridha» side by side, not run together into one Latin word.
+                      The gap is a plain space, not a margin on the bdi: a Latin bdi reads left to right, so its
+                      inline-start is the outer side here and the two names would touch. */}
                   <span className="block truncate text-[0.9062rem] font-semibold text-ink">
-                    {title}
-                    {p.shop && p.name ? <span className="ms-1.5 text-[0.8125rem] font-normal text-muted">{p.name}</span> : null}
+                    <bdi>{title}</bdi>
+                    {p.shop && p.name ? (
+                      <>
+                        {" "}
+                        <bdi className="text-[0.8125rem] font-normal text-muted">{p.name}</bdi>
+                      </>
+                    ) : null}
                   </span>
                   <span className="block truncate text-[0.75rem] text-muted">
                     {p.state === "gone" ? `كان هنا ${agoSaid(serverNow() - Date.parse(p.at))}` : `${p.state === "here" ? "متّصل" : "مفتوحة عندو"} · ${whereSaid(p.path)}${since ? ` · ${since}` : ""}`}

@@ -33,6 +33,17 @@ function client(ua: string) {
   return { device, os, browser, bot };
 }
 
+/** An ad's words as written: a few of its links come encoded twice («POINTILI+TEST2+%7C+Site»). */
+function said(x: unknown): string | undefined {
+  if (typeof x !== "string" || !x) return undefined;
+  if (!/%[0-9a-f]{2}/i.test(x)) return x;
+  try {
+    return decodeURIComponent(x.replace(/\+/g, " "));
+  } catch {
+    return x;
+  }
+}
+
 /** Where a visit came from: the ad's utm_source, else the site that sent it, else nothing (direct). */
 function source(utm: string | undefined, referrer: string | undefined, fbclid: boolean, host: string): string {
   if (utm) return utm.toLowerCase().slice(0, 60);
@@ -42,7 +53,8 @@ function source(utm: string | undefined, referrer: string | undefined, fbclid: b
   } catch {
     from = "";
   }
-  if (from && from === host) from = "";
+  // the site itself, with or without its www, is not a source
+  if (from && from === host.replace(/^www\./, "")) from = "";
   if (/(^|\.)facebook\.com$|(^|\.)fb\.com$|^l\.facebook\.com$|^lm\.facebook\.com$/.test(from) || fbclid) return "facebook";
   if (/instagram\.com$/.test(from)) return "instagram";
   if (/google\./.test(from)) return "google";
@@ -84,11 +96,11 @@ export async function POST(request: NextRequest) {
     user_id: me?.id ?? null,
     landing: v.landing ?? null,
     referrer: v.referrer ?? null,
-    source: source(typeof v.utm_source === "string" ? v.utm_source : undefined, typeof v.referrer === "string" ? v.referrer : undefined, fbclid, host),
-    medium: v.utm_medium ?? null,
-    campaign: v.utm_campaign ?? null,
-    content: v.utm_content ?? null,
-    term: v.utm_term ?? null,
+    source: source(said(v.utm_source), typeof v.referrer === "string" ? v.referrer : undefined, fbclid, host),
+    medium: said(v.utm_medium) ?? null,
+    campaign: said(v.utm_campaign) ?? null,
+    content: said(v.utm_content) ?? null,
+    term: said(v.utm_term) ?? null,
     fbclid,
     device: who.device,
     os: who.os,
