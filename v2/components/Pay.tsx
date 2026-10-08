@@ -120,17 +120,19 @@ export function TrialBanner({ pay, offer, phone }: { pay: Pay; offer: boolean; p
         {over ? (
           <span className="min-w-0 flex-1 truncate text-[0.875rem] font-bold">{t.trialOverTitle}</span>
         ) : (
-          <span className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold text-body">
-            {t.trialLeft}{" "}
-            <b className="font-bold text-ink">
+          <>
+            {/* the words give way on a narrow phone, never the time: «1 يوم · 02:50» while
+                there are days left, the seconds ticking only on the last day */}
+            <span className="min-w-0 truncate text-[0.875rem] font-semibold text-body">{t.trialLeft}</span>
+            <b className="shrink-0 whitespace-nowrap text-[0.875rem] font-bold text-ink">
               {days > 0 && <>{fill(t.trialDays, { n: days })} · </>}
               <bdi className="num" suppressHydrationWarning>
-                {two(left.h % 24)}:{two(left.m)}:{two(left.s)}
+                {days > 0 ? `${two(left.h % 24)}:${two(left.m)}` : `${two(left.h)}:${two(left.m)}:${two(left.s)}`}
               </bdi>
             </b>
-          </span>
+          </>
         )}
-        <ChevronLeft className="size-4 shrink-0 opacity-60" />
+        <ChevronLeft className="ms-auto size-4 shrink-0 opacity-60" />
       </Link>
       {call}
     </div>
