@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, ExternalLink } from "lucide-react";
+import { Download, ExternalLink, Send } from "lucide-react";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
 import { installApp, isIphone, outsideHref, startPwa, useCanInstall, useInApp, useIosBrowser } from "@/lib/pwa";
@@ -108,10 +108,22 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
     if (iphone) setTimeout(() => document.visibilityState === "visible" && setStuck(true), 1500);
   };
 
+  // The other way out, and the one more people take: WhatsApp is an app, so
+  // opening it leaves Facebook's browser by itself — and it leaves the address
+  // behind in a chat, which is what «open in Chrome» never does. Someone who
+  // closes Facebook an hour later has lost nothing.
+  const send = () => {
+    signal("pwa_out_wa", where);
+    window.location.href = `https://wa.me/?text=${encodeURIComponent(`${t.waShareText}\nhttps://${location.host}${path}`)}`;
+  };
+
   if (look === "line") {
     return (
       <div className={className}>
-        <button type="button" onClick={go} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.875rem] font-bold text-brand">
+        <button type="button" onClick={send} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.875rem] font-bold text-brand">
+          <Send className="size-4" /> {t.waSendSelf}
+        </button>
+        <button type="button" onClick={go} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.875rem] font-semibold text-muted">
           <ExternalLink className="size-4" /> {label}
         </button>
         {stuck && (
@@ -123,15 +135,26 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
     );
   }
   return (
-    <button type="button" onClick={go} className={`press flex w-full items-center gap-3 rounded-[1.375rem] bg-surface p-4 text-start shadow-card ${className}`}>
-      <span className="grid size-10 shrink-0 place-items-center rounded-[0.875rem] bg-brand text-white">
-        <ExternalLink className="size-5" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[1.0312rem] font-bold">{label}</span>
-        <span className="block text-[0.8438rem] leading-snug text-muted">{stuck ? <Mixed text={t.openOutsideStuck} /> : t.openOutsideHint}</span>
-      </span>
-    </button>
+    <div className={className}>
+      <button type="button" onClick={send} className="press flex w-full items-center gap-3 rounded-[1.375rem] bg-surface p-4 text-start shadow-card">
+        <span className="grid size-10 shrink-0 place-items-center rounded-[0.875rem] bg-brand text-white">
+          <Send className="size-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[1.0312rem] font-bold">{t.waSendSelf}</span>
+          <span className="block text-[0.8438rem] leading-snug text-muted">{t.waSendHint}</span>
+        </span>
+      </button>
+      <button type="button" onClick={go} className="press mt-1.5 flex w-full items-center gap-3 rounded-[1.375rem] px-4 py-2.5 text-start">
+        <span className="grid size-7 shrink-0 place-items-center text-muted">
+          <ExternalLink className="size-4" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[0.9375rem] font-bold text-body">{label}</span>
+          <span className="block text-[0.8125rem] leading-snug text-muted">{stuck ? <Mixed text={t.openOutsideStuck} /> : t.openOutsideHint}</span>
+        </span>
+      </button>
+    </div>
   );
 }
 

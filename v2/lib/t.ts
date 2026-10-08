@@ -670,6 +670,11 @@ export const t = {
   openOutside: "حلّ Pointili في {browser}",
   openOutsideHint: "هكا تلقاها ديما، وتنجم تحطّها في تليفونك",
   openOutsideStuck: "ما تحلّتش؟ اضغط ⋯ الفوق واختار «Open in browser»",
+  // the other way out of Facebook's browser: WhatsApp is an app, so it leaves
+  // by itself — and the address stays in a chat the owner keeps
+  waSendSelf: "ابعثها لروحك في واتساب",
+  waSendHint: "الرابط يقعد عندك، ما تضيعهاش",
+  waShareText: "Pointili — المحل متاعي",
   // the install sheet, once, where Android's Chrome offers it
   installPopupBody: "تحلّها من الشاشة كيما أي أبليكاسيون، بلا ما تفتّش عليها",
   installPopupYes: "حطّها",
