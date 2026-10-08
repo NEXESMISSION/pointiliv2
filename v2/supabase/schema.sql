@@ -161,8 +161,7 @@ create table if not exists public.push_subs (
   created_at  timestamptz not null default now()
 );
 create index if not exists push_subs_user_idx on public.push_subs (user_id);
--- a card reminded: once a month at most; a shop's owner nudged the morning after: once
-alter table public.cards add column if not exists reminded_at timestamptz;
+-- a shop's owner nudged the morning after: once (the card's own reminder date is with the cards)
 alter table public.shops add column if not exists nudged_at timestamptz;
 
 -- the shop's logo (optional): a picture in the public «logos» box, set by the owner
@@ -190,6 +189,8 @@ alter table public.cards add column if not exists goal int check (goal between 3
 alter table public.cards add column if not exists gift text;
 create index if not exists cards_user_idx on public.cards (user_id, last_at desc);
 create index if not exists cards_shop_idx on public.cards (shop_id, last_at desc);
+-- a card reminded: once a month at most
+alter table public.cards add column if not exists reminded_at timestamptz;
 
 create table if not exists public.codes (
   id          uuid primary key default gen_random_uuid(),
@@ -692,7 +693,8 @@ begin
     'returning',  (select count(*) from public.cards where shop_id = s.id and stamps > 1),
     'new_week',   (select count(*) from public.cards where shop_id = s.id and created_at >= public.tunis_today() - interval '6 days'),
     'days', coalesce((
-      select jsonb_agg(jsonb_build_object('day', d::date, 'stamps', (
+      -- the day as Tunis says it: d is Tunis midnight, which the database (on UTC) calls the evening before
+      select jsonb_agg(jsonb_build_object('day', (d at time zone 'Africa/Tunis')::date, 'stamps', (
         select count(*) from public.moments m
         where m.shop_id = s.id and m.kind = 'stamp'
           and m.created_at >= d and m.created_at < d + interval '1 day')) order by d)
@@ -761,6 +763,11 @@ create table if not exists public.items (
   created_at  timestamptz not null default now()
 );
 create index if not exists items_shop_idx on public.items (shop_id, rank, id);
+-- like every table: closed to the browser, read and written only through the functions below
+-- (made after the loop that closes the others, so it closes itself)
+alter table public.items enable row level security;
+alter table public.items force row level security;
+revoke all on public.items from anon, authenticated, public;
 alter table public.codes   add column if not exists item_id bigint references public.items (id) on delete set null;
 alter table public.moments add column if not exists item_id bigint references public.items (id) on delete set null;
 create index if not exists moments_item_idx on public.moments (item_id) where item_id is not null;
@@ -1878,9 +1885,11 @@ begin
     p_day1 := v_b;
   else
     p_to := now();
-    p_from := now() - make_interval(days => v_n);
     p_day1 := (now() at time zone 'Africa/Tunis')::date;
     p_day0 := p_day1 - (v_n - 1);
+    -- «24 ساعة» is the last 24 hours; a stretch of days starts at its first
+    -- day's midnight, so the numbers count exactly the days the bars show
+    p_from := case when v_n = 1 then now() - interval '1 day' else p_day0::timestamp at time zone 'Africa/Tunis' end;
   end if;
 end $$;
 
@@ -2052,8 +2061,9 @@ begin
         'as_app', (select count(*) from b where b.app),
         'accounts', (select count(distinct b.user_id) from b where 'signup' = any (b.did)),
         'shops', (select count(distinct b.user_id) from b where 'shop' = any (b.did))),
-      'video_s', (select coalesce(avg(substring(s.detail from '^(\d+)s')::int), 0)::int
-                  from public.signals s join k on k.id = s.visit_id where s.name = 'video_close' and s.detail ~ '^\d+s'),
+      -- a browser writes this detail: six digits at the most, or one forged «99999999999s» empties the page
+      'video_s', (select coalesce(avg(substring(s.detail from '^(\d{1,6})s')::int), 0)::int
+                  from public.signals s join k on k.id = s.visit_id where s.name = 'video_close' and s.detail ~ '^\d{1,6}s'),
       'signals', coalesce((
         select jsonb_agg(row_to_json(x) order by x.n desc) from (
           select s.name, case when s.name = 'video_close' then null else s.detail end as detail, count(*) as n, count(distinct s.visit_id) as visits
@@ -2219,12 +2229,15 @@ begin
       ) x
       join public.people p on p.id = x.user_id
       left join public.shops s on s.owner_id = x.user_id
-      -- the machines' accounts stay out, unless a machine is asking (its own run)
-      where not p.is_admin and (public.sees_robots() or not public.is_robot(p.id))
+      -- the machines' accounts and the founder's test account stay out (as from
+      -- every other number), unless a machine is asking (its own run)
+      where not p.is_admin and (public.sees_robots() or (not public.is_robot(p.id) and not p.is_tester))
     ), '[]'::jsonb),
+    -- and a phone the founder ever used the site on is the founder's, signed in or not
     'strangers', (select count(*) from public.visits v
                   where v.user_id is null and v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds'
-                    and not v.is_admin and not v.is_bot)
+                    and not v.is_admin and not v.is_bot
+                    and not exists (select 1 from public.visits o where o.visitor = v.visitor and o.is_admin))
   );
 end $$;
 
