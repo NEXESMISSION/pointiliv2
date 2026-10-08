@@ -6,6 +6,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ArrowDown, Check, ChevronRight, Eye, Phone, ScanLine, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
+import { useRouter } from "next/navigation";
 import { TryItButton } from "@/components/TryIt";
 import { PickItem, type Item } from "@/components/PickItem";
 import { useScreen } from "@/components/Tracker";
@@ -76,7 +77,17 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   // is never left over from the customer before.
   const [item, setItem] = useState<Item | null>(null);
   const itemRef = useRef<Item | null>(null);
+  // the page may have been opened before this shop wrote its list: the server
+  // then refuses a code until one is chosen, while this page does not yet know
+  // there is anything to choose. Fetching the page's own props again is what
+  // closes that gap — and nothing is asked for in the meantime.
+  const [stale, setStale] = useState(false);
+  const router = useRouter();
   const asking = !!shop.items_on && items.length > 0 && !item;
+  const waiting = stale && items.length === 0;
+  useEffect(() => {
+    if (items.length > 0 && stale) setStale(false);
+  }, [items.length, stale]);
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
@@ -94,9 +105,12 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   const busy = useRef(false);
   const again = useRef(false);
 
-  const fetchCode = useCallback(async (): Promise<Code | "paused"> => {
+  const fetchCode = useCallback(async (): Promise<Code | "paused" | "pick"> => {
     const res = await fetch("/api/code", { method: "POST", cache: "no-store", headers: { "content-type": "application/json" }, body: JSON.stringify({ item: itemRef.current?.id ?? null }) });
     const j = await res.json();
+    // the shop asks what the stamp is for and this went out without an answer
+    // (a counter left open from before the list existed): ask, do not look broken
+    if (j.error === "pick_item") return "pick";
     if (j.error === "paused" || j.error === "shut") {
       setShut(j.error === "shut");
       return "paused";
@@ -116,7 +130,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
     sparing.current = true;
     try {
       const c = await fetchCode();
-      if (c !== "paused") spareRef.current = c;
+      if (c !== "paused" && c !== "pick") spareRef.current = c;
     } catch {
       /* the next tick tries again */
     } finally {
@@ -141,11 +155,22 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         setPaused(true);
         return;
       }
+      if (c === "pick") {
+        itemRef.current = null;
+        setItem(null);
+        // this page does not know the list yet: ask the server for it, and stop
+        // asking for codes until it arrives
+        if (!shop.items_on || items.length === 0) {
+          setStale(true);
+          router.refresh();
+        }
+        return;
+      }
       setPaused(false);
       show(c);
     }
     void prepare();
-  }, [fetchCode, prepare, show]);
+  }, [fetchCode, prepare, show, shop.items_on, items.length, router]);
 
   // a phone just took the code on screen: the next one goes up this instant (or the screen
   // clears until it comes), never the used one
@@ -251,7 +276,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   }, [paused, mint]);
 
   useEffect(() => {
-    if (paused || asking) return;
+    if (paused || asking || waiting) return;
     const first = setTimeout(tick, 0);
     const poll = setInterval(tick, live ? ASK_LIVE_MS : ASK_DEAF_MS);
     const wake = () => document.visibilityState === "visible" && void tick();
@@ -275,7 +300,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       window.removeEventListener("online", wake);
       void lock?.release().catch(() => {});
     };
-  }, [tick, paused, live, asking]);
+  }, [tick, paused, live, asking, waiting]);
 
   // the coaching is once in a lifetime, whichever half shows: written down the
   // moment it appears, and the address loses its flag, so neither a reload nor
