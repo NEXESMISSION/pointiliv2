@@ -117,6 +117,8 @@ function arrival(): Record<string, string | boolean | null> {
     utm_content: first ? q.get("utm_content") : null,
     utm_term: first ? q.get("utm_term") : null,
     fbclid: first && q.has("fbclid"),
+    // the installed app or a browser tab: only the page itself can tell
+    standalone: typeof matchMedia === "function" && (matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: minimal-ui)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true),
     screen: `${screen.width}x${screen.height}`,
     lang: navigator.language,
   };

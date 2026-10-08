@@ -14,7 +14,7 @@ export const metadata = { title: "الترافيك" };
 type Step = { step: string; visits: number };
 type PageRow = { route: string; screen: string | null; views: number; visits: number; ms: number; exits: number; taps: number; rage: number };
 type Who = "anon" | "acct" | "owner" | "client";
-type Before = { visitors: number; visits: number; avg_ms: number; bounce: number; from_ads: number; accounts: number; shops: number };
+type Before = { visitors: number; visits: number; avg_ms: number; bounce: number; from_ads: number; as_app: number; accounts: number; shops: number };
 type VisitRow = {
   id: string;
   started_at: string;
@@ -50,6 +50,10 @@ type Traffic = {
   taps: number;
   rage: number;
   from_ads: number;
+  as_app: number;
+  as_inapp: number;
+  as_web: number;
+  app_people: number;
   accounts: number;
   shops: number;
   signed: number;
@@ -581,6 +585,25 @@ function Overview({ data, f, href, live }: { data: Traffic; f: Filters; href: Hr
           />
         </Card>
       </div>
+
+      {/* the plain question: is Pointili being opened as an app, or as a page in somebody's browser */}
+      <Card title="منين يخدمو بيها؟" hint="الأبليكاسيون المصوبة، ولّا صفحة في براوزر">
+        <Stats cols={3}>
+          <Stat
+            label="من الأبليكاسيون"
+            value={data.as_app}
+            sub={<><Delta now={data.as_app} before={b.as_app} /><Pct a={data.as_app} b={data.visits} /> · {data.app_people} واحد</>}
+            tone="mint"
+          />
+          <Stat label="من براوزر عادي" value={data.as_web} sub={<><Pct a={data.as_web} b={data.visits} /> · Chrome، Safari…</>} />
+          <Stat
+            label="من داخل فيسبوك"
+            value={data.as_inapp}
+            sub={<><Pct a={data.as_inapp} b={data.visits} /> · ما ينجموش يصوبو</>}
+            tone={data.as_inapp ? "coral" : "ink"}
+          />
+        </Stats>
+      </Card>
 
       {/* Pointili on the phone (Android): the button seen, tapped, the app installed, the visits opened from it */}
       <Card title="📲 Pointili في التليفونات" hint="أندرويد وآيفون">

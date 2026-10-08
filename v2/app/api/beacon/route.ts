@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
     device: who.device,
     os: who.os,
     browser: who.browser,
+    standalone: v.standalone === true,
     screen: v.screen ?? null,
     lang: v.lang ?? null,
     country: request.headers.get("x-vercel-ip-country"),
