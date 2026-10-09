@@ -7,7 +7,7 @@ import { Pass } from "@/components/Pass";
 import { useScreen } from "@/components/Tracker";
 import { Confetti, IMPACT_MS, StampLand } from "@/components/StampLand";
 import { Icon3D, LinkBtn, Logo } from "@/components/ui";
-import { fill, kindIcon, t } from "@/lib/t";
+import { fill, kindIcon, pointsSaid, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { nextTampon } from "@/lib/when";
 import type { ScanResult } from "@/lib/types";
@@ -88,13 +88,15 @@ function Checking() {
 
 function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   const { card, gift } = res;
-  const title = gift ? fill(t.won, { gift: card.shop.gift ?? "" }) : t.newStamp;
+  // a shop in points mode: what this scan gave is the card's newest moment, its amount on it
+  const got = card.last?.kind === "points" ? (card.last.n ?? 0) : null;
+  const title = gift ? fill(t.won, { gift: card.shop.gift ?? "" }) : got !== null ? fill(t.pointsWon, { n: pointsSaid(got) }) : t.newStamp;
   // a gift with a long name (up to 60 letters) takes two lines: smaller on a short screen, and the card gives way
   const long = title.length > 24;
   return (
     <div className="relative flex flex-col items-center text-center">
       <Confetti count={gift ? 70 : 36} delay={IMPACT_MS} />
-      <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} logo={card.shop.stamp_logo ? card.shop.logo : null} />
+      <StampLand color={card.shop.color} icon={got !== null ? "coin" : kindIcon(card.shop.kind)} logo={got === null && card.shop.stamp_logo ? card.shop.logo : null} label={got !== null ? `+${got}` : "+1"} />
       <h1
         className={`mt-1 animate-rise text-balance text-[1.8rem] font-bold leading-tight [@media(max-height:700px)]:mt-0 ${long ? "[@media(max-height:700px)]:text-[1.5rem]" : ""}`}
         style={after(80)}
@@ -106,7 +108,7 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
       </p>
 
       <div className={`mt-[2.4dvh] animate-rise text-start ${gift ? (long ? CARD_GIFT_LONG : CARD_GIFT) : CARD}`} style={after(220)}>
-        <Pass shop={card.shop} stamps={card.stamps} fresh />
+        <Pass shop={card.shop} stamps={card.stamps} points={card.points} fresh />
       </div>
 
       {/* the gift: one line to show at the counter, not a second card */}
@@ -198,7 +200,7 @@ function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
       {v.body && <p className="mt-2 max-w-xs text-balance text-[1rem] text-muted">{v.body}</p>}
       {card && (
         <div className={`mt-6 text-start ${CARD}`}>
-          <Pass shop={card.shop} stamps={card.stamps} />
+          <Pass shop={card.shop} stamps={card.stamps} points={card.points} />
         </div>
       )}
       <div className="mt-8 w-full space-y-2.5">

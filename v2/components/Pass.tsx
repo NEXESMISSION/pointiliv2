@@ -1,16 +1,20 @@
-import { Check, Gift } from "lucide-react";
+import { Check, Coins, Gift } from "lucide-react";
 import { ShopMark } from "@/components/ShopMark";
-import { fill, t } from "@/lib/t";
+import { fill, pointsSaid, t } from "@/lib/t";
 
-export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null; stamp_logo?: boolean };
+export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null; stamp_logo?: boolean; mode?: "stamps" | "points" };
 
 /**
  * The loyalty card, the same everywhere: the shop's colour, its name, a dot
  * per stamp (the last one is the gift), and one line saying how far the gift
  * is. `small` is the wallet's card behind the front one: the top line only.
  * `fresh` makes the newest stamp land (after a scan).
+ *
+ * A shop in points mode: the same card, a balance instead of the dots — its
+ * number large (it jumps when `fresh`), and one line on what to do with it.
  */
-export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: PassShop; stamps: number; small?: boolean; fresh?: boolean; className?: string }) {
+export function Pass({ shop, stamps, points = 0, small, fresh, className = "" }: { shop: PassShop; stamps: number; points?: number; small?: boolean; fresh?: boolean; className?: string }) {
+  const byPoints = shop.mode === "points";
   const goal = shop.goal ?? 10;
   const done = Math.min(stamps, goal);
   const ready = stamps >= goal;
@@ -48,13 +52,36 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
           <span dir="auto" className="min-w-0 flex-1 truncate text-right text-[1.125rem] font-bold leading-tight">
             {shop.name}
           </span>
-          <span className="num shrink-0 leading-none">
-            <span className="text-[2rem] font-bold">{done}</span>
-            <span className="text-[1rem] font-semibold text-white/70">/{goal}</span>
-          </span>
+          {byPoints ? (
+            <span className="num shrink-0 leading-none">
+              <span className="text-[2rem] font-bold">{points}</span>
+              <Coins className="ms-1 inline size-[1.125rem] align-[2px] text-white/75" />
+            </span>
+          ) : (
+            <span className="num shrink-0 leading-none">
+              <span className="text-[2rem] font-bold">{done}</span>
+              <span className="text-[1rem] font-semibold text-white/70">/{goal}</span>
+            </span>
+          )}
         </div>
 
-        {!small && (
+        {!small && byPoints && (
+          <>
+            {/* the balance, large: what the card is worth now */}
+            <div className="mt-5 flex flex-col items-center rounded-[1.25rem] bg-white/[0.12] px-4 py-4">
+              <span className={`num text-[3.25rem] font-bold leading-none ${fresh ? "pass-land" : ""}`} style={{ animationDelay: fresh ? "380ms" : undefined }}>
+                {points}
+              </span>
+              <span className="mt-1.5 text-[0.9375rem] font-semibold text-white/80">{points === 0 ? t.pointsBalance : pointsSaid(points).replace(/^\d+ /, "")}</span>
+            </div>
+            <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/[0.16] px-3.5 py-2.5 text-[0.9062rem] font-semibold">
+              <Coins className="size-[1.125rem] shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{t.pointsAsk}</span>
+            </div>
+          </>
+        )}
+
+        {!small && !byPoints && (
           <>
             <div className="mt-5 grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
               {Array.from({ length: goal }, (_, i) => {

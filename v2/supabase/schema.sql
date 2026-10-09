@@ -530,7 +530,7 @@ begin
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'stamp_gap', s.stamp_gap) end);
+      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'mode', s.mode, 'stamp_gap', s.stamp_gap) end);
 end $$;
 
 -- the owner's choice for the stamps on the card: the tick, or the shop's logo
@@ -763,7 +763,7 @@ begin
   if s.id is null then return public.err('no_shop'); end if;
   return jsonb_build_object('ok', true, 'goal', s.goal, 'items', coalesce((
     select jsonb_agg(jsonb_build_object('id', c.id, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone),
-                                        'stamps', c.stamps, 'gifts', c.gifts, 'last_at', c.last_at,
+                                        'stamps', c.stamps, 'gifts', c.gifts, 'points', c.points, 'last_at', c.last_at,
                                         'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift), 'ready', public.waits(c.id))
                      order by c.last_at desc nulls last, c.created_at desc)
     from public.cards c left join public.people p on p.id = c.user_id
@@ -1155,7 +1155,7 @@ $$;
 create or replace function public.card(p_id uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select public.card_view(c.id) || jsonb_build_object('history', coalesce((
-           select jsonb_agg(jsonb_build_object('kind', m.kind, 'at', coalesce(m.given_at, m.created_at), 'given', m.given_at is not null, 'gift', m.gift)
+           select jsonb_agg(jsonb_build_object('kind', m.kind, 'n', m.n, 'at', coalesce(m.given_at, m.created_at), 'given', m.given_at is not null, 'gift', m.gift)
                             order by coalesce(m.given_at, m.created_at) desc)
            from (select * from public.moments where card_id = c.id order by created_at desc limit 30) m), '[]'::jsonb))
   from public.cards c where c.id = p_id and c.user_id = auth.uid()

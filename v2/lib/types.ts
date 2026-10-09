@@ -9,7 +9,11 @@ export type CardView = {
   /** a gift waits for the shop to hand it over */
   waiting: boolean;
   /** the shop, with this card's own goal and gift (the promise it started with) */
-  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean };
+  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; mode?: "stamps" | "points" };
+  /** the points balance (a shop in points mode) */
+  points?: number;
+  /** the card's newest moment: what a scan just gave (`n`: the points, null for a tampon or a gift) */
+  last?: { kind: "stamp" | "gift" | "points"; n: number | null; at: string } | null;
   /** the shop's card of today when it differs: this customer's next card, after this gift */
   next?: { goal: number; gift: string } | null;
 };

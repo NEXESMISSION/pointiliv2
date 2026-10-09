@@ -9,10 +9,10 @@ import { Icon3D, Screen } from "@/components/ui";
 import { siteOrigin } from "@/lib/origin";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
-import { fill, stampsN, t } from "@/lib/t";
+import { fill, pointsSaid, stampsN, t } from "@/lib/t";
 import type { CardView } from "@/lib/types";
 
-type Card = CardView & { history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null }[] };
+type Card = CardView & { history: { kind: "stamp" | "gift" | "points"; n?: number | null; at: string; given: boolean; gift: string | null }[] };
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -62,7 +62,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
     <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
       <Top back="/" title={card.shop.name} />
       <div className={`mx-auto w-full animate-rise ${look.card}`}>
-        <Pass shop={card.shop} stamps={card.stamps} />
+        <Pass shop={card.shop} stamps={card.stamps} points={card.points} />
       </div>
       {card.next && (
         <p className={`mt-3 rounded-2xl bg-surface px-4 text-[0.9062rem] text-body shadow-card ${look.next}`}>
@@ -103,15 +103,15 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           <ul data-list className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
             {card.history.map((h, i) => (
               <li key={i} className="flex items-center gap-3 px-4 py-3">
-                {h.kind === "stamp" ? (
-                  <span className="num grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.875rem] font-bold text-brand">+1</span>
+                {h.kind === "stamp" || h.kind === "points" ? (
+                  <span className="num grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.875rem] font-bold text-brand">{h.kind === "points" ? `+${h.n ?? 0}` : "+1"}</span>
                 ) : (
                   <span className="grid size-10 shrink-0 place-items-center rounded-full bg-coral-soft text-coral">
                     <Gift className="size-5" />
                   </span>
                 )}
                 <span className="min-w-0 flex-1 text-[0.9688rem] font-medium">
-                  {h.kind === "stamp" ? t.hStamp : h.given ? fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" }) : t.hGiftWaiting}
+                  {h.kind === "points" ? fill(t.pointsWon, { n: pointsSaid(h.n ?? 0) }) : h.kind === "stamp" ? t.hStamp : h.given ? fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" }) : t.hGiftWaiting}
                 </span>
                 <span className="shrink-0 text-[0.7812rem] text-muted">{when(h.at)}</span>
               </li>

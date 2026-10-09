@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Gift, ScanLine, X } from "lucide-react";
+import { Coins, Gift, ScanLine, X } from "lucide-react";
 import { Pass, type PassShop } from "@/components/Pass";
 import { fill, giftsN, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 
-export type CustomerRow = { id: string; name: string | null; phone: string | null; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null };
+export type CustomerRow = { id: string; name: string | null; phone: string | null; stamps: number; points?: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null };
 
 const when = (iso: string | null) =>
   iso ? new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso)) : t.never;
@@ -20,6 +20,8 @@ const when = (iso: string | null) =>
  */
 export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop: PassShop; goal: number }) {
   const [open, setOpen] = useState<CustomerRow | null>(null);
+  // a shop in points mode: each customer's balance, not a row of tampons
+  const byPoints = shop.mode === "points";
   useEffect(() => {
     if (!open) return;
     signal("customer_open");
@@ -52,11 +54,17 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                       </>
                     )}
                   </span>
-                  <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-line">
-                    <span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
-                  </span>
+                  {!byPoints && (
+                    <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-line">
+                      <span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+                    </span>
+                  )}
                 </span>
-                {c.ready ? (
+                {byPoints ? (
+                  <span className="shrink-0 text-[0.875rem] font-bold text-body">
+                    <bdi className="num">{c.points ?? 0}</bdi> <Coins className="inline size-3.5 align-[-2px] text-brand" />
+                  </span>
+                ) : c.ready ? (
                   <span className="flex shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2.5 py-1 text-[0.7812rem] font-bold text-coral">
                     <Gift className="size-3.5" /> {t.ready.replace("!", "")}
                   </span>
@@ -93,9 +101,9 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
               </span>
             </div>
             <div className="mt-3">
-              <Pass shop={{ ...shop, goal: open.goal ?? shop.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
+              <Pass shop={{ ...shop, goal: open.goal ?? shop.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} points={open.points ?? 0} />
             </div>
-            {open.ready ? (
+            {byPoints ? null : open.ready ? (
               <div className="mt-3 flex items-center gap-3 rounded-[1.25rem] bg-coral-soft p-3.5">
                 <Gift className="size-6 shrink-0 text-coral" />
                 <span className="min-w-0 flex-1 text-[0.9062rem] font-semibold text-coral">{t.customerGiftWaits}</span>

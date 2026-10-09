@@ -217,6 +217,12 @@ export const t = {
   cardColor: "اللون",
   cardDone: "حلّ الكود",
   // what each stamp on the card looks like: the tick, or the shop's logo
+  // a shop in points mode: the card holds a balance, a scan gives an amount
+  pointsWord: "نقطة",
+  pointsWords: "نقاط",
+  pointsWon: "ربحت {n}",
+  pointsBalance: "نقاطك",
+  pointsAsk: "اسأل في المحل شنوّة تجيبلك نقاطك",
   stampLook: "شكل التامبون",
   stampTick: "العادي",
   stampLogo: "اللوغو متاعك",
@@ -627,6 +633,7 @@ export const t = {
   tryLobby: "جرّب بروحك: شوف شنوّة يشوف الحريف",
   tryScan: "الحريف يسكاني الكود متاعك بتليفونو",
   tryStamp: "يطلعلو التامبون على طول، والكارط متاعك باسمك",
+  tryPoints: "يطلعولو النقاط على طول، والكارط متاعك باسمك",
   tryWin: "كي يكمّل {n} تامبونات: «ربحت {gift}!»، ويورّيك الكود متاع الكادو",
   tryYou: "إنت: «سكاني» ← تسكاني الكود متاعو ← «إيه، عطيه الكادو». خلاص.",
   tryYourScreen: "الشاشة متاعك",
@@ -1026,3 +1033,8 @@ export const liveN = (n: number) => counted(n, "واحد يخدم", "زوز يخ
 export const pausedN = (n: number) => counted(n, "واحد موقّف", "زوز موقّفين", "موقّفين", "موقّفين");
 /** كادو واحد يستنّى, زوز كادوات يستنّاو */
 export const waitingN = (n: number) => (n === 0 ? t.aNoneWaiting : n === 1 ? `${giftsN(1)} يستنّى` : `${giftsN(n)} يستنّاو`);
+
+/** «5 نقاط», «1 نقطة», «120 نقطة»: the counted word the way it is said (نقاط from 2 to 10). */
+export function pointsSaid(n: number): string {
+  return `${n} ${n >= 2 && n <= 10 ? t.pointsWords : t.pointsWord}`;
+}

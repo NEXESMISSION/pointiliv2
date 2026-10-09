@@ -85,7 +85,7 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
           <div data-list className="-mx-2 min-h-0 space-y-3 overflow-y-auto overscroll-contain px-2 pb-2">
             {cards.map((c, i) => (
               <Link key={c.id} href={`/c/${c.id}`} className="press block animate-rise" style={{ animationDelay: `${i * 70}ms` }}>
-                <Pass shop={c.shop} stamps={c.stamps} />
+                <Pass shop={c.shop} stamps={c.stamps} points={c.points} />
               </Link>
             ))}
           </div>

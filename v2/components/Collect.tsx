@@ -10,7 +10,7 @@ import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
 import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
-import { fill, t } from "@/lib/t";
+import { fill, pointsSaid, t } from "@/lib/t";
 import { nextTampon } from "@/lib/when";
 import type { CardView } from "@/lib/types";
 
@@ -273,13 +273,15 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
                 fill(t.collectGift, { name: who, gift: step.card.shop.gift ?? "" })
               ) : (
                 <>
-                  <bdi className="num">+1</bdi> {name ? fill(t.collectDone, { name }) : t.collectDoneAnon}
+                  {/* a shop in points mode gave an amount, not a tampon: the card's newest moment says how many */}
+                  <bdi className="num">{step.card.last?.kind === "points" ? `+${step.card.last.n ?? 0}` : "+1"}</bdi>{" "}
+                  {name ? fill(t.collectDone, { name }) : step.card.last?.kind === "points" ? pointsSaid(step.card.last.n ?? 0).replace(/^\d+ /, "") + "!" : t.collectDoneAnon}
                 </>
               )}
             </h2>
             {/* the card a little smaller on a short screen (ranges that do not overlap: the CSS lists them by size) */}
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-              <Pass shop={step.card.shop} stamps={step.card.stamps} fresh />
+              <Pass shop={step.card.shop} stamps={step.card.stamps} points={step.card.points} fresh />
             </div>
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
             <div className="mt-[3dvh] w-full space-y-2">
@@ -319,7 +321,7 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
             <h2 className="mt-3 text-[1.625rem] font-bold">{t.collectUndone}</h2>
             <p className="mt-1 text-[0.9375rem] text-muted">{t.collectUndoneBody}</p>
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-              <Pass shop={step.card.shop} stamps={step.card.stamps} />
+              <Pass shop={step.card.shop} stamps={step.card.stamps} points={step.card.points} />
             </div>
             <div className="mt-[3dvh] w-full space-y-2">
               <Btn type="button" onClick={again}>
@@ -338,7 +340,7 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
             <h2 className="mt-3 text-balance text-[1.625rem] font-bold">{fill(t.collectHanded, { name: who, gift: step.gift })}</h2>
             {step.card && (
               <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-                <Pass shop={step.card.shop} stamps={step.card.stamps} />
+                <Pass shop={step.card.shop} stamps={step.card.stamps} points={step.card.points} />
               </div>
             )}
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
