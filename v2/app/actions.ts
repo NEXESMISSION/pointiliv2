@@ -67,7 +67,17 @@ export async function join(_: FormState, fd: FormData): Promise<FormState> {
   const supabase = await db();
   const { error: e2 } = await supabase.auth.signInWithPassword({ email: phoneEmail(phone), password });
   if (e2) return { error: t.errNetwork };
+  await markKnown();
   redirect(owner ? "/shop/setup" : (next ?? "/"));
+}
+
+/**
+ * This phone has an account on it. Nothing about who — a 1, for a year — so
+ * the front door can lead with «ادخل» for somebody coming back instead of
+ * asking them to make the account they already have.
+ */
+async function markKnown() {
+  (await cookies()).set("pl-known", "1", { maxAge: 31_536_000, sameSite: "lax", path: "/" });
 }
 
 export async function login(_: FormState, fd: FormData): Promise<FormState> {
@@ -83,6 +93,7 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   const { error } = await supabase.auth.signInWithPassword({ email: phoneEmail(phone), password });
   if (error) return { error: /invalid|credentials/i.test(error.message) ? t.errLogin : t.errNetwork };
   await service().rpc("forget_tries", { p_key: `login:${phone}` });
+  await markKnown();
   const { data: me } = await supabase.rpc("me");
   redirect(next ?? homeOf(me as Me));
 }

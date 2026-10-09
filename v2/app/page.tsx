@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Wallet } from "@/components/Wallet";
 import { JsonLd } from "@/components/SiteFrame";
@@ -24,7 +25,8 @@ export default async function Home() {
       <>
         <JsonLd data={orgJsonLd(settings.supportPhone, settings.social)} />
         <JsonLd data={faqJsonLd(FAQ.slice(0, 5).flatMap((f) => [{ q: f.q, a: f.a }, f.fr]))} />
-        <Welcome video={help.video1} />
+        {/* somebody who has signed in on this phone before is offered the way back in first */}
+        <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} />
       </>
     );
   }

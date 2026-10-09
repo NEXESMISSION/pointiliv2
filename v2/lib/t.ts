@@ -9,6 +9,10 @@ export const t = {
   haveAccount: "عندي كونت",
   enterAsShop: "ادخل كمولى محل",
   enterAsCustomer: "ادخل كحريف",
+  // a phone that has an account on it is offered the way back in, first
+  comeBackIn: "ادخل للكونت متاعك",
+  newHere: "جديد هنا؟",
+  makeOne: "اعمل كونت",
   haveAccountLogin: "عندك كونت؟ ادخل",
   back: "ارجع",
   next: "كمّل",
