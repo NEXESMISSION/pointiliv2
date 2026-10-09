@@ -902,13 +902,84 @@ begin
   );
 end $$;
 
+-- ═══ points, beside the tampons ═══════════════════════════════════════════
+--
+-- A shop runs on one of two things: tampons, where a card fills up and a
+-- gift falls out, or points, where a balance grows and is spent. One card
+-- either way — the card is the shop's relationship with the customer, its
+-- code and its history and its reminders, not the scheme it runs — so it
+-- carries both counters and a shop says which one it is counting.
+--
+-- Switching keeps both, so a customer never loses what he had. Tampons by
+-- default, for every shop that exists and every shop to come.
+
+alter table public.shops add column if not exists mode text not null default 'stamps';
+do $$ begin
+  alter table public.shops add constraint shops_mode_ck check (mode in ('stamps', 'points'));
+exception when duplicate_object then null; end $$;
+
+alter table public.cards add column if not exists points int not null default 0 check (points >= 0);
+
+-- how many this code is worth, written when it is made (as the item was):
+-- a code without an amount is never made, so a scan can never be worth the
+-- wrong number
+alter table public.codes add column if not exists points int check (points > 0 and points <= 10000);
+
+-- a moment is a tampon, a gift, or points earned; `n` is how many, and only
+-- points have it
+alter table public.moments add column if not exists n int;
+do $$ begin
+  alter table public.moments drop constraint if exists moments_kind_check;
+  alter table public.moments add constraint moments_kind_check check (kind in ('stamp', 'gift', 'points'));
+end $$;
+
+-- ═══ the switch ═══════════════════════════════════════════════════════════
+create or replace function public.set_mode(p_mode text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if p_mode not in ('stamps', 'points') then return public.err('invalid'); end if;
+  update public.shops set mode = p_mode where id = s.id;
+  return jsonb_build_object('ok', true, 'mode', p_mode);
+end $$;
+
+-- ═══ what the card says ═══════════════════════════════════════════════════
+-- `last` is the card's newest moment, with `n` carrying the amount for points
+-- and null for a tampon or a gift. It is what lets the landing animation show
+-- what was just earned without knowing which mode the shop runs on.
+create or replace function public.card_view(p_card uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object(
+    'id', c.id, 'stamps', c.stamps, 'gifts', c.gifts, 'points', c.points, 'last_at', c.last_at,
+    'ready', w.waiting, 'waiting', w.waiting,
+    'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'stamp_logo', s.stamp_logo,
+                               'mode', s.mode,
+                               'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift)),
+    'last', (select jsonb_build_object('kind', m.kind, 'n', m.n, 'at', m.created_at)
+             from public.moments m where m.card_id = c.id order by m.id desc limit 1),
+    'next', case when s.goal is not null
+                  and (coalesce(c.goal, s.goal) <> s.goal or not public.same_gift(coalesce(c.gift, s.gift), s.gift))
+                 then jsonb_build_object('goal', s.goal, 'gift', s.gift) end)
+  from public.cards c join public.shops s on s.id = c.shop_id
+  cross join lateral (select public.waits(c.id) as waiting) w
+  where c.id = p_card
+$$;
+
+-- ═══ the grant list ═══════════════════════════════════════════════════════
+--   grant execute on function public.set_mode(text) to authenticated;
+--   and new_code / give_stamp keep theirs: their signatures gain a defaulted
+--   parameter each, so both are dropped and recreated — see below.
+
 -- ═══ the counter: a code that works once ═══════════════════════════════════
 -- The old new_code() took nothing. It is replaced rather than added beside,
 -- so PostgREST sees one function of this name; the default answers a call
 -- with no arguments, so a counter running the previous build keeps minting
 -- right through the deploy.
 drop function if exists public.new_code();
-create or replace function public.new_code(p_item bigint default null) returns jsonb
+drop function if exists public.new_code(bigint);
+create or replace function public.new_code(p_item bigint default null, p_points int default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_token text; v_id uuid; v_exp timestamptz := now() + interval '60 seconds';
 begin
@@ -920,8 +991,16 @@ begin
   if (select count(*) from public.codes where shop_id = s.id and created_at > now() - interval '10 minutes') > 400 then
     return public.err('slow_down');
   end if;
+  -- a shop counting points is asked how many before anything is made: no
+  -- answer, no code. Not a rule the screen is trusted to keep.
+  if s.mode = 'points' then
+    if p_points is null or p_points < 1 or p_points > 10000 then return public.err('pick_points'); end if;
+  else
+    p_points := null;
+  end if;
   v_token := translate(encode(extensions.gen_random_bytes(24), 'base64'), '+/=', '-_');
-  insert into public.codes (shop_id, hash, expires_at, item_id) values (s.id, public.sha(v_token), v_exp, p_item) returning id into v_id;
+  insert into public.codes (shop_id, hash, expires_at, item_id, points)
+  values (s.id, public.sha(v_token), v_exp, p_item, p_points) returning id into v_id;
   delete from public.codes where shop_id = s.id and used_at is null and held_hash is null and expires_at < now() - interval '1 day';
   return jsonb_build_object('ok', true, 'id', v_id, 'token', v_token, 'expires_at', v_exp);
 end $$;
@@ -1042,8 +1121,17 @@ begin
     return public.err('too_soon', jsonb_build_object('next_at', public.next_stamp_at(c.last_at, s.stamp_gap), 'card', public.card_view(c.id)));
   end if;
 
-  v_waiting := public.waits(c.id);
   update public.codes set used_at = now(), used_by = v_uid where id = k.id;
+
+  -- a shop counting points: the balance grows by what the code was worth and
+  -- nothing else moves — no goal, no gift, no card filling up
+  if s.mode = 'points' then
+    update public.cards set points = points + coalesce(k.points, 0), last_at = now() where id = c.id returning * into c;
+    insert into public.moments (shop_id, card_id, kind, n) values (s.id, c.id, 'points', coalesce(k.points, 0));
+    return jsonb_build_object('ok', true, 'gift', false, 'card', public.card_view(c.id));
+  end if;
+
+  v_waiting := public.waits(c.id);
   -- a card at rest follows the shop's card of today; a card on its way keeps the one it started
   update public.cards set
     goal = case when (stamps = 0 and not v_waiting) or goal is null then s.goal else goal end,
@@ -1393,7 +1481,8 @@ end $$;
 -- the tampon, given by the shop: the same rules as a scan (one an hour, the
 -- card's promise, the gift at the goal); thirty tries in ten minutes at most
 drop function if exists public.give_stamp(text);
-create or replace function public.give_stamp(p_who text, p_item bigint default null) returns jsonb
+drop function if exists public.give_stamp(text, bigint);
+create or replace function public.give_stamp(p_who text, p_item bigint default null, p_points int default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare
   v_uid uuid := auth.uid();
@@ -1423,6 +1512,14 @@ begin
     return public.err('too_soon', jsonb_build_object('next_at', public.next_stamp_at(c.last_at, s.stamp_gap), 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id)));
   end if;
 
+  -- a shop counting points: the balance grows and the card never fills up
+  if s.mode = 'points' then
+    if p_points is null or p_points < 1 or p_points > 10000 then return public.err('pick_points'); end if;
+    update public.cards set points = points + p_points, last_at = now() where id = c.id returning * into c;
+    insert into public.moments (shop_id, card_id, kind, n) values (s.id, c.id, 'points', p_points) returning id into v_moment;
+    return jsonb_build_object('ok', true, 'gift', false, 'name', nullif(v_name, ''), 'card', public.card_view(c.id),
+                              'waiting', public.waiting_gift(c.id), 'moment', v_moment);
+  end if;
   v_waiting := public.waits(c.id);
   update public.cards set
     goal = case when (stamps = 0 and not v_waiting) or goal is null then s.goal else goal end,
@@ -2516,7 +2613,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
-  public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
+  public.new_code(bigint, int), public.set_mode(text), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
   public.counter(uuid, timestamptz), public.give(bigint), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),
@@ -2527,7 +2624,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.news_next(), public.news_seen(uuid), public.news_clicked(uuid),
   public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),
   public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),
-  public.customer_at(text), public.give_stamp(text, bigint), public.push_subscribe(text, text, text), public.push_unsubscribe(text),
+  public.customer_at(text), public.give_stamp(text, bigint, int), public.push_subscribe(text, text, text), public.push_unsubscribe(text),
   public.my_payment(), public.pay_request(text), public.admin_payments(), public.admin_payment_decide(uuid, boolean) to authenticated;
 grant execute on all functions in schema public to service_role;
 
