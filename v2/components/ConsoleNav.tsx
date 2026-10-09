@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { BarChart3, Building2, FlaskConical, LayoutGrid, Megaphone, Settings2, Users, Wallet } from "lucide-react";
+import { BarChart3, Building2, FlaskConical, LayoutGrid, Megaphone, PhoneCall, Settings2, Users, Wallet } from "lucide-react";
 
 const ITEMS = [
   { href: "/admin", label: "الكونسول", icon: LayoutGrid, exact: true },
   { href: "/admin/shops", label: "المحلات", icon: Building2 },
+  { href: "/admin/crm", label: "المتابعة", icon: PhoneCall },
   { href: "/admin/people", label: "الكونتات", icon: Users },
   { href: "/admin/payments", label: "الحسابات", icon: Wallet },
   { href: "/admin/traffic", label: "الترافيك", icon: BarChart3 },
