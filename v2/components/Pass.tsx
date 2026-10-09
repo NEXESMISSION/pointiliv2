@@ -2,7 +2,7 @@ import { Check, Gift } from "lucide-react";
 import { ShopMark } from "@/components/ShopMark";
 import { fill, t } from "@/lib/t";
 
-export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null };
+export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null; stamp_logo?: boolean };
 
 /**
  * The loyalty card, the same everywhere: the shop's colour, its name, a dot
@@ -16,6 +16,9 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
   const ready = stamps >= goal;
   const left = goal - done;
   const cols = goal <= 6 ? goal : goal <= 10 ? 5 : goal <= 12 ? 6 : goal <= 16 ? 8 : 10;
+  // the shop's own mark in place of the tick. The dot stays a white disc
+  // either way, so a logo drawn on nothing still reads as a stamp filled in.
+  const mark = !!shop.stamp_logo && !!shop.logo;
 
   return (
     <div
@@ -64,7 +67,14 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
                     className={`grid aspect-square place-items-center rounded-full bg-white shadow-[0_3px_8px_rgb(0_0_0/0.18)] ${landing ? "pass-land" : ""}`}
                     style={{ color: shop.color, animationDelay: landing ? "380ms" : undefined }}
                   >
-                    {last ? <Gift className="size-[52%]" strokeWidth={2.4} /> : <Check className="size-[52%]" strokeWidth={3.2} />}
+                    {last ? (
+                      <Gift className="size-[52%]" strokeWidth={2.4} />
+                    ) : mark ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={shop.logo!} alt="" decoding="async" className="size-[74%] rounded-full object-contain" />
+                    ) : (
+                      <Check className="size-[52%]" strokeWidth={3.2} />
+                    )}
                   </span>
                 ) : (
                   <span key={i} className="grid aspect-square place-items-center rounded-full border-2 border-dashed border-white/45 bg-white/[0.07] text-white/70">

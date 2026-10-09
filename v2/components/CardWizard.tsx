@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Check, ChevronRight } from "lucide-react";
 import { cardChange, saveCard } from "@/app/actions";
+import { setStampLogo } from "@/app/shop/card/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
 import { Pass } from "@/components/Pass";
 import { Confetti } from "@/components/StampLand";
@@ -40,7 +42,7 @@ const HELLO_MS = 3400;
 const SHRINK = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(85.5dvh_-_31rem))))]";
 const SHRINK_HELLO = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(92dvh_-_31rem))))]";
 
-type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_gap?: number };
+type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; stamp_gap?: number };
 
 /**
  * The card, one question at a time. A new owner first gets a hello — «توّا
@@ -67,6 +69,10 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
   const otherBad = other !== "" && !(Number(other) >= 3 && Number(other) <= 30);
   const [gift, setGift] = useState(shop.gift ?? ideas[0] ?? "");
   const [color, setColor] = useState((shop.color || COLORS[0]!).toUpperCase());
+  // each stamp: the tick, or the shop's own logo (only with a logo to draw)
+  const stampAtFirst = !!shop.stamp_logo && !!shop.logo;
+  const [stampLogo, setStampLogoOn] = useState(stampAtFirst);
+  const [stampErr, setStampErr] = useState(false);
   // the wait: one of the three, or a number of hours typed (1 to 72)
   const [gap, setGap] = useState(shop.stamp_gap ?? 60);
   const [hours, setHours] = useState(() => (shop.stamp_gap && !WAITS.includes(shop.stamp_gap) ? String(Math.round(shop.stamp_gap / 60)) : ""));
@@ -112,6 +118,11 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
   }, [step, ruleChanged, goal, gift]);
 
   const send = async () => {
+    // the stamps' look is the shop's own setting, saved first (the card's save does not carry it)
+    if (stampLogo !== stampAtFirst) {
+      const r = await setStampLogo(stampLogo).catch(() => ({ ok: false }));
+      if (!r.ok) return setStampErr(true);
+    }
     // a first card: how it works, then the code
     if (!editing) return setConfirm(true);
     // nothing a customer's card feels (the colour, the wait, or nothing at all): saved at once
@@ -183,7 +194,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  const preview = { name: shop.name, kind: shop.kind, logo: shop.logo, goal, gift: gift.trim() || "…", color };
+  const preview = { name: shop.name, kind: shop.kind, logo: shop.logo, goal, gift: gift.trim() || "…", color, stamp_logo: stampLogo };
 
   if (step === 0) {
     return (
@@ -398,6 +409,49 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
                 {color === c && <Check className="size-5" strokeWidth={3} />}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* the card made: what each stamp looks like — the tick, or the shop's logo (the card above shows it at once) */}
+        {step === READY && (
+          <div className="mt-[2dvh]">
+            <p className="text-[0.875rem] font-semibold text-muted">{t.stampLook}</p>
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              {[false, true].map((on) => {
+                const off = on && !shop.logo;
+                return (
+                  <button
+                    key={String(on)}
+                    type="button"
+                    disabled={off}
+                    onClick={() => {
+                      setStampLogoOn(on);
+                      setStampErr(false);
+                    }}
+                    aria-pressed={stampLogo === on}
+                    className={`press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] px-2 text-[0.9688rem] font-bold disabled:opacity-45 ${stampLogo === on ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
+                  >
+                    {on ? (
+                      shop.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={shop.logo} alt="" className="size-7 rounded-full bg-white object-contain p-0.5" />
+                      ) : null
+                    ) : (
+                      <span className="grid size-7 place-items-center rounded-full bg-white" style={{ color }}>
+                        <Check className="size-4" strokeWidth={3.2} />
+                      </span>
+                    )}
+                    {on ? t.stampLogo : t.stampTick}
+                  </button>
+                );
+              })}
+            </div>
+            {!shop.logo && (
+              <Link href="/shop/setup?edit=1" className="mt-1.5 block text-[0.8125rem] font-semibold text-brand">
+                {t.stampNoLogo} ←
+              </Link>
+            )}
+            {stampErr && <p className="mt-1.5 text-[0.8438rem] font-semibold text-coral">{t.errNetwork}</p>}
           </div>
         )}
 

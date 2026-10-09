@@ -14,7 +14,8 @@ const SPARKS = 16;
  * smaller tampon (it follows the rem and the height), so the answer under it
  * always fits.
  */
-export function StampLand({ color = "#6c47ff", icon = "star", size = 112, label = "+1" }: { color?: string; icon?: string; size?: number; label?: string }) {
+/** `logo`: the shop chose its own logo as its stamp — the tampon lands with it on its face (on a white disc, so any logo reads). */
+export function StampLand({ color = "#6c47ff", icon = "star", size = 112, label = "+1", logo = null }: { color?: string; icon?: string; size?: number; label?: string; logo?: string | null }) {
   const k = (n: number) => `calc(var(--sl) * ${n})`;
   const box = { "--sl": `min(${size / 16}rem, ${+(size / 8.44).toFixed(2)}dvh)`, width: k(1.9), height: k(1.6) } as React.CSSProperties;
   return (
@@ -96,9 +97,16 @@ export function StampLand({ color = "#6c47ff", icon = "star", size = 112, label 
         }}
       >
         <span className="absolute inset-[9%] rounded-full border-2 border-dashed border-white/55" />
-        <span className="grid place-items-center" style={{ width: k(0.5), height: k(0.5) }}>
-          <Icon3D name={icon} size={size * 0.5} className="size-full!" />
-        </span>
+        {logo ? (
+          <span className="grid place-items-center overflow-hidden rounded-full bg-white" style={{ width: k(0.62), height: k(0.62) }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logo} alt="" decoding="async" className="size-[82%] object-contain" />
+          </span>
+        ) : (
+          <span className="grid place-items-center" style={{ width: k(0.5), height: k(0.5) }}>
+            <Icon3D name={icon} size={size * 0.5} className="size-full!" />
+          </span>
+        )}
       </span>
 
       <span

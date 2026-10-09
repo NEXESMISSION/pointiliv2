@@ -94,7 +94,7 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   return (
     <div className="relative flex flex-col items-center text-center">
       <Confetti count={gift ? 70 : 36} delay={IMPACT_MS} />
-      <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} />
+      <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} logo={card.shop.stamp_logo ? card.shop.logo : null} />
       <h1
         className={`mt-1 animate-rise text-balance text-[1.8rem] font-bold leading-tight [@media(max-height:700px)]:mt-0 ${long ? "[@media(max-height:700px)]:text-[1.5rem]" : ""}`}
         style={after(80)}

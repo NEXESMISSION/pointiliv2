@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { ChevronLeft, QrCode, ScanLine, X } from "lucide-react";
 import { Pass } from "@/components/Pass";
 import { Confetti, StampLand } from "@/components/StampLand";
@@ -9,7 +9,7 @@ import { fill, kindIcon, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 
 /** what the demo needs to know of the shop: the card as the customer would get it */
-export type DemoShop = { name: string; kind: string; color: string; logo?: string | null; goal: number | null; gift: string | null };
+export type DemoShop = { name: string; kind: string; color: string; logo?: string | null; goal: number | null; gift: string | null; stamp_logo?: boolean };
 
 /**
  * The customer's side, replayed on the owner's own phone — the thing an owner
@@ -22,9 +22,12 @@ export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }
   const [beat, setBeat] = useState(0);
   const goal = shop.goal ?? 10;
   const gift = shop.gift ?? "";
-  const pass = { name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal, gift };
+  const pass = { name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal, gift, stamp_logo: shop.stamp_logo };
+  // the shop's own logo as the stamp, when it chose so (and has one)
+  const stampFace = shop.stamp_logo && shop.logo ? shop.logo : null;
+  // said once, when the demo opens — not again when the page behind it re-renders (the counter polls)
+  useEffect(() => signal("tryit", "open"), []);
   useEffect(() => {
-    signal("tryit", "open");
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     addEventListener("keydown", esc);
     return () => removeEventListener("keydown", esc);
@@ -70,7 +73,7 @@ export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }
           {beat === 1 && (
             <Phone>
               <Confetti count={24} />
-              <StampLand color={shop.color} icon={kindIcon(shop.kind)} size={84} />
+              <StampLand color={shop.color} icon={kindIcon(shop.kind)} size={84} logo={stampFace} />
               <p className="mt-1 text-[1.25rem] font-bold">{t.newStamp}</p>
               <p className="text-[0.8125rem] font-semibold text-muted">{shop.name}</p>
               <div className="mt-3 w-full text-start">
@@ -81,7 +84,7 @@ export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }
           {beat === 2 && (
             <Phone>
               <Confetti count={40} />
-              <StampLand color={shop.color} icon={kindIcon(shop.kind)} size={72} />
+              <StampLand color={shop.color} icon={kindIcon(shop.kind)} size={72} logo={stampFace} />
               <p className="mt-1 text-balance text-[1.125rem] font-bold leading-tight">{fill(t.won, { gift })}</p>
               <div className="mt-2 w-full text-start">
                 <Pass shop={pass} stamps={goal} small />
@@ -124,12 +127,14 @@ const Phone = ({ children }: { children: ReactNode }) => <div className="relativ
 /** A button that opens the demo: its children are its face. */
 export function TryItButton({ shop, className, children }: { shop: DemoShop; className?: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  // one and the same closer for the demo's life: its listeners are not torn down on every render
+  const close = useCallback(() => setOpen(false), []);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={className}>
         {children}
       </button>
-      {open && <TryIt shop={shop} onClose={() => setOpen(false)} />}
+      {open && <TryIt shop={shop} onClose={close} />}
     </>
   );
 }
