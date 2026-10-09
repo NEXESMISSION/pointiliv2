@@ -6,9 +6,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ArrowDown, Check, ChevronRight, Eye, Phone, ScanLine, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
-import { useRouter } from "next/navigation";
 import { TryItButton } from "@/components/TryIt";
-import { PickItem, type Item } from "@/components/PickItem";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
@@ -16,8 +14,7 @@ import { seenBefore, shown } from "@/lib/once";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 
-// `item`: the answer the code was made for (null when the shop does not ask)
-type Code = { id: string; svg: string; expiresLocal: number; item: number | null };
+type Code = { id: string; svg: string; expiresLocal: number };
 type Flash = { id: number; name: string | null };
 type Gift = { id: number; name: string | null; gift: string };
 
@@ -64,7 +61,7 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = [] }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; goal?: number | null; gift?: string | null; items_on?: boolean }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null; items?: Item[] }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -73,25 +70,10 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   // the name, kept: the address drops ?welcome at once
   const [name] = useState(welcome);
   const [code, setCode] = useState<Code | null>(null);
-  // what the code on screen is for. A shop that says what it sells is asked
-  // before anything is made, and asked again after every scan — so the answer
-  // is never left over from the customer before.
-  const [item, setItem] = useState<Item | null>(null);
-  const itemRef = useRef<Item | null>(null);
-  // the page may have been opened before this shop wrote its list: the server
-  // then refuses a code until one is chosen, while this page does not yet know
-  // there is anything to choose. Fetching the page's own props again is what
-  // closes that gap — and nothing is asked for in the meantime.
-  const [stale, setStale] = useState(false);
-  const router = useRouter();
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
   const [paused, setPaused] = useState(!!shop.paused || !!shutAtFirst);
-  // a stopped shop says so (and «كلّمنا») before it asks anything
-  const asking = !paused && !!shop.items_on && items.length > 0 && !item;
-  // waiting only until the list lands: once it does, `asking` takes over
-  const waiting = stale && items.length === 0;
   // stopped at the trial's end (not by the founder's switch): the code's place says so, with a call
   const [shut, setShut] = useState(!!shutAtFirst);
   const [live, setLive] = useState(false);
@@ -105,13 +87,9 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   const busy = useRef(false);
   const again = useRef(false);
 
-  const fetchCode = useCallback(async (): Promise<Code | "paused" | "pick"> => {
-    const forItem = itemRef.current?.id ?? null;
-    const res = await fetch("/api/code", { method: "POST", cache: "no-store", headers: { "content-type": "application/json" }, body: JSON.stringify({ item: forItem }) });
+  const fetchCode = useCallback(async (): Promise<Code | "paused"> => {
+    const res = await fetch("/api/code", { method: "POST", cache: "no-store" });
     const j = await res.json();
-    // the shop asks what the stamp is for and this went out without an answer
-    // (a counter left open from before the list existed): ask, do not look broken
-    if (j.error === "pick_item") return "pick";
     if (j.error === "paused" || j.error === "shut") {
       setShut(j.error === "shut");
       return "paused";
@@ -119,25 +97,22 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
     setShut(false);
     if (!j.ok) throw new Error(j.error ?? "network");
     const offset = Date.parse(j.server_now) - Date.now();
-    return { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset, item: forItem };
+    return { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset };
   }, []);
 
   // the next code, kept ready (made again when it gets old)
   const prepare = useCallback(async () => {
-    // a code made ahead would carry the answer given for the customer before,
-    // so a shop that asks gets no spare: every code is made for its own answer
-    if (shop.items_on) return;
     if (sparing.current || (spareRef.current && spareRef.current.expiresLocal - Date.now() > 2 * RENEW_BEFORE_MS)) return;
     sparing.current = true;
     try {
       const c = await fetchCode();
-      if (c !== "paused" && c !== "pick") spareRef.current = c;
+      if (c !== "paused") spareRef.current = c;
     } catch {
       /* the next tick tries again */
     } finally {
       sparing.current = false;
     }
-  }, [fetchCode, shop.items_on]);
+  }, [fetchCode]);
 
   const show = useCallback((c: Code) => {
     codeRef.current = c;
@@ -156,27 +131,11 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         setPaused(true);
         return;
       }
-      if (c === "pick") {
-        // not stopped (the server asks only a shop that runs): back from a pause, if it was one
-        setPaused(false);
-        itemRef.current = null;
-        setItem(null);
-        // this page does not know the list yet: ask the server for it, and stop
-        // asking for codes until it arrives
-        if (!shop.items_on || items.length === 0) {
-          setStale(true);
-          router.refresh();
-        }
-        return;
-      }
       setPaused(false);
-      // the answer changed while this code was being made (another item chosen,
-      // or a scan cleared it): it would carry the wrong one — the next round makes the right one
-      if (c.item !== (itemRef.current?.id ?? null)) return;
       show(c);
     }
     void prepare();
-  }, [fetchCode, prepare, show, shop.items_on, items.length, router]);
+  }, [fetchCode, prepare, show]);
 
   // a phone just took the code on screen: the next one goes up this instant (or the screen
   // clears until it comes), never the used one
@@ -191,22 +150,6 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
     void prepare();
   }, [prepare, show]);
 
-  // what a code's state brings to the screen: the «+1» of each new tampon, and the gifts waiting
-  const absorb = useCallback((s: { stamps: { id: number; name: string | null }[]; gifts: Gift[] }) => {
-    const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
-    if (fresh.length) {
-      fresh.forEach((x) => seen.current.add(x.id));
-      const shown = fresh.slice(-2);
-      setFlashes((f) => [...f, ...shown]);
-      navigator.vibrate?.(60);
-      setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 2600);
-    }
-    setGifts((g) => {
-      if (s.gifts.length > g.length) setParty((p) => p + 1);
-      return s.gifts;
-    });
-  }, []);
-
   const tick = useCallback(async () => {
     if (document.visibilityState !== "visible") return;
     if (busy.current) {
@@ -217,7 +160,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
     busy.current = true;
     try {
       const c = codeRef.current;
-      if (!c || c.expiresLocal - Date.now() < RENEW_BEFORE_MS || c.item !== (itemRef.current?.id ?? null)) {
+      if (!c || c.expiresLocal - Date.now() < RENEW_BEFORE_MS) {
         await mint();
       } else {
         const res = await fetch(`/api/counter?code=${c.id}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" });
@@ -225,16 +168,19 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         const s = (await res.json()) as { taken: boolean; expired: boolean; stamps: { id: number; name: string | null }[]; gifts: Gift[] };
         // the code on screen changed while asking (the radio swapped it): its answer is about the old one
         const same = codeRef.current?.id === c.id;
-        absorb(s);
-        if (same && s.taken && shop.items_on) {
-          // a shop that asks: whoever comes next is a new question — never the answer
-          // given for the customer before (the radio may be down, or late: this is the
-          // same reset it would have done)
-          itemRef.current = null;
-          codeRef.current = null;
-          setItem(null);
-          setCode(null);
-        } else if (same && (s.taken || s.expired)) await mint();
+        const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
+        if (fresh.length) {
+          fresh.forEach((x) => seen.current.add(x.id));
+          const shown = fresh.slice(-2);
+          setFlashes((f) => [...f, ...shown]);
+          navigator.vibrate?.(60);
+          setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 2600);
+        }
+        setGifts((g) => {
+          if (s.gifts.length > g.length) setParty((p) => p + 1);
+          return s.gifts;
+        });
+        if (same && (s.taken || s.expired)) await mint();
         else void prepare();
       }
       setOffline(false);
@@ -247,7 +193,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         setTimeout(() => void tickRef.current(), 0);
       }
     }
-  }, [mint, prepare, shop.items_on, absorb]);
+  }, [mint, prepare]);
   const tickRef = useRef(tick);
   const swapRef = useRef(swapNow);
   useEffect(() => {
@@ -267,19 +213,6 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       .on("broadcast", { event: "ping" }, (msg) => {
         // the code on screen was just taken (held or used): the next one, now
         const taken = (msg?.payload as { code?: string } | undefined)?.code;
-        if (taken && taken === codeRef.current?.id && shop.items_on) {
-          // the shop asks: the next customer is a new question, not the old answer —
-          // and what this scan did (the «+1», a gift) shows now, not after that answer
-          itemRef.current = null;
-          codeRef.current = null;
-          setItem(null);
-          setCode(null);
-          void fetch(`/api/counter?code=${taken}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((st) => st && absorb(st))
-            .catch(() => {});
-          return;
-        }
         if (taken && taken === codeRef.current?.id) swapRef.current();
         void tickRef.current();
       })
@@ -288,26 +221,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       setLive(false);
       void sb.removeChannel(channel);
     };
-  }, [shop.signal, paused, shop.items_on, absorb]);
-
-  // a shop that asks shows its question before any code is made — but a stopped one
-  // (the founder's switch, the trial's end) must say so first, with «كلّمنا». The
-  // server refuses a stopped shop before it asks for an answer: one question on
-  // arrival tells which (nothing is made either way)
-  useEffect(() => {
-    if (!shop.items_on || paused) return;
-    let gone = false;
-    void fetchCode()
-      .then((c) => {
-        if (!gone && c === "paused") setPaused(true);
-      })
-      .catch(() => {});
-    return () => {
-      gone = true;
-    };
-    // once, on arrival
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [shop.signal, paused]);
 
   // paused by the founder: look now and then whether it is back on
   useEffect(() => {
@@ -319,7 +233,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   }, [paused, mint]);
 
   useEffect(() => {
-    if (paused || asking || waiting) return;
+    if (paused) return;
     const first = setTimeout(tick, 0);
     const poll = setInterval(tick, live ? ASK_LIVE_MS : ASK_DEAF_MS);
     const wake = () => document.visibilityState === "visible" && void tick();
@@ -343,7 +257,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       window.removeEventListener("online", wake);
       void lock?.release().catch(() => {});
     };
-  }, [tick, paused, live, asking, waiting]);
+  }, [tick, paused, live]);
 
   // the coaching is once in a lifetime, whichever half shows: written down the
   // moment it appears, and the address loses its flag, so neither a reload nor
@@ -368,8 +282,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
     return () => clearTimeout(id);
   }, [coach]);
 
-  // the one name for this screen (the picker inside it names nothing itself, or the two overwrite each other)
-  useScreen(coach === "bravo" || coach === "leaving" ? "bravo" : coach === "tip" ? "tip" : asking ? "counter-pick" : "code");
+  useScreen(coach === "bravo" || coach === "leaving" ? "bravo" : coach === "tip" ? "tip" : "code");
 
   const latest = flashes[flashes.length - 1];
   const gift = gifts[0];
@@ -430,15 +343,6 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           !gift && <h1 className="text-center text-[clamp(1.6rem,4.6dvh,2.6rem)] font-bold leading-tight">{t.counterTitle}</h1>
         )}
 
-        {asking ? (
-          <PickItem
-            items={items}
-            onPick={(it) => {
-              itemRef.current = it;
-              setItem(it);
-            }}
-          />
-        ) : (
         <div className="flex min-h-0 shrink items-center justify-center transition-[width,height] duration-500 [container-type:size]" style={{ width: qr, height: qr }}>
           <div className="relative aspect-square" style={{ width: "min(100cqw, 100cqh)" }}>
             {flashes.map((f) => (
@@ -479,27 +383,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
             </div>
           </div>
         </div>
-        )}
 
-        {item && !paused && (
-          <p className="flex shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-[0.9375rem] font-bold text-white">
-            {t.codeFor} <span className="font-bold">{item.name}</span>
-            <button
-              type="button"
-              onClick={() => {
-                itemRef.current = null;
-                codeRef.current = null;
-                setItem(null);
-                setCode(null);
-              }}
-              className="press -me-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[0.8125rem] font-bold"
-            >
-              {t.changeItem}
-            </button>
-          </p>
-        )}
-
-        {(!asking || latest) && (
         <div className="flex h-12 shrink-0 items-center">
           {latest ? (
             <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.125rem] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
@@ -509,7 +393,6 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
             <p className="max-w-xs text-center text-[0.9375rem] text-white/80">{t.counterHint}</p>
           )}
         </div>
-        )}
         {/* alone with one phone, the owner cannot scan their own screen: the customer's side, replayed here */}
         {!gift && !paused && shop.goal && (
           <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal: shop.goal, gift: shop.gift ?? "" }} className="press flex h-10 shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 text-[0.875rem] font-bold text-white">

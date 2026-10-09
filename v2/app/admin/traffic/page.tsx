@@ -365,15 +365,22 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
   const query = Object.fromEntries(new URLSearchParams(href().split("?")[1] ?? ""));
   const pf = { ...f, ...(from ? { from, to: to ?? from } : {}) };
 
-  const [data, { clarity }, visit] = await Promise.all([
+  // the heat map's page is either named in the address, and then it can be
+  // asked for alongside everything else, or taken from the busiest page — and
+  // only that second case has to wait for the list to come back
+  const askHeat = (at: [string, string | null]) => call<Heat>("admin_heat", { p_route: at[0], p_screen: at[1] ?? "", p_days: days, p_all: all, p_f: pf });
+  const named = tab === "heat" && sp.h ? split(sp.h) : null;
+
+  const [data, { clarity }, visit, heatNamed] = await Promise.all([
     call<Traffic>("admin_traffic", { p_days: days, p_all: all, p_f: pf, p_limit: limit }),
     getSettings(),
     tab === "visits" && visitId ? call<VisitDetail>("admin_visit", { p_id: visitId }) : Promise.resolve(null),
+    named ? askHeat(named) : Promise.resolve(null),
   ]);
   const pages = data?.pages ?? [];
   const heatKey = tab === "heat" ? (sp.h ?? (pages[0] ? keyOf(pages[0].route, pages[0].screen) : "/:welcome")) : null;
   const heatAt = heatKey ? split(heatKey) : null;
-  const heat = heatAt ? await call<Heat>("admin_heat", { p_route: heatAt[0], p_screen: heatAt[1] ?? "", p_days: days, p_all: all, p_f: pf }) : null;
+  const heat = named ? heatNamed : heatAt ? await askHeat(heatAt) : null;
 
   const on = Object.entries(f) as [Key, string][];
   const visitsN = (n: number) => (n > 100 ? String(n) : null);
