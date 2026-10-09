@@ -148,7 +148,7 @@ function PlanPill({ paid, shut, hours, test }: { paid: boolean; shut: boolean; h
  * uses it. Lists for the questions asked every day (on the site now, gave a
  * tampon, came back, hot), and an order for each (time spent, interest…).
  */
-export default async function AdminShops({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string; f?: string; sort?: string }> }) {
+export default async function AdminShops({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string; f?: string; sort?: string; n?: string }> }) {
   const sp = await searchParams;
   const q = sp.q ?? "";
   // the real shops, or the test ones (the founder's own and the ones marked): never in one list
@@ -161,7 +161,15 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
   ]);
   const scored: Scored[] = shops.map((s) => ({ s, i: interest(s) }));
   const count = (id: string) => scored.filter((x) => FILTERS.find((f) => f.id === id)!.keep(x.s, x.i.level)).length;
-  const rows = scored.filter((x) => filter.keep(x.s, x.i.level)).sort(sort.by);
+  const all = scored.filter((x) => filter.keep(x.s, x.i.level)).sort(sort.by);
+  // the list draws a screenful and keeps the rest a tap away. Every row is a
+  // picture, a handful of pills and six cells, and drawing eighty of them is
+  // most of what the console spends its time on — while almost every visit
+  // only ever looks at the top of the list.
+  const PAGE = 30;
+  const want = Math.max(PAGE, Math.min(500, Number(sp.n) || PAGE));
+  const rows = all.slice(0, want);
+  const left = all.length - rows.length;
 
   const href = (o: { f?: string; sort?: string }) => {
     const p = new URLSearchParams();
@@ -320,6 +328,15 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
               </Row>
             ))}
           </Table>
+        )}
+        {left > 0 && (
+          <Link
+            href={`/admin/shops?${new URLSearchParams({ ...kept, ...(q ? { q } : {}), n: String(want + PAGE) })}`}
+            className="flex items-center justify-center gap-2 border-t border-line py-3 text-[0.875rem] font-bold text-brand hover:bg-canvas"
+          >
+            ورّي {Math.min(PAGE, left)} أخرى
+            <span className="font-medium text-muted">باقي {left}</span>
+          </Link>
         )}
       </Card>
     </Page>

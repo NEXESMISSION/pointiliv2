@@ -87,7 +87,7 @@ function PlanPill({ r }: { r: CrmRow }) {
  * written down in two taps. Numbers live on the shops' page; here is what
  * was said.
  */
-export default async function AdminCrm({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string; f?: string; open?: string }> }) {
+export default async function AdminCrm({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string; f?: string; open?: string; n?: string }> }) {
   const sp = await searchParams;
   const q = sp.q ?? "";
   const onTests = sp.tests === "1";
@@ -100,7 +100,12 @@ export default async function AdminCrm({ searchParams }: { searchParams: Promise
   const open = sp.open && /^[0-9a-f-]{36}$/i.test(sp.open) ? rows.find((r) => r.id === sp.open) : undefined;
   const of = open ? await call<CrmOf>("admin_crm_of", { p_shop: open.id }) : null;
   const count = (id: string) => rows.filter((r) => FILTERS.find((f) => f.id === id)!.keep(r, today)).length;
-  const shown = rows.filter((r) => filter.keep(r, today)).sort(order(today));
+  const matching = rows.filter((r) => filter.keep(r, today)).sort(order(today));
+  // a screenful, and the rest a tap away: see the shops list for why
+  const PAGE = 30;
+  const want = Math.max(PAGE, Math.min(500, Number(sp.n) || PAGE));
+  const shown = matching.slice(0, want);
+  const left = matching.length - shown.length;
 
   const href = (o: { f?: string; open?: string | null }) => {
     const p = new URLSearchParams();
@@ -244,6 +249,15 @@ export default async function AdminCrm({ searchParams }: { searchParams: Promise
               );
             })}
           </Table>
+        )}
+        {left > 0 && (
+          <Link
+            href={`${href({})}${href({}).includes("?") ? "&" : "?"}n=${want + PAGE}`}
+            className="flex items-center justify-center gap-2 border-t border-line py-3 text-[0.875rem] font-bold text-brand hover:bg-canvas"
+          >
+            ورّي {Math.min(PAGE, left)} أخرى
+            <span className="font-medium text-muted">باقي {left}</span>
+          </Link>
         )}
       </Card>
 
