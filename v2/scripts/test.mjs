@@ -479,6 +479,7 @@ try {
   const pzNear = await pzDue();
   check("a card on its way, quiet for twenty days: reminded, with what is left", pzNear.length === 1 && pzNear[0].kind === "near" && pzNear[0].left === (nourCard.goal ?? 0) - 2 && pzNear[0].shop === pzShop.name && pzNear[0].user_id === nour.id, pzNear);
   check("…once reminded, not again this month", (await admin.rpc("push_remembered", { p_card: nourCard.id })).data?.ok === true && (await pzDue()).length === 0);
+  check("…and a second clock finds the word taken", (await admin.rpc("push_remembered", { p_card: nourCard.id })).data?.ok === false);
   await admin.from("cards").update({ last_at: pzAgo(3), reminded_at: null }).eq("id", nourCard.id);
   check("three days quiet: left alone", (await pzDue()).length === 0);
   await admin.from("cards").update({ last_at: pzAgo(90), reminded_at: null }).eq("id", nourCard.id);
@@ -496,13 +497,17 @@ try {
   const { data: pzLone } = await admin.from("shops").insert({ owner_id: pzOwner.id, name: "Café Lone", kind: "cafe", goal: 8, gift: "قهوة بلاش", created_at: pzAgo(0.8) }).select("id").single();
   await rpc(pzOwner, "push_subscribe", { ...pzSub, p_endpoint: pzEnd + "owner" });
   const pzOwnerDue = async () => ((await admin.rpc("push_reminders")).data ?? []).filter((d) => d.card === pzLone.id);
+  check("the word just given: not this morning, the next", (await pzOwnerDue()).length === 0);
+  await admin.from("push_subs").update({ created_at: pzAgo(0.5) }).eq("endpoint", pzEnd + "owner");
   const pzNudge = await pzOwnerDue();
   check("an owner with a card and no tampon since last night: one word in the morning", pzNudge.length === 1 && pzNudge[0].kind === "owner" && pzNudge[0].user_id === pzOwner.id && pzNudge[0].shop === "Café Lone", pzNudge);
   check("…once nudged, no more", (await admin.rpc("push_nudged", { p_shop: pzLone.id })).data?.ok === true && (await pzOwnerDue()).length === 0);
-  await admin.from("shops").update({ nudged_at: null, created_at: pzAgo(5) }).eq("id", pzLone.id);
-  check("five days later it is too late to nudge", (await pzOwnerDue()).length === 0);
-  await admin.from("shops").update({ created_at: pzAgo(0.2) }).eq("id", pzLone.id);
-  check("and five hours after the card, too soon", (await pzOwnerDue()).length === 0);
+  check("…and a second clock finds the word taken", (await admin.rpc("push_nudged", { p_shop: pzLone.id })).data?.ok === false);
+  await admin.from("shops").update({ nudged_at: null, created_at: pzAgo(5), trial_days: 30 }).eq("id", pzLone.id);
+  check("five days after the card, the word still due while nobody nudged", (await pzOwnerDue()).length === 1);
+  await admin.from("shops").update({ trial_days: 1 }).eq("id", pzLone.id);
+  check("a shop whose trial is over: left alone", (await pzOwnerDue()).length === 0);
+  await admin.from("shops").update({ trial_days: 30 }).eq("id", pzLone.id);
   await admin.from("moments").delete().eq("id", pzGift.id);
   await admin.from("cards").update({ stamps: 0, last_at: null, reminded_at: null }).eq("id", nourCard.id);
   await admin.from("shops").update({ paid_until: pzPaid }).eq("id", pzShop.id);
@@ -715,6 +720,27 @@ try {
   check("…and so does every visit of a phone the founder used, before and after", !without.recent.some((x) => x.id === vid) && withMine.recent.some((x) => x.id === vid));
   check("a customer cannot read the traffic", !!(await rpc(sami, "admin_traffic", { p_days: 1, p_all: false })).error && !!(await rpc(sami, "admin_heat", { p_route: "/", p_screen: "welcome", p_days: 1, p_all: false })).error && !!(await rpc(sami, "admin_visit", { p_id: vid })).error);
   check("an owner cannot read the traffic", !!(await rpc(owner, "admin_traffic", { p_days: 7, p_all: true })).error);
+
+  console.log("\nThe follow-up: where a shop stands, by the founder's hand");
+  const crmShop = (await rpc(owner, "me")).shop.id;
+  const crmRow = async () => ((await rpc(boss, "admin_crm", { p_q: null, p_tests: false })) ?? []).find((r) => r.id === crmShop);
+  check("a shop nobody called stands «new», no word yet", (await crmRow())?.stage === "new" && (await crmRow())?.last === null);
+  check("an owner cannot read the follow-up", !!(await rpc(owner, "admin_crm", { p_q: null })).error);
+  const crmTried = await rpc(boss, "admin_crm_log", { p_shop: crmShop, p_kind: "call", p_outcome: "no_answer", p_text: "" });
+  check("a call nobody answered: written, and the shop «tried» on its own", crmTried.ok && crmTried.stage === "tried" && (await crmRow())?.stage === "tried" && (await crmRow())?.tries === 1);
+  const crmTalked = await rpc(boss, "admin_crm_log", { p_shop: crmShop, p_kind: "call", p_outcome: "answered", p_text: "يحب يشوف الكارط" });
+  check("a call answered: «talked», its words the last word", crmTalked.stage === "talked" && (await crmRow())?.last?.text === "يحب يشوف الكارط" && (await crmRow())?.talks === 1);
+  const crmSet = await rpc(boss, "admin_crm_set", { p_shop: crmShop, p_stage: "interested", p_next: "2030-01-15", p_note: "المولى هو اللي يقرّر" });
+  check("a stage chosen by hand, a day to come back, a note", crmSet.ok && (await crmRow())?.stage === "interested" && (await crmRow())?.next_at === "2030-01-15" && (await crmRow())?.note === "المولى هو اللي يقرّر");
+  const crmAgain = await rpc(boss, "admin_crm_log", { p_shop: crmShop, p_kind: "whatsapp", p_outcome: "sent", p_text: "" });
+  check("a word after a stage chosen by hand leaves that stage alone", crmAgain.ok && crmAgain.stage === "interested");
+  check("the day cleared, the rest kept", (await rpc(boss, "admin_crm_set", { p_shop: crmShop, p_clear_next: true })).ok && (await crmRow())?.next_at === null && (await crmRow())?.note === "المولى هو اللي يقرّر");
+  const crmOf = await rpc(boss, "admin_crm_of", { p_shop: crmShop });
+  check("the shop's follow-up, whole: the log newest first, the stage change in it", crmOf.stage === "interested" && crmOf.log.length === 4 && crmOf.log[0].kind === "whatsapp" && crmOf.log.some((l) => l.kind === "stage" && l.text === "interested"), crmOf);
+  check("a line taken back", (await rpc(boss, "admin_crm_unlog", { p_id: crmOf.log[0].id })).ok && (await rpc(boss, "admin_crm_of", { p_shop: crmShop })).log.length === 3);
+  check("a stage that is no stage is refused", (await rpc(boss, "admin_crm_set", { p_shop: crmShop, p_stage: "gold" })).error === "bad_stage");
+  check("a word of a kind there is not", (await rpc(boss, "admin_crm_log", { p_shop: crmShop, p_kind: "fax" })).error === "bad_kind");
+  check("a customer cannot write the follow-up", !!(await rpc(sami, "admin_crm_log", { p_shop: crmShop, p_kind: "note", p_text: "x" })).error);
 } catch (e) {
   failed.push(`crashed: ${e.message}`);
   console.log(`  ✗ crashed: ${e.message}`);

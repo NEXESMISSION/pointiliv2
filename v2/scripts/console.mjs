@@ -176,6 +176,9 @@ try {
   await check("02-shops", "/admin/shops");
   const shopId = made.shops[0];
   await check("03-shop", `/admin/shops/${shopId}`);
+  // the follow-up: the list, and a shop's sheet open on it
+  await check("03b-crm", "/admin/crm");
+  await check("03c-crm-open", `/admin/crm?open=${shopId}`);
   await check("04-people", "/admin/people");
   const { data: someone } = await db.from("cards").select("user_id").limit(1).single();
   await check("05-person", `/admin/people/${someone.user_id}`);

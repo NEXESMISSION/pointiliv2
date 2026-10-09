@@ -490,7 +490,8 @@ try {
           // UA=… shows the screens as a given browser sees them (Facebook's own, for the ads)
           ...(process.env.UA ? { userAgent: process.env.UA } : {}),
           storageState: as ? states[as] : undefined,
-          permissions: ["camera"],
+          // a phone that can take a word: the push asks show and are measured (headless Chrome would refuse them)
+          permissions: ["camera", "notifications"],
         });
       return contexts[key];
     };
