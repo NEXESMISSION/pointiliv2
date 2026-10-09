@@ -41,6 +41,17 @@ const time = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour:
  * «سكاني» — the customer shows their code, the camera reads it, and the
  * screen asks «تعطيهولو توّا؟». Who won what stays a line in «آخر حركة».
  */
+/** before the first customer: the picture and the two lines over the three steps */
+function EmptyWords() {
+  return (
+    <>
+      <Icon3D name="phone" size={48} className="animate-float" />
+      <h3 className="mt-1.5 text-[1rem] font-bold">{t.customersEmpty}</h3>
+      <p className="mt-1 text-balance text-[0.8125rem] leading-snug text-muted">{t.customersEmptyBody}</p>
+    </>
+  );
+}
+
 export default async function ShopHome({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const me = await getMe();
   if (!me) redirect("/shop/new");
@@ -64,7 +75,6 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
     { href: "/shop/stats", mark: <Icon3D name="chart" size={30} />, label: t.statsTitle },
     { href: "/shop/customers", mark: <Icon3D name="people" size={30} />, label: t.customersTitle },
     { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
-    { href: "/shop/items", mark: <Icon3D name="basket" size={30} />, label: t.itemsTile },
     {
       // the shop's own tile shows its logo: the logo tip lights this one
       href: "/shop/setup?edit=1",
@@ -134,8 +144,8 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
       </Link>
       </div>
 
-      {/* the places to go, in one row — the row keeps its height however many it holds */}
-      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-6 gap-1.5">
+      {/* the four places to go, in one row */}
+      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-5 gap-1.5">
         {options.map((o) => (
           <Link key={o.href} id={o.id} href={o.href} className="press flex flex-col items-center gap-1 rounded-[1.125rem] bg-surface px-0.5 py-[clamp(0.75rem,1.9dvh,1.15rem)] shadow-card">
             {o.mark}
@@ -176,10 +186,14 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
             </>
           ) : (
             // before the first customer: how it goes, in three steps
-            <div className="m-auto flex w-full max-w-[17rem] flex-col items-center px-4 py-4 text-center">
-              <Icon3D name="phone" size={48} className="animate-float" />
-              <h3 className="mt-1.5 text-[1rem] font-bold">{t.customersEmpty}</h3>
-              <p className="mt-1 text-balance text-[0.8125rem] leading-snug text-muted">{t.customersEmptyBody}</p>
+            <div className="m-auto flex w-full max-w-[17rem] flex-col items-center px-4 py-3 text-center">
+              {/* a card made at night, no customer yet: a word tomorrow morning (asked once) — in the place of
+                  the picture and the two lines, never under them: a short phone's one screen is already full */}
+              {!seen.includes("push") ? (
+                <PushAsk shop={shop.name} title={t.pushOwnerAskTitle} body={fill(t.pushOwnerAskBody, { shop: shop.name })} compact fallback={<EmptyWords />} />
+              ) : (
+                <EmptyWords />
+              )}
               {/* the three steps open the customer's side, replayed (owners kept tapping them) */}
               <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal: shop.goal, gift: shop.gift }} className="press mt-3 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-start">
                 <ol className="space-y-1.5">
@@ -192,8 +206,6 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
                 </ol>
                 <span className="mt-2 block text-center text-[0.8125rem] font-bold text-brand">{t.tryLobby} ←</span>
               </TryItButton>
-              {/* a card made at night, no customer yet: a word tomorrow morning (asked once) */}
-              {!seen.includes("push") && <PushAsk shop={shop.name} title={t.pushOwnerAskTitle} body={fill(t.pushOwnerAskBody, { shop: shop.name })} compact />}
             </div>
           )}
         </div>

@@ -230,22 +230,6 @@ export async function cardChange(goal: number, gift: string): Promise<{ ok: bool
   return res ?? { ok: false };
 }
 
-/** What the shop sells, written whole: the names, then whether the counter asks. An empty list cannot leave the question on. */
-export async function saveItems(names: string[], on: boolean): Promise<{ ok: boolean; error?: string }> {
-  // say what cannot be kept instead of quietly dropping it: a list cut to
-  // twenty, or a name past forty characters, would otherwise come back from
-  // the server shorter than it was typed with nothing said about why
-  const clean = names.map((n) => n.trim()).filter(Boolean);
-  if (clean.length > 20) return { ok: false, error: "too_many" };
-  if (clean.some((n) => n.length > 40)) return { ok: false, error: "too_long" };
-  const res = await call<{ ok: boolean; error?: string }>("set_items", { p_names: clean });
-  if (!res?.ok) return { ok: false, error: res?.error ?? "network" };
-  const sw = await call<{ ok: boolean }>("set_items_on", { p_on: on && clean.length > 0 });
-  if (!sw?.ok) return { ok: false, error: "network" };
-  revalidatePath("/", "layout");
-  return { ok: true };
-}
-
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
 export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push" | "install"): Promise<void> {
   await call("see", { p_key: note });
@@ -261,8 +245,8 @@ export async function customerAt(who: string): Promise<{ ok: boolean; error?: st
 }
 
 /** The shop gives the tampon itself: the same rules as a scan (the shop's wait between two, the gift at the goal). */
-export async function giveStamp(who: string, item: number | null = null): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
-  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20), p_item: item });
+export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
+  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20) });
   // the last tampon by the shop's hand: the customer's phone hears it, after the answer has left
   if (res?.ok && res.gift && res.card) {
     const card = res.card;

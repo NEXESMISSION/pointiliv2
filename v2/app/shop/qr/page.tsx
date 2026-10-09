@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { Counter } from "@/components/Counter";
 import { getMe } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
-import { call } from "@/lib/supabase";
 
 export const metadata = { title: "الكود", robots: { index: false } };
 
@@ -12,12 +11,9 @@ export default async function ShopQr({ searchParams }: { searchParams: Promise<{
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
-  // a shop that says what it sells: the counter asks which one before it makes a code
-  const items = me.shop.items_on ? ((await call<{ id: number; name: string }[]>("my_items")) ?? []) : [];
   return (
     <Counter
-      shop={{ id: me.shop.id, name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused, signal: me.shop.signal, logo: me.shop.logo, goal: me.shop.goal, gift: me.shop.gift, items_on: me.shop.items_on }}
-      items={items}
+      shop={{ id: me.shop.id, name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused, signal: me.shop.signal, logo: me.shop.logo, goal: me.shop.goal, gift: me.shop.gift }}
       welcome={welcome && !(me.seen ?? []).includes("coach") ? ((me.name ?? "").split(" ")[0] ?? "") : null}
       tip={tip === "1"}
       // past the trial the code's place says so (the code itself is refused), with a call to this number
