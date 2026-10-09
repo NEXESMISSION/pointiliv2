@@ -43,8 +43,6 @@ type ShopRow = {
 };
 type Level = "paid" | "hot" | "warm" | "cold" | "nocard";
 
-const TZ = "Africa/Tunis";
-const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(iso));
 /** 45ث · 12د · 1س 5د */
 function dur(ms: number): string {
   const s = Math.round((ms || 0) / 1000);
@@ -242,7 +240,8 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
         {rows.length === 0 ? (
           <Empty>{t.aNothing}</Empty>
         ) : (
-          <Table head={["المحل", t.aOwner, "الاهتمام", "قعد", t.aCustomers, "تامبون", "آخر مرّة جا", t.aCreated]} words={[1, 2]}>
+          // six columns, so the list fits a laptop's screen: when it opened and when its owner was last here ride under the shop and the time
+          <Table head={["المحل", t.aOwner, "الاهتمام", "قعد", t.aCustomers, "تامبون"]} words={[1, 2]}>
             {rows.map(({ s, i }) => (
               <Row key={s.id} href={`/admin/shops/${s.id}`}>
                 <Cell>
@@ -250,16 +249,18 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                     <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[0.625rem]" style={{ background: s.color }}>
                       <ShopMark shop={s} size={22} />
                     </span>
-                    <span className="min-w-0">
+                    <span className="min-w-0 max-w-[13rem]">
                       <span className="flex items-center gap-1.5">
-                        <b className="truncate font-semibold text-ink">
+                        <b className="min-w-0 truncate font-semibold text-ink">
                           <bdi>{s.name}</bdi>
                         </b>
                         {s.paused && <Pill tone="coral">{t.aPaused}</Pill>}
                         {!s.goal && <Pill>{t.aNoCard}</Pill>}
                         <PlanPill paid={s.paid} shut={s.shut} hours={s.trial_hours} test={s.test} />
                       </span>
-                      <span className="block truncate text-[0.75rem] text-muted">{t.kinds[s.kind as keyof typeof t.kinds] ?? s.kind}</span>
+                      <span className="block truncate text-[0.75rem] text-muted">
+                        {t.kinds[s.kind as keyof typeof t.kinds] ?? s.kind} · {t.aCreated} <Ago at={s.created_at} />
+                      </span>
                       <Presence user={s.owner.id} />
                     </span>
                   </span>
@@ -267,7 +268,7 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                 <Cell muted className="whitespace-nowrap">
                   <span className="flex items-center gap-3">
                     <span className="min-w-0">
-                      <bdi className="block truncate">{s.owner.name || t.aOwner}</bdi>
+                      <bdi className="block max-w-[8rem] truncate">{s.owner.name || t.aOwner}</bdi>
                       {s.owner.phone && (
                         <span className="block text-[0.75rem]">
                           <Num>{pretty(s.owner.phone)}</Num>
@@ -279,7 +280,7 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                   </span>
                 </Cell>
                 <Cell>
-                  <span className="block min-w-[9rem] max-w-[15rem]">
+                  <span className="block min-w-[8rem] max-w-[12rem]">
                     <Pill tone={LEVELS[i.level].tone}>{LEVELS[i.level].label}</Pill>
                     {/* the score itself, in sight (a title would sit under the row's link, never seen) */}
                     <span className="ms-1.5 text-[0.6875rem] font-semibold text-faint">
@@ -293,6 +294,9 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                   <span className="block text-[0.6875rem] text-muted">
                     {s.days > 1 ? `${s.days} أيّام · ` : ""}
                     {s.visits === 1 ? "مرّة وحدة" : `${s.visits} مرّات`}
+                  </span>
+                  <span className="block text-[0.6875rem] text-muted">
+                    {s.online ? <b className="text-mint">توّا</b> : s.seen_at ? <Ago at={s.seen_at} /> : "—"}
                   </span>
                 </Cell>
                 <Cell n>
@@ -312,13 +316,6 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                       <Ago at={s.last_at} />
                     </span>
                   ) : null}
-                </Cell>
-                <Cell n muted>
-                  {s.online ? <span className="font-bold text-mint">توّا</span> : s.seen_at ? <Ago at={s.seen_at} /> : "—"}
-                </Cell>
-                <Cell n muted>
-                  <Ago at={s.created_at} className="block" />
-                  <span className="block text-[0.6875rem]">{day(s.created_at)}</span>
                 </Cell>
               </Row>
             ))}
