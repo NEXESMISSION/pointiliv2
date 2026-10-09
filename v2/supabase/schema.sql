@@ -161,11 +161,40 @@ create table if not exists public.push_subs (
   created_at  timestamptz not null default now()
 );
 create index if not exists push_subs_user_idx on public.push_subs (user_id);
+
+-- ═══ the follow-up: the founder's CRM ══════════════════════════════════════════
+-- One line per shop the founder follows: where it stands (his own word, not the
+-- numbers'), the day to come back to it, and a note; and under it the log —
+-- every call, WhatsApp, visit or note, with what came of it. Read and written
+-- by the founder alone (require_admin); a robot's shop takes its lines with it.
+create table if not exists public.crm (
+  shop_id     uuid primary key references public.shops (id) on delete cascade,
+  stage       text not null default 'new' check (stage in ('new', 'tried', 'talked', 'interested', 'promised', 'later', 'refused')),
+  next_at     date,
+  note        text not null default '' check (char_length(note) <= 2000),
+  updated_at  timestamptz not null default now()
+);
+create table if not exists public.crm_log (
+  id          bigint generated always as identity primary key,
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  kind        text not null check (kind in ('call', 'whatsapp', 'visit', 'note', 'stage')),
+  outcome     text check (outcome in ('answered', 'no_answer', 'busy', 'wrong', 'sent', 'replied')),
+  text        text not null default '' check (char_length(text) <= 2000),
+  at          timestamptz not null default now()
+);
+create index if not exists crm_log_shop_idx on public.crm_log (shop_id, at desc);
+alter table public.crm enable row level security;
+alter table public.crm force row level security;
+alter table public.crm_log enable row level security;
+alter table public.crm_log force row level security;
+revoke all on public.crm, public.crm_log from anon, authenticated, public;
 -- a shop's owner nudged the morning after: once (the card's own reminder date is with the cards)
 alter table public.shops add column if not exists nudged_at timestamptz;
 
 -- the shop's logo (optional): a picture in the public «logos» box, set by the owner
 alter table public.shops add column if not exists logo text check (logo is null or (logo ~ '^https://' and char_length(logo) <= 300));
+-- the stamps on the card drawn as the shop's own logo (its owner's choice), not the tick
+alter table public.shops add column if not exists stamp_logo boolean not null default false;
 
 -- how long a customer waits between two tampons here, in minutes, the owner's
 -- choice on the card: 60 (an hour) by default; 0 = no wait; 1440 = once a day
@@ -206,8 +235,11 @@ create table if not exists public.codes (
 create index if not exists codes_shop_idx on public.codes (shop_id, created_at desc);
 -- the counter's private radio: Realtime topic "pointili:<signal>", told of every scan
 alter table public.shops add column if not exists signal text not null default encode(extensions.gen_random_bytes(16), 'hex');
--- a shop may say what it sells; until it does, the counter never asks (see items, below)
+-- Products were asked for and then withdrawn (2026-10-09). What was recorded
+-- stays — public.items, codes.item_id, moments.item_id and item_report() are
+-- all still here — but nothing asks any more, and no screen offers it.
 alter table public.shops add column if not exists items_on boolean not null default false;
+update public.shops set items_on = false where items_on;
 
 create table if not exists public.moments (
   id          bigint generated always as identity primary key,
@@ -379,7 +411,7 @@ update public.moments m set gift = c.gift from public.cards c where c.id = m.car
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log', 'books', 'push_subs'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log', 'books', 'crm', 'crm_log', 'push_subs'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -468,7 +500,7 @@ language sql stable security definer set search_path = '' as $$
   select jsonb_build_object(
     'id', c.id, 'stamps', c.stamps, 'gifts', c.gifts, 'last_at', c.last_at,
     'ready', w.waiting, 'waiting', w.waiting,
-    'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo,
+    'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'stamp_logo', s.stamp_logo,
                                'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift)),
     'next', case when s.goal is not null
                   and (coalesce(c.goal, s.goal) <> s.goal or not public.same_gift(coalesce(c.gift, s.gift), s.gift))
@@ -498,7 +530,20 @@ begin
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal, 'logo', s.logo, 'stamp_gap', s.stamp_gap, 'items_on', s.items_on) end);
+      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'stamp_gap', s.stamp_gap) end);
+end $$;
+
+-- the owner's choice for the stamps on the card: the tick, or the shop's logo
+-- (only with a logo to draw: none yet, refused)
+create or replace function public.set_stamp_logo(p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if coalesce(p_on, false) and s.logo is null then return public.err('no_logo'); end if;
+  update public.shops set stamp_logo = coalesce(p_on, false) where id = s.id;
+  return jsonb_build_object('ok', true, 'on', coalesce(p_on, false));
 end $$;
 
 -- a one-time note seen: added once to the person's list (unknown notes refused)
@@ -874,16 +919,6 @@ begin
   if public.shut(s) then return public.err('shut'); end if;
   if (select count(*) from public.codes where shop_id = s.id and created_at > now() - interval '10 minutes') > 400 then
     return public.err('slow_down');
-  end if;
-  -- the shop asks what it was for: no answer, no code. Not a rule the screen
-  -- is trusted to keep — the code simply is not made.
-  if s.items_on then
-    if p_item is null then return public.err('pick_item'); end if;
-    if not exists (select 1 from public.items where id = p_item and shop_id = s.id and rank < 999) then
-      return public.err('pick_item');
-    end if;
-  else
-    p_item := null;
   end if;
   v_token := translate(encode(extensions.gen_random_bytes(24), 'base64'), '+/=', '-_');
   insert into public.codes (shop_id, hash, expires_at, item_id) values (s.id, public.sha(v_token), v_exp, p_item) returning id into v_id;
@@ -1377,16 +1412,6 @@ begin
   if s.paused then return public.err('paused'); end if;
   if public.shut(s) then return public.err('shut'); end if;
   if not public.try_once('give:' || v_uid, 30, 10) then return public.err('too_many'); end if;
-  -- the same question the counter asks, asked of the hand that gives it: a
-  -- shop that says what it sells may not write down a stamp for nothing
-  if s.items_on then
-    if p_item is null then return public.err('pick_item'); end if;
-    if not exists (select 1 from public.items where id = p_item and shop_id = s.id and rank < 999) then
-      return public.err('pick_item');
-    end if;
-  else
-    p_item := null;
-  end if;
   v_person := public.person_of(p_who);
   if v_person is null then return public.err('unknown'); end if;
   if v_person = v_uid then return public.err('own_shop'); end if;
@@ -1446,7 +1471,7 @@ begin
   if p_endpoint !~ '^https://' or char_length(p_endpoint) > 2000 or char_length(coalesce(p_p256dh, '')) not between 20 and 200 or char_length(coalesce(p_auth, '')) not between 10 and 100 then return public.err('invalid'); end if;
   if not public.try_once('push:' || v_uid, 20, 60) then return public.err('too_many'); end if;
   insert into public.push_subs (user_id, endpoint, p256dh, auth) values (v_uid, p_endpoint, p_p256dh, p_auth)
-  on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth;
+  on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth, created_at = now();
   return jsonb_build_object('ok', true);
 end $$;
 
@@ -1483,26 +1508,132 @@ language sql stable security definer set search_path = '' as $$
     union all
     select jsonb_build_object('user_id', s.owner_id, 'card', s.id, 'shop', s.name, 'left', 0, 'gift', coalesce(s.gift, ''), 'kind', 'owner')
     from public.shops s
-    where s.goal is not null and not s.paused and s.nudged_at is null
-      and s.created_at between now() - interval '3 days' and now() - interval '12 hours'
+    where s.goal is not null and not s.paused and s.nudged_at is null and not public.shut(s)
+      -- the morning after the owner said yes (the phone written down eight hours or more before the run), the card still without a tampon
+      and exists (select 1 from public.push_subs p where p.user_id = s.owner_id and p.created_at < now() - interval '8 hours')
       and not exists (select 1 from public.moments m where m.shop_id = s.id and m.kind = 'stamp')
-      and exists (select 1 from public.push_subs p where p.user_id = s.owner_id)
   ) x
 $$;
 
--- an owner nudged
+-- an owner's word claimed before it goes: «ok» only to the one clock that takes it (a cron delivered
+-- twice, or a hand on «Run» during the morning's, sends one word, not two); once an owner, never again
 create or replace function public.push_nudged(p_shop uuid) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
-  update public.shops set nudged_at = now() where id = p_shop;
+  update public.shops set nudged_at = now() where id = p_shop and nudged_at is null;
   return jsonb_build_object('ok', found);
 end $$;
 
--- a card reminded today
+-- a card's reminder claimed the same way: once a month at most, whoever asks first
 create or replace function public.push_remembered(p_card uuid) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
-  update public.cards set reminded_at = now() where id = p_card;
+  update public.cards set reminded_at = now() where id = p_card and (reminded_at is null or reminded_at < now() - interval '30 days');
+  return jsonb_build_object('ok', found);
+end $$;
+
+-- the follow-up list: every shop with where it stands, the last word with its owner, the next day due
+create or replace function public.admin_crm(p_q text default null, p_tests boolean default false) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v_like text := '%' || replace(replace(coalesce(trim(p_q), ''), '%', ''), '_', '') || '%'; v_all boolean;
+begin
+  perform public.require_admin();
+  v_all := public.sees_robots();
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'created_at', s.created_at,
+      'owner', jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone),
+      'paid', s.paid_until is not null and s.paid_until > now(), 'shut', public.shut(s),
+      'trial_hours', greatest(0, ceil(extract(epoch from (s.created_at + make_interval(days => s.trial_days) - now())) / 3600))::int,
+      'test', coalesce(p.is_admin or p.is_tester, false),
+      'stamps', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
+      'last_stamp_at', (select max(m.created_at) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
+      'stage', coalesce(c.stage, 'new'), 'next_at', c.next_at, 'note', coalesce(c.note, ''), 'updated_at', c.updated_at,
+      'tries', coalesce(l.tries, 0), 'talks', coalesce(l.talks, 0), 'talked_at', l.talked_at,
+      'last', case when l.last_at is null then null else jsonb_build_object('kind', l.last_kind, 'outcome', l.last_outcome, 'text', l.last_text, 'at', l.last_at) end
+      ) order by s.created_at desc)
+    from public.shops s left join public.people p on p.id = s.owner_id
+    left join public.crm c on c.shop_id = s.id
+    left join lateral (
+      select count(*) filter (where g.kind in ('call', 'whatsapp', 'visit')) as tries,
+             count(*) filter (where g.kind = 'visit' or g.outcome in ('answered', 'replied')) as talks,
+             max(g.at) filter (where g.kind = 'visit' or g.outcome in ('answered', 'replied')) as talked_at,
+             max(g.at) as last_at,
+             (array_agg(g.kind order by g.at desc))[1] as last_kind,
+             (array_agg(g.outcome order by g.at desc))[1] as last_outcome,
+             (array_agg(g.text order by g.at desc))[1] as last_text
+      from public.crm_log g where g.shop_id = s.id and g.kind <> 'stage') l on true
+    where (p_q is null or trim(p_q) = '' or s.name ilike v_like or coalesce(p.phone, '') like v_like or coalesce(p.name, '') ilike v_like)
+      and (v_all or (not public.is_robot(s.owner_id) and coalesce(p.is_admin or p.is_tester, false) = coalesce(p_tests, false)))
+  ), '[]'::jsonb);
+end $$;
+
+-- one shop's follow-up, whole: where it stands and every line of its log, newest first
+create or replace function public.admin_crm_of(p_shop uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return jsonb_build_object(
+    'stage', coalesce((select stage from public.crm where shop_id = p_shop), 'new'),
+    'next_at', (select next_at from public.crm where shop_id = p_shop),
+    'note', coalesce((select note from public.crm where shop_id = p_shop), ''),
+    'log', coalesce((select jsonb_agg(jsonb_build_object('id', g.id, 'kind', g.kind, 'outcome', g.outcome, 'text', g.text, 'at', g.at) order by g.at desc)
+                     from public.crm_log g where g.shop_id = p_shop), '[]'::jsonb));
+end $$;
+
+-- where a shop stands, by the founder's hand: the stage, the day to come back (p_clear_next empties it), the
+-- note — a null leaves a thing as it was. A stage that changed is a line in the log too.
+create or replace function public.admin_crm_set(p_shop uuid, p_stage text default null, p_next date default null, p_clear_next boolean default false, p_note text default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_old text;
+begin
+  perform public.require_admin();
+  if p_stage is not null and p_stage not in ('new', 'tried', 'talked', 'interested', 'promised', 'later', 'refused') then return public.err('bad_stage'); end if;
+  if p_note is not null and char_length(p_note) > 2000 then return public.err('too_long'); end if;
+  if not exists (select 1 from public.shops where id = p_shop) then return public.err('no_shop'); end if;
+  select stage into v_old from public.crm where shop_id = p_shop;
+  insert into public.crm (shop_id, stage, next_at, note)
+  values (p_shop, coalesce(p_stage, 'new'), case when p_clear_next then null else p_next end, coalesce(p_note, ''))
+  on conflict (shop_id) do update set
+    stage = coalesce(p_stage, public.crm.stage),
+    next_at = case when p_clear_next then null else coalesce(p_next, public.crm.next_at) end,
+    note = coalesce(p_note, public.crm.note),
+    updated_at = now();
+  if p_stage is not null and p_stage is distinct from coalesce(v_old, 'new') then
+    insert into public.crm_log (shop_id, kind, text) values (p_shop, 'stage', p_stage);
+  end if;
+  return (select jsonb_build_object('ok', true, 'stage', c.stage, 'next_at', c.next_at, 'note', c.note) from public.crm c where c.shop_id = p_shop);
+end $$;
+
+-- a word with the owner written down: a call (answered, no answer, busy, a wrong number), a WhatsApp (sent,
+-- replied), a visit, or a note. The first words move the stage on their own — a try that got nobody makes a
+-- «new» shop «tried», a talk makes a «new» or «tried» one «talked» — and a stage the founder chose stays.
+create or replace function public.admin_crm_log(p_shop uuid, p_kind text, p_outcome text default null, p_text text default '') returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_id bigint; v_now text; v_stage text;
+begin
+  perform public.require_admin();
+  if p_kind not in ('call', 'whatsapp', 'visit', 'note') then return public.err('bad_kind'); end if;
+  if p_outcome is not null and p_outcome not in ('answered', 'no_answer', 'busy', 'wrong', 'sent', 'replied') then return public.err('bad_outcome'); end if;
+  if char_length(coalesce(p_text, '')) > 2000 then return public.err('too_long'); end if;
+  if not exists (select 1 from public.shops where id = p_shop) then return public.err('no_shop'); end if;
+  insert into public.crm_log (shop_id, kind, outcome, text) values (p_shop, p_kind, p_outcome, coalesce(trim(p_text), '')) returning id into v_id;
+  select stage into v_now from public.crm where shop_id = p_shop;
+  v_stage := case
+    when p_kind in ('call', 'whatsapp') and p_outcome in ('no_answer', 'busy', 'wrong', 'sent') and coalesce(v_now, 'new') = 'new' then 'tried'
+    when (p_kind = 'visit' or p_outcome in ('answered', 'replied')) and coalesce(v_now, 'new') in ('new', 'tried') then 'talked'
+    else null end;
+  insert into public.crm (shop_id, stage) values (p_shop, coalesce(v_stage, 'new'))
+  on conflict (shop_id) do update set stage = coalesce(v_stage, public.crm.stage), updated_at = now();
+  return jsonb_build_object('ok', true, 'id', v_id, 'stage', coalesce(v_stage, v_now, 'new'));
+end $$;
+
+-- a line of the log taken back (a slip)
+create or replace function public.admin_crm_unlog(p_id bigint) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  delete from public.crm_log where id = p_id;
   return jsonb_build_object('ok', found);
 end $$;
 
@@ -2380,7 +2511,7 @@ from public.shops s
 where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
   and not (p.seen @> case when s.goal is not null then array['card_hello', 'coach', 'logo_tip'] else array['card_hello', 'logo_tip'] end);
 
-grant execute on function public.me(), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
+grant execute on function public.me(), public.set_stamp_logo(boolean), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
   public.admin_save_card(uuid, int, text, text, int, boolean), public.admin_shop_edit(uuid, text, text),
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
@@ -2388,7 +2519,8 @@ grant execute on function public.me(), public.see(text), public.set_name(text), 
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
   public.counter(uuid, timestamptz), public.give(bigint), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
-  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_set_paused(uuid, boolean),
+  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),
+  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),
   public.admin_set_setting(text, text), public.admin_traffic(int, boolean, jsonb, int), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean, jsonb), public.admin_online(),

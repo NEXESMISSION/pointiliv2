@@ -30,7 +30,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
 
   return (
     <>
-      <ul data-list className="mb-[2dvh] mt-[2.5dvh] min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
+      <ul data-list data-clarity-mask="true" className="mb-[2dvh] mt-[2.5dvh] min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
         {items.map((c) => {
           // each card has its own goal: the one it started with
           const of = c.goal ?? goal;
@@ -72,7 +72,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
       </ul>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={open.name ?? t.someone} onClick={() => setOpen(null)}>
+        <div data-clarity-mask="true" className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={open.name ?? t.someone} onClick={() => setOpen(null)}>
           <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink" style={{ animation: "cust-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
             <style>{`@keyframes cust-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
             <div className="flex items-center justify-between">

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { InstallApp, InstallPopup, OpenOutside } from "@/components/InstallApp";
 import { redirect } from "next/navigation";
-import { ChevronLeft, LogOut } from "lucide-react";
-import { logout } from "@/app/actions";
+import { ChevronLeft } from "lucide-react";
+import { LogoutButton } from "@/components/LogoutButton";
 import { NameForm } from "@/components/NameForm";
 import { PasswordForm } from "@/components/PasswordForm";
 import { Heading, Top } from "@/components/Top";
@@ -58,11 +58,8 @@ export default async function Account({ searchParams }: { searchParams: Promise<
       <OpenOutside where="account" className="mt-[2dvh]" />
       {/* out of Facebook's browser to install: Chrome's offer asked at once */}
       <InstallPopup where="account" who={me.id} show={install === "1"} force={install === "1"} />
-      <form action={logout} className="mt-[3dvh]">
-        <button type="submit" className="press flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0625rem] font-semibold text-coral shadow-card">
-          <LogOut className="size-5" /> {t.logout}
-        </button>
-      </form>
+      {/* out: this phone's push word taken back first (components/LogoutButton.tsx) */}
+      <LogoutButton />
       </Middle>
     </Screen>
   );

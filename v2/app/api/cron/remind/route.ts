@@ -22,6 +22,10 @@ export async function GET(request: NextRequest) {
   const due = (data ?? []) as Due[];
   let sent = 0;
   for (const d of due) {
+    // claimed before it goes: two clocks at once (a cron delivered twice, a hand on «Run» during the
+    // morning's) find the list the same, but only one takes each word — the other is told it is taken
+    const claim = await service().rpc(d.kind === "owner" ? "push_nudged" : "push_remembered", d.kind === "owner" ? { p_shop: d.card } : { p_card: d.card });
+    if (!(claim.data as { ok?: boolean } | null)?.ok) continue;
     // an owner: the card made, never shown — the code, one tap away; a customer: the gift, or what is left
     const note =
       d.kind === "owner"
@@ -30,7 +34,6 @@ export async function GET(request: NextRequest) {
           ? { title: t.pushWaitingTitle, body: fill(t.pushWaitingBody, { gift: d.gift, shop: d.shop }), url: `/c/${d.card}?show=1`, tag: `gift-${d.card}` }
           : { title: fill(t.pushNearTitle, { shop: d.shop }), body: fill(t.pushNearBody, { n: stampsN(d.left), gift: d.gift }), url: `/c/${d.card}`, tag: `near-${d.card}` };
     sent += await sendPush(d.user_id, note);
-    await service().rpc(d.kind === "owner" ? "push_nudged" : "push_remembered", d.kind === "owner" ? { p_shop: d.card } : { p_card: d.card });
   }
   return NextResponse.json({ ok: true, due: due.length, sent });
 }

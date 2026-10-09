@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { BellRing } from "lucide-react";
 import { markSeen, pushSubscribe } from "@/app/actions";
 import { signal } from "@/lib/track";
@@ -27,10 +27,11 @@ function keyBytes(b64: string): Uint8Array<ArrayBuffer> {
  * not even asked), and it is not asked again. Either answer is one-time
  * (people.seen), so another phone of the same person is asked afresh.
  */
-export function PushAsk({ shop, title, body, compact }: { shop: string; title?: string; body?: string; compact?: boolean }) {
+export function PushAsk({ shop, title, body, compact, fallback = null }: { shop: string; title?: string; body?: string; compact?: boolean; fallback?: ReactNode }) {
   const can = useCanPush();
   const [state, setState] = useState<"ask" | "busy" | "gone">("ask");
-  if (!can || state === "gone") return null;
+  // in a place where the ask stands in for something: that something, while the ask cannot be put or once it is answered
+  if (!can || state === "gone") return fallback;
 
   const done = (how: string) => {
     signal("push", how);

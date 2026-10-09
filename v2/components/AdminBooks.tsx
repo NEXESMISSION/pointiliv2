@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Plus, Trash2 } from "lucide-react";
 import { adminBookAdd, adminBookDelete } from "@/app/actions";
 import { CBtn } from "@/components/console";
@@ -132,8 +132,23 @@ export function AdminBookAdd({ today }: { today: string }) {
 /** One line of the books taken back (a slip of the finger): asked once, then gone. */
 export function AdminBookDelete({ id }: { id: number }) {
   const router = useRouter();
-  const [pending, start] = useTransition();
+  // a plain flag, not a transition: a refresh started inside a transition can wait on it forever
+  const [pending, setPending] = useState(false);
   const [ask, setAsk] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const take = async () => {
+    setPending(true);
+    setFailed(false);
+    try {
+      if (!(await adminBookDelete(id))) throw new Error("not taken");
+      setAsk(false);
+      router.refresh();
+    } catch {
+      setFailed(true);
+    } finally {
+      setPending(false);
+    }
+  };
   if (!ask) {
     return (
       <button type="button" onClick={() => setAsk(true)} aria-label={t.aBookDelete} title={t.aBookDelete} className="grid size-8 place-items-center rounded-[0.5rem] text-faint transition-colors hover:bg-coral-soft hover:text-coral">
@@ -146,15 +161,9 @@ export function AdminBookDelete({ id }: { id: number }) {
       <CBtn
         kind="coral"
         disabled={pending}
-        onClick={() =>
-          start(async () => {
-            await adminBookDelete(id);
-            setAsk(false);
-            router.refresh();
-          })
-        }
+        onClick={() => void take()}
       >
-        {t.aBookDeleteYes}
+        {failed ? t.errNetwork : t.aBookDeleteYes}
       </CBtn>
       <CBtn kind="soft" disabled={pending} onClick={() => setAsk(false)}>
         {t.back}
