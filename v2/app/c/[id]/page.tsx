@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
-import { Gift, QrCode } from "lucide-react";
+import { Gift, QrCode, ShoppingBag } from "lucide-react";
+import type { Order, Reward } from "@/app/actions-store";
+import { CardStore } from "@/components/CardStore";
 import { MyCode } from "@/components/MyCode";
 import { PushAsk } from "@/components/PushAsk";
 import { Pass } from "@/components/Pass";
@@ -12,7 +14,8 @@ import { call } from "@/lib/supabase";
 import { fill, pointsSaid, stampsN, t } from "@/lib/t";
 import type { CardView } from "@/lib/types";
 
-type Card = CardView & { history: { kind: "stamp" | "gift" | "points"; n?: number | null; at: string; given: boolean; gift: string | null }[] };
+type Card = CardView & { history: { kind: "stamp" | "gift" | "points" | "spend"; n?: number | null; at: string; given: boolean; gift: string | null }[] };
+type Store = { ok: boolean; points: number; order: Order | null; items: Reward[] };
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -23,11 +26,12 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const me = await getMe();
   if (!me) redirect(`/login?next=/c/${id}`);
-  const card = await call<Card | null>("card", { p_id: id });
+  const [card, store] = await Promise.all([call<Card | null>("card", { p_id: id }), call<Store>("card_store", { p_card: id })]);
   if (!card) notFound();
-  // the gift waiting: the customer's own code is the gift's (the shop scans it, sees the gift, hands it over)
+  const shop = store?.ok && (store.items.length > 0 || store.order) ? store : null;
+  // the gift waiting, or a thing from the store: the customer's own code is theirs too (the shop scans it, sees it, hands it over)
   const svg =
-    card.ready && me.code
+    (card.ready || shop) && me.code
       ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
       : null;
 
@@ -70,6 +74,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
         </p>
       )}
 
+      {/* the shop's store: what the points pay for, and the thing chosen, waiting */}
+      {shop && <CardStore card={card.id} points={shop.points} items={shop.items} order={shop.order} code={me.code ?? null} svg={svg} />}
+
       {ready && (
         <div className={`relative shrink-0 animate-pop overflow-hidden rounded-[1.75rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a_55%,#e0452a)] text-center text-white shadow-[0_20px_44px_-18px_rgb(255_107_74/0.85)] ${look.box}`}>
           <span className="pointer-events-none absolute -top-16 start-1/2 size-56 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" aria-hidden />
@@ -103,7 +110,11 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           <ul data-list className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
             {card.history.map((h, i) => (
               <li key={i} className="flex items-center gap-3 px-4 py-3">
-                {h.kind === "stamp" || h.kind === "points" ? (
+                {h.kind === "spend" ? (
+                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-coral-soft text-coral">
+                    <ShoppingBag className="size-5" />
+                  </span>
+                ) : h.kind === "stamp" || h.kind === "points" ? (
                   <span className="num grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.875rem] font-bold text-brand">{h.kind === "points" ? `+${h.n ?? 0}` : "+1"}</span>
                 ) : (
                   <span className="grid size-10 shrink-0 place-items-center rounded-full bg-coral-soft text-coral">
@@ -111,7 +122,11 @@ export default async function CardPage({ params, searchParams }: { params: Promi
                   </span>
                 )}
                 <span className="min-w-0 flex-1 text-[0.9688rem] font-medium">
-                  {h.kind === "points" ? fill(t.pointsWon, { n: pointsSaid(h.n ?? 0) }) : h.kind === "stamp" ? t.hStamp : h.given ? fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" }) : t.hGiftWaiting}
+                  {h.kind === "spend" ? (
+                    <>
+                      <bdi>{h.gift ?? ""}</bdi> <span className="num text-[0.875rem] font-bold text-coral">−{h.n ?? 0}</span>
+                    </>
+                  ) : h.kind === "points" ? fill(t.pointsWon, { n: pointsSaid(h.n ?? 0) }) : h.kind === "stamp" ? t.hStamp : h.given ? fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" }) : t.hGiftWaiting}
                 </span>
                 <span className="shrink-0 text-[0.7812rem] text-muted">{when(h.at)}</span>
               </li>

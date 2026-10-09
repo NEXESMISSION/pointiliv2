@@ -925,12 +925,12 @@ alter table public.cards add column if not exists points int not null default 0 
 -- wrong number
 alter table public.codes add column if not exists points int check (points > 0 and points <= 10000);
 
--- a moment is a tampon, a gift, or points earned; `n` is how many, and only
--- points have it
+-- a moment is a tampon, a gift, points earned, or points spent in the store;
+-- `n` is how many (points and spend), and a spend keeps the thing's name in `gift`
 alter table public.moments add column if not exists n int;
 do $$ begin
   alter table public.moments drop constraint if exists moments_kind_check;
-  alter table public.moments add constraint moments_kind_check check (kind in ('stamp', 'gift', 'points'));
+  alter table public.moments add constraint moments_kind_check check (kind in ('stamp', 'gift', 'points', 'spend'));
 end $$;
 
 -- ═══ the switch ═══════════════════════════════════════════════════════════
@@ -971,6 +971,185 @@ $$;
 --   grant execute on function public.set_mode(text) to authenticated;
 --   and new_code / give_stamp keep theirs: their signatures gain a defaulted
 --   parameter each, so both are dropped and recreated — see below.
+
+-- ═══ the shop's store: things to take with the points ══════════════════════
+--
+-- The owner lists a few things (a name, a price in points). A customer opens
+-- his card, picks one he can pay for, and shows his own code at the counter —
+-- the same code, the same scan («سكاني») as a gift: the owner sees «يحب:
+-- كابوسة · 50 نقطة» and gives it. The points leave the card only then, counted
+-- again at that moment, so nothing is spent on a thing not handed over.
+--
+-- Every thing taken stays written down for the owner, as it was that day: the
+-- name and the price are copied on the order, so renaming or removing a thing
+-- later never changes what was taken. A thing removed from the store is only
+-- put away (`active`), never deleted.
+
+create table if not exists public.rewards (
+  id          bigint generated always as identity primary key,
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  name        text not null check (char_length(btrim(name)) between 2 and 40),
+  cost        int not null check (cost between 1 and 100000),
+  rank        int not null default 0,
+  active      boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+create index if not exists rewards_shop_idx on public.rewards (shop_id, active, cost);
+
+create table if not exists public.redemptions (
+  id          uuid primary key default gen_random_uuid(),
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  card_id     uuid not null references public.cards (id) on delete cascade,
+  user_id     uuid not null references auth.users (id) on delete cascade,
+  reward_id   bigint references public.rewards (id) on delete set null,
+  name        text not null,
+  cost        int not null check (cost > 0),
+  status      text not null default 'waiting' check (status in ('waiting', 'done', 'cancelled')),
+  created_at  timestamptz not null default now(),
+  done_at     timestamptz
+);
+create index if not exists redemptions_shop_idx on public.redemptions (shop_id, done_at desc) where status = 'done';
+-- one thing waiting per card at a time: a new choice replaces the one before
+create unique index if not exists redemptions_one_waiting on public.redemptions (card_id) where status = 'waiting';
+
+-- like every table: closed to the browser, read and written only through the functions below
+-- (made after the loop that closes the others, so they close themselves)
+alter table public.rewards enable row level security;
+alter table public.rewards force row level security;
+revoke all on public.rewards from anon, authenticated, public;
+alter table public.redemptions enable row level security;
+alter table public.redemptions force row level security;
+revoke all on public.redemptions from anon, authenticated, public;
+
+-- the waiting order on a card, as the counter and the card show it
+create or replace function public.waiting_order(p_card uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('id', r.id, 'name', r.name, 'cost', r.cost, 'at', r.created_at)
+  from public.redemptions r where r.card_id = p_card and r.status = 'waiting'
+$$;
+
+-- ── the owner's side ──────────────────────────────────────────────────────
+create or replace function public.my_rewards() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return '[]'::jsonb; end if;
+  return coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'name', r.name, 'cost', r.cost) order by r.cost, r.id)
+                   from public.rewards r where r.shop_id = s.id and r.active), '[]'::jsonb);
+end $$;
+
+-- add one (p_id null) or change one; thirty in the store at the most
+create or replace function public.reward_save(p_id bigint, p_name text, p_cost int) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_name text := btrim(regexp_replace(coalesce(p_name, ''), '\s+', ' ', 'g'));
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if char_length(v_name) < 2 or char_length(v_name) > 40 or v_name !~ '[[:alpha:]]' then return public.err('bad_name'); end if;
+  if p_cost is null or p_cost < 1 or p_cost > 100000 then return public.err('bad_cost'); end if;
+  if p_id is null then
+    if (select count(*) from public.rewards where shop_id = s.id and active) >= 30 then return public.err('too_many'); end if;
+    if exists (select 1 from public.rewards where shop_id = s.id and active and lower(name) = lower(v_name)) then return public.err('exists'); end if;
+    insert into public.rewards (shop_id, name, cost) values (s.id, v_name, p_cost);
+  else
+    update public.rewards set name = v_name, cost = p_cost where id = p_id and shop_id = s.id and active;
+    if not found then return public.err('not_found'); end if;
+  end if;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- put away (the orders already taken keep its name); a waiting order for it is let go
+create or replace function public.reward_drop(p_id bigint) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  update public.rewards set active = false where id = p_id and shop_id = s.id;
+  update public.redemptions set status = 'cancelled' where reward_id = p_id and shop_id = s.id and status = 'waiting';
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- the order handed over at the counter: the points leave the card now (counted
+-- again: the balance may have changed), written on the card as a moment
+create or replace function public.serve_order(p_order uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; r public.redemptions%rowtype; c public.cards%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  select * into r from public.redemptions where id = p_order and shop_id = s.id for update;
+  if r.id is null then return public.err('not_found'); end if;
+  if r.status = 'done' then return jsonb_build_object('ok', true, 'already', true, 'card', public.card_view(r.card_id)); end if;
+  if r.status <> 'waiting' then return public.err('cancelled'); end if;
+  select * into c from public.cards where id = r.card_id for update;
+  if c.points < r.cost then return public.err('not_enough', jsonb_build_object('points', c.points, 'cost', r.cost)); end if;
+  update public.cards set points = points - r.cost, last_at = now() where id = c.id;
+  insert into public.moments (shop_id, card_id, kind, n, gift, given_at) values (s.id, c.id, 'spend', r.cost, r.name, now());
+  update public.redemptions set status = 'done', done_at = now() where id = r.id;
+  return jsonb_build_object('ok', true, 'name', r.name, 'cost', r.cost, 'card', public.card_view(c.id));
+end $$;
+
+-- what was taken, every time: the newest first — the thing, its points, who, when;
+-- and per thing, how many times and how many points in all
+create or replace function public.store_log(p_limit int default 200) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return jsonb_build_object('ok', true,
+    'spent', (select coalesce(sum(r.cost), 0) from public.redemptions r where r.shop_id = s.id and r.status = 'done'),
+    'count', (select count(*) from public.redemptions r where r.shop_id = s.id and r.status = 'done'),
+    'by_thing', coalesce((select jsonb_agg(jsonb_build_object('name', x.name, 'n', x.n, 'points', x.points) order by x.n desc, x.name)
+                          from (select r.name, count(*) as n, sum(r.cost) as points from public.redemptions r
+                                where r.shop_id = s.id and r.status = 'done' group by r.name) x), '[]'::jsonb),
+    'lines', coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'name', r.name, 'cost', r.cost, 'at', r.done_at,
+                                                           'who', nullif(split_part(coalesce(btrim(p.name), ''), ' ', 1), ''), 'phone', public.masked(p.phone))
+                                        order by r.done_at desc)
+                       from (select * from public.redemptions where shop_id = s.id and status = 'done'
+                             order by done_at desc limit greatest(1, least(coalesce(p_limit, 200), 1000))) r
+                       left join public.people p on p.id = r.user_id), '[]'::jsonb));
+end $$;
+
+-- ── the customer's side ───────────────────────────────────────────────────
+-- the store, from the customer's own card: what there is, his points, his waiting choice
+create or replace function public.card_store(p_card uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare c public.cards%rowtype;
+begin
+  select * into c from public.cards where id = p_card and user_id = auth.uid();
+  if c.id is null then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true, 'points', c.points, 'order', public.waiting_order(c.id),
+    'items', coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'name', r.name, 'cost', r.cost) order by r.cost, r.id)
+                       from public.rewards r where r.shop_id = c.shop_id and r.active), '[]'::jsonb));
+end $$;
+
+-- a thing chosen: held as the card's one waiting order until the shop hands it over
+create or replace function public.order_reward(p_card uuid, p_reward bigint) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare c public.cards%rowtype; w public.rewards%rowtype; v_id uuid;
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  select * into c from public.cards where id = p_card and user_id = auth.uid() for update;
+  if c.id is null then return public.err('not_found'); end if;
+  select * into w from public.rewards where id = p_reward and shop_id = c.shop_id and active;
+  if w.id is null then return public.err('gone'); end if;
+  if c.points < w.cost then return public.err('not_enough'); end if;
+  update public.redemptions set status = 'cancelled' where card_id = c.id and status = 'waiting';
+  insert into public.redemptions (shop_id, card_id, user_id, reward_id, name, cost)
+  values (c.shop_id, c.id, c.user_id, w.id, w.name, w.cost) returning id into v_id;
+  return jsonb_build_object('ok', true, 'order', public.waiting_order(c.id));
+end $$;
+
+create or replace function public.cancel_order(p_card uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.redemptions r set status = 'cancelled'
+  from public.cards c where c.id = r.card_id and c.id = p_card and c.user_id = auth.uid() and r.status = 'waiting';
+  return jsonb_build_object('ok', true);
+end $$;
 
 -- ═══ the counter: a code that works once ═══════════════════════════════════
 -- The old new_code() took nothing. It is replaced rather than added beside,
@@ -1475,7 +1654,9 @@ begin
   select * into c from public.cards where shop_id = s.id and user_id = v_person;
   return jsonb_build_object('ok', true, 'name', nullif(v_name, ''),
     'card', case when c.id is null then null else public.card_view(c.id) end,
-    'waiting', case when c.id is null then null else public.waiting_gift(c.id) end);
+    'waiting', case when c.id is null then null else public.waiting_gift(c.id) end,
+    -- a thing from the store the customer chose, waiting to be handed over
+    'order', case when c.id is null then null else public.waiting_order(c.id) end);
 end $$;
 
 -- the tampon, given by the shop: the same rules as a scan (one an hour, the
@@ -2608,7 +2789,8 @@ from public.shops s
 where s.owner_id = p.id and s.created_at < '2026-10-03 19:05:00+00'
   and not (p.seen @> case when s.goal is not null then array['card_hello', 'coach', 'logo_tip'] else array['card_hello', 'logo_tip'] end);
 
-grant execute on function public.me(), public.set_stamp_logo(boolean), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
+grant execute on function public.me(), public.my_rewards(), public.reward_save(bigint, text, int), public.reward_drop(bigint), public.serve_order(uuid), public.store_log(int),
+  public.card_store(uuid), public.order_reward(uuid, bigint), public.cancel_order(uuid), public.set_stamp_logo(boolean), public.see(text), public.set_name(text), public.open_shop(text, text), public.save_card(int, text, text, int, boolean), public.card_change(int, text),
   public.admin_save_card(uuid, int, text, text, int, boolean), public.admin_shop_edit(uuid, text, text),
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),

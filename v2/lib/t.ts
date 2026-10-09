@@ -226,6 +226,7 @@ export const t = {
   // the shop's store: things to take with the points
   storeTitle: "الماغازة",
   storeHave: "عندك {n}",
+  storeHasHe: "عندو {n}",
   storeTake: "خوذها",
   storeMissing: "ينقصك {n}",
   storeShow: "ورّي الكود هذا للمحل، ويعطيك",

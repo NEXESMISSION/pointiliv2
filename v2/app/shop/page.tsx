@@ -75,6 +75,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
     { href: "/shop/stats", mark: <Icon3D name="chart" size={30} />, label: t.statsTitle },
     { href: "/shop/customers", mark: <Icon3D name="people" size={30} />, label: t.customersTitle },
     { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
+    { href: "/shop/store", mark: <Icon3D name="shop" size={30} />, label: t.storeTile },
     {
       // the shop's own tile shows its logo: the logo tip lights this one
       href: "/shop/setup?edit=1",
