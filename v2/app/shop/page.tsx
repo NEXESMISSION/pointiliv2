@@ -195,7 +195,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
                 <EmptyWords />
               )}
               {/* the three steps open the customer's side, replayed (owners kept tapping them) */}
-              <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal: shop.goal, gift: shop.gift }} className="press mt-3 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-start">
+              <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift }} className="press mt-3 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-start">
                 <ol className="space-y-1.5">
                   {t.firstSteps.map((s, i) => (
                     <li key={s} className="flex items-center gap-2.5">
