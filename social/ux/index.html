@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pointili · كل الإيكرانات</title>
+<style>
+  :root{
+    --bg:#0E0D14; --card:#17161F; --line:#282633; --ink:#F4F3F7; --body:#B7B4C4; --faint:#6F6B80;
+    --brand:#7F77DD; --mint:#1D9E75; --coral:#D85A30; --amber:#EF9F27;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Noto Sans Arabic","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.6}
+  header{position:sticky;top:0;z-index:20;background:rgba(14,13,20,.92);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:12px clamp(12px,3vw,28px)}
+  .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  h1{margin:0;font-size:18px;font-weight:600;letter-spacing:.2px}
+  .sub{color:var(--faint);font-size:13px}
+  .grow{flex:1}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:transparent;color:var(--body);border-radius:999px;
+    padding:6px 13px;font:inherit;font-size:13px;cursor:pointer}
+  .chip[aria-pressed=true]{background:var(--brand);border-color:var(--brand);color:#fff}
+  .bar{height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:10px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--mint));width:0;transition:width .3s}
+  main{padding:18px clamp(12px,3vw,28px) 80px}
+  section{margin:26px 0 0}
+  .head{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}
+  .head h2{margin:0;font-size:16px;font-weight:600}
+  .head span{color:var(--faint);font-size:13px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+  .s{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
+    display:flex;flex-direction:column}
+  .s.fix{border-color:var(--coral)}
+  .s.ok{border-color:var(--mint)}
+  .shot{position:relative;background:#000;cursor:zoom-in;aspect-ratio:390/844;overflow:hidden}
+  .shot img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+  .miss{display:grid;place-items:center;height:100%;color:var(--faint);font-size:13px}
+  .meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:7px}
+  .name{font-size:14px;font-weight:600;line-height:1.35}
+  .route{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--faint);direction:ltr;text-align:right}
+  textarea{width:100%;min-height:54px;resize:vertical;background:#101019;color:var(--ink);
+    border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:13px}
+  textarea:focus{outline:none;border-color:var(--brand)}
+  .row{display:flex;gap:6px}
+  .row button{flex:1;border:1px solid var(--line);background:transparent;color:var(--body);
+    border-radius:9px;padding:6px;font:inherit;font-size:12.5px;cursor:pointer}
+  .row button[aria-pressed=true]{color:#fff}
+  .row button.f[aria-pressed=true]{background:var(--coral);border-color:var(--coral)}
+  .row button.o[aria-pressed=true]{background:var(--mint);border-color:var(--mint)}
+  dialog{border:none;background:transparent;padding:0;max-width:min(96vw,460px)}
+  dialog::backdrop{background:rgba(0,0,0,.82)}
+  dialog img{width:100%;border-radius:12px;display:block}
+  .out{position:fixed;inset-inline:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+    padding:10px clamp(12px,3vw,28px);display:flex;gap:10px;align-items:center;z-index:30}
+  .out button{border:1px solid var(--brand);background:var(--brand);color:#fff;border-radius:10px;
+    padding:9px 16px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+  .out button.ghost{background:transparent;color:var(--body);border-color:var(--line)}
+  .said{color:var(--faint);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <h1>كل الإيكرانات متاع Pointili</h1>
+    <span class="sub" id="count"></span>
+    <span class="grow"></span>
+    <div class="chips">
+      <button class="chip" data-f="all" aria-pressed="true">الكل</button>
+      <button class="chip" data-f="fix" aria-pressed="false">يلزمها خدمة</button>
+      <button class="chip" data-f="ok" aria-pressed="false">باهية</button>
+      <button class="chip" data-f="none" aria-pressed="false">مازال</button>
+    </div>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+</header>
+
+<main id="main"></main>
+
+<div class="out">
+  <button id="copy">انسخ كل الملاحظات</button>
+  <button class="ghost" id="wipe">فسخ الكل</button>
+  <span class="said" id="said"></span>
+</div>
+
+<dialog id="big"><img alt="" /></dialog>
+
+<script>
+const SHOTS = "../../v2/shots/";
+const JOURNEYS = [
+  { t:"الباب", s:"أول حاجة يشوفها اللي ما يعرفناش", items:[
+    ["01-welcome","الباب — المحل ولا الحريف","/"],
+    ["01b-video","الفيديو في الباب","/"],
+    ["18-login","ادخل","/login"],
+    ["18b-forgot","نسيت كلمة السر","/forgot"],
+    ["07-join","الحريف يعمل كونت","/join"],
+    ["read-prix","الأسعار","/prix"],
+    ["read-faq","أسئلة","/faq"],
+  ]},
+  { t:"المولى يحلّ محلّه", s:"من كونت فارغ لكارط حاضرة", items:[
+    ["02-owner-account","الكونت متاع المولى","/shop/new"],
+    ["03-owner-shop","اسم المحل واللوغو","/shop/setup"],
+    ["03b-kinds-all","شنوّة يبيع — الكل","/shop/setup"],
+    ["03c-kinds-search","شنوّة يبيع — يلوّج","/shop/setup"],
+    ["03d-kinds-picked","شنوّة يبيع — اختار","/shop/setup"],
+    ["04a-card-hello","الكارط — السلام","/shop/card"],
+    ["04b-card-goal","قدّاش من تامبون","/shop/card"],
+    ["04b2-card-goal-typed","العدد مكتوب باليد","/shop/card"],
+    ["04c-card-gift","شنوّة الكادو","/shop/card"],
+    ["04c2-card-wait","كل قدّاش ياخو تامبون","/shop/card"],
+    ["04d-card-color","اللون","/shop/card"],
+    ["04-owner-card","الكارط حاضرة","/shop/card"],
+    ["04e-card-how","هكّا تخدم","/shop/card"],
+    ["05a-bravo","برافو","/shop?welcome=1"],
+    ["05b-tip","الكلمة على الكود","/shop/qr?tip=1"],
+    ["05c-try-1","جرّب بروحك · 1","/shop"],
+    ["05c-try-2","جرّب بروحك · 2","/shop"],
+    ["05c-try-3","جرّب بروحك · 3","/shop"],
+    ["05c-try-4","جرّب بروحك · 4","/shop"],
+  ]},
+  { t:"الكونتوار", s:"الإيكران اللي يقعد قدّام الحريف", items:[
+    ["05-counter","الكود","/shop/qr"],
+    ["09-counter-plus-one","جا حريف — ‎+1","/shop/qr"],
+    ["11-counter-gift","كادو يستنّى","/shop/qr"],
+    ["12-counter-given","الكادو تعطى","/shop/qr"],
+    ["12-gift-question","تعطيه الكادو؟","/shop/qr"],
+    ["12b-undo-ask","ترجّع التامبون؟","/shop/collect"],
+    ["12c-undone","رجّعتو","/shop/collect"],
+  ]},
+  { t:"الحريف", s:"يسكاني، ياخو، ويرجع", items:[
+    ["06-reserved","حجزنالك التامبون — مازال ما عندوش كونت","/s/…"],
+    ["08-stamped","خذا تامبون","/s/…"],
+    ["08b-card-ask","يحطّها في التليفون؟","/s/…"],
+    ["10-gift-won","ربح الكادو","/c/…"],
+    ["10b-gift-code","كود الكادو","/c/…"],
+    ["13-wallet","الكارطات متاعو","/wallet"],
+    ["14-card","كارط وحدة","/c/…"],
+    ["15-scanner","الكاميرا","/scan"],
+    ["16-account","الكونت متاعو","/me"],
+  ]},
+  { t:"دار المولى", s:"وين يقعد كل نهار", items:[
+    ["17-owner-home","الدار","/shop"],
+    ["17d-logo-tip","حطّ لوغو","/shop"],
+    ["17f-offer","الأبونمان","/shop"],
+    ["17e-news","خبر جديد","/shop"],
+    ["17c-help","عندك سؤال؟","/shop"],
+    ["18-owner-stats","الأرقام","/shop/stats"],
+    ["19-owner-customers","الحرفاء","/shop/customers"],
+    ["19b-customer","حريف وحدو","/shop/customers"],
+    ["19c-own-code","الكود متاعو","/shop/collect"],
+    ["17b-card-change","يبدّل الكارط","/shop/card"],
+    ["16b-owner-account","الكونت متاعو","/me"],
+    ["17-settings","الريڤلاج","/shop"],
+    ["pay-ways","طرق الخلاص","/shop/pay"],
+  ]},
+  { t:"الكونسول", s:"إنت برك", items:[
+    ["20-admin","الكونسول","/admin"],
+    ["21-admin-shops","المحلات","/admin/shops"],
+    ["21b-admin-shop","محل وحدو","/admin/shops/…"],
+    ["22-admin-people","الكونتات","/admin/people"],
+    ["23-admin-person","كونت وحدو","/admin/people/…"],
+    ["24-admin-new-password","كلمة سر جديدة","/admin/people/…"],
+    ["25-traffic","الترافيك","/admin/traffic"],
+    ["25b-traffic-pages","الصفحات","/admin/traffic"],
+    ["25c-traffic-sources","منين جاو","/admin/traffic"],
+    ["25d-traffic-visits","الزيارات","/admin/traffic"],
+    ["25e-traffic-visit","زيارة وحدة","/admin/traffic"],
+    ["25f-traffic-heat","وين ضربو","/admin/traffic"],
+    ["26-settings","الريڤلاج","/admin/settings"],
+    ["27-news","الأخبار","/admin/news"],
+    ["27b-news-piece","خبر وحدو","/admin/news"],
+    ["27c-news-new","خبر جديد","/admin/news"],
+    ["28-books","الحسابات","/admin/payments"],
+  ]},
+];
+
+const KEY = "pointili-ux";
+const store = JSON.parse(localStorage.getItem(KEY) || "{}");
+const save = () => localStorage.setItem(KEY, JSON.stringify(store));
+const all = JOURNEYS.flatMap(j => j.items);
+
+const main = document.getElementById("main");
+main.innerHTML = JOURNEYS.map(j => `
+  <section>
+    <div class="head"><h2>${j.t}</h2><span>${j.s} · ${j.items.length}</span></div>
+    <div class="grid">${j.items.map(([id, name, route]) => `
+      <article class="s" data-id="${id}">
+        <div class="shot" data-shot="${id}"><img loading="lazy" src="${SHOTS}${id}.png" alt="${name}"
+          onerror="this.parentNode.innerHTML='<div class=miss>ما فماش تصويرة</div>'" /></div>
+        <div class="meta">
+          <div class="name">${name}</div>
+          <div class="route">${route}</div>
+          <textarea data-note="${id}" placeholder="شنوّة يتبدّل هنا…"></textarea>
+          <div class="row">
+            <button class="f" data-mark="fix" data-id="${id}">يلزمها خدمة</button>
+            <button class="o" data-mark="ok" data-id="${id}">باهية</button>
+          </div>
+        </div>
+      </article>`).join("")}</div>
+  </section>`).join("");
+
+for (const ta of main.querySelectorAll("textarea")) {
+  const id = ta.dataset.note;
+  ta.value = store[id]?.note || "";
+  ta.addEventListener("input", () => { (store[id] ||= {}).note = ta.value; save(); paint(); });
+}
+for (const b of main.querySelectorAll("[data-mark]")) {
+  b.addEventListener("click", () => {
+    const s = (store[b.dataset.id] ||= {});
+    s.mark = s.mark === b.dataset.mark ? null : b.dataset.mark;
+    save(); paint();
+  });
+}
+
+let filter = "all";
+function paint() {
+  let done = 0;
+  for (const [id] of all) {
+    const s = store[id] || {};
+    const card = main.querySelector(`.s[data-id="${id}"]`);
+    card.classList.toggle("fix", s.mark === "fix");
+    card.classList.toggle("ok", s.mark === "ok");
+    for (const b of card.querySelectorAll("[data-mark]")) b.setAttribute("aria-pressed", String(s.mark === b.dataset.mark));
+    if (s.mark) done++;
+    const keep = filter === "all" || (filter === "none" ? !s.mark : s.mark === filter);
+    card.style.display = keep ? "" : "none";
+  }
+  for (const sec of main.querySelectorAll("section"))
+    sec.style.display = [...sec.querySelectorAll(".s")].some(c => c.style.display !== "none") ? "" : "none";
+  document.getElementById("count").textContent = `${all.length} إيكران · ${done} تشافو`;
+  document.getElementById("bar").style.width = `${Math.round((done / all.length) * 100)}%`;
+}
+for (const c of document.querySelectorAll(".chip")) {
+  c.addEventListener("click", () => {
+    filter = c.dataset.f;
+    for (const o of document.querySelectorAll(".chip")) o.setAttribute("aria-pressed", String(o === c));
+    paint();
+  });
+}
+
+const big = document.getElementById("big");
+main.addEventListener("click", (e) => {
+  const s = e.target.closest("[data-shot]");
+  if (!s) return;
+  big.querySelector("img").src = `${SHOTS}${s.dataset.shot}.png`;
+  big.showModal();
+});
+big.addEventListener("click", () => big.close());
+
+document.getElementById("copy").addEventListener("click", async () => {
+  const lines = [];
+  for (const j of JOURNEYS) {
+    const mine = j.items.filter(([id]) => store[id]?.note || store[id]?.mark);
+    if (!mine.length) continue;
+    lines.push(`\n## ${j.t}`);
+    for (const [id, name, route] of mine) {
+      const s = store[id];
+      lines.push(`- ${name} (${route}) ${s.mark === "fix" ? "— يلزمها خدمة" : s.mark === "ok" ? "— باهية" : ""}`);
+      if (s.note) lines.push(`  ${s.note}`);
+    }
+  }
+  const text = lines.join("\n").trim() || "مازال ما فما حتى ملاحظة.";
+  try { await navigator.clipboard.writeText(text); say("تنسخت — لصقها لـ Claude"); }
+  catch { say("ما تنسختش"); }
+});
+document.getElementById("wipe").addEventListener("click", () => {
+  if (!confirm("تفسخ كل الملاحظات؟")) return;
+  for (const k of Object.keys(store)) delete store[k];
+  save();
+  for (const ta of main.querySelectorAll("textarea")) ta.value = "";
+  paint(); say("تفسخو");
+});
+function say(t) {
+  const el = document.getElementById("said");
+  el.textContent = t;
+  setTimeout(() => { el.textContent = ""; }, 2600);
+}
+paint();
+</script>
+</body>
+</html>
