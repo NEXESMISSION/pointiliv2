@@ -42,7 +42,7 @@ const keep = (token: string, r: ScanResult) => {
 };
 
 /** Scan → the tampon lands. One POST, then the answer — kept, so coming back to this page shows it again. */
-export function ScanFlow({ token }: { token: string }) {
+export function ScanFlow({ token, known }: { token: string; known?: boolean }) {
   const [res, setRes] = useState<ScanResult | null>(null);
   const started = useRef(false);
 
@@ -68,7 +68,7 @@ export function ScanFlow({ token }: { token: string }) {
 
   if (!res) return <Checking />;
   if (res.kind === "stamped") return <Stamped res={res} />;
-  if (res.kind === "held") return <Held token={token} res={res} />;
+  if (res.kind === "held") return <Held token={token} res={res} known={known} />;
   return <Failed res={res} />;
 }
 
@@ -137,7 +137,7 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
  * held for 20 minutes — and the only thing left is to keep it: make an
  * account, or open the one they have. Two buttons, nothing else.
  */
-function Held({ token, res }: { token: string; res: Extract<ScanResult, { kind: "held" }> }) {
+function Held({ token, res, known }: { token: string; res: Extract<ScanResult, { kind: "held" }>; known?: boolean }) {
   const next = encodeURIComponent(`/s/${token}`);
   return (
     <div className="flex flex-col items-center text-center">
@@ -157,15 +157,29 @@ function Held({ token, res }: { token: string; res: Extract<ScanResult, { kind: 
       </p>
 
       <div className="mt-8 w-full space-y-3">
+        {/* a phone that has an account on it is offered the way back in first:
+            being told to make the one you already have is where people stop */}
         <div className="animate-rise" style={after(340)}>
-          <LinkBtn href={`/join?next=${next}`} className="animate-breathe">
-            {t.createAccount}
-          </LinkBtn>
+          {known ? (
+            <LinkBtn href={`/login?next=${next}`} className="animate-breathe">
+              {t.comeBackIn}
+            </LinkBtn>
+          ) : (
+            <LinkBtn href={`/join?next=${next}`} className="animate-breathe">
+              {t.createAccount}
+            </LinkBtn>
+          )}
         </div>
         <div className="animate-rise" style={after(400)}>
-          <LinkBtn href={`/login?next=${next}`} kind="soft">
-            {t.haveAccount}
-          </LinkBtn>
+          {known ? (
+            <LinkBtn href={`/join?next=${next}`} kind="soft">
+              {t.newHere}
+            </LinkBtn>
+          ) : (
+            <LinkBtn href={`/login?next=${next}`} kind="soft">
+              {t.haveAccount}
+            </LinkBtn>
+          )}
         </div>
       </div>
     </div>
