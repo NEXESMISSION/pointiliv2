@@ -7,8 +7,6 @@ import { ArrowDown, Check, ChevronRight, Eye, Phone, ScanLine, WifiOff } from "l
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { TryItButton } from "@/components/TryIt";
-import { askEachTime } from "@/app/actions";
-import { HowMany } from "@/components/HowMany";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
@@ -63,7 +61,7 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null; ask?: boolean; per_visit?: number }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -72,19 +70,10 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
   // the name, kept: the address drops ?welcome at once
   const [name] = useState(welcome);
   const [code, setCode] = useState<Code | null>(null);
-  // A counter that asks says how many before anything is made, and is asked
-  // again after every scan — so an amount is never left over from the
-  // customer before. A counter that does not ask gives what a visit is worth
-  // and never sees a question.
-  const [points, setPoints] = useState(!!shop.ask);
-  const [many, setMany] = useState<number | null>(null);
-  const manyRef = useRef<number | null>(null);
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
   const [paused, setPaused] = useState(!!shop.paused || !!shutAtFirst);
-  // a stopped shop says so before it asks anything
-  const asking = points && !paused && many === null;
   // stopped at the trial's end (not by the founder's switch): the code's place says so, with a call
   const [shut, setShut] = useState(!!shutAtFirst);
   const [live, setLive] = useState(false);
@@ -99,12 +88,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
   const again = useRef(false);
 
   const fetchCode = useCallback(async (): Promise<Code | "paused"> => {
-    const res = await fetch("/api/code", {
-      method: "POST",
-      cache: "no-store",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ points: manyRef.current }),
-    });
+    const res = await fetch("/api/code", { method: "POST", cache: "no-store" });
     const j = await res.json();
     if (j.error === "paused" || j.error === "shut") {
       setShut(j.error === "shut");
@@ -118,9 +102,6 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
 
   // the next code, kept ready (made again when it gets old)
   const prepare = useCallback(async () => {
-    // a code made ahead would be worth what the last customer was given,
-    // so a shop that asks gets no spare: every code is made for its answer
-    if (points) return;
     if (sparing.current || (spareRef.current && spareRef.current.expiresLocal - Date.now() > 2 * RENEW_BEFORE_MS)) return;
     sparing.current = true;
     try {
@@ -131,21 +112,11 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
     } finally {
       sparing.current = false;
     }
-  }, [fetchCode, points]);
+  }, [fetchCode]);
 
   const show = useCallback((c: Code) => {
     codeRef.current = c;
     setCode(c);
-  }, []);
-
-  // the owner turns the question on or off: whatever was typed goes with it
-  const flip = useCallback(async (on: boolean) => {
-    setPoints(on);
-    manyRef.current = null;
-    codeRef.current = null;
-    setMany(null);
-    setCode(null);
-    await askEachTime(on).catch(() => {});
   }, []);
 
   const mint = useCallback(async () => {
@@ -242,15 +213,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
       .on("broadcast", { event: "ping" }, (msg) => {
         // the code on screen was just taken (held or used): the next one, now
         const taken = (msg?.payload as { code?: string } | undefined)?.code;
-        if (taken && taken === codeRef.current?.id) {
-          // the next customer is a new question, never the last answer
-          if (points) {
-            manyRef.current = null;
-            codeRef.current = null;
-            setMany(null);
-            setCode(null);
-          } else swapRef.current();
-        }
+        if (taken && taken === codeRef.current?.id) swapRef.current();
         void tickRef.current();
       })
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
@@ -258,7 +221,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
       setLive(false);
       void sb.removeChannel(channel);
     };
-  }, [shop.signal, paused, points]);
+  }, [shop.signal, paused]);
 
   // paused by the founder: look now and then whether it is back on
   useEffect(() => {
@@ -270,7 +233,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
   }, [paused, mint]);
 
   useEffect(() => {
-    if (paused || asking) return;
+    if (paused) return;
     const first = setTimeout(tick, 0);
     const poll = setInterval(tick, live ? ASK_LIVE_MS : ASK_DEAF_MS);
     const wake = () => document.visibilityState === "visible" && void tick();
@@ -294,7 +257,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
       window.removeEventListener("online", wake);
       void lock?.release().catch(() => {});
     };
-  }, [tick, paused, live, asking]);
+  }, [tick, paused, live]);
 
   // the coaching is once in a lifetime, whichever half shows: written down the
   // moment it appears, and the address loses its flag, so neither a reload nor
@@ -380,14 +343,6 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
           !gift && <h1 className="text-center text-[clamp(1.6rem,4.6dvh,2.6rem)] font-bold leading-tight">{t.counterTitle}</h1>
         )}
 
-        {asking ? (
-          <HowMany
-            onPick={(n) => {
-              manyRef.current = n;
-              setMany(n);
-            }}
-          />
-        ) : (
         <div className="flex min-h-0 shrink items-center justify-center transition-[width,height] duration-500 [container-type:size]" style={{ width: qr, height: qr }}>
           <div className="relative aspect-square" style={{ width: "min(100cqw, 100cqh)" }}>
             {flashes.map((f) => (
@@ -428,32 +383,6 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
             </div>
           </div>
         </div>
-        )}
-
-        {many !== null && !paused && (
-          <p className="flex shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-[0.9375rem] font-bold">
-            <span className="num">{many}</span> {t.howManyOn}
-            <button
-              type="button"
-              onClick={() => {
-                manyRef.current = null;
-                codeRef.current = null;
-                setMany(null);
-                setCode(null);
-              }}
-              className="press -me-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[0.8125rem] font-bold"
-            >
-              {t.howManyChange}
-            </button>
-          </p>
-        )}
-
-        {!paused && (
-          <label className="press flex shrink-0 cursor-pointer items-center gap-2.5 rounded-full bg-white/15 px-4 py-2 text-[0.875rem] font-bold">
-            <input type="checkbox" checked={points} onChange={(e) => void flip(e.target.checked)} className="size-4 accent-white" />
-            {t.askEach}
-          </label>
-        )}
 
         <div className="flex h-12 shrink-0 items-center">
           {latest ? (

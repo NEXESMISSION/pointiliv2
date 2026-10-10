@@ -4,14 +4,13 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
 import { customerAt, give as handOver, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
-import { serveOrder, type Order } from "@/app/actions-store";
 import { Pass } from "@/components/Pass";
 import { TryItButton, type DemoShop } from "@/components/TryIt";
 import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
 import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
-import { fill, pointsSaid, t } from "@/lib/t";
+import { fill, t } from "@/lib/t";
 import { nextTampon } from "@/lib/when";
 import type { CardView } from "@/lib/types";
 
@@ -26,8 +25,7 @@ type Step =
   | { kind: "done"; name: string | null; card: CardView; gift: boolean; waiting: WaitingGift | null; moment: number | null }
   | { kind: "undone"; name: string | null; card: CardView }
   | { kind: "soon"; name: string | null; at: string; card?: CardView; waiting: WaitingGift | null }
-  | { kind: "handed"; name: string | null; gift: string; card: CardView | null; waiting: WaitingGift | null }
-  | { kind: "served"; name: string | null; thing: string; cost: number; card: CardView | null };
+  | { kind: "handed"; name: string | null; gift: string; card: CardView | null; waiting: WaitingGift | null };
 
 /** 6 digits are a customer's code; 8 (or 216 + 8) their number. */
 const complete = (d: string) => d.length === 6 || d.length === 8 || (d.length === 11 && d.startsWith("216"));
@@ -78,41 +76,7 @@ function GiftPop({ who, w, won, busy, onGive, onLater }: { who: string; w: Waiti
   );
 }
 
-/**
- * The customer's code read and a thing from the store waits on the card: what
- * it is and what it costs, and one question — give it now, or not now. The
- * points leave the card only on «إيه، عطيه».
- */
-function OrderPop({ who, o, points, busy, onGive, onLater }: { who: string | null; o: Order; points: number | null; busy: boolean; onGive: () => void; onLater: () => void }) {
-  const title = who ? fill(t.storeOrderAsk, { name: who }) : t.storeOrderAskAnon;
-  return (
-    <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={title} onClick={onLater}>
-      <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-5 pt-[clamp(1rem,3dvh,1.75rem)] text-center" style={{ animation: "pop-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
-        <style>{`@keyframes pop-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
-        <Icon3D name="shop" size={72} className="mx-auto animate-pop" />
-        <h2 className="mt-2 text-balance text-[1.375rem] font-bold leading-tight">{title}</h2>
-        <p className="mt-1 text-balance text-[1.625rem] font-bold text-coral">
-          <bdi>{o.name}</bdi>
-        </p>
-        <p className="mt-1 text-[1.0625rem] font-bold text-brand">
-          −{pointsSaid(o.cost)}
-          {points !== null && <span className="ms-2 text-[0.9062rem] font-semibold text-muted">({fill(t.storeHasHe, { n: pointsSaid(points) })})</span>}
-        </p>
-        <div className="mt-[2.5dvh] space-y-1.5">
-          <Btn type="button" kind="coral" onClick={onGive} disabled={busy}>
-            {busy ? t.checking : t.storeGive}
-          </Btn>
-          <Btn type="button" kind="ghost" onClick={onLater} disabled={busy}>
-            {t.storeLater}
-          </Btn>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function errorText(code?: string): string {
-  if (code === "not_enough") return t.storeNotEnough;
   if (code === "own_shop") return t.collectOwn;
   if (code === "paused") return t.pausedBanner;
   if (code === "shut") return `${t.trialOverTitle}. ${t.trialOverBody}`;
@@ -140,9 +104,6 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
   // the gift's question, over the screen; a gift the owner said «موش توّا» to is not asked again by itself
   const [pop, setPop] = useState<{ w: WaitingGift; won: boolean } | null>(null);
   const later = useRef<number | null>(null);
-  // a thing from the store the customer chose: asked first, over the screen
-  const [order, setOrder] = useState<Order | null>(null);
-  const [serving, setServing] = useState(false);
   const ask = (w: WaitingGift | null | undefined, won = false) => {
     if (w && (won || later.current !== w.id)) setPop({ w, won });
   };
@@ -157,8 +118,6 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
       if (asked.current !== digits) return;
       if (res.ok) {
         setStep({ kind: "found", name: res.name ?? null, card: res.card ?? null, waiting: res.waiting ?? null });
-        const o = (res as { order?: Order | null }).order;
-        if (o) setOrder(o);
         // a gift waits: the question comes up (refs and setters only, the effect needs nothing more)
         if (res.waiting && later.current !== res.waiting.id) setPop({ w: res.waiting, won: false });
       }
@@ -216,22 +175,6 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
     });
   };
 
-  // the thing from the store handed over: the points leave the card now
-  const serve = async (o: Order) => {
-    if (serving) return;
-    setServing(true);
-    const res = await serveOrder(o.id).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof serveOrder>>);
-    setServing(false);
-    setOrder(null);
-    if (!res.ok) {
-      setStep({ kind: "error", text: errorText(res.error) });
-      return;
-    }
-    navigator.vibrate?.(60);
-    signal("store_serve", `${o.name} · ${o.cost}`);
-    setStep({ kind: "served", name: "name" in step ? step.name : null, thing: o.name, cost: o.cost, card: res.card ?? null });
-  };
-
   // the tampon just given, taken back: a slip of the finger (the wrong customer, twice). Asked once; ten minutes
   const [undo, setUndo] = useState<"no" | "ask" | "busy">("no");
   const [undoSaid, setUndoSaid] = useState<string | null>(null);
@@ -253,7 +196,6 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
     asked.current = "";
     later.current = null;
     setPop(null);
-    setOrder(null);
     setUndo("no");
     setUndoSaid(null);
     setDigits("");
@@ -331,15 +273,13 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
                 fill(t.collectGift, { name: who, gift: step.card.shop.gift ?? "" })
               ) : (
                 <>
-                  {/* a shop in points mode gave an amount, not a tampon: the card's newest moment says how many */}
-                  <bdi className="num">{step.card.last?.kind === "points" ? `+${step.card.last.n ?? 0}` : "+1"}</bdi>{" "}
-                  {name ? fill(t.collectDone, { name }) : step.card.last?.kind === "points" ? pointsSaid(step.card.last.n ?? 0).replace(/^\d+ /, "") + "!" : t.collectDoneAnon}
+                  <bdi className="num">+1</bdi> {name ? fill(t.collectDone, { name }) : t.collectDoneAnon}
                 </>
               )}
             </h2>
             {/* the card a little smaller on a short screen (ranges that do not overlap: the CSS lists them by size) */}
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-              <Pass shop={step.card.shop} stamps={step.card.stamps} points={step.card.points} fresh />
+              <Pass shop={step.card.shop} stamps={step.card.stamps} fresh />
             </div>
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
             <div className="mt-[3dvh] w-full space-y-2">
@@ -379,7 +319,7 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
             <h2 className="mt-3 text-[1.625rem] font-bold">{t.collectUndone}</h2>
             <p className="mt-1 text-[0.9375rem] text-muted">{t.collectUndoneBody}</p>
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-              <Pass shop={step.card.shop} stamps={step.card.stamps} points={step.card.points} />
+              <Pass shop={step.card.shop} stamps={step.card.stamps} />
             </div>
             <div className="mt-[3dvh] w-full space-y-2">
               <Btn type="button" onClick={again}>
@@ -390,26 +330,6 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
               </Link>
             </div>
           </div>
-        ) : step.kind === "served" ? (
-          <div className="my-auto flex flex-col items-center text-center">
-            <span className="grid size-[clamp(3.5rem,10dvh,5rem)] animate-pop place-items-center rounded-full bg-mint text-white">
-              <Icon3D name="shop" size={46} />
-            </span>
-            <h2 className="mt-3 text-balance text-[1.625rem] font-bold">
-              <bdi>{fill(t.storeServed, { thing: step.thing })}</bdi>
-            </h2>
-            <p className="mt-1 text-[1.0625rem] font-bold text-coral">−{pointsSaid(step.cost)}</p>
-            {step.card && (
-              <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-                <Pass shop={step.card.shop} stamps={step.card.stamps} points={step.card.points} />
-              </div>
-            )}
-            <div className="mt-[3dvh] w-full">
-              <Btn type="button" onClick={again}>
-                <RotateCcw className="size-5" /> {t.collectNext}
-              </Btn>
-            </div>
-          </div>
         ) : step.kind === "handed" ? (
           <div className="my-auto flex flex-col items-center text-center">
             <span className="grid size-[clamp(3.5rem,10dvh,5rem)] animate-pop place-items-center rounded-full bg-mint text-white">
@@ -418,7 +338,7 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
             <h2 className="mt-3 text-balance text-[1.625rem] font-bold">{fill(t.collectHanded, { name: who, gift: step.gift })}</h2>
             {step.card && (
               <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-                <Pass shop={step.card.shop} stamps={step.card.stamps} points={step.card.points} />
+                <Pass shop={step.card.shop} stamps={step.card.stamps} />
               </div>
             )}
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
@@ -518,10 +438,7 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
         )}
       </div>
 
-      {order && (
-        <OrderPop who={"name" in step ? step.name : null} o={order} points={"card" in step && step.card ? (step.card.points ?? 0) : null} busy={serving} onGive={() => void serve(order)} onLater={() => setOrder(null)} />
-      )}
-      {pop && !order && (
+      {pop && (
         <GiftPop
           who={who}
           w={pop.w}
@@ -535,7 +452,7 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
         />
       )}
 
-      {mode === "code" && step.kind !== "done" && step.kind !== "handed" && step.kind !== "served" && step.kind !== "undone" && (
+      {mode === "code" && step.kind !== "done" && step.kind !== "handed" && step.kind !== "undone" && (
         <Link href="/shop/qr" className="mb-[2dvh] flex shrink-0 items-center justify-center gap-1.5 text-[0.875rem] font-semibold text-brand">
           <QrCode className="size-4" /> {t.collectOr}
         </Link>

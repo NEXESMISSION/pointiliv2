@@ -217,45 +217,6 @@ export const t = {
   cardColor: "اللون",
   cardDone: "حلّ الكود",
   // what each stamp on the card looks like: the tick, or the shop's logo
-  // a shop in points mode: the card holds a balance, a scan gives an amount
-  pointsWord: "نقطة",
-  pointsWords: "نقاط",
-  pointsWon: "ربحت {n}",
-  pointsBalance: "نقاطك",
-  pointsAsk: "اسأل في المحل شنوّة تجيبلك نقاطك",
-  // the shop's store: things to take with the points
-  storeTitle: "الماغازة",
-  storeHave: "عندك {n}",
-  storeHasHe: "عندو {n}",
-  storeTake: "خوذها",
-  storeMissing: "ينقصك {n}",
-  storeShow: "ورّي الكود هذا للمحل، ويعطيك",
-  storeWaiting: "تستنّاك: {name}",
-  storeShowShort: "ورّي الكود",
-  storeCancel: "بطّل",
-  storeGone: "الحاجة هاذي ما عادتش موجودة",
-  storeNotEnough: "النقاط ما يكفيوش",
-  storeMine: "الماغازة متاعك",
-  storeMineWhat: "حطّ الحاجات اللي الحريف ينجم ياخوهم بالنقاط، وبقدّاش كل وحدة.",
-  storeName: "الحاجة",
-  storeNamePh: "مثلا: كابوسة",
-  storeCost: "بقدّاش نقطة",
-  storeAdd: "زيد",
-  storeSave: "سجّل",
-  storeEmptyOwner: "مازالت فارغة: زيد أوّل حاجة.",
-  storeErrName: "اكتب اسم الحاجة (حرفين على الأقل)",
-  storeErrCost: "النقاط: من 1 لـ 100000",
-  storeErrExists: "موجودة ديجا",
-  storeErrMany: "30 حاجة على الأكثر",
-  storeLog: "شنوّة خذاو",
-  storeLogEmpty: "مازال حتى حد ما خذا حاجة.",
-  storeLogTotal: "{count} مرّة · {points} نقطة تصرفت",
-  storeOrderAsk: "{name} يحب ياخو:",
-  storeOrderAskAnon: "الحريف يحب ياخو:",
-  storeGive: "إيه، عطيه",
-  storeLater: "موش توّا",
-  storeServed: "{thing} تعطات",
-  storeTile: "الماغازة",
   stampLook: "شكل التامبون",
   stampTick: "العادي",
   stampLogo: "اللوغو متاعك",
@@ -390,13 +351,6 @@ export const t = {
   // the counter
   counterTitle: "سكاني وخوذ تامبون",
   counterHint: "الكود يتبدّل وحدو، ويخدم مرّة برك",
-  // a shop that counts points says how many before the code is made
-  askEach: "اسألني قدّاش نعطي",
-  howManyAsk: "قدّاش من نقطة؟",
-  howManyHint: "اكتب العدد، وبعدها يطلع الكود",
-  howManyGo: "ورّي الكود",
-  howManyOn: "نقطة",
-  howManyChange: "بدّل",
   someone: "حريف",
   giftFor: "{who} ربح {gift}",
   giveNow: "يورّيك الكود متاع الكادو في تليفونو، وإنت سكانيه",
@@ -673,7 +627,6 @@ export const t = {
   tryLobby: "جرّب بروحك: شوف شنوّة يشوف الحريف",
   tryScan: "الحريف يسكاني الكود متاعك بتليفونو",
   tryStamp: "يطلعلو التامبون على طول، والكارط متاعك باسمك",
-  tryPoints: "يطلعولو النقاط على طول، والكارط متاعك باسمك",
   tryWin: "كي يكمّل {n} تامبونات: «ربحت {gift}!»، ويورّيك الكود متاع الكادو",
   tryYou: "إنت: «سكاني» ← تسكاني الكود متاعو ← «إيه، عطيه الكادو». خلاص.",
   tryYourScreen: "الشاشة متاعك",
@@ -1073,8 +1026,3 @@ export const liveN = (n: number) => counted(n, "واحد يخدم", "زوز يخ
 export const pausedN = (n: number) => counted(n, "واحد موقّف", "زوز موقّفين", "موقّفين", "موقّفين");
 /** كادو واحد يستنّى, زوز كادوات يستنّاو */
 export const waitingN = (n: number) => (n === 0 ? t.aNoneWaiting : n === 1 ? `${giftsN(1)} يستنّى` : `${giftsN(n)} يستنّاو`);
-
-/** «5 نقاط», «1 نقطة», «120 نقطة»: the counted word the way it is said (نقاط from 2 to 10). */
-export function pointsSaid(n: number): string {
-  return `${n} ${n >= 2 && n <= 10 ? t.pointsWords : t.pointsWord}`;
-}

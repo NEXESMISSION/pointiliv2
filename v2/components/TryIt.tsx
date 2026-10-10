@@ -5,11 +5,11 @@ import { ChevronLeft, QrCode, ScanLine, X } from "lucide-react";
 import { Pass } from "@/components/Pass";
 import { Confetti, StampLand } from "@/components/StampLand";
 import { Icon3D } from "@/components/ui";
-import { fill, kindIcon, pointsSaid, t } from "@/lib/t";
+import { fill, kindIcon, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 
 /** what the demo needs to know of the shop: the card as the customer would get it */
-export type DemoShop = { name: string; kind: string; color: string; logo?: string | null; goal: number | null; gift: string | null; stamp_logo?: boolean; mode?: "stamps" | "points" };
+export type DemoShop = { name: string; kind: string; color: string; logo?: string | null; goal: number | null; gift: string | null; stamp_logo?: boolean };
 
 /**
  * The customer's side, replayed on the owner's own phone — the thing an owner
@@ -22,10 +22,7 @@ export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }
   const [beat, setBeat] = useState(0);
   const goal = shop.goal ?? 10;
   const gift = shop.gift ?? "";
-  const pass = { name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal, gift, stamp_logo: shop.stamp_logo, mode: shop.mode };
-  // a shop in points mode: the scan, then the points landing — no full card, no gift to hand over (the store comes later)
-  const byPoints = shop.mode === "points";
-  const DEMO_POINTS = 5;
+  const pass = { name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal, gift, stamp_logo: shop.stamp_logo };
   // the shop's own logo as the stamp, when it chose so (and has one)
   const stampFace = shop.stamp_logo && shop.logo ? shop.logo : null;
   // said once, when the demo opens — not again when the page behind it re-renders (the counter polls)
@@ -35,7 +32,7 @@ export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }
     addEventListener("keydown", esc);
     return () => removeEventListener("keydown", esc);
   }, [onClose]);
-  const captions = byPoints ? [t.tryScan, t.tryPoints] : [t.tryScan, t.tryStamp, fill(t.tryWin, { n: goal, gift }), t.tryYou];
+  const captions = [t.tryScan, t.tryStamp, fill(t.tryWin, { n: goal, gift }), t.tryYou];
   const last = beat === captions.length - 1;
   const next = () => {
     if (last) {
@@ -76,11 +73,11 @@ export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }
           {beat === 1 && (
             <Phone>
               <Confetti count={24} />
-              <StampLand color={shop.color} icon={byPoints ? "coin" : kindIcon(shop.kind)} size={84} logo={byPoints ? null : stampFace} label={byPoints ? `+${DEMO_POINTS}` : "+1"} />
-              <p className="mt-1 text-[1.25rem] font-bold">{byPoints ? fill(t.pointsWon, { n: pointsSaid(DEMO_POINTS) }) : t.newStamp}</p>
+              <StampLand color={shop.color} icon={kindIcon(shop.kind)} size={84} logo={stampFace} />
+              <p className="mt-1 text-[1.25rem] font-bold">{t.newStamp}</p>
               <p className="text-[0.8125rem] font-semibold text-muted">{shop.name}</p>
               <div className="mt-3 w-full text-start">
-                <Pass shop={pass} stamps={1} points={DEMO_POINTS} small fresh />
+                <Pass shop={pass} stamps={1} small fresh />
               </div>
             </Phone>
           )}
