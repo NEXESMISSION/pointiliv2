@@ -764,6 +764,9 @@ begin
   return jsonb_build_object('ok', true, 'goal', s.goal, 'items', coalesce((
     select jsonb_agg(jsonb_build_object('id', c.id, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone),
                                         'stamps', c.stamps, 'gifts', c.gifts, 'last_at', c.last_at,
+                                        -- what this customer took last (a shop that says what it sells)
+                                        'last_item', (select i.name from public.moments m join public.items i on i.id = m.item_id
+                                                      where m.card_id = c.id and m.kind = 'stamp' order by m.created_at desc limit 1),
                                         'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift), 'ready', public.waits(c.id))
                      order by c.last_at desc nulls last, c.created_at desc)
     from public.cards c left join public.people p on p.id = c.user_id
@@ -1105,7 +1108,9 @@ $$;
 create or replace function public.card(p_id uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select public.card_view(c.id) || jsonb_build_object('history', coalesce((
-           select jsonb_agg(jsonb_build_object('kind', m.kind, 'at', coalesce(m.given_at, m.created_at), 'given', m.given_at is not null, 'gift', m.gift)
+           select jsonb_agg(jsonb_build_object('kind', m.kind, 'at', coalesce(m.given_at, m.created_at), 'given', m.given_at is not null, 'gift', m.gift,
+                                               -- what the tampon was for, when the shop says what it sells
+                                               'item', (select i.name from public.items i where i.id = m.item_id))
                             order by coalesce(m.given_at, m.created_at) desc)
            from (select * from public.moments where card_id = c.id order by created_at desc limit 30) m), '[]'::jsonb))
   from public.cards c where c.id = p_id and c.user_id = auth.uid()

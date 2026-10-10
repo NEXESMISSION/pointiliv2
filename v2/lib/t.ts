@@ -101,6 +101,7 @@ export const t = {
   giftCodeHint: "ورّي الكود هذا في الكاسة: يسكانيوه ويعطيوك الكادو",
   history: "شنوّة صار",
   hStamp: "تامبون",
+  statSelling: "شنوّة يمشي أكثر · 30 يوم",
   hGift: "خذيت {gift}",
   hGiftWaiting: "كادو يستنّى",
   nothingYet: "مازال ما صار شي",

@@ -13,7 +13,7 @@ import { call } from "@/lib/supabase";
 import { fill, stampsN, t } from "@/lib/t";
 import type { CardView } from "@/lib/types";
 
-type Card = CardView & { history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null }[] };
+type Card = CardView & { history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -115,7 +115,17 @@ export default async function CardPage({ params, searchParams }: { params: Promi
                   </span>
                 )}
                 <span className="min-w-0 flex-1 text-[0.9688rem] font-medium">
-                  {h.kind === "stamp" ? t.hStamp : h.given ? fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" }) : t.hGiftWaiting}
+                  {h.kind === "stamp" ? (
+                    <>
+                      {t.hStamp}
+                      {h.item && (
+                        <>
+                          {" · "}
+                          <bdi className="font-bold text-brand">{h.item}</bdi>
+                        </>
+                      )}
+                    </>
+                  ) : h.given ? fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" }) : t.hGiftWaiting}
                 </span>
                 <span className="shrink-0 text-[0.7812rem] text-muted">{when(h.at)}</span>
               </li>

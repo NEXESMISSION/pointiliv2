@@ -87,7 +87,7 @@ function Checking() {
 }
 
 function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
-  const { card, gift } = res;
+  const { card, gift, item } = res;
   const title = gift ? fill(t.won, { gift: card.shop.gift ?? "" }) : t.newStamp;
   // a gift with a long name (up to 60 letters) takes two lines: smaller on a short screen, and the card gives way
   const long = title.length > 24;
@@ -101,6 +101,12 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
       >
         {title}
       </h1>
+      {/* what the tampon was for (a shop that says what it sells): the customer sees it, not only «+1» */}
+      {item && (
+        <p className="mt-1 inline-flex animate-rise items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1 text-[1rem] font-bold text-brand" style={after(120)}>
+          <span className="num">+1</span> · <bdi>{item}</bdi>
+        </p>
+      )}
       <p className="animate-rise text-[1rem] font-semibold text-muted" style={after(140)}>
         {card.shop.name}
       </p>

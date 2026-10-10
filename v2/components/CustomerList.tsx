@@ -7,7 +7,7 @@ import { Pass, type PassShop } from "@/components/Pass";
 import { fill, giftsN, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 
-export type CustomerRow = { id: string; name: string | null; phone: string | null; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null };
+export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null };
 
 const when = (iso: string | null) =>
   iso ? new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso)) : t.never;
@@ -43,6 +43,12 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                   <span className="block truncate text-[0.9688rem] font-semibold">{c.name ?? t.someone}</span>
                   <span className="block truncate text-[0.7812rem] text-muted">
                     {when(c.last_at)}
+                    {c.last_item && (
+                      <>
+                        {" · "}
+                        <bdi className="font-semibold text-brand">{c.last_item}</bdi>
+                      </>
+                    )}
                     {c.phone && (
                       <>
                         {" · "}

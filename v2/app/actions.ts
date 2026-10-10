@@ -144,8 +144,8 @@ export async function scan(token: string): Promise<ScanResult> {
     const { data, error } = await supabase.rpc("stamp", { p_token: token, p_hold: hold });
     if (error || !data) return { kind: "error", code: "network" };
     if (hold) jar.delete(HOLD);
-    const res = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string };
-    if (res.ok && res.card) return { kind: "stamped", card: res.card, gift: !!res.gift };
+    const res = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null };
+    if (res.ok && res.card) return { kind: "stamped", card: res.card, gift: !!res.gift, item: res.item ?? null };
     return { kind: "error", code: res.error ?? "invalid", card: res.card, next_at: res.next_at, shop: res.shop };
   }
 

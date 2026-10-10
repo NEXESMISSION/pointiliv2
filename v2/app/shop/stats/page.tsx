@@ -29,7 +29,9 @@ export default async function ShopStats() {
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
-  const s = await call<Stats>("shop_stats");
+  // what sells: the shop's things by tampons these 30 days (a shop that says what it sells)
+  const [s, sold] = await Promise.all([call<Stats>("shop_stats"), call<{ id: number; name: string; n: number; started: number; came_back: number }[]>("item_report", { p_days: 30 })]);
+  const selling = (Array.isArray(sold) ? sold : []).filter((x) => x.n > 0);
   const days = s?.days ?? [];
   const max = Math.max(1, ...days.map((d) => d.stamps));
   const tiles = [
@@ -83,6 +85,21 @@ export default async function ShopStats() {
           {t.statNewWeek}
         </p>
       </div>
+
+      {/* «شنوّة يمشي أكثر»: one row of chips, the best first — slides sideways, never takes the screen */}
+      {selling.length > 0 && (
+        <section className="mt-[2dvh] shrink-0">
+          <h2 className="mb-1.5 px-0.5 text-[0.9375rem] font-bold">{t.statSelling}</h2>
+          <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
+            {selling.map((x, i) => (
+              <span key={x.id} className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.875rem] font-bold shadow-card ${i === 0 ? "bg-brand text-white" : "bg-surface text-ink"}`}>
+                <bdi>{x.name}</bdi>
+                <span className={`num text-[0.8125rem] ${i === 0 ? "text-white/80" : "text-brand"}`}>×{x.n}</span>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mt-[2dvh] flex min-h-0 flex-1 flex-col pb-3">
         <h2 className="mb-2 px-0.5 text-[0.9375rem] font-bold">{t.statTop}</h2>

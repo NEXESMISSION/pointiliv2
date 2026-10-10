@@ -15,7 +15,7 @@ export type CardView = {
 };
 
 export type ScanResult =
-  | { kind: "stamped"; card: CardView; gift: boolean }
+  | { kind: "stamped"; card: CardView; gift: boolean; item?: string | null }
   | { kind: "held"; shop: string; color: string; shopKind: string }
   | { kind: "error"; code: string; card?: CardView; next_at?: string; shop?: string };
 
