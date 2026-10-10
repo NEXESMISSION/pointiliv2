@@ -530,7 +530,7 @@ begin
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'stamp_gap', s.stamp_gap) end);
+      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on, 'stamp_gap', s.stamp_gap) end);
 end $$;
 
 -- the owner's choice for the stamps on the card: the tick, or the shop's logo
@@ -942,6 +942,17 @@ begin
   if (select count(*) from public.codes where shop_id = s.id and created_at > now() - interval '10 minutes') > 400 then
     return public.err('slow_down');
   end if;
+  -- a shop that says what it sells is asked which one, and nothing is made
+  -- until it answers: a code that exists at all has a thing attached to it,
+  -- so a tampon can never be written down against the wrong one.
+  if s.items_on then
+    if p_item is null then return public.err('pick_item'); end if;
+    if not exists (select 1 from public.items where id = p_item and shop_id = s.id and rank < 999) then
+      return public.err('pick_item');
+    end if;
+  else
+    p_item := null;
+  end if;
   v_token := translate(encode(extensions.gen_random_bytes(24), 'base64'), '+/=', '-_');
   insert into public.codes (shop_id, hash, expires_at, item_id) values (s.id, public.sha(v_token), v_exp, p_item) returning id into v_id;
   delete from public.codes where shop_id = s.id and used_at is null and held_hash is null and expires_at < now() - interval '1 day';
@@ -1015,7 +1026,9 @@ begin
     return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo);
   end if;
   if k.used_at is not null or k.held_hash is not null then return public.err('used'); end if;
-  if k.expires_at <= now() then return public.err('expired'); end if;
+  -- a code is judged by when it was on the screen: a slow phone's page can take a while to open, so two
+  -- minutes of grace past its minute (it stays one-use: a code taken is taken)
+  if k.expires_at + interval '2 minutes' <= now() then return public.err('expired'); end if;
   -- past its trial, to the customer the shop is simply stopped
   if s.paused or public.shut(s) then return public.err('paused'); end if;
   update public.codes set held_hash = public.sha(p_hold), held_until = now() + interval '20 minutes' where id = k.id;
@@ -1049,7 +1062,7 @@ begin
     -- held by a phone without an account: only that phone, back signed in, takes it
     if p_hold is null or public.sha(p_hold) <> k.held_hash then return public.err('used', jsonb_build_object('shop', s.name)); end if;
     if k.held_until <= now() then return public.err('expired', jsonb_build_object('shop', s.name)); end if;
-  elsif k.expires_at <= now() then
+  elsif k.expires_at + interval '2 minutes' <= now() then
     return public.err('expired', jsonb_build_object('shop', s.name));
   end if;
   if s.owner_id = v_uid then return public.err('own_shop'); end if;
@@ -1077,7 +1090,10 @@ begin
     insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
     v_gift := true;
   end if;
-  return jsonb_build_object('ok', true, 'gift', v_gift, 'card', public.card_view(c.id));
+  -- the thing it was for goes back with the answer, so the phone that just
+  -- scanned can say «كابوسة» and not only «+1»
+  return jsonb_build_object('ok', true, 'gift', v_gift, 'card', public.card_view(c.id),
+                            'item', (select i.name from public.items i where i.id = k.item_id));
 end $$;
 
 create or replace function public.wallet() returns jsonb
@@ -1434,6 +1450,15 @@ begin
   if s.paused then return public.err('paused'); end if;
   if public.shut(s) then return public.err('shut'); end if;
   if not public.try_once('give:' || v_uid, 30, 10) then return public.err('too_many'); end if;
+  -- the same question, asked of the hand that gives it
+  if s.items_on then
+    if p_item is null then return public.err('pick_item'); end if;
+    if not exists (select 1 from public.items where id = p_item and shop_id = s.id and rank < 999) then
+      return public.err('pick_item');
+    end if;
+  else
+    p_item := null;
+  end if;
   v_person := public.person_of(p_who);
   if v_person is null then return public.err('unknown'); end if;
   if v_person = v_uid then return public.err('own_shop'); end if;

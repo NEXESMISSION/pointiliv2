@@ -7,6 +7,7 @@ import { ArrowDown, Check, ChevronRight, Eye, Phone, ScanLine, WifiOff } from "l
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { TryItButton } from "@/components/TryIt";
+import { PickItem, type Item } from "@/components/PickItem";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
@@ -61,7 +62,7 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = [] }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null; items?: Item[] }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -70,10 +71,17 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
   // the name, kept: the address drops ?welcome at once
   const [name] = useState(welcome);
   const [code, setCode] = useState<Code | null>(null);
+  // what the code on screen is for. A shop that says what it sells is asked
+  // before anything is made, and asked again after every scan — so the answer
+  // is never left over from the customer before.
+  const [item, setItem] = useState<Item | null>(null);
+  const itemRef = useRef<Item | null>(null);
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
   const [paused, setPaused] = useState(!!shop.paused || !!shutAtFirst);
+  // a stopped shop says so before it asks anything
+  const asking = !paused && items.length > 0 && !item;
   // stopped at the trial's end (not by the founder's switch): the code's place says so, with a call
   const [shut, setShut] = useState(!!shutAtFirst);
   const [live, setLive] = useState(false);
@@ -88,7 +96,12 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
   const again = useRef(false);
 
   const fetchCode = useCallback(async (): Promise<Code | "paused"> => {
-    const res = await fetch("/api/code", { method: "POST", cache: "no-store" });
+    const res = await fetch("/api/code", {
+      method: "POST",
+      cache: "no-store",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ item: itemRef.current?.id ?? null }),
+    });
     const j = await res.json();
     if (j.error === "paused" || j.error === "shut") {
       setShut(j.error === "shut");
@@ -213,7 +226,15 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
       .on("broadcast", { event: "ping" }, (msg) => {
         // the code on screen was just taken (held or used): the next one, now
         const taken = (msg?.payload as { code?: string } | undefined)?.code;
-        if (taken && taken === codeRef.current?.id) swapRef.current();
+        if (taken && taken === codeRef.current?.id) {
+          // whoever comes next is a new question, never the last answer
+          if (items.length > 0) {
+            itemRef.current = null;
+            codeRef.current = null;
+            setItem(null);
+            setCode(null);
+          } else swapRef.current();
+        }
         void tickRef.current();
       })
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
@@ -221,7 +242,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
       setLive(false);
       void sb.removeChannel(channel);
     };
-  }, [shop.signal, paused]);
+  }, [shop.signal, paused, items.length]);
 
   // paused by the founder: look now and then whether it is back on
   useEffect(() => {
@@ -233,7 +254,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
   }, [paused, mint]);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || asking) return;
     const first = setTimeout(tick, 0);
     const poll = setInterval(tick, live ? ASK_LIVE_MS : ASK_DEAF_MS);
     const wake = () => document.visibilityState === "visible" && void tick();
@@ -257,7 +278,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
       window.removeEventListener("online", wake);
       void lock?.release().catch(() => {});
     };
-  }, [tick, paused, live]);
+  }, [tick, paused, live, asking]);
 
   // the coaching is once in a lifetime, whichever half shows: written down the
   // moment it appears, and the address loses its flag, so neither a reload nor
@@ -343,6 +364,15 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
           !gift && <h1 className="text-center text-[clamp(1.6rem,4.6dvh,2.6rem)] font-bold leading-tight">{t.counterTitle}</h1>
         )}
 
+        {asking ? (
+          <PickItem
+            items={items}
+            onPick={(it) => {
+              itemRef.current = it;
+              setItem(it);
+            }}
+          />
+        ) : (
         <div className="flex min-h-0 shrink items-center justify-center transition-[width,height] duration-500 [container-type:size]" style={{ width: qr, height: qr }}>
           <div className="relative aspect-square" style={{ width: "min(100cqw, 100cqh)" }}>
             {flashes.map((f) => (
@@ -383,6 +413,25 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
             </div>
           </div>
         </div>
+        )}
+
+        {item && !paused && (
+          <p className="flex shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-[0.9375rem] font-bold">
+            {t.codeFor} {item.name}
+            <button
+              type="button"
+              onClick={() => {
+                itemRef.current = null;
+                codeRef.current = null;
+                setItem(null);
+                setCode(null);
+              }}
+              className="press -me-1 rounded-full bg-white/20 px-2.5 py-0.5 text-[0.8125rem] font-bold"
+            >
+              {t.changeItem}
+            </button>
+          </p>
+        )}
 
         <div className="flex h-12 shrink-0 items-center">
           {latest ? (

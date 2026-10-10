@@ -230,6 +230,20 @@ export async function cardChange(goal: number, gift: string): Promise<{ ok: bool
   return res ?? { ok: false };
 }
 
+/** What the shop sells, written whole: the names, then whether the counter asks.
+ *  What cannot be kept is named rather than dropped quietly. */
+export async function saveItems(names: string[], on: boolean): Promise<{ ok: boolean; error?: string }> {
+  const clean = names.map((n) => n.trim()).filter(Boolean);
+  if (clean.length > 20) return { ok: false, error: "too_many" };
+  if (clean.some((n) => n.length > 40)) return { ok: false, error: "too_long" };
+  const res = await call<{ ok: boolean; error?: string }>("set_items", { p_names: clean });
+  if (!res?.ok) return { ok: false, error: res?.error ?? "network" };
+  const sw = await call<{ ok: boolean }>("set_items_on", { p_on: on && clean.length > 0 });
+  if (!sw?.ok) return { ok: false, error: "network" };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
 export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push" | "install"): Promise<void> {
   await call("see", { p_key: note });
