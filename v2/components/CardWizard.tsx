@@ -19,6 +19,7 @@ import { waitSays } from "@/lib/when";
 import type { FormState } from "@/lib/types";
 
 const GOALS = [5, 6, 8, 10, 12];
+const TAP_LABEL = "جرّب: زيد تامبون على الكارط";
 /** the wait between two tampons, in minutes: an hour, once a day (the next day in Tunis), none — or hours typed */
 const WAITS = [60, 1440, 0];
 /** the steps: 0 is the hello, then the four questions, then the card made */
@@ -64,6 +65,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
   const [step, setStep] = useState(() => (editing || !hello || seenBefore("card_hello", shop.id) ? 1 : 0));
   const [back, setBack] = useState(false);
   const [goal, setGoal] = useState(shop.goal ?? 8);
+  const [tap, setTap] = useState<{ goal: number; n: number } | null>(null);
   // a number typed by hand (3 to 30) instead of one of the five
   const [other, setOther] = useState(shop.goal && !GOALS.includes(shop.goal) ? String(shop.goal) : "");
   const otherBad = other !== "" && !(Number(other) >= 3 && Number(other) <= 30);
@@ -195,6 +197,8 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
   }, [step]);
 
   const preview = { name: shop.name, kind: shop.kind, logo: shop.logo, goal, gift: gift.trim() || "…", color, stamp_logo: stampLogo };
+  // the preview's tampons: a step's own number, or the ones tapped onto it for this goal
+  const onCard = tap && tap.goal === goal ? tap.n : step === READY ? 1 : Math.max(1, Math.round(goal * 0.6));
 
   if (step === 0) {
     return (
@@ -270,9 +274,16 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
 
       {/* the card, the question, the answers and the button: one block, in the middle */}
       <div className="flex flex-1 flex-col justify-center py-[2dvh]">
-      <div className={SHRINK}>
-        <Pass shop={preview} stamps={step === READY ? 1 : Math.max(1, Math.round(goal * 0.6))} fresh={step === READY} key={step === READY ? "ready" : "live"} />
-      </div>
+      {/* the card is a try: a tap lands one more tampon on it, up to the gift, then it starts over
+          (owners kept tapping it on the goal step, and nothing happened) */}
+      <button
+        type="button"
+        onClick={() => setTap({ goal, n: onCard >= goal ? 0 : onCard + 1 })}
+        aria-label={TAP_LABEL}
+        className={`press block w-full rounded-[1.75rem] text-start ${SHRINK}`}
+      >
+        <Pass shop={preview} stamps={onCard} fresh={step === READY || tap?.goal === goal} key={step === READY ? "ready" : "live"} />
+      </button>
 
       {/* the question slides in from the side: clipped sideways only, at the screen's edge, so the page never widens */}
       <div className="-mx-[clamp(1rem,5vw,1.5rem)] mt-[3dvh] overflow-x-clip px-[clamp(1rem,5vw,1.5rem)]">

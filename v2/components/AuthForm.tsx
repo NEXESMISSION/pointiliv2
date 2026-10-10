@@ -17,6 +17,7 @@ export function AuthForm({ mode, next, owner }: { mode: "join" | "login"; next?:
   const [state, action, pending] = useActionState<FormState, FormData>(mode === "join" ? join : login, null);
   // kept by hand: a form action clears its fields, and a name typed once is enough
   const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
   const err = (f: string) => (state?.field === f ? state.error : null);
   useEffect(() => {
     if (state?.error) signal("form_error", `${mode}${owner ? "-owner" : ""} · ${state.field ?? "form"} · ${state.error}`);
@@ -26,13 +27,15 @@ export function AuthForm({ mode, next, owner }: { mode: "join" | "login"; next?:
   const q = after ? `?next=${encodeURIComponent(after)}` : "";
 
   return (
-    <form action={action} className="mt-[3dvh] flex flex-col">
+    // noValidate: the browser's own bubble for an empty field never showed inside Facebook's browser, so «كمّل»
+    // looked dead (7 owners left that way); the server checks every field and says it under the field
+    <form action={action} noValidate className="mt-[3dvh] flex flex-col">
       <div className="space-y-[1.8dvh]">
         {mode === "join" && (
           <Field label={owner ? t.ownerName : t.name} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" required maxLength={60} error={err("name")} />
         )}
         <PhoneField label={t.phone} error={err("phone")} />
-        <Field label={t.password} name="password" type="password" placeholder={t.passwordPh} autoComplete={mode === "join" ? "new-password" : "current-password"} required minLength={mode === "join" ? 8 : 1} error={err("password")} />
+        <Field label={t.password} name="password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder={t.passwordPh} autoComplete={mode === "join" ? "new-password" : "current-password"} required minLength={mode === "join" ? 8 : 1} error={err("password")} />
       </div>
       {next && <input type="hidden" name="next" value={next} />}
       {owner && <input type="hidden" name="owner" value="1" />}

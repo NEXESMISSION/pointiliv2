@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { Gift, QrCode } from "lucide-react";
+import { CardTap } from "@/components/CardTap";
 import { MyCode } from "@/components/MyCode";
 import { PushAsk } from "@/components/PushAsk";
 import { Pass } from "@/components/Pass";
@@ -62,7 +63,10 @@ export default async function CardPage({ params, searchParams }: { params: Promi
     <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
       <Top back="/" title={card.shop.name} />
       <div className={`mx-auto w-full animate-rise ${look.card}`}>
-        <Pass shop={card.shop} stamps={card.stamps} />
+        {/* the card opens: how far the gift is, and how the next tampon is taken (customers kept tapping it) */}
+        <CardTap shop={card.shop.name} gift={card.shop.gift ?? ""} stamps={card.stamps} goal={card.shop.goal ?? 10} ready={ready}>
+          <Pass shop={card.shop} stamps={card.stamps} />
+        </CardTap>
       </div>
       {card.next && (
         <p className={`mt-3 rounded-2xl bg-surface px-4 text-[0.9062rem] text-body shadow-card ${look.next}`}>

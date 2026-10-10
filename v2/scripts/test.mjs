@@ -97,8 +97,14 @@ try {
   const soon = await rpc(sami, "stamp", { p_token: c2.token });
   check("a second stamp within the hour is refused, with the time it opens", soon.error === "too_soon" && !!soon.next_at, soon);
   check("the owner never stamps his own card", (await rpc(owner, "stamp", { p_token: c2.token })).error === "own_shop");
-  await admin.from("codes").update({ expires_at: ago(1) }).eq("id", c2.id);
-  check("an expired code: expired", (await rpc(other, "stamp", { p_token: c2.token })).error === "expired");
+  // a code scanned near the end of its minute still counts: a slow phone opens the page late (two minutes of grace)
+  const cg = await rpc(owner, "new_code");
+  await admin.from("codes").update({ expires_at: new Date(Date.now() - 90_000).toISOString() }).eq("id", cg.id);
+  const lateHold = await admin.rpc("hold", { p_token: cg.token, p_hold: randomBytes(32).toString("base64url") });
+  check("a code ninety seconds past its minute: still taken", lateHold.data?.ok === true, lateHold.data);
+  const cx = await rpc(owner, "new_code");
+  await admin.from("codes").update({ expires_at: new Date(Date.now() - 3 * 60_000).toISOString() }).eq("id", cx.id);
+  check("a code three minutes past its minute: expired", (await rpc(other, "stamp", { p_token: cx.token })).error === "expired");
   check("a made-up code: invalid", (await rpc(other, "stamp", { p_token: "A".repeat(32) })).error === "invalid");
 
   console.log("\nA phone without an account holds the code");

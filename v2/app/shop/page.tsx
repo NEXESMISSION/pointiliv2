@@ -9,6 +9,7 @@ import { OfferPopup, PayBanner, TrialBanner, type Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
 import { PlanOn } from "@/components/PlanOn";
 import { PushAsk } from "@/components/PushAsk";
+import { RecentList } from "@/components/RecentList";
 import { TryItButton } from "@/components/TryIt";
 import { ShopWelcome } from "@/components/ShopWelcome";
 import { Icon3D } from "@/components/ui";
@@ -75,6 +76,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
     { href: "/shop/stats", mark: <Icon3D name="chart" size={30} />, label: t.statsTitle },
     { href: "/shop/customers", mark: <Icon3D name="people" size={30} />, label: t.customersTitle },
     { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
+    { href: "/shop/items", mark: <Icon3D name="basket" size={30} />, label: t.itemsTile },
     {
       // the shop's own tile shows its logo: the logo tip lights this one
       href: "/shop/setup?edit=1",
@@ -145,7 +147,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
       </div>
 
       {/* the four places to go, in one row */}
-      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-5 gap-1.5">
+      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-6 gap-1.5">
         {options.map((o) => (
           <Link key={o.href} id={o.id} href={o.href} className="press flex flex-col items-center gap-1 rounded-[1.125rem] bg-surface px-0.5 py-[clamp(0.75rem,1.9dvh,1.15rem)] shadow-card">
             {o.mark}
@@ -161,25 +163,23 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
         <div className={`flex flex-1 flex-col rounded-[1.25rem] bg-surface shadow-card ${recent.length > 0 ? "min-h-0 overflow-hidden" : ""}`}>
           {recent.length > 0 ? (
             <>
-              <ul data-list data-clarity-mask="true" className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain">
-                {recent.map((r) => (
-                  <li key={r.id} className="flex items-center gap-3 px-3.5 py-2.5">
-                    {r.kind === "stamp" ? (
-                      <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.7812rem] font-bold text-brand">+1</span>
-                    ) : (
-                      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-coral-soft">
-                        <Icon3D name="gift" size={22} />
-                      </span>
-                    )}
-                    <span className="min-w-0 flex-1 truncate text-[0.9062rem] font-medium">
-                      {r.kind === "stamp"
-                        ? fill(t.lateStamp, { who: r.name ?? t.someone })
-                        : fill(r.given ? t.lateGiven : t.lateGift, { who: r.name ?? t.someone, gift: r.gift ?? shop.gift ?? "" })}
-                    </span>
-                    <span className="num shrink-0 text-[0.75rem] text-muted">{time(r.at)}</span>
-                  </li>
-                ))}
-              </ul>
+              {/* each line opens: the customer's card as it stands (owners kept tapping them) */}
+              <RecentList
+                shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift }}
+                rows={recent.map((r) => ({
+                  id: r.id,
+                  kind: r.kind,
+                  name: r.name ?? t.someone,
+                  line:
+                    r.kind === "stamp"
+                      ? fill(t.lateStamp, { who: r.name ?? t.someone })
+                      : fill(r.given ? t.lateGiven : t.lateGift, { who: r.name ?? t.someone, gift: r.gift ?? shop.gift ?? "" }),
+                  time: time(r.at),
+                  stamps: r.stamps,
+                  goal: r.goal,
+                  gift: r.gift,
+                }))}
+              />
               <Link href="/shop/customers" className="mt-auto flex shrink-0 items-center justify-center gap-1 border-t border-line py-3 text-[0.875rem] font-bold text-brand">
                 {t.seeAll} <ChevronLeft className="size-4" />
               </Link>

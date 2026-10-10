@@ -22,6 +22,10 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUP
 // walking the local server again and again: its sign-up and sign-in counters start from zero
 if (/localhost|127\.0\.0\.1/.test(BASE)) for (const ip of ["local", "::1", "127.0.0.1"]) for (const key of [`join-ip:${ip}`, `login-ip:${ip}`]) await admin.rpc("forget_tries", { p_key: key });
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
+// a walk cut short leaves its two lines in the books (a script's lines, never the founder's): gone before this
+// one writes them again, or «the line is taken back» finds the old twin still there and waits forever
+const BOOK_LINES = ["سبونسور فيسبوك", "خدمة طباعة لمحل"];
+await admin.from("books").delete().eq("robot", true).in("what", BOOK_LINES);
 // robots, all three: on the list before they exist, so the founder's console never shows them (scripts/robots.mjs)
 const ownerPhone = await robot(admin, phoneNo());
 const customerPhone = await robot(admin, phoneNo());
