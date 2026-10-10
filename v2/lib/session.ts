@@ -2,7 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { call } from "@/lib/supabase";
 
-export type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; mode?: "stamps" | "points"; stamp_gap?: number };
+export type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; mode?: "stamps" | "points"; per_visit?: number; ask_points?: boolean; sells?: boolean; stamp_gap?: number };
 export type Me = { id: string; name: string; phone: string | null; admin?: boolean; shop: Shop | null; seen?: string[]; code?: string | null; tester?: boolean };
 
 /** Who is here: null when nobody is signed in (no network call without a session cookie). */

@@ -530,7 +530,7 @@ begin
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'mode', s.mode, 'stamp_gap', s.stamp_gap) end);
+      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'mode', s.mode, 'per_visit', s.per_visit, 'ask_points', s.ask_points, 'sells', public.sells(s.id), 'stamp_gap', s.stamp_gap) end);
 end $$;
 
 -- the owner's choice for the stamps on the card: the tick, or the shop's logo
@@ -763,7 +763,7 @@ begin
   if s.id is null then return public.err('no_shop'); end if;
   return jsonb_build_object('ok', true, 'goal', s.goal, 'items', coalesce((
     select jsonb_agg(jsonb_build_object('id', c.id, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone),
-                                        'stamps', c.stamps, 'gifts', c.gifts, 'points', c.points, 'last_at', c.last_at,
+                                        'stamps', c.stamps, 'gifts', c.gifts, 'points', c.stamps, 'last_at', c.last_at,
                                         'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift), 'ready', public.waits(c.id))
                      order by c.last_at desc nulls last, c.created_at desc)
     from public.cards c left join public.people p on p.id = c.user_id
@@ -913,11 +913,23 @@ end $$;
 -- Switching keeps both, so a customer never loses what he had. Tampons by
 -- default, for every shop that exists and every shop to come.
 
-alter table public.shops add column if not exists mode text not null default 'stamps';
+-- What one scan is worth. A shop that never touches it gives one at a time
+-- and has the card everybody already knows; a shop that sets it to five is
+-- counting in points. There is no mode: there is a number, and it is 1.
+alter table public.shops add column if not exists per_visit int not null default 1;
+-- Whether the counter asks every time. Off, a scan is worth per_visit and the
+-- counter is the one everybody knows. On, the owner says how many before
+-- there is anything to scan — and the server will not make a code without an
+-- answer, so a scan can never be worth a number nobody chose.
+alter table public.shops add column if not exists ask_points boolean not null default false;
 do $$ begin
-  alter table public.shops add constraint shops_mode_ck check (mode in ('stamps', 'points'));
+  alter table public.shops add constraint shops_per_visit_ck check (per_visit between 1 and 10000);
 exception when duplicate_object then null; end $$;
 
+-- `mode` and `cards.points` are what two separate schemes needed. There is
+-- one balance — cards.stamps, which give() has always spent — so both are
+-- left where they are and nothing reads them any more.
+alter table public.shops add column if not exists mode text not null default 'stamps';
 alter table public.cards add column if not exists points int not null default 0 check (points >= 0);
 
 -- how many this code is worth, written when it is made (as the item was):
@@ -945,6 +957,28 @@ begin
   return jsonb_build_object('ok', true, 'mode', p_mode);
 end $$;
 
+-- the one switch the owner has: ask me each time, or do not
+create or replace function public.set_ask_points(p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  update public.shops set ask_points = coalesce(p_on, false) where id = s.id;
+  return jsonb_build_object('ok', true, 'ask_points', coalesce(p_on, false));
+end $$;
+
+create or replace function public.set_per_visit(p_n int) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if p_n is null or p_n < 1 or p_n > 10000 then return public.err('invalid'); end if;
+  update public.shops set per_visit = p_n where id = s.id;
+  return jsonb_build_object('ok', true, 'per_visit', p_n);
+end $$;
+
 -- ═══ what the card says ═══════════════════════════════════════════════════
 -- `last` is the card's newest moment, with `n` carrying the amount for points
 -- and null for a tampon or a gift. It is what lets the landing animation show
@@ -952,7 +986,7 @@ end $$;
 create or replace function public.card_view(p_card uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select jsonb_build_object(
-    'id', c.id, 'stamps', c.stamps, 'gifts', c.gifts, 'points', c.points, 'last_at', c.last_at,
+    'id', c.id, 'stamps', c.stamps, 'gifts', c.gifts, 'points', c.stamps, 'last_at', c.last_at,
     'ready', w.waiting, 'waiting', w.waiting,
     'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'stamp_logo', s.stamp_logo,
                                'mode', s.mode,
@@ -995,6 +1029,14 @@ create table if not exists public.rewards (
   created_at  timestamptz not null default now()
 );
 create index if not exists rewards_shop_idx on public.rewards (shop_id, active, cost);
+
+-- A shop with things to take has no single gift waiting at a number: the
+-- balance is spent on whichever of them the customer wants, so the card must
+-- not hand anything over on its own.
+create or replace function public.sells(p_shop uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.rewards r where r.shop_id = p_shop and r.active)
+$$;
 
 create table if not exists public.redemptions (
   id          uuid primary key default gen_random_uuid(),
@@ -1084,8 +1126,8 @@ begin
   if r.status = 'done' then return jsonb_build_object('ok', true, 'already', true, 'card', public.card_view(r.card_id)); end if;
   if r.status <> 'waiting' then return public.err('cancelled'); end if;
   select * into c from public.cards where id = r.card_id for update;
-  if c.points < r.cost then return public.err('not_enough', jsonb_build_object('points', c.points, 'cost', r.cost)); end if;
-  update public.cards set points = points - r.cost, last_at = now() where id = c.id;
+  if c.stamps < r.cost then return public.err('not_enough', jsonb_build_object('points', c.stamps, 'cost', r.cost)); end if;
+  update public.cards set stamps = greatest(stamps - r.cost, 0), last_at = now() where id = c.id;
   insert into public.moments (shop_id, card_id, kind, n, gift, given_at) values (s.id, c.id, 'spend', r.cost, r.name, now());
   update public.redemptions set status = 'done', done_at = now() where id = r.id;
   return jsonb_build_object('ok', true, 'name', r.name, 'cost', r.cost, 'card', public.card_view(c.id));
@@ -1121,7 +1163,7 @@ declare c public.cards%rowtype;
 begin
   select * into c from public.cards where id = p_card and user_id = auth.uid();
   if c.id is null then return public.err('not_found'); end if;
-  return jsonb_build_object('ok', true, 'points', c.points, 'order', public.waiting_order(c.id),
+  return jsonb_build_object('ok', true, 'points', c.stamps, 'order', public.waiting_order(c.id),
     'items', coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'name', r.name, 'cost', r.cost) order by r.cost, r.id)
                        from public.rewards r where r.shop_id = c.shop_id and r.active), '[]'::jsonb));
 end $$;
@@ -1136,7 +1178,7 @@ begin
   if c.id is null then return public.err('not_found'); end if;
   select * into w from public.rewards where id = p_reward and shop_id = c.shop_id and active;
   if w.id is null then return public.err('gone'); end if;
-  if c.points < w.cost then return public.err('not_enough'); end if;
+  if c.stamps < w.cost then return public.err('not_enough'); end if;
   update public.redemptions set status = 'cancelled' where card_id = c.id and status = 'waiting';
   insert into public.redemptions (shop_id, card_id, user_id, reward_id, name, cost)
   values (c.shop_id, c.id, c.user_id, w.id, w.name, w.cost) returning id into v_id;
@@ -1170,13 +1212,11 @@ begin
   if (select count(*) from public.codes where shop_id = s.id and created_at > now() - interval '10 minutes') > 400 then
     return public.err('slow_down');
   end if;
-  -- a shop counting points is asked how many before anything is made: no
-  -- answer, no code. Not a rule the screen is trusted to keep.
-  if s.mode = 'points' then
-    if p_points is null or p_points < 1 or p_points > 10000 then return public.err('pick_points'); end if;
-  else
-    p_points := null;
-  end if;
+  -- what this one is worth. A shop that asks gets no code until it answers;
+  -- one that does not gives what a visit is worth, and never sees a question.
+  if s.ask_points and p_points is null then return public.err('pick_points'); end if;
+  p_points := coalesce(p_points, s.per_visit, 1);
+  if p_points < 1 or p_points > 10000 then return public.err('pick_points'); end if;
   v_token := translate(encode(extensions.gen_random_bytes(24), 'base64'), '+/=', '-_');
   insert into public.codes (shop_id, hash, expires_at, item_id, points)
   values (s.id, public.sha(v_token), v_exp, p_item, p_points) returning id into v_id;
@@ -1267,6 +1307,7 @@ declare
   c public.cards%rowtype;
   v_gift boolean := false;
   v_waiting boolean;
+  v_n int;
 begin
   if v_uid is null then return public.err('not_signed_in'); end if;
   if p_token is null or p_token !~ '^[A-Za-z0-9_-]{20,64}$' then return public.err('invalid'); end if;
@@ -1302,23 +1343,17 @@ begin
 
   update public.codes set used_at = now(), used_by = v_uid where id = k.id;
 
-  -- a shop counting points: the balance grows by what the code was worth and
-  -- nothing else moves — no goal, no gift, no card filling up
-  if s.mode = 'points' then
-    update public.cards set points = points + coalesce(k.points, 0), last_at = now() where id = c.id returning * into c;
-    insert into public.moments (shop_id, card_id, kind, n) values (s.id, c.id, 'points', coalesce(k.points, 0));
-    return jsonb_build_object('ok', true, 'gift', false, 'card', public.card_view(c.id));
-  end if;
-
+  v_n := greatest(1, coalesce(k.points, s.per_visit, 1));
   v_waiting := public.waits(c.id);
   -- a card at rest follows the shop's card of today; a card on its way keeps the one it started
   update public.cards set
     goal = case when (stamps = 0 and not v_waiting) or goal is null then s.goal else goal end,
     gift = case when (stamps = 0 and not v_waiting) or gift is null then s.gift else gift end,
-    stamps = stamps + 1, last_at = now()
+    stamps = stamps + v_n, last_at = now()
   where id = c.id returning * into c;
-  insert into public.moments (shop_id, card_id, kind, item_id) values (s.id, c.id, 'stamp', k.item_id);
-  if c.stamps >= c.goal and not v_waiting then
+  insert into public.moments (shop_id, card_id, kind, item_id, n) values (s.id, c.id, 'stamp', k.item_id, v_n);
+  -- a shop that sells from a list hands nothing over by itself
+  if c.stamps >= c.goal and not v_waiting and not public.sells(s.id) then
     insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
     v_gift := true;
   end if;
@@ -1674,6 +1709,7 @@ declare
   v_gift boolean := false;
   v_waiting boolean;
   v_moment bigint;
+  v_n int;
 begin
   if v_uid is null then return public.err('not_signed_in'); end if;
   select * into s from public.shops where owner_id = v_uid;
@@ -1693,22 +1729,15 @@ begin
     return public.err('too_soon', jsonb_build_object('next_at', public.next_stamp_at(c.last_at, s.stamp_gap), 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id)));
   end if;
 
-  -- a shop counting points: the balance grows and the card never fills up
-  if s.mode = 'points' then
-    if p_points is null or p_points < 1 or p_points > 10000 then return public.err('pick_points'); end if;
-    update public.cards set points = points + p_points, last_at = now() where id = c.id returning * into c;
-    insert into public.moments (shop_id, card_id, kind, n) values (s.id, c.id, 'points', p_points) returning id into v_moment;
-    return jsonb_build_object('ok', true, 'gift', false, 'name', nullif(v_name, ''), 'card', public.card_view(c.id),
-                              'waiting', public.waiting_gift(c.id), 'moment', v_moment);
-  end if;
+  v_n := greatest(1, coalesce(p_points, s.per_visit, 1));
   v_waiting := public.waits(c.id);
   update public.cards set
     goal = case when (stamps = 0 and not v_waiting) or goal is null then s.goal else goal end,
     gift = case when (stamps = 0 and not v_waiting) or gift is null then s.gift else gift end,
-    stamps = stamps + 1, last_at = now()
+    stamps = stamps + v_n, last_at = now()
   where id = c.id returning * into c;
-  insert into public.moments (shop_id, card_id, kind, item_id) values (s.id, c.id, 'stamp', p_item) returning id into v_moment;
-  if c.stamps >= c.goal and not v_waiting then
+  insert into public.moments (shop_id, card_id, kind, item_id, n) values (s.id, c.id, 'stamp', p_item, v_n) returning id into v_moment;
+  if c.stamps >= c.goal and not v_waiting and not public.sells(s.id) then
     insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
     v_gift := true;
   end if;
@@ -2795,7 +2824,7 @@ grant execute on function public.me(), public.my_rewards(), public.reward_save(b
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
-  public.new_code(bigint, int), public.set_mode(text), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
+  public.new_code(bigint, int), public.set_mode(text), public.set_per_visit(int), public.set_ask_points(boolean), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
   public.counter(uuid, timestamptz), public.give(bigint), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),

@@ -391,6 +391,7 @@ export const t = {
   counterTitle: "سكاني وخوذ تامبون",
   counterHint: "الكود يتبدّل وحدو، ويخدم مرّة برك",
   // a shop that counts points says how many before the code is made
+  askEach: "اسألني قدّاش نعطي",
   howManyAsk: "قدّاش من نقطة؟",
   howManyHint: "اكتب العدد، وبعدها يطلع الكود",
   howManyGo: "ورّي الكود",

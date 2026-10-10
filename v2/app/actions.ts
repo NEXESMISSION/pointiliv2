@@ -230,6 +230,13 @@ export async function cardChange(goal: number, gift: string): Promise<{ ok: bool
   return res ?? { ok: false };
 }
 
+/** The counter's one switch: ask how many each time, or give what a visit is worth. */
+export async function askEachTime(on: boolean): Promise<boolean> {
+  const r = await call<{ ok: boolean }>("set_ask_points", { p_on: on });
+  revalidatePath("/", "layout");
+  return !!r?.ok;
+}
+
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
 export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push" | "install"): Promise<void> {
   await call("see", { p_key: note });

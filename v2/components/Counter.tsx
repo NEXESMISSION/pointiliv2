@@ -7,6 +7,7 @@ import { ArrowDown, Check, ChevronRight, Eye, Phone, ScanLine, WifiOff } from "l
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { TryItButton } from "@/components/TryIt";
+import { askEachTime } from "@/app/actions";
 import { HowMany } from "@/components/HowMany";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
@@ -62,7 +63,7 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null; mode?: string }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null; ask?: boolean; per_visit?: number }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -71,10 +72,11 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
   // the name, kept: the address drops ?welcome at once
   const [name] = useState(welcome);
   const [code, setCode] = useState<Code | null>(null);
-  // In a shop that counts points the owner says how many before anything is
-  // made, and is asked again after every scan — so an amount is never left
-  // over from the customer before.
-  const points = shop.mode === "points";
+  // A counter that asks says how many before anything is made, and is asked
+  // again after every scan — so an amount is never left over from the
+  // customer before. A counter that does not ask gives what a visit is worth
+  // and never sees a question.
+  const [points, setPoints] = useState(!!shop.ask);
   const [many, setMany] = useState<number | null>(null);
   const manyRef = useRef<number | null>(null);
   const [flashes, setFlashes] = useState<Flash[]>([]);
@@ -134,6 +136,16 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
   const show = useCallback((c: Code) => {
     codeRef.current = c;
     setCode(c);
+  }, []);
+
+  // the owner turns the question on or off: whatever was typed goes with it
+  const flip = useCallback(async (on: boolean) => {
+    setPoints(on);
+    manyRef.current = null;
+    codeRef.current = null;
+    setMany(null);
+    setCode(null);
+    await askEachTime(on).catch(() => {});
   }, []);
 
   const mint = useCallback(async () => {
@@ -434,6 +446,13 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone }: { shop
               {t.howManyChange}
             </button>
           </p>
+        )}
+
+        {!paused && (
+          <label className="press flex shrink-0 cursor-pointer items-center gap-2.5 rounded-full bg-white/15 px-4 py-2 text-[0.875rem] font-bold">
+            <input type="checkbox" checked={points} onChange={(e) => void flip(e.target.checked)} className="size-4 accent-white" />
+            {t.askEach}
+          </label>
         )}
 
         <div className="flex h-12 shrink-0 items-center">
