@@ -326,6 +326,12 @@ alter table public.visits add column if not exists here_path text;
 alter table public.visits drop constraint if exists visits_here_state_check;
 alter table public.visits add constraint visits_here_state_check check (here_state is null or here_state in ('here', 'idle', 'away'));
 create index if not exists visits_here_idx on public.visits (here_at desc) where here_at is not null;
+-- the sign-in the visit was made under (the access token's session_id): auth.sessions
+-- only knows the server that signed in («node», a Vercel address), so the phone, its
+-- browser and its city — what the console shows for each phone an owner is signed
+-- in on — come from the visits made under that session
+alter table public.visits add column if not exists session_id uuid;
+create index if not exists visits_session_idx on public.visits (session_id, started_at desc) where session_id is not null;
 
 create table if not exists public.views (
   id          uuid primary key,
@@ -1252,7 +1258,26 @@ begin
     'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused, 'created_at', s.created_at,
     'owner', (select jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone, 'tester', p.is_tester, 'admin', p.is_admin, 'robot', public.is_robot(p.id))
               from public.people p where p.id = s.owner_id),
-    'stamp_gap', s.stamp_gap,
+    'stamp_gap', s.stamp_gap, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on,
+    -- what the owner wrote in «شنوّة تبيع» (removed ones too, rank 999), and the tampons each one got
+    'items', coalesce((
+      select jsonb_agg(jsonb_build_object('id', i.id, 'name', i.name, 'gone', i.rank >= 999, 'at', i.created_at,
+                                          'n', (select count(*) from public.moments m where m.item_id = i.id and m.kind = 'stamp'),
+                                          'n30', (select count(*) from public.moments m where m.item_id = i.id and m.kind = 'stamp' and m.created_at > now() - interval '30 days'),
+                                          'last_at', (select max(m.created_at) from public.moments m where m.item_id = i.id and m.kind = 'stamp'))
+                       order by i.rank >= 999, i.rank, i.id)
+      from public.items i where i.shop_id = s.id), '[]'::jsonb),
+    -- every phone or computer the owner is signed in on right now (one per sign-in; a
+    -- sign-out ends it): what it is and where, from the last visit made under it
+    'devices', coalesce((
+      select jsonb_agg(jsonb_build_object('id', x.id, 'since', x.created_at,
+                                          'last_at', greatest(coalesce(x.refreshed_at, x.updated_at, x.created_at), v.last_at, v.here_at),
+                                          'device', v.device, 'os', v.os, 'browser', v.browser, 'city', v.city, 'app', v.standalone,
+                                          'here', v.here_at > now() - interval '2 minutes' and v.here_state in ('here', 'idle'))
+                       order by greatest(coalesce(x.refreshed_at, x.updated_at, x.created_at), v.last_at, v.here_at) desc nulls last)
+      from auth.sessions x
+      left join lateral (select * from public.visits w where w.session_id = x.id order by w.started_at desc limit 1) v on true
+      where x.user_id = s.owner_id and (x.not_after is null or x.not_after > now())), '[]'::jsonb),
     'plan', jsonb_build_object(
       'paid_until', s.paid_until,
       'paid', s.paid_until is not null and s.paid_until > now(),
@@ -1291,7 +1316,8 @@ begin
     'waiting', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is null),
     'recent', coalesce((
       select jsonb_agg(jsonb_build_object('at', m.created_at, 'kind', m.kind, 'given', m.given_at is not null, 'gift', m.gift,
-                                          'name', nullif(p.name, ''), 'phone', public.masked(p.phone)) order by m.created_at desc)
+                                          'name', nullif(p.name, ''), 'phone', public.masked(p.phone),
+                                          'item', (select i.name from public.items i where i.id = m.item_id)) order by m.created_at desc)
       from (select * from public.moments where shop_id = s.id order by created_at desc limit 15) m
       join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb),
     'top', coalesce((
@@ -2451,16 +2477,18 @@ begin
   if v is null or coalesce(v ->> 'id', '') !~ '^[0-9a-f-]{36}$' then return; end if;
   v_id := (v ->> 'id')::uuid;
   insert into public.visits (id, visitor, user_id, landing, referrer, source, medium, campaign, content, term, fbclid,
-                             device, os, browser, screen, lang, country, city, is_admin, is_bot, standalone)
+                             device, os, browser, screen, lang, country, city, is_admin, is_bot, standalone, session_id)
   values (v_id, left(v ->> 'visitor', 64), nullif(v ->> 'user_id', '')::uuid, left(v ->> 'landing', 300), left(v ->> 'referrer', 300),
           left(v ->> 'source', 60), left(v ->> 'medium', 60), left(v ->> 'campaign', 120), left(v ->> 'content', 120), left(v ->> 'term', 120),
           coalesce((v ->> 'fbclid')::boolean, false), left(v ->> 'device', 20), left(v ->> 'os', 30), left(v ->> 'browser', 40),
           left(v ->> 'screen', 20), left(v ->> 'lang', 20), left(v ->> 'country', 4), left(v ->> 'city', 60),
           coalesce((v ->> 'is_admin')::boolean, false), coalesce((v ->> 'is_bot')::boolean, false),
-          coalesce((v ->> 'standalone')::boolean, false))
+          coalesce((v ->> 'standalone')::boolean, false),
+          case when coalesce(v ->> 'session_id', '') ~ '^[0-9a-f-]{36}$' then (v ->> 'session_id')::uuid end)
   on conflict (id) do update set
     last_at = now(),
     user_id = coalesce(excluded.user_id, public.visits.user_id),
+    session_id = coalesce(excluded.session_id, public.visits.session_id),
     is_admin = public.visits.is_admin or excluded.is_admin,
     is_bot = public.visits.is_bot or excluded.is_bot;
   -- where the person is right now, sent with every batch too (the pings come between batches)

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getMe } from "@/lib/session";
+import { getMe, sessionId } from "@/lib/session";
 import { service } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -88,12 +88,15 @@ export async function POST(request: NextRequest) {
   const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").replace(/:\d+$/, "");
   const who = client(ua);
   const me = await getMe().catch(() => null);
+  // which of the person's phones this is (only once the token has passed, through getMe)
+  const session = me ? await sessionId() : null;
   const city = request.headers.get("x-vercel-ip-city");
   const fbclid = !!v.fbclid;
   const visit = {
     id: v.id,
     visitor: v.visitor,
     user_id: me?.id ?? null,
+    session_id: session,
     landing: v.landing ?? null,
     referrer: v.referrer ?? null,
     source: source(said(v.utm_source), typeof v.referrer === "string" ? v.referrer : undefined, fbclid, host),

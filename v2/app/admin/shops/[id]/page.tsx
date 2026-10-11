@@ -21,14 +21,16 @@ type Shop = {
     created_at: string; first_at: string | null; last_at: string | null; n: number; ms: number;
     visits: { id: string; at: string; end_at: string; ms: number; pages: number; device: string | null; os: string | null; browser: string | null; city: string | null; country: string | null; source: string }[];
   } | null;
-  stamp_gap: number;
+  stamp_gap: number; stamp_logo: boolean; items_on: boolean;
+  items: { id: number; name: string; gone: boolean; at: string; n: number; n30: number; last_at: string | null }[];
+  devices: { id: string; since: string; last_at: string | null; device: string | null; os: string | null; browser: string | null; city: string | null; app: boolean | null; here: boolean | null }[];
   plan: {
     paid_until: string | null; paid: boolean; offer_until: string | null; offer: boolean;
     log: { id: number; kind: "paid" | "until" | "end"; months: number | null; until: string | null; note: string | null; method: string | null; amount: number | null; shown: boolean; seen: string | null; at: string }[];
     payments: { id: string; method: string; months: number; status: "pending" | "paid" | "refused"; at: string }[];
   };
   customers: number; stamps: number; today: number; given: number; waiting: number;
-  recent: { at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; phone: string | null }[];
+  recent: { at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; phone: string | null; item: string | null }[];
   top: { name: string | null; phone: string | null; stamps: number; gifts: number; goal: number | null }[];
 };
 
@@ -110,6 +112,10 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                 <dt className="text-muted">الكارط</dt>
                 <dd className="min-w-0 text-end font-semibold text-body">{s.goal ? <>{s.gift} ← <Num>{s.goal}</Num></> : t.aNoCard}</dd>
               </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted">شكل التامبون</dt>
+                <dd className="text-end font-semibold text-body">{s.stamp_logo && s.logo ? "اللوغو متاعو" : "عادي"}</dd>
+              </div>
             </dl>
           </Card>
 
@@ -171,6 +177,31 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                 )}
           </Card>
 
+          {/* every phone the owner is signed in on now: one sign-in each, a sign-out ends it */}
+          <Card title="التليفونات المحلولة" actions={<Pill tone={s.devices.length > 1 ? "brand" : "grey"}><Num>{s.devices.length}</Num></Pill>}>
+            {!s.devices.length ? (
+              <p className="text-[0.8125rem] text-faint">موش محلول على حتى تليفون توّا</p>
+            ) : (
+              <ul className="space-y-2.5 text-[0.8438rem]">
+                {s.devices.map((d) => (
+                  <li key={d.id} className="flex items-start justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1.5 font-semibold text-body">
+                        {d.here && <span className="size-2 shrink-0 rounded-full bg-mint" aria-label="متّصل توّا" />}
+                        {d.device || d.os || d.browser ? <Parts of={[DEVICES[d.device ?? ""] ?? d.device, d.os, d.app ? "التطبيق" : d.browser]} /> : <span className="text-muted">ما نعرفوش (تحلّ قبل)</span>}
+                      </span>
+                      <span className="block text-[0.75rem] text-muted">
+                        {d.city && <>{/^[؀-ۿ]/.test(d.city) ? d.city : <Lat>{d.city}</Lat>} · </>}
+                        محلول من <When>{when(d.since)}</When>
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-end text-[0.75rem] text-muted">{d.last_at ? <Ago at={d.last_at} /> : "—"}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
           <AdminShopEdit shop={{ id: s.id, name: s.name, kind: s.kind, goal: s.goal, gift: s.gift, stamp_gap: s.stamp_gap }} />
           <AdminShopActions id={s.id} paused={s.paused} owner={s.owner ? { id: s.owner.id, tester: s.owner.tester, admin: s.owner.admin } : null} />
         </div>
@@ -226,6 +257,32 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                   ))}
                 </ul>
               </div>
+            )}
+          </Card>
+
+          {/* what the owner wrote in «شنوّة تبيع», and how many tampons each one got */}
+          <Card
+            title="شنوّة يبيع"
+            hint={s.items.length ? undefined : "ما كتب حتى حاجة"}
+            actions={s.items.length > 0 && <Pill tone={s.items_on ? "mint" : "grey"}>{s.items_on ? "يسأل على شنوّة التامبون" : "مطفي"}</Pill>}
+            pad={false}
+          >
+            {s.items.length > 0 && (
+              <Table head={["الحاجة", "تامبونات", "30 يوم", "آخر مرّة", "تزادت"]} words={[0]}>
+                {s.items.map((x) => (
+                  <Row key={x.id}>
+                    <Cell strong>
+                      <span className={`block truncate ${x.gone ? "text-faint line-through" : ""}`}>
+                        <bdi>{x.name}</bdi>
+                      </span>
+                    </Cell>
+                    <Cell n strong>{x.n}</Cell>
+                    <Cell n muted>{x.n30}</Cell>
+                    <Cell muted>{x.last_at ? <Ago at={x.last_at} /> : "—"}</Cell>
+                    <Cell muted><When>{day(x.at)}</When></Cell>
+                  </Row>
+                ))}
+              </Table>
             )}
           </Card>
 
@@ -310,6 +367,7 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                     <Row key={i}>
                       <Cell>
                         <Pill tone={r.kind === "stamp" ? "brand" : "coral"}>{r.kind === "stamp" ? <><Num>+1</Num> تامبون</> : "كادو"}</Pill>
+                        {r.item && <span className="ms-1.5 font-semibold text-body"><bdi>{r.item}</bdi></span>}
                       </Cell>
                       <Cell muted>
                         <span className="block truncate">{r.name ?? (r.phone ? <Num>{r.phone}</Num> : t.someone)}</span>

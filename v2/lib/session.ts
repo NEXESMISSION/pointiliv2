@@ -12,6 +12,28 @@ export async function getMe(): Promise<Me | null> {
   return call<Me>("me");
 }
 
+/**
+ * The sign-in this browser is under (the access token's session_id claim): one
+ * per phone, so the console can tell an owner's phones apart. Read off the
+ * cookie without a call; trust it only once the token has passed (getMe).
+ */
+export async function sessionId(): Promise<string | null> {
+  const parts = (await cookies())
+    .getAll()
+    .filter((c) => c.name.startsWith("sb-") && c.name.includes("auth-token") && !c.name.includes("code-verifier") && c.value)
+    .sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }));
+  if (!parts.length) return null;
+  try {
+    const raw = parts.map((c) => c.value).join("");
+    const json = raw.startsWith("base64-") ? Buffer.from(raw.slice(7), "base64").toString("utf8") : decodeURIComponent(raw);
+    const token = JSON.parse(json)?.access_token as string;
+    const id = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8"))?.session_id;
+    return typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Where a signed-in person belongs: the founder at the console, an owner at home (or finishing the setup), a customer at the wallet. */
 export function homeOf(me: Me): string {
   if (me.admin) return "/admin";

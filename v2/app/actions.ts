@@ -99,7 +99,8 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
 }
 
 export async function logout() {
-  await (await db()).auth.signOut();
+  // this phone only: the same account stays signed in on the owner's other phones (the default, «global», signed them all out)
+  await (await db()).auth.signOut({ scope: "local" });
   redirect("/");
 }
 
