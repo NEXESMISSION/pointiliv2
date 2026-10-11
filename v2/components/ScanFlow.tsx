@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
 import { scan } from "@/app/actions";
 import { Pass } from "@/components/Pass";
 import { useScreen } from "@/components/Tracker";
@@ -138,56 +138,126 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   );
 }
 
+/** The 20 minutes the code is held for this phone, counted down from the moment the answer came. */
+const HOLD_S = 20 * 60;
+function useHoldLeft(): number {
+  const [left, setLeft] = useState(HOLD_S);
+  useEffect(() => {
+    const start = Date.now();
+    const id = setInterval(() => {
+      const l = Math.max(0, HOLD_S - Math.floor((Date.now() - start) / 1000));
+      setLeft(l);
+      if (l === 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return left;
+}
+
 /**
- * No account on this phone: the tampon lands all the same — it is theirs,
- * held for 20 minutes — and the only thing left is to keep it: make an
- * account, or open the one they have. Two buttons, nothing else.
+ * No account on this phone: the tampon lands all the same — held for 20
+ * minutes — and it must be plain that it is not theirs yet. Three steps with
+ * the one left lit, the minutes running down, what happens if they walk
+ * away, and one big way on (people saw the stamp land and left).
  */
 function Held({ token, res, known }: { token: string; res: Extract<ScanResult, { kind: "held" }>; known?: boolean }) {
   const next = encodeURIComponent(`/s/${token}`);
+  const left = useHoldLeft();
+  const gone = left === 0;
+  const clock = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  const steps = [t.heldStepScan, known ? t.heldStepLogin : t.heldStepJoin, t.heldStepCard];
   return (
     <div className="flex flex-col items-center text-center">
-      <Logo className="mb-2 scale-90" />
+      <Logo className="mb-2 scale-90 [@media(max-height:640px)]:hidden" />
       <StampLand color={res.color} icon={kindIcon(res.shopKind)} />
-      <h1 className="mt-1 animate-rise text-[1.875rem] font-bold" style={after(80)}>
+      <h1 className="mt-1 animate-rise text-[1.75rem] font-bold leading-tight [@media(max-height:640px)]:text-[1.5rem]" style={after(80)}>
         {t.reserved}
       </h1>
-      <p className="animate-rise text-[1.0625rem] font-semibold" style={{ ...after(140), color: res.color }}>
+      <p className="animate-rise text-[1rem] font-semibold" style={{ ...after(140), color: res.color }}>
         {res.shop}
       </p>
-      <p className="mt-3 animate-rise text-[1rem] text-body" style={after(200)}>
-        {t.reservedBody}
-      </p>
-      <p className="mt-3 inline-flex animate-rise items-center gap-1.5 rounded-full bg-mint-soft px-3.5 py-1.5 text-[0.875rem] font-semibold text-mint" style={after(260)}>
-        <Clock className="size-4" /> {t.reservedClock}
-      </p>
 
-      <div className="mt-8 w-full space-y-3">
+      {/* the important part: not theirs yet — one step left, and the time it waits */}
+      <div className="relative mt-[2.2dvh] w-full animate-rise rounded-[1.5rem] bg-surface px-4 pb-3.5 pt-3 shadow-card" style={after(240)}>
+        <p className="flex items-center justify-center gap-1.5 text-[1rem] font-bold text-ink">
+          <AlertTriangle className="size-[1.125rem] shrink-0 text-coral" /> {t.heldMust}
+        </p>
+
+        {/* three steps, the one left lit */}
+        <ol className="relative mt-3 grid grid-cols-3" aria-label={t.heldMust}>
+          <span className="absolute inset-x-[16%] top-[1.0625rem] h-[3px] rounded-full bg-line" aria-hidden />
+          <span className="held-line absolute end-[50%] start-[16%] top-[1.0625rem] h-[3px] rounded-full bg-mint" aria-hidden style={after(500)} />
+          {steps.map((s, i) => (
+            <li key={s} className="relative flex flex-col items-center gap-1">
+              {i === 0 ? (
+                <span className="grid size-[2.125rem] animate-pop place-items-center rounded-full bg-mint text-white shadow-[0_6px_14px_-6px_rgb(18_183_106/0.8)]" style={after(420)}>
+                  <Check className="size-[1.125rem]" strokeWidth={3.2} />
+                </span>
+              ) : i === 1 ? (
+                <span className="held-now num relative grid size-[2.125rem] place-items-center rounded-full bg-brand text-[0.9375rem] font-bold text-white" style={after(620)}>
+                  2
+                </span>
+              ) : (
+                <span className="num grid size-[2.125rem] place-items-center rounded-full border-2 border-dashed border-line bg-canvas text-[0.9375rem] font-bold text-faint">3</span>
+              )}
+              <span className={`text-[0.8125rem] leading-tight ${i === 1 ? "font-bold text-brand" : i === 0 ? "font-semibold text-mint" : "text-muted"}`}>{s}</span>
+            </li>
+          ))}
+        </ol>
+
+        {/* the minutes left, running down: a bar that empties */}
+        <div className={`mt-3 flex items-center gap-2 rounded-full px-3 py-1.5 text-[0.875rem] font-semibold ${gone ? "bg-coral-soft text-coral" : "bg-mint-soft text-mint"}`}>
+          <Clock className="size-4 shrink-0" />
+          {gone ? (
+            <span className="min-w-0 flex-1 truncate text-start">{t.heldGone}</span>
+          ) : (
+            <>
+              <span className="shrink-0">{t.heldLeft}</span>
+              <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-mint/20" aria-hidden>
+                <span className="absolute inset-y-0 start-0 rounded-full bg-mint transition-[width] duration-1000 ease-linear" style={{ width: `${(left / HOLD_S) * 100}%` }} />
+              </span>
+              <bdi className="num shrink-0 tabular-nums">{clock}</bdi>
+            </>
+          )}
+        </div>
+        {!gone && <p className="mt-2 text-[0.8125rem] font-semibold text-coral">{t.heldLose}</p>}
+      </div>
+
+      <div className="mt-[2.4dvh] w-full space-y-2">
         {/* a phone that has an account on it is offered the way back in first:
             being told to make the one you already have is where people stop */}
         <div className="animate-rise" style={after(340)}>
-          {known ? (
-            <LinkBtn href={`/login?next=${next}`} className="animate-breathe">
-              {t.comeBackIn}
-            </LinkBtn>
-          ) : (
-            <LinkBtn href={`/join?next=${next}`} className="animate-breathe">
-              {t.createAccount}
-            </LinkBtn>
-          )}
+          <LinkBtn href={known ? `/login?next=${next}` : `/join?next=${next}`} className="held-go relative h-[3.75rem] overflow-hidden text-[1.125rem] font-bold">
+            <span className="relative">{known ? t.comeBackIn : t.createAccount}</span>
+            <ArrowLeft className="held-arrow relative size-5" strokeWidth={2.6} />
+          </LinkBtn>
+          {!known && <p className="mt-1.5 text-[0.8125rem] text-muted">{t.heldQuick}</p>}
         </div>
         <div className="animate-rise" style={after(400)}>
           {known ? (
-            <LinkBtn href={`/join?next=${next}`} kind="soft">
+            <LinkBtn href={`/join?next=${next}`} kind="soft" className="h-[3.25rem]">
               {t.newHere}
             </LinkBtn>
           ) : (
-            <LinkBtn href={`/login?next=${next}`} kind="soft">
+            <LinkBtn href={`/login?next=${next}`} kind="soft" className="h-[3.25rem]">
               {t.haveAccount}
             </LinkBtn>
           )}
         </div>
       </div>
+      <style>{`
+        /* the step left breathes a ring; the done part of the line draws itself; the way on shines and points */
+        .held-now { animation: pop 560ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
+        .held-now::after { content: ""; position: absolute; inset: -5px; border-radius: 9999px; border: 2px solid var(--color-brand); animation: held-ring 1.6s ease-out 1.4s infinite both; }
+        @keyframes held-ring { 0% { transform: scale(0.85); opacity: 0.9; } 100% { transform: scale(1.45); opacity: 0; } }
+        .held-line { transform-origin: right; animation: held-draw 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+        @keyframes held-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        .held-go::before { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.38) 50%, transparent 65%); transform: translateX(120%); animation: held-shine 3s ease-in-out 1.8s infinite; }
+        @keyframes held-shine { 0% { transform: translateX(120%); } 45%, 100% { transform: translateX(-120%); } }
+        .held-arrow { animation: held-nudge 1.4s ease-in-out infinite; }
+        @keyframes held-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-5px); } }
+        @media (prefers-reduced-motion: reduce) { .held-now::after, .held-go::before, .held-arrow { animation: none; } }
+      `}</style>
     </div>
   );
 }
