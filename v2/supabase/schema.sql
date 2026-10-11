@@ -1348,7 +1348,10 @@ begin
           select jsonb_agg(jsonb_build_object(
                    'id', x.id, 'at', x.started_at, 'end_at', x.last_at, 'ms', x.ms, 'pages', x.pages,
                    'device', x.device, 'os', x.os, 'browser', x.browser,
-                   'city', x.city, 'country', x.country, 'source', coalesce(x.source, 'direct')) order by x.started_at desc)
+                   'city', x.city, 'country', x.country, 'source', coalesce(x.source, 'direct'),
+                   -- the pages of the visit, in order, with the time on each
+                   'path', coalesce((select jsonb_agg(jsonb_build_object('route', w.route, 'screen', w.screen, 'ms', w.active_ms) order by w.entered_at)
+                                     from (select * from public.views w where w.visit_id = x.id order by w.entered_at limit 40) w), '[]'::jsonb)) order by x.started_at desc)
           from (select v.*,
                        (select count(*) from public.views w where w.visit_id = v.id) as pages,
                        (select coalesce(sum(w.active_ms), 0) from public.views w where w.visit_id = v.id) as ms

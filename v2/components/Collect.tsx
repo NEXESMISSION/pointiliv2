@@ -305,11 +305,11 @@ export function Collect({ by, preset = "", shop, items = [] }: { by: "scan" | "c
               <Pass shop={step.card.shop} stamps={step.card.stamps} fresh />
             </div>
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
-            <div className="mt-[3dvh] w-full space-y-2">
+            <div className="mt-[3dvh] w-full space-y-2 [@media(max-height:560px)]:mt-[2dvh] [@media(max-height:560px)]:space-y-1">
               <Btn type="button" onClick={again}>
                 <RotateCcw className="size-5" /> {t.collectNext}
               </Btn>
-              <Link href="/shop" className="block py-2 text-center text-[0.9375rem] font-semibold text-muted">
+              <Link href="/shop" className="block py-2 text-center text-[0.9375rem] font-semibold text-muted [@media(max-height:560px)]:py-1.5">
                 {t.done}
               </Link>
             </div>

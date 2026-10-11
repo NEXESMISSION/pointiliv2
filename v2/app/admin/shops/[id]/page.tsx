@@ -8,6 +8,7 @@ import { Ago } from "@/components/Ago";
 import { Presence } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Lat, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
+import { screenName } from "@/lib/screens";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
 import { fill, monthsSaid, stampsN, t } from "@/lib/t";
@@ -19,7 +20,7 @@ type Shop = {
   owner: { id: string; name: string; phone: string | null; tester: boolean; admin: boolean } | null;
   seen: {
     created_at: string; first_at: string | null; last_at: string | null; n: number; ms: number;
-    visits: { id: string; at: string; end_at: string; ms: number; pages: number; device: string | null; os: string | null; browser: string | null; city: string | null; country: string | null; source: string }[];
+    visits: { id: string; at: string; end_at: string; ms: number; pages: number; device: string | null; os: string | null; browser: string | null; city: string | null; country: string | null; source: string; path: { route: string; screen: string | null; ms: number }[] }[];
   } | null;
   stamp_gap: number; stamp_logo: boolean; items_on: boolean;
   items: { id: number; name: string; gone: boolean; at: string; n: number; n30: number; last_at: string | null }[];
@@ -299,9 +300,10 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
               {!s.seen.visits.length ? (
                 <Empty>{t.aNoVisits}</Empty>
               ) : (
-                <Table head={[t.aVisitWhen, t.aVisitStayed, t.aVisitPages, t.aVisitPhone, t.aVisitPlace, t.aVisitFrom]} words={[3, 4, 5]}>
+                <Table head={[t.aVisitWhen, t.aVisitStayed, "عدّى على", t.aVisitPhone, t.aVisitPlace, t.aVisitFrom]} words={[2, 3, 4, 5]}>
                   {s.seen.visits.map((v) => (
-                    <Row key={v.id}>
+                    // the whole visit, step by step with its taps, on the traffic page
+                    <Row key={v.id} href={`/admin/traffic?tab=visits&v=${v.id}`}>
                       <Cell strong>
                         <Ago at={v.at} />
                         <span className="block text-[0.75rem] font-normal text-muted">
@@ -311,8 +313,21 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                       <Cell n strong>
                         {v.ms > 0 ? dur(v.ms) : "—"}
                       </Cell>
-                      <Cell n muted>
-                        {v.pages}
+                      <Cell muted className="min-w-[16rem]">
+                        {/* the pages in the order they went through them, with the time on each */}
+                        <span className="flex flex-wrap items-center gap-1">
+                          {v.path.map((w, i) => (
+                            <span key={i} className="inline-flex items-center gap-1">
+                              {i > 0 && <span className="text-faint" aria-hidden>←</span>}
+                              <span className="inline-flex items-center gap-1 rounded-full bg-canvas px-2 py-0.5 text-[0.75rem] font-semibold text-body">
+                                <bdi>{screenName(w.route, w.screen)}</bdi>
+                                {w.ms >= 1000 && <bdi className="font-normal text-muted">{dur(w.ms)}</bdi>}
+                              </span>
+                            </span>
+                          ))}
+                          {v.pages > v.path.length && <span className="text-[0.75rem] text-muted">+<Num>{v.pages - v.path.length}</Num></span>}
+                          {!v.path.length && <span className="text-faint">—</span>}
+                        </span>
                       </Cell>
                       <Cell muted>
                         <Parts of={[DEVICES[v.device ?? ""] ?? v.device, v.browser]} />

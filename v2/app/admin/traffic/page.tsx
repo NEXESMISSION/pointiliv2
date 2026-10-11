@@ -8,6 +8,7 @@ import { TrafficFilters, type Menu } from "@/components/TrafficFilters";
 import { pretty } from "@/lib/phone";
 import { getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
+import { ROUTES, screenName } from "@/lib/screens";
 
 export const metadata = { title: "الترافيك" };
 
@@ -109,49 +110,6 @@ const D = ({ ms }: { ms: number }) => <bdi className="tabular-nums">{dur(ms)}</b
 /** A share inside Arabic words: kept «25%», not turned round into «%25». */
 const Pct = ({ a, b }: { a: number; b: number }) => <Num>{pct(a, b)}</Num>;
 
-/** Every page and every step inside one, by the name the founder knows it by. */
-const ROUTES: Record<string, string> = {
-  "/": "الصفحة الأولى",
-  "/shop/new": "تسجيل محل",
-  "/shop/setup": "المحل (الاسم والنوع)",
-  "/shop/card": "الكارط",
-  "/shop/qr": "الكود",
-  "/shop": "دار المحل",
-  "/shop/customers": "الحرفاء",
-  "/s/[token]": "سكان",
-  "/join": "تسجيل حريف",
-  "/login": "الدخول",
-  "/forgot": "نسيت كلمة السر",
-  "/me": "الكونت",
-  "/me/cards": "كارطاتي",
-  "/c/[id]": "كارط حريف",
-  "/scan": "السكانر",
-};
-const SCREENS: Record<string, string> = {
-  welcome: "الصفحة الأولى",
-  wallet: "كارطات الحريف",
-  hello: "مرحبا",
-  goal: "قدّاش من تامبون",
-  wait: "كل قدّاش",
-  gift: "الكادو",
-  color: "اللون",
-  ready: "حاضرة",
-  bravo: "برافو",
-  tip: "النصيحة",
-  code: "الكود",
-  checking: "يثبّت",
-  stamped: "خذا تامبون",
-  held: "بلا كونت (محجوز)",
-};
-const FAILS: Record<string, string> = { used: "كود مستعمل", expired: "كود فات وقتو", too_soon: "بكري برشا", done: "كمّل الكارط", own_shop: "محلّو هو", paused: "محل موقوف", network: "مشكل إنترنت", invalid: "كود غالط" };
-function screenName(route: string, screen: string | null): string {
-  if (route === "/" && screen) return SCREENS[screen] ?? screen;
-  const base = ROUTES[route] ?? route;
-  if (!screen) return base;
-  if (screen.startsWith("failed:")) return `${base} · ${FAILS[screen.slice(7)] ?? screen.slice(7)}`;
-  if (screen.startsWith("edit-")) return `تبديل الكارط · ${SCREENS[screen.slice(5)] ?? screen.slice(5)}`;
-  return `${base} · ${SCREENS[screen] ?? screen}`;
-}
 /** "/shop/card:goal" → its route and its step (a step may hold a colon itself: failed:used). */
 function split(key: string): [string, string | null] {
   const i = key.indexOf(":");
