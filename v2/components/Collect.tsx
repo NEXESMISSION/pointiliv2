@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
-import { customerAt, give as handOver, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
+import { customerAt, give as handOver, giveAll, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
 import { Pass } from "@/components/Pass";
 import type { Item } from "@/components/PickItem";
 import { TryItButton, type DemoShop } from "@/components/TryIt";
@@ -40,7 +40,10 @@ function GiftRow({ w, onOpen }: { w: WaitingGift; onOpen: () => void }) {
       <Icon3D name="gift" size={36} className="shrink-0" />
       <span className="min-w-0 flex-1">
         <span className="block text-[0.8125rem] font-semibold text-muted">{t.collectGiftWaits}</span>
-        <span className="block truncate text-[1rem] font-bold">{w.gift}</span>
+        <span className="block truncate text-[1rem] font-bold">
+          {w.gift}
+          {(w.n ?? 1) > 1 && <span className="num text-coral"> ×{w.n}</span>}
+        </span>
       </span>
       <button type="button" onClick={onOpen} className="press h-11 shrink-0 rounded-[1rem] bg-coral-soft px-4 text-[0.9375rem] font-bold text-coral">
         {t.collectGiftOpen}
@@ -54,20 +57,27 @@ function GiftRow({ w, onOpen }: { w: WaitingGift; onOpen: () => void }) {
  * question over the screen — give it now, or not now. `won`: the tampon just
  * given was the last one.
  */
-function GiftPop({ who, w, won, busy, onGive, onLater }: { who: string; w: WaitingGift; won: boolean; busy: boolean; onGive: () => void; onLater: () => void }) {
-  const title = won ? fill(t.collectGift, { name: who, gift: w.gift ?? "" }) : fill(t.popGiftHas, { name: who });
+function GiftPop({ who, w, won, busy, onGive, onLater }: { who: string; w: WaitingGift; won: boolean; busy: boolean; onGive: (all: boolean) => void; onLater: () => void }) {
+  // several saved: give them all at once, or one now and the rest another day
+  const n = w.n ?? 1;
+  const title = won && n === 1 ? fill(t.collectGift, { name: who, gift: w.gift ?? "" }) : n > 1 ? fill(t.popGiftHasMany, { name: who, n }) : fill(t.popGiftHas, { name: who });
   return (
     <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={title} onClick={onLater}>
       <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-5 pt-[clamp(1rem,3dvh,1.75rem)] text-center" style={{ animation: "pop-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
         <style>{`@keyframes pop-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
         <Icon3D name="gift" size={76} className="mx-auto animate-pop" />
         <h2 className="mt-2 text-balance text-[1.5rem] font-bold leading-tight">{title}</h2>
-        {!won && <p className="mt-1 text-balance text-[1.375rem] font-bold text-coral">{w.gift}</p>}
+        {(!won || n > 1) && <p className="mt-1 text-balance text-[1.375rem] font-bold text-coral">{w.gift}</p>}
         <p className="mt-1.5 text-[1rem] text-muted">{t.popGiftAsk}</p>
         <div className="mt-[2.5dvh] space-y-1.5">
-          <Btn type="button" kind="coral" onClick={onGive} disabled={busy}>
-            {busy ? t.checking : t.popGiftGive}
+          <Btn type="button" kind="coral" onClick={() => onGive(n > 1)} disabled={busy}>
+            {busy ? t.checking : n > 1 ? fill(t.popGiftGiveAll, { n }) : t.popGiftGive}
           </Btn>
+          {n > 1 && (
+            <Btn type="button" kind="soft" onClick={() => onGive(false)} disabled={busy}>
+              {t.popGiftGiveOne}
+            </Btn>
+          )}
           <Btn type="button" kind="ghost" onClick={onLater} disabled={busy}>
             {t.popGiftLater}
           </Btn>
@@ -158,10 +168,10 @@ export function Collect({ by, preset = "", shop, items = [] }: { by: "scan" | "c
 
   // the gift handed over at the counter: the card as it is now (the rest of the stamps carried on)
   const [handing, setHanding] = useState(false);
-  const hand = async (w: WaitingGift) => {
+  const hand = async (w: WaitingGift, all = false) => {
     if (handing) return;
     setHanding(true);
-    const ok = await handOver(w.id).catch(() => false);
+    const ok = await (all ? giveAll(w.id) : handOver(w.id)).catch(() => false);
     setPop(null);
     if (!ok) {
       setHanding(false);
@@ -175,7 +185,7 @@ export function Collect({ by, preset = "", shop, items = [] }: { by: "scan" | "c
     setStep({
       kind: "handed",
       name: (now?.ok ? now.name : null) ?? ("name" in step ? step.name : null),
-      gift: w.gift ?? "",
+      gift: all && (w.n ?? 1) > 1 ? `${w.gift ?? ""} ×${w.n}` : (w.gift ?? ""),
       card: now?.ok ? (now.card ?? null) : null,
       // a card with stamps to spare can hold the next gift already
       waiting: now?.ok ? (now.waiting ?? null) : null,
@@ -477,7 +487,7 @@ export function Collect({ by, preset = "", shop, items = [] }: { by: "scan" | "c
           w={pop.w}
           won={pop.won}
           busy={handing}
-          onGive={() => void hand(pop.w)}
+          onGive={(all) => void hand(pop.w, all)}
           onLater={() => {
             later.current = pop.w.id;
             setPop(null);

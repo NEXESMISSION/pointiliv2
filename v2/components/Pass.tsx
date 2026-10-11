@@ -14,6 +14,9 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
   const goal = shop.goal ?? 10;
   const done = Math.min(stamps, goal);
   const ready = stamps >= goal;
+  // stamps past the goal are kept: each full card is a gift waiting, and what is left over goes to the next one
+  const won = Math.floor(stamps / goal);
+  const rest = won > 0 ? stamps - won * goal : 0;
   const left = goal - done;
   const cols = goal <= 6 ? goal : goal <= 10 ? 5 : goal <= 12 ? 6 : goal <= 16 ? 8 : 10;
   // the shop's own mark in place of the tick. The dot stays a white disc
@@ -87,7 +90,14 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
             {shop.gift && (
               <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/[0.16] px-3.5 py-2.5 text-[0.9062rem] font-semibold">
                 <Gift className="size-[1.125rem] shrink-0" />
-                <span className="min-w-0 flex-1 truncate">{ready ? fill(t.won, { gift: shop.gift }) : left === 1 ? fill(t.toGoOne, { gift: shop.gift }) : fill(t.toGo, { n: left, gift: shop.gift })}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {ready ? fill(won > 1 ? t.wonMany : t.won, { gift: shop.gift, n: won }) : left === 1 ? fill(t.toGoOne, { gift: shop.gift }) : fill(t.toGo, { n: left, gift: shop.gift })}
+                </span>
+                {rest > 0 && (
+                  <span className="shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[0.8125rem] font-bold">
+                    <bdi dir="ltr" className="num">+{rest}</bdi> {t.savedNext}
+                  </span>
+                )}
               </div>
             )}
           </>

@@ -251,7 +251,7 @@ export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offe
 }
 
 /** A gift the customer's card holds for the shop to hand over. */
-export type WaitingGift = { id: number; gift: string | null };
+export type WaitingGift = { id: number; gift: string | null; n?: number };
 
 /** The customer behind a code or a number, for the shop about to give them a tampon (their first name, their card here, a gift waiting). */
 export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null }> {
@@ -396,6 +396,12 @@ export async function newsClicked(id: string): Promise<void> {
 /** The shop hands a waiting gift over. */
 export async function give(moment: number): Promise<boolean> {
   const res = await call<{ ok: boolean }>("give", { p_moment: moment });
+  return !!res?.ok;
+}
+
+/** Every gift waiting on that customer's card, handed over together (they saved several). */
+export async function giveAll(moment: number): Promise<boolean> {
+  const res = await call<{ ok: boolean }>("give_all", { p_moment: moment });
   return !!res?.ok;
 }
 

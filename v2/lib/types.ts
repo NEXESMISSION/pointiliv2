@@ -6,6 +6,8 @@ export type CardView = {
   last_at: string | null;
   /** the card has reached its goal */
   ready: boolean;
+  /** how many gifts wait on it: every full card not yet taken (the stamps past the goal are kept) */
+  waiting_n?: number;
   /** a gift waits for the shop to hand it over */
   waiting: boolean;
   /** the shop, with this card's own goal and gift (the promise it started with) */

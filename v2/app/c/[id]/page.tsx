@@ -78,7 +78,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
         <div className={`relative shrink-0 animate-pop overflow-hidden rounded-[1.75rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a_55%,#e0452a)] text-center text-white shadow-[0_20px_44px_-18px_rgb(255_107_74/0.85)] ${look.box}`}>
           <span className="pointer-events-none absolute -top-16 start-1/2 size-56 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" aria-hidden />
           <Icon3D name="gift" size={72} className={`relative animate-float ${look.pic}`} />
-          <p className={`relative text-[1.375rem] font-bold ${look.title}`}>{t.ready}</p>
+          <p className={`relative text-[1.375rem] font-bold ${look.title}`}>{(card.waiting_n ?? 1) > 1 ? fill(t.readyMany, { n: card.waiting_n ?? 2 }) : t.ready}</p>
           <p className={`relative text-[1.625rem] font-bold ${look.gift}`}>{card.shop.gift}</p>
           {me.code && svg ? (
             <MyCode

@@ -61,6 +61,8 @@ export const t = {
   toGo: "مازالولك {n} باش تربح {gift}",
   toGoOne: "مازالك تامبون واحد باش تربح {gift}",
   won: "ربحت {gift}!",
+  wonMany: "ربحت {gift} ×{n}!",
+  savedNext: "للكارط الجاية",
   wonBody: "ورّي الكود متاع الكادو",
   seeCard: "شوف الكارط",
   done: "باهي",
@@ -95,6 +97,7 @@ export const t = {
 
   // a card
   ready: "الكادو متاعك حاضر!",
+  readyMany: "عندك {n} كادوات حاضرين!",
   readyBody: "ورّي الكود متاع الكادو في الكاسة",
   giftShow: "ورّي الكود متاع الكادو",
   giftCodeTitle: "الكادو متاعك: {gift}",
@@ -668,6 +671,9 @@ export const t = {
   collectGiftWaits: "عندو كادو يستنّى",
   collectGiftOpen: "عطيه",
   popGiftHas: "{name} عندو كادو!",
+  popGiftHasMany: "{name} عندو {n} كادوات!",
+  popGiftGiveAll: "عطيه الـ{n} الكل",
+  popGiftGiveOne: "واحد برك",
   popGiftAsk: "تعطيهولو توّا؟",
   popGiftGive: "إيه، عطيه الكادو",
   popGiftLater: "موش توّا",

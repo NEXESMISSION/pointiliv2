@@ -251,7 +251,9 @@ create table if not exists public.moments (
 );
 create index if not exists moments_shop_idx on public.moments (shop_id, created_at desc);
 create index if not exists moments_card_idx on public.moments (card_id, created_at desc);
-create unique index if not exists moments_one_waiting_gift on public.moments (card_id) where kind = 'gift' and given_at is null;
+-- a card can hold several gifts waiting now (public.bank: every full card is one), so no longer one at most
+drop index if exists public.moments_one_waiting_gift;
+create index if not exists moments_waiting_idx on public.moments (card_id) where kind = 'gift' and given_at is null;
 -- a gift remembers what it was, whatever the card says later
 alter table public.moments add column if not exists gift text;
 
@@ -498,6 +500,30 @@ language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.moments m where m.card_id = p_card and m.kind = 'gift' and m.given_at is null)
 $$;
 
+-- the gifts a card has earned and not yet taken: one per full card. Stamps
+-- past the goal are never lost — they stay on the card, and every time they
+-- fill it again another gift is written down and waits beside the first, so
+-- a customer can gather several and take them one day, together. Called after
+-- every tampon and every gift handed over; returns how many it just wrote.
+create or replace function public.bank(p_card uuid) returns int
+language plpgsql security definer set search_path = '' as $$
+declare c public.cards%rowtype; s public.shops%rowtype; v_goal int; v_have int; v_owed int; v_made int := 0;
+begin
+  select * into c from public.cards where id = p_card;
+  if c.id is null then return 0; end if;
+  select * into s from public.shops where id = c.shop_id;
+  v_goal := coalesce(c.goal, s.goal);
+  if v_goal is null or v_goal < 1 then return 0; end if;
+  select count(*) into v_have from public.moments where card_id = c.id and kind = 'gift' and given_at is null;
+  v_owed := least(c.stamps / v_goal, 50);
+  while v_have < v_owed loop
+    insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', coalesce(c.gift, s.gift));
+    v_have := v_have + 1;
+    v_made := v_made + 1;
+  end loop;
+  return v_made;
+end $$;
+
 -- what a customer's card looks like, everywhere it is shown: the goal and the
 -- gift are this card's own (the promise); "next" is the shop's card of today
 -- when it differs — it starts for this customer after this gift
@@ -506,6 +532,8 @@ language sql stable security definer set search_path = '' as $$
   select jsonb_build_object(
     'id', c.id, 'stamps', c.stamps, 'gifts', c.gifts, 'last_at', c.last_at,
     'ready', w.waiting, 'waiting', w.waiting,
+    -- how many gifts wait on it (full cards not yet taken)
+    'waiting_n', (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null),
     'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'stamp_logo', s.stamp_logo,
                                'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift)),
     'next', case when s.goal is not null
@@ -629,6 +657,7 @@ begin
   select s.id, c.id, 'gift', coalesce(c.gift, v_gift) from public.cards c
   where c.shop_id = s.id and c.stamps >= coalesce(c.goal, p_goal) and not public.waits(c.id);
   get diagnostics v_filled = row_count;
+  perform public.bank(c.id) from public.cards c where c.shop_id = s.id and c.stamps >= 2 * coalesce(c.goal, p_goal);
 
   select count(*) into v_kept from public.cards c
   where c.shop_id = s.id and c.stamps > 0 and not public.waits(c.id)
@@ -1020,12 +1049,30 @@ begin
   if m.given_at is not null then return jsonb_build_object('ok', true, 'already', true); end if;
   perform 1 from public.cards where id = m.card_id for update;
   update public.moments set given_at = now() where id = m.id;
-  update public.cards set stamps = greatest(stamps - coalesce(goal, s.goal), 0), gifts = gifts + 1, goal = s.goal, gift = s.gift
+  update public.cards set stamps = greatest(stamps - coalesce(goal, s.goal), 0), gifts = gifts + 1
   where id = m.card_id returning * into c;
-  if c.stamps >= c.goal then
-    insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
+  -- the last gift taken: the card follows the shop's card of today (the stamps left over carry on to it)
+  if not public.waits(c.id) then
+    update public.cards set goal = s.goal, gift = s.gift where id = c.id;
   end if;
+  perform public.bank(c.id);
   return jsonb_build_object('ok', true);
+end $$;
+
+-- every gift waiting on that card, handed over at once (a customer who saved several)
+create or replace function public.give_all(p_moment bigint) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_card uuid; v_n int := 0; x record;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  select card_id into v_card from public.moments where id = p_moment and shop_id = s.id and kind = 'gift';
+  if v_card is null then return public.err('not_found'); end if;
+  for x in select id from public.moments where card_id = v_card and kind = 'gift' and given_at is null order by created_at, id loop
+    perform public.give(x.id);
+    v_n := v_n + 1;
+  end loop;
+  return jsonb_build_object('ok', true, 'n', v_n);
 end $$;
 
 -- ═══ the customer: hold a code, take the stamp, see the cards ══════════════
@@ -1102,10 +1149,8 @@ begin
     stamps = stamps + 1, last_at = now()
   where id = c.id returning * into c;
   insert into public.moments (shop_id, card_id, kind, item_id) values (s.id, c.id, 'stamp', k.item_id);
-  if c.stamps >= c.goal and not v_waiting then
-    insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
-    v_gift := true;
-  end if;
+  -- a full card (again): another gift waits, beside any already there
+  v_gift := public.bank(c.id) > 0;
   -- the thing it was for goes back with the answer, so the phone that just
   -- scanned can say «كابوسة» and not only «+1»
   return jsonb_build_object('ok', true, 'gift', v_gift, 'card', public.card_view(c.id),
@@ -1441,7 +1486,8 @@ end $$;
 -- the gift a card holds for the shop to hand over, if any: which one, and what
 create or replace function public.waiting_gift(p_card uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
-  select jsonb_build_object('id', m.id, 'gift', coalesce(m.gift, c.gift))
+  select jsonb_build_object('id', m.id, 'gift', coalesce(m.gift, c.gift),
+                            'n', (select count(*) from public.moments x where x.card_id = p_card and x.kind = 'gift' and x.given_at is null))
   from public.moments m join public.cards c on c.id = m.card_id
   where m.card_id = p_card and m.kind = 'gift' and m.given_at is null
   order by m.created_at limit 1
@@ -1515,10 +1561,8 @@ begin
     stamps = stamps + 1, last_at = now()
   where id = c.id returning * into c;
   insert into public.moments (shop_id, card_id, kind, item_id) values (s.id, c.id, 'stamp', p_item) returning id into v_moment;
-  if c.stamps >= c.goal and not v_waiting then
-    insert into public.moments (shop_id, card_id, kind, gift) values (s.id, c.id, 'gift', c.gift);
-    v_gift := true;
-  end if;
+  -- a full card (again): another gift waits, beside any already there
+  v_gift := public.bank(c.id) > 0;
   return jsonb_build_object('ok', true, 'gift', v_gift, 'name', nullif(v_name, ''), 'card', public.card_view(c.id), 'waiting', public.waiting_gift(c.id), 'moment', v_moment);
 end $$;
 
@@ -2604,7 +2648,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
-  public.counter(uuid, timestamptz), public.give(bigint), public.unstamp(bigint),
+  public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),
   public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),
