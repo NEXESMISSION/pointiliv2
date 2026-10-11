@@ -3,6 +3,7 @@ import { Back } from "@/components/Back";
 import { Collect } from "@/components/Collect";
 import { Icon3D, Logo, Middle, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
+import { call } from "@/lib/supabase";
 import { t } from "@/lib/t";
 
 export const metadata = { title: "كود كارط Pointili", robots: { index: false } };
@@ -14,7 +15,10 @@ export const metadata = { title: "كود كارط Pointili", robots: { index: fa
 export default async function CustomerCode({ params }: { params: Promise<{ code: string }> }) {
   const [{ code }, me] = await Promise.all([params, getMe()]);
   const valid = /^\d{6}$/.test(code);
-  if (valid && me?.shop?.goal && me.code !== code) return <Collect by="code" preset={code} />;
+  if (valid && me?.shop?.goal && me.code !== code) {
+    const items = me.shop.items_on ? ((await call<{ id: number; name: string }[]>("my_items")) ?? []) : [];
+    return <Collect by="code" preset={code} items={items} />;
+  }
   return (
     <Screen>
       <header className="flex shrink-0 items-center pt-2">

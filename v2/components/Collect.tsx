@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
 import { customerAt, give as handOver, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
 import { Pass } from "@/components/Pass";
+import type { Item } from "@/components/PickItem";
 import { TryItButton, type DemoShop } from "@/components/TryIt";
 import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
@@ -22,7 +23,7 @@ type Step =
   | { kind: "own" }
   | { kind: "found"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
   | { kind: "giving"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
-  | { kind: "done"; name: string | null; card: CardView; gift: boolean; waiting: WaitingGift | null; moment: number | null }
+  | { kind: "done"; name: string | null; card: CardView; gift: boolean; waiting: WaitingGift | null; moment: number | null; item: string | null }
   | { kind: "undone"; name: string | null; card: CardView }
   | { kind: "soon"; name: string | null; at: string; card?: CardView; waiting: WaitingGift | null }
   | { kind: "handed"; name: string | null; gift: string; card: CardView | null; waiting: WaitingGift | null };
@@ -95,7 +96,7 @@ function errorText(code?: string): string {
  * code in their wallet is the same one), and a question comes up — give it
  * now, or not now.
  */
-export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset?: string; shop?: DemoShop }) {
+export function Collect({ by, preset = "", shop, items = [] }: { by: "scan" | "code"; preset?: string; shop?: DemoShop; items?: Item[] }) {
   const [mode, setMode] = useState(by);
   const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
   const [step, setStep] = useState<Step>({ kind: "idle" });
@@ -133,14 +134,20 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
     return () => clearTimeout(id);
   }, [digits, mode, shop]);
 
-  const give = async () => {
+  // a shop that says what it sells: the tampon is given by tapping what it was for (one tap, as at the counter)
+  const give = async (item?: Item) => {
     if (step.kind !== "found" && step.kind !== "handed") return;
     const { name, card } = step;
+    if (items.length && !item) {
+      // after a gift handed over: back to the question «على شنوّة؟»
+      setStep({ kind: "found", name, card, waiting: step.waiting });
+      return;
+    }
     setStep({ kind: "giving", name, card, waiting: null });
-    const res = await giveStamp(digits).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
+    const res = await giveStamp(digits, item?.id).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
     if (res.ok && res.card) {
       navigator.vibrate?.(60);
-      setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null, moment: res.moment ?? null });
+      setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null, moment: res.moment ?? null, item: item?.name ?? null });
       signal("collect", `${mode}${res.gift ? " · gift" : ""}`);
       if (res.gift) ask(res.waiting, true);
     } else if (res.error === "too_soon" && res.next_at) {
@@ -277,6 +284,12 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
                 </>
               )}
             </h2>
+            {/* what it was for, written on the card's history and the owner's list */}
+            {step.item && (
+              <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1 text-[1rem] font-bold text-brand">
+                <bdi>{step.item}</bdi>
+              </p>
+            )}
             {/* the card a little smaller on a short screen (ranges that do not overlap: the CSS lists them by size) */}
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
               <Pass shop={step.card.shop} stamps={step.card.stamps} fresh />
@@ -428,9 +441,29 @@ export function Collect({ by, preset = "", shop }: { by: "scan" | "code"; preset
                     </span>
                   </div>
                   {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
-                  <Btn type="button" onClick={() => void give()} disabled={step.kind === "giving"} className="mt-3 h-[3.75rem] text-[1.125rem]">
-                    {step.kind === "giving" ? t.checking : name ? fill(t.collectGive, { name }) : t.collectGiveAnon}
-                  </Btn>
+                  {items.length > 0 ? (
+                    // «على شنوّة التامبون؟» — tapping the thing gives the tampon for it
+                    <div className="mt-3">
+                      <p className="mb-1.5 text-center text-[0.9375rem] font-bold">{step.kind === "giving" ? t.checking : t.pickAsk}</p>
+                      <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${items.length === 4 ? 2 : Math.min(items.length, 3)}, minmax(0, 1fr))` }}>
+                        {items.map((it) => (
+                          <button
+                            key={it.id}
+                            type="button"
+                            disabled={step.kind === "giving"}
+                            onClick={() => void give(it)}
+                            className="press flex min-h-[3rem] items-center justify-center rounded-[1rem] bg-brand px-2 text-center text-[1rem] font-bold leading-tight text-white shadow-[0_8px_18px_-10px_var(--color-brand)] disabled:opacity-60"
+                          >
+                            <span className="line-clamp-2">{it.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <Btn type="button" onClick={() => void give()} disabled={step.kind === "giving"} className="mt-3 h-[3.75rem] text-[1.125rem]">
+                      {step.kind === "giving" ? t.checking : name ? fill(t.collectGive, { name }) : t.collectGiveAnon}
+                    </Btn>
+                  )}
                 </div>
               )}
             </div>

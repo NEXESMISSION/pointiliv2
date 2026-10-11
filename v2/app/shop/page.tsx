@@ -26,7 +26,7 @@ type Home = {
   today: number;
   visitors_today: number;
   given_today: number;
-  recent: { id: number; at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; stamps: number; goal: number; gift: string | null }[];
+  recent: { id: number; at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; stamps: number; goal: number; gift: string | null; item?: string | null }[];
 };
 
 const time = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -178,6 +178,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
                   stamps: r.stamps,
                   goal: r.goal,
                   gift: r.gift,
+                  item: r.kind === "stamp" ? (r.item ?? null) : null,
                 }))}
               />
               <Link href="/shop/customers" className="mt-auto flex shrink-0 items-center justify-center gap-1 border-t border-line py-3 text-[0.875rem] font-bold text-brand">

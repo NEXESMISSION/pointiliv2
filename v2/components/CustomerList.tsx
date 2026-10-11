@@ -7,7 +7,7 @@ import { Pass, type PassShop } from "@/components/Pass";
 import { fill, giftsN, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 
-export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null };
+export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; items?: { name: string; n: number }[]; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null };
 
 const when = (iso: string | null) =>
   iso ? new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso)) : t.never;
@@ -98,6 +98,17 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                 </span>
               </span>
             </div>
+            {/* everything this customer took here, by thing, the most first — one row that slides */}
+            {!!open.items?.length && (
+              <div className="-mx-[clamp(1rem,5vw,1.5rem)] mt-2.5 flex gap-1.5 overflow-x-auto px-[clamp(1rem,5vw,1.5rem)] [scrollbar-width:none]">
+                {open.items.map((x) => (
+                  <span key={x.name} className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[0.875rem] font-bold text-brand">
+                    <bdi>{x.name}</bdi>
+                    <span className="num text-[0.8125rem] text-brand/75">×{x.n}</span>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="mt-3">
               <Pass shop={{ ...shop, goal: open.goal ?? shop.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
             </div>

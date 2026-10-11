@@ -258,9 +258,9 @@ export async function customerAt(who: string): Promise<{ ok: boolean; error?: st
   return res ?? { ok: false, error: "network" };
 }
 
-/** The shop gives the tampon itself: the same rules as a scan (the shop's wait between two, the gift at the goal). */
-export async function giveStamp(who: string): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
-  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20) });
+/** The shop gives the tampon itself: the same rules as a scan (the shop's wait between two, the gift at the goal) — and, in a shop that says what it sells, what it was for. */
+export async function giveStamp(who: string, item?: number | null): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
+  const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20), p_item: Number.isSafeInteger(item) ? item : null });
   // the last tampon by the shop's hand: the customer's phone hears it, after the answer has left
   if (res?.ok && res.gift && res.card) {
     const card = res.card;

@@ -713,7 +713,9 @@ begin
     'recent', coalesce((
       select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'kind', m.kind, 'given', m.given_at is not null,
                                           'name', nullif(split_part(p.name, ' ', 1), ''), 'stamps', c.stamps, 'goal', coalesce(c.goal, s.goal),
-                                          'gift', coalesce(m.gift, c.gift, s.gift))
+                                          'gift', coalesce(m.gift, c.gift, s.gift),
+                                          -- what the tampon was for (a shop that says what it sells)
+                                          'item', (select i.name from public.items i where i.id = m.item_id))
                        order by m.created_at desc)
       from (select * from public.moments where shop_id = s.id order by created_at desc limit 8) m
       join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb));
@@ -767,6 +769,11 @@ begin
                                         -- what this customer took last (a shop that says what it sells)
                                         'last_item', (select i.name from public.moments m join public.items i on i.id = m.item_id
                                                       where m.card_id = c.id and m.kind = 'stamp' order by m.created_at desc limit 1),
+                                        -- everything this customer took, by thing, the most first
+                                        'items', coalesce((select jsonb_agg(jsonb_build_object('name', i.name, 'n', x.n) order by x.n desc, i.name)
+                                                           from (select m.item_id, count(*) as n from public.moments m
+                                                                 where m.card_id = c.id and m.kind = 'stamp' and m.item_id is not null group by m.item_id) x
+                                                           join public.items i on i.id = x.item_id), '[]'::jsonb),
                                         'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift), 'ready', public.waits(c.id))
                      order by c.last_at desc nulls last, c.created_at desc)
     from public.cards c left join public.people p on p.id = c.user_id

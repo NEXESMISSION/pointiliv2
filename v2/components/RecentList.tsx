@@ -9,7 +9,7 @@ import { fill, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 
 /** one line of «آخر حركة», its words and time already said by the page */
-export type RecentRow = { id: number; kind: "stamp" | "gift"; name: string; line: string; time: string; stamps: number; goal: number; gift: string | null };
+export type RecentRow = { id: number; kind: "stamp" | "gift"; name: string; line: string; time: string; stamps: number; goal: number; gift: string | null; item?: string | null };
 
 const say = {
   left: "مازالو {n} على {gift}",
@@ -45,7 +45,16 @@ export function RecentList({ rows, shop }: { rows: RecentRow[]; shop: PassShop }
                   <Icon3D name="gift" size={22} />
                 </span>
               )}
-              <span className="min-w-0 flex-1 truncate text-[0.9062rem] font-medium">{r.line}</span>
+              <span className="min-w-0 flex-1 truncate text-[0.9062rem] font-medium">
+                {r.line}
+                {/* what the tampon was for */}
+                {r.item && (
+                  <>
+                    {" · "}
+                    <bdi className="font-bold text-brand">{r.item}</bdi>
+                  </>
+                )}
+              </span>
               <span className="num shrink-0 text-[0.75rem] text-muted">{r.time}</span>
             </button>
           </li>
@@ -65,7 +74,14 @@ export function RecentList({ rows, shop }: { rows: RecentRow[]; shop: PassShop }
             </div>
             <p className="mt-1 text-[1.25rem] font-bold">{open.name}</p>
             <p className="text-[0.9062rem] text-muted">
-              {open.line} · <span className="num">{open.time}</span>
+              {open.line}
+              {open.item && (
+                <>
+                  {" · "}
+                  <bdi className="font-bold text-brand">{open.item}</bdi>
+                </>
+              )}{" "}
+              · <span className="num">{open.time}</span>
             </p>
             <div className="mt-4">
               <Pass shop={{ ...shop, goal: open.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
