@@ -5,6 +5,7 @@ import { AdminPlan } from "@/components/AdminPlan";
 import { AdminTrial } from "@/components/AdminTrial";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminPhoneCheck } from "@/components/AdminPhoneCheck";
+import { AdminForms, type IdForm } from "@/components/AdminForms";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
 import { AdminItemsSwitch } from "@/components/AdminItemsSwitch";
 import { AdminStoreSwitch } from "@/components/AdminStoreSwitch";
@@ -14,6 +15,7 @@ import { Presence } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Lat, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
 import { screenName } from "@/lib/screens";
+import { siteOrigin } from "@/lib/origin";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
 import { fill, monthsSaid, stampsN, t } from "@/lib/t";
@@ -95,7 +97,7 @@ const HELD: Record<string, { tone: "brand" | "coral" | "mint" | "grey"; say: str
 export default async function AdminShop({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const s = await call<Shop | null>("admin_shop", { p_id: id });
+  const [s, forms, origin] = await Promise.all([call<Shop | null>("admin_shop", { p_id: id }), call<IdForm[]>("admin_forms", { p_shop: id }), siteOrigin()]);
   if (!s) notFound();
 
   return (
@@ -292,6 +294,11 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                 </ul>
               </div>
             )}
+          </Card>
+
+          {/* forms of identification: the founder's fields, a QR each; the owner sees the answers at every tampon */}
+          <Card title="فورمات التعريف" hint="طلبة، شركاء… كل فورم بالخانات متاعو والـQR متاعو" actions={<Pill tone={forms?.length ? "brand" : "grey"}><Num>{forms?.length ?? 0}</Num></Pill>}>
+            <AdminForms shop={s.id} forms={forms ?? []} origin={origin} />
           </Card>
 
           {/* the wheel: the founder's switch for this shop, its prizes and chances, and what fell */}

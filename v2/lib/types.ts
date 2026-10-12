@@ -27,6 +27,9 @@ export type ScanResult =
   | { kind: "held"; shop: string; color: string; shopKind: string }
   | { kind: "error"; code: string; card?: CardView; next_at?: string; shop?: string };
 
+/** a customer's answers to the shop's forms of identification: each form, its fields as label and value */
+export type Said = { form: string; fields: { label: string; value: string }[] }[];
+
 /** the store of a shop switched to it (v2.store_list, orders_waiting, card_store) */
 export type StoreItem = { id: number; name: string; cost: number };
 export type Order = { batch: string; at: string; lines: { name: string; qty: number; cost: number }[]; total: number };

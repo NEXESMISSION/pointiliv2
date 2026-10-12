@@ -16,7 +16,7 @@ import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 import { nextTampon } from "@/lib/when";
-import type { CardView, Order } from "@/lib/types";
+import type { CardView, Order, Said } from "@/lib/types";
 
 type Step =
   | { kind: "idle" }
@@ -174,6 +174,8 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
   const [orders, setOrders] = useState<{ card: string; list: Order[] } | null>(null);
   const [ordersBusy, setOrdersBusy] = useState(false);
   const [ordersDone, setOrdersDone] = useState<string | null>(null);
+  // who this customer is, by the shop's forms of identification (to check)
+  const [said, setSaid] = useState<Said>([]);
   const later = useRef<number | null>(null);
   const ask = (w: WaitingGift | null | undefined, won = false) => {
     if (w && (won || later.current !== w.id)) setPop({ w, won });
@@ -189,6 +191,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
       if (asked.current !== digits) return;
       if (res.ok) {
         setStep({ kind: "found", name: res.name ?? null, card: res.card ?? null, waiting: res.waiting ?? null });
+        setSaid(res.said ?? []);
         // an order from the store waits: that question first; else a gift waits: its question
         if (res.orders?.length && res.card) setOrders({ card: res.card.id, list: res.orders });
         else if (res.waiting && later.current !== res.waiting.id) setPop({ w: res.waiting, won: false });
@@ -276,6 +279,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
     setPop(null);
     setOrders(null);
     setOrdersDone(null);
+    setSaid([]);
     setUndo("no");
     setUndoSaid(null);
     setDigits("");
@@ -518,6 +522,18 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
                       )}
                     </span>
                   </div>
+                  {/* known by a form: their answers, to check before the tampon */}
+                  {said.map((f, i) => (
+                    <div key={i} className="mt-2 rounded-[1.125rem] bg-mint-soft px-3.5 py-2.5">
+                      <p className="text-[0.8125rem] font-bold text-mint">{f.form}</p>
+                      {f.fields.map((x, j) => (
+                        <p key={j} className="flex justify-between gap-3 text-[0.9375rem]">
+                          <span className="shrink-0 text-muted">{x.label}</span>
+                          <bdi className="min-w-0 text-end font-bold">{x.value}</bdi>
+                        </p>
+                      ))}
+                    </div>
+                  ))}
                   {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
                   {items.length > 0 ? (
                     // «على شنوّة التامبون؟» — tapping the thing gives the tampon for it

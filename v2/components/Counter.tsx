@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ArrowDown, Check, ChevronRight, Eye, Hourglass, Phone, ScanLine, WifiOff } from "lucide-react";
+import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, Phone, ScanLine, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { TryItButton } from "@/components/TryIt";
@@ -14,11 +14,15 @@ import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
+import { pretty } from "@/lib/phone";
+import type { Said } from "@/lib/types";
 
 type Code = { id: string; svg: string; expiresLocal: number };
 /** who just took a tampon — or, `held`, a phone without an account that scanned: not a tampon until they make one */
 type Flash = { id: number | string; name: string | null; held?: boolean };
 type Gift = { id: number; name: string | null; gift: string };
+/** a customer who filled one of the shop's forms of identification, just stamped: who they are, to check */
+type Known = { id: number; name: string | null; phone: string | null; said: Said };
 
 /** a code is replaced this long before it dies, so a phone never scans a dead one */
 const RENEW_BEFORE_MS = 10_000;
@@ -93,6 +97,9 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   const sparing = useRef(false);
   const seen = useRef(new Set<number>());
   const seenHeld = useRef(new Set<string>());
+  // who scanned, when they filled a form here: shown until the owner says next (one after the other)
+  const [known, setKnown] = useState<Known[]>([]);
+  const seenKnown = useRef(new Set<number>());
   const openedAt = useRef(new Date().toISOString());
   const busy = useRef(false);
   const again = useRef(false);
@@ -180,7 +187,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       } else {
         const res = await fetch(`/api/counter?code=${c.id}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" });
         if (!res.ok) throw new Error("state");
-        const s = (await res.json()) as { taken: boolean; expired: boolean; stamps: { id: number; name: string | null }[]; gifts: Gift[]; held?: string[] };
+        const s = (await res.json()) as { taken: boolean; expired: boolean; stamps: { id: number; name: string | null }[]; gifts: Gift[]; held?: string[]; ids?: Known[] };
         // the code on screen changed while asking (the radio swapped it): its answer is about the old one
         const same = codeRef.current?.id === c.id;
         const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
@@ -190,6 +197,13 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           setFlashes((f) => [...f, ...shown]);
           navigator.vibrate?.(60);
           setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 2600);
+        }
+        // a customer known by a form: their answers stay up until «next»
+        const knownNew = (s.ids ?? []).filter((k) => !seenKnown.current.has(k.id));
+        if (knownNew.length) {
+          knownNew.forEach((k) => seenKnown.current.add(k.id));
+          setKnown((q) => [...q, ...knownNew]);
+          navigator.vibrate?.([80, 60, 80]);
         }
         // scanned by a phone without an account: the owner must know it is not a tampon yet (it shows longer)
         const heldNew = (s.held ?? []).filter((id) => !seenHeld.current.has(id));
@@ -317,10 +331,11 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
 
   const latest = flashes[flashes.length - 1];
   const gift = gifts[0];
+  const who = known[0];
   // the code's size: as wide as the screen lets it, smaller when a gift needs room under it. On a
   // short screen its box gives way to the rest (the only thing in the column that does), and the
   // code inside stays square at whatever the box has left: as large as it can be, never covered
-  const qr = gift ? "min(60vw, 22rem)" : "min(78vw, 30rem)";
+  const qr = who ? "min(46vw, 16rem)" : gift ? "min(60vw, 22rem)" : "min(78vw, 30rem)";
 
   return (
     <div
@@ -463,8 +478,48 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           </TryItButton>
         )}
 
+        {/* who just scanned, known by a form: their answers to check, until «next» (never gone by itself) */}
+        {who && (
+          <div className="w-full shrink-0 rounded-[1.75rem] bg-surface p-[1.1rem] text-start text-ink shadow-[0_-10px_40px_-10px_rgb(0_0_0/0.35)]" style={{ animation: "ct-in 480ms cubic-bezier(0.2,0.8,0.2,1) both" }} role="status">
+            <p className="flex items-center gap-2">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-mint text-white">
+                <BadgeCheck className="size-6" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <bdi className="block truncate text-[1.25rem] font-bold leading-tight">{who.name ?? t.someone}</bdi>
+                {who.phone && (
+                  <span dir="ltr" className="num block text-end text-[0.875rem] text-muted">
+                    {pretty(who.phone)}
+                  </span>
+                )}
+              </span>
+              {known.length > 1 && <span className="num shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[0.8125rem] font-bold text-brand">+{known.length - 1}</span>}
+            </p>
+            <div className="mt-2 max-h-[22dvh] space-y-2 overflow-y-auto">
+              {who.said.map((f, i) => (
+                <div key={i} className="rounded-[1rem] bg-canvas px-3 py-2">
+                  <p className="text-[0.8125rem] font-bold text-brand">{f.form}</p>
+                  <dl className="mt-0.5 space-y-0.5">
+                    {f.fields.map((x, j) => (
+                      <div key={j} className="flex justify-between gap-3 text-[0.9375rem]">
+                        <dt className="shrink-0 text-muted">{x.label}</dt>
+                        <dd className="min-w-0 text-end font-bold">
+                          <bdi>{x.value}</bdi>
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={() => setKnown((q) => q.slice(1))} className="press mt-3 flex h-[3.25rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
+              <Check className="size-5" strokeWidth={3} /> {known.length > 1 ? "مريقل، اللي بعدو" : "مريقل، سكان الجاي"}
+            </button>
+          </div>
+        )}
+
         {/* a gift to hand over: under the code, in the page, never over the code */}
-        {gift && (
+        {gift && !who && (
           <div className="w-full shrink-0 rounded-[1.75rem] bg-surface p-[1.1rem] text-center text-ink shadow-[0_-10px_40px_-10px_rgb(0_0_0/0.35)]" style={{ animation: "ct-in 480ms cubic-bezier(0.2,0.8,0.2,1) both" }}>
             <p className="flex items-center justify-center gap-2 text-[1.25rem] font-bold leading-tight">
               <Icon3D name="gift" size={36} className="animate-float" />

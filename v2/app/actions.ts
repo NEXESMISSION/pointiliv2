@@ -13,7 +13,7 @@ import { digits, phoneEmail, validPhone } from "@/lib/phone";
 import { NEWS_ICONS, newsHref } from "@/lib/news";
 import { clarityId, domainCode, pixelId, socialUrl, youtubeId } from "@/lib/settings";
 import { fill, t } from "@/lib/t";
-import type { CardView, FormState, Order, ScanResult } from "@/lib/types";
+import type { CardView, FormState, Order, Said, ScanResult } from "@/lib/types";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 /** Only paths inside the app: a crafted ?next= cannot send anyone elsewhere. */
@@ -262,8 +262,8 @@ export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offe
 export type WaitingGift = { id: number; gift: string | null; n?: number; spin?: boolean };
 
 /** The customer behind a code or a number, for the shop about to give them a tampon (their first name, their card here, a gift waiting). */
-export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null; orders?: Order[] }> {
-  const res = await call<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null; orders?: Order[] }>("customer_at", { p_who: String(who).slice(0, 20) });
+export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null; orders?: Order[]; said?: Said }> {
+  const res = await call<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null; orders?: Order[]; said?: Said }>("customer_at", { p_who: String(who).slice(0, 20) });
   return res ?? { ok: false, error: "network" };
 }
 
