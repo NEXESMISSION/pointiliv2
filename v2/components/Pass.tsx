@@ -1,8 +1,8 @@
-import { Check, Gift } from "lucide-react";
+import { Check, Gift, ShoppingBag } from "lucide-react";
 import { ShopMark } from "@/components/ShopMark";
 import { fill, t } from "@/lib/t";
 
-export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null; stamp_logo?: boolean };
+export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null; stamp_logo?: boolean; store?: boolean };
 
 /**
  * The loyalty card, the same everywhere: the shop's colour, its name, a dot
@@ -51,13 +51,28 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
           <span dir="auto" className="min-w-0 flex-1 truncate text-right text-[1.125rem] font-bold leading-tight">
             {shop.name}
           </span>
-          <span className="num shrink-0 leading-none">
-            <span className="text-[2rem] font-bold">{done}</span>
-            <span className="text-[1rem] font-semibold text-white/70">/{goal}</span>
-          </span>
+          {shop.store ? (
+            // a shop with a store: the tampons kept, to spend
+            <span className="num shrink-0 text-end leading-none">
+              <span className="text-[2rem] font-bold">{stamps}</span>
+              <span className="block text-[0.6875rem] font-semibold text-white/75">{t.storeBalance}</span>
+            </span>
+          ) : (
+            <span className="num shrink-0 leading-none">
+              <span className="text-[2rem] font-bold">{done}</span>
+              <span className="text-[1rem] font-semibold text-white/70">/{goal}</span>
+            </span>
+          )}
         </div>
 
-        {!small && (
+        {!small && shop.store && (
+          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/[0.16] px-3.5 py-2.5 text-[0.9062rem] font-semibold">
+            <ShoppingBag className="size-[1.125rem] shrink-0" />
+            <span className="min-w-0 flex-1 truncate">{t.storeSpend}</span>
+          </div>
+        )}
+
+        {!small && !shop.store && (
           <>
             <div className="mt-5 grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
               {Array.from({ length: goal }, (_, i) => {

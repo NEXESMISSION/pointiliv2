@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { Gift, QrCode } from "lucide-react";
+import { CardStore } from "@/components/CardStore";
 import { CardTap } from "@/components/CardTap";
 import { MyCode } from "@/components/MyCode";
 import { PushAsk } from "@/components/PushAsk";
@@ -11,7 +12,7 @@ import { siteOrigin } from "@/lib/origin";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { fill, stampsN, t } from "@/lib/t";
-import type { CardView } from "@/lib/types";
+import type { CardStore as Store, CardView } from "@/lib/types";
 
 type Card = CardView & { history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
 
@@ -26,6 +27,20 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   if (!me) redirect(`/login?next=/c/${id}`);
   const card = await call<Card | null>("card", { p_id: id });
   if (!card) notFound();
+
+  // a shop the founder switched to the store: the tampons kept, and the things to spend them on
+  if (card.shop.store) {
+    const store = await call<Store | null>("card_store", { p_card: id });
+    const code = me.code
+      ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
+      : null;
+    return (
+      <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
+        <Top back="/" title={card.shop.name} />
+        <CardStore card={id} shop={card.shop} balance={store?.balance ?? card.stamps} items={store?.items ?? []} waiting={store?.waiting ?? []} code={me.code ?? null} svg={code} />
+      </Screen>
+    );
+  }
   // the gift waiting: the customer's own code is the gift's (the shop scans it, sees the gift, hands it over)
   const svg =
     card.ready && me.code

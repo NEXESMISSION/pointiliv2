@@ -72,6 +72,24 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
           </Link>
         ))}
 
+      {/* an order from a store waiting (and no gift): the way to its card, where the code is */}
+      {waiting.length === 0 &&
+        (() => {
+          const ordered = cards.find((c) => (c.orders_n ?? 0) > 0);
+          return ordered ? (
+            <Link href={`/c/${ordered.id}`} className="press relative mt-[2dvh] block shrink-0 animate-rise overflow-hidden rounded-[1.5rem] bg-surface p-4 pe-24 shadow-card">
+              <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
+                <Icon3D name="cart" size={60} className="animate-float" />
+              </span>
+              <b className="block text-[1.0625rem] font-bold">{t.storeOrderWaits}</b>
+              <span className="block truncate text-[0.875rem] text-muted">{fill(t.storeOrderAt, { shop: ordered.shop.name })}</span>
+              <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">
+                <QrCode className="size-4" /> {t.storeShow}
+              </span>
+            </Link>
+          ) : null;
+        })()}
+
       {cards.length === 0 ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">
           <Icon3D name="ticket" size={96} className="animate-float" />

@@ -11,7 +11,9 @@ export type CardView = {
   /** a gift waits for the shop to hand it over */
   waiting: boolean;
   /** the shop, with this card's own goal and gift (the promise it started with) */
-  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean };
+  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; store?: boolean };
+  /** a shop with a store: the orders this customer made and has not taken yet */
+  orders_n?: number;
   /** the shop's card of today when it differs: this customer's next card, after this gift */
   next?: { goal: number; gift: string } | null;
 };
@@ -20,5 +22,10 @@ export type ScanResult =
   | { kind: "stamped"; card: CardView; gift: boolean; item?: string | null }
   | { kind: "held"; shop: string; color: string; shopKind: string }
   | { kind: "error"; code: string; card?: CardView; next_at?: string; shop?: string };
+
+/** the store of a shop switched to it (v2.store_list, orders_waiting, card_store) */
+export type StoreItem = { id: number; name: string; cost: number };
+export type Order = { batch: string; at: string; lines: { name: string; qty: number; cost: number }[]; total: number };
+export type CardStore = { ok: boolean; error?: string; balance: number; items: StoreItem[]; waiting: Order[] };
 
 export type FormState = { error?: string | null; field?: string } | null;

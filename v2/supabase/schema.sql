@@ -515,6 +515,8 @@ begin
   select * into c from public.cards where id = p_card;
   if c.id is null then return 0; end if;
   select * into s from public.shops where id = c.shop_id;
+  -- a shop switched to the store: no gift at a goal, every tampon stays on the card to spend
+  if s.store_on then return 0; end if;
   v_goal := coalesce(c.goal, s.goal);
   if v_goal is null or v_goal < 1 then return 0; end if;
   select count(*) into v_have from public.moments where card_id = c.id and kind = 'gift' and given_at is null;
@@ -538,7 +540,9 @@ language sql stable security definer set search_path = '' as $$
     -- how many gifts wait on it (full cards not yet taken)
     'waiting_n', (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null),
     'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'stamp_logo', s.stamp_logo,
-                               'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift)),
+                               'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift), 'store', s.store_on),
+    -- a shop with a store: what this customer ordered and has not taken yet
+    'orders_n', (select count(distinct o.batch) from public.orders o where o.card_id = c.id and o.status = 'waiting'),
     'next', case when s.goal is not null
                   and (coalesce(c.goal, s.goal) <> s.goal or not public.same_gift(coalesce(c.gift, s.gift), s.gift))
                  then jsonb_build_object('goal', s.goal, 'gift', s.gift) end)
@@ -567,7 +571,7 @@ begin
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on, 'stamp_gap', s.stamp_gap) end);
+      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on, 'stamp_gap', s.stamp_gap, 'store_on', s.store_on) end);
 end $$;
 
 -- the owner's choice for the stamps on the card: the tick, or the shop's logo
@@ -1205,7 +1209,8 @@ language sql stable security definer set search_path = '' as $$
                                                -- what the tampon was for, when the shop says what it sells
                                                'item', (select i.name from public.items i where i.id = m.item_id))
                             order by coalesce(m.given_at, m.created_at) desc)
-           from (select * from public.moments where card_id = c.id order by created_at desc limit 30) m), '[]'::jsonb))
+           from (select * from public.moments where card_id = c.id order by created_at desc limit 30) m), '[]'::jsonb),
+         'orders', public.orders_story(c.id))
   from public.cards c where c.id = p_id and c.user_id = auth.uid()
 $$;
 
@@ -1409,7 +1414,11 @@ begin
       from (select * from public.cards where shop_id = s.id order by gifts desc, stamps desc limit 5) c
       left join public.people p on p.id = c.user_id), '[]'::jsonb))
     -- (a second object: one jsonb_build_object takes 100 arguments at most)
-    || jsonb_build_object('held', public.held_list(s.id, 14));
+    || jsonb_build_object('held', public.held_list(s.id, 14), 'store_on', s.store_on, 'store', public.store_list(s.id),
+         'orders', coalesce((select jsonb_agg(jsonb_build_object('at', o.created_at, 'name', o.name, 'qty', o.qty, 'cost', o.cost, 'status', o.status,
+                                                                 'who', nullif(split_part(p.name, ' ', 1), '')) order by o.created_at desc)
+                             from (select * from public.orders where shop_id = s.id order by created_at desc limit 20) o
+                             join public.cards c on c.id = o.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb));
 end $$;
 
 create or replace function public.admin_set_paused(p_id uuid, p_paused boolean) returns jsonb
@@ -1549,7 +1558,8 @@ begin
   select * into c from public.cards where shop_id = s.id and user_id = v_person;
   return jsonb_build_object('ok', true, 'name', nullif(v_name, ''),
     'card', case when c.id is null then null else public.card_view(c.id) end,
-    'waiting', case when c.id is null then null else public.waiting_gift(c.id) end);
+    'waiting', case when c.id is null then null else public.waiting_gift(c.id) end,
+    'orders', case when c.id is null then '[]'::jsonb else public.orders_waiting(c.id) end);
 end $$;
 
 -- the tampon, given by the shop: the same rules as a scan (one an hour, the
@@ -2671,6 +2681,208 @@ create trigger codes_ping after update of held_hash, used_at on public.codes for
   when ((old.held_hash is null and new.held_hash is not null) or (old.used_at is null and new.used_at is not null))
   execute function public.ping_counter();
 
+
+-- ═══ the store: a shop the founder switches to it ══════════════════════════
+-- For a few shops, by the founder's hand only. The card's goal and gift step
+-- aside: every tampon stays on the card (cards.stamps, never spent by a gift),
+-- and the owner fills a store — things, each with its price in tampons. The
+-- customer buys from it on their card, several things at once: the tampons
+-- leave at once (set aside for the order), the order waits, and the owner
+-- hands it over when the customer shows their code, as with a gift. A shop
+-- that is not switched sees none of it, and neither do its customers — the
+-- same customer keeps their ordinary cards everywhere else.
+alter table public.shops add column if not exists store_on boolean not null default false;
+
+create table if not exists public.store_items (
+  id          bigint generated always as identity primary key,
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  name        text not null check (char_length(btrim(name)) between 1 and 40),
+  cost        int  not null check (cost between 1 and 9999),
+  rank        int  not null default 0,
+  gone        boolean not null default false,
+  created_at  timestamptz not null default now()
+);
+create index if not exists store_items_shop_idx on public.store_items (shop_id, rank, id);
+
+create table if not exists public.orders (
+  id          bigint generated always as identity primary key,
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  card_id     uuid not null references public.cards (id) on delete cascade,
+  batch       uuid not null,
+  item_id     bigint references public.store_items (id) on delete set null,
+  name        text not null,
+  cost        int  not null,
+  qty         int  not null check (qty between 1 and 20),
+  status      text not null default 'waiting' check (status in ('waiting', 'given', 'cancelled')),
+  created_at  timestamptz not null default now(),
+  done_at     timestamptz
+);
+create index if not exists orders_card_idx on public.orders (card_id, created_at desc);
+create index if not exists orders_shop_idx on public.orders (shop_id, created_at desc);
+create index if not exists orders_waiting_idx on public.orders (card_id) where status = 'waiting';
+-- like every table: closed to the browser, read and written only through the functions below
+alter table public.store_items enable row level security;
+alter table public.store_items force row level security;
+revoke all on public.store_items from anon, authenticated, public;
+alter table public.orders enable row level security;
+alter table public.orders force row level security;
+revoke all on public.orders from anon, authenticated, public;
+
+-- the things on sale, in the owner's order
+create or replace function public.store_list(p_shop uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', i.id, 'name', i.name, 'cost', i.cost) order by i.rank, i.id), '[]'::jsonb)
+  from public.store_items i where i.shop_id = p_shop and not i.gone
+$$;
+
+-- the orders waiting on a card, one per purchase, its lines and its total
+create or replace function public.orders_waiting(p_card uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(b order by b ->> 'at'), '[]'::jsonb) from (
+    select jsonb_build_object('batch', o.batch, 'at', min(o.created_at),
+             'lines', jsonb_agg(jsonb_build_object('name', o.name, 'qty', o.qty, 'cost', o.cost) order by o.id),
+             'total', sum(o.cost * o.qty)) as b
+    from public.orders o where o.card_id = p_card and o.status = 'waiting'
+    group by o.batch) x
+$$;
+
+-- the founder switches a shop to the store, or back to its card (only a shop with a card)
+create or replace function public.admin_set_store(p_id uuid, p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_id;
+  if s.id is null then return public.err('not_found'); end if;
+  if coalesce(p_on, false) and s.goal is null then return public.err('no_card'); end if;
+  update public.shops set store_on = coalesce(p_on, false) where id = p_id;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- the owner's store: what is on sale, the orders waiting, and what went these 30 days
+create or replace function public.my_store() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return jsonb_build_object('ok', true, 'on', s.store_on,
+    'items', public.store_list(s.id),
+    'waiting', coalesce((
+      select jsonb_agg(jsonb_build_object('card', w.card_id, 'name', nullif(split_part(p.name, ' ', 1), ''), 'phone', public.masked(p.phone),
+                                          'orders', public.orders_waiting(w.card_id)) order by w.at)
+      from (select card_id, min(created_at) as at from public.orders where shop_id = s.id and status = 'waiting' group by card_id) w
+      join public.cards c on c.id = w.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb),
+    'sold', coalesce((
+      select jsonb_agg(jsonb_build_object('name', x.name, 'n', x.n) order by x.n desc)
+      from (select o.name, sum(o.qty) as n from public.orders o
+            where o.shop_id = s.id and o.status = 'given' and o.done_at > now() - interval '30 days' group by o.name) x), '[]'::jsonb));
+end $$;
+
+-- the owner writes the store: the whole list in their order ([{id?, name, cost}]); a thing
+-- left out is taken off sale (kept, so what was bought keeps its name)
+create or replace function public.store_save(p_items jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; x jsonb; v_rank int := 0; v_keep bigint[] := '{}'; v_id bigint; v_name text; v_cost int;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if not s.store_on then return public.err('store_off'); end if;
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) > 40 then return public.err('invalid'); end if;
+  for x in select * from jsonb_array_elements(p_items) loop
+    v_name := btrim(coalesce(x ->> 'name', ''));
+    v_cost := case when coalesce(x ->> 'cost', '') ~ '^\d{1,4}$' then (x ->> 'cost')::int end;
+    if char_length(v_name) not between 1 and 40 or v_cost is null or v_cost < 1 then return public.err('invalid'); end if;
+    v_id := case when coalesce(x ->> 'id', '') ~ '^\d{1,18}$' then (x ->> 'id')::bigint end;
+    if v_id is not null and exists (select 1 from public.store_items where id = v_id and shop_id = s.id) then
+      update public.store_items set name = v_name, cost = v_cost, rank = v_rank, gone = false where id = v_id;
+    else
+      insert into public.store_items (shop_id, name, cost, rank) values (s.id, v_name, v_cost, v_rank) returning id into v_id;
+    end if;
+    v_keep := v_keep || v_id;
+    v_rank := v_rank + 1;
+  end loop;
+  update public.store_items set gone = true where shop_id = s.id and not gone and not (id = any (v_keep));
+  return jsonb_build_object('ok', true, 'items', public.store_list(s.id));
+end $$;
+
+-- the customer's side of a store: the tampons on the card, the things, the orders waiting
+create or replace function public.card_store(p_card uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('ok', true, 'balance', c.stamps, 'items', public.store_list(s.id), 'waiting', public.orders_waiting(c.id))
+  from public.cards c join public.shops s on s.id = c.shop_id
+  where c.id = p_card and c.user_id = auth.uid() and s.store_on
+$$;
+
+-- the customer buys ([{id, qty}]): every line checked, the tampons taken at once, one order
+create or replace function public.store_buy(p_card uuid, p_lines jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare c public.cards%rowtype; s public.shops%rowtype; x jsonb; v_total int := 0; v_batch uuid := gen_random_uuid(); i public.store_items%rowtype; v_qty int; v_n int := 0;
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  select * into c from public.cards where id = p_card and user_id = auth.uid() for update;
+  if c.id is null then return public.err('not_found'); end if;
+  select * into s from public.shops where id = c.shop_id;
+  if not s.store_on then return public.err('store_off'); end if;
+  if s.paused or public.shut(s) then return public.err('paused'); end if;
+  if jsonb_typeof(p_lines) <> 'array' or jsonb_array_length(p_lines) = 0 or jsonb_array_length(p_lines) > 20 then return public.err('invalid'); end if;
+  if not public.try_once('buy:' || auth.uid(), 20, 10) then return public.err('too_many'); end if;
+  for x in select * from jsonb_array_elements(p_lines) loop
+    v_qty := case when coalesce(x ->> 'qty', '') ~ '^\d{1,2}$' then (x ->> 'qty')::int end;
+    select * into i from public.store_items where id = case when coalesce(x ->> 'id', '') ~ '^\d{1,18}$' then (x ->> 'id')::bigint end
+      and shop_id = s.id and not gone;
+    if i.id is null or v_qty is null or v_qty not between 1 and 20 then return public.err('invalid'); end if;
+    v_total := v_total + i.cost * v_qty;
+    insert into public.orders (shop_id, card_id, batch, item_id, name, cost, qty) values (s.id, c.id, v_batch, i.id, i.name, i.cost, v_qty);
+    v_n := v_n + 1;
+  end loop;
+  if v_total > c.stamps then
+    raise exception 'not_enough' using errcode = 'P0001', detail = v_total::text;
+  end if;
+  update public.cards set stamps = stamps - v_total where id = c.id;
+  return jsonb_build_object('ok', true, 'batch', v_batch, 'total', v_total) || public.card_store(c.id);
+exception when raise_exception then
+  if sqlerrm = 'not_enough' then return public.err('not_enough'); end if;
+  raise;
+end $$;
+
+-- the customer takes an order back before it is handed over: the tampons come back
+create or replace function public.store_cancel(p_card uuid, p_batch uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare c public.cards%rowtype; v_back int;
+begin
+  select * into c from public.cards where id = p_card and user_id = auth.uid() for update;
+  if c.id is null then return public.err('not_found'); end if;
+  select coalesce(sum(cost * qty), 0) into v_back from public.orders where card_id = c.id and batch = p_batch and status = 'waiting';
+  if v_back = 0 then return public.err('not_found'); end if;
+  update public.orders set status = 'cancelled', done_at = now() where card_id = c.id and batch = p_batch and status = 'waiting';
+  update public.cards set stamps = stamps + v_back where id = c.id;
+  return jsonb_build_object('ok', true) || public.card_store(c.id);
+end $$;
+
+-- the owner hands over what a customer ordered (all of it, or one order)
+create or replace function public.store_give(p_card uuid, p_batch uuid default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_n int;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  update public.orders set status = 'given', done_at = now()
+  where shop_id = s.id and card_id = p_card and status = 'waiting' and (p_batch is null or batch = p_batch);
+  get diagnostics v_n = row_count;
+  if v_n = 0 then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true, 'n', v_n);
+end $$;
+
+-- the customer's purchases on this card, for its story
+create or replace function public.orders_story(p_card uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object('at', b.at, 'status', b.status, 'total', b.total, 'lines', b.lines) order by b.at desc), '[]'::jsonb)
+  from (select o.batch, min(o.created_at) as at, min(o.status) as status, sum(o.cost * o.qty) as total,
+               string_agg(o.qty || '× ' || o.name, '، ' order by o.id) as lines
+        from public.orders o where o.card_id = p_card group by o.batch order by min(o.created_at) desc limit 20) b
+$$;
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 -- ═══ once: the owners from before the notes were kept here ═════════════════
@@ -2688,7 +2900,9 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
-  public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid), public.unstamp(bigint),
+  public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid),
+  public.admin_set_store(uuid, boolean), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
+  public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),
   public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),

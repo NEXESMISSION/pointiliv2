@@ -25,6 +25,7 @@ export const ROUTES: Record<string, string> = {
   "/shop/stats": "الأرقام",
   "/shop/settings": "الإعدادات",
   "/shop/pay": "الخلاص",
+  "/shop/store": "الماغازة",
   "/faq": "الأسئلة",
   "/guide": "الدليل",
   "/prix": "الأسوام",
@@ -45,6 +46,7 @@ export const SCREENS: Record<string, string> = {
   checking: "يثبّت",
   stamped: "خذا تامبون",
   held: "بلا كونت (محجوز)",
+  store: "الماغازة",
 };
 export const FAILS: Record<string, string> = { used: "كود مستعمل", expired: "كود فات وقتو", too_soon: "بكري برشا", done: "كمّل الكارط", own_shop: "محلّو هو", paused: "محل موقوف", network: "مشكل إنترنت", invalid: "كود غالط" };
 export function screenName(route: string, screen: string | null): string {
@@ -53,5 +55,7 @@ export function screenName(route: string, screen: string | null): string {
   if (!screen) return base;
   if (screen.startsWith("failed:")) return `${base} · ${FAILS[screen.slice(7)] ?? screen.slice(7)}`;
   if (screen.startsWith("edit-")) return `تبديل الكارط · ${SCREENS[screen.slice(5)] ?? screen.slice(5)}`;
+  // a page whose one screen bears its own name: said once
+  if (SCREENS[screen] === base) return base;
   return `${base} · ${SCREENS[screen] ?? screen}`;
 }

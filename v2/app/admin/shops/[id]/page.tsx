@@ -4,6 +4,7 @@ import { ChevronRight, Gift, MessageCircle, Phone } from "lucide-react";
 import { AdminPlan } from "@/components/AdminPlan";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
+import { AdminStoreSwitch } from "@/components/AdminStoreSwitch";
 import { Ago } from "@/components/Ago";
 import { Presence } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
@@ -24,6 +25,9 @@ type Shop = {
   } | null;
   stamp_gap: number; stamp_logo: boolean; items_on: boolean;
   held: { id: string; at: string; until: string; state: "waiting" | "lost" | "done" | "back"; name: string | null; item: string | null }[];
+  store_on: boolean;
+  store: { id: number; name: string; cost: number }[];
+  orders: { at: string; name: string; qty: number; cost: number; status: "waiting" | "given" | "cancelled"; who: string | null }[];
   items: { id: number; name: string; gone: boolean; at: string; n: number; n30: number; last_at: string | null }[];
   devices: { id: string; since: string; last_at: string | null; device: string | null; os: string | null; browser: string | null; city: string | null; app: boolean | null; here: boolean | null }[];
   plan: {
@@ -266,6 +270,50 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+          </Card>
+
+          {/* the store: the founder's switch for this shop, what is on sale, and the latest orders */}
+          <Card title="الماغازة" actions={<Pill tone={s.store_on ? "brand" : "grey"}>{s.store_on ? "مخدومة" : "الكارط العادية"}</Pill>}>
+            <AdminStoreSwitch id={s.id} on={s.store_on} hasCard={!!s.goal} />
+            {s.store_on && (
+              <div className="mt-4 grid gap-4 border-t border-line pt-3 lg:grid-cols-2">
+                <div>
+                  <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">شنوّة فيها</p>
+                  {s.store.length ? (
+                    <ul className="space-y-1 text-[0.875rem]">
+                      {s.store.map((x) => (
+                        <li key={x.id} className="flex justify-between gap-3">
+                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
+                          <span className="shrink-0 text-muted">
+                            <Num>{x.cost}</Num> تامبون
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[0.8125rem] text-faint">المولى مازال ما حطّ حتى حاجة</p>
+                  )}
+                </div>
+                <div>
+                  <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">آخر الطلبيات</p>
+                  {s.orders.length ? (
+                    <ul className="space-y-1 text-[0.8125rem]">
+                      {s.orders.map((o, i) => (
+                        <li key={i} className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate">
+                            <Num>{o.qty}</Num>× <bdi className="font-semibold text-body">{o.name}</bdi>
+                            <span className="text-muted"> · {o.who ?? t.someone}</span>
+                          </span>
+                          <Pill tone={o.status === "given" ? "mint" : o.status === "waiting" ? "brand" : "grey"}>{o.status === "given" ? "تسلّمت" : o.status === "waiting" ? "تستنّى" : "تبطّلت"}</Pill>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[0.8125rem] text-faint">حتى طلبية</p>
+                  )}
+                </div>
               </div>
             )}
           </Card>

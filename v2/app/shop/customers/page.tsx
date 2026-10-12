@@ -29,7 +29,7 @@ export default async function ShopCustomers() {
           <p className="mt-1.5 max-w-[17rem] text-[0.9375rem] text-muted">{t.customersEmptyBody}</p>
         </div>
       ) : (
-        <CustomerList items={items} shop={me.shop} goal={goal} />
+        <CustomerList items={items} shop={{ ...me.shop, store: !!me.shop.store_on }} goal={goal} />
       )}
     </Screen>
   );

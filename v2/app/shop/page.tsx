@@ -76,7 +76,10 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   const options = [
     { href: "/shop/stats", mark: <Icon3D name="chart" size={30} />, label: t.statsTitle },
     { href: "/shop/customers", mark: <Icon3D name="people" size={30} />, label: t.customersTitle },
-    { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
+    // a shop the founder switched to the store: its store in the card's place
+    shop.store_on
+      ? { href: "/shop/store", mark: <Icon3D name="cart" size={30} />, label: t.storeOwnerTitle }
+      : { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
     { href: "/shop/items", mark: <Icon3D name="basket" size={30} />, label: t.itemsTile },
     {
       // the shop's own tile shows its logo: the logo tip lights this one
@@ -168,7 +171,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
             <>
               {/* each line opens: the customer's card as it stands (owners kept tapping them) */}
               <RecentList
-                shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift }}
+                shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift, store: !!shop.store_on }}
                 rows={[
                   ...recent.map((r) => ({
                     at: r.at,

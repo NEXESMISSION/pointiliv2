@@ -105,7 +105,7 @@ export function RecentList({ rows, shop }: { rows: RecentRow[]; shop: PassShop }
               <Pass shop={{ ...shop, goal: open.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
             </div>
             <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">
-              {open.stamps >= open.goal ? fill(say.ready, { gift: open.gift ?? shop.gift ?? "" }) : fill(say.left, { n: stampsN(open.goal - open.stamps), gift: open.gift ?? shop.gift ?? "" })}
+              {shop.store ? fill(t.storeHolds, { n: open.stamps }) : open.stamps >= open.goal ? fill(say.ready, { gift: open.gift ?? shop.gift ?? "" }) : fill(say.left, { n: stampsN(open.goal - open.stamps), gift: open.gift ?? shop.gift ?? "" })}
             </p>
             <Link href="/shop/customers" className="press mt-4 flex h-12 items-center justify-center gap-1 rounded-[1rem] bg-surface text-[0.9375rem] font-bold text-brand shadow-card">
               {say.all} <ChevronLeft className="size-4" />

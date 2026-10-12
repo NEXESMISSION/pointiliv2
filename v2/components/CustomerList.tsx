@@ -58,11 +58,16 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                       </>
                     )}
                   </span>
-                  <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-line">
-                    <span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
-                  </span>
+                  {/* a shop with a store has no goal to fill: the tampons kept, on the right */}
+                  {!shop.store && (
+                    <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-line">
+                      <span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+                    </span>
+                  )}
                 </span>
-                {c.ready ? (
+                {shop.store ? (
+                  <span className="num shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[0.875rem] font-bold text-brand">{c.stamps}</span>
+                ) : c.ready ? (
                   <span className="flex shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2.5 py-1 text-[0.7812rem] font-bold text-coral">
                     <Gift className="size-3.5" /> {t.ready.replace("!", "")}
                   </span>
@@ -112,7 +117,9 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
             <div className="mt-3">
               <Pass shop={{ ...shop, goal: open.goal ?? shop.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
             </div>
-            {open.ready ? (
+            {shop.store ? (
+              <p className="mt-3 text-center text-[0.9062rem] font-semibold text-body">{fill(t.storeHolds, { n: open.stamps })}</p>
+            ) : open.ready ? (
               <div className="mt-3 flex items-center gap-3 rounded-[1.25rem] bg-coral-soft p-3.5">
                 <Gift className="size-6 shrink-0 text-coral" />
                 <span className="min-w-0 flex-1 text-[0.9062rem] font-semibold text-coral">{t.customerGiftWaits}</span>

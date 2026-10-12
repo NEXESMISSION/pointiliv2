@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
 import { customerAt, give as handOver, giveAll, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
+import { storeGive } from "@/app/actions-store";
 import { Pass } from "@/components/Pass";
 import type { Item } from "@/components/PickItem";
 import { TryItButton, type DemoShop } from "@/components/TryIt";
@@ -13,7 +14,7 @@ import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 import { nextTampon } from "@/lib/when";
-import type { CardView } from "@/lib/types";
+import type { CardView, Order } from "@/lib/types";
 
 type Step =
   | { kind: "idle" }
@@ -87,6 +88,39 @@ function GiftPop({ who, w, won, busy, onGive, onLater }: { who: string; w: Waiti
   );
 }
 
+/**
+ * A shop with a store, and the customer ordered from it: what they ordered,
+ * over the screen — hand it over now, or not now (as with a gift).
+ */
+function OrderPop({ who, orders, busy, onGive, onLater }: { who: string; orders: Order[]; busy: boolean; onGive: () => void; onLater: () => void }) {
+  const lines = orders.flatMap((o) => o.lines);
+  return (
+    <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={fill(t.storeHas, { name: who })} onClick={onLater}>
+      <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-5 pt-[clamp(1rem,3dvh,1.75rem)] text-center" style={{ animation: "pop-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+        <style>{`@keyframes pop-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
+        <Icon3D name="cart" size={72} className="mx-auto animate-pop" />
+        <h2 className="mt-2 text-balance text-[1.5rem] font-bold leading-tight">{fill(t.storeHas, { name: who })}</h2>
+        <ul className="mx-auto mt-3 max-h-[28dvh] max-w-xs space-y-1.5 overflow-y-auto text-start">
+          {lines.map((l, i) => (
+            <li key={i} className="flex items-center gap-2.5 rounded-[0.875rem] bg-surface px-3 py-2 shadow-card">
+              <span className="num grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.9375rem] font-bold text-brand">{l.qty}</span>
+              <bdi className="min-w-0 flex-1 truncate text-[1.0625rem] font-bold">{l.name}</bdi>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-[2.5dvh] space-y-1.5">
+          <Btn type="button" onClick={onGive} disabled={busy}>
+            {busy ? t.checking : t.storeGiveAll}
+          </Btn>
+          <Btn type="button" kind="ghost" onClick={onLater} disabled={busy}>
+            {t.popGiftLater}
+          </Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function errorText(code?: string): string {
   if (code === "own_shop") return t.collectOwn;
   if (code === "paused") return t.pausedBanner;
@@ -114,6 +148,10 @@ export function Collect({ by, preset = "", shop, items = [], back }: { by: "scan
   const asked = useRef("");
   // the gift's question, over the screen; a gift the owner said «موش توّا» to is not asked again by itself
   const [pop, setPop] = useState<{ w: WaitingGift; won: boolean } | null>(null);
+  // a store's orders waiting for this customer (asked first, before any gift)
+  const [orders, setOrders] = useState<{ card: string; list: Order[] } | null>(null);
+  const [ordersBusy, setOrdersBusy] = useState(false);
+  const [ordersDone, setOrdersDone] = useState<string | null>(null);
   const later = useRef<number | null>(null);
   const ask = (w: WaitingGift | null | undefined, won = false) => {
     if (w && (won || later.current !== w.id)) setPop({ w, won });
@@ -129,8 +167,9 @@ export function Collect({ by, preset = "", shop, items = [], back }: { by: "scan
       if (asked.current !== digits) return;
       if (res.ok) {
         setStep({ kind: "found", name: res.name ?? null, card: res.card ?? null, waiting: res.waiting ?? null });
-        // a gift waits: the question comes up (refs and setters only, the effect needs nothing more)
-        if (res.waiting && later.current !== res.waiting.id) setPop({ w: res.waiting, won: false });
+        // an order from the store waits: that question first; else a gift waits: its question
+        if (res.orders?.length && res.card) setOrders({ card: res.card.id, list: res.orders });
+        else if (res.waiting && later.current !== res.waiting.id) setPop({ w: res.waiting, won: false });
       }
       else if (res.error === "unknown") {
         setStep({ kind: "unknown" });
@@ -213,6 +252,8 @@ export function Collect({ by, preset = "", shop, items = [], back }: { by: "scan
     asked.current = "";
     later.current = null;
     setPop(null);
+    setOrders(null);
+    setOrdersDone(null);
     setUndo("no");
     setUndoSaid(null);
     setDigits("");
@@ -437,6 +478,11 @@ export function Collect({ by, preset = "", shop, items = [], back }: { by: "scan
               )}
               {(step.kind === "found" || step.kind === "giving") && (
                 <div className="animate-rise">
+                  {ordersDone && (
+                    <p className="mb-2 flex animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-mint-soft px-4 py-2.5 text-[0.9688rem] font-bold text-mint">
+                      <Check className="size-5" strokeWidth={3} /> {ordersDone}
+                    </p>
+                  )}
                   <div className="flex items-center gap-3 rounded-[1.375rem] bg-surface p-3.5 shadow-card">
                     <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.125rem] font-bold text-white">{(who[0] ?? "؟").toUpperCase()}</span>
                     <span className="min-w-0 flex-1">
@@ -481,6 +527,25 @@ export function Collect({ by, preset = "", shop, items = [], back }: { by: "scan
         )}
       </div>
 
+      {orders && (
+        <OrderPop
+          who={who}
+          orders={orders.list}
+          busy={ordersBusy}
+          onGive={async () => {
+            setOrdersBusy(true);
+            const ok = await storeGive(orders.card).catch(() => false);
+            setOrdersBusy(false);
+            setOrders(null);
+            if (ok) {
+              navigator.vibrate?.(60);
+              signal("store_give", mode);
+              setOrdersDone(fill(t.storeGiven, { name: who }));
+            } else setStep({ kind: "error", text: t.errNetwork });
+          }}
+          onLater={() => setOrders(null)}
+        />
+      )}
       {pop && (
         <GiftPop
           who={who}
