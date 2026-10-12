@@ -4,6 +4,7 @@ import { ChevronRight, Gift, MessageCircle, Phone } from "lucide-react";
 import { AdminPlan } from "@/components/AdminPlan";
 import { AdminTrial } from "@/components/AdminTrial";
 import { AdminShopActions } from "@/components/AdminShopActions";
+import { AdminPhoneCheck } from "@/components/AdminPhoneCheck";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
 import { AdminStoreSwitch } from "@/components/AdminStoreSwitch";
 import { Ago } from "@/components/Ago";
@@ -19,7 +20,10 @@ export const metadata = { title: "محل" };
 
 type Shop = {
   id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; gift: string | null; paused: boolean; created_at: string;
-  owner: { id: string; name: string; phone: string | null; tester: boolean; admin: boolean } | null;
+  owner: {
+    id: string; name: string; phone: string | null; tester: boolean; admin: boolean;
+    phone_check: "ask" | "sent" | null; phone_given: string | null; phone_given_at: string | null; phone_ok_at: string | null;
+  } | null;
   seen: {
     created_at: string; first_at: string | null; last_at: string | null; n: number; ms: number;
     visits: { id: string; at: string; end_at: string; ms: number; pages: number; device: string | null; os: string | null; browser: string | null; city: string | null; country: string | null; source: string; path: { route: string; screen: string | null; ms: number }[] }[];
@@ -156,6 +160,10 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
               </>
             ) : (
               <p className="mt-1 text-[0.8125rem] text-faint">بلا نومرو</p>
+            )}
+            {/* a number that looks made up: ask for the real one (it covers the owner's screens until given) */}
+            {s.owner && !s.owner.admin && (
+              <AdminPhoneCheck id={s.owner.id} state={s.owner.phone_check} given={s.owner.phone_given} givenAt={s.owner.phone_given_at} okAt={s.owner.phone_ok_at} />
             )}
                 {s.seen && (
                   <dl className="mt-4 space-y-2 border-t border-line pt-3 text-[0.8125rem]">

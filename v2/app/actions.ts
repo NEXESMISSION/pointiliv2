@@ -344,6 +344,21 @@ export async function adminBookDelete(id: number): Promise<boolean> {
 }
 
 /** The owner paid by hand: the founder turns the access on (so many months, or until a date), or stops it — with what came in, for the books. */
+/** The owner gives their real number (the founder asked for it): checked, then a call. */
+export async function phoneGive(phone: string): Promise<{ ok: boolean; error?: string }> {
+  const res = await call<{ ok: boolean; error?: string }>("phone_give", { p_phone: String(phone ?? "").replace(/\D/g, "").slice(0, 11) });
+  // no refresh here: the question stays up to say «وصلنا» until they tap «باهي»; the next page has it gone
+  return res ?? { ok: false, error: "network" };
+}
+
+/** The founder asks an owner for their real number, or says the one given is right. */
+export async function adminPhoneAsk(personId: string, on: boolean): Promise<{ ok: boolean }> {
+  if (!UUID.test(personId)) return { ok: false };
+  const res = await call<{ ok: boolean }>("admin_phone_ask", { p_person: personId, p_on: on });
+  revalidatePath("/admin", "layout");
+  return { ok: !!res?.ok };
+}
+
 /** More days of trial for a shop (not a subscription): the owner is told once, plainly. */
 export async function adminTrial(shopId: string, days: number): Promise<{ ok: boolean }> {
   if (!UUID.test(shopId) || !Number.isInteger(days) || days < 1 || days > 60) return { ok: false };

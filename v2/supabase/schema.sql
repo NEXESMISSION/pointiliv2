@@ -570,6 +570,7 @@ begin
   select * into s from public.shops where owner_id = v_uid;
   return jsonb_build_object(
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
+    'phone_check', public.phone_state(p),
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
       'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on, 'stamp_gap', s.stamp_gap, 'store_on', s.store_on) end);
@@ -1342,7 +1343,8 @@ begin
   if s.id is null then return null; end if;
   return jsonb_build_object(
     'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused, 'created_at', s.created_at,
-    'owner', (select jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone, 'tester', p.is_tester, 'admin', p.is_admin, 'robot', public.is_robot(p.id))
+    'owner', (select jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone, 'tester', p.is_tester, 'admin', p.is_admin, 'robot', public.is_robot(p.id),
+                                        'phone_check', public.phone_state(p), 'phone_given', p.phone_given, 'phone_given_at', p.phone_given_at, 'phone_ok_at', p.phone_ok_at)
               from public.people p where p.id = s.owner_id),
     'stamp_gap', s.stamp_gap, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on,
     -- what the owner wrote in «شنوّة تبيع» (removed ones too, rank 999), and the tampons each one got
@@ -2906,6 +2908,58 @@ language sql stable security definer set search_path = '' as $$
         from public.orders o where o.card_id = p_card group by o.batch order by min(o.created_at) desc limit 20) b
 $$;
 
+
+-- ═══ a number that is not theirs ═══════════════════════════════════════════
+-- An owner signed up with a number that is plainly not theirs (55 555 555…):
+-- the founder asks for the real one. Until they give it, every owner screen is
+-- covered by one question; once given, it waits for the founder's call, and
+-- the founder says it is right (or asks again).
+alter table public.people add column if not exists phone_ask_at   timestamptz;
+alter table public.people add column if not exists phone_given    text check (phone_given is null or phone_given ~ '^[2-9][0-9]{7}$');
+alter table public.people add column if not exists phone_given_at timestamptz;
+alter table public.people add column if not exists phone_ok_at    timestamptz;
+
+-- where it stands, for the owner's screens: null (nothing asked), 'ask', or 'sent' (waiting for the call)
+create or replace function public.phone_state(p public.people) returns text
+language sql stable set search_path = '' as $$
+  select case when p.phone_ask_at is null then null
+              when p.phone_given_at is null or p.phone_given_at < p.phone_ask_at then 'ask'
+              else 'sent' end
+$$;
+
+-- the founder asks for the real number (p_on), or says the one given is right / takes the question back
+create or replace function public.admin_phone_ask(p_person uuid, p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  if coalesce(p_on, false) then
+    update public.people set phone_ask_at = now(), phone_ok_at = null where id = p_person;
+  else
+    update public.people set phone_ask_at = null, phone_ok_at = case when phone_given is not null then now() end where id = p_person;
+  end if;
+  if not found then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- the owner gives their real number: eight digits, a Tunisian line, not a row of the same digit or a run
+create or replace function public.phone_give(p_phone text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v text := regexp_replace(coalesce(p_phone, ''), '\D', '', 'g'); v_old text;
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  if v ~ '^216[0-9]{8}$' then v := substr(v, 4); end if;
+  if v !~ '^[2-9][0-9]{7}$' or v ~ '^(\d)\1{7}$' or v in ('12345678', '23456789', '98765432', '87654321')
+     or v ~ '^(\d\d)\1{3}$' then
+    return public.err('invalid');
+  end if;
+  select regexp_replace(coalesce(phone, ''), '\D', '', 'g') into v_old from public.people where id = auth.uid();
+  if right(v_old, 8) = v then return public.err('same'); end if;
+  if not public.try_once('phone:' || auth.uid(), 5, 60) then return public.err('too_many'); end if;
+  update public.people set phone_given = v, phone_given_at = now() where id = auth.uid() and phone_ask_at is not null;
+  if not found then return public.err('not_asked'); end if;
+  return jsonb_build_object('ok', true);
+end $$;
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 -- ═══ once: the owners from before the notes were kept here ═════════════════
@@ -2924,7 +2978,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
   public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid),
-  public.admin_set_store(uuid, boolean), public.admin_trial(uuid, int, boolean), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
+  public.admin_set_store(uuid, boolean), public.admin_trial(uuid, int, boolean), public.admin_phone_ask(uuid, boolean), public.phone_give(text), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
   public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),
