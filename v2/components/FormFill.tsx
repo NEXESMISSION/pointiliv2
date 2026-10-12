@@ -94,44 +94,50 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
       }}
     >
       <div data-list className="-mx-1 min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-1 py-1">
-        {shown.map((f) => (
-          <label key={f.key} className="block">
-            <span className="mb-1.5 block px-1 text-[0.9062rem] font-semibold text-body">
-              {f.label}
-              {f.required && <span className="text-coral"> *</span>}
-            </span>
-            {f.kind === "choice" ? (
-              <span className="flex flex-wrap gap-1.5">
-                {(f.options ?? []).map((o) => (
-                  <button
-                    key={o}
-                    type="button"
-                    onClick={() => {
-                      setData((d) => ({ ...d, [f.key]: o }));
-                      setError(null);
-                    }}
-                    className={`press h-11 rounded-full px-4 text-[0.9375rem] font-bold ${data[f.key] === o ? "bg-brand text-white" : "bg-surface text-ink shadow-card"}`}
-                  >
-                    {o}
-                  </button>
-                ))}
+        {shown.map((f) => {
+          // a list to pick from is a group of buttons, not a label (a label would name every button with its own text)
+          const Wrap = f.kind === "choice" ? "div" : "label";
+          return (
+            <Wrap key={f.key} className="block" {...(f.kind === "choice" ? { role: "radiogroup", "aria-label": f.label } : {})}>
+              <span className="mb-1.5 block px-1 text-[0.9062rem] font-semibold text-body">
+                {f.label}
+                {f.required && <span className="text-coral"> *</span>}
               </span>
-            ) : (
-              <input
-                value={data[f.key] ?? ""}
-                onChange={(e) => {
-                  setData((d) => ({ ...d, [f.key]: e.target.value }));
-                  setError(null);
-                }}
-                type={f.kind === "date" ? "date" : "text"}
-                inputMode={f.kind === "number" ? "numeric" : f.kind === "phone" ? "tel" : undefined}
-                dir={f.kind === "text" ? "auto" : "ltr"}
-                placeholder={f.kind === "phone" ? "22 123 456" : undefined}
-                className={`${box} ${error?.field === f.key ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-coral)]" : ""}`}
-              />
-            )}
-          </label>
-        ))}
+              {f.kind === "choice" ? (
+                <span className="flex flex-wrap gap-1.5">
+                  {(f.options ?? []).map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      role="radio"
+                      aria-checked={data[f.key] === o}
+                      onClick={() => {
+                        setData((d) => ({ ...d, [f.key]: o }));
+                        setError(null);
+                      }}
+                      className={`press h-11 rounded-full px-4 text-[0.9375rem] font-bold ${data[f.key] === o ? "bg-brand text-white" : "bg-surface text-ink shadow-card"}`}
+                    >
+                      {o}
+                    </button>
+                  ))}
+                </span>
+              ) : (
+                <input
+                  value={data[f.key] ?? ""}
+                  onChange={(e) => {
+                    setData((d) => ({ ...d, [f.key]: e.target.value }));
+                    setError(null);
+                  }}
+                  type={f.kind === "date" ? "date" : "text"}
+                  inputMode={f.kind === "number" ? "numeric" : f.kind === "phone" ? "tel" : undefined}
+                  dir={f.kind === "text" ? "auto" : "ltr"}
+                  placeholder={f.kind === "phone" ? "22 123 456" : undefined}
+                  className={`${box} ${error?.field === f.key ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-coral)]" : ""}`}
+                />
+              )}
+            </Wrap>
+          );
+        })}
         {join && (
           <div className="space-y-3 border-t border-line pt-3">
             <p className="px-1 text-[0.9062rem] font-bold text-ink">الكونت متاعك</p>
