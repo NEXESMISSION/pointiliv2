@@ -2,7 +2,7 @@ import { Check, Gift, ShoppingBag } from "lucide-react";
 import { ShopMark } from "@/components/ShopMark";
 import { fill, t } from "@/lib/t";
 
-export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null; stamp_logo?: boolean; store?: boolean };
+export type PassShop = { name: string; kind: string; color: string; goal: number | null; gift: string | null; logo?: string | null; stamp_logo?: boolean; store?: boolean; wheel?: boolean };
 
 /**
  * The loyalty card, the same everywhere: the shop's colour, its name, a dot
@@ -106,7 +106,19 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
               <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/[0.16] px-3.5 py-2.5 text-[0.9062rem] font-semibold">
                 <Gift className="size-[1.125rem] shrink-0" />
                 <span className="min-w-0 flex-1 truncate">
-                  {ready ? fill(won > 1 ? t.wonMany : t.won, { gift: shop.gift, n: won }) : left === 1 ? fill(t.toGoOne, { gift: shop.gift }) : fill(t.toGo, { n: left, gift: shop.gift })}
+                  {shop.wheel
+                    ? ready
+                      ? shop.gift && shop.gift !== "الروليت"
+                        ? fill(t.won, { gift: shop.gift })
+                        : t.wheelReady
+                      : left === 1
+                        ? t.wheelToGoOne
+                        : fill(t.wheelToGo, { n: left })
+                    : ready
+                      ? fill(won > 1 ? t.wonMany : t.won, { gift: shop.gift, n: won })
+                      : left === 1
+                        ? fill(t.toGoOne, { gift: shop.gift })
+                        : fill(t.toGo, { n: left, gift: shop.gift })}
                 </span>
                 {rest > 0 && (
                   <span className="shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[0.8125rem] font-bold">

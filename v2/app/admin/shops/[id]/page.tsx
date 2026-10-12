@@ -7,6 +7,7 @@ import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminPhoneCheck } from "@/components/AdminPhoneCheck";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
 import { AdminStoreSwitch } from "@/components/AdminStoreSwitch";
+import { AdminWheelSwitch } from "@/components/AdminWheelSwitch";
 import { Ago } from "@/components/Ago";
 import { Presence } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
@@ -33,6 +34,9 @@ type Shop = {
   store_on: boolean;
   trial_until: string;
   trial_over: boolean;
+  wheel_on: boolean;
+  wheel: { id: number; name: string; chance: number }[];
+  wheel_fell: { name: string; n: number }[];
   store: { id: number; name: string; cost: number }[];
   orders: { at: string; name: string; qty: number; cost: number; status: "waiting" | "given" | "cancelled"; who: string | null }[];
   items: { id: number; name: string; gone: boolean; at: string; n: number; n30: number; last_at: string | null }[];
@@ -285,6 +289,49 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+          </Card>
+
+          {/* the wheel: the founder's switch for this shop, its prizes and chances, and what fell */}
+          <Card title="الروليت" actions={<Pill tone={s.wheel_on ? "brand" : "grey"}>{s.wheel_on ? "مخدومة" : "الكادو العادي"}</Pill>}>
+            <AdminWheelSwitch id={s.id} on={s.wheel_on} hasCard={!!s.goal} store={s.store_on} />
+            {s.wheel_on && (
+              <div className="mt-4 grid gap-4 border-t border-line pt-3 lg:grid-cols-2">
+                <div>
+                  <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">الكادوات والحظ</p>
+                  {s.wheel.length ? (
+                    <ul className="space-y-1 text-[0.875rem]">
+                      {s.wheel.map((x) => (
+                        <li key={x.id} className="flex justify-between gap-3">
+                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
+                          <span className="shrink-0 text-muted">
+                            <Num>{x.chance}%</Num>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[0.8125rem] text-faint">المولى مازال ما حطّ حتى كادو (الحريف ياخو الكادو متاع الكارط)</p>
+                  )}
+                </div>
+                <div>
+                  <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">شنوّة طاح</p>
+                  {s.wheel_fell.length ? (
+                    <ul className="space-y-1 text-[0.875rem]">
+                      {s.wheel_fell.map((x) => (
+                        <li key={x.name} className="flex justify-between gap-3">
+                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
+                          <span className="shrink-0 text-muted">
+                            ×<Num>{x.n}</Num>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[0.8125rem] text-faint">حتى روليت ما تدوّرت</p>
+                  )}
+                </div>
               </div>
             )}
           </Card>

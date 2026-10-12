@@ -3,6 +3,8 @@ import QRCode from "qrcode";
 import { Gift, QrCode } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
 import { CardTap } from "@/components/CardTap";
+import { CardWheel } from "@/components/CardWheel";
+import type { Prize } from "@/components/Wheel";
 import { MyCode } from "@/components/MyCode";
 import { PushAsk } from "@/components/PushAsk";
 import { Pass } from "@/components/Pass";
@@ -14,7 +16,7 @@ import { call } from "@/lib/supabase";
 import { fill, stampsN, t } from "@/lib/t";
 import type { CardStore as Store, CardView } from "@/lib/types";
 
-type Card = CardView & { history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
+type Card = CardView & { prizes?: Prize[] | null; history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -50,7 +52,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   // A gift waiting fills the screen most. On a short screen (800px and less), and on any screen when the
   // shop's next card is announced too, the gift's box tightens (its picture beside the title) and the
   // card's width follows the height: the story below keeps room for its first lines.
-  const ready = card.ready;
+  // a wheel shop, a full card not spun yet: the wheel takes the gift's place
+  const turn = card.spin && card.prizes?.length ? card.spin : null;
+  const ready = card.ready && !turn;
   const tight = ready && !!card.next;
   const look = tight
     ? {
@@ -89,17 +93,19 @@ export default async function CardPage({ params, searchParams }: { params: Promi
         </p>
       )}
 
+      {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} />}
+
       {ready && (
         <div className={`relative shrink-0 animate-pop overflow-hidden rounded-[1.75rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a_55%,#e0452a)] text-center text-white shadow-[0_20px_44px_-18px_rgb(255_107_74/0.85)] ${look.box}`}>
           <span className="pointer-events-none absolute -top-16 start-1/2 size-56 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" aria-hidden />
           <Icon3D name="gift" size={72} className={`relative animate-float ${look.pic}`} />
           <p className={`relative text-[1.375rem] font-bold ${look.title}`}>{(card.waiting_n ?? 1) > 1 ? fill(t.readyMany, { n: card.waiting_n ?? 2 }) : t.ready}</p>
-          <p className={`relative text-[1.625rem] font-bold ${look.gift}`}>{card.shop.gift}</p>
+          <p className={`relative text-[1.625rem] font-bold ${look.gift}`}>{card.won ?? card.shop.gift}</p>
           {me.code && svg ? (
             <MyCode
               code={me.code}
               svg={svg}
-              gift={card.shop.gift}
+              gift={card.won ?? card.shop.gift}
               startOpen={show === "1"}
               className={`press relative mx-auto mt-2 flex h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-[0.9688rem] font-bold text-coral ${look.hint}`}
             >

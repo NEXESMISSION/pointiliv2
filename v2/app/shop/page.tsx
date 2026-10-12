@@ -79,7 +79,10 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
     // a shop the founder switched to the store: its store in the card's place
     shop.store_on
       ? { href: "/shop/store", mark: <Icon3D name="cart" size={30} />, label: t.storeOwnerTitle }
-      : { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
+      : shop.wheel_on
+        ? // a shop switched to the wheel: its wheel in the card's place (the card's goal is one tap away from there)
+          { href: "/shop/wheel", mark: <Icon3D name="party" size={30} />, label: t.wheelOwnerTitle }
+        : { href: "/shop/card", mark: <Icon3D name="ticket" size={30} />, label: t.cardTitle },
     { href: "/shop/items", mark: <Icon3D name="basket" size={30} />, label: t.itemsTile },
     {
       // the shop's own tile shows its logo: the logo tip lights this one

@@ -88,7 +88,7 @@ function Checking() {
 
 function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   const { card, gift, item } = res;
-  const title = gift ? fill(t.won, { gift: card.shop.gift ?? "" }) : t.newStamp;
+  const title = gift ? (card.shop.wheel ? t.wheelTitle : fill(t.won, { gift: card.shop.gift ?? "" })) : t.newStamp;
   // a gift with a long name (up to 60 letters) takes two lines: smaller on a short screen, and the card gives way
   const long = title.length > 24;
   return (
@@ -118,11 +118,11 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
       {/* the gift: one line to show at the counter, not a second card */}
       {gift && (
         <a
-          href={`/c/${card.id}?show=1`}
+          href={card.shop.wheel ? `/c/${card.id}` : `/c/${card.id}?show=1`}
           className="press relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0312rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)] [@media(max-height:700px)]:mt-[1.4dvh] [@media(max-height:600px)]:py-2"
           style={after(420)}
         >
-          <Icon3D name="gift" size={30} className="animate-float" /> {t.wonBody}
+          <Icon3D name={card.shop.wheel ? "party" : "gift"} size={30} className="animate-float" /> {card.shop.wheel ? t.wheelGo : t.wonBody}
         </a>
       )}
 

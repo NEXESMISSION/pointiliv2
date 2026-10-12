@@ -259,7 +259,7 @@ export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offe
 }
 
 /** A gift the customer's card holds for the shop to hand over. */
-export type WaitingGift = { id: number; gift: string | null; n?: number };
+export type WaitingGift = { id: number; gift: string | null; n?: number; spin?: boolean };
 
 /** The customer behind a code or a number, for the shop about to give them a tampon (their first name, their card here, a gift waiting). */
 export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null; orders?: Order[] }> {

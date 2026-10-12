@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
 import { customerAt, give as handOver, giveAll, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
 import { storeGive } from "@/app/actions-store";
+import { spinAtCounter } from "@/app/actions-wheel";
+import { Wheel, type Prize } from "@/components/Wheel";
 import { Pass } from "@/components/Pass";
 import type { Item } from "@/components/PickItem";
 import { TryItButton, type DemoShop } from "@/components/TryIt";
@@ -58,7 +60,27 @@ function GiftRow({ w, onOpen }: { w: WaitingGift; onOpen: () => void }) {
  * question over the screen — give it now, or not now. `won`: the tampon just
  * given was the last one.
  */
-function GiftPop({ who, w, won, busy, onGive, onLater }: { who: string; w: WaitingGift; won: boolean; busy: boolean; onGive: (all: boolean) => void; onLater: () => void }) {
+function GiftPop({ who, w, won, busy, onGive, onLater, prizes = [], onSpun }: { who: string; w: WaitingGift; won: boolean; busy: boolean; onGive: (all: boolean) => void; onLater: () => void; prizes?: Prize[]; onSpun?: (prize: string) => void }) {
+  // a wheel shop, the turn not spun yet: the owner spins it here, in front of the customer — then it is the prize
+  if (w.spin && prizes.length > 0 && onSpun) {
+    return (
+      <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={t.wheelAtCounter} onClick={onLater}>
+        <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-5 pt-[clamp(1rem,3dvh,1.75rem)] text-center" style={{ animation: "pop-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+          <style>{`@keyframes pop-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
+          <h2 className="text-balance text-[1.375rem] font-bold leading-tight">
+            {who} · {t.wheelAtCounter}
+          </h2>
+          <p className="mb-3 mt-0.5 text-[0.9375rem] text-muted">{t.wheelAtCounterHint}</p>
+          <div className="flex justify-center">
+            <Wheel prizes={prizes} size="min(72vw, 34dvh, 19rem)" spin={() => spinAtCounter(w.id)} onDone={onSpun} />
+          </div>
+          <Btn type="button" kind="ghost" className="mt-2" onClick={onLater}>
+            {t.popGiftLater}
+          </Btn>
+        </div>
+      </div>
+    );
+  }
   // several saved: give them all at once, or one now and the rest another day
   const n = w.n ?? 1;
   const title = won && n === 1 ? fill(t.collectGift, { name: who, gift: w.gift ?? "" }) : n > 1 ? fill(t.popGiftHasMany, { name: who, n }) : fill(t.popGiftHas, { name: who });
@@ -140,7 +162,7 @@ function errorText(code?: string): string {
  * code in their wallet is the same one), and a question comes up — give it
  * now, or not now.
  */
-export function Collect({ by, preset = "", shop, items = [], back }: { by: "scan" | "code"; preset?: string; shop?: DemoShop; items?: Item[]; back?: string }) {
+export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }: { by: "scan" | "code"; preset?: string; shop?: DemoShop; items?: Item[]; back?: string; prizes?: Prize[] }) {
   const [mode, setMode] = useState(by);
   const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
   const [step, setStep] = useState<Step>({ kind: "idle" });
@@ -556,6 +578,13 @@ export function Collect({ by, preset = "", shop, items = [], back }: { by: "scan
           onLater={() => {
             later.current = pop.w.id;
             setPop(null);
+          }}
+          prizes={prizes}
+          onSpun={(prize) => {
+            navigator.vibrate?.([60, 40, 60]);
+            signal("wheel_counter", prize);
+            // the prize, now an ordinary gift waiting: the usual question, a moment later
+            setTimeout(() => setPop((p) => (p ? { ...p, w: { ...p.w, gift: prize, spin: false } } : p)), 1400);
           }}
         />
       )}

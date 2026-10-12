@@ -11,7 +11,11 @@ export type CardView = {
   /** a gift waits for the shop to hand it over */
   waiting: boolean;
   /** the shop, with this card's own goal and gift (the promise it started with) */
-  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; store?: boolean };
+  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; store?: boolean; wheel?: boolean };
+  /** a wheel shop: the turn waiting to be spun (a gift moment's id) */
+  spin?: number | null;
+  /** the gift waiting, by its own name (a wheel's prize once spun) */
+  won?: string | null;
   /** a shop with a store: the orders this customer made and has not taken yet */
   orders_n?: number;
   /** the shop's card of today when it differs: this customer's next card, after this gift */

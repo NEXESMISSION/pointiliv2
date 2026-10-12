@@ -51,13 +51,22 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
 
       {/* a gift waiting: its code, to show at the counter (the shop scans it and hands the gift over) */}
       {waiting.length > 0 &&
-        (me.code && svg ? (
-          <MyCode code={me.code} svg={svg} gift={waiting[0]!.shop.gift} className="press relative mt-[2dvh] block w-full shrink-0 animate-rise overflow-hidden rounded-[1.5rem] bg-surface p-4 pe-24 text-start shadow-card">
+        (waiting[0]!.spin ? (
+          <Link href={`/c/${waiting[0]!.id}`} className="press relative mt-[2dvh] block shrink-0 animate-rise overflow-hidden rounded-[1.5rem] bg-surface p-4 pe-24 shadow-card">
+            <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
+              <Icon3D name="party" size={60} className="animate-float" />
+            </span>
+            <b className="block text-[1.0625rem] font-bold">{t.wheelWaits}</b>
+            <span className="block truncate text-[0.875rem] text-muted">{waiting[0]!.shop.name}</span>
+            <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">{t.wheelGo}</span>
+          </Link>
+        ) : me.code && svg ? (
+          <MyCode code={me.code} svg={svg} gift={waiting[0]!.won ?? waiting[0]!.shop.gift} className="press relative mt-[2dvh] block w-full shrink-0 animate-rise overflow-hidden rounded-[1.5rem] bg-surface p-4 pe-24 text-start shadow-card">
             <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
               <Icon3D name="gift" size={64} className="animate-float" />
             </span>
             <b className="block text-[1.0625rem] font-bold">{t.giftWaiting}</b>
-            <span className="block truncate text-[0.875rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
+            <span className="block truncate text-[0.875rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.won ?? waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
             <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">
               <QrCode className="size-4" /> {t.giftShow}
             </span>
@@ -68,7 +77,7 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
               <Icon3D name="gift" size={64} className="animate-float" />
             </span>
             <b className="block text-[1.0625rem] font-bold">{t.giftWaiting}</b>
-            <span className="block truncate text-[0.875rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
+            <span className="block truncate text-[0.875rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.won ?? waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
           </Link>
         ))}
 

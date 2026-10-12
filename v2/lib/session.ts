@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { call } from "@/lib/supabase";
 
-export type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; stamp_gap?: number; items_on?: boolean; store_on?: boolean };
+export type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; stamp_gap?: number; items_on?: boolean; store_on?: boolean; wheel_on?: boolean };
 export type Me = { id: string; name: string; phone: string | null; admin?: boolean; shop: Shop | null; seen?: string[]; code?: string | null; tester?: boolean; phone_check?: "ask" | "sent" | null };
 
 /** Who is here: null when nobody is signed in (no network call without a session cookie). */

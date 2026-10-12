@@ -17,7 +17,8 @@ export default async function CustomerCode({ params }: { params: Promise<{ code:
   const valid = /^\d{6}$/.test(code);
   if (valid && me?.shop?.goal && me.code !== code) {
     const items = me.shop.items_on ? ((await call<{ id: number; name: string }[]>("my_items")) ?? []) : [];
-    return <Collect by="code" preset={code} items={items} />;
+    const wheel = me.shop.wheel_on ? await call<{ prizes: { id: number; name: string; chance: number }[] }>("my_wheel") : null;
+    return <Collect by="code" preset={code} items={items} prizes={wheel?.prizes ?? []} />;
   }
   return (
     <Screen>
