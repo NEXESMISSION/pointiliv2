@@ -1072,6 +1072,16 @@ begin
     'held', coalesce((select jsonb_agg(x.id) from public.codes x where x.shop_id = s.id and x.held_hash is not null and x.used_at is null
                         and x.held_until > coalesce(p_since, now()) + interval '20 minutes'), '[]'::jsonb),
     'expired', k.id is null or k.expires_at <= now(),
+    -- a customer who filled one of the shop's forms: who they are, for the owner to check (kept on screen until «next»)
+    'ids', coalesce((
+      select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(p.name, ''), 'phone', p.phone,
+                                          'said', public.id_said(s.id, c.user_id)) order by m.created_at)
+      from (select * from public.moments where shop_id = s.id and kind = 'stamp' and created_at > coalesce(p_since, now())
+            order by created_at desc limit 20) m
+      join public.cards c on c.id = m.card_id
+      left join public.people p on p.id = c.user_id
+      where exists (select 1 from public.id_entries e where e.shop_id = s.id and e.user_id = c.user_id)
+    ), '[]'::jsonb),
     'stamps', coalesce((
       select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(split_part(p.name, ' ', 1), ''),
                                           'stamps', c.stamps, 'goal', coalesce(c.goal, s.goal)) order by m.created_at)
@@ -1586,7 +1596,8 @@ begin
   return jsonb_build_object('ok', true, 'name', nullif(v_name, ''),
     'card', case when c.id is null then null else public.card_view(c.id) end,
     'waiting', case when c.id is null then null else public.waiting_gift(c.id) end,
-    'orders', case when c.id is null then '[]'::jsonb else public.orders_waiting(c.id) end);
+    'orders', case when c.id is null then '[]'::jsonb else public.orders_waiting(c.id) end,
+    'said', public.id_said(s.id, v_person));
 end $$;
 
 -- the tampon, given by the shop: the same rules as a scan (one an hour, the
@@ -2808,6 +2819,21 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
+-- the founder's switch for «شنوّة يبيع»: the counter asks which thing each tampon is for. Only with things
+-- written down (none: refused, the counter would ask about nothing); off keeps what was written and recorded
+create or replace function public.admin_set_items(p_id uuid, p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_n int;
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_id;
+  if s.id is null then return public.err('not_found'); end if;
+  select count(*) into v_n from public.items where shop_id = s.id and rank < 999;
+  if coalesce(p_on, false) and v_n = 0 then return public.err('no_items'); end if;
+  update public.shops set items_on = coalesce(p_on, false) where id = p_id;
+  return jsonb_build_object('ok', true, 'on', coalesce(p_on, false));
+end $$;
+
 -- the owner's store: what is on sale, the orders waiting, and what went these 30 days
 create or replace function public.my_store() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
@@ -3125,6 +3151,154 @@ begin
   return public.wheel_pick(p_moment);
 end $$;
 
+
+-- ═══ forms of identification: who a customer is, for a shop ═══════════════
+-- The founder makes forms for a shop — «طلبة جامعة …», a partner's staff —
+-- each with the fields he chooses and a QR of its own, to hand out where those
+-- customers are. A customer scans it, signs in, fills it once (and can change
+-- it). From then on, every tampon they take at that shop brings their answers
+-- up on the owner's counter, to check them — until the owner says next.
+create table if not exists public.id_forms (
+  id          uuid primary key default gen_random_uuid(),
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  name        text not null check (char_length(btrim(name)) between 2 and 60),
+  -- [{key, label, kind: text|number|phone|date|choice, required, options?}]
+  fields      jsonb not null default '[]'::jsonb,
+  token       text not null unique default translate(encode(extensions.gen_random_bytes(12), 'base64'), '+/=', '-_'),
+  active      boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+create index if not exists id_forms_shop_idx on public.id_forms (shop_id, created_at);
+
+create table if not exists public.id_entries (
+  id          bigint generated always as identity primary key,
+  form_id     uuid not null references public.id_forms (id) on delete cascade,
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  user_id     uuid not null references auth.users (id) on delete cascade,
+  data        jsonb not null default '{}'::jsonb,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  unique (form_id, user_id)
+);
+create index if not exists id_entries_shop_user_idx on public.id_entries (shop_id, user_id);
+alter table public.id_forms enable row level security;
+alter table public.id_forms force row level security;
+revoke all on public.id_forms from anon, authenticated, public;
+alter table public.id_entries enable row level security;
+alter table public.id_entries force row level security;
+revoke all on public.id_entries from anon, authenticated, public;
+
+-- one customer's answers at a shop, as the owner reads them: each form, its fields in order, label and value
+create or replace function public.id_said(p_shop uuid, p_user uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object('form', f.name,
+           'fields', (select coalesce(jsonb_agg(jsonb_build_object('label', x ->> 'label', 'value', e.data ->> (x ->> 'key')) order by o), '[]'::jsonb)
+                      from jsonb_array_elements(f.fields) with ordinality q(x, o) where coalesce(e.data ->> (x ->> 'key'), '') <> ''))
+           order by e.created_at), '[]'::jsonb)
+  from public.id_entries e join public.id_forms f on f.id = e.form_id
+  where e.shop_id = p_shop and e.user_id = p_user
+$$;
+
+-- the founder's forms for a shop, with how many filled each
+create or replace function public.admin_forms(p_shop uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return coalesce((select jsonb_agg(jsonb_build_object('id', f.id, 'name', f.name, 'fields', f.fields, 'token', f.token, 'active', f.active, 'at', f.created_at,
+                                                       'n', (select count(*) from public.id_entries e where e.form_id = f.id)) order by f.created_at)
+                   from public.id_forms f where f.shop_id = p_shop), '[]'::jsonb);
+end $$;
+
+-- the founder writes a form (new when p_id is null): its name and its fields, checked
+create or replace function public.admin_form_save(p_shop uuid, p_id uuid, p_name text, p_fields jsonb, p_active boolean default true) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare x jsonb; v_keys text[] := '{}'; v_id uuid;
+begin
+  perform public.require_admin();
+  if not exists (select 1 from public.shops where id = p_shop) then return public.err('not_found'); end if;
+  if char_length(btrim(coalesce(p_name, ''))) not between 2 and 60 then return public.err('name'); end if;
+  if jsonb_typeof(p_fields) <> 'array' or jsonb_array_length(p_fields) not between 1 and 15 then return public.err('fields'); end if;
+  for x in select * from jsonb_array_elements(p_fields) loop
+    if coalesce(x ->> 'key', '') !~ '^[a-z0-9_]{1,24}$' or (x ->> 'key') = any (v_keys)
+       or char_length(btrim(coalesce(x ->> 'label', ''))) not between 1 and 60
+       or coalesce(x ->> 'kind', '') not in ('text', 'number', 'phone', 'date', 'choice')
+       or ((x ->> 'kind') = 'choice' and (jsonb_typeof(x -> 'options') <> 'array' or jsonb_array_length(x -> 'options') not between 2 and 20)) then
+      return public.err('fields');
+    end if;
+    v_keys := v_keys || (x ->> 'key');
+  end loop;
+  if p_id is null then
+    insert into public.id_forms (shop_id, name, fields, active) values (p_shop, btrim(p_name), p_fields, coalesce(p_active, true)) returning id into v_id;
+  else
+    update public.id_forms set name = btrim(p_name), fields = p_fields, active = coalesce(p_active, true) where id = p_id and shop_id = p_shop returning id into v_id;
+    if v_id is null then return public.err('not_found'); end if;
+  end if;
+  return jsonb_build_object('ok', true, 'id', v_id);
+end $$;
+
+-- the founder takes a form away, with what was filled in it
+create or replace function public.admin_form_delete(p_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  delete from public.id_forms where id = p_id;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- what was filled in a form, the latest first (for the founder)
+create or replace function public.admin_form_entries(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return coalesce((select jsonb_agg(jsonb_build_object('name', nullif(p.name, ''), 'phone', p.phone, 'data', e.data, 'at', e.updated_at) order by e.updated_at desc)
+                   from public.id_entries e left join public.people p on p.id = e.user_id where e.form_id = p_id), '[]'::jsonb);
+end $$;
+
+-- a form opened by its QR: the shop, the form, its fields — and what this person already filled
+create or replace function public.form_open(p_token text) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('ok', true, 'name', f.name, 'fields', f.fields,
+           'shop', jsonb_build_object('name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo),
+           'mine', (select e.data from public.id_entries e where e.form_id = f.id and e.user_id = auth.uid()))
+  from public.id_forms f join public.shops s on s.id = f.shop_id
+  where f.token = p_token and f.active
+$$;
+
+-- the customer fills the form: every field checked against its kind; kept, and changed when filled again.
+-- The shop's card is made at the same time, so they are its customer from now on.
+create or replace function public.form_fill(p_token text, p_data jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare f public.id_forms%rowtype; s public.shops%rowtype; x jsonb; v text; v_clean jsonb := '{}'::jsonb;
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  select * into f from public.id_forms where token = p_token and active;
+  if f.id is null then return public.err('not_found'); end if;
+  select * into s from public.shops where id = f.shop_id;
+  if s.owner_id = auth.uid() then return public.err('own_shop'); end if;
+  if jsonb_typeof(p_data) <> 'object' then return public.err('invalid'); end if;
+  if not public.try_once('form:' || auth.uid(), 20, 10) then return public.err('too_many'); end if;
+  for x in select * from jsonb_array_elements(f.fields) loop
+    v := btrim(coalesce(p_data ->> (x ->> 'key'), ''));
+    if v = '' then
+      if coalesce((x ->> 'required')::boolean, false) then return public.err('required', jsonb_build_object('field', x ->> 'key')); end if;
+      continue;
+    end if;
+    if char_length(v) > 120
+       or ((x ->> 'kind') = 'number' and v !~ '^\d{1,20}$')
+       or ((x ->> 'kind') = 'phone' and regexp_replace(v, '\D', '', 'g') !~ '^(216)?[2-9]\d{7}$')
+       or ((x ->> 'kind') = 'date' and v !~ '^\d{4}-\d{2}-\d{2}$')
+       or ((x ->> 'kind') = 'choice' and not (x -> 'options') ? v) then
+      return public.err('invalid', jsonb_build_object('field', x ->> 'key'));
+    end if;
+    v_clean := v_clean || jsonb_build_object(x ->> 'key', v);
+  end loop;
+  insert into public.people (id) values (auth.uid()) on conflict (id) do nothing;
+  insert into public.id_entries (form_id, shop_id, user_id, data) values (f.id, f.shop_id, auth.uid(), v_clean)
+  on conflict (form_id, user_id) do update set data = excluded.data, updated_at = now();
+  insert into public.cards (shop_id, user_id, goal, gift) values (s.id, auth.uid(), s.goal, s.gift) on conflict (shop_id, user_id) do nothing;
+  return jsonb_build_object('ok', true, 'shop', s.name);
+end $$;
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 -- ═══ once: the owners from before the notes were kept here ═════════════════
@@ -3143,8 +3317,10 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
   public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid),
-  public.admin_set_store(uuid, boolean), public.admin_trial(uuid, int, boolean), public.admin_phone_ask(uuid, boolean), public.phone_give(text),
-  public.admin_set_wheel(uuid, boolean), public.my_wheel(), public.wheel_save(jsonb), public.spin(bigint), public.spin_at_counter(bigint), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
+  public.admin_set_store(uuid, boolean), public.admin_set_items(uuid, boolean), public.admin_trial(uuid, int, boolean), public.admin_phone_ask(uuid, boolean), public.phone_give(text),
+  public.admin_set_wheel(uuid, boolean),
+  public.admin_forms(uuid), public.admin_form_save(uuid, uuid, text, jsonb, boolean), public.admin_form_delete(uuid), public.admin_form_entries(uuid),
+  public.form_open(text), public.form_fill(text, jsonb), public.my_wheel(), public.wheel_save(jsonb), public.spin(bigint), public.spin_at_counter(bigint), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
   public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),

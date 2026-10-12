@@ -271,6 +271,13 @@ try {
   check("the founder finds a shop by its name", found.length === 1 && found[0].customers === 2, found);
   const page = await rpc(boss, "admin_shop", { p_id: found[0]?.id });
   check("a shop's page: the owner, the numbers, the best customers", page.owner?.name === "Yasmine" && page.top.length === 2 && page.stamps >= 7, page);
+  // «شنوّة يبيع» turned on by the founder: only with things written, and never by the owner through this door
+  const itemsBefore = (await admin.from("items").select("id").eq("shop_id", found[0].id)).data ?? [];
+  if (!itemsBefore.length) check("the founder cannot turn «شنوّة يبيع» on with nothing written", (await rpc(boss, "admin_set_items", { p_id: found[0].id, p_on: true })).error === "no_items");
+  await rpc(owner, "set_items", { p_names: ["كابوسة", "كرواسون"] });
+  check("the founder turns «شنوّة يبيع» on", (await rpc(boss, "admin_set_items", { p_id: found[0].id, p_on: true })).ok && (await rpc(owner, "me")).shop.items_on === true);
+  check("an owner cannot use the founder's switch", !!(await rpc(owner, "admin_set_items", { p_id: found[0].id, p_on: false })).error);
+  check("the founder turns it off again, the things kept", (await rpc(boss, "admin_set_items", { p_id: found[0].id, p_on: false })).ok && (await rpc(owner, "me")).shop.items_on === false && ((await admin.from("items").select("id").eq("shop_id", found[0].id)).data ?? []).length >= 2);
   check("pausing a shop", (await rpc(boss, "admin_set_paused", { p_id: found[0].id, p_paused: true })).ok);
   check("a paused shop makes no code", (await rpc(owner, "new_code")).error === "paused");
   check("the owner sees it paused", (await rpc(owner, "me")).shop.paused === true);

@@ -55,3 +55,12 @@ export async function adminSetStore(id: string, on: boolean): Promise<{ ok: bool
   revalidatePath("/admin", "layout");
   return res ?? { ok: false, error: "network" };
 }
+
+/** The founder turns «شنوّة يبيع» on or off for one shop: the counter asks which thing each tampon is for. */
+export async function adminSetItems(id: string, on: boolean): Promise<{ ok: boolean; error?: string }> {
+  if (!UUID.test(id)) return { ok: false };
+  const res = await call<{ ok: boolean; error?: string }>("admin_set_items", { p_id: id, p_on: on });
+  revalidatePath("/admin", "layout");
+  revalidatePath("/shop", "layout");
+  return res ?? { ok: false, error: "network" };
+}

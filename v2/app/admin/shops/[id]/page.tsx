@@ -6,6 +6,7 @@ import { AdminTrial } from "@/components/AdminTrial";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminPhoneCheck } from "@/components/AdminPhoneCheck";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
+import { AdminItemsSwitch } from "@/components/AdminItemsSwitch";
 import { AdminStoreSwitch } from "@/components/AdminStoreSwitch";
 import { AdminWheelSwitch } from "@/components/AdminWheelSwitch";
 import { Ago } from "@/components/Ago";
@@ -387,6 +388,8 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
             actions={s.items.length > 0 && <Pill tone={s.items_on ? "mint" : "grey"}>{s.items_on ? "يسأل على شنوّة التامبون" : "مطفي"}</Pill>}
             pad={false}
           >
+            {/* the founder's switch: the counter asks which thing each tampon is for */}
+            <AdminItemsSwitch id={s.id} on={s.items_on} count={s.items.filter((x) => !x.gone).length} />
             {s.items.length > 0 && (
               <Table head={["الحاجة", "تامبونات", "30 يوم", "آخر مرّة", "تزادت"]} words={[0]}>
                 {s.items.map((x) => (
