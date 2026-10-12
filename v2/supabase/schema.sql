@@ -796,7 +796,7 @@ begin
       from public.moments m join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id
       where m.shop_id = s.id and m.kind = 'gift' and m.given_at is null), '[]'::jsonb),
     'recent', coalesce((
-      select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'kind', m.kind, 'given', m.given_at is not null,
+      select jsonb_agg(jsonb_build_object('id', m.id, 'card', m.card_id, 'at', m.created_at, 'kind', m.kind, 'given', m.given_at is not null,
                                           'name', nullif(split_part(p.name, ' ', 1), ''), 'stamps', c.stamps, 'goal', coalesce(c.goal, s.goal),
                                           'gift', coalesce(m.gift, c.gift, s.gift),
                                           -- what the tampon was for (a shop that says what it sells)
@@ -844,6 +844,17 @@ begin
 end $$;
 
 -- the owner's customers, the latest visit first
+-- (the owner) one customer's card, every tampon and gift on it, newest first, with what each tampon was for
+create or replace function public.shop_card_moments(p_card uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', m.id, 'kind', m.kind, 'at', m.created_at, 'given', m.given_at is not null,
+                                               'gift', coalesce(m.gift, c.gift, s.gift),
+                                               'item', (select i.name from public.items i where i.id = m.item_id))
+                            order by m.created_at desc), '[]'::jsonb)
+  from public.moments m join public.cards c on c.id = m.card_id join public.shops s on s.id = c.shop_id
+  where m.card_id = p_card and s.owner_id = auth.uid()
+$$;
+
 create or replace function public.shop_customers() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare s public.shops%rowtype;
@@ -3314,7 +3325,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_save_card(uuid, int, text, text, int, boolean), public.admin_shop_edit(uuid, text, text),
   public.admin_plan(uuid, text, int, timestamptz, text, boolean, text, int), public.plan_seen(bigint), public.admin_ledger(),
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
-  public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
+  public.in_progress(), public.shop_home(), public.shop_card_moments(uuid), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
   public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid),
   public.admin_set_store(uuid, boolean), public.admin_set_items(uuid, boolean), public.admin_trial(uuid, int, boolean), public.admin_phone_ask(uuid, boolean), public.phone_give(text),

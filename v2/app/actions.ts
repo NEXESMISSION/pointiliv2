@@ -649,3 +649,10 @@ export async function adminDeletePerson(id: string) {
   revalidatePath("/admin", "layout");
   redirect("/admin?tab=people");
 }
+
+/** (the owner) one customer's card: every tampon and gift on it, newest first, with what each tampon was for. */
+export type CardMoment = { id: number; kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item: string | null };
+export async function cardMoments(card: string): Promise<CardMoment[]> {
+  if (!UUID.test(card)) return [];
+  return (await call<CardMoment[]>("shop_card_moments", { p_card: card })) ?? [];
+}

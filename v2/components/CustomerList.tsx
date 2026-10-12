@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Gift, ScanLine, X } from "lucide-react";
+import { CardMoments } from "@/components/CardMoments";
 import { Pass, type PassShop } from "@/components/Pass";
 import { fill, giftsN, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
@@ -84,7 +85,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
 
       {open && (
         <div data-clarity-mask="true" className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={open.name ?? t.someone} onClick={() => setOpen(null)}>
-          <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink" style={{ animation: "cust-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+          <div className="safe-b max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink" style={{ animation: "cust-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
             <style>{`@keyframes cust-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
             <div className="flex items-center justify-between">
               <span className="size-10" />
@@ -130,6 +131,8 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
             ) : (
               <p className="mt-3 text-center text-[0.9062rem] text-muted">{fill(t.customerLeft, { n: stampsN(Math.max((open.goal ?? goal) - open.stamps, 0)), gift: open.gift ?? shop.gift ?? "" })}</p>
             )}
+            {/* every tampon on the card, and what each one was for (the things' totals are above) */}
+            <CardMoments card={open.id} color={shop.color} tally={!(open.items && open.items.length)} />
           </div>
         </div>
       )}

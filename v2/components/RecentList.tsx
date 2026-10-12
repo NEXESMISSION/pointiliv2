@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft, Hourglass, QrCode, TriangleAlert, Undo2, X } from "lucide-react";
 import { Pass, type PassShop } from "@/components/Pass";
+import { CardMoments } from "@/components/CardMoments";
 import { Icon3D } from "@/components/ui";
 import { fill, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
@@ -11,6 +12,8 @@ import { signal } from "@/lib/track";
 /** one line of «آخر حركة», its words and time already said by the page */
 export type RecentRow = {
   id: number | string; kind: "stamp" | "gift" | "held"; name: string; line: string; time: string; stamps: number; goal: number; gift: string | null; item?: string | null;
+  /** the customer's card (not on a scan without an account) */
+  card?: string;
   /** a scan without an account: how it ended, and until when it waits */
   state?: "waiting" | "lost" | "done" | "back"; until?: string;
 };
@@ -77,7 +80,7 @@ export function RecentList({ rows, shop }: { rows: RecentRow[]; shop: PassShop }
 
       {open && (
         <div data-clarity-mask="true" className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={open.name} onClick={() => setOpen(null)}>
-          <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink" style={{ animation: "recent-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+          <div className="safe-b max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink" style={{ animation: "recent-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
             <style>{`@keyframes recent-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
             <div className="flex items-center justify-between">
               <span className="size-10" />
@@ -92,14 +95,7 @@ export function RecentList({ rows, shop }: { rows: RecentRow[]; shop: PassShop }
               <>
             <p className="mt-1 text-[1.25rem] font-bold">{open.name}</p>
             <p className="text-[0.9062rem] text-muted">
-              {open.line}
-              {open.item && (
-                <>
-                  {" · "}
-                  <bdi className="font-bold text-brand">{open.item}</bdi>
-                </>
-              )}{" "}
-              · <span className="num">{open.time}</span>
+              {open.line} · <span className="num">{open.time}</span>
             </p>
             <div className="mt-4">
               <Pass shop={{ ...shop, goal: open.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
@@ -107,6 +103,8 @@ export function RecentList({ rows, shop }: { rows: RecentRow[]; shop: PassShop }
             <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">
               {shop.store ? fill(t.storeHolds, { n: open.stamps }) : open.stamps >= open.goal ? fill(say.ready, { gift: open.gift ?? shop.gift ?? "" }) : fill(say.left, { n: stampsN(open.goal - open.stamps), gift: open.gift ?? shop.gift ?? "" })}
             </p>
+            {/* every tampon on the card, and what each one was for */}
+            {open.card && <CardMoments card={open.card} color={shop.color} />}
             <Link href="/shop/customers" className="press mt-4 flex h-12 items-center justify-center gap-1 rounded-[1rem] bg-surface text-[0.9375rem] font-bold text-brand shadow-card">
               {say.all} <ChevronLeft className="size-4" />
             </Link>
