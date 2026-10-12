@@ -10,6 +10,9 @@
         "run",
         "dev"
       ],
+      "env": {
+        "NODE_OPTIONS": "--network-family-autoselection-attempt-timeout=1000"
+      },
       "port": 3200
     },
     {
