@@ -233,6 +233,9 @@ create table if not exists public.codes (
   created_at  timestamptz not null default now()
 );
 create index if not exists codes_shop_idx on public.codes (shop_id, created_at desc);
+-- a code scanned by a phone without an account is held 20 minutes for it: the
+-- owner gave that tampon back by hand (the customer never finished) — when
+alter table public.codes add column if not exists back_at timestamptz;
 -- the counter's private radio: Realtime topic "pointili:<signal>", told of every scan
 alter table public.shops add column if not exists signal text not null default encode(extensions.gen_random_bytes(16), 'hex');
 -- Products were asked for and then withdrawn (2026-10-09). What was recorded
@@ -728,6 +731,33 @@ begin
   return jsonb_build_object('ok', true, 'n', (select count(*) from public.cards c where c.shop_id = s.id and c.stamps > 0 and not public.waits(c.id)));
 end $$;
 
+-- the scans by phones without an account, lately: the customer had to make an
+-- account to keep the tampon. waiting: still inside its 20 minutes; done: they
+-- did, and took it; lost: they never did; back: the owner gave it by hand since.
+-- So a scan never vanishes without the owner knowing.
+create or replace function public.held_list(p_shop uuid, p_days int) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'id', k.id, 'at', k.held_until - interval '20 minutes', 'until', k.held_until,
+           'state', case when k.used_at is not null then 'done' when k.back_at is not null then 'back' when k.held_until > now() then 'waiting' else 'lost' end,
+           'name', (select nullif(split_part(p.name, ' ', 1), '') from public.people p where p.id = k.used_by),
+           'item', (select i.name from public.items i where i.id = k.item_id)) order by k.held_until desc), '[]'::jsonb)
+  from (select * from public.codes where shop_id = p_shop and held_hash is not null
+          and held_until > now() - make_interval(days => greatest(p_days, 1))
+        order by held_until desc limit 12) k
+$$;
+
+-- the owner gave by hand the tampon of a scan that never finished
+create or replace function public.held_back(p_code uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  update public.codes set back_at = now() where id = p_code and shop_id = s.id and held_hash is not null and used_at is null and back_at is null;
+  return jsonb_build_object('ok', true);
+end $$;
+
 -- the owner's home: today, the gifts waiting, who came lately
 create or replace function public.shop_home() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
@@ -753,7 +783,9 @@ begin
                                           'item', (select i.name from public.items i where i.id = m.item_id))
                        order by m.created_at desc)
       from (select * from public.moments where shop_id = s.id order by created_at desc limit 8) m
-      join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb));
+      join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb),
+    -- scans without an account these three days, and how each ended
+    'held', public.held_list(s.id, 3));
 end $$;
 
 -- the owner's numbers: today, this week, all of it, the last seven days one
@@ -1016,6 +1048,9 @@ begin
     'ok', true,
     'paused', s.paused,
     'taken', k.id is not null and (k.used_at is not null or k.held_hash is not null),
+    -- scanned by a phone without an account (held, not yet a tampon): the counter says so
+    'held', coalesce((select jsonb_agg(x.id) from public.codes x where x.shop_id = s.id and x.held_hash is not null and x.used_at is null
+                        and x.held_until > coalesce(p_since, now()) + interval '20 minutes'), '[]'::jsonb),
     'expired', k.id is null or k.expires_at <= now(),
     'stamps', coalesce((
       select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(split_part(p.name, ' ', 1), ''),
@@ -1372,7 +1407,9 @@ begin
       select jsonb_agg(jsonb_build_object('name', nullif(p.name, ''), 'phone', public.masked(p.phone), 'stamps', c.stamps, 'gifts', c.gifts,
                                           'goal', coalesce(c.goal, s.goal)) order by c.gifts desc, c.stamps desc)
       from (select * from public.cards where shop_id = s.id order by gifts desc, stamps desc limit 5) c
-      left join public.people p on p.id = c.user_id), '[]'::jsonb));
+      left join public.people p on p.id = c.user_id), '[]'::jsonb))
+    -- (a second object: one jsonb_build_object takes 100 arguments at most)
+    || jsonb_build_object('held', public.held_list(s.id, 14));
 end $$;
 
 create or replace function public.admin_set_paused(p_id uuid, p_paused boolean) returns jsonb
@@ -2651,7 +2688,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_book_add(text, text, numeric, date, text), public.admin_book_delete(bigint),
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
-  public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.unstamp(bigint),
+  public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),
   public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),

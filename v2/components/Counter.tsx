@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ArrowDown, Check, ChevronRight, Eye, Phone, ScanLine, WifiOff } from "lucide-react";
+import { ArrowDown, Check, ChevronRight, Eye, Hourglass, Phone, ScanLine, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { TryItButton } from "@/components/TryIt";
@@ -16,7 +16,8 @@ import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 
 type Code = { id: string; svg: string; expiresLocal: number };
-type Flash = { id: number; name: string | null };
+/** who just took a tampon — or, `held`, a phone without an account that scanned: not a tampon until they make one */
+type Flash = { id: number | string; name: string | null; held?: boolean };
 type Gift = { id: number; name: string | null; gift: string };
 
 /** a code is replaced this long before it dies, so a phone never scans a dead one */
@@ -91,6 +92,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   const spareRef = useRef<Code | null>(null);
   const sparing = useRef(false);
   const seen = useRef(new Set<number>());
+  const seenHeld = useRef(new Set<string>());
   const openedAt = useRef(new Date().toISOString());
   const busy = useRef(false);
   const again = useRef(false);
@@ -178,7 +180,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       } else {
         const res = await fetch(`/api/counter?code=${c.id}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" });
         if (!res.ok) throw new Error("state");
-        const s = (await res.json()) as { taken: boolean; expired: boolean; stamps: { id: number; name: string | null }[]; gifts: Gift[] };
+        const s = (await res.json()) as { taken: boolean; expired: boolean; stamps: { id: number; name: string | null }[]; gifts: Gift[]; held?: string[] };
         // the code on screen changed while asking (the radio swapped it): its answer is about the old one
         const same = codeRef.current?.id === c.id;
         const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
@@ -188,6 +190,14 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           setFlashes((f) => [...f, ...shown]);
           navigator.vibrate?.(60);
           setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 2600);
+        }
+        // scanned by a phone without an account: the owner must know it is not a tampon yet (it shows longer)
+        const heldNew = (s.held ?? []).filter((id) => !seenHeld.current.has(id));
+        if (heldNew.length) {
+          heldNew.forEach((id) => seenHeld.current.add(id));
+          const shown = heldNew.slice(-1).map((id) => ({ id: `h-${id}`, name: null, held: true }));
+          setFlashes((f) => [...f, ...shown]);
+          setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 6000);
         }
         setGifts((g) => {
           if (s.gifts.length > g.length) setParty((p) => p + 1);
@@ -375,7 +385,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         ) : (
         <div className="flex min-h-0 shrink items-center justify-center transition-[width,height] duration-500 [container-type:size]" style={{ width: qr, height: qr }}>
           <div className="relative aspect-square" style={{ width: "min(100cqw, 100cqh)" }}>
-            {flashes.map((f) => (
+            {flashes.filter((f) => !f.held).map((f) => (
               <span key={f.id} className="absolute inset-0 rounded-[2.125rem] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
             ))}
             <div className="absolute inset-0 rounded-[2.125rem] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
@@ -434,7 +444,11 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         )}
 
         <div className="flex h-12 shrink-0 items-center">
-          {latest ? (
+          {latest?.held ? (
+            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-[#fff4e0] px-5 py-2.5 text-[1rem] font-bold text-[#b45309]" style={{ animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
+              <Hourglass className="size-5 shrink-0" strokeWidth={2.6} /> {t.counterHeld}
+            </p>
+          ) : latest ? (
             <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.125rem] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
               <Check className="size-5" strokeWidth={3} /> <span className="num">+1</span> {latest.name ?? t.someone}
             </p>

@@ -135,16 +135,24 @@ export async function changePassword(_: FormState, fd: FormData): Promise<FormSt
 export async function scan(token: string): Promise<ScanResult> {
   if (!TOKEN.test(token)) return { kind: "error", code: "invalid" };
   const jar = await cookies();
-  const stored = jar.get(HOLD)?.value ?? "";
-  const dot = stored.lastIndexOf(".");
-  const hold = dot > 0 && stored.slice(0, dot) === token ? stored.slice(dot + 1) : null;
+  // the codes this phone holds, «token.proof» joined by «|»: several, so a second scan (another shop,
+  // or the same one again) before the account is made never loses the first
+  const held = (jar.get(HOLD)?.value ?? "")
+    .split("|")
+    .map((x) => [x.slice(0, x.lastIndexOf(".")), x.slice(x.lastIndexOf(".") + 1)] as const)
+    .filter(([k, v]) => TOKEN.test(k) && v.length >= 32);
+  const hold = held.find(([k]) => k === token)?.[1] ?? null;
+  const keepHeld = (list: (readonly [string, string])[]) =>
+    list.length
+      ? jar.set(HOLD, list.slice(-4).map(([k, v]) => `${k}.${v}`).join("|"), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 20 * 60 })
+      : jar.delete(HOLD);
 
   const supabase = await db();
   const { data: user } = await supabase.auth.getUser();
   if (user.user) {
     const { data, error } = await supabase.rpc("stamp", { p_token: token, p_hold: hold });
     if (error || !data) return { kind: "error", code: "network" };
-    if (hold) jar.delete(HOLD);
+    if (hold) keepHeld(held.filter(([k]) => k !== token));
     const res = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null };
     if (res.ok && res.card) return { kind: "stamped", card: res.card, gift: !!res.gift, item: res.item ?? null };
     return { kind: "error", code: res.error ?? "invalid", card: res.card, next_at: res.next_at, shop: res.shop };
@@ -155,7 +163,7 @@ export async function scan(token: string): Promise<ScanResult> {
   if (error || !data) return { kind: "error", code: "network" };
   const res = data as { ok: boolean; error?: string; shop?: string; color?: string; kind?: string };
   if (!res.ok) return { kind: "error", code: res.error ?? "invalid" };
-  jar.set(HOLD, `${token}.${fresh}`, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 20 * 60 });
+  keepHeld([...held.filter(([k]) => k !== token), [token, fresh] as const]);
   return { kind: "held", shop: res.shop ?? "", color: res.color ?? "#6C47FF", shopKind: res.kind ?? "other" };
 }
 
@@ -260,8 +268,10 @@ export async function customerAt(who: string): Promise<{ ok: boolean; error?: st
 }
 
 /** The shop gives the tampon itself: the same rules as a scan (the shop's wait between two, the gift at the goal) — and, in a shop that says what it sells, what it was for. */
-export async function giveStamp(who: string, item?: number | null): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
+export async function giveStamp(who: string, item?: number | null, back?: string | null): Promise<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }> {
   const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20), p_item: Number.isSafeInteger(item) ? item : null });
+  // the tampon of a scan that never finished (no account then), given back now: that scan is settled
+  if (res?.ok && back && /^[0-9a-f-]{36}$/i.test(back)) await call("held_back", { p_code: back });
   // the last tampon by the shop's hand: the customer's phone hears it, after the answer has left
   if (res?.ok && res.gift && res.card) {
     const card = res.card;

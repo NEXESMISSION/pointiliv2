@@ -106,7 +106,7 @@ function errorText(code?: string): string {
  * code in their wallet is the same one), and a question comes up — give it
  * now, or not now.
  */
-export function Collect({ by, preset = "", shop, items = [] }: { by: "scan" | "code"; preset?: string; shop?: DemoShop; items?: Item[] }) {
+export function Collect({ by, preset = "", shop, items = [], back }: { by: "scan" | "code"; preset?: string; shop?: DemoShop; items?: Item[]; back?: string }) {
   const [mode, setMode] = useState(by);
   const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
   const [step, setStep] = useState<Step>({ kind: "idle" });
@@ -154,7 +154,7 @@ export function Collect({ by, preset = "", shop, items = [] }: { by: "scan" | "c
       return;
     }
     setStep({ kind: "giving", name, card, waiting: null });
-    const res = await giveStamp(digits, item?.id).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
+    const res = await giveStamp(digits, item?.id, back).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
     if (res.ok && res.card) {
       navigator.vibrate?.(60);
       setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null, moment: res.moment ?? null, item: item?.name ?? null });

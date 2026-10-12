@@ -23,6 +23,7 @@ type Shop = {
     visits: { id: string; at: string; end_at: string; ms: number; pages: number; device: string | null; os: string | null; browser: string | null; city: string | null; country: string | null; source: string; path: { route: string; screen: string | null; ms: number }[] }[];
   } | null;
   stamp_gap: number; stamp_logo: boolean; items_on: boolean;
+  held: { id: string; at: string; until: string; state: "waiting" | "lost" | "done" | "back"; name: string | null; item: string | null }[];
   items: { id: number; name: string; gone: boolean; at: string; n: number; n30: number; last_at: string | null }[];
   devices: { id: string; since: string; last_at: string | null; device: string | null; os: string | null; browser: string | null; city: string | null; app: boolean | null; here: boolean | null }[];
   plan: {
@@ -65,6 +66,14 @@ const Parts = ({ of }: { of: (string | null | undefined)[] }) => {
 };
 const DEVICES: Record<string, string> = { phone: "تليفون", tablet: "تابلات", computer: "PC" };
 const SOURCES: Record<string, string> = { facebook: "فيسبوك", instagram: "إنستغرام", google: "Google", tiktok: "تيك توك", whatsapp: "واتساب", direct: "مباشر" };
+
+/** a scan by a phone without an account, by how it ended */
+const HELD: Record<string, { tone: "brand" | "coral" | "mint" | "grey"; say: string }> = {
+  waiting: { tone: "brand", say: "بلا كونت · يستنّى" },
+  lost: { tone: "coral", say: "بلا كونت · ضاع" },
+  done: { tone: "mint", say: "عمل كونت وخذاه" },
+  back: { tone: "mint", say: "رجّعهولو بيدو" },
+};
 
 /** One shop: who owns it on the side, how it is doing in the middle. */
 export default async function AdminShop({ params }: { params: Promise<{ id: string }> }) {
@@ -373,15 +382,25 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
               )}
             </Card>
 
-            <Card title={t.aRecent} pad={false}>
-              {s.recent.length === 0 ? (
+            <Card title={t.aRecent} hint={s.held.some((h) => h.state === "lost") ? `${s.held.filter((h) => h.state === "lost").length} سكان ضاع (ما عملش كونت)` : undefined} pad={false}>
+              {s.recent.length + s.held.length === 0 ? (
                 <Empty>{t.aNothing}</Empty>
               ) : (
                 <Table head={["شنوّة", "شكون", "وقتاش"]} words={[1]}>
-                  {s.recent.map((r, i) => (
+                  {[
+                    ...s.recent.map((r) => ({ ...r, held: null as (typeof s.held)[number] | null })),
+                    // the scans without an account: whether the tampon was ever collected
+                    ...s.held.map((h) => ({ at: h.at, kind: "held" as const, given: false, name: h.name, phone: null, item: h.item, held: h })),
+                  ]
+                    .sort((a, b) => b.at.localeCompare(a.at))
+                    .map((r, i) => (
                     <Row key={i}>
                       <Cell>
-                        <Pill tone={r.kind === "stamp" ? "brand" : "coral"}>{r.kind === "stamp" ? <><Num>+1</Num> تامبون</> : "كادو"}</Pill>
+                        {r.held ? (
+                          <Pill tone={HELD[r.held.state]!.tone}>{HELD[r.held.state]!.say}</Pill>
+                        ) : (
+                          <Pill tone={r.kind === "stamp" ? "brand" : "coral"}>{r.kind === "stamp" ? <><Num>+1</Num> تامبون</> : "كادو"}</Pill>
+                        )}
                         {r.item && <span className="ms-1.5 font-semibold text-body"><bdi>{r.item}</bdi></span>}
                       </Cell>
                       <Cell muted>

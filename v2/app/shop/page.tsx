@@ -27,6 +27,7 @@ type Home = {
   visitors_today: number;
   given_today: number;
   recent: { id: number; at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; stamps: number; goal: number; gift: string | null; item?: string | null }[];
+  held?: { id: string; at: string; until: string; state: "waiting" | "lost" | "done" | "back"; name: string | null; item: string | null }[];
 };
 
 const time = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
@@ -91,6 +92,8 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
     { href: "/me", mark: <Icon3D name="wave" size={30} />, label: t.account },
   ];
   const recent = home?.recent ?? [];
+  const held = home?.held ?? [];
+  const lately = recent.length > 0 || held.length > 0;
 
   return (
     // nothing is clipped: on a phone too short for it all, the page scrolls as a whole
@@ -158,28 +161,48 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
 
       {/* who came lately: a box that takes all the room left, never less than a row
           and the link; before the first customer, as tall as its three steps */}
-      <section className={`mt-[2dvh] flex flex-1 flex-col pb-3 ${recent.length > 0 ? "min-h-[9.5rem]" : ""}`}>
+      <section className={`mt-[2dvh] flex flex-1 flex-col pb-3 ${lately ? "min-h-[9.5rem]" : ""}`}>
         <h2 className="mb-2 px-0.5 text-[0.9375rem] font-bold">{t.lately}</h2>
-        <div className={`flex flex-1 flex-col rounded-[1.25rem] bg-surface shadow-card ${recent.length > 0 ? "min-h-0 overflow-hidden" : ""}`}>
-          {recent.length > 0 ? (
+        <div className={`flex flex-1 flex-col rounded-[1.25rem] bg-surface shadow-card ${lately ? "min-h-0 overflow-hidden" : ""}`}>
+          {lately ? (
             <>
               {/* each line opens: the customer's card as it stands (owners kept tapping them) */}
               <RecentList
                 shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift }}
-                rows={recent.map((r) => ({
-                  id: r.id,
-                  kind: r.kind,
-                  name: r.name ?? t.someone,
-                  line:
-                    r.kind === "stamp"
-                      ? fill(t.lateStamp, { who: r.name ?? t.someone })
-                      : fill(r.given ? t.lateGiven : t.lateGift, { who: r.name ?? t.someone, gift: r.gift ?? shop.gift ?? "" }),
-                  time: time(r.at),
-                  stamps: r.stamps,
-                  goal: r.goal,
-                  gift: r.gift,
-                  item: r.kind === "stamp" ? (r.item ?? null) : null,
-                }))}
+                rows={[
+                  ...recent.map((r) => ({
+                    at: r.at,
+                    id: r.id,
+                    kind: r.kind,
+                    name: r.name ?? t.someone,
+                    line:
+                      r.kind === "stamp"
+                        ? fill(t.lateStamp, { who: r.name ?? t.someone })
+                        : fill(r.given ? t.lateGiven : t.lateGift, { who: r.name ?? t.someone, gift: r.gift ?? shop.gift ?? "" }),
+                    time: time(r.at),
+                    stamps: r.stamps,
+                    goal: r.goal,
+                    gift: r.gift,
+                    item: r.kind === "stamp" ? (r.item ?? null) : null,
+                  })),
+                  // the scans without an account, and how each ended (one finished shows as its tampon too)
+                  ...held.map((h) => ({
+                    at: h.at,
+                    id: h.id,
+                    kind: "held" as const,
+                    name: h.name ?? t.someone,
+                    line: h.state === "waiting" ? t.heldWaiting : h.state === "lost" ? t.heldLost : h.state === "back" ? t.heldBack : fill(t.heldDone, { who: h.name ?? t.someone }),
+                    time: time(h.at),
+                    stamps: 0,
+                    goal: shop.goal ?? 10,
+                    gift: shop.gift,
+                    item: h.item,
+                    state: h.state,
+                    until: h.until,
+                  })),
+                ]
+                  .sort((a, b) => b.at.localeCompare(a.at))
+                  .map(({ at, ...r }) => (void at, r))}
               />
               <Link href="/shop/customers" className="mt-auto flex shrink-0 items-center justify-center gap-1 border-t border-line py-3 text-[0.875rem] font-bold text-brand">
                 {t.seeAll} <ChevronLeft className="size-4" />
