@@ -5,7 +5,7 @@ import { monthsSaid, t } from "@/lib/t";
 
 type Line = {
   at: string;
-  kind: "paid" | "until" | "end";
+  kind: "paid" | "until" | "end" | "trial";
   months: number | null;
   until: string | null;
   amount: number | null;

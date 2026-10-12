@@ -344,6 +344,14 @@ export async function adminBookDelete(id: number): Promise<boolean> {
 }
 
 /** The owner paid by hand: the founder turns the access on (so many months, or until a date), or stops it — with what came in, for the books. */
+/** More days of trial for a shop (not a subscription): the owner is told once, plainly. */
+export async function adminTrial(shopId: string, days: number): Promise<{ ok: boolean }> {
+  if (!UUID.test(shopId) || !Number.isInteger(days) || days < 1 || days > 60) return { ok: false };
+  const res = await call<{ ok: boolean }>("admin_trial", { p_shop: shopId, p_days: days, p_show: true });
+  revalidatePath("/admin", "layout");
+  return { ok: !!res?.ok };
+}
+
 export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null, amount: number | null = null): Promise<{ ok: boolean }> {
   if (!UUID.test(shopId)) return { ok: false };
   const res = await call<{ ok: boolean }>("admin_plan", {

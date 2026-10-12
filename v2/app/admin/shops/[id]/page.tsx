@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Gift, MessageCircle, Phone } from "lucide-react";
 import { AdminPlan } from "@/components/AdminPlan";
+import { AdminTrial } from "@/components/AdminTrial";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminShopEdit } from "@/components/AdminShopEdit";
 import { AdminStoreSwitch } from "@/components/AdminStoreSwitch";
@@ -26,13 +27,15 @@ type Shop = {
   stamp_gap: number; stamp_logo: boolean; items_on: boolean;
   held: { id: string; at: string; until: string; state: "waiting" | "lost" | "done" | "back"; name: string | null; item: string | null }[];
   store_on: boolean;
+  trial_until: string;
+  trial_over: boolean;
   store: { id: number; name: string; cost: number }[];
   orders: { at: string; name: string; qty: number; cost: number; status: "waiting" | "given" | "cancelled"; who: string | null }[];
   items: { id: number; name: string; gone: boolean; at: string; n: number; n30: number; last_at: string | null }[];
   devices: { id: string; since: string; last_at: string | null; device: string | null; os: string | null; browser: string | null; city: string | null; app: boolean | null; here: boolean | null }[];
   plan: {
     paid_until: string | null; paid: boolean; offer_until: string | null; offer: boolean;
-    log: { id: number; kind: "paid" | "until" | "end"; months: number | null; until: string | null; note: string | null; method: string | null; amount: number | null; shown: boolean; seen: string | null; at: string }[];
+    log: { id: number; kind: "paid" | "until" | "end" | "trial"; months: number | null; until: string | null; note: string | null; method: string | null; amount: number | null; shown: boolean; seen: string | null; at: string }[];
     payments: { id: string; method: string; months: number; status: "pending" | "paid" | "refused"; at: string }[];
   };
   customers: number; stamps: number; today: number; given: number; waiting: number;
@@ -235,6 +238,8 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
             }
           >
             <AdminPlan shopId={s.id} paidUntil={s.plan.paid_until} paid={s.plan.paid} />
+            {/* more days of trial: not a subscription, the owner is told plainly */}
+            {!s.plan.paid && <AdminTrial shopId={s.id} until={s.trial_until} over={s.trial_over} />}
             {(s.plan.log.length > 0 || s.plan.payments.some((y) => y.status === "pending")) && (
               <div className="mt-4 border-t border-line pt-3">
                 <p className="mb-2 text-[0.8438rem] font-bold text-muted">{t.aPlanHistory}</p>
@@ -253,7 +258,9 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                     <li key={l.id} className="flex items-center justify-between gap-3">
                       <span className="min-w-0">
                         <span className="font-semibold text-body">
-                          {l.kind === "end"
+                          {l.kind === "trial"
+                            ? `زيادة تجربة حتى ${day(l.until ?? l.at)}`
+                            : l.kind === "end"
                             ? t.aPlanLogEnd
                             : l.kind === "until"
                               ? fill(t.aPlanLogUntil, { date: day(l.until ?? l.at) })

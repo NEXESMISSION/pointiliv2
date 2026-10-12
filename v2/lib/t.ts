@@ -59,6 +59,9 @@ export const t = {
   reservedBody: "اعمل كونت باش يولّي متاعك",
   reservedClock: "عندك 20 دقيقة",
   heldMust: "مازالت خطوة وحدة باش يتحسب",
+  trialMoreTitle: "زدناك في التجربة",
+  trialMoreUntil: "التجربة متاعك توفى نهار {date}",
+  trialMoreOk: "باهي",
   // the store (a shop the founder switched to it): tampons kept, spent on things
   storeBalance: "تامبون عندك",
   storeSpend: "بدّلهم بحاجات من الماغازة",

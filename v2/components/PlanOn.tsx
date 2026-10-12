@@ -7,7 +7,7 @@ import { pixel } from "@/lib/pixel";
 import { signal } from "@/lib/track";
 import { fill, monthsSaid, t } from "@/lib/t";
 
-export type Grant = { id: number; kind: "paid" | "until" | "end"; months: number | null; until: string; note: string | null; method?: string | null; amount?: number | null };
+export type Grant = { id: number; kind: "paid" | "until" | "end" | "trial"; months: number | null; until: string; note: string | null; method?: string | null; amount?: number | null };
 
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Tunis" }).format(new Date(iso));
 
@@ -25,13 +25,29 @@ export function PlanOn({ grant }: { grant: Grant }) {
     if (said.current) return;
     said.current = true;
     signal("plan_on", grant.months ? `${grant.months}` : grant.kind);
-    // what came in, for the ad that brought this owner (months added with no money are not a sale)
-    if (grant.amount) pixel("Purchase", { value: grant.amount, currency: "TND", content_name: "abonnement" });
+    // what came in, for the ad that brought this owner (months added with no money are not a sale, nor days of trial)
+    if (grant.amount && grant.kind !== "trial") pixel("Purchase", { value: grant.amount, currency: "TND", content_name: "abonnement" });
     void planSeen(grant.id).catch(() => {});
   }, [grant]);
   if (!open) return null;
 
   const until = day(grant.until);
+  // more days of trial: not a subscription — one quiet line, no crown, no thanks
+  if (grant.kind === "trial") {
+    return (
+      <div className="fixed inset-0 z-50 flex animate-fade items-center justify-center bg-[rgb(20_16_40/0.4)] px-6" role="dialog" aria-modal="true" aria-label={t.trialMoreTitle} onClick={() => setOpen(false)}>
+        <div className="w-full max-w-xs rounded-[1.5rem] bg-surface px-5 pb-4 pt-5 text-center text-ink shadow-card" style={{ animation: "plan-in 320ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+          <style>{`@keyframes plan-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }`}</style>
+          <Icon3D name="hourglass" size={48} className="mx-auto" />
+          <h2 className="mt-2 text-[1.25rem] font-bold">{t.trialMoreTitle}</h2>
+          <p className="mt-1.5 text-[0.9688rem] text-body">{fill(t.trialMoreUntil, { date: until })}</p>
+          <Btn type="button" kind="soft" className="mt-4 h-12" onClick={() => setOpen(false)}>
+            {t.trialMoreOk}
+          </Btn>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="fixed inset-0 z-50 flex animate-fade items-center justify-center bg-[rgb(20_16_40/0.5)] px-6 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label={t.grantTitle} onClick={() => setOpen(false)}>
       <style>{`@keyframes plan-in { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: none; } }`}</style>

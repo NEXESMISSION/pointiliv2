@@ -14,7 +14,7 @@ type Who = { name: string | null; phone: string | null };
 type Line = {
   id: number;
   at: string;
-  kind: "paid" | "until" | "end";
+  kind: "paid" | "until" | "end" | "trial";
   months: number | null;
   until: string | null;
   amount: number | null;

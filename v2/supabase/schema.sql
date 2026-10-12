@@ -124,9 +124,10 @@ create table if not exists public.plan_log (
 create index if not exists plan_log_shop_idx on public.plan_log (shop_id, created_at desc);
 alter table public.plan_log add column if not exists method text check (method is null or method in ('cash', 'd17', 'virement', 'versement', 'mandat'));
 alter table public.plan_log add column if not exists amount int check (amount is null or amount between 0 and 100000);
--- the kinds: months turned on, an end date, stopped (never called a gift)
+-- the kinds: months turned on, an end date, stopped (never called a gift) — and
+-- days of trial added by the founder (not a subscription: no money, no year)
 alter table public.plan_log drop constraint if exists plan_log_kind_check;
-alter table public.plan_log add constraint plan_log_kind_check check (kind in ('paid', 'until', 'end'));
+alter table public.plan_log add constraint plan_log_kind_check check (kind in ('paid', 'until', 'end', 'trial'));
 -- the ways: the five, and "contact" (the owner called or wrote on WhatsApp to pay)
 alter table public.payments drop constraint if exists payments_method_check;
 alter table public.payments add constraint payments_method_check check (method in ('card', 'd17', 'virement', 'versement', 'mandat', 'contact'));
@@ -1414,7 +1415,8 @@ begin
       from (select * from public.cards where shop_id = s.id order by gifts desc, stamps desc limit 5) c
       left join public.people p on p.id = c.user_id), '[]'::jsonb))
     -- (a second object: one jsonb_build_object takes 100 arguments at most)
-    || jsonb_build_object('held', public.held_list(s.id, 14), 'store_on', s.store_on, 'store', public.store_list(s.id),
+    || jsonb_build_object('held', public.held_list(s.id, 14), 'store_on', s.store_on,
+         'trial_until', s.created_at + make_interval(days => s.trial_days), 'trial_over', now() >= s.created_at + make_interval(days => s.trial_days), 'store', public.store_list(s.id),
          'orders', coalesce((select jsonb_agg(jsonb_build_object('at', o.created_at, 'name', o.name, 'qty', o.qty, 'cost', o.cost, 'status', o.status,
                                                                  'who', nullif(split_part(p.name, ' ', 1), '')) order by o.created_at desc)
                              from (select * from public.orders where shop_id = s.id order by created_at desc limit 20) o
@@ -1938,6 +1940,26 @@ begin
   return jsonb_build_object('ok', true, 'paid_until', v_until);
 end $$;
 
+-- the founder gives a shop more days of trial: added onto the trial still
+-- running, or from now when it is over. Not a subscription — nothing paid, the
+-- year stays as it was; the owner is told once, plainly, until when.
+create or replace function public.admin_trial(p_shop uuid, p_days int, p_show boolean default true) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_end timestamptz; v_days int;
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_shop for update;
+  if s.id is null then return public.err('not_found'); end if;
+  if p_days is null or p_days not between 1 and 60 then return public.err('invalid'); end if;
+  v_end := greatest(s.created_at + make_interval(days => s.trial_days), now()) + make_interval(days => p_days);
+  v_days := ceil(extract(epoch from (v_end - s.created_at)) / 86400)::int;
+  if v_days > 365 then return public.err('invalid'); end if;
+  update public.shops set trial_days = v_days where id = s.id;
+  v_end := s.created_at + make_interval(days => v_days);
+  insert into public.plan_log (shop_id, kind, months, until_at, show_owner) values (s.id, 'trial', null, v_end, coalesce(p_show, true));
+  return jsonb_build_object('ok', true, 'trial_until', v_end);
+end $$;
+
 -- the owner saw the access the founder turned on: said once
 create or replace function public.plan_seen(p_id bigint) returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -2011,7 +2033,8 @@ begin
       select s.* from public.shops s left join public.people p on p.id = s.owner_id
       where v_all or (not public.is_robot(s.owner_id) and not coalesce(p.is_admin or p.is_tester, false))
     ), lines as (
-      select l.* from public.plan_log l where l.shop_id in (select id from real_shops)
+      -- money and access only: days of trial added are no sale
+      select l.* from public.plan_log l where l.shop_id in (select id from real_shops) and l.kind <> 'trial'
     ), mine as (
       select b.* from public.books b where v_all or not b.robot
     )
@@ -2901,7 +2924,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.in_progress(), public.shop_home(), public.shop_customers(), public.shop_numbers(), public.shop_stats(),
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
   public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid),
-  public.admin_set_store(uuid, boolean), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
+  public.admin_set_store(uuid, boolean), public.admin_trial(uuid, int, boolean), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
   public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),
