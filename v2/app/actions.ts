@@ -14,6 +14,7 @@ import { NEWS_ICONS, newsHref } from "@/lib/news";
 import { clarityId, domainCode, pixelId, socialUrl, youtubeId } from "@/lib/settings";
 import { fill, t } from "@/lib/t";
 import type { CardView, FormState, Order, Said, ScanResult } from "@/lib/types";
+import type { FormField } from "@/app/actions-forms";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 /** Only paths inside the app: a crafted ?next= cannot send anyone elsewhere. */
@@ -69,6 +70,66 @@ export async function join(_: FormState, fd: FormData): Promise<FormState> {
   if (e2) return { error: t.errNetwork };
   await markKnown();
   redirect(owner ? "/shop/setup" : (next ?? "/"));
+}
+
+/**
+ * A form of identification filled by somebody with no account yet: the
+ * account (name, phone, password) and the form on one page, one button.
+ * Everything is checked before the account is made — the account's fields,
+ * then the form's own rules (the same as form_fill's) — so a mistake never
+ * leaves an account behind with the form unfilled. A field of kind «phone»
+ * is the account's number.
+ */
+export async function formJoin(
+  token: string,
+  data: Record<string, string>,
+  account: { name: string; phone: string; password: string },
+): Promise<{ ok: boolean; error?: string; field?: string }> {
+  if (!/^[A-Za-z0-9_-]{8,40}$/.test(token)) return { ok: false, error: t.errNetwork };
+  const name = String(account.name ?? "").trim();
+  const phone = digits(String(account.phone ?? ""));
+  const password = String(account.password ?? "");
+  const form = (await service().rpc("form_open", { p_token: token })).data as { ok: boolean; fields: FormField[] } | null;
+  if (!form?.ok) return { ok: false, error: t.errNetwork };
+
+  const clean: Record<string, string> = {};
+  for (const f of form.fields) {
+    const v = (f.kind === "phone" ? phone : String(data[f.key] ?? "")).trim();
+    if (!v) {
+      if (f.required) return { ok: false, error: "required", field: f.key };
+      continue;
+    }
+    const bad =
+      v.length > 120 ||
+      (f.kind === "number" && !/^\d{1,20}$/.test(v)) ||
+      (f.kind === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(v)) ||
+      (f.kind === "choice" && !(f.options ?? []).includes(v));
+    if (bad) return { ok: false, error: "invalid", field: f.key };
+    clean[f.key] = v;
+  }
+  if (name.length < 2 || name.length > 60) return { ok: false, error: t.errName, field: "acc_name" };
+  if (!validPhone(phone)) return { ok: false, error: t.errPhone, field: "acc_phone" };
+  if (password.length < PASSWORD_MIN) return { ok: false, error: t.errPassword, field: "acc_password" };
+  if (!(await allowed(`join-ip:${await address()}`, 30, 60))) return { ok: false, error: t.errTooMany };
+
+  const admin = service();
+  const { data: made, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password, email_confirm: true, app_metadata: { phone: `+216${phone}` } });
+  if (error) {
+    if (/already|registered|exists/i.test(error.message)) return { ok: false, error: t.errTaken, field: "acc_phone" };
+    if (/password/i.test(error.message)) return { ok: false, error: t.errPassword, field: "acc_password" };
+    console.error("[formJoin]", error.message);
+    return { ok: false, error: t.errNetwork };
+  }
+  await admin.from("people").upsert({ id: made.user.id, name, phone: `+216${phone}` });
+  const supabase = await db();
+  const { error: e2 } = await supabase.auth.signInWithPassword({ email: phoneEmail(phone), password });
+  if (e2) return { ok: false, error: t.errNetwork };
+  await markKnown();
+  // the same client, now signed in as the new account, fills the form
+  const { data: filled, error: e3 } = await supabase.rpc("form_fill", { p_token: token, p_data: clean });
+  const res = filled as { ok?: boolean; error?: string; field?: string } | null;
+  if (e3 || !res?.ok) return { ok: false, error: res?.error ?? t.errNetwork, field: res?.field };
+  return { ok: true };
 }
 
 /**
