@@ -59,6 +59,9 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
+  // a wheel or a store shop is set up by one thing only: until it is there, that is where home goes
+  if (me.shop.wheel_on && !((await call<{ prizes: unknown[] }>("my_wheel"))?.prizes?.length ?? 0)) redirect("/shop/wheel?start=1");
+  if (me.shop.store_on && !((await call<{ items: unknown[] }>("my_store"))?.items?.length ?? 0)) redirect("/shop/store?start=1");
   const shop = me.shop;
   const [home, help, news, pay, { welcome }] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), searchParams]);
   const seen = me.seen ?? [];

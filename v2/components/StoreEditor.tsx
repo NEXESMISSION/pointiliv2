@@ -22,7 +22,7 @@ const START = 10;
  * counter by scanning the customer's code — and the things on sale, each a
  * name and a price in tampons, changed in place and saved at once.
  */
-export function StoreEditor({ items, waiting, sold }: { items: StoreItem[]; waiting: Waiting[]; sold: { name: string; n: number }[] }) {
+export function StoreEditor({ items, waiting, sold, first = false }: { items: StoreItem[]; waiting: Waiting[]; sold: { name: string; n: number }[]; first?: boolean }) {
   useScreen("store");
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>(() => items.map((x) => ({ key: `i${x.id}`, id: x.id, name: x.name, cost: x.cost })));
@@ -56,7 +56,9 @@ export function StoreEditor({ items, waiting, sold }: { items: StoreItem[]; wait
       setRows(res.items.map((x) => ({ key: `i${x.id}`, id: x.id, name: x.name, cost: x.cost })));
       setDirty(false);
       setSaved(true);
-      router.refresh();
+      // the shop's first set-up: that was the only thing to choose — home, with its welcome
+      if (first && res.items.length > 0) router.push("/shop?welcome=1");
+      else router.refresh();
     });
   const give = (card: string) =>
     start(async () => {
@@ -66,7 +68,13 @@ export function StoreEditor({ items, waiting, sold }: { items: StoreItem[]; wait
 
   return (
     <>
-      <Top back="/shop" title={t.storeOwnerTitle} hint={t.storeOwnerHint} />
+      <Top back={first ? undefined : "/shop"} title={t.storeOwnerTitle} hint={first ? undefined : t.storeOwnerHint} />
+      {first && (
+        <>
+          <h1 className="mt-1 shrink-0 text-balance text-[1.375rem] font-bold leading-tight">شنوّة يشريو الحرفاء بالتامبونات؟</h1>
+          <p className="shrink-0 text-[0.875rem] text-muted">اكتب الحاجات وقدّاش من تامبون كل وحدة. هذا كل شي.</p>
+        </>
+      )}
 
       {/* what customers ordered and have not taken: handed over here, or by scanning their code */}
       {waiting.length > 0 && (

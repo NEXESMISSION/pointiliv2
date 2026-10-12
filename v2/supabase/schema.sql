@@ -676,9 +676,9 @@ begin
   where c.shop_id = s.id and c.stamps > 0 and coalesce(c.goal, 999) > p_goal and public.same_gift(c.gift, v_gift) and not public.waits(c.id);
   get diagnostics v_eased = row_count;
 
-  insert into public.moments (shop_id, card_id, kind, gift)
-  select s.id, c.id, 'gift', coalesce(c.gift, v_gift) from public.cards c
-  where c.shop_id = s.id and c.stamps >= coalesce(c.goal, p_goal) and not public.waits(c.id);
+  insert into public.moments (shop_id, card_id, kind, gift, wheel)
+  select s.id, c.id, 'gift', case when s.wheel_on then 'الروليت' else coalesce(c.gift, v_gift) end, s.wheel_on from public.cards c
+  where c.shop_id = s.id and not s.store_on and c.stamps >= coalesce(c.goal, p_goal) and not public.waits(c.id);
   get diagnostics v_filled = row_count;
   perform public.bank(c.id) from public.cards c where c.shop_id = s.id and c.stamps >= 2 * coalesce(c.goal, p_goal);
 
@@ -2824,9 +2824,12 @@ begin
   perform public.require_admin();
   select * into s from public.shops where id = p_id;
   if s.id is null then return public.err('not_found'); end if;
-  if coalesce(p_on, false) and s.goal is null then return public.err('no_card'); end if;
-  -- one or the other: the store keeps every tampon, the wheel needs a full card
-  update public.shops set store_on = coalesce(p_on, false), wheel_on = case when coalesce(p_on, false) then false else wheel_on end where id = p_id;
+  -- one or the other: the store keeps every tampon, the wheel needs a full card. A shop with no card
+  -- yet gets a quiet one (the store never shows it): its set-up is the store, nothing else
+  update public.shops set store_on = coalesce(p_on, false), wheel_on = case when coalesce(p_on, false) then false else wheel_on end,
+                          goal = case when coalesce(p_on, false) then coalesce(goal, 10) else goal end,
+                          gift = case when coalesce(p_on, false) then coalesce(gift, 'الماغازة') else gift end
+  where id = p_id;
   return jsonb_build_object('ok', true);
 end $$;
 
@@ -3062,7 +3065,7 @@ begin
   perform public.require_admin();
   select * into s from public.shops where id = p_id;
   if s.id is null then return public.err('not_found'); end if;
-  if coalesce(p_on, false) and s.goal is null then return public.err('no_card'); end if;
+  -- a shop with no card yet starts on the wheel: the owner's set-up is the goal and the prizes, nothing else
   update public.shops set wheel_on = coalesce(p_on, false), store_on = case when coalesce(p_on, false) then false else store_on end where id = p_id;
   return jsonb_build_object('ok', true);
 end $$;

@@ -26,7 +26,7 @@ const even = (rows: Row[]): Row[] => {
  * goes, with one tap to share them out evenly — and the wheel itself as the
  * customers will see it. The card's goal stays on «الكارط».
  */
-export function WheelEditor({ prizes, fell, goal }: { prizes: Prize[]; fell: { name: string; n: number }[]; goal: number | null }) {
+export function WheelEditor({ prizes, fell, goal, first = false }: { prizes: Prize[]; fell: { name: string; n: number }[]; goal: number | null; first?: boolean }) {
   useScreen("wheel");
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>(() => prizes.map((p) => ({ key: `p${p.id}`, id: p.id, name: p.name, chance: p.chance })));
@@ -59,12 +59,21 @@ export function WheelEditor({ prizes, fell, goal }: { prizes: Prize[]; fell: { n
       setRows(res.prizes.map((p) => ({ key: `p${p.id}`, id: p.id, name: p.name, chance: p.chance })));
       setDirty(false);
       setSaved(true);
-      router.refresh();
+      // the shop's first set-up: that was the last thing to choose — home, with its welcome
+      if (first) router.push("/shop?welcome=1");
+      else router.refresh();
     });
 
   return (
     <>
-      <Top back="/shop" title={t.wheelOwnerTitle} hint={t.wheelOwnerHint} />
+      <Top back={first ? "/shop/card" : "/shop"} title={t.wheelOwnerTitle} hint={first ? undefined : t.wheelOwnerHint} />
+      {first && (
+        <>
+          <p className="mt-1 shrink-0 text-[0.9375rem] font-semibold text-brand">الخطوة 2 من 2</p>
+          <h1 className="shrink-0 text-balance text-[1.375rem] font-bold leading-tight">شنوّة يربح الحريف في الروليت؟</h1>
+          <p className="shrink-0 text-[0.875rem] text-muted">اكتب الكادوات، وقدّاش حظ كل وحدة (المجموع 100%)</p>
+        </>
+      )}
 
       {/* the wheel as the customers will see it (it does not turn here) */}
       {rows.length >= 2 && (
@@ -75,6 +84,7 @@ export function WheelEditor({ prizes, fell, goal }: { prizes: Prize[]; fell: { n
 
       <section className="mt-[1.5dvh] flex min-h-0 flex-1 flex-col">
         <div data-list className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[1.25rem] bg-surface shadow-card">
+          {rows.length === 0 && <p className="px-4 pb-1 pt-4 text-center text-[0.9062rem] text-muted">حتى كادو مازال: اكتب أوّل واحد لتحت</p>}
           <ul className="divide-y divide-line">
             {rows.map((x) => (
               <li key={x.key} className="flex items-center gap-2 px-3 py-2">
@@ -152,9 +162,11 @@ export function WheelEditor({ prizes, fell, goal }: { prizes: Prize[]; fell: { n
             )}
           </Btn>
           {/* the card's goal: how many tampons for a turn */}
+          {!first && (
           <Link href="/shop/card" className="mt-1 flex items-center justify-center gap-1 py-1.5 text-[0.875rem] font-semibold text-brand">
             {t.wheelEditCard} {goal ? <span className="text-muted">({stampsN(goal)})</span> : null} <ChevronLeft className="size-4" />
           </Link>
+          )}
         </div>
       </section>
     </>

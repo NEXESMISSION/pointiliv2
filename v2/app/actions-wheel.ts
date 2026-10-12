@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import type { Prize, SpinResult } from "@/components/Wheel";
 
@@ -36,6 +37,20 @@ export async function wheelSave(prizes: Prize[]): Promise<{ ok: boolean; error?:
   const res = await call<{ ok: boolean; error?: string; prizes?: Prize[] }>("wheel_save", { p_prizes: clean });
   revalidatePath("/shop/wheel");
   return res ?? { ok: false, error: "network" };
+}
+
+/**
+ * A wheel shop's card, in one question: how many tampons for a turn. The gift
+ * is the wheel itself, the wait and the colour stay as they are; the customers
+ * on their way keep the card they started.
+ */
+export async function saveWheelGoal(goal: number): Promise<boolean> {
+  if (!Number.isInteger(goal) || goal < 3 || goal > 30) return false;
+  const me = await getMe();
+  if (!me?.shop?.wheel_on) return false;
+  const res = await call<{ ok: boolean }>("save_card", { p_goal: goal, p_gift: "الروليت", p_color: me.shop.color, p_gap: null, p_move: false });
+  revalidatePath("/", "layout");
+  return !!res?.ok;
 }
 
 /** The founder switches a shop to the wheel, or back to its gift. */

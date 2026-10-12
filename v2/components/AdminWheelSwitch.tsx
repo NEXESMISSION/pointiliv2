@@ -56,14 +56,14 @@ export function AdminWheelSwitch({ id, on, hasCard, store }: { id: string; on: b
       ) : (
         <button
           type="button"
-          disabled={!hasCard && !on}
           onClick={() => setAsk(true)}
           className={`flex h-9 w-full items-center justify-center gap-1.5 rounded-[0.625rem] text-[0.8438rem] font-semibold transition-colors disabled:opacity-50 ${on ? "border border-line bg-surface text-body hover:border-coral hover:text-coral" : "bg-brand text-white hover:bg-brand-deep"}`}
         >
           {on ? "رجّعو للكادو العادي" : "خدّم الروليت"}
         </button>
       )}
-      {!hasCard && !on && <p className="text-center text-[0.75rem] text-muted">لازم المحل يعمل الكارط قبل</p>}
+      {/* a shop with no card yet starts straight on this: one short set-up, nothing else */}
+      {!hasCard && <p className="text-center text-[0.75rem] text-muted">المحل مازال ما عملش الكارط: كي يدخل، يختار قدّاش من تامبون والكادوات متاع الروليت، وهذا كل شي.</p>}
       {error && <p className="text-center text-[0.8125rem] font-semibold text-coral">{error}</p>}
     </div>
   );

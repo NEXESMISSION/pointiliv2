@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { CardWizard } from "@/components/CardWizard";
+import { Screen } from "@/components/ui";
+import { WheelGoal } from "@/components/WheelGoal";
 import { getMe } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
 
@@ -10,7 +12,17 @@ export default async function ShopCard() {
   const me = await getMe();
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
+  // a store shop has no card to make: its store is all there is to set
+  if (me.shop.store_on) redirect(me.shop.goal ? "/shop/store" : "/shop/store?start=1");
   const editing = !!me.shop.goal;
+  // a wheel shop: one question (how many tampons for a turn), then the wheel's prizes
+  if (me.shop.wheel_on) {
+    return (
+      <Screen>
+        <WheelGoal shop={me.shop} editing={editing} />
+      </Screen>
+    );
+  }
   const help = await getHelp();
   return (
     <CardWizard
