@@ -5,7 +5,8 @@ import { service } from "@/lib/supabase";
 /** A YouTube link as the app plays it: the video's id, and whether it stands up (a Short). */
 export type Video = { id: string; label: string; vertical: boolean; url: string };
 /** Where the owners pay: the card page (Dodo Payments), D17, the bank account, the post office. */
-export type PayDetails = { card: string | null; d17: string | null; name: string | null; bank: string | null; rib: string | null; mandat: string | null };
+/** where the owners pay; `banks` are the founder's accounts, each its bank and its RIB (no holder's name shown) */
+export type PayDetails = { card: string | null; d17: string | null; name: string | null; bank: string | null; rib: string | null; mandat: string | null; banks: { bank: string | null; rib: string }[] };
 /** Pointili's own pages (the footer links them; search engines and AI assistants learn they are Pointili's). */
 export type Social = { facebook: string | null; instagram: string | null; tiktok: string | null };
 /** The ads: Facebook's pixel (its number) and the code that tells Facebook the domain is Pointili's. */
@@ -103,6 +104,10 @@ export async function getSettings(fresh = false): Promise<Settings> {
       bank: raw.pay_bank?.trim() || null,
       rib: raw.pay_rib?.trim() || null,
       mandat: raw.pay_mandat?.trim() || null,
+      banks: [
+        { bank: raw.pay_bank?.trim() || null, rib: raw.pay_rib?.trim() || "" },
+        { bank: raw.pay_bank2?.trim() || null, rib: raw.pay_rib2?.trim() || "" },
+      ].filter((b) => b.rib),
     },
     social: { facebook: socialUrl(raw.facebook_url, "facebook.com"), instagram: socialUrl(raw.instagram_url, "instagram.com"), tiktok: socialUrl(raw.tiktok_url, "tiktok.com") },
     meta: { pixel: pixelId(raw.meta_pixel), domainCode: domainCode(raw.fb_domain_verify) },

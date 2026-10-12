@@ -526,7 +526,7 @@ export async function adminNewsDelete(id: string) {
 /** The founder's settings: the number owners call, the two videos (YouTube links checked here). */
 export async function adminSaveSettings(_: FormState, fd: FormData): Promise<FormState> {
   if (!(await getMe())?.admin) return { error: t.errNetwork };
-  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "facebook_url", "instagram_url", "tiktok_url", "meta_pixel", "fb_domain_verify", "clarity_id"] as const;
+  const keys = ["support_phone", "video1_label", "video1_url", "video2_label", "video2_url", "facebook_url", "instagram_url", "tiktok_url", "meta_pixel", "fb_domain_verify", "clarity_id", "pay_d17", "pay_bank", "pay_rib", "pay_bank2", "pay_rib2"] as const;
   const phone = str(fd, "support_phone");
   if (phone && phone.replace(/\D/g, "").length < 8) return { error: t.errPhone, field: "support_phone" };
   for (const [key, host] of [["facebook_url", "facebook.com"], ["instagram_url", "instagram.com"], ["tiktok_url", "tiktok.com"]] as const) {

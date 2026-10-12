@@ -20,7 +20,7 @@ const WAYS = [
  * money order — and the two buttons that go on with it: a call, or a
  * WhatsApp already written. Either one tells the founder a payment is coming.
  */
-export function PayMethods({ support, shop, months, details }: { support: string | null; shop: string; months: number; details?: { d17: string | null; rib: string | null; name: string | null; bank: string | null } }) {
+export function PayMethods({ support, shop, months, details }: { support: string | null; shop: string; months: number; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] } }) {
   const said = (how: string) => {
     signal("pay", how);
     void payRequest("contact").catch(() => {});
@@ -46,10 +46,13 @@ export function PayMethods({ support, shop, months, details }: { support: string
         ))}
       </ul>
       {/* where the money goes, when the founder wrote it in the console: the D17 number, the account */}
-      {(details?.d17 || details?.rib) && (
+      {(details?.d17 || !!details?.banks.length) && (
         <div className="mt-2 divide-y divide-line rounded-[1.125rem] bg-surface shadow-card">
           {details.d17 && <Detail label="D17" value={details.d17} />}
-          {details.rib && <Detail label={t.payRib} value={details.rib} sub={[details.name, details.bank].filter(Boolean).join(" · ") || null} />}
+          {/* each account: its bank under the RIB (the holder's name is not shown) */}
+          {details.banks.map((b) => (
+            <Detail key={b.rib} label={t.payRib} value={b.rib} sub={b.bank} />
+          ))}
         </div>
       )}
       <p className="mt-[2.4dvh] text-balance text-center text-[0.9375rem] leading-relaxed text-body">{t.payHow}</p>
@@ -84,7 +87,12 @@ function Detail({ label, value, sub }: { label: string; value: string; sub?: str
       <span className="w-12 shrink-0 text-[0.8125rem] font-bold text-muted" dir="ltr">{label}</span>
       <span className="min-w-0 flex-1">
         <bdi dir="ltr" className="num block truncate text-[1rem] font-bold">{value}</bdi>
-        {sub && <span className="block truncate text-[0.75rem] text-muted">{sub}</span>}
+        {/* a bank's name in Latin letters loses its end, never its start */}
+        {sub && (
+          <bdi dir="auto" className="block truncate text-[0.75rem] text-muted">
+            {sub}
+          </bdi>
+        )}
       </span>
       <button type="button" onClick={copy} className="press flex h-9 shrink-0 items-center gap-1 rounded-full bg-brand-soft px-3 text-[0.8125rem] font-bold text-brand">
         {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? t.payCopied : t.payCopy}

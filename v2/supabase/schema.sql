@@ -280,6 +280,8 @@ alter table public.settings drop constraint if exists settings_key_check;
 alter table public.settings add constraint settings_key_check check (key in (
   'support_phone', 'video1_url', 'video1_label', 'video2_url', 'video2_label',
   'pay_card_url', 'pay_d17', 'pay_name', 'pay_bank', 'pay_rib', 'pay_mandat',
+  -- a second account, at another bank
+  'pay_bank2', 'pay_rib2',
   'facebook_url', 'instagram_url', 'tiktok_url',
   -- the ads: Facebook's pixel, and the code that tells Facebook the domain is ours
   'meta_pixel', 'fb_domain_verify',

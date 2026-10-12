@@ -113,6 +113,15 @@ export function AdminSettingsForm({ raw }: { raw: Record<string, string> }) {
         )}
       </Part>
 
+      {/* where the owners pay: shown on their «الخلاص» page, each with a copy button */}
+      <Part title="الخلاص" hint="يطلعو للمولى في صفحة الخلاص، كل واحد بزرّ «انسخ». اسم صاحب الكونت ما يطلعش.">
+        <Box name="pay_d17" label="D17 (النومرو)" value={raw.pay_d17 ?? ""} placeholder="58 415 520" ltr />
+        <Box name="pay_bank" label="البنك 1" value={raw.pay_bank ?? ""} placeholder="BIAT" ltr />
+        <Box name="pay_rib" label="RIB 1" value={raw.pay_rib ?? ""} placeholder="08 901 0003820079638 72" ltr />
+        <Box name="pay_bank2" label="البنك 2" value={raw.pay_bank2 ?? ""} placeholder="BTE" ltr />
+        <Box name="pay_rib2" label="RIB 2" value={raw.pay_rib2 ?? ""} placeholder="24 031 168 0052 511101 32" ltr />
+      </Part>
+
       <Part title={t.aVideosCard} hint={t.aVideosCardHint}>
         <VideoBox n={1} raw={raw} err={err} />
         <VideoBox n={2} raw={raw} err={err} />
