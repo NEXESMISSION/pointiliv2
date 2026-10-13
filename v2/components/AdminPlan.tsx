@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { CalendarClock, CalendarPlus, Power, StopCircle } from "lucide-react";
 import { adminPlan } from "@/app/actions";
 import { CBtn } from "@/components/console";
+import { PlanImage, type PlanShot } from "@/components/PlanImage";
 import { fill, monthsSaid, t } from "@/lib/t";
 
 type By = "months" | "until";
@@ -28,7 +29,7 @@ const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "
  * The owner's home says it once, plainly
  * («الأبونمان متاعك تفعّل»), unless the box is unticked. Nothing is ever free.
  */
-export function AdminPlan({ shopId, paidUntil, paid }: { shopId: string; paidUntil: string | null; paid: boolean }) {
+export function AdminPlan({ shopId, paidUntil, paid, shop, owner }: { shopId: string; paidUntil: string | null; paid: boolean; shop: string; owner?: string | null }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
@@ -43,6 +44,8 @@ export function AdminPlan({ shopId, paidUntil, paid }: { shopId: string; paidUnt
   const [note, setNote] = useState("");
   const [show, setShow] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // the subscription just turned on: its picture opens by itself, to send the owner
+  const [made, setMade] = useState<PlanShot | null>(null);
 
   const n = custom ? Number(custom) : months;
   const customBad = custom !== "" && !(n >= 1 && n <= 120);
@@ -56,6 +59,7 @@ export function AdminPlan({ shopId, paidUntil, paid }: { shopId: string; paidUnt
       setError(null);
       const res = await adminPlan(shopId, by === "until" ? "until" : "paid", by === "until" ? null : n, by === "until" ? until : null, note, show, sum === 0 ? null : method, sum);
       if (!res.ok) return setError(t.errNetwork);
+      setMade({ at: new Date().toISOString(), kind: by === "until" ? "until" : "paid", months: by === "until" ? null : n, until: res.until ?? null, amount: sum ?? null, method: sum === 0 ? null : method, shop, owner });
       setOpen(false);
       setNote("");
       setCustom("");
@@ -90,6 +94,7 @@ export function AdminPlan({ shopId, paidUntil, paid }: { shopId: string; paidUnt
   if (!open) {
     return (
       <div className="flex flex-wrap gap-2">
+        {made && <PlanImage plan={made} startOpen label="تصويرة الأبونمان الجديد" onClose={() => setMade(null)} />}
         <CBtn kind="main" onClick={() => setOpen(true)}>
           <Power className="size-4" /> {t.aPlanGive}
         </CBtn>

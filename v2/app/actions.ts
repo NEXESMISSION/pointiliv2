@@ -428,9 +428,9 @@ export async function adminTrial(shopId: string, days: number): Promise<{ ok: bo
   return { ok: !!res?.ok };
 }
 
-export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null, amount: number | null = null): Promise<{ ok: boolean }> {
+export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null, amount: number | null = null): Promise<{ ok: boolean; until?: string }> {
   if (!UUID.test(shopId)) return { ok: false };
-  const res = await call<{ ok: boolean }>("admin_plan", {
+  const res = await call<{ ok: boolean; paid_until?: string }>("admin_plan", {
     p_shop: shopId,
     p_kind: kind,
     p_months: months !== null && Number.isFinite(months) ? Math.round(months) : null,
@@ -443,7 +443,7 @@ export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", 
   });
   revalidatePath(`/admin/shops/${shopId}`);
   revalidatePath("/admin/payments");
-  return { ok: !!res?.ok };
+  return { ok: !!res?.ok, until: res?.paid_until };
 }
 
 /** The founder's hand on a shop's card: the same rules as the owner's. */

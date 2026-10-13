@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { PlanImage } from "@/components/PlanImage";
 import { Download } from "lucide-react";
 import { AdminBookAdd, AdminBookDelete } from "@/components/AdminBooks";
 import { AdminPayActions } from "@/components/AdminPayActions";
@@ -204,7 +205,12 @@ export default async function AdminPayments() {
                     <Cell n strong>
                       {l.amount === null ? <span className="font-normal text-faint">—</span> : <Sum n={l.amount} />}
                     </Cell>
-                    <Cell>{""}</Cell>
+                    <Cell>
+                      {/* the subscription's picture, to send the owner */}
+                      {(l.kind === "paid" || l.kind === "until") && (
+                        <PlanImage plan={{ id: l.id, at: l.at, kind: l.kind, months: l.months, until: l.until, amount: l.amount, method: l.method, shop: l.shop.name, owner: l.owner.name }} />
+                      )}
+                    </Cell>
                   </Row>
                 ) : h ? (
                   // a line by hand: what it was, and its kind

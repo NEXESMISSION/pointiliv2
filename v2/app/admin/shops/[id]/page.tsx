@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Gift, MessageCircle, Phone } from "lucide-react";
 import { AdminPlan } from "@/components/AdminPlan";
+import { PlanImage } from "@/components/PlanImage";
 import { AdminTrial } from "@/components/AdminTrial";
 import { AdminShopActions } from "@/components/AdminShopActions";
 import { AdminPhoneCheck } from "@/components/AdminPhoneCheck";
@@ -252,7 +253,7 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
               )
             }
           >
-            <AdminPlan shopId={s.id} paidUntil={s.plan.paid_until} paid={s.plan.paid} />
+            <AdminPlan shopId={s.id} paidUntil={s.plan.paid_until} paid={s.plan.paid} shop={s.name} owner={s.owner?.name ?? null} />
             {/* more days of trial: not a subscription, the owner is told plainly */}
             {!s.plan.paid && <AdminTrial shopId={s.id} until={s.trial_until} over={s.trial_over} />}
             {(s.plan.log.length > 0 || s.plan.payments.some((y) => y.status === "pending")) && (
@@ -287,6 +288,10 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                       </span>
                       <span className="flex shrink-0 items-center gap-2 text-[0.8125rem] text-muted">
                         {l.shown && <Pill tone={l.seen ? "mint" : "grey"}>{l.seen ? t.aPlanSeen : t.aPlanNotSeen}</Pill>}
+                        {/* the subscription's picture, to send the owner (old ones too) */}
+                        {(l.kind === "paid" || l.kind === "until") && (
+                          <PlanImage plan={{ id: l.id, at: l.at, kind: l.kind, months: l.months, until: l.until, amount: l.amount, method: l.method, shop: s.name, owner: s.owner?.name ?? null }} />
+                        )}
                         {when(l.at)}
                       </span>
                     </li>
