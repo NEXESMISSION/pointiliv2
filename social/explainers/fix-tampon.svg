@@ -1,0 +1,201 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <!--
+    «بدّل الحاجة متاع تامبون» — a 16-second explainer that plays by itself and
+    loops, to send an owner: the tampon in «آخر حركة», «غلطت في الحاجة؟ بدّلها»,
+    the right thing, done. Every scene is a group shown by its own keyframes.
+  -->
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600;700&amp;display=swap');
+      text { font-family: 'Readex Pro', 'Segoe UI', Tahoma, sans-serif; }
+      .rtl { direction: rtl; unicode-bidi: plaintext; }
+      .t { animation-duration: 16s; animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-fill-mode: both; }
+
+      /* scenes: 0–3s ask, 3–6s the row, 6–9s the sheet, 9–13s the page, 13–16s done */
+      @keyframes c0 { 0%, 17% { opacity: 1 } 19%, 100% { opacity: 0 } }
+      @keyframes c1 { 0%, 17% { opacity: 0 } 19%, 36% { opacity: 1 } 38%, 100% { opacity: 0 } }
+      @keyframes c2 { 0%, 36% { opacity: 0 } 38%, 55% { opacity: 1 } 57%, 100% { opacity: 0 } }
+      @keyframes c3 { 0%, 55% { opacity: 0 } 57%, 80% { opacity: 1 } 82%, 100% { opacity: 0 } }
+      @keyframes c4 { 0%, 80% { opacity: 0 } 82%, 98% { opacity: 1 } 100% { opacity: 0 } }
+      .c0 { animation-name: c0 } .c1 { animation-name: c1 } .c2 { animation-name: c2 } .c3 { animation-name: c3 } .c4 { animation-name: c4 }
+
+      /* the home: shown until the page opens */
+      @keyframes home { 0%, 55% { opacity: 1 } 57%, 100% { opacity: 0 } }
+      .home { animation-name: home }
+      /* the row tapped lights up */
+      @keyframes rowhi { 0%, 28% { opacity: 0 } 30%, 40% { opacity: 1 } 44%, 100% { opacity: 0 } }
+      .rowhi { animation-name: rowhi }
+      /* the sheet slides up over the home */
+      @keyframes dim { 0%, 37% { opacity: 0 } 39%, 55% { opacity: 1 } 57%, 100% { opacity: 0 } }
+      .dim { animation-name: dim }
+      @keyframes sheet { 0%, 37% { transform: translateY(560px) } 41%, 55% { transform: translateY(0) } 57%, 100% { transform: translateY(560px) } }
+      .sheet { animation-name: sheet }
+      @keyframes btnhi { 0%, 49% { opacity: 0 } 51%, 56% { opacity: 1 } 58%, 100% { opacity: 0 } }
+      .btnhi { animation-name: btnhi }
+      /* the page: from 9s to the end */
+      @keyframes page { 0%, 55% { opacity: 0 } 58%, 98% { opacity: 1 } 100% { opacity: 0 } }
+      .page { animation-name: page }
+      /* the change: كابوسة → اكسبراس at 11.4s */
+      @keyframes before { 0%, 70% { opacity: 1 } 72%, 100% { opacity: 0 } }
+      @keyframes after { 0%, 70% { opacity: 0 } 72%, 98% { opacity: 1 } 100% { opacity: 0 } }
+      .before { animation-name: before } .after { animation-name: after }
+      @keyframes pop { 0%, 70% { transform: scale(0.6) } 74% { transform: scale(1.12) } 78%, 100% { transform: scale(1) } }
+      .pop { animation-name: pop; transform-box: fill-box; transform-origin: center }
+
+      /* the finger: a soft round mark, where each tap is, with a ring */
+      @keyframes f1 { 0%, 22% { opacity: 0; transform: translate(560px, 1500px) } 26% { opacity: 1; transform: translate(560px, 1500px) } 30% { opacity: 1; transform: translate(560px, 1004px) } 34% { opacity: 1; transform: translate(560px, 1004px) } 37%, 100% { opacity: 0; transform: translate(560px, 1004px) } }
+      @keyframes f2 { 0%, 43% { opacity: 0; transform: translate(540px, 1640px) } 46% { opacity: 1; transform: translate(540px, 1640px) } 50% { opacity: 1; transform: translate(540px, 1406px) } 54% { opacity: 1; transform: translate(540px, 1406px) } 56%, 100% { opacity: 0; transform: translate(540px, 1406px) } }
+      @keyframes f3 { 0%, 62% { opacity: 0; transform: translate(560px, 1500px) } 65% { opacity: 1; transform: translate(560px, 1500px) } 69% { opacity: 1; transform: translate(703px, 885px) } 73% { opacity: 1; transform: translate(703px, 885px) } 76%, 100% { opacity: 0; transform: translate(703px, 885px) } }
+      .f1 { animation-name: f1 } .f2 { animation-name: f2 } .f3 { animation-name: f3 }
+      @keyframes ring1 { 0%, 30% { r: 10; opacity: 0 } 31% { r: 14; opacity: 0.9 } 35%, 100% { r: 70; opacity: 0 } }
+      @keyframes ring2 { 0%, 50% { r: 10; opacity: 0 } 51% { r: 14; opacity: 0.9 } 55%, 100% { r: 70; opacity: 0 } }
+      @keyframes ring3 { 0%, 69% { r: 10; opacity: 0 } 70% { r: 14; opacity: 0.9 } 74%, 100% { r: 70; opacity: 0 } }
+      .ring1 { animation-name: ring1 } .ring2 { animation-name: ring2 } .ring3 { animation-name: ring3 }
+      /* the steps' dots under the caption */
+      @keyframes d1 { 0%, 17% { fill: #ffffff55 } 19%, 36% { fill: #fff } 38%, 100% { fill: #ffffff55 } }
+      @keyframes d2 { 0%, 36% { fill: #ffffff55 } 38%, 55% { fill: #fff } 57%, 100% { fill: #ffffff55 } }
+      @keyframes d3 { 0%, 55% { fill: #ffffff55 } 57%, 80% { fill: #fff } 82%, 100% { fill: #ffffff55 } }
+      .d1 { animation-name: d1 } .d2 { animation-name: d2 } .d3 { animation-name: d3 }
+    </style>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#9B7BFF" />
+      <stop offset="0.45" stop-color="#6C47FF" />
+      <stop offset="1" stop-color="#3B1FC0" />
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8D6BFF" />
+      <stop offset="1" stop-color="#4A2AD6" />
+    </linearGradient>
+    <linearGradient id="avatar" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFB18A" />
+      <stop offset="1" stop-color="#FF6B4A" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#140a3c" flood-opacity="0.45" />
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#140a3c" flood-opacity="0.12" />
+    </filter>
+    <clipPath id="screen"><rect x="264" y="404" width="552" height="1152" rx="52" /></clipPath>
+  </defs>
+
+  <!-- the background -->
+  <rect width="1080" height="1920" fill="url(#bg)" />
+  <circle cx="120" cy="140" r="240" fill="#ffffff" opacity="0.07" />
+  <circle cx="1000" cy="1780" r="300" fill="#ffffff" opacity="0.07" />
+
+  <!-- the caption of each step -->
+  <g fill="#fff" text-anchor="middle">
+    <g class="t c0"><text x="540" y="200" font-size="64" font-weight="700" class="rtl">غلطت في الحاجة متاع تامبون؟</text><text x="540" y="285" font-size="44" opacity="0.85" class="rtl">بدّلها في زوز ثواني 👇</text></g>
+    <g class="t c1"><text x="540" y="200" font-size="60" font-weight="700" class="rtl">1. اضغط على التامبون</text><text x="540" y="285" font-size="42" opacity="0.85" class="rtl">في «آخر حركة»، في الصفحة الأولى</text></g>
+    <g class="t c2"><text x="540" y="200" font-size="60" font-weight="700" class="rtl">2. اضغط «بدّلها»</text><text x="540" y="285" font-size="42" opacity="0.85" class="rtl">غلطت في الحاجة؟ بدّلها</text></g>
+    <g class="t c3"><text x="540" y="200" font-size="60" font-weight="700" class="rtl">3. اختار الحاجة الصحيحة</text><text x="540" y="285" font-size="42" opacity="0.85" class="rtl">تتبدّل وحدها، في بلاصتها</text></g>
+    <g class="t c4"><text x="540" y="200" font-size="64" font-weight="700" class="rtl">✓ تبدّلت!</text><text x="540" y="285" font-size="42" opacity="0.85" class="rtl">التامبون يقعد كيف ما هو</text></g>
+  </g>
+  <g>
+    <circle class="t d1" cx="500" cy="340" r="9" fill="#ffffff55" />
+    <circle class="t d2" cx="540" cy="340" r="9" fill="#ffffff55" />
+    <circle class="t d3" cx="580" cy="340" r="9" fill="#ffffff55" />
+  </g>
+
+  <!-- the phone -->
+  <rect x="240" y="380" width="600" height="1200" rx="72" fill="#0F0E17" filter="url(#shadow)" />
+  <rect x="264" y="404" width="552" height="1152" rx="52" fill="#F4F2FA" />
+  <rect x="460" y="420" width="160" height="34" rx="17" fill="#0F0E17" />
+
+  <g clip-path="url(#screen)">
+    <!-- ═══ the home ═══ -->
+    <g class="t home">
+      <text x="790" y="530" font-size="24" fill="#6B6880" class="rtl" text-anchor="start">نهارك طيّب سامي</text>
+      <text x="790" y="580" font-size="40" font-weight="700" fill="#0F0E17" class="rtl" text-anchor="start">قهوة سامي</text>
+      <rect x="290" y="620" width="500" height="150" rx="34" fill="url(#card)" />
+      <text x="700" y="705" font-size="40" font-weight="700" fill="#fff" class="rtl" text-anchor="start">ورّي الكود</text>
+      <rect x="320" y="655" width="80" height="80" rx="18" fill="#ffffff33" />
+      <rect x="340" y="675" width="40" height="40" rx="6" fill="none" stroke="#fff" stroke-width="5" />
+      <text x="790" y="840" font-size="28" font-weight="700" fill="#0F0E17" class="rtl" text-anchor="start">آخر حركة</text>
+      <rect x="290" y="866" width="500" height="420" rx="30" fill="#fff" filter="url(#soft)" />
+      <!-- the row that gets tapped -->
+      <rect class="t rowhi" x="290" y="940" width="500" height="128" fill="#EEE9FF" />
+      <g font-size="23">
+        <g transform="translate(0,0)">
+          <circle cx="745" cy="1004" r="32" fill="#EEE9FF" /><text x="745" y="1013" font-size="24" font-weight="700" fill="#6C47FF" text-anchor="middle">+1</text>
+          <text x="696" y="1013" fill="#0F0E17" class="rtl" text-anchor="start">علي خذا تامبون · <tspan font-weight="700" fill="#6C47FF">كابوسة</tspan></text>
+          <text x="318" y="1013" font-size="22" fill="#6B6880">14:16</text>
+        </g>
+        <line x1="310" y1="940" x2="770" y2="940" stroke="#ECEAF3" stroke-width="2" />
+        <line x1="310" y1="1068" x2="770" y2="1068" stroke="#ECEAF3" stroke-width="2" />
+        <circle cx="745" cy="904" r="32" fill="#EEE9FF" /><text x="745" y="913" font-size="24" font-weight="700" fill="#6C47FF" text-anchor="middle">+1</text>
+        <text x="696" y="913" fill="#0F0E17" class="rtl" text-anchor="start">نور خذا تامبون · <tspan font-weight="700" fill="#6C47FF">شاي</tspan></text>
+        <text x="318" y="913" font-size="22" fill="#6B6880">14:20</text>
+        <circle cx="745" cy="1132" r="32" fill="#EEE9FF" /><text x="745" y="1141" font-size="24" font-weight="700" fill="#6C47FF" text-anchor="middle">+1</text>
+        <text x="696" y="1141" fill="#0F0E17" class="rtl" text-anchor="start">سامي خذا تامبون · <tspan font-weight="700" fill="#6C47FF">اكسبراس</tspan></text>
+        <text x="318" y="1141" font-size="22" fill="#6B6880">13:58</text>
+        <line x1="310" y1="1196" x2="770" y2="1196" stroke="#ECEAF3" stroke-width="2" />
+        <text x="540" y="1250" font-size="24" font-weight="700" fill="#6C47FF" text-anchor="middle" class="rtl">شوف الحرفاء الكل</text>
+      </g>
+    </g>
+
+    <!-- ═══ the sheet over the home ═══ -->
+    <rect class="t dim" x="264" y="404" width="552" height="1152" fill="#0F0E17" fill-opacity="0.45" />
+    <g class="t sheet">
+      <rect x="264" y="1080" width="552" height="520" rx="44" fill="#F4F2FA" />
+      <rect x="500" y="1100" width="80" height="10" rx="5" fill="#E2DFEC" />
+      <text x="780" y="1180" font-size="36" font-weight="700" fill="#0F0E17" class="rtl" text-anchor="start">علي</text>
+      <text x="780" y="1225" font-size="24" fill="#6B6880" class="rtl" text-anchor="start">علي خذا تامبون · <tspan font-weight="700" fill="#6C47FF">كابوسة</tspan> · 14:16</text>
+      <rect x="300" y="1262" width="480" height="64" rx="18" fill="url(#card)" />
+      <text x="540" y="1303" font-size="26" fill="#fff" text-anchor="middle" opacity="0.9">• • • 4/10 • • •</text>
+      <rect x="300" y="1370" width="480" height="76" rx="22" fill="#EEE9FF" />
+      <rect class="t btnhi" x="300" y="1370" width="480" height="76" rx="22" fill="#D9CFFF" />
+      <text x="540" y="1418" font-size="30" font-weight="700" fill="#6C47FF" text-anchor="middle" class="rtl">غلطت في الحاجة؟ بدّلها</text>
+      <rect x="300" y="1466" width="480" height="70" rx="22" fill="#fff" />
+      <text x="540" y="1510" font-size="28" font-weight="700" fill="#6C47FF" text-anchor="middle" class="rtl">الحرفاء الكل</text>
+    </g>
+
+    <!-- ═══ the page «بدّل الحاجة» ═══ -->
+    <g class="t page">
+      <rect x="264" y="404" width="552" height="1152" fill="#F4F2FA" />
+      <text x="790" y="560" font-size="44" font-weight="700" fill="#0F0E17" class="rtl" text-anchor="start">بدّل الحاجة</text>
+      <text x="790" y="605" font-size="24" fill="#6B6880" class="rtl" text-anchor="start">غلطت في الحاجة؟ اختار التامبون وبدّلها</text>
+      <rect x="290" y="650" width="500" height="560" rx="30" fill="#fff" filter="url(#soft)" />
+      <!-- the row, then mint once changed -->
+      <rect class="t after" x="290" y="650" width="500" height="120" rx="30" fill="#E7F8EF" />
+      <circle cx="745" cy="710" r="32" fill="url(#avatar)" /><text x="745" y="720" font-size="26" font-weight="700" fill="#fff" text-anchor="middle">ع</text>
+      <text x="696" y="702" font-size="28" font-weight="700" fill="#0F0E17" class="rtl" text-anchor="start">علي</text>
+      <text x="696" y="738" font-size="22" fill="#6B6880" class="rtl" text-anchor="start">الثلاثاء 14:16</text>
+      <g class="t before"><rect x="320" y="688" width="140" height="46" rx="23" fill="#EEE9FF" /><text x="390" y="720" font-size="24" font-weight="700" fill="#6C47FF" text-anchor="middle">كابوسة</text></g>
+      <g class="t after"><g class="t pop"><rect x="306" y="688" width="168" height="46" rx="23" fill="#12B76A" /><text x="390" y="720" font-size="24" font-weight="700" fill="#fff" text-anchor="middle" class="rtl">✓ اكسبراس</text></g></g>
+      <text x="770" y="820" font-size="24" font-weight="600" fill="#6B6880" class="rtl" text-anchor="start">التامبون هذا كان على:</text>
+      <!-- the shop's things -->
+      <g font-size="28" font-weight="700" text-anchor="middle">
+        <rect x="628" y="845" width="150" height="80" rx="22" fill="#F4F2FA" />
+        <g class="t after"><rect x="628" y="845" width="150" height="80" rx="22" fill="#6C47FF" /></g>
+        <text x="703" y="895" fill="#0F0E17" class="t before">اكسبراس</text>
+        <text x="703" y="895" fill="#fff" class="t after">اكسبراس</text>
+        <rect x="465" y="845" width="150" height="80" rx="22" fill="#F4F2FA" />
+        <g class="t before"><rect x="465" y="845" width="150" height="80" rx="22" fill="#6C47FF" /></g>
+        <text x="540" y="895" fill="#fff" class="t before">كابوسة</text>
+        <text x="540" y="895" fill="#0F0E17" class="t after">كابوسة</text>
+        <rect x="302" y="845" width="150" height="80" rx="22" fill="#F4F2FA" /><text x="377" y="895" fill="#0F0E17">شاي</text>
+      </g>
+      <line x1="310" y1="960" x2="770" y2="960" stroke="#ECEAF3" stroke-width="2" />
+      <g font-size="24">
+        <circle cx="745" cy="1020" r="30" fill="url(#avatar)" /><text x="745" y="1029" font-weight="700" fill="#fff" text-anchor="middle">ن</text>
+        <text x="696" y="1029" font-weight="700" fill="#0F0E17" class="rtl" text-anchor="start">نور</text>
+        <rect x="320" y="1000" width="110" height="44" rx="22" fill="#EEE9FF" /><text x="375" y="1030" font-weight="700" fill="#6C47FF" text-anchor="middle">شاي</text>
+        <line x1="310" y1="1080" x2="770" y2="1080" stroke="#ECEAF3" stroke-width="2" />
+        <circle cx="745" cy="1140" r="30" fill="url(#avatar)" /><text x="745" y="1149" font-weight="700" fill="#fff" text-anchor="middle">س</text>
+        <text x="696" y="1149" font-weight="700" fill="#0F0E17" class="rtl" text-anchor="start">سامي</text>
+        <rect x="320" y="1120" width="130" height="44" rx="22" fill="#EEE9FF" /><text x="385" y="1150" font-weight="700" fill="#6C47FF" text-anchor="middle">اكسبراس</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- the finger, one for each tap -->
+  <g class="t f1"><circle class="t ring1" r="10" fill="none" stroke="#fff" stroke-width="5" /><circle r="34" fill="#ffffff" opacity="0.9" filter="url(#soft)" /><circle r="18" fill="#6C47FF" opacity="0.55" /></g>
+  <g class="t f2"><circle class="t ring2" r="10" fill="none" stroke="#fff" stroke-width="5" /><circle r="34" fill="#ffffff" opacity="0.9" filter="url(#soft)" /><circle r="18" fill="#6C47FF" opacity="0.55" /></g>
+  <g class="t f3"><circle class="t ring3" r="10" fill="none" stroke="#fff" stroke-width="5" /><circle r="34" fill="#ffffff" opacity="0.9" filter="url(#soft)" /><circle r="18" fill="#6C47FF" opacity="0.55" /></g>
+
+  <!-- the name -->
+  <text x="540" y="1720" font-size="56" font-weight="700" fill="#fff" text-anchor="middle">Pointili</text>
+  <text x="540" y="1780" font-size="30" fill="#ffffff" opacity="0.75" text-anchor="middle">www.pointili.online</text>
+</svg>
