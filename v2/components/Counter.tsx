@@ -457,6 +457,11 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
             </button>
           </p>
         )}
+        {item && !paused && (
+          <Link href="/shop/tampons" className="shrink-0 text-[0.8438rem] font-semibold text-white/80 underline underline-offset-4">
+            غلطت في تامبون؟ بدّل الحاجة متاعو
+          </Link>
+        )}
 
         <div className="flex h-12 shrink-0 items-center">
           {latest?.held ? (

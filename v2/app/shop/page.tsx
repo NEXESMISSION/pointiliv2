@@ -177,6 +177,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
             <>
               {/* each line opens: the customer's card as it stands (owners kept tapping them) */}
               <RecentList
+                fix={!!shop.items_on}
                 shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift, store: !!shop.store_on }}
                 rows={[
                   ...recent.map((r) => ({

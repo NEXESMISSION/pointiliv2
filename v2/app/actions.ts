@@ -315,8 +315,16 @@ export async function saveItems(names: string[], on: boolean): Promise<{ ok: boo
 }
 
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
-export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push" | "install"): Promise<void> {
+export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push" | "install" | "fix_tip"): Promise<void> {
   await call("see", { p_key: note });
+}
+
+/** A tampon written against the wrong thing, put right (the owner's «بدّل الحاجة»). */
+export async function setMomentItem(moment: number, item: number): Promise<boolean> {
+  if (!Number.isSafeInteger(moment) || !Number.isSafeInteger(item)) return false;
+  const res = await call<{ ok: boolean }>("set_moment_item", { p_moment: moment, p_item: item });
+  if (res?.ok) revalidatePath("/shop", "layout");
+  return !!res?.ok;
 }
 
 /** A gift the customer's card holds for the shop to hand over. */

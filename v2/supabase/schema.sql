@@ -608,7 +608,7 @@ create or replace function public.see(p_key text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then return public.err('not_signed_in'); end if;
-  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push', 'install') then return public.err('invalid'); end if;
+  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push', 'install', 'fix_tip') then return public.err('invalid'); end if;
   update public.people set seen = array_append(seen, p_key) where id = auth.uid() and not (p_key = any (seen));
   return jsonb_build_object('ok', true);
 end $$;
@@ -3313,6 +3313,41 @@ begin
   return jsonb_build_object('ok', true, 'shop', s.name);
 end $$;
 
+
+-- ═══ a tampon written against the wrong thing ═════════════════════════════
+-- The counter asks which thing a tampon is for, and a finger can tap the wrong
+-- one. The owner sees the latest tampons (a week back) and puts each right in a
+-- tap; nothing else about the tampon changes — the customer, the card, the time.
+create or replace function public.my_stamps() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return jsonb_build_object('ok', true, 'items', public.my_items(),
+    'stamps', coalesce((
+      select jsonb_agg(jsonb_build_object('id', m.id, 'at', m.created_at, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone),
+                                          'item', m.item_id, 'item_name', (select i.name from public.items i where i.id = m.item_id))
+                       order by m.created_at desc)
+      from (select * from public.moments where shop_id = s.id and kind = 'stamp' and created_at > now() - interval '7 days'
+            order by created_at desc limit 60) m
+      join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id), '[]'::jsonb));
+end $$;
+
+create or replace function public.set_moment_item(p_moment bigint, p_item bigint) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_name text;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  select name into v_name from public.items where id = p_item and shop_id = s.id and rank < 999;
+  if v_name is null then return public.err('invalid'); end if;
+  update public.moments set item_id = p_item
+  where id = p_moment and shop_id = s.id and kind = 'stamp' and created_at > now() - interval '7 days';
+  if not found then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true, 'name', v_name);
+end $$;
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 -- ═══ once: the owners from before the notes were kept here ═════════════════
@@ -3332,7 +3367,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.new_code(bigint), public.my_items(), public.set_items(text[]), public.set_items_on(boolean), public.item_report(int),
   public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid),
   public.admin_set_store(uuid, boolean), public.admin_set_items(uuid, boolean), public.admin_trial(uuid, int, boolean), public.admin_phone_ask(uuid, boolean), public.phone_give(text),
-  public.admin_set_wheel(uuid, boolean),
+  public.admin_set_wheel(uuid, boolean), public.my_stamps(), public.set_moment_item(bigint, bigint),
   public.admin_forms(uuid), public.admin_form_save(uuid, uuid, text, jsonb, boolean), public.admin_form_delete(uuid), public.admin_form_entries(uuid),
   public.form_open(text), public.form_fill(text, jsonb), public.my_wheel(), public.wheel_save(jsonb), public.spin(bigint), public.spin_at_counter(bigint), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
   public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),

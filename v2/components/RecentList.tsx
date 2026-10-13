@@ -37,7 +37,7 @@ const say = {
  * tapping them (43 taps on nothing in two days) — the customer's card as it
  * stands, what just happened, and the way to all the customers.
  */
-export function RecentList({ rows, shop }: { rows: RecentRow[]; shop: PassShop }) {
+export function RecentList({ rows, shop, fix = false }: { rows: RecentRow[]; shop: PassShop; fix?: boolean }) {
   const [open, setOpen] = useState<RecentRow | null>(null);
   useEffect(() => {
     if (!open) return;
@@ -105,6 +105,12 @@ export function RecentList({ rows, shop }: { rows: RecentRow[]; shop: PassShop }
             </p>
             {/* every tampon on the card, and what each one was for */}
             {open.card && <CardMoments card={open.card} color={shop.color} />}
+            {/* the wrong thing tapped at the counter: put right in two taps */}
+            {fix && open.kind === "stamp" && (
+              <Link href={`/shop/tampons?m=${open.id}`} className="press mt-3 flex h-11 items-center justify-center rounded-[1rem] bg-brand-soft text-[0.9062rem] font-bold text-brand">
+                غلطت في الحاجة؟ بدّلها
+              </Link>
+            )}
             <Link href="/shop/customers" className="press mt-4 flex h-12 items-center justify-center gap-1 rounded-[1rem] bg-surface text-[0.9375rem] font-bold text-brand shadow-card">
               {say.all} <ChevronLeft className="size-4" />
             </Link>
