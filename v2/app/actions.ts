@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath, updateTag } from "next/cache";
 import { after } from "next/server";
 import { sendPush } from "@/lib/push";
+import { alertNewShop, alertPay, alertStamp } from "@/lib/telegram";
 import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
@@ -215,7 +216,12 @@ export async function scan(token: string): Promise<ScanResult> {
     if (error || !data) return { kind: "error", code: "network" };
     if (hold) keepHeld(held.filter(([k]) => k !== token));
     const res = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null };
-    if (res.ok && res.card) return { kind: "stamped", card: res.card, gift: !!res.gift, item: res.item ?? null };
+    if (res.ok && res.card) {
+      const c = res.card;
+      // the founder's Telegram: a shop's first real customer, then 5, 10, 25… (lib/telegram)
+      after(() => alertStamp(c.shop.id, c.id));
+      return { kind: "stamped", card: c, gift: !!res.gift, item: res.item ?? null };
+    }
     return { kind: "error", code: res.error ?? "invalid", card: res.card, next_at: res.next_at, shop: res.shop };
   }
 
@@ -239,6 +245,8 @@ export async function openShop(_: FormState, fd: FormData): Promise<FormState> {
   if (!me) return { error: t.errNetwork };
   const res = await call<{ ok: boolean; error?: string }>("open_shop", { p_name: name, p_kind: str(fd, "kind") });
   if (!res?.ok) return { error: t.errNetwork };
+  // a new shop: a word to the founder's Telegram (not when an owner only renames theirs)
+  if (!me.shop) after(() => alertNewShop(me.id));
   // the logo: only a picture of this owner's own folder in the box; "" takes it away
   const logo = str(fd, "logo");
   const before = me.shop?.logo ?? "";
@@ -341,6 +349,11 @@ export async function giveStamp(who: string, item?: number | null, back?: string
   const res = await call<{ ok: boolean; error?: string; gift?: boolean; name?: string | null; card?: CardView; next_at?: string; waiting?: WaitingGift | null; moment?: number }>("give_stamp", { p_who: String(who).slice(0, 20), p_item: Number.isSafeInteger(item) ? item : null });
   // the tampon of a scan that never finished (no account then), given back now: that scan is settled
   if (res?.ok && back && /^[0-9a-f-]{36}$/i.test(back)) await call("held_back", { p_code: back });
+  // the founder's Telegram: a shop's first real customer, then 5, 10, 25…
+  if (res?.ok && res.card) {
+    const c = res.card;
+    after(() => alertStamp(c.shop.id, c.id));
+  }
   // the last tampon by the shop's hand: the customer's phone hears it, after the answer has left
   if (res?.ok && res.gift && res.card) {
     const card = res.card;
@@ -376,6 +389,11 @@ export async function unstamp(moment: number): Promise<{ ok: boolean; error?: st
 /** The owner chose a way to pay and says the money is sent: one payment waits for the founder's word. */
 export async function payRequest(method: string): Promise<{ ok: boolean; months?: number; error?: string }> {
   const res = await call<{ ok: boolean; months?: number; error?: string }>("pay_request", { p_method: method });
+  // the founder's Telegram: money on its way (or a call wanted)
+  if (res?.ok) {
+    const me = await getMe();
+    if (me) after(() => alertPay(me.id, method));
+  }
   revalidatePath("/shop");
   return res ?? { ok: false, error: "network" };
 }

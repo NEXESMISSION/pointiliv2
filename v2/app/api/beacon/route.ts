@@ -1,6 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 import { getMe, sessionId } from "@/lib/session";
 import { service } from "@/lib/supabase";
+import { alertCall } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -126,6 +127,11 @@ export async function POST(request: NextRequest) {
   if (error) {
     console.error("[track]", error.message);
     return new NextResponse(null, { status: 400 });
+  }
+  // an owner tapped «كلّمنا» on the trial's line: the founder's Telegram rings (not a robot's, not on the local server)
+  if (me?.shop && !visit.is_bot && (body.signals ?? []).some((g) => (g as { name?: unknown })?.name === "trial_call")) {
+    const owner = me.id;
+    after(() => alertCall(owner));
   }
   return new NextResponse(null, { status: 204 });
 }
