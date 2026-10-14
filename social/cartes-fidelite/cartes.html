@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Cartes de fidélité</title>
+<!--
+  Four loyalty cards, print-ready: each 85 × 55 mm with 3 mm bleed (91 × 61 mm
+  per page), text inside a 4 mm safe zone. Open with ?card=N to show one card
+  alone (the PDF/PNG export uses it), or with nothing to see them all.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Montserrat:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Great+Vibes&family=Pacifico&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  @page { size: 91mm 61mm; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #e9e7ef; }
+  body { display: flex; flex-wrap: wrap; gap: 8mm; padding: 8mm; }
+  .card { width: 91mm; height: 61mm; position: relative; overflow: hidden; }
+  .card svg { width: 100%; height: 100%; display: block; }
+  html:has(body.one) { background: none; }
+  body.one { padding: 0; gap: 0; background: none; }
+  body.one .card { break-after: page; }
+  @media print { body { padding: 0; gap: 0; background: none; } .card { break-after: page; } }
+</style>
+</head>
+<body>
+
+<!-- ═══ 2. Barber King — black and gold, 8 stamps ═══ -->
+<div class="card" id="c2">
+<svg viewBox="0 0 910 610" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F6E3A1" /><stop offset="0.45" stop-color="#D4AF37" /><stop offset="1" stop-color="#A47A1E" />
+    </linearGradient>
+    <radialGradient id="bk" cx="0.5" cy="0.3" r="0.9"><stop offset="0" stop-color="#22201c" /><stop offset="1" stop-color="#0b0b0b" /></radialGradient>
+    <g id="scis">
+      <circle cx="-9" cy="13" r="7" fill="none" stroke="url(#gold)" stroke-width="3.2" />
+      <circle cx="9" cy="13" r="7" fill="none" stroke="url(#gold)" stroke-width="3.2" />
+      <path d="M-5 7 L10 -18 M5 7 L-10 -18" stroke="url(#gold)" stroke-width="3.6" stroke-linecap="round" />
+    </g>
+  </defs>
+  <rect width="910" height="610" fill="url(#bk)" />
+  <!-- fine gold frame, inside the safe zone -->
+  <rect x="58" y="58" width="794" height="494" rx="16" fill="none" stroke="url(#gold)" stroke-width="2.4" />
+  <rect x="68" y="68" width="774" height="474" rx="12" fill="none" stroke="#D4AF37" stroke-opacity="0.35" stroke-width="1" />
+  <!-- crown -->
+  <path d="M405 128 L418 96 L436 116 L455 86 L474 116 L492 96 L505 128 Z" fill="url(#gold)" />
+  <rect x="405" y="131" width="100" height="9" rx="2" fill="url(#gold)" />
+  <text x="455" y="208" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="62" fill="url(#gold)" letter-spacing="4">BARBER KING</text>
+  <g stroke="url(#gold)" stroke-width="1.6"><line x1="250" y1="236" x2="400" y2="236" /><line x1="510" y1="236" x2="660" y2="236" /></g>
+  <text x="455" y="244" text-anchor="middle" font-family="Montserrat" font-weight="600" font-size="22" fill="#E9D49A" letter-spacing="6">CARTE DE FIDÉLITÉ</text>
+  <!-- 8 stamps, two rows of four -->
+  <g fill="none" stroke="url(#gold)" stroke-width="2.6">
+    <circle cx="290" cy="320" r="34" /><circle cx="400" cy="320" r="34" /><circle cx="510" cy="320" r="34" /><circle cx="620" cy="320" r="34" />
+    <circle cx="290" cy="410" r="34" /><circle cx="400" cy="410" r="34" /><circle cx="510" cy="410" r="34" /><circle cx="620" cy="410" r="34" />
+  </g>
+  <circle cx="620" cy="410" r="34" fill="#D4AF37" fill-opacity="0.12" />
+  <use href="#scis" x="620" y="410" />
+  <text x="455" y="500" text-anchor="middle" font-family="Montserrat" font-weight="700" font-size="25" fill="#F1DFA8" letter-spacing="1.5">8 coupes = 1 coupe offerte</text>
+</svg>
+</div>
+
+<!-- ═══ 3. Pâtisserie Yasmine — pastel pink and cream, 6 stamps ═══ -->
+<div class="card" id="c3">
+<svg viewBox="0 0 910 610" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="#F2B8C6" fill-opacity="0.45" /></pattern>
+    <g id="cake">
+      <path d="M-15 2 L15 2 L11 20 L-11 20 Z" fill="#E86A8D" />
+      <path d="M-17 3 C-17 -10 -6 -16 0 -16 C6 -16 17 -10 17 3 Z" fill="#FBE3EA" stroke="#E86A8D" stroke-width="2.2" />
+      <circle cx="0" cy="-19" r="4.5" fill="#D6334F" />
+    </g>
+  </defs>
+  <rect width="910" height="610" fill="#FFF6F3" />
+  <rect width="910" height="610" fill="url(#dots)" />
+  <!-- scalloped band on top -->
+  <path d="M0 0 H910 V118 Q887 146 864 118 Q841 146 818 118 Q795 146 772 118 Q749 146 726 118 Q703 146 680 118 Q657 146 634 118 Q611 146 588 118 Q565 146 542 118 Q519 146 496 118 Q473 146 450 118 Q427 146 404 118 Q381 146 358 118 Q335 146 312 118 Q289 146 266 118 Q243 146 220 118 Q197 146 174 118 Q151 146 128 118 Q105 146 82 118 Q59 146 36 118 Q13 146 0 118 Z" fill="#F7C6D3" />
+  <text x="455" y="92" text-anchor="middle" font-family="Great Vibes" font-size="68" fill="#B83A5E">Pâtisserie Yasmine</text>
+  <text x="455" y="205" text-anchor="middle" font-family="Poppins" font-weight="600" font-size="22" fill="#B83A5E" letter-spacing="6">CARTE DE FIDÉLITÉ</text>
+  <!-- 6 stamps, one row -->
+  <g fill="#ffffff" stroke="#E89AB0" stroke-width="3" stroke-dasharray="7 6">
+    <circle cx="190" cy="320" r="42" /><circle cx="296" cy="320" r="42" /><circle cx="402" cy="320" r="42" /><circle cx="508" cy="320" r="42" /><circle cx="614" cy="320" r="42" />
+  </g>
+  <circle cx="720" cy="320" r="42" fill="#FCE4EB" stroke="#E86A8D" stroke-width="3" />
+  <use href="#cake" x="720" y="322" />
+  <rect x="235" y="408" width="440" height="56" rx="28" fill="#E86A8D" />
+  <text x="455" y="445" text-anchor="middle" font-family="Poppins" font-weight="700" font-size="25" fill="#fff">6 gâteaux = 1 gâteau offert</text>
+  <text x="455" y="518" text-anchor="middle" font-family="Playfair Display" font-style="italic" font-weight="600" font-size="21" fill="#B83A5E" fill-opacity="0.75">Merci pour votre fidélité</text>
+</svg>
+</div>
+
+<!-- ═══ 4. Lavage Express — blue and white, 12 stamps ═══ -->
+<div class="card" id="c4">
+<svg viewBox="0 0 910 610" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E88E5" /><stop offset="1" stop-color="#0B3D91" /></linearGradient>
+    <g id="car">
+      <path d="M-20 4 L-16 -6 Q-14 -11 -8 -11 L8 -11 Q14 -11 16 -6 L20 4 Q22 5 22 8 L22 13 L-22 13 L-22 8 Q-22 5 -20 4 Z" fill="#1E88E5" />
+      <path d="M-12 -8 L-14 -1 L14 -1 L12 -8 Z" fill="#E3F2FD" />
+      <circle cx="-12" cy="14" r="5" fill="#0B3D91" /><circle cx="12" cy="14" r="5" fill="#0B3D91" />
+    </g>
+  </defs>
+  <rect width="910" height="610" fill="#ffffff" />
+  <!-- the blue side with a wave -->
+  <path d="M0 0 H910 V170 C760 230 600 120 455 170 C310 220 150 120 0 175 Z" fill="url(#blue)" />
+  <!-- bubbles -->
+  <g fill="#ffffff" fill-opacity="0.18"><circle cx="90" cy="70" r="26" /><circle cx="150" cy="120" r="12" /><circle cx="820" cy="60" r="20" /><circle cx="770" cy="110" r="10" /></g>
+  <text x="455" y="100" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="60" fill="#ffffff" letter-spacing="1">LAVAGE EXPRESS</text>
+  <text x="455" y="140" text-anchor="middle" font-family="Montserrat" font-weight="600" font-size="20" fill="#BBDEFB" letter-spacing="7">CARTE DE FIDÉLITÉ</text>
+  <!-- 12 stamps, two rows of six -->
+  <g fill="#ffffff" stroke="#1E88E5" stroke-width="2.6">
+    <circle cx="195" cy="285" r="31" /><circle cx="299" cy="285" r="31" /><circle cx="403" cy="285" r="31" /><circle cx="507" cy="285" r="31" /><circle cx="611" cy="285" r="31" /><circle cx="715" cy="285" r="31" />
+    <circle cx="195" cy="375" r="31" /><circle cx="299" cy="375" r="31" /><circle cx="403" cy="375" r="31" /><circle cx="507" cy="375" r="31" /><circle cx="611" cy="375" r="31" />
+  </g>
+  <circle cx="715" cy="375" r="31" fill="#E3F2FD" stroke="#0B3D91" stroke-width="3" />
+  <use href="#car" x="715" y="374" />
+  <text x="455" y="462" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="27" fill="#0B3D91">12 lavages = 1 lavage offert</text>
+  <rect x="345" y="482" width="220" height="5" rx="2.5" fill="#1E88E5" />
+  <text x="455" y="530" text-anchor="middle" font-family="Montserrat" font-weight="600" font-size="19" fill="#1E88E5" letter-spacing="3">EXTÉRIEUR · INTÉRIEUR · POLISSAGE</text>
+</svg>
+</div>
+
+<!-- ═══ 5. Pizzeria Bella — Italian red, cream and green, 9 stamps ═══ -->
+<div class="card" id="c5">
+<svg viewBox="0 0 910 610" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="check" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="#C62828" /><rect width="20" height="20" fill="#E35050" /><rect x="20" y="20" width="20" height="20" fill="#E35050" />
+    </pattern>
+    <g id="pizza">
+      <path d="M0 -20 L18 16 Q0 24 -18 16 Z" fill="#F9C74F" stroke="#C77D1C" stroke-width="2.5" stroke-linejoin="round" />
+      <path d="M-18 16 Q0 24 18 16" fill="none" stroke="#B5651D" stroke-width="5" stroke-linecap="round" />
+      <circle cx="-4" cy="2" r="4" fill="#C62828" /><circle cx="5" cy="9" r="3.5" fill="#C62828" /><circle cx="1" cy="-8" r="3" fill="#C62828" />
+    </g>
+  </defs>
+  <rect width="910" height="610" fill="#FFF8EC" />
+  <!-- the checked band on the left -->
+  <rect width="150" height="610" fill="url(#check)" />
+  <rect x="150" width="10" height="610" fill="#2E7D32" />
+  <rect x="160" width="6" height="610" fill="#ffffff" />
+  <rect x="166" width="10" height="610" fill="#C62828" />
+  <text x="530" y="125" text-anchor="middle" font-family="Pacifico" font-size="66" fill="#C62828">Pizzeria Bella</text>
+  <text x="530" y="168" text-anchor="middle" font-family="Poppins" font-weight="600" font-size="20" fill="#2E7D32" letter-spacing="6">CARTE DE FIDÉLITÉ</text>
+  <!-- 9 stamps, three rows of three -->
+  <g fill="#ffffff" stroke="#C62828" stroke-width="2.6">
+    <circle cx="420" cy="245" r="30" /><circle cx="530" cy="245" r="30" /><circle cx="640" cy="245" r="30" />
+    <circle cx="420" cy="325" r="30" /><circle cx="530" cy="325" r="30" /><circle cx="640" cy="325" r="30" />
+    <circle cx="420" cy="405" r="30" /><circle cx="530" cy="405" r="30" />
+  </g>
+  <circle cx="640" cy="405" r="30" fill="#FFE9B3" stroke="#2E7D32" stroke-width="3" />
+  <use href="#pizza" x="640" y="404" />
+  <text x="530" y="492" text-anchor="middle" font-family="Poppins" font-weight="800" font-size="26" fill="#C62828">9 pizzas = 1 pizza offerte</text>
+  <text x="530" y="525" text-anchor="middle" font-family="Playfair Display" font-style="italic" font-weight="600" font-size="19" fill="#2E7D32">Buon appetito !</text>
+</svg>
+</div>
+
+<script>
+  // ?card=N: that card alone, page-sized (the export uses it)
+  const n = new URLSearchParams(location.search).get("card");
+  if (n) {
+    document.body.classList.add("one");
+    for (const c of document.querySelectorAll(".card")) if (c.id !== "c" + n) c.remove();
+  }
+</script>
+</body>
+</html>
