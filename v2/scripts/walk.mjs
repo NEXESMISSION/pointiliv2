@@ -87,61 +87,42 @@ try {
     await shot(o, "01b-video", 1200);
     await o.keyboard.press("Escape");
   }
+  // the owner's three steps. ① the account and the shop, on one screen
   await o.goto(BASE + "/shop/new", { waitUntil: "load" });
   await o.locator('input[name="name"]').fill("ياسمين");
+  await o.locator('input[name="shop"]').fill("Café Yasmine");
   await o.locator('input[name="phone"]').fill(ownerPhone);
   await o.locator('input[name="password"]').fill("yasmine123");
-  await shot(o, "02-owner-account", 300);
-  await Promise.all([o.waitForURL("**/shop/setup", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
-  await o.locator('input[name="name"]').fill("Café Yasmine");
-  await o.getByRole("button", { name: "قهوة" }).click();
-  // the logo (not needed): a picture from the phone, made small, shown beside the name
-  await o.locator('input[type="file"]').setInputFiles("app/apple-icon.png");
-  await o.locator('img[src*="/logos/"]').first().waitFor({ timeout: 30000 });
-  await shot(o, "03-owner-shop", 300);
-  // the other 39 kinds: the full list, a search in it, a pick from it
+  // the other 39 kinds: the full list, a search in it, a pick from it (it takes the row's first place)
   await o.getByRole("button", { name: /الكل/ }).click();
   await o.getByRole("dialog").waitFor();
   await shot(o, "03b-kinds-all", 500);
   await o.locator('input[type="search"]').fill("parfum");
   await shot(o, "03c-kinds-search", 400);
   await o.getByRole("dialog").getByRole("button", { name: "عطورات" }).click();
+  await o.getByRole("radio", { name: /عطورات/ }).waitFor();
   await shot(o, "03d-kinds-picked", 400);
-  await o.getByRole("button", { name: "قهوة" }).click();
-  await Promise.all([o.waitForURL("**/shop/card", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
-  // the card, one question at a time: the hello, how many, which gift, how long between two, which colour, ready
-  await o.getByRole("heading", { name: /توّا نعملو مع بعضنا/ }).waitFor({ timeout: 30000 });
-  await shot(o, "04a-card-hello", 1600);
-  await o.reload({ waitUntil: "load" });
-  await never(o, "the card's hello (reload)", o.getByRole("heading", { name: /توّا نعملو مع بعضنا/ }), 1500);
-  await o.getByText("قدّاش من تامبون").first().waitFor({ timeout: 20000 });
-  await o.getByRole("textbox", { name: "ولا اكتب العدد" }).fill("15");
-  await shot(o, "04b2-card-goal-typed", 500);
-  await o.getByRole("button", { name: "5", exact: true }).click();
+  await o.getByRole("radio", { name: /قهوة/ }).click();
+  await shot(o, "02-owner-account", 300);
+  await Promise.all([o.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
+  // ② the card on one screen, already answered for a café: a goal and a gift are taps, the card changes above them
+  await o.getByText("قدّاش من تامبون، وشنوّة يربح؟").waitFor({ timeout: 30000 });
+  await shot(o, "04-owner-card", 900);
+  await o.getByRole("radio", { name: "5", exact: true }).click();
+  await o.getByRole("button", { name: /جرّب: زيد تامبون/ }).click();
   await shot(o, "04b-card-goal", 600);
-  await o.getByRole("button", { name: "كمّل" }).click();
-  await o.getByText("شنوّة يربح الحريف").waitFor();
-  await shot(o, "04c-card-gift", 600);
-  await o.getByRole("button", { name: "كمّل" }).click();
-  // the wait between two tampons: an hour stays (the rest of the walk scans by the hour)
-  await o.getByText("كل قدّاش ينجم الحريف").waitFor();
-  await shot(o, "04c2-card-wait", 600);
-  await o.getByRole("button", { name: "كمّل" }).click();
-  await o.getByRole("button", { name: "#FF6B4A" }).click();
-  await shot(o, "04d-card-color", 600);
-  await o.getByRole("button", { name: "كمّل" }).click();
-  await o.getByText("الكارط متاعك حاضرة").waitFor();
-  await shot(o, "04-owner-card", 1200);
-  // the button breathes: Playwright never finds it "stable", so the click is forced; a sheet says how the card works first
-  await o.getByRole("button", { name: "حلّ الكود" }).click({ force: true });
-  await o.getByRole("dialog", { name: "هكّا تخدم الكارط متاعك" }).waitFor({ timeout: 20000 });
-  await shot(o, "04e-card-how", 700);
-  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }), o.getByRole("button", { name: "باهي، حلّ الكود" }).click()]);
-  // the card is ready: the bravo meets them on their own home and asks for one
-  // thing — press «ورّي الكود». That is what opens the counter, and its note.
-  await o.getByText("برافو").waitFor({ timeout: 30000 });
-  await shot(o, "05a-bravo", 1400);
-  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), o.getByRole("button", { name: "ورّي الكود" }).click()]);
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/start", { timeout: 60000 }), o.getByRole("button", { name: "حلّ الكارط" }).click()]);
+  // ③ what the customer sees, in four beats (by day: then the counter; ?night=0 whatever the walk's hour)
+  await o.goto(BASE + "/shop/start?night=0", { waitUntil: "load" });
+  const demo = o.getByRole("dialog", { name: "هكّا يشوفها الحريف" });
+  await demo.waitFor({ timeout: 20000 });
+  for (let i = 0; i < 3; i++) {
+    await shot(o, `05c-try-${i + 1}`, 700);
+    await demo.getByRole("button", { name: "كمّل", exact: true }).click();
+  }
+  await shot(o, "05c-try-4", 700);
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), demo.getByRole("button", { name: "فهمت، ورّيني الكود" }).click()]);
+  console.log("  · the customer's side, replayed in four beats, then the counter ✓");
   await o.getByText("عندك تليفون آخر").waitFor({ timeout: 20000 });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05b-tip", 900);
@@ -155,18 +136,24 @@ try {
   await o.waitForURL((u) => u.pathname === "/shop/qr" && !u.search, { timeout: 20000 });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05-counter", 1200);
-  // alone with one phone: the customer's side, replayed from the counter's pill (the home's three steps open the same)
-  await o.getByRole("button", { name: "شوف شنوّة يشوف الحريف" }).click();
-  const demo = o.getByRole("dialog", { name: "هكّا يشوفها الحريف" });
-  await demo.waitFor({ timeout: 20000 });
-  for (let i = 0; i < 4; i++) {
-    await shot(o, `05c-try-${i + 1}`, 700);
-    await demo.getByRole("button", { name: i === 3 ? "فهمت" : "كمّل", exact: true }).click();
-  }
-  await demo.waitFor({ state: "detached", timeout: 10000 });
-  console.log("  · the customer's side, replayed in four beats ✓");
   await o.reload({ waitUntil: "load" });
-  await never(o, "the bravo (reload)", o.getByText("برافو"));
+  await never(o, "the tip (reload)", o.getByText("عندك تليفون آخر"));
+  // the night's ending, by the same steps: the morning, not the counter
+  await o.goto(BASE + "/shop/start?night=1", { waitUntil: "load" });
+  for (let i = 0; i < 4; i++) await o.getByRole("dialog", { name: "هكّا يشوفها الحريف" }).getByRole("button", { name: "كمّل", exact: true }).click();
+  await o.getByRole("heading", { name: "الحانوت مسكّر توّا؟" }).waitFor({ timeout: 20000 });
+  await shot(o, "05d-night", 600);
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 30000 }), o.getByRole("link", { name: "باهي، غدوة" }).click()]);
+  // before the first customer the home has one job: no logo tip, no install, no offer over it — and its first steps
+  await never(o, "a note before the first customer", o.getByRole("dialog"), 1500);
+  await o.getByRole("region", { name: "باش تبدا" }).waitFor({ timeout: 10000 });
+  await shot(o, "05e-home-mission", 400);
+  // the logo, from «المحل» (not asked on the way in): a picture from the phone, made small, shown beside the name
+  await o.goto(BASE + "/shop/setup?edit=1", { waitUntil: "load" });
+  await o.locator('input[type="file"]').setInputFiles("app/apple-icon.png");
+  await o.locator('img[src*="/logos/"]').first().waitFor({ timeout: 30000 });
+  await shot(o, "03-owner-shop", 300);
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   await o.goto(BASE + "/shop/qr", { waitUntil: "load" });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
 
@@ -198,6 +185,15 @@ try {
   await c.getByText("تامبون جديد!").waitFor({ timeout: 30000 });
   await shot(c, "08-stamped", 1800);
   await plusOne;
+  // the shop's very first customer: the counter says what just happened, once
+  {
+    const bravo = o.getByRole("dialog", { name: "شفت؟ هكّا!" });
+    await bravo.waitFor({ timeout: 20000 });
+    await shot(o, "09b-first-customer", 900);
+    await bravo.getByRole("button", { name: "باهي" }).click();
+    await bravo.waitFor({ state: "detached", timeout: 10000 });
+    console.log("  · the first customer, celebrated on the counter ✓");
+  }
   // the card asks once for a word to this phone: the phone's own question says yes (granted here), the browser's
   // subscription is stood in for (no push service in a headless browser), and the phone is written down
   await c.context().grantPermissions(["notifications"], { origin: BASE });
@@ -250,6 +246,20 @@ try {
   // the counter shows who won, and the camera to hand it over (never a tap alone)
   await o.getByRole("link", { name: "سكاني" }).waitFor({ timeout: 20000 });
   await shot(o, "11-counter-gift", 1200);
+  // the shop's first gift won: the home says how to hand it over, once
+  await o.goto(BASE + "/shop", { waitUntil: "load" });
+  {
+    const how = o.getByRole("dialog", { name: "باش تعطيهولو:" });
+    await how.waitFor({ timeout: 20000 });
+    await shot(o, "11b-first-gift-how", 900);
+    await how.getByRole("button", { name: "من بعد" }).click();
+    // one note a visit: the next one is the logo's (the shop has a customer now)
+    await o.reload({ waitUntil: "load" });
+    await o.getByRole("dialog", { name: "اللوغو متاعك هوني" }).waitFor({ timeout: 20000 });
+    await shot(o, "17d-logo-tip", 700);
+    await o.getByRole("button", { name: "باهي", exact: true }).click();
+    await never(o, "the first gift's how-to (reload)", o.getByRole("dialog", { name: "باش تعطيهولو:" }), 500);
+  }
   // the owner types the code under the customer's QR: the question comes up, the gift is handed over
   const { data: gifted } = await admin.from("people").select("code").eq("phone", `+216${customerPhone}`).single();
   await o.goto(BASE + "/shop/collect?by=code", { waitUntil: "load" });
@@ -291,13 +301,8 @@ try {
     newsId = piece.id;
   }
   await o.goto(BASE + "/shop", { waitUntil: "load" });
-  await o.getByRole("dialog", { name: "اللوغو متاعك هوني" }).waitFor({ timeout: 20000 });
-  await shot(o, "17d-logo-tip", 700);
-  await o.getByRole("button", { name: "باهي", exact: true }).click();
-  await shot(o, "17-owner-home");
-  await o.reload({ waitUntil: "load" });
   await never(o, "the logo tip (reload)", o.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
-  // one note a visit: after the logo tip, the offer (a new shop's first 48 hours), then the news
+  // one note a visit: after the logo tip, the offer (its 48 hours start with the first customer), then the news
   const offer = o.getByRole("dialog", { name: "عام كامل + 3 شهور بلاش" });
   await offer.waitFor({ timeout: 20000 });
   await shot(o, "17f-offer", 1300);
@@ -311,6 +316,7 @@ try {
   await o.waitForURL("**/shop/setup?edit=1", { timeout: 20000 });
   await o.goto(BASE + "/shop", { waitUntil: "load" });
   await never(o, "the news (back home)", news);
+  await shot(o, "17-owner-home");
   // the welcome's own address, now that every note on this screen has had its turn
   await o.goto(BASE + "/shop?welcome=1", { waitUntil: "load" });
   await never(o, "the bravo (its old address)", o.getByText("برافو"));

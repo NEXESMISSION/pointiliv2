@@ -38,6 +38,8 @@ type Shop = {
   store_on: boolean;
   trial_until: string;
   trial_over: boolean;
+  /** false: the trial's clock waits for the shop's first customer (shops opened since 14 Oct 2026) */
+  trial_started?: boolean;
   wheel_on: boolean;
   wheel: { id: number; name: string; chance: number }[];
   wheel_fell: { name: string; n: number }[];
@@ -255,7 +257,7 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
           >
             <AdminPlan shopId={s.id} paidUntil={s.plan.paid_until} paid={s.plan.paid} shop={s.name} owner={s.owner?.name ?? null} />
             {/* more days of trial: not a subscription, the owner is told plainly */}
-            {!s.plan.paid && <AdminTrial shopId={s.id} until={s.trial_until} over={s.trial_over} />}
+            {!s.plan.paid && <AdminTrial shopId={s.id} until={s.trial_until} over={s.trial_over} started={s.trial_started !== false} />}
             {(s.plan.log.length > 0 || s.plan.payments.some((y) => y.status === "pending")) && (
               <div className="mt-4 border-t border-line pt-3">
                 <p className="mb-2 text-[0.8438rem] font-bold text-muted">{t.aPlanHistory}</p>

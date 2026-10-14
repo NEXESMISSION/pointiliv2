@@ -11,7 +11,7 @@ import { signal } from "@/lib/track";
 import type { FormState } from "@/lib/types";
 
 /** The kinds most shops are: one tap away. The other 39 are behind «الكل». */
-const POPULAR = ["cafe", "juice", "bakery", "pastry", "restaurant", "fastfood", "pizza", "barber", "hair", "beauty", "clothes"];
+export const POPULAR = ["cafe", "juice", "bakery", "pastry", "restaurant", "fastfood", "pizza", "barber", "hair", "beauty", "clothes"];
 
 /**
  * Step 2 for an owner: the shop's name (and its logo beside it, if the owner

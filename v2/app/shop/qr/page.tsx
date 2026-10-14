@@ -14,6 +14,8 @@ export default async function ShopQr({ searchParams }: { searchParams: Promise<{
   if (!me.shop.goal) redirect("/shop/card");
   // a shop that says what it sells: the counter asks which one before it makes a code
   const items = me.shop.items_on ? ((await call<{ id: number; name: string }[]>("my_items")) ?? []) : [];
+  // no customer yet (the owner's own card aside): the counter celebrates the first one, once
+  const firstWaits = !(me.seen ?? []).includes("first_scan") && ((await call<{ served?: number }>("shop_home"))?.served ?? 1) === 0;
   return (
     <Counter
       shop={{ id: me.shop.id, name: me.shop.name, kind: me.shop.kind, color: me.shop.color, paused: !!me.shop.paused, signal: me.shop.signal, logo: me.shop.logo, stamp_logo: me.shop.stamp_logo, goal: me.shop.goal, gift: me.shop.gift }}
@@ -22,6 +24,7 @@ export default async function ShopQr({ searchParams }: { searchParams: Promise<{
       tip={tip === "1"}
       // past the trial the code's place says so (the code itself is refused), with a call to this number
       phone={help.phone}
+      firstWaits={firstWaits}
     />
   );
 }

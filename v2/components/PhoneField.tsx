@@ -13,12 +13,12 @@ function shape(raw: string): string {
 }
 
 /** A Tunisian mobile number: +216 written in, the eight digits spaced as they are said. */
-export function PhoneField({ label, name = "phone", error }: { label: string; name?: string; error?: string | null }) {
+export function PhoneField({ label, name = "phone", error, compact }: { label: string; name?: string; error?: string | null; compact?: boolean }) {
   const [value, setValue] = useState("");
   return (
     <label className="block">
       <span className="mb-1.5 block px-1 text-[0.875rem] font-semibold text-muted">{label}</span>
-      <span dir="ltr" className={`flex h-[3.5rem] w-full items-center ${boxLook} focus-within:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]`}>
+      <span dir="ltr" className={`flex ${compact ? "h-[3.25rem] [@media(max-height:520px)]:h-[2.875rem]" : "h-[3.5rem]"} w-full items-center ${boxLook} focus-within:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]`}>
         <span className="num ps-4 pe-3 text-[1.0625rem] font-semibold text-muted">+216</span>
         <span className="h-6 w-px bg-line" aria-hidden />
         <input

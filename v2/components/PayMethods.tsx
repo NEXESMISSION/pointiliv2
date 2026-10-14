@@ -29,18 +29,19 @@ export function PayMethods({ support, shop, months, details }: { support: string
   return (
     <>
       <h2 className="mb-2.5 mt-[2.4dvh] px-0.5 text-[0.9375rem] font-bold">{t.payWays}</h2>
-      <ul className="grid grid-cols-4 gap-2">
+      {/* the four ways' marks: the smallest phones keep the numbers to copy and the two buttons */}
+      <ul className={`grid grid-cols-4 gap-2 ${details?.d17 || details?.banks.length ? "[@media(max-height:500px)]:hidden" : ""}`}>
         {WAYS.map((w, i) => (
-          <li key={i} className="flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-[1.125rem] bg-surface px-1 py-3 shadow-card [@media(max-height:540px)]:py-2">
+          <li key={i} className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-[1.125rem] bg-surface px-1 py-2 shadow-card">
             {w.title ? (
               <>
-                <span className="[&>svg]:size-10">{w.mark}</span>
+                <span className="[&>svg]:size-9">{w.mark}</span>
                 <span className="w-full truncate text-center text-[0.75rem] font-bold" dir="ltr">
                   {w.title}
                 </span>
               </>
             ) : (
-              <span className="[&>svg]:size-12">{w.mark}</span>
+              <span className="[&>svg]:size-11">{w.mark}</span>
             )}
           </li>
         ))}
@@ -55,9 +56,10 @@ export function PayMethods({ support, shop, months, details }: { support: string
           ))}
         </div>
       )}
-      <p className="mt-[2.4dvh] text-balance text-center text-[0.9375rem] leading-relaxed text-body">{t.payHow}</p>
+      {/* on a short phone the two buttons say it themselves: the sentence over them steps aside */}
+      <p className="mt-[2.4dvh] text-balance text-center text-[0.9375rem] leading-relaxed text-body [@media(max-height:600px)]:hidden">{t.payHow}</p>
       {support && (
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2 [@media(max-height:600px)]:mt-[2.4dvh]">
           <a href={`tel:+${support}`} onClick={() => said("call")} className="press flex h-[3.5rem] items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1.0312rem] font-bold text-white">
             <Phone className="size-5" /> {t.helpCall}
           </a>

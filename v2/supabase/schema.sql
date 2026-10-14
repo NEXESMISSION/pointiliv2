@@ -89,6 +89,11 @@ alter table public.shops add column if not exists trial_days int not null defaul
 alter table public.shops alter column trial_days set default 3;
 alter table public.shops drop constraint if exists shops_trial_days_check;
 alter table public.shops add constraint shops_trial_days_check check (trial_days between 0 and 365);
+-- the trial's clock (since 2026-10-14, for the shops opened from then on): it starts with the shop's first
+-- customer — a tampon to somebody else than the owner — not at the sign-up, so an owner who opens at night
+-- or takes a few days to start loses none of it. The shops opened before keep their clock from the opening.
+alter table public.shops add column if not exists trial_first boolean not null default false;
+alter table public.shops alter column trial_first set default true;
 
 -- an owner's payment: the way they chose, then the founder's word (paid or not);
 -- 15 months for the price of 12 when it came within 48 hours of opening the shop
@@ -608,7 +613,7 @@ create or replace function public.see(p_key text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then return public.err('not_signed_in'); end if;
-  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push', 'install', 'fix_tip') then return public.err('invalid'); end if;
+  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push', 'install', 'fix_tip', 'first_scan', 'first_gift', 'mission') then return public.err('invalid'); end if;
   update public.people set seen = array_append(seen, p_key) where id = auth.uid() and not (p_key = any (seen));
   return jsonb_build_object('ok', true);
 end $$;
@@ -787,6 +792,8 @@ begin
   if s.id is null then return public.err('no_shop'); end if;
   return jsonb_build_object('ok', true,
     'customers', (select count(*) from public.cards where shop_id = s.id),
+    -- the customers who are not the owner (a card of their own is a try): the home's first steps count these
+    'served', (select count(*) from public.cards where shop_id = s.id and user_id <> s.owner_id),
     'today', (select count(*) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
     'visitors_today', (select count(distinct card_id) from public.moments where shop_id = s.id and kind = 'stamp' and created_at >= public.tunis_today()),
     'given', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is not null),
@@ -894,10 +901,39 @@ end $$;
 -- a shop past its trial, its year not turned on: no code at the counter, no
 -- tampon by the customer's code, until the founder turns the year on. The
 -- founder's own shop and the test accounts never stop.
+-- when the trial's clock started: the opening, or (trial_first) the first customer's tampon — not yet: now
+create or replace function public.trial_start(s public.shops) returns timestamptz
+language sql stable security definer set search_path = '' as $$
+  select case when not s.trial_first then s.created_at
+    else coalesce((select min(m.created_at) from public.moments m join public.cards c on c.id = m.card_id
+                   where m.shop_id = s.id and m.kind = 'stamp' and c.user_id <> s.owner_id), now()) end
+$$;
+
+-- the trial's end. A clock waiting for the first customer still runs out two weeks after the
+-- usual end, customer or not: a trial is for trying, it is not kept forever
+create or replace function public.trial_end(s public.shops) returns timestamptz
+language sql stable security definer set search_path = '' as $$
+  select case when not s.trial_first then s.created_at + make_interval(days => s.trial_days)
+    else least(public.trial_start(s) + make_interval(days => s.trial_days), s.created_at + make_interval(days => s.trial_days + 14)) end
+$$;
+
+-- has the clock started (a shop of the old clock: always)
+create or replace function public.trial_started(s public.shops) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select not s.trial_first or exists (select 1 from public.moments m join public.cards c on c.id = m.card_id
+                                      where m.shop_id = s.id and m.kind = 'stamp' and c.user_id <> s.owner_id)
+$$;
+
+-- every shop's trial end, for the founder's morning digest (the service's key only)
+create or replace function public.trial_ends() returns table (id uuid, ends timestamptz, started boolean)
+language sql stable security definer set search_path = '' as $$
+  select s.id, public.trial_end(s), public.trial_started(s) from public.shops s
+$$;
+
 create or replace function public.shut(s public.shops) returns boolean
 language sql stable security definer set search_path = '' as $$
   select (s.paid_until is null or s.paid_until <= now())
-     and now() >= s.created_at + make_interval(days => s.trial_days)
+     and now() >= public.trial_end(s)
      and not exists (select 1 from public.people p where p.id = s.owner_id and (p.is_admin or p.is_tester))
 $$;
 
@@ -1079,6 +1115,8 @@ begin
     'ok', true,
     'paused', s.paused,
     'taken', k.id is not null and (k.used_at is not null or k.held_hash is not null),
+    -- the customers who are not the owner: the counter celebrates the very first one
+    'served', (select count(*) from public.cards where shop_id = s.id and user_id <> s.owner_id),
     -- scanned by a phone without an account (held, not yet a tampon): the counter says so
     'held', coalesce((select jsonb_agg(x.id) from public.codes x where x.shop_id = s.id and x.held_hash is not null and x.used_at is null
                         and x.held_until > coalesce(p_since, now()) + interval '20 minutes'), '[]'::jsonb),
@@ -1335,7 +1373,7 @@ begin
       'created_at', s.created_at, 'owner', jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone),
       -- the year, or the trial and its end
       'paid', s.paid_until is not null and s.paid_until > now(), 'shut', public.shut(s),
-      'trial_hours', greatest(0, ceil(extract(epoch from (s.created_at + make_interval(days => s.trial_days) - now())) / 3600))::int,
+      'trial_hours', greatest(0, ceil(extract(epoch from (public.trial_end(s) - now())) / 3600))::int,
       'test', coalesce(p.is_admin or p.is_tester, false),
       'customers', (select count(*) from public.cards c where c.shop_id = s.id),
       'stamps', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
@@ -1457,10 +1495,10 @@ begin
       left join public.people p on p.id = c.user_id), '[]'::jsonb))
     -- (a second object: one jsonb_build_object takes 100 arguments at most)
     || jsonb_build_object('held', public.held_list(s.id, 14), 'store_on', s.store_on,
-         'trial_until', s.created_at + make_interval(days => s.trial_days),
+         'trial_until', public.trial_end(s), 'trial_started', public.trial_started(s),
          'wheel_on', s.wheel_on, 'wheel', public.wheel_list(s.id),
          'wheel_fell', coalesce((select jsonb_agg(jsonb_build_object('name', x.gift, 'n', x.n) order by x.n desc)
-                                 from (select m.gift, count(*) as n from public.moments m where m.shop_id = s.id and m.wheel and m.spun_at is not null group by m.gift) x), '[]'::jsonb), 'trial_over', now() >= s.created_at + make_interval(days => s.trial_days), 'store', public.store_list(s.id),
+                                 from (select m.gift, count(*) as n from public.moments m where m.shop_id = s.id and m.wheel and m.spun_at is not null group by m.gift) x), '[]'::jsonb), 'trial_over', now() >= public.trial_end(s), 'store', public.store_list(s.id),
          'orders', coalesce((select jsonb_agg(jsonb_build_object('at', o.created_at, 'name', o.name, 'qty', o.qty, 'cost', o.cost, 'status', o.status,
                                                                  'who', nullif(split_part(p.name, ' ', 1), '')) order by o.created_at desc)
                              from (select * from public.orders where shop_id = s.id order by created_at desc limit 20) o
@@ -1772,7 +1810,7 @@ begin
       'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'created_at', s.created_at,
       'owner', jsonb_build_object('id', p.id, 'name', p.name, 'phone', p.phone),
       'paid', s.paid_until is not null and s.paid_until > now(), 'shut', public.shut(s),
-      'trial_hours', greatest(0, ceil(extract(epoch from (s.created_at + make_interval(days => s.trial_days) - now())) / 3600))::int,
+      'trial_hours', greatest(0, ceil(extract(epoch from (public.trial_end(s) - now())) / 3600))::int,
       'test', coalesce(p.is_admin or p.is_tester, false),
       'stamps', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
       'last_stamp_at', (select max(m.created_at) from public.moments m where m.shop_id = s.id and m.kind = 'stamp'),
@@ -1875,7 +1913,8 @@ begin
   if v_uid is null then return null; end if;
   select * into s from public.shops where owner_id = v_uid;
   if s.id is null then return null; end if;
-  if s.offer_at is null and (s.paid_until is null or s.paid_until < now()) then
+  -- the offer's 48 hours start the first time the owner's home asks — once the trial's clock runs
+  if s.offer_at is null and (s.paid_until is null or s.paid_until < now()) and public.trial_started(s) then
     update public.shops set offer_at = now() where id = s.id returning * into s;
   end if;
   select * into y from public.payments where shop_id = s.id order by created_at desc limit 1;
@@ -1887,7 +1926,9 @@ begin
     'offer_until', s.offer_at + interval '48 hours',
     'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
     -- the trial's end (its clock on the owner's home), and whether it is over
-    'trial_until', s.created_at + make_interval(days => s.trial_days),
+    'trial_until', public.trial_end(s),
+    -- a clock that waits for the first customer has not started yet: the home says so instead of a countdown
+    'trial_started', public.trial_started(s),
     'shut', public.shut(s),
     'exempt', exists (select 1 from public.people p where p.id = s.owner_id and (p.is_admin or p.is_tester)),
     'last', case when y.id is null then null else jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'status', y.status, 'at', y.created_at) end);
@@ -1992,17 +2033,19 @@ end $$;
 -- year stays as it was; the owner is told once, plainly, until when.
 create or replace function public.admin_trial(p_shop uuid, p_days int, p_show boolean default true) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare s public.shops%rowtype; v_end timestamptz; v_days int;
+declare s public.shops%rowtype; v_end timestamptz; v_days int; v_start timestamptz;
 begin
   perform public.require_admin();
   select * into s from public.shops where id = p_shop for update;
   if s.id is null then return public.err('not_found'); end if;
   if p_days is null or p_days not between 1 and 60 then return public.err('invalid'); end if;
-  v_end := greatest(s.created_at + make_interval(days => s.trial_days), now()) + make_interval(days => p_days);
-  v_days := ceil(extract(epoch from (v_end - s.created_at)) / 86400)::int;
+  -- the days count from the clock's start: the opening, or the first customer (not yet: from now)
+  v_start := public.trial_start(s);
+  v_end := greatest(public.trial_end(s), now()) + make_interval(days => p_days);
+  v_days := ceil(extract(epoch from (v_end - v_start)) / 86400)::int;
   if v_days > 365 then return public.err('invalid'); end if;
-  update public.shops set trial_days = v_days where id = s.id;
-  v_end := s.created_at + make_interval(days => v_days);
+  update public.shops set trial_days = v_days where id = s.id returning * into s;
+  v_end := public.trial_end(s);
   insert into public.plan_log (shop_id, kind, months, until_at, show_owner) values (s.id, 'trial', null, v_end, coalesce(p_show, true));
   return jsonb_build_object('ok', true, 'trial_until', v_end);
 end $$;

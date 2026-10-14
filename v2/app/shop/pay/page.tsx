@@ -62,8 +62,9 @@ export default async function ShopPay() {
                 </span>
               </div>
             )}
-            {/* the smallest phones keep the price and the ways to pay: the perks step aside */}
-            <ul className="relative mt-3 space-y-1.5 [@media(max-height:500px)]:hidden">
+            {/* a phone of ordinary height keeps the price and the ways to pay (with the numbers to copy) on one
+                screen: the perks step aside under 760px — the owner has used them for days already */}
+            <ul className="relative mt-3 space-y-1.5 [@media(max-height:760px)]:hidden">
               {t.payPerks.map((p) => (
                 <li key={p} className="flex items-start gap-2 text-[0.875rem] text-white/95">
                   <Check className="mt-0.5 size-4 shrink-0" strokeWidth={3} /> {p}

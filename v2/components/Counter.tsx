@@ -67,7 +67,7 @@ function tuneIn(): SupabaseClient | null {
  * Everything fits one screen: when a gift waits, the title steps aside and
  * the code gets smaller, so the gift sits under the code, not over it.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = [] }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null; items?: Item[] }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = [], firstWaits = false }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null; items?: Item[]; firstWaits?: boolean }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -101,6 +101,18 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   const [known, setKnown] = useState<Known[]>([]);
   const seenKnown = useRef(new Set<number>());
   const openedAt = useRef(new Date().toISOString());
+  // `firstWaits`: no customer yet (the owner's own card aside). The first one to take a tampon here
+  // is celebrated over the code, once in the shop's life: «شفت؟ هكّا!»
+  const firstRef = useRef(firstWaits);
+  const [first, setFirst] = useState<{ name: string | null } | null>(null);
+  const celebrate = useCallback(
+    (who: string | null) => {
+      shown("first_scan", shop.id);
+      signal("first_scan");
+      setFirst({ name: who });
+    },
+    [shop.id],
+  );
   const busy = useRef(false);
   const again = useRef(false);
 
@@ -187,7 +199,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       } else {
         const res = await fetch(`/api/counter?code=${c.id}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" });
         if (!res.ok) throw new Error("state");
-        const s = (await res.json()) as { taken: boolean; expired: boolean; stamps: { id: number; name: string | null }[]; gifts: Gift[]; held?: string[]; ids?: Known[] };
+        const s = (await res.json()) as { taken: boolean; expired: boolean; served?: number; stamps: { id: number; name: string | null }[]; gifts: Gift[]; held?: string[]; ids?: Known[] };
         // the code on screen changed while asking (the radio swapped it): its answer is about the old one
         const same = codeRef.current?.id === c.id;
         const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
@@ -197,6 +209,12 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           setFlashes((f) => [...f, ...shown]);
           navigator.vibrate?.(60);
           setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 2600);
+          // the shop's very first customer (not the owner trying it): after the «+1», the bravo
+          if (firstRef.current && (s.served ?? 0) >= 1 && !seenBefore("first_scan", shop.id)) {
+            firstRef.current = false;
+            const who = fresh[fresh.length - 1]?.name ?? null;
+            setTimeout(() => celebrate(who), 1500);
+          }
         }
         // a customer known by a form: their answers stay up until «next»
         const knownNew = (s.ids ?? []).filter((k) => !seenKnown.current.has(k.id));
@@ -230,7 +248,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         setTimeout(() => void tickRef.current(), 0);
       }
     }
-  }, [mint, prepare]);
+  }, [mint, prepare, celebrate, shop.id]);
   const tickRef = useRef(tick);
   const swapRef = useRef(swapNow);
   useEffect(() => {
@@ -539,6 +557,21 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           </div>
         )}
       </main>
+
+      {/* the shop's first customer: what just happened, said plainly, once */}
+      {first && (
+        <div className="safe-t safe-b fixed inset-0 z-50 flex animate-fade flex-col items-center justify-center bg-canvas/95 px-[clamp(1.25rem,6vw,1.75rem)] text-center text-ink backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label={t.firstScanTitle}>
+          <Confetti count={90} />
+          <Icon3D name="party" size={92} className="animate-pop" />
+          <h1 className="mt-[2dvh] animate-rise text-[2.1rem] font-bold">{t.firstScanTitle}</h1>
+          <p className="mt-2 max-w-[18rem] animate-rise text-balance text-[1.0625rem] leading-relaxed text-body" style={{ animationDelay: "250ms" }}>
+            {fill(t.firstScanBody, { name: first.name ?? t.someone })}
+          </p>
+          <button type="button" onClick={() => setFirst(null)} className="press mt-[4dvh] h-[3.25rem] w-full max-w-xs rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
+            {t.firstScanOk}
+          </button>
+        </div>
+      )}
 
       {/* right after a new card: the bravo, over everything, fading by itself onto the code */}
       {(coach === "bravo" || coach === "leaving") && (

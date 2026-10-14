@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath, updateTag } from "next/cache";
 import { after } from "next/server";
 import { sendPush } from "@/lib/push";
-import { alertNewShop, alertPay, alertStamp } from "@/lib/telegram";
+import { alertGift, alertNewShop, alertPay, alertStamp } from "@/lib/telegram";
 import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
 import { getMe, homeOf, type Me } from "@/lib/session";
@@ -16,6 +16,7 @@ import { clarityId, domainCode, pixelId, socialUrl, youtubeId } from "@/lib/sett
 import { fill, t } from "@/lib/t";
 import type { CardView, FormState, Order, Said, ScanResult } from "@/lib/types";
 import type { FormField } from "@/app/actions-forms";
+import type { Note } from "@/lib/once";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 /** Only paths inside the app: a crafted ?next= cannot send anyone elsewhere. */
@@ -53,9 +54,19 @@ export async function join(_: FormState, fd: FormData): Promise<FormState> {
   if (name.length < 2 || name.length > 60) return { error: t.errName, field: "name" };
   if (!validPhone(phone)) return { error: t.errPhone, field: "phone" };
   if (password.length < PASSWORD_MIN) return { error: t.errPassword, field: "password" };
+  const made = await newAccount(name, phone, password);
+  if ("error" in made) return made;
+  redirect(owner ? "/shop/setup" : (next ?? "/"));
+}
+
+/**
+ * The account itself, once its fields are checked: made, its person written,
+ * and signed in on this phone. Gives the signed-in client back (what comes
+ * next runs as the new person), or the form's error.
+ */
+async function newAccount(name: string, phone: string, password: string): Promise<{ supabase: Awaited<ReturnType<typeof db>>; id: string } | { error: string; field?: string }> {
   // a phone shop's wifi or a mobile network can share one address: the limit is wide
   if (!(await allowed(`join-ip:${await address()}`, 30, 60))) return { error: t.errTooMany };
-
   const admin = service();
   const { data, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password, email_confirm: true, app_metadata: { phone: `+216${phone}` } });
   if (error) {
@@ -65,12 +76,40 @@ export async function join(_: FormState, fd: FormData): Promise<FormState> {
     return { error: t.errNetwork };
   }
   await admin.from("people").upsert({ id: data.user.id, name, phone: `+216${phone}` });
-
   const supabase = await db();
   const { error: e2 } = await supabase.auth.signInWithPassword({ email: phoneEmail(phone), password });
   if (e2) return { error: t.errNetwork };
   await markKnown();
-  redirect(owner ? "/shop/setup" : (next ?? "/"));
+  return { supabase, id: data.user.id };
+}
+
+/**
+ * A new owner's first screen: their account and their shop at once — their
+ * name, the shop's name, what it sells, the phone and a password. Everything
+ * is checked before the account is made; then the account, then the shop, as
+ * the new owner. On to the card (?new=1: the sign-up Facebook's pixel counts).
+ * Should the shop fail once the account exists, the shop's own screen takes
+ * over, with nothing lost.
+ */
+export async function joinShop(_: FormState, fd: FormData): Promise<FormState> {
+  const name = str(fd, "name");
+  const shop = str(fd, "shop");
+  const kind = str(fd, "kind");
+  const phone = digits(str(fd, "phone"));
+  const password = String(fd.get("password") ?? "");
+  if (name.length < 2 || name.length > 60) return { error: t.errName, field: "name" };
+  if (shop.length < 2 || shop.length > 60) return { error: t.errShopName, field: "shop" };
+  if (!validPhone(phone)) return { error: t.errPhone, field: "phone" };
+  if (password.length < PASSWORD_MIN) return { error: t.errPassword, field: "password" };
+  if (!kind) return { error: t.errKind, field: "kind" };
+  const made = await newAccount(name, phone, password);
+  if ("error" in made) return made;
+  const { data: res } = await made.supabase.rpc("open_shop", { p_name: shop, p_kind: kind });
+  if (!(res as { ok?: boolean } | null)?.ok) redirect("/shop/setup");
+  // a new shop: a word to the founder's Telegram
+  after(() => alertNewShop(made.id));
+  revalidatePath("/", "layout");
+  redirect("/shop/card?new=1");
 }
 
 /**
@@ -323,7 +362,7 @@ export async function saveItems(names: string[], on: boolean): Promise<{ ok: boo
 }
 
 /** A one-time note just showed (see lib/once.ts): written on the person, so it never shows again. */
-export async function markSeen(note: "coach" | "logo_tip" | "card_hello" | "offer" | "push" | "install" | "fix_tip"): Promise<void> {
+export async function markSeen(note: Note): Promise<void> {
   await call("see", { p_key: note });
 }
 
@@ -516,12 +555,15 @@ export async function newsClicked(id: string): Promise<void> {
 /** The shop hands a waiting gift over. */
 export async function give(moment: number): Promise<boolean> {
   const res = await call<{ ok: boolean }>("give", { p_moment: moment });
+  // the shop's first gift handed over: a word to the founder's Telegram
+  if (res?.ok) after(() => alertGift(moment));
   return !!res?.ok;
 }
 
 /** Every gift waiting on that customer's card, handed over together (they saved several). */
 export async function giveAll(moment: number): Promise<boolean> {
   const res = await call<{ ok: boolean }>("give_all", { p_moment: moment });
+  if (res?.ok) after(() => alertGift(moment));
   return !!res?.ok;
 }
 

@@ -20,6 +20,8 @@ export type Pay = {
   offer: boolean;
   /** the trial's end (3 days from the opening; 7 for the shops opened before 7 Oct 2026) */
   trial_until?: string | null;
+  /** false: the trial's clock waits for the shop's first customer (the shops opened since 14 Oct 2026) */
+  trial_started?: boolean;
   /** past the trial, the year not turned on: the counter gives nothing */
   shut?: boolean;
   /** the founder's own shop or a test account: no trial, never stopped */
@@ -101,7 +103,9 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
 export function TrialBanner({ pay, offer, phone }: { pay: Pay; offer: boolean; phone: string | null }) {
   const left = useLeft(pay.trial_until ?? new Date().toISOString());
   if (pay.last?.status === "pending" && pay.last.method !== "contact") return <PayBanner pay={pay} offer={offer} />;
-  const over = !!pay.shut || left.over;
+  // a clock that waits for the first customer: no countdown yet, just that
+  const waits = pay.trial_started === false && !pay.shut;
+  const over = !waits && (!!pay.shut || left.over);
   const days = Math.floor(left.h / 24);
   const call = phone ? (
     <a
@@ -117,7 +121,9 @@ export function TrialBanner({ pay, offer, phone }: { pay: Pay; offer: boolean; p
     <div className="mt-3 flex shrink-0 items-stretch gap-2">
       <Link href="/shop/pay" className={`press flex min-w-0 flex-1 items-center gap-2 rounded-full py-2 pe-3 ps-3.5 ${over ? "bg-coral-soft text-coral" : "bg-surface shadow-card"}`}>
         <Hourglass className={`size-4 shrink-0 ${over ? "" : "text-brand"}`} />
-        {over ? (
+        {waits ? (
+          <span className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold text-body">{t.trialWaits}</span>
+        ) : over ? (
           <span className="min-w-0 flex-1 truncate text-[0.875rem] font-bold">{t.trialOverTitle}</span>
         ) : (
           <>

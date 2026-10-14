@@ -40,7 +40,7 @@ function Zellige({ color, id }: { color: string; id: string }) {
 /**
  * The front door, Tunisian: a card from a café in the Medina between jasmine
  * and a glass of mint tea, a corner of Sidi Bou Said, and two doors only —
- * the shop's (first) and the customer's. One screen, on the smallest phone:
+ * the shop's (first) and the customer's (none from an ad). One screen, on the smallest phone:
  * every size here follows the screen's height. The founder's first video
  * («كيفاش تخدم؟») floats on the card's edge. At least the screen's height,
  * never cut: on a phone shorter than everything (under ~525px) the page
@@ -48,7 +48,7 @@ function Zellige({ color, id }: { color: string; id: string }) {
  * and the rem shrinks on short screens); a column on a computer. The
  * pictures are decoration: they may be cut at the edges.
  */
-export function Welcome({ video, known }: { video?: HelpVideo | null; known?: boolean }) {
+export function Welcome({ video, known, ad }: { video?: HelpVideo | null; known?: boolean; ad?: boolean }) {
   return (
     // data-welcome: the front door as a stranger sees it (Facebook's pixel counts this one, not a customer's wallet)
     <main data-welcome className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-center overflow-hidden bg-[#FBF6EF] px-5 safe-t safe-b max-[448px]:max-w-none">
@@ -132,7 +132,8 @@ export function Welcome({ video, known }: { video?: HelpVideo | null; known?: bo
           <span className={`relative flex-1 text-[1.0625rem] font-bold ${known ? "text-ink" : ""}`}>{t.enterAsShop}</span>
           <ChevronLeft className={`relative size-5 shrink-0 ${known ? "text-faint" : "opacity-80"}`} />
         </Link>
-        {!known && (
+        {/* a customer comes in by a shop's code, not by an ad: from an ad, the shop's door stands alone */}
+        {!known && !ad && (
           <Link href="/join" className="press relative flex h-[3.6rem] items-center gap-3 overflow-hidden rounded-[1.25rem] bg-white px-4 shadow-[0_10px_26px_-14px_rgb(29_95_168/0.45)] ring-1 ring-[#1D5FA8]/10">
             <Zellige color={BLUE} id="zl-customer" />
             <span className="relative grid size-10 shrink-0 place-items-center rounded-[0.8125rem] bg-[#EAF1FA]">

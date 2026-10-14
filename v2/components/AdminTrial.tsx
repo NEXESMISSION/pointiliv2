@@ -13,7 +13,7 @@ const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "
  * nothing paid, no year turned on. Added onto the trial still running (or from
  * now, when it is over); the owner is told once, in a plain popup.
  */
-export function AdminTrial({ shopId, until, over }: { shopId: string; until: string; over: boolean }) {
+export function AdminTrial({ shopId, until, over, started = true }: { shopId: string; until: string; over: boolean; started?: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [pick, setPick] = useState<number | null>(null);
@@ -32,7 +32,7 @@ export function AdminTrial({ shopId, until, over }: { shopId: string; until: str
     <div className="mt-4 border-t border-line pt-3">
       <p className="flex items-center gap-1.5 text-[0.8438rem] font-bold text-muted">
         <Hourglass className="size-4" /> التجربة
-        <span className={`ms-auto font-semibold ${over ? "text-coral" : "text-body"}`}>{over ? `وفات ${day(until)}` : `توفى ${day(until)}`}</span>
+        <span className={`ms-auto font-semibold ${over ? "text-coral" : "text-body"}`}>{over ? `وفات ${day(until)}` : started ? `توفى ${day(until)}` : "تبدا مع أوّل حريف"}</span>
       </p>
       {pick === null ? (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">

@@ -67,7 +67,7 @@ export function Screen({ children, className = "" }: { children: ReactNode; clas
 
 /** The middle of a screen: whatever it holds sits centred in the room left, the button right under it. */
 export function Middle({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`flex min-h-0 flex-1 flex-col justify-center py-[2.5dvh] ${className}`}>{children}</div>;
+  return <div className={`flex min-h-0 flex-1 flex-col justify-center-safe py-[2.5dvh] ${className}`}>{children}</div>;
 }
 
 /** Pointili's mark — two loyalty cards, the front one with a sparkle — and the name. */

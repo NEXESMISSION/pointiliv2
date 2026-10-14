@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { CardFirst } from "@/components/CardFirst";
 import { CardWizard } from "@/components/CardWizard";
 import { Screen } from "@/components/ui";
 import { WheelGoal } from "@/components/WheelGoal";
@@ -7,7 +8,7 @@ import { getHelp } from "@/lib/settings";
 
 export const metadata = { title: "الكارط" };
 
-/** Step 3 of 3: the card, one question at a time — and, later, changing it from the shop's home. */
+/** Step 2 of 3: the first card, on one screen — and, later, changing it from the shop's home, one question at a time. */
 export default async function ShopCard() {
   const me = await getMe();
   if (!me) redirect("/shop/new");
@@ -24,14 +25,7 @@ export default async function ShopCard() {
     );
   }
   const help = await getHelp();
-  return (
-    <CardWizard
-      shop={me.shop}
-      owner={(me.name ?? "").split(" ")[0] ?? ""}
-      next={editing ? "/shop" : "/shop?welcome=1"}
-      editing={editing}
-      hello={!editing && !(me.seen ?? []).includes("card_hello")}
-      help={help}
-    />
-  );
+  // a first card: two questions on one screen, already answered for what the shop sells
+  if (!editing) return <CardFirst shop={me.shop} help={help} />;
+  return <CardWizard shop={me.shop} owner={(me.name ?? "").split(" ")[0] ?? ""} next="/shop" editing help={help} />;
 }

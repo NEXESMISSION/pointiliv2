@@ -104,6 +104,10 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
           <Icon3D name="ticket" size={96} className="animate-float" />
           <h2 className="mt-5 text-[1.375rem] font-bold">{t.noCards}</h2>
           <p className="mt-1.5 max-w-[16rem] text-[0.9375rem] text-muted">{t.noCardsBody}</p>
+          {/* an owner who took the customer's door by mistake (an ad sends owners): the way to their shop, from here */}
+          <Link href="/shop/setup" className="press mt-4 flex h-11 items-center gap-1.5 rounded-full bg-surface px-4 text-[0.9375rem] font-bold text-brand shadow-card">
+            <Icon3D name="shop" size={22} /> {t.walletOwner} ←
+          </Link>
         </div>
       ) : (
         // the cards scroll inside their own box: the page, the title and the scan button stay put

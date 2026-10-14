@@ -285,12 +285,13 @@ try {
   check("resumed, it makes codes again", (await rpc(owner, "new_code")).ok === true);
 
   // the trial: 3 days from the opening (7 for the shops opened before 7 Oct 2026), then nothing until the founder turns the year on
-  const trial = (await admin.from("shops").select("id, trial_days, created_at, paid_until").eq("id", found[0].id).single()).data;
+  const trial = (await admin.from("shops").select("id, trial_days, created_at, paid_until, trial_first").eq("id", found[0].id).single()).data;
   check("a new shop's trial is 3 days", trial.trial_days === 3, trial);
   const trPay = await rpc(owner, "my_payment");
   check("the owner's home knows the trial's end", !!trPay.trial_until && trPay.shut === false && trPay.exempt === false, trPay);
   const trCode = await rpc(owner, "new_code");
-  await admin.from("shops").update({ created_at: new Date(Date.now() - 4 * 86_400_000).toISOString(), paid_until: null }).eq("id", trial.id);
+  // the old clock (a shop opened before 14 Oct 2026): from the opening
+  await admin.from("shops").update({ created_at: new Date(Date.now() - 4 * 86_400_000).toISOString(), paid_until: null, trial_first: false }).eq("id", trial.id);
   check("past its trial, the shop makes no code", (await rpc(owner, "new_code")).error === "shut");
   check("past its trial, the owner's home says it", (await rpc(owner, "my_payment")).shut === true);
   check("past its trial, a code already on screen gives nothing", (await rpc(sami, "stamp", { p_token: trCode.token })).error === "paused");
@@ -298,7 +299,24 @@ try {
   check("the console marks it stopped", ((await rpc(boss, "admin_shops", { p_q: "Café Test" })) ?? []).find((x) => x.id === trial.id)?.shut === true);
   await admin.from("shops").update({ paid_until: new Date(Date.now() + 86_400_000).toISOString() }).eq("id", trial.id);
   check("its year turned on, it makes codes again", (await rpc(owner, "new_code")).ok === true);
-  await admin.from("shops").update({ created_at: trial.created_at, paid_until: trial.paid_until }).eq("id", trial.id);
+  await admin.from("shops").update({ created_at: trial.created_at, paid_until: trial.paid_until, trial_first: trial.trial_first }).eq("id", trial.id);
+
+  // since 14 Oct 2026 the clock starts with the shop's first customer (a tampon to somebody else than the owner)
+  check("a new shop's clock waits for its first customer", trial.trial_first === true, trial);
+  {
+    const ownerId = (await rpc(owner, "me")).id;
+    const { data: cs } = await admin.from("cards").select("id, user_id").eq("shop_id", trial.id);
+    const others = (cs ?? []).filter((c) => c.user_id !== ownerId).map((c) => c.id);
+    const { data: first } = await admin.from("moments").select("created_at").eq("shop_id", trial.id).eq("kind", "stamp").in("card_id", others).order("created_at").limit(1).single();
+    await admin.from("shops").update({ created_at: new Date(Date.now() - 4 * 86_400_000).toISOString(), paid_until: null }).eq("id", trial.id);
+    const p = await rpc(owner, "my_payment");
+    const want = Date.parse(first.created_at) + trial.trial_days * 86_400_000;
+    check("…opened 4 days ago, its first customer since: still in its trial, counted from that customer", p.trial_started === true && p.shut === false && Math.abs(Date.parse(p.trial_until) - want) < 60_000, { p, want: new Date(want).toISOString() });
+    check("…and it makes codes", (await rpc(owner, "new_code")).ok === true);
+    await admin.from("shops").update({ created_at: new Date(Date.now() - 18 * 86_400_000).toISOString() }).eq("id", trial.id);
+    check("…but two weeks past the usual end, the trial is over whatever happened", (await rpc(owner, "my_payment")).shut === true);
+    await admin.from("shops").update({ created_at: trial.created_at, paid_until: trial.paid_until }).eq("id", trial.id);
+  }
 
   // who is on the site right now: the presence pings (/api/here → here()), read by the console (admin_online)
   console.log("\nWho is on the site right now");
@@ -519,7 +537,10 @@ try {
   await admin.from("shops").update({ nudged_at: null, created_at: pzAgo(5), trial_days: 30 }).eq("id", pzLone.id);
   check("five days after the card, the word still due while nobody nudged", (await pzOwnerDue()).length === 1);
   await admin.from("shops").update({ trial_days: 1 }).eq("id", pzLone.id);
-  check("a shop whose trial is over: left alone", (await pzOwnerDue()).length === 0);
+  // a shop opened since 14 Oct 2026: its clock waits for the first customer, so five days on it is still in its trial
+  check("a 1-day trial, five days on, no customer yet: the clock has not started, the word still due", (await pzOwnerDue()).length === 1);
+  await admin.from("shops").update({ created_at: pzAgo(20) }).eq("id", pzLone.id);
+  check("a shop whose trial is over (two weeks past its end, never started): left alone", (await pzOwnerDue()).length === 0);
   await admin.from("shops").update({ trial_days: 30 }).eq("id", pzLone.id);
   await admin.from("moments").delete().eq("id", pzGift.id);
   await admin.from("cards").update({ stamps: 0, last_at: null, reminded_at: null }).eq("id", nourCard.id);

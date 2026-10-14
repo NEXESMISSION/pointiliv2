@@ -149,6 +149,18 @@ export async function alertStamp(shopId: string, cardId: string): Promise<void> 
   }
 }
 
+/** A gift handed over: a word on the shop's first one only — the loop is closed, the owner has seen it all work. */
+export async function alertGift(moment: number): Promise<void> {
+  const db = service();
+  const { data: m } = await db.from("moments").select("shop_id, gift, card_id").eq("id", moment).maybeSingle();
+  if (!m) return;
+  const { count } = await db.from("moments").select("id", { count: "exact", head: true }).eq("shop_id", m.shop_id).eq("kind", "gift").not("given_at", "is", null);
+  if (count !== 1) return;
+  const f = await shopFacts({ shop: m.shop_id });
+  if (!f) return;
+  await tg([`🎁 <b>أوّل كادو تعطى</b>`, shopLine(f), m.gift ? esc(m.gift) : "", "الدورة كاملة خدمت عندو: وقت مزيان باش تعيّطلو."].filter(Boolean).join("\n"), shopButtons(f));
+}
+
 /** The owner says the money is sent (or asks to be called about paying). */
 export async function alertPay(owner: string, method: string): Promise<void> {
   const f = await shopFacts({ owner });

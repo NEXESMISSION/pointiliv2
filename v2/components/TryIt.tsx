@@ -17,8 +17,10 @@ export type DemoShop = { name: string; kind: string; color: string; logo?: strin
  * Four beats in a drawn phone: the scan, the tampon landing on a card in the
  * shop's colours, the gift won when the card is full, and the owner's part
  * («سكاني», then «إيه، عطيه الكادو»). Nothing is written anywhere.
+ * A new owner meets it as the third step of opening the shop: `top` (the
+ * steps) over it, and `finish` on its last button.
  */
-export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }) {
+export function TryIt({ shop, onClose, finish, top }: { shop: DemoShop; onClose: () => void; finish?: string; top?: ReactNode }) {
   const [beat, setBeat] = useState(0);
   const goal = shop.goal ?? 10;
   const gift = shop.gift ?? "";
@@ -46,6 +48,7 @@ export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }
       <button type="button" onClick={onClose} className="press absolute end-4 top-[max(1rem,env(safe-area-inset-top))] grid size-10 place-items-center rounded-full bg-white/15" aria-label={t.back}>
         <X className="size-5" />
       </button>
+      {top}
       <p className="text-[0.8125rem] font-semibold text-white/70">{t.tryTitle}</p>
       <p key={beat} className="mt-1 min-h-[3.2rem] max-w-[22rem] animate-rise text-balance text-[1.0625rem] font-bold leading-snug">
         <span className="num me-1.5 inline-grid size-6 place-items-center rounded-full bg-white/20 align-[-3px] text-[0.75rem]">{beat + 1}</span>
@@ -115,7 +118,7 @@ export function TryIt({ shop, onClose }: { shop: DemoShop; onClose: () => void }
           </button>
         )}
         <button type="button" onClick={next} className="press h-12 flex-1 rounded-full bg-white text-[1rem] font-bold text-ink">
-          {last ? t.tryGotIt : t.next}
+          {last ? (finish ?? t.tryGotIt) : t.next}
         </button>
       </div>
     </div>

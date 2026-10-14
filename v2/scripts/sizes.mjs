@@ -52,7 +52,7 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",").map((s) => s.trim())
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const anonDb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
 const PASS = "sizes-check-2026";
-const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install"];
+const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "first_scan", "first_gift", "mission"];
 const made = [];
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const HOUR = 3600_000;
@@ -96,7 +96,7 @@ console.log("setting up…");
 // the owner, an established café with customers, a gift to hand over, the offer running
 const owner = await person("سامي بن عمر");
 // (opened five days ago on a 7-day trial: two days left on its clock; «-shut» screens end it)
-const shop = await shopOf(owner, { name: "Pâtisserie El Medina", goal: 8, gift: "قهوة بلاش", created_at: ago(5 * 86_400_000), offer_at: ago(HOUR), trial_days: 7 });
+const shop = await shopOf(owner, { name: "Pâtisserie El Medina", goal: 8, gift: "قهوة بلاش", created_at: ago(5 * 86_400_000), offer_at: ago(HOUR), trial_days: 7, trial_first: false });
 const names = ["نور الهدى", "محمد أمين", "ياسمين", "أحمد", "سلمى", "خليل", "مريم", "يوسف"];
 const regulars = [];
 for (const [i, n] of names.entries()) {
@@ -221,6 +221,7 @@ async function newToken() {
 const press = (page, name) => page.getByRole("button", { name, exact: true }).first().click({ timeout: 15000 });
 const SCREENS = [
   { name: "public-welcome", path: "/" },
+  { name: "public-welcome-ad", path: "/?utm_source=fb" },
   { name: "public-join", path: "/join" },
   { name: "public-login", path: "/login" },
   { name: "public-forgot", path: "/forgot" },
@@ -271,9 +272,13 @@ const SCREENS = [
 
   { name: "home", as: "owner", path: "/shop" },
   { name: "home-help", as: "owner", path: "/shop", act: (p) => press(p, "عندك سؤال؟") },
-  { name: "home-welcome", as: "owner", before: () => notes(owner, ["card_hello", "logo_tip", "offer"]), path: "/shop?welcome=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
-  { name: "home-logo-tip", as: "owner", before: () => notes(owner, ["card_hello", "coach", "offer"]), path: "/shop", wait: 1800, after: () => notes(owner, ALL_NOTES) },
-  { name: "home-offer", as: "owner", before: () => notes(owner, ["card_hello", "coach", "logo_tip"]), path: "/shop", wait: 2000, after: () => notes(owner, ALL_NOTES) },
+  { name: "home-welcome", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "coach")), path: "/shop?welcome=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
+  // the shop's first gift waiting: how to hand it over, before any other note
+  { name: "home-first-gift", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "first_gift")), path: "/shop", wait: 1800, after: () => notes(owner, ALL_NOTES) },
+  // a new owner's first steps, all done: the bravo (shown once)
+  { name: "home-mission-done", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "mission")), path: "/shop", wait: 1500, after: () => notes(owner, ALL_NOTES) },
+  { name: "home-logo-tip", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "logo_tip")), path: "/shop", wait: 1800, after: () => notes(owner, ALL_NOTES) },
+  { name: "home-offer", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "offer")), path: "/shop", wait: 2000, after: () => notes(owner, ALL_NOTES) },
   { name: "home-news", as: "owner", before: newsOnlyOurs, path: "/shop", wait: 1800 },
   {
     name: "home-news-slide",
@@ -307,7 +312,7 @@ const SCREENS = [
   // the trial over and the year not on: the home's line turns red, the code's place says why, with a call
   { name: "home-shut", as: "owner", before: () => admin.from("shops").update({ trial_days: 3 }).eq("id", shop.id), path: "/shop", wait: 1500, after: () => admin.from("shops").update({ trial_days: 7 }).eq("id", shop.id) },
   { name: "counter-shut", as: "owner", before: () => admin.from("shops").update({ trial_days: 3 }).eq("id", shop.id), path: "/shop/qr", wait: 2500, after: () => admin.from("shops").update({ trial_days: 7 }).eq("id", shop.id) },
-  { name: "counter-tip", as: "owner", before: () => notes(owner, ["card_hello", "logo_tip", "offer"]), path: "/shop/qr?tip=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
+  { name: "counter-tip", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "coach")), path: "/shop/qr?tip=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "collect-scan", as: "owner", path: "/shop/collect?by=scan", wait: 2500 },
   { name: "collect-code", as: "owner", path: "/shop/collect?by=code" },
   {
@@ -369,17 +374,12 @@ const SCREENS = [
     await p.getByText("يكمّلو كارطهم القديمة").waitFor({ timeout: 20000 });
   } },
 
-  { name: "wizard-hello", as: "fresh", before: () => notes(fresh, []), path: "/shop/card", wait: 1300 },
-  { name: "wizard-goal", as: "fresh", path: "/shop/card" },
-  { name: "wizard-gift", as: "fresh", path: "/shop/card", act: (p) => press(p, "كمّل") },
-  { name: "wizard-wait", as: "fresh", path: "/shop/card", act: async (p) => { await press(p, "كمّل"); await press(p, "كمّل"); } },
-  { name: "wizard-color", as: "fresh", path: "/shop/card", act: async (p) => { for (let n = 0; n < 3; n++) await press(p, "كمّل"); } },
-  { name: "wizard-ready", as: "fresh", path: "/shop/card", act: async (p) => { for (let n = 0; n < 4; n++) await press(p, "كمّل"); }, wait: 1500 },
-  { name: "wizard-confirm", as: "fresh", path: "/shop/card", act: async (p) => {
-    for (let n = 0; n < 4; n++) await press(p, "كمّل");
-    await p.getByRole("button", { name: "حلّ الكود" }).click({ force: true });
-    await p.getByRole("dialog").waitFor({ timeout: 15000 });
-  } },
+  // a new owner's three steps: the account and the shop (public-shop-new), the card on one screen, what the customer sees
+  { name: "first-card", as: "fresh", path: "/shop/card?new=1" },
+  { name: "first-card-other", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "حاجة أخرى") },
+  { name: "start", as: "owner", path: "/shop/start?night=0", wait: 900 },
+  { name: "start-last", as: "owner", path: "/shop/start?night=0", act: async (p) => { for (let n = 0; n < 3; n++) await press(p, "كمّل"); }, wait: 900 },
+  { name: "start-night", as: "owner", path: "/shop/start?night=1", act: async (p) => { for (let n = 0; n < 4; n++) await press(p, "كمّل"); }, wait: 900 },
   { name: "setup", as: "noShop", path: "/shop/setup" },
 
   { name: "console", as: "boss", path: "/admin", read: true },

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeft, QrCode, ScanLine } from "lucide-react";
 import { HelpButton } from "@/components/Help";
+import { FirstGift } from "@/components/FirstGift";
 import { LogoTip } from "@/components/LogoTip";
+import { Mission } from "@/components/Mission";
 import { NewsPopup } from "@/components/NewsPopup";
 import { InstallPopup, OpenOutside } from "@/components/InstallApp";
 import { OfferPopup, PayBanner, TrialBanner, type Pay } from "@/components/Pay";
@@ -23,6 +25,9 @@ export const metadata = { title: "المحل" };
 
 type Home = {
   customers: number;
+  /** the customers who are not the owner */
+  served?: number;
+  waiting?: { id: number; at: string; name: string | null; gift: string }[];
   today: number;
   visitors_today: number;
   given_today: number;
@@ -71,10 +76,17 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   // on their first visit the logo tip and the offer are both unseen too, and
   // two overlays on one screen is one too many
   const coachNow = welcome === "1" && !seen.includes("coach");
-  const logoTip = !coachNow && !seen.includes("logo_tip");
+  // before the first customer the home has one job (the code): the logo and the install wait for a customer
+  const served = (home?.served ?? 0) > 0;
+  // the shop's first gift won and waiting: how to hand it over comes before any other note
+  const firstGift = !coachNow && !seen.includes("first_gift") ? (home?.waiting?.[0] ?? null) : null;
+  const logoTip = !coachNow && !firstGift && served && !seen.includes("logo_tip");
   // what the founder just gave (a gift, a payment taken by hand, a new end date): said once
-  const grant = !coachNow && !logoTip ? (pay?.grant ?? null) : null;
-  const offerNote = !coachNow && !logoTip && !grant && offer && !seen.includes("offer") && !(pay?.last?.status === "pending" && pay.last.method !== "contact");
+  const grant = !coachNow && !firstGift && !logoTip ? (pay?.grant ?? null) : null;
+  // the offer's popup: once the shop has a customer (it means something then), or on its last day whatever happens
+  // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
+  const offerLastDay = !!pay?.offer_until && Date.parse(pay.offer_until) - Date.now() < 24 * 3600_000;
+  const offerNote = !coachNow && !firstGift && !logoTip && !grant && offer && (served || offerLastDay) && !seen.includes("offer") && !(pay?.last?.status === "pending" && pay.last.method !== "contact");
   const first = (me.name ?? "").split(" ")[0];
   const options = [
     { href: "/shop/stats", mark: <Icon3D name="chart" size={30} />, label: t.statsTitle },
@@ -168,6 +180,9 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
         ))}
       </nav>
 
+      {/* a new owner's first steps (the card, the first customer, five), until the bravo has shown */}
+      {!seen.includes("mission") && <Mission served={home?.served ?? 0} shopId={shop.id} />}
+
       {/* who came lately: a box that takes all the room left, never less than a row
           and the link; before the first customer, as tall as its three steps */}
       <section className={`mt-[2dvh] flex flex-1 flex-col pb-3 ${lately ? "min-h-[9.5rem]" : ""}`}>
@@ -221,7 +236,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
             </>
           ) : (
             // before the first customer: how it goes, in three steps
-            <div className="m-auto flex w-full max-w-[17rem] flex-col items-center px-4 py-3 text-center">
+            <div className="m-auto flex w-full max-w-[21rem] flex-col items-center px-3 py-3 text-center">
               {/* a card made at night, no customer yet: a word tomorrow morning (asked once) — in the place of
                   the picture and the two lines, never under them: a short phone's one screen is already full */}
               {!seen.includes("push") ? (
@@ -229,17 +244,9 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
               ) : (
                 <EmptyWords />
               )}
-              {/* the three steps open the customer's side, replayed (owners kept tapping them) */}
-              <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift }} className="press mt-3 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-start">
-                <ol className="space-y-1.5">
-                  {t.firstSteps.map((s, i) => (
-                    <li key={s} className="flex items-center gap-2.5">
-                      <span className="num grid size-6 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.75rem] font-bold text-brand">{i + 1}</span>
-                      <span className="text-[0.875rem] font-semibold">{s}</span>
-                    </li>
-                  ))}
-                </ol>
-                <span className="mt-2 block text-center text-[0.8125rem] font-bold text-brand">{t.tryLobby} ←</span>
+              {/* the customer's side, replayed, one tap away (the steps themselves are the mission's, above) */}
+              <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift }} className="press mt-2 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-center text-[0.8125rem] font-bold text-brand">
+                {t.tryLobby} ←
               </TryItButton>
             </div>
           )}
@@ -249,10 +256,11 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
       <LogoTip shopId={shop.id} logo={shop.logo ?? null} show={logoTip} />
       {offerNote && pay?.offer_until && <OfferPopup shopId={shop.id} offerUntil={pay.offer_until} />}
       <ShopWelcome name={first} shopId={shop.id} show={coachNow} />
+      {firstGift && <FirstGift shopId={shop.id} name={firstGift.name} gift={firstGift.gift} />}
       {grant && <PlanOn grant={grant} />}
-      <NewsPopup news={coachNow || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
+      <NewsPopup news={coachNow || firstGift || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
       {/* Pointili on the home screen, asked once where Android's Chrome offers it — never over another note */}
-      <InstallPopup where="home" who={shop.id} show={!coachNow && !logoTip && !offerNote && !grant && !news && !seen.includes("install")} />
+      <InstallPopup where="home" who={shop.id} show={served && !coachNow && !firstGift && !logoTip && !offerNote && !grant && !news && !seen.includes("install")} />
     </main>
   );
 }

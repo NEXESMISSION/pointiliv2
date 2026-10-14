@@ -16,8 +16,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return meta.domainCode ? { other: { "facebook-domain-verification": meta.domainCode } } : {};
 }
 
+const fromAd = (q: Record<string, string | string[] | undefined>) => !!(q.fbclid || q.utm_source || q.utm_campaign);
+
 /** Home: the welcome for a stranger, the counter for a shop, the wallet for a customer. */
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const me = await getMe();
   if (!me) {
     const [help, settings] = await Promise.all([getHelp(), getSettings()]);
@@ -26,7 +28,8 @@ export default async function Home() {
         <JsonLd data={orgJsonLd(settings.supportPhone, settings.social)} />
         <JsonLd data={faqJsonLd(FAQ.slice(0, 5).flatMap((f) => [{ q: f.q, a: f.a }, f.fr]))} />
         {/* somebody who has signed in on this phone before is offered the way back in first */}
-        <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} />
+        {/* from an ad (Facebook's click id, or the ad's utm): an owner, most likely — the shop's door alone */}
+        <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(await searchParams)} />
       </>
     );
   }

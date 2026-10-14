@@ -63,8 +63,14 @@ export async function GET(request: NextRequest) {
   const shopsYesterday = [...new Set(realYesterday.map((m) => m.shop_id))].map((id) => byId.get(id)!.name);
   const activeWeek = [...new Set(real.map((m) => m.shop_id))].map((id) => byId.get(id)!).filter((s) => !paid(s));
 
-  // trials that end today, at shops that gave at least one real tampon this week
-  const endsToday = activeWeek.filter((s) => tunisDay(new Date(Date.parse(s.created_at) + s.trial_days * DAY)) === today);
+  // trials that end today, at shops that gave at least one real tampon this week (the end as the database
+  // counts it: from the opening, or from the first customer for the shops opened since 14 Oct 2026)
+  const { data: ends } = await db.rpc("trial_ends");
+  const endOf = new Map(((ends ?? []) as { id: string; ends: string }[]).map((e) => [e.id, e.ends]));
+  const endsToday = activeWeek.filter((s) => {
+    const end = endOf.get(s.id) ?? new Date(Date.parse(s.created_at) + s.trial_days * DAY).toISOString();
+    return tunisDay(new Date(end)) === today;
+  });
   // yesterday's night sign-ups that never gave a tampon: the morning calls
   const stamped = new Set(real.map((m) => m.shop_id));
   const nightSilent = born.filter((s) => {
