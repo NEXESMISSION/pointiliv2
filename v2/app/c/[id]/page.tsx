@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
-import { Gift, QrCode } from "lucide-react";
+import { Check, Gift, QrCode } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
 import { CardTap } from "@/components/CardTap";
 import { CardWheel } from "@/components/CardWheel";
@@ -19,7 +19,7 @@ import type { CardStore as Store, CardView } from "@/lib/types";
 type Card = CardView & { prizes?: Prize[] | null; history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
 
 const when = (iso: string) =>
-  new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
+  new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date(iso));
 
 /** One card: the stamps, the gift — and when it is ready, its code to show at the counter (`?show=1` opens it). */
 export default async function CardPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ show?: string }> }) {
@@ -49,70 +49,43 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
       : null;
 
-  // A gift waiting fills the screen most. On a short screen (800px and less), and on any screen when the
-  // shop's next card is announced too, the gift's box tightens (its picture beside the title) and the
-  // card's width follows the height: the story below keeps room for its first lines.
-  // a wheel shop, a full card not spun yet: the wheel takes the gift's place
+  // a wheel shop, a full card not spun yet: the roulette (a popup) takes the gift's place
   const turn = card.spin && card.prizes?.length ? card.spin : null;
   const ready = card.ready && !turn;
-  const tight = ready && !!card.next;
-  const look = tight
-    ? {
-        card: "mt-[2dvh] max-w-[min(100%,40dvh)]",
-        next: "py-2 leading-snug",
-        box: "mt-3 flex flex-wrap items-center justify-center gap-x-2 px-5 py-3.5",
-        pic: "size-[2.25rem]!",
-        title: "",
-        gift: "basis-full leading-snug",
-        hint: "mt-0.5 basis-full",
-        story: "mt-[2.5dvh] pb-[1.5dvh]",
-      }
-    : {
-        card: ready ? "mt-5 max-w-[min(100%,54dvh)] [@media(max-height:800px)]:mt-[2dvh]" : "mt-5",
-        next: "py-3 leading-relaxed",
-        box: "mt-4 p-5 [@media(max-height:800px)]:mt-3 [@media(max-height:800px)]:flex [@media(max-height:800px)]:flex-wrap [@media(max-height:800px)]:items-center [@media(max-height:800px)]:justify-center [@media(max-height:800px)]:gap-x-2 [@media(max-height:800px)]:py-3.5",
-        pic: "mx-auto [@media(max-height:800px)]:mx-0 [@media(max-height:800px)]:size-[2.25rem]!",
-        title: "mt-1 [@media(max-height:800px)]:mt-0",
-        gift: "[@media(max-height:800px)]:basis-full [@media(max-height:800px)]:leading-snug",
-        hint: "mt-1 [@media(max-height:800px)]:mt-0.5 [@media(max-height:800px)]:basis-full",
-        story: ready ? "mt-6 pb-4 [@media(max-height:800px)]:mt-[2.5dvh] [@media(max-height:800px)]:pb-[1.5dvh]" : "mt-6 pb-4",
-      };
   return (
-    // one screen: the story below scrolls inside its own box, the card never moves (shorter than 548px, the page scrolls)
+    // one screen: the history scrolls inside its own box, the card never moves (shorter than 548px, the page scrolls)
     <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
-      <Top back="/" title={card.shop.name} />
-      <div className={`mx-auto w-full animate-rise ${look.card}`}>
+      <Top back="/" />
+      <div className="mx-auto mt-2 w-full max-w-[min(100%,52dvh)] shrink-0 animate-rise">
         {/* the card opens: how far the gift is, and how the next tampon is taken (customers kept tapping it) */}
         <CardTap shop={card.shop.name} gift={card.shop.gift ?? ""} stamps={card.stamps} goal={card.shop.goal ?? 10} ready={ready}>
           <Pass shop={card.shop} stamps={card.stamps} />
         </CardTap>
       </div>
-      {card.next && (
-        <p className={`mt-3 rounded-2xl bg-surface px-4 text-[0.9062rem] text-body shadow-card ${look.next}`}>
-          {fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}
-        </p>
-      )}
+      {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.875rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
 
+      {/* the roulette: a popup that opens by itself, and a banner to open it again */}
       {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} />}
 
+      {/* the gift waiting: what it is, and the one thing to do — show the code at the counter */}
       {ready && (
-        <div className={`relative shrink-0 animate-pop overflow-hidden rounded-[1.75rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a_55%,#e0452a)] text-center text-white shadow-[0_20px_44px_-18px_rgb(255_107_74/0.85)] ${look.box}`}>
-          <span className="pointer-events-none absolute -top-16 start-1/2 size-56 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" aria-hidden />
-          <Icon3D name="gift" size={72} className={`relative animate-float ${look.pic}`} />
-          <p className={`relative text-[1.375rem] font-bold ${look.title}`}>{(card.waiting_n ?? 1) > 1 ? fill(t.readyMany, { n: card.waiting_n ?? 2 }) : t.ready}</p>
-          <p className={`relative text-[1.625rem] font-bold ${look.gift}`}>{card.won ?? card.shop.gift}</p>
-          {me.code && svg ? (
+        <div className="mt-3 flex shrink-0 animate-pop items-center gap-3 rounded-[1.25rem] bg-surface p-3.5 shadow-card">
+          <Icon3D name="gift" size={44} className="animate-float" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.875rem] font-semibold text-coral">{(card.waiting_n ?? 1) > 1 ? fill(t.readyMany, { n: card.waiting_n ?? 2 }) : t.ready}</p>
+            <p className="truncate text-[1.0625rem] font-bold leading-tight">{card.won ?? card.shop.gift}</p>
+            {!(me.code && svg) && <p className="text-[0.8125rem] text-muted">{t.readyBody}</p>}
+          </div>
+          {me.code && svg && (
             <MyCode
               code={me.code}
               svg={svg}
               gift={card.won ?? card.shop.gift}
               startOpen={show === "1"}
-              className={`press relative mx-auto mt-2 flex h-11 items-center justify-center gap-2 rounded-full bg-white px-5 text-[0.9688rem] font-bold text-coral ${look.hint}`}
+              className="press flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-coral px-4 text-[0.9375rem] font-bold text-white"
             >
-              <QrCode className="size-5" /> {t.giftShow}
+              <QrCode className="size-5" /> ورّي الكود
             </MyCode>
-          ) : (
-            <p className={`relative text-[0.9375rem] text-white/85 ${look.hint}`}>{t.readyBody}</p>
           )}
         </div>
       )}
@@ -120,35 +93,41 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       {/* once, on a card with a tampon on it: a word to this phone when the gift is near, or waiting */}
       {(card.stamps > 0 || ready) && !(me.seen ?? []).includes("push") && <PushAsk shop={card.shop.name} />}
 
-      <section className={`flex min-h-0 flex-1 flex-col ${look.story}`}>
-        <h2 className="mb-2.5 px-0.5 text-[1.0625rem] font-bold">{t.history}</h2>
+      <section className="mt-4 flex min-h-0 flex-1 flex-col pb-3">
+        <h2 className="mb-1.5 px-0.5 text-[0.9375rem] font-bold">{t.history}</h2>
         {card.history.length === 0 ? (
           <p className="rounded-[1.25rem] bg-surface p-4 text-[0.9375rem] text-muted shadow-card">{t.nothingYet}</p>
         ) : (
-          <ul data-list className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
+          <ul data-list className="min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.25rem] bg-surface shadow-card">
             {card.history.map((h, i) => (
-              <li key={i} className="flex items-center gap-3 px-4 py-3">
+              <li key={i} className="flex items-center gap-3 px-3.5 py-2">
                 {h.kind === "stamp" ? (
-                  <span className="num grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.875rem] font-bold text-brand">+1</span>
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full text-white" style={{ background: card.shop.color }}>
+                    <Check className="size-4" strokeWidth={3} />
+                  </span>
                 ) : (
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-coral-soft text-coral">
-                    <Gift className="size-5" />
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-coral-soft text-coral">
+                    <Gift className="size-4" />
                   </span>
                 )}
-                <span className="min-w-0 flex-1 text-[0.9688rem] font-medium">
+                <span className="min-w-0 flex-1 truncate text-[0.875rem] font-medium">
                   {h.kind === "stamp" ? (
                     <>
                       {t.hStamp}
                       {h.item && (
                         <>
                           {" · "}
-                          <bdi className="font-bold text-brand">{h.item}</bdi>
+                          <bdi className="font-bold">{h.item}</bdi>
                         </>
                       )}
                     </>
-                  ) : h.given ? fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" }) : t.hGiftWaiting}
+                  ) : h.given ? (
+                    fill(t.hGift, { gift: h.gift ?? card.shop.gift ?? "" })
+                  ) : (
+                    t.hGiftWaiting
+                  )}
                 </span>
-                <span className="shrink-0 text-[0.7812rem] text-muted">{when(h.at)}</span>
+                <span className="shrink-0 text-[0.75rem] tabular-nums text-muted">{when(h.at)}</span>
               </li>
             ))}
           </ul>

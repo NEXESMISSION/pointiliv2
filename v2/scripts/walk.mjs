@@ -24,7 +24,7 @@ if (/localhost|127\.0\.0\.1/.test(BASE)) for (const ip of ["local", "::1", "127.
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
 // a walk cut short leaves its two lines in the books (a script's lines, never the founder's): gone before this
 // one writes them again, or «the line is taken back» finds the old twin still there and waits forever
-const BOOK_LINES = ["سبونسور فيسبوك", "خدمة طباعة لمحل"];
+const BOOK_LINES = ["سبونسور تجربة الوولك", "خدمة طباعة لمحل"];
 await admin.from("books").delete().eq("robot", true).in("what", BOOK_LINES);
 // robots, all three: on the list before they exist, so the founder's console never shows them (scripts/robots.mjs)
 const ownerPhone = await robot(admin, phoneNo());
@@ -416,11 +416,11 @@ try {
   await shot(a, "27c-news-new", 400);
   // the books: an expense and a line of income written by hand, each in its list, then taken back (a script's lines: never in the founder's own books)
   await a.goto(`${BASE}/admin/payments`, { waitUntil: "load" });
-  await a.getByPlaceholder("مثلا: سبونسور فيسبوك").fill("سبونسور فيسبوك");
+  await a.getByPlaceholder("مثلا: سبونسور فيسبوك").fill("سبونسور تجربة الوولك");
   await a.getByRole("textbox", { name: "قدّاش؟ (د)" }).fill("47,35");
   await a.getByRole("radio", { name: "إشهار" }).click();
   await a.getByRole("button", { name: "سجّل", exact: true }).click();
-  const spentLine = a.getByRole("row", { name: /سبونسور فيسبوك/ }).first();
+  const spentLine = a.getByRole("row", { name: /سبونسور تجربة الوولك/ }).first();
   await spentLine.waitFor({ timeout: 20000 });
   const spentSays = (await spentLine.textContent()).replace(/\s+/g, " ");
   console.log(spentSays.includes("47,35") && spentSays.includes("إشهار") ? "  · an expense written: its line is in the books ✓" : `  ! the expense's line says: ${spentSays}`);

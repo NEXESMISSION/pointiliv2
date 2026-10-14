@@ -1,9 +1,9 @@
 import Link from "next/link";
 import QRCode from "qrcode";
-import { ChevronRight, QrCode, ScanLine } from "lucide-react";
+import { ChevronLeft, ChevronRight, QrCode, ScanLine } from "lucide-react";
 import { InstallApp, InstallPopup } from "@/components/InstallApp";
 import { MyCode } from "@/components/MyCode";
-import { Pass } from "@/components/Pass";
+import { ShopMark } from "@/components/ShopMark";
 import { Mark } from "@/components/Tracker";
 import { Icon3D, LinkBtn, Logo, Screen } from "@/components/ui";
 import { siteOrigin } from "@/lib/origin";
@@ -40,11 +40,11 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
         {me.code && svg ? <MyCode code={me.code} svg={svg} /> : <Logo />}
       </header>
 
-      <div className="mt-[2.5dvh] shrink-0">
+      <div className="mt-[1.5dvh] shrink-0">
         <p className="flex items-center gap-1.5 text-[0.9375rem] text-muted">
           {t.hello} <Icon3D name="wave" size={22} />
         </p>
-        <h1 className="mt-0.5 truncate text-[2rem] font-bold leading-tight">{back ? t.myCards : first || t.myCards}</h1>
+        <h1 className="mt-0.5 truncate text-[1.5rem] font-bold leading-tight">{back ? t.myCards : first || t.myCards}</h1>
         {/* Pointili on the home screen: Android's own dialog, or on an iPhone the guide to the three taps */}
         {!back && <InstallApp where="wallet" className="mt-2 h-9 text-[0.8438rem]" />}
       </div>
@@ -52,31 +52,31 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
       {/* a gift waiting: its code, to show at the counter (the shop scans it and hands the gift over) */}
       {waiting.length > 0 &&
         (waiting[0]!.spin ? (
-          <Link href={`/c/${waiting[0]!.id}`} className="press relative mt-[2dvh] block shrink-0 animate-rise overflow-hidden rounded-[1.5rem] bg-surface p-4 pe-24 shadow-card">
+          <Link href={`/c/${waiting[0]!.id}`} className="press relative mt-[2dvh] block shrink-0 animate-rise overflow-hidden rounded-[1.25rem] bg-surface p-3.5 pe-20 shadow-card">
             <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
-              <Icon3D name="party" size={60} className="animate-float" />
+              <Icon3D name="party" size={50} className="animate-float" />
             </span>
-            <b className="block text-[1.0625rem] font-bold">{t.wheelWaits}</b>
+            <b className="block text-[0.9688rem] font-bold">{t.wheelWaits}</b>
             <span className="block truncate text-[0.875rem] text-muted">{waiting[0]!.shop.name}</span>
             <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">{t.wheelGo}</span>
           </Link>
         ) : me.code && svg ? (
-          <MyCode code={me.code} svg={svg} gift={waiting[0]!.won ?? waiting[0]!.shop.gift} className="press relative mt-[2dvh] block w-full shrink-0 animate-rise overflow-hidden rounded-[1.5rem] bg-surface p-4 pe-24 text-start shadow-card">
+          <MyCode code={me.code} svg={svg} gift={waiting[0]!.won ?? waiting[0]!.shop.gift} className="press relative mt-[2dvh] block w-full shrink-0 animate-rise overflow-hidden rounded-[1.25rem] bg-surface p-3.5 pe-20 text-start shadow-card">
             <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
-              <Icon3D name="gift" size={64} className="animate-float" />
+              <Icon3D name="gift" size={52} className="animate-float" />
             </span>
-            <b className="block text-[1.0625rem] font-bold">{t.giftWaiting}</b>
+            <b className="block text-[0.9688rem] font-bold">{t.giftWaiting}</b>
             <span className="block truncate text-[0.875rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.won ?? waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
             <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">
               <QrCode className="size-4" /> {t.giftShow}
             </span>
           </MyCode>
         ) : (
-          <Link href={`/c/${waiting[0]!.id}`} className="press relative mt-[2dvh] block shrink-0 animate-rise overflow-hidden rounded-[1.5rem] bg-surface p-4 pe-24 shadow-card">
+          <Link href={`/c/${waiting[0]!.id}`} className="press relative mt-[2dvh] block shrink-0 animate-rise overflow-hidden rounded-[1.25rem] bg-surface p-3.5 pe-20 shadow-card">
             <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
-              <Icon3D name="gift" size={64} className="animate-float" />
+              <Icon3D name="gift" size={52} className="animate-float" />
             </span>
-            <b className="block text-[1.0625rem] font-bold">{t.giftWaiting}</b>
+            <b className="block text-[0.9688rem] font-bold">{t.giftWaiting}</b>
             <span className="block truncate text-[0.875rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.won ?? waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
           </Link>
         ))}
@@ -86,11 +86,11 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
         (() => {
           const ordered = cards.find((c) => (c.orders_n ?? 0) > 0);
           return ordered ? (
-            <Link href={`/c/${ordered.id}`} className="press relative mt-[2dvh] block shrink-0 animate-rise overflow-hidden rounded-[1.5rem] bg-surface p-4 pe-24 shadow-card">
+            <Link href={`/c/${ordered.id}`} className="press relative mt-[2dvh] block shrink-0 animate-rise overflow-hidden rounded-[1.25rem] bg-surface p-3.5 pe-20 shadow-card">
               <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
-                <Icon3D name="cart" size={60} className="animate-float" />
+                <Icon3D name="cart" size={50} className="animate-float" />
               </span>
-              <b className="block text-[1.0625rem] font-bold">{t.storeOrderWaits}</b>
+              <b className="block text-[0.9688rem] font-bold">{t.storeOrderWaits}</b>
               <span className="block truncate text-[0.875rem] text-muted">{fill(t.storeOrderAt, { shop: ordered.shop.name })}</span>
               <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">
                 <QrCode className="size-4" /> {t.storeShow}
@@ -108,23 +108,76 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
       ) : (
         // the cards scroll inside their own box: the page, the title and the scan button stay put
         <section className="mt-[2.5dvh] flex min-h-0 flex-1 flex-col">
-          {!back && <h2 className="mb-2.5 shrink-0 px-0.5 text-[1.125rem] font-bold">{t.myCards}</h2>}
-          <div data-list className="-mx-2 min-h-0 space-y-3 overflow-y-auto overscroll-contain px-2 pb-2">
-            {cards.map((c, i) => (
-              <Link key={c.id} href={`/c/${c.id}`} className="press block animate-rise" style={{ animationDelay: `${i * 70}ms` }}>
-                <Pass shop={c.shop} stamps={c.stamps} />
-              </Link>
-            ))}
+          {!back && <h2 className="mb-2 shrink-0 px-0.5 text-[1rem] font-bold">{t.myCards}</h2>}
+          {/* one line a card: what the shop is, how far the gift is, what waits — the card itself one tap away */}
+          <div data-list className="-mx-2 min-h-0 overflow-y-auto overscroll-contain px-2 pb-2">
+            <ul className="divide-y divide-line overflow-hidden rounded-[1.375rem] bg-surface shadow-card">
+              {cards.map((c, i) => (
+                <li key={c.id} className="animate-rise" style={{ animationDelay: `${i * 60}ms` }}>
+                  <CardRow card={c} />
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
       )}
 
       {/* the one thing a customer does here */}
       <div className="shrink-0 pb-[2dvh] pt-[1.5dvh]">
-        <LinkBtn href="/scan" className="h-[3.75rem] animate-breathe rounded-[1.5rem] text-[1.1875rem]">
+        <LinkBtn href="/scan" className="h-14 animate-breathe rounded-[1.25rem] text-[1.0625rem]">
           <ScanLine className="size-6" strokeWidth={2.4} /> {t.scan}
         </LinkBtn>
       </div>
     </Screen>
+  );
+}
+
+/**
+ * One card in the wallet, as a line: the shop's mark in its colour, its name,
+ * a bar that fills to the gift, and the count — or what waits (the gift, the
+ * roulette, an order), said in the shop's colour.
+ */
+function CardRow({ card: c }: { card: CardView }) {
+  const goal = c.shop.goal ?? 10;
+  const done = Math.min(c.stamps, goal);
+  const left = goal - done;
+  const waits = c.spin ? t.wheelWaits : c.ready ? fill(t.won, { gift: c.won ?? c.shop.gift ?? "" }) : (c.orders_n ?? 0) > 0 ? t.storeOrderWaits : null;
+  const line = c.shop.store
+    ? `${c.stamps} ${t.storeBalance}`
+    : c.shop.wheel
+      ? left === 1
+        ? t.wheelToGoOne
+        : fill(t.wheelToGo, { n: left })
+      : left === 1
+        ? fill(t.toGoOne, { gift: c.shop.gift ?? "" })
+        : fill(t.toGo, { n: left, gift: c.shop.gift ?? "" });
+  return (
+    <Link href={`/c/${c.id}`} className="press flex items-center gap-3 px-3.5 py-3 active:bg-canvas">
+      <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-[0.9rem]" style={{ background: c.shop.color }}>
+        <ShopMark shop={c.shop} size={30} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-2">
+          <span dir="auto" className="min-w-0 truncate text-[1rem] font-bold">
+            {c.shop.name}
+          </span>
+          {!c.shop.store && (
+            <span className="num shrink-0 text-[0.875rem] font-bold" style={{ color: c.shop.color }}>
+              {done}
+              <span className="text-muted">/{goal}</span>
+            </span>
+          )}
+        </span>
+        {!c.shop.store && (
+          <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-canvas" aria-hidden>
+            <span className="block h-full rounded-full" style={{ width: `${Math.round((done / goal) * 100)}%`, background: c.shop.color }} />
+          </span>
+        )}
+        <span className={`mt-1 block truncate text-[0.8125rem] ${waits ? "font-bold" : "text-muted"}`} style={waits ? { color: c.shop.color } : undefined}>
+          {waits ?? line}
+        </span>
+      </span>
+      <ChevronLeft className="size-5 shrink-0 text-faint" />
+    </Link>
   );
 }

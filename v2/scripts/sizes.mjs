@@ -252,7 +252,7 @@ const SCREENS = [
     before: () => giftBack(),
     path: () => `/c/${cardHere.id}`,
     act: async (p) => {
-      await p.getByRole("button", { name: /ورّي الكود متاع الكادو/ }).click({ timeout: 15000 });
+      await p.getByRole("button", { name: /ورّي الكود/ }).click({ timeout: 15000 });
       await p.getByRole("dialog").waitFor({ timeout: 15000 });
     },
   },

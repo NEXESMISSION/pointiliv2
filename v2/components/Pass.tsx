@@ -23,58 +23,64 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
   // either way, so a logo drawn on nothing still reads as a stamp filled in.
   const mark = !!shop.stamp_logo && !!shop.logo;
 
+  // the dots keep a size a thumb understands: never giant on a short card, never tiny on a long one
+  const dot = goal <= 6 ? "max-w-[3rem]" : "max-w-[2.5rem]";
+  const line = shop.wheel
+    ? ready
+      ? shop.gift && shop.gift !== "الروليت"
+        ? fill(t.won, { gift: shop.gift })
+        : t.wheelReady
+      : left === 1
+        ? t.wheelToGoOne
+        : fill(t.wheelToGo, { n: left })
+    : ready
+      ? fill(won > 1 ? t.wonMany : t.won, { gift: shop.gift ?? "", n: won })
+      : left === 1
+        ? fill(t.toGoOne, { gift: shop.gift ?? "" })
+        : fill(t.toGo, { n: left, gift: shop.gift ?? "" });
+
   return (
     <div
-      className={`relative overflow-hidden rounded-[1.75rem] text-white ${className}`}
+      className={`relative overflow-hidden rounded-[1.5rem] text-white ${className}`}
       style={{
-        background: `linear-gradient(150deg, color-mix(in oklab, ${shop.color} 75%, white) -20%, ${shop.color} 45%, color-mix(in oklab, ${shop.color} 70%, black) 120%)`,
-        boxShadow: `0 20px 44px -18px color-mix(in oklab, ${shop.color} 80%, black)`,
+        // one colour, the shop's, a little lighter at the top: no pattern, nothing to read through
+        background: `linear-gradient(165deg, color-mix(in oklab, ${shop.color} 82%, white) 0%, ${shop.color} 55%, color-mix(in oklab, ${shop.color} 88%, black) 100%)`,
+        boxShadow: `0 14px 30px -18px color-mix(in oklab, ${shop.color} 75%, black)`,
       }}
     >
-      {/* light from the top corner, and soft waves: the pass looks like a pass */}
-      <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_80%_at_0%_0%,rgb(255_255_255/0.28),transparent_55%)]" aria-hidden />
-      <svg className="pointer-events-none absolute inset-0 size-full opacity-[0.13]" aria-hidden>
-        <defs>
-          <pattern id="waves" width="90" height="36" patternUnits="userSpaceOnUse">
-            <path d="M0 18c22 0 22-10 45-10s23 10 45 10" fill="none" stroke="white" strokeWidth="2" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#waves)" />
-      </svg>
-
-      <div className={`relative ${small ? "px-4 pb-7 pt-3.5" : "p-5"}`}>
+      <div className={`relative ${small ? "px-4 pb-6 pt-3.5" : "px-5 pb-4 pt-4"}`}>
         <div className="flex items-center gap-3">
-          <span className="grid size-[2.875rem] shrink-0 place-items-center overflow-hidden rounded-[0.9375rem] bg-white/20 backdrop-blur-sm">
-            <ShopMark shop={shop} size={30} />
+          <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[0.75rem] bg-white/95">
+            <ShopMark shop={shop} size={26} />
           </span>
           {/* a name in Latin letters too long for the card loses its end, never its start: «Pâtisserie El Me…» */}
-          <span dir="auto" className="min-w-0 flex-1 truncate text-right text-[1.125rem] font-bold leading-tight">
+          <span dir="auto" className="min-w-0 flex-1 truncate text-right text-[1rem] font-bold leading-tight">
             {shop.name}
           </span>
           {shop.store ? (
             // a shop with a store: the tampons kept, to spend
             <span className="num shrink-0 text-end leading-none">
-              <span className="text-[2rem] font-bold">{stamps}</span>
+              <span className="text-[1.5rem] font-bold">{stamps}</span>
               <span className="block text-[0.6875rem] font-semibold text-white/75">{t.storeBalance}</span>
             </span>
           ) : (
             <span className="num shrink-0 leading-none">
-              <span className="text-[2rem] font-bold">{done}</span>
-              <span className="text-[1rem] font-semibold text-white/70">/{goal}</span>
+              <span className="text-[1.5rem] font-bold">{done}</span>
+              <span className="text-[0.9375rem] font-semibold text-white/70">/{goal}</span>
             </span>
           )}
         </div>
 
         {!small && shop.store && (
-          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/[0.16] px-3.5 py-2.5 text-[0.9062rem] font-semibold">
+          <p className="mt-3.5 flex items-center gap-2 border-t border-white/20 pt-2.5 text-[0.8438rem] font-semibold text-white/95">
             <ShoppingBag className="size-[1.125rem] shrink-0" />
             <span className="min-w-0 flex-1 truncate">{t.storeSpend}</span>
-          </div>
+          </p>
         )}
 
         {!small && !shop.store && (
           <>
-            <div className="mt-5 grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+            <div className="mt-3.5 grid justify-items-center gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
               {Array.from({ length: goal }, (_, i) => {
                 const on = i < done;
                 const last = i === goal - 1;
@@ -82,20 +88,20 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
                 return on ? (
                   <span
                     key={i}
-                    className={`grid aspect-square place-items-center rounded-full bg-white shadow-[0_3px_8px_rgb(0_0_0/0.18)] ${landing ? "pass-land" : ""}`}
+                    className={`grid aspect-square w-full place-items-center rounded-full bg-white shadow-[0_2px_6px_rgb(0_0_0/0.15)] ${dot} ${landing ? "pass-land" : ""}`}
                     style={{ color: shop.color, animationDelay: landing ? "380ms" : undefined }}
                   >
                     {last ? (
-                      <Gift className="size-[52%]" strokeWidth={2.4} />
+                      <Gift className="size-[50%]" strokeWidth={2.4} />
                     ) : mark ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={shop.logo!} alt="" decoding="async" className="size-[74%] rounded-full object-contain" />
+                      <img src={shop.logo!} alt="" decoding="async" className="size-[72%] rounded-full object-contain" />
                     ) : (
-                      <Check className="size-[52%]" strokeWidth={3.2} />
+                      <Check className="size-[50%]" strokeWidth={3.2} />
                     )}
                   </span>
                 ) : (
-                  <span key={i} className="grid aspect-square place-items-center rounded-full border-2 border-dashed border-white/45 bg-white/[0.07] text-white/70">
+                  <span key={i} className={`grid aspect-square w-full place-items-center rounded-full bg-white/20 text-white/80 ${dot}`}>
                     {last && <Gift className="size-[46%]" />}
                   </span>
                 );
@@ -103,29 +109,16 @@ export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: Pas
             </div>
 
             {shop.gift && (
-              <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/[0.16] px-3.5 py-2.5 text-[0.9062rem] font-semibold">
-                <Gift className="size-[1.125rem] shrink-0" />
-                <span className="min-w-0 flex-1 truncate">
-                  {shop.wheel
-                    ? ready
-                      ? shop.gift && shop.gift !== "الروليت"
-                        ? fill(t.won, { gift: shop.gift })
-                        : t.wheelReady
-                      : left === 1
-                        ? t.wheelToGoOne
-                        : fill(t.wheelToGo, { n: left })
-                    : ready
-                      ? fill(won > 1 ? t.wonMany : t.won, { gift: shop.gift, n: won })
-                      : left === 1
-                        ? fill(t.toGoOne, { gift: shop.gift })
-                        : fill(t.toGo, { n: left, gift: shop.gift })}
-                </span>
+              // one plain line under a thin rule: how far the gift is
+              <p className="mt-3.5 flex items-center gap-2 border-t border-white/20 pt-2.5 text-[0.8438rem] font-semibold text-white/95">
+                <Gift className="size-[1.0625rem] shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{line}</span>
                 {rest > 0 && (
                   <span className="shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[0.8125rem] font-bold">
                     <bdi dir="ltr" className="num">+{rest}</bdi> {t.savedNext}
                   </span>
                 )}
-              </div>
+              </p>
             )}
           </>
         )}
