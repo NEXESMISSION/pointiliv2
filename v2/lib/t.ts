@@ -272,6 +272,7 @@ export const t = {
   posterHint: "ورقة A5: حطّها على الكاسة قدّام الحرفاء",
   setPosterSub: "ورقة A5 تفسّر الكارط للحرفاء",
   customersNone: "ما لقينا حتى حريف بالإسم هذا",
+  customerHowAdd: "باش تزيدلو تامبون: سكاني الكود اللي في تليفونو",
   todayNone: "حتى تامبون اليوم مازال",
   ownerName: "اسمك",
   shopTitle: "المحل",

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft, Hourglass, QrCode, TriangleAlert, Undo2, X } from "lucide-react";
-import { Pass, type PassShop } from "@/components/Pass";
+import { CardHow } from "@/components/CardHow";
+import { type PassShop } from "@/components/Pass";
 import { CardMoments } from "@/components/CardMoments";
 import { Icon3D } from "@/components/ui";
 import { fill, stampsN, t } from "@/lib/t";
@@ -97,12 +98,18 @@ export function RecentList({ rows, shop, fix = false }: { rows: RecentRow[]; sho
             <p className="text-[0.9375rem] text-muted">
               {open.line} · <span className="num">{open.time}</span>
             </p>
-            <div className="mt-4">
-              <Pass shop={{ ...shop, goal: open.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
-            </div>
-            <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">
-              {shop.store ? fill(t.storeHolds, { n: open.stamps }) : open.stamps >= open.goal ? fill(say.ready, { gift: open.gift ?? shop.gift ?? "" }) : fill(say.left, { n: stampsN(open.goal - open.stamps), gift: open.gift ?? shop.gift ?? "" })}
-            </p>
+            {/* the card answers a tap: how a tampon is given (owners tapped its dots, as on paper) */}
+            <CardHow
+              key={open.id}
+              className="mt-4"
+              shop={{ ...shop, goal: open.goal, gift: open.gift ?? shop.gift }}
+              stamps={open.stamps}
+              line={
+                <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">
+                  {shop.store ? fill(t.storeHolds, { n: open.stamps }) : open.stamps >= open.goal ? fill(say.ready, { gift: open.gift ?? shop.gift ?? "" }) : fill(say.left, { n: stampsN(open.goal - open.stamps), gift: open.gift ?? shop.gift ?? "" })}
+                </p>
+              }
+            />
             {/* every tampon on the card, and what each one was for */}
             {open.card && <CardMoments card={open.card} color={shop.color} />}
             {/* the wrong thing tapped at the counter: put right in two taps */}

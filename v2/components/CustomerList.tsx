@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Gift, ScanLine, Search, X } from "lucide-react";
 import { CardMoments } from "@/components/CardMoments";
-import { Pass, type PassShop } from "@/components/Pass";
+import { CardHow } from "@/components/CardHow";
+import { type PassShop } from "@/components/Pass";
 import { fill, giftsN, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 
@@ -137,22 +138,27 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                 ))}
               </div>
             )}
-            <div className="mt-3">
-              <Pass shop={{ ...shop, goal: open.goal ?? shop.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
-            </div>
-            {shop.store ? (
-              <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">{fill(t.storeHolds, { n: open.stamps })}</p>
-            ) : open.ready ? (
-              <div className="mt-3 flex items-center gap-3 rounded-[1.25rem] bg-coral-soft p-3.5">
-                <Gift className="size-6 shrink-0 text-coral" />
-                <span className="min-w-0 flex-1 text-[0.9375rem] font-semibold text-coral">{t.customerGiftWaits}</span>
-                <Link href="/shop/collect?by=scan" className="press flex h-10 shrink-0 items-center gap-1.5 rounded-[0.875rem] bg-coral px-3.5 text-[0.9375rem] font-bold text-white">
-                  <ScanLine className="size-4" /> {t.collectScanShort}
-                </Link>
-              </div>
-            ) : (
-              <p className="mt-3 text-center text-[0.9375rem] text-muted">{fill(t.customerLeft, { n: stampsN(Math.max((open.goal ?? goal) - open.stamps, 0)), gift: open.gift ?? shop.gift ?? "" })}</p>
-            )}
+            {/* the card answers a tap: how to give this customer a tampon (owners tapped its dots, and nothing happened) */}
+            <CardHow
+              key={open.id}
+              shop={{ ...shop, goal: open.goal ?? shop.goal, gift: open.gift ?? shop.gift }}
+              stamps={open.stamps}
+              line={
+                shop.store ? (
+                  <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">{fill(t.storeHolds, { n: open.stamps })}</p>
+                ) : open.ready ? (
+                  <div className="mt-3 flex items-center gap-3 rounded-[1.25rem] bg-coral-soft p-3.5">
+                    <Gift className="size-6 shrink-0 text-coral" />
+                    <span className="min-w-0 flex-1 text-[0.9375rem] font-semibold text-coral">{t.customerGiftWaits}</span>
+                    <Link href="/shop/collect?by=scan" className="press flex h-10 shrink-0 items-center gap-1.5 rounded-[0.875rem] bg-coral px-3.5 text-[0.9375rem] font-bold text-white">
+                      <ScanLine className="size-4" /> {t.collectScanShort}
+                    </Link>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-center text-[0.9375rem] text-muted">{fill(t.customerLeft, { n: stampsN(Math.max((open.goal ?? goal) - open.stamps, 0)), gift: open.gift ?? shop.gift ?? "" })}</p>
+                )
+              }
+            />
             {/* every tampon on the card, and what each one was for (the things' totals are above) */}
             <CardMoments card={open.id} color={shop.color} tally={!(open.items && open.items.length)} />
           </div>

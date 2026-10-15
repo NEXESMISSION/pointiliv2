@@ -374,6 +374,10 @@ try {
   await o.getByRole("button", { name: /سامي/ }).first().click();
   await o.getByRole("dialog").waitFor({ timeout: 20000 });
   await shot(o, "19b-customer", 700);
+  // the card in the sheet answers a tap: how a tampon is given («سكاني»)
+  await o.getByRole("dialog").getByRole("button", { name: /باش تزيدلو تامبون/ }).click();
+  await o.getByRole("dialog").getByRole("link", { name: "سكاني" }).waitFor({ timeout: 10000 });
+  await shot(o, "19b2-customer-how", 500);
   await o.keyboard.press("Escape");
   await o.getByRole("dialog").waitFor({ state: "detached", timeout: 10000 });
   // the owner types their own code under «سكاني»: not an error, the customer's side to see
