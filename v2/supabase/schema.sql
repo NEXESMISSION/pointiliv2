@@ -247,11 +247,12 @@ create index if not exists codes_shop_idx on public.codes (shop_id, created_at d
 alter table public.codes add column if not exists back_at timestamptz;
 -- the counter's private radio: Realtime topic "pointili:<signal>", told of every scan
 alter table public.shops add column if not exists signal text not null default encode(extensions.gen_random_bytes(16), 'hex');
--- Products were asked for and then withdrawn (2026-10-09). What was recorded
--- stays — public.items, codes.item_id, moments.item_id and item_report() are
--- all still here — but nothing asks any more, and no screen offers it.
+-- «شنوّة يبيع»: the counter asks which thing before it makes a code. Withdrawn
+-- on 2026-10-09, back since 2026-10-14 as the founder's switch, shop by shop
+-- (admin_set_items). The line that turned every shop's switch off on each run
+-- of this file (from the withdrawal) is gone: it switched Sultan al oud off
+-- the night after the founder turned it on at the owner's request.
 alter table public.shops add column if not exists items_on boolean not null default false;
-update public.shops set items_on = false where items_on;
 
 create table if not exists public.moments (
   id          bigint generated always as identity primary key,
