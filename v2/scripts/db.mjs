@@ -46,9 +46,36 @@ async function logosBucket() {
   console.log(`✓ logos bucket (${have.ok ? "kept" : "made"})`);
 }
 
+/**
+ * What the founder and the owners set by hand, shop by shop: the switches and
+ * the subscription. Applying the schema must never change any of it — on
+ * 15 Oct 2026 a forgotten line in it turned every «شنوّة يبيع» off, and a
+ * perfume shop's counter stopped asking which perfume. So: read before,
+ * read after, and anything that moved is put back and said loudly.
+ */
+const KEPT = ["items_on", "store_on", "wheel_on", "paused", "paid_until", "trial_days", "trial_first"];
+const keptNow = async () => new Map((await sql(`select id, name, ${KEPT.join(", ")} from public.shops`)).map((r) => [r.id, r]));
+const lit = (v) => (v === null ? "null" : typeof v === "boolean" || typeof v === "number" ? String(v) : `'${String(v).replace(/'/g, "''")}'`);
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const t0 = Date.now();
-  await sql(readFileSync("supabase/schema.sql", "utf8"));
+  // trial_first is new on 14 Oct: on a database from before it, the snapshot simply goes without it
+  const before = await keptNow().catch(async () => new Map((await sql("select id, name, items_on, store_on, wheel_on, paused, paid_until, trial_days from public.shops")).map((r) => [r.id, r])));
+  await sql(readFileSync(process.env.SCHEMA || "supabase/schema.sql", "utf8"));
+  const after = await keptNow();
+  const moved = [];
+  for (const [id, was] of before) {
+    const now = after.get(id);
+    if (!now) continue;
+    const fields = KEPT.filter((k) => k in was && String(was[k]) !== String(now[k]));
+    if (fields.length) moved.push({ id, name: was.name, fields, was });
+  }
+  for (const m of moved) await sql(`update public.shops set ${m.fields.map((k) => `${k} = ${lit(m.was[k])}`).join(", ")} where id = '${m.id}'`);
+  if (moved.length) {
+    console.log(`\n!!! schema.sql changed what the founder and the owners set, in ${moved.length} shop(s) — put back as it was:`);
+    for (const m of moved) console.log(`    ${m.name}: ${m.fields.join(", ")}`);
+    console.log("!!! find the top-level UPDATE in schema.sql that did it and remove it\n");
+  }
   // a brand-new function is in the database but not yet in the API's own list
   // of what it will serve: without this, the app gets a 404 from it for a while
   await sql("select pg_notify('pgrst', 'reload schema')");
