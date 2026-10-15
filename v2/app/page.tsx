@@ -22,14 +22,14 @@ const fromAd = (q: Record<string, string | string[] | undefined>) => !!(q.fbclid
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const me = await getMe();
   if (!me) {
-    const [help, settings] = await Promise.all([getHelp(), getSettings()]);
+    const [help, settings, q] = await Promise.all([getHelp(), getSettings(), searchParams]);
     return (
       <>
         <JsonLd data={orgJsonLd(settings.supportPhone, settings.social)} />
         <JsonLd data={faqJsonLd(FAQ.slice(0, 5).flatMap((f) => [{ q: f.q, a: f.a }, f.fr]))} />
         {/* somebody who has signed in on this phone before is offered the way back in first */}
         {/* from an ad (Facebook's click id, or the ad's utm): an owner, most likely — the shop's door alone */}
-        <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(await searchParams)} />
+        <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} client={"client" in q} />
       </>
     );
   }

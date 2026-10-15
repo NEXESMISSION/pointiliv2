@@ -218,12 +218,17 @@ export async function setName(_: FormState, fd: FormData): Promise<FormState> {
 export async function changePassword(_: FormState, fd: FormData): Promise<FormState> {
   const password = String(fd.get("password") ?? "");
   if (password.length < PASSWORD_MIN) return { error: t.errPassword, field: "password" };
-  const { error } = await (await db()).auth.updateUser({ password });
+  const supabase = await db();
+  const { data: user, error } = await supabase.auth.updateUser({ password });
   // the same password again is not a failure
   if (error && !/different|same/i.test(error.message)) {
     console.error("[password]", error.message);
     return { error: t.errNetwork };
   }
+  // an account made at the counter has its own password now: the wallet stops asking
+  const id = user?.user?.id ?? (await supabase.auth.getUser()).data.user?.id;
+  if (id) await service().from("people").update({ password_set: true }).eq("id", id);
+  revalidatePath("/", "layout");
   return { error: null };
 }
 
@@ -271,6 +276,40 @@ export async function scan(token: string): Promise<ScanResult> {
   if (!res.ok) return { kind: "error", code: res.error ?? "invalid" };
   keepHeld([...held.filter(([k]) => k !== token), [token, fresh] as const]);
   return { kind: "held", shop: res.shop ?? "", color: res.color ?? "#6C47FF", shopKind: res.kind ?? "other" };
+}
+
+/**
+ * The account at the counter, in twenty seconds: a phone scanned the code with
+ * no account, the tampon is held for it — a name and a phone number make the
+ * account (with a password nobody sees: the wallet asks for one later), sign
+ * it in, and the held tampon lands, all in this one call. A number already
+ * taken says so, with the way to sign in.
+ */
+export async function quickJoin(token: string, name: string, phoneRaw: string): Promise<{ ok: false; error: string; field?: string } | { ok: true; res: ScanResult }> {
+  if (!TOKEN.test(token)) return { ok: false, error: t.errNetwork };
+  const who = String(name ?? "").trim();
+  const phone = digits(String(phoneRaw ?? ""));
+  if (who.length < 2 || who.length > 60) return { ok: false, error: t.errName, field: "name" };
+  if (!validPhone(phone)) return { ok: false, error: t.errPhone, field: "phone" };
+  const made = await newAccount(who, phone, randomBytes(18).toString("base64url"));
+  if ("error" in made) return { ok: false, error: made.error, field: made.field };
+  await service().from("people").update({ password_set: false }).eq("id", made.id);
+  // the tampon held for this phone, now theirs
+  const jar = await cookies();
+  const held = (jar.get(HOLD)?.value ?? "").split("|").map((x) => [x.slice(0, x.lastIndexOf(".")), x.slice(x.lastIndexOf(".") + 1)] as const);
+  const hold = held.find(([k]) => k === token)?.[1] ?? null;
+  const rest = held.filter(([k, v]) => k !== token && TOKEN.test(k) && v.length >= 32);
+  if (rest.length) jar.set(HOLD, rest.map(([k, v]) => `${k}.${v}`).join("|"), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 20 * 60 });
+  else jar.delete(HOLD);
+  const { data, error } = await made.supabase.rpc("stamp", { p_token: token, p_hold: hold });
+  if (error || !data) return { ok: true, res: { kind: "error", code: "network" } };
+  const r = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null };
+  if (r.ok && r.card) {
+    const c = r.card;
+    after(() => alertStamp(c.shop.id, c.id));
+    return { ok: true, res: { kind: "stamped", card: c, gift: !!r.gift, item: r.item ?? null } };
+  }
+  return { ok: true, res: { kind: "error", code: r.error ?? "invalid", card: r.card, next_at: r.next_at, shop: r.shop } };
 }
 
 // ── the owner ──────────────────────────────────────────────────────────────

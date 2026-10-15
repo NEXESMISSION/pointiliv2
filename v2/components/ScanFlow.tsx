@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, Check, Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
-import { scan } from "@/app/actions";
+import { AlertTriangle, ArrowLeft, Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
+import Link from "next/link";
+import { quickJoin, scan } from "@/app/actions";
+import { PhoneField } from "@/components/PhoneField";
 import { Pass } from "@/components/Pass";
 import { useScreen } from "@/components/Tracker";
 import { Confetti, IMPACT_MS, StampLand } from "@/components/StampLand";
-import { Icon3D, LinkBtn, Logo } from "@/components/ui";
+import { Btn, Field, Icon3D, LinkBtn, Logo } from "@/components/ui";
 import { fill, kindIcon, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { nextTampon } from "@/lib/when";
@@ -68,7 +70,18 @@ export function ScanFlow({ token, known }: { token: string; known?: boolean }) {
 
   if (!res) return <Checking />;
   if (res.kind === "stamped") return <Stamped res={res} />;
-  if (res.kind === "held") return <Held token={token} res={res} known={known} />;
+  if (res.kind === "held")
+    return (
+      <Held
+        token={token}
+        res={res}
+        known={known}
+        onDone={(r) => {
+          keep(token, r);
+          setRes(r);
+        }}
+      />
+    );
   return <Failed res={res} />;
 }
 
@@ -93,7 +106,8 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   const long = title.length > 24;
   return (
     <div className="relative flex flex-col items-center text-center">
-      <Confetti count={gift ? 70 : 36} delay={IMPACT_MS} />
+      {/* the confetti is the gift's: a tampon lands with its own little bounce */}
+      {gift && <Confetti count={70} delay={IMPACT_MS} />}
       <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} logo={card.shop.stamp_logo ? card.shop.logo : null} />
       <h1
         className={`mt-1 animate-rise text-balance text-[1.8rem] font-bold leading-tight [@media(max-height:700px)]:mt-0 ${long ? "[@media(max-height:700px)]:text-[1.5rem]" : ""}`}
@@ -156,57 +170,59 @@ function useHoldLeft(): number {
 
 /**
  * No account on this phone: the tampon lands all the same — held for 20
- * minutes — and it must be plain that it is not theirs yet. Three steps with
- * the one left lit, the minutes running down, what happens if they walk
- * away, and one big way on (people saw the stamp land and left).
+ * minutes — and it must be plain that it is not theirs yet. One short step
+ * on this very screen: a name and a phone number, and the tampon is theirs
+ * (the account is made with a password nobody sees; the wallet asks for one
+ * later). A phone that had an account is offered the way back in first.
+ * The minutes run down above it.
  */
-function Held({ token, res, known }: { token: string; res: Extract<ScanResult, { kind: "held" }>; known?: boolean }) {
+function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanResult, { kind: "held" }>; known?: boolean; onDone: (r: ScanResult) => void }) {
   const next = encodeURIComponent(`/s/${token}`);
   const left = useHoldLeft();
   const gone = left === 0;
   const clock = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
-  const steps = [t.heldStepScan, known ? t.heldStepLogin : t.heldStepJoin, t.heldStepCard];
+  // a phone that had an account: the way back in first, the short form one tap away
+  const [form, setForm] = useState(!known);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<{ error: string; field?: string } | null>(null);
+  const send = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await quickJoin(token, name, String(new FormData(e.currentTarget).get("phone") ?? ""));
+      if (r.ok) {
+        signal("quick_join", r.res.kind);
+        onDone(r.res);
+      } else {
+        signal("form_error", `quick-join · ${r.field ?? "form"} · ${r.error}`);
+        setErr(r);
+      }
+    } catch {
+      setErr({ error: t.errNetwork });
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="flex flex-col items-center text-center">
-      <Logo className="mb-2 scale-90 [@media(max-height:640px)]:hidden" />
-      <StampLand color={res.color} icon={kindIcon(res.shopKind)} />
-      <h1 className="mt-1 animate-rise text-[1.75rem] font-bold leading-tight [@media(max-height:640px)]:text-[1.5rem]" style={after(80)}>
+      <Logo className="mb-2 scale-90 [@media(max-height:700px)]:hidden" />
+      <StampLand color={res.color} icon={kindIcon(res.shopKind)} size={88} />
+      <h1 className="mt-1 animate-rise text-[1.625rem] font-bold leading-tight [@media(max-height:640px)]:text-[1.4rem]" style={after(80)}>
         {t.reserved}
       </h1>
       <p className="animate-rise text-[1rem] font-semibold" style={{ ...after(140), color: res.color }}>
         {res.shop}
       </p>
 
-      {/* the important part: not theirs yet — one step left, and the time it waits */}
-      <div className="relative mt-[2.2dvh] w-full animate-rise rounded-[1.5rem] bg-surface px-4 pb-3.5 pt-3 shadow-card" style={after(240)}>
-        <p className="flex items-center justify-center gap-1.5 text-[1rem] font-bold text-ink">
-          <AlertTriangle className="size-[1.125rem] shrink-0 text-coral" /> {t.heldMust}
+      {/* the important part: not theirs yet — one short step, and the time it waits */}
+      <div className="relative mt-[1.8dvh] w-full animate-rise rounded-[1.375rem] bg-surface px-3.5 py-2.5 shadow-card" style={after(240)}>
+        <p className="flex items-center justify-center gap-1.5 text-[0.9688rem] font-bold text-ink">
+          <AlertTriangle className="size-[1.0625rem] shrink-0 text-coral" /> {form ? t.heldQuickMust : t.heldMust}
         </p>
-
-        {/* three steps, the one left lit */}
-        <ol className="relative mt-3 grid grid-cols-3" aria-label={t.heldMust}>
-          <span className="absolute inset-x-[16%] top-[1.0625rem] h-[3px] rounded-full bg-line" aria-hidden />
-          <span className="held-line absolute end-[50%] start-[16%] top-[1.0625rem] h-[3px] rounded-full bg-mint" aria-hidden style={after(500)} />
-          {steps.map((s, i) => (
-            <li key={s} className="relative flex flex-col items-center gap-1">
-              {i === 0 ? (
-                <span className="grid size-[2.125rem] animate-pop place-items-center rounded-full bg-mint text-white shadow-[0_6px_14px_-6px_rgb(18_183_106/0.8)]" style={after(420)}>
-                  <Check className="size-[1.125rem]" strokeWidth={3.2} />
-                </span>
-              ) : i === 1 ? (
-                <span className="held-now num relative grid size-[2.125rem] place-items-center rounded-full bg-brand text-[0.9375rem] font-bold text-white" style={after(620)}>
-                  2
-                </span>
-              ) : (
-                <span className="num grid size-[2.125rem] place-items-center rounded-full border-2 border-dashed border-line bg-canvas text-[0.9375rem] font-bold text-faint">3</span>
-              )}
-              <span className={`text-[0.8125rem] leading-tight ${i === 1 ? "font-bold text-brand" : i === 0 ? "font-semibold text-mint" : "text-muted"}`}>{s}</span>
-            </li>
-          ))}
-        </ol>
-
-        {/* the minutes left, running down: a bar that empties */}
-        <div className={`mt-3 flex items-center gap-2 rounded-full px-3 py-1.5 text-[0.875rem] font-semibold ${gone ? "bg-coral-soft text-coral" : "bg-mint-soft text-mint"}`}>
+        <div className={`mt-2 flex items-center gap-2 rounded-full px-3 py-1 text-[0.8438rem] font-semibold ${gone ? "bg-coral-soft text-coral" : "bg-mint-soft text-mint"}`}>
           <Clock className="size-4 shrink-0" />
           {gone ? (
             <span className="min-w-0 flex-1 truncate text-start">{t.heldGone}</span>
@@ -220,43 +236,45 @@ function Held({ token, res, known }: { token: string; res: Extract<ScanResult, {
             </>
           )}
         </div>
-        {!gone && <p className="mt-2 text-[0.8125rem] font-semibold text-coral">{t.heldLose}</p>}
       </div>
 
-      <div className="mt-[2.4dvh] w-full space-y-2">
-        {/* a phone that has an account on it is offered the way back in first:
-            being told to make the one you already have is where people stop */}
-        <div className="animate-rise" style={after(340)}>
-          <LinkBtn href={known ? `/login?next=${next}` : `/join?next=${next}`} className="held-go relative h-[3.75rem] overflow-hidden text-[1.125rem] font-bold">
-            <span className="relative">{known ? t.comeBackIn : t.createAccount}</span>
+      {form ? (
+        // noValidate: the browser's own bubbles never show inside Facebook's browser; each mistake is said under its field
+        <form onSubmit={(e) => void send(e)} noValidate className="mt-[1.8dvh] w-full animate-rise space-y-[1.2dvh] text-start" style={after(320)}>
+          <Field label={t.name} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" maxLength={60} error={err?.field === "name" ? err.error : null} className="!h-[3.25rem]" />
+          <PhoneField label={t.phone} error={err?.field === "phone" ? err.error : null} compact />
+          {err?.field === "phone" && err.error === t.errTaken && (
+            <Link href={`/login?next=${next}`} className="block px-1 text-[0.9062rem] font-semibold text-brand">
+              {t.toLogin}
+            </Link>
+          )}
+          {err && !err.field && <p className="rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.9062rem] font-medium text-coral">{err.error}</p>}
+          <Btn type="submit" disabled={busy || gone} className="held-go relative h-[3.5rem] overflow-hidden text-[1.125rem] font-bold">
+            <span className="relative">{busy ? t.checking : t.quickGo}</span>
+            {!busy && <ArrowLeft className="held-arrow relative size-5" strokeWidth={2.6} />}
+          </Btn>
+          <Link href={`/login?next=${next}`} className="press flex h-10 items-center justify-center text-[0.9062rem] font-semibold text-muted">
+            {t.haveAccountLogin}
+          </Link>
+        </form>
+      ) : (
+        <div className="mt-[2.4dvh] w-full animate-rise space-y-2" style={after(340)}>
+          <LinkBtn href={`/login?next=${next}`} className="held-go relative h-[3.75rem] overflow-hidden text-[1.125rem] font-bold">
+            <span className="relative">{t.comeBackIn}</span>
             <ArrowLeft className="held-arrow relative size-5" strokeWidth={2.6} />
           </LinkBtn>
-          {!known && <p className="mt-1.5 text-[0.8125rem] text-muted">{t.heldQuick}</p>}
+          <Btn type="button" kind="soft" onClick={() => setForm(true)} className="h-[3.25rem]">
+            {t.newHere}
+          </Btn>
         </div>
-        <div className="animate-rise" style={after(400)}>
-          {known ? (
-            <LinkBtn href={`/join?next=${next}`} kind="soft" className="h-[3.25rem]">
-              {t.newHere}
-            </LinkBtn>
-          ) : (
-            <LinkBtn href={`/login?next=${next}`} kind="soft" className="h-[3.25rem]">
-              {t.haveAccount}
-            </LinkBtn>
-          )}
-        </div>
-      </div>
+      )}
       <style>{`
-        /* the step left breathes a ring; the done part of the line draws itself; the way on shines and points */
-        .held-now { animation: pop 560ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
-        .held-now::after { content: ""; position: absolute; inset: -5px; border-radius: 9999px; border: 2px solid var(--color-brand); animation: held-ring 1.6s ease-out 1.4s infinite both; }
-        @keyframes held-ring { 0% { transform: scale(0.85); opacity: 0.9; } 100% { transform: scale(1.45); opacity: 0; } }
-        .held-line { transform-origin: right; animation: held-draw 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-        @keyframes held-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        /* the way on shines and points */
         .held-go::before { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.38) 50%, transparent 65%); transform: translateX(120%); animation: held-shine 3s ease-in-out 1.8s infinite; }
         @keyframes held-shine { 0% { transform: translateX(120%); } 45%, 100% { transform: translateX(-120%); } }
         .held-arrow { animation: held-nudge 1.4s ease-in-out infinite; }
         @keyframes held-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-5px); } }
-        @media (prefers-reduced-motion: reduce) { .held-now::after, .held-go::before, .held-arrow { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .held-go::before, .held-arrow { animation: none; } }
       `}</style>
     </div>
   );

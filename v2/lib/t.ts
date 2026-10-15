@@ -256,6 +256,11 @@ export const t = {
   statBack: "رجعو",
   customersSearch: "لوّج على حريف",
   customersNear: "قربو للكادو",
+  // the account at the counter: a name and a phone, the tampon is theirs
+  heldQuickMust: "اسمك ونومروك، والتامبون يولّي متاعك",
+  quickGo: "خوذ التامبون",
+  // the wallet asks for a password, gently, once an account was made at the counter
+  passwordAsk: "حطّ كلمة سر باش ترجع لكارطاتك من أي تليفون",
   customersNone: "ما لقينا حتى حريف بالإسم هذا",
   todayNone: "حتى تامبون اليوم مازال",
   ownerName: "اسمك",

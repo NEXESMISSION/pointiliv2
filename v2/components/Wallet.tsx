@@ -1,6 +1,6 @@
 import Link from "next/link";
 import QRCode from "qrcode";
-import { ChevronLeft, ChevronRight, QrCode, ScanLine } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, QrCode, ScanLine } from "lucide-react";
 import { InstallApp, InstallPopup } from "@/components/InstallApp";
 import { MyCode } from "@/components/MyCode";
 import { ShopMark } from "@/components/ShopMark";
@@ -47,6 +47,12 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
         <h1 className="mt-0.5 truncate text-[1.5rem] font-bold leading-tight">{back ? t.myCards : first || t.myCards}</h1>
         {/* Pointili on the home screen: Android's own dialog, or on an iPhone the guide to the three taps */}
         {!back && <InstallApp where="wallet" className="mt-2 h-9 text-[0.8438rem]" />}
+        {/* an account made at the counter has no password the person knows: one line asks for one, until it is set */}
+        {me.password_set === false && (
+          <Link href="/me" className="press mt-2 flex items-center gap-2 rounded-full bg-brand-soft px-3.5 py-2 text-[0.8438rem] font-bold text-brand">
+            <Lock className="size-4 shrink-0" /> <span className="min-w-0 flex-1 truncate">{t.passwordAsk}</span> <ChevronLeft className="size-4 shrink-0" />
+          </Link>
+        )}
       </div>
 
       {/* a gift waiting: its code, to show at the counter (the shop scans it and hands the gift over) */}

@@ -53,6 +53,9 @@ update public.people set code = public.new_person_code() where code is null;
 -- the card's hello, the logo tip): kept here, not on the phone, so none ever
 -- shows twice — not after a reload, not on another phone
 alter table public.people add column if not exists seen text[] not null default '{}';
+-- an account made at the counter in twenty seconds (since 15 Oct 2026): a name and a phone, a password
+-- the person never saw. false until they choose one — their wallet asks for it, gently
+alter table public.people add column if not exists password_set boolean not null default true;
 
 -- the machines' accounts (the walk, the sizes, the rule checks): a script
 -- writes its number here BEFORE it makes the account, so the console never
@@ -589,6 +592,7 @@ begin
   select * into s from public.shops where owner_id = v_uid;
   return jsonb_build_object(
     'id', v_uid, 'name', p.name, 'phone', p.phone, 'admin', p.is_admin, 'seen', to_jsonb(p.seen), 'code', p.code, 'tester', p.is_tester,
+    'password_set', p.password_set,
     'phone_check', public.phone_state(p),
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,

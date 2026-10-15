@@ -228,6 +228,8 @@ const SCREENS = [
   { name: "public-shop-new", path: "/shop/new" },
   { name: "public-scan", path: "/scan", wait: 2500 },
   { name: "public-stamp-reserved", path: async () => `/s/${await newToken()}`, wait: 2500 },
+  // the account at the counter, sent empty: each mistake under its field
+  { name: "public-stamp-reserved-errors", path: async () => `/s/${await newToken()}`, act: (p) => press(p, "خوذ التامبون"), wait: 2500 },
   { name: "public-stamp-expired", path: "/s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", wait: 1500 },
   { name: "public-person", path: () => `/u/${customer.code}` },
   { name: "public-faq", path: "/faq", read: true },
@@ -261,6 +263,8 @@ const SCREENS = [
   // the card asks once for a word to this phone
   { name: "customer-card-push", as: "customer", before: () => notes(customer, ["card_hello", "coach", "logo_tip", "offer"]), path: () => `/c/${cardBarber}`, after: () => notes(customer, ALL_NOTES) },
   { name: "customer-me", as: "customer", path: "/me" },
+  // an account made at the counter: the wallet asks for a password, in one line
+  { name: "wallet-password", as: "customer", before: () => admin.from("people").update({ password_set: false }).eq("id", customer.id), path: "/", after: () => admin.from("people").update({ password_set: true }).eq("id", customer.id) },
   { name: "customer-scan", as: "customer", path: "/scan", wait: 2500 },
   {
     name: "customer-stamp",

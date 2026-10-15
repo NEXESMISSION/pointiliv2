@@ -106,7 +106,7 @@ try {
   await shot(o, "02-owner-account", 300);
   await Promise.all([o.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   // ② the card on one screen, already answered for a café: a goal and a gift are taps, the card changes above them
-  await o.getByText("قدّاش من تامبون، وشنوّة يربح؟").waitFor({ timeout: 30000 });
+  await o.getByRole("heading", { name: "قدّاش من تامبون، وشنوّة يربح؟" }).waitFor({ timeout: 30000 });
   await shot(o, "04-owner-card", 900);
   await o.getByRole("radio", { name: "5", exact: true }).click();
   await o.getByRole("button", { name: /جرّب: زيد تامبون/ }).click();
@@ -164,11 +164,9 @@ try {
   await c.goto(BASE + new URL(url).pathname, { waitUntil: "load" });
   await c.getByText("حجزنالك التامبون").waitFor({ timeout: 30000 });
   await shot(c, "06-reserved", 1600);
-  await c.getByRole("link", { name: "اعمل كونت" }).click({ force: true });
-  await c.waitForURL("**/join**");
+  // the account right there, at the counter: a name and a phone, no password (the wallet asks for one later)
   await c.locator('input[name="name"]').fill("سامي بن علي");
   await c.locator('input[name="phone"]').fill(customerPhone);
-  await c.locator('input[name="password"]').fill("sami1234");
   await shot(c, "07-join", 300);
   // the counter hears the stamp (Realtime): «+1 سامي» shows for a moment — caught as it lands
   const t0 = Date.now();
@@ -181,8 +179,10 @@ try {
       await shot(o, "09-counter-plus-one", 450);
     })
     .catch(() => console.log("  ! the counter never showed +1"));
-  await Promise.all([c.waitForURL("**/s/**", { timeout: 60000 }), c.locator('button[type="submit"]').click()]);
+  const tapped = Date.now();
+  await c.getByRole("button", { name: /خوذ التامبون/ }).click({ force: true });
   await c.getByText("تامبون جديد!").waitFor({ timeout: 30000 });
+  console.log(`  · from «خوذ التامبون» to the tampon: ${((Date.now() - tapped) / 1000).toFixed(1)} s ✓`);
   await shot(c, "08-stamped", 1800);
   await plusOne;
   // the shop's very first customer: the counter says what just happened, once
@@ -283,7 +283,23 @@ try {
 
   // ── the customer's other screens ──
   await c.goto(BASE + "/", { waitUntil: "load" });
+  await c.getByRole("link", { name: /حطّ كلمة سر/ }).waitFor({ timeout: 20000 });
   await shot(c, "13-wallet");
+  // the password, chosen now: the wallet stops asking
+  await c.getByRole("link", { name: /حطّ كلمة سر/ }).click();
+  await c.waitForURL("**/me");
+  await c.locator('input[name="password"]').fill("sami1234");
+  await c.locator('input[name="password"]').press("Enter");
+  {
+    let set = false;
+    for (let i = 0; i < 20 && !set; i++) {
+      await c.waitForTimeout(500);
+      set = (await admin.from("people").select("password_set").eq("phone", `+216${customerPhone}`).single()).data?.password_set === true;
+    }
+    console.log(set ? "  · the password chosen after the counter: written down ✓" : "  ! the password was not written down");
+  }
+  await c.goto(BASE + "/", { waitUntil: "load" });
+  await never(c, "the password ask (once set)", c.getByRole("link", { name: /حطّ كلمة سر/ }), 800);
   await c.locator('a[href^="/c/"]').first().click();
   await c.waitForURL("**/c/**");
   await shot(c, "14-card");
