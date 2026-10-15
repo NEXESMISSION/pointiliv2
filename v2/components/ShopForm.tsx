@@ -1,17 +1,13 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
-import { LayoutGrid } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
 import { openShop } from "@/app/actions";
-import { KindPicker, KindTile } from "@/components/KindPicker";
+import { KindField } from "@/components/KindPicker";
 import { LogoPicker } from "@/components/LogoPicker";
 import { Btn, boxFocus, boxLook } from "@/components/ui";
 import { KINDS, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import type { FormState } from "@/lib/types";
-
-/** The kinds most shops are: one tap away. The other 39 are behind «الكل». */
-export const POPULAR = ["cafe", "juice", "bakery", "pastry", "restaurant", "fastfood", "pizza", "barber", "hair", "beauty", "clothes"];
 
 /**
  * Step 2 for an owner: the shop's name (and its logo beside it, if the owner
@@ -25,13 +21,9 @@ export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?:
   const [mark, setMark] = useState(logo ?? "");
   const [logoError, setLogoError] = useState<string | null>(null);
   const [k, setK] = useState(KINDS.includes(kind) ? kind : "other");
-  const [all, setAll] = useState(false);
-  const close = useCallback(() => setAll(false), []);
   useEffect(() => {
     if (state?.error) signal("form_error", `shop · ${state.field ?? "form"} · ${state.error}`);
   }, [state]);
-  // a kind chosen from the full list takes the first place, lit
-  const shown = POPULAR.includes(k) ? POPULAR : [k, ...POPULAR.slice(0, POPULAR.length - 1)];
 
   return (
     <form action={action} className="mt-[3dvh] flex flex-col">
@@ -63,28 +55,9 @@ export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?:
         {logoError && <span className="mt-1.5 block px-1 text-[0.8125rem] font-medium text-coral">{logoError}</span>}
       </div>
       <input type="hidden" name="logo" value={mark} />
-      <p className="mb-2 mt-[2.5dvh] px-1 text-[0.8125rem] font-semibold text-muted">{t.shopKind}</p>
-      <div className="grid grid-cols-4 gap-2">
-        {shown.map((id) => (
-          <KindTile key={id} id={id} on={k === id} onPick={setK} />
-        ))}
-        <button type="button" onClick={() => setAll(true)} className="press flex flex-col items-center justify-center gap-1 rounded-[1.125rem] bg-brand px-1 py-3 text-[0.8125rem] font-bold leading-tight text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
-          <LayoutGrid className="size-[1.875rem]" strokeWidth={2.2} />
-          <span>
-            {t.kindsAll} <span className="num font-semibold text-white/80">+{KINDS.length - shown.length}</span>
-          </span>
-        </button>
-      </div>
-      {all && (
-        <KindPicker
-          value={k}
-          onPick={(id) => {
-            setK(id);
-            setAll(false);
-          }}
-          onClose={close}
-        />
-      )}
+      {/* what it sells: one field — a tap opens every kind, in groups, with a search */}
+      <p className="mb-1.5 mt-[2.5dvh] px-1 text-[0.8125rem] font-semibold text-muted">{t.shopKind}</p>
+      <KindField value={k} onPick={setK} />
       <input type="hidden" name="kind" value={k} />
       {next && <input type="hidden" name="next" value={next} />}
       {state?.error && !state.field && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{state.error}</p>}

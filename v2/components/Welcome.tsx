@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { InstallApp } from "@/components/InstallApp";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Store, WalletCards } from "lucide-react";
 import { VideoPill, type HelpVideo } from "@/components/Help";
 import { Pass } from "@/components/Pass";
 import { Mark } from "@/components/Tracker";
-import { Icon3D, Logo } from "@/components/ui";
+import { Logo } from "@/components/ui";
 import { t } from "@/lib/t";
 
 const RED = "#D7141A";
@@ -39,8 +39,8 @@ function Zellige({ color, id }: { color: string; id: string }) {
 
 /**
  * The front door, Tunisian: a card from a café in the Medina between jasmine
- * and a glass of mint tea, a corner of Sidi Bou Said, and two doors only —
- * the shop's (first) and the customer's (none from an ad). One screen, on the smallest phone:
+ * and a glass of mint tea, a corner of Sidi Bou Said, and two doors apart —
+ * the shop owner's (red) and the customer's (none from an ad). One screen, on the smallest phone:
  * every size here follows the screen's height. The founder's first video
  * («كيفاش تخدم؟») floats on the card's edge. At least the screen's height,
  * never cut: on a phone shorter than everything (under ~525px) the page
@@ -48,7 +48,7 @@ function Zellige({ color, id }: { color: string; id: string }) {
  * and the rem shrinks on short screens); a column on a computer. The
  * pictures are decoration: they may be cut at the edges.
  */
-export function Welcome({ video, known, ad, client }: { video?: HelpVideo | null; known?: boolean; ad?: boolean; client?: boolean }) {
+export function Welcome({ video, known, ad }: { video?: HelpVideo | null; known?: boolean; ad?: boolean }) {
   return (
     // data-welcome: the front door as a stranger sees it (Facebook's pixel counts this one, not a customer's wallet)
     <main data-welcome className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-center overflow-hidden bg-[#FBF6EF] px-5 safe-t safe-b max-[448px]:max-w-none">
@@ -101,55 +101,44 @@ export function Welcome({ video, known, ad, client }: { video?: HelpVideo | null
         <span className="h-px flex-1 bg-[linear-gradient(to_right,#D7141A66,transparent)]" />
       </div>
 
-      {/* two doors: the shop's first — unless this phone has an account on it
-          already, and then the way back in is the one with the weight */}
+      {/* two doors, apart and plain: the shop owner's (red, the one with the weight) and the customer's (white,
+          blue). Each says who it is for and what is behind it. From an ad only the owner's: a customer comes in
+          by a shop's code. Somebody who already has an account signs in from the line under them. */}
       <div className="relative mt-[4.2dvh] space-y-[1.2dvh]">
-        {known && (
-          <Link
-            href="/login"
-            className="press relative flex h-[3.6rem] items-center gap-3 overflow-hidden rounded-[1.25rem] bg-[linear-gradient(150deg,#F2414A,#D7141A_55%,#B00D17)] px-4 text-white shadow-[0_16px_30px_-14px_rgb(215_20_26/0.75)]"
-          >
-            <Zellige color="#fff" id="zl-back" />
-            <span className="relative grid size-10 shrink-0 place-items-center rounded-[0.8125rem] bg-white/95">
-              <Icon3D name="wave" size={27} />
-            </span>
-            <span className="relative flex-1 text-[1.0625rem] font-bold">{t.comeBackIn}</span>
-            <ChevronLeft className="relative size-5 shrink-0 opacity-80" />
-          </Link>
-        )}
         <Link
           href="/shop/new"
-          className={
-            known
-              ? "press relative flex h-[3.6rem] items-center gap-3 overflow-hidden rounded-[1.25rem] bg-white px-4 shadow-[0_10px_26px_-14px_rgb(215_20_26/0.45)] ring-1 ring-[#D7141A]/10"
-              : "press relative flex h-[3.6rem] items-center gap-3 overflow-hidden rounded-[1.25rem] bg-[linear-gradient(150deg,#F2414A,#D7141A_55%,#B00D17)] px-4 text-white shadow-[0_16px_30px_-14px_rgb(215_20_26/0.75)]"
-          }
+          className="press relative flex h-[4rem] items-center gap-3 overflow-hidden rounded-[1.25rem] bg-[linear-gradient(150deg,#F2414A,#D7141A_55%,#B00D17)] px-3.5 text-white shadow-[0_16px_30px_-14px_rgb(215_20_26/0.75)]"
         >
-          <Zellige color={known ? "#D7141A" : "#fff"} id="zl-shop" />
-          <span className="relative grid size-10 shrink-0 place-items-center rounded-[0.8125rem] bg-white/95">
-            <Icon3D name="shop" size={27} />
+          <Zellige color="#fff" id="zl-shop" />
+          <span className="relative grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-white text-[#D7141A] shadow-[0_6px_14px_-6px_rgb(0_0_0/0.35)]">
+            <Store className="size-6" strokeWidth={2.2} />
           </span>
-          <span className={`relative flex-1 text-[1.0625rem] font-bold ${known ? "text-ink" : ""}`}>{t.enterAsShop}</span>
-          <ChevronLeft className={`relative size-5 shrink-0 ${known ? "text-faint" : "opacity-80"}`} />
+          <span className="relative min-w-0 flex-1">
+            <span className="block text-[1.0625rem] font-bold leading-tight">{t.doorOwner}</span>
+            <span className="block truncate text-[0.8125rem] font-medium text-white/85">{t.doorOwnerSub}</span>
+          </span>
+          <ChevronLeft className="relative size-5 shrink-0 opacity-80" />
         </Link>
-        {/* a customer comes in by a shop's code (the account is made right there, at the counter): the front door
-            is the shop's — a customer's own door only for somebody who came looking for it on purpose (?client) */}
-        {!known && !ad && client && (
-          <Link href="/join" className="press relative flex h-[3.6rem] items-center gap-3 overflow-hidden rounded-[1.25rem] bg-white px-4 shadow-[0_10px_26px_-14px_rgb(29_95_168/0.45)] ring-1 ring-[#1D5FA8]/10">
+        {!ad && (
+          <Link
+            href={known ? "/login" : "/join"}
+            className="press relative flex h-[4rem] items-center gap-3 overflow-hidden rounded-[1.25rem] bg-white px-3.5 shadow-[0_10px_26px_-14px_rgb(29_95_168/0.45)] ring-1 ring-[#1D5FA8]/15"
+          >
             <Zellige color={BLUE} id="zl-customer" />
-            <span className="relative grid size-10 shrink-0 place-items-center rounded-[0.8125rem] bg-[#EAF1FA]">
-              <Icon3D name="ticket" size={27} />
+            <span className="relative grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-[#EAF1FA] text-[#1D5FA8]">
+              <WalletCards className="size-6" strokeWidth={2.2} />
             </span>
-            <span className="relative flex-1 text-[1.0625rem] font-bold text-ink">{t.enterAsCustomer}</span>
+            <span className="relative min-w-0 flex-1">
+              <span className="block text-[1.0625rem] font-bold leading-tight text-ink">{t.doorCustomer}</span>
+              <span className="block truncate text-[0.8125rem] font-medium text-[#5B6B80]">{t.doorCustomerSub}</span>
+            </span>
             <ChevronLeft className="relative size-5 shrink-0 text-faint" />
           </Link>
         )}
-        {/* the third way in is a whisper, not a third button: no box, no ring —
-            the two doors above keep all the weight. Gone once the way back in
-            is the first button, so the same thing is never said twice */}
-        <Link href={known ? "/join" : "/login"} className="press mx-auto flex h-10 w-fit items-center gap-1.5 px-3 text-[0.9062rem] font-semibold text-[#7A6F63]">
-          {known ? t.newHere : "عندك كونت؟"}
-          <span className="font-bold text-[#B00D17] underline decoration-[#D7141A]/30 decoration-2 underline-offset-4">{known ? t.makeOne : "ادخل"}</span>
+        {/* the way back in, for anybody with an account: a line, not a third button */}
+        <Link href="/login" className="press mx-auto flex h-10 w-fit items-center gap-1.5 px-3 text-[0.9062rem] font-semibold text-[#7A6F63]">
+          عندك كونت؟
+          <span className="font-bold text-[#B00D17] underline decoration-[#D7141A]/30 decoration-2 underline-offset-4">ادخل</span>
         </Link>
       </div>
 

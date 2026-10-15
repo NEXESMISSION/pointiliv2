@@ -468,16 +468,22 @@ $$;
 create or replace function public.kinds() returns text[]
 language sql immutable set search_path = '' as $$
   select array[
-    -- food and drink
-    'cafe', 'juice', 'bakery', 'pastry', 'viennoiserie', 'crepes', 'restaurant', 'fastfood', 'snack', 'pizza', 'grill',
-    -- the house's shopping
-    'grocery', 'market', 'butcher', 'fish', 'veggies', 'roastery',
-    -- beauty and health
-    'barber', 'hair', 'beauty', 'nails', 'perfume', 'parapharmacy', 'hammam', 'optics', 'gym',
-    -- things
-    'clothes', 'fripe', 'shoes', 'bags', 'jewelry', 'phones', 'electronics', 'books', 'toys', 'gifts', 'flowers', 'pets', 'hardware',
-    -- services and fun
-    'carwash', 'mechanic', 'laundry', 'tailor', 'print', 'photo', 'courses', 'games', 'pitch', 'events', 'other']
+    -- قهاوي وماكلة
+    'cafe', 'tea', 'juice', 'icecream', 'bakery', 'pastry', 'tunsweets', 'chocolate', 'viennoiserie', 'crepes', 'restaurant', 'fastfood', 'snack', 'lablabi', 'pizza', 'grill', 'chicken', 'seafood', 'healthy', 'catering',
+    -- قضية الدار
+    'grocery', 'market', 'butcher', 'poultry', 'fish', 'veggies', 'dairy', 'roastery', 'spices', 'oil', 'drinks', 'organic',
+    -- جمال
+    'barber', 'hair', 'beauty', 'nails', 'cosmetics', 'makeup', 'perfume', 'hammam', 'spa', 'henna',
+    -- صحّة
+    'pharmacy', 'parapharmacy', 'optics', 'doctor', 'dentist', 'physio', 'lab', 'vet', 'herbalist',
+    -- رياضة وتفرهيد
+    'gym', 'dance', 'martial', 'pool', 'pitch', 'padel', 'games', 'kids', 'cinema', 'bikes', 'events',
+    -- لبسة وأكسسوار
+    'clothes', 'fripe', 'kidswear', 'sportswear', 'traditional', 'wedding', 'hijab', 'shoes', 'bags', 'jewelry', 'watches', 'fabric',
+    -- حوايج ودار
+    'phones', 'repair', 'electronics', 'computers', 'appliances', 'furniture', 'decor', 'kitchen', 'baby', 'toys', 'books', 'stationery', 'gifts', 'flowers', 'pets', 'hardware', 'paint', 'carparts',
+    -- خدمات
+    'carwash', 'mechanic', 'tires', 'carrental', 'driving', 'laundry', 'tailor', 'cobbler', 'keys', 'print', 'photo', 'courses', 'language', 'nursery', 'travel', 'hotel', 'cyber', 'cleaning', 'other']
 $$;
 
 -- «قهوة بلاش» and «  قهوة   بلاش » are the same gift

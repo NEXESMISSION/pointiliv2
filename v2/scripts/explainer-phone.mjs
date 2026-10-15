@@ -108,7 +108,7 @@ try {
   await o0.locator('input[name="shop"]').fill("Sultan al oud");
   await o0.locator('input[name="phone"]').fill(owner);
   await o0.locator('input[name="password"]').fill("explainer1");
-  await o0.getByRole("button", { name: /الكل/ }).click();
+  await o0.getByRole("button", { name: /اختار من القائمة/ }).click();
   await o0.locator('input[type="search"]').fill("parfum");
   await o0.getByRole("dialog").getByRole("button", { name: "عطورات" }).click();
   await Promise.all([o0.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o0.locator('button[type="submit"]').click()]);

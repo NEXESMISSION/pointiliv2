@@ -93,16 +93,23 @@ try {
   await o.locator('input[name="shop"]').fill("Café Yasmine");
   await o.locator('input[name="phone"]').fill(ownerPhone);
   await o.locator('input[name="password"]').fill("yasmine123");
-  // the other 39 kinds: the full list, a search in it, a pick from it (it takes the row's first place)
-  await o.getByRole("button", { name: /الكل/ }).click();
+  // what it sells: one field that opens every kind (111, in eight groups), a search in it (the French names too), a pick
+  await o.getByRole("button", { name: /اختار من القائمة/ }).click();
   await o.getByRole("dialog").waitFor();
   await shot(o, "03b-kinds-all", 500);
+  // a group's chip brings its kinds up
+  await o.getByRole("dialog").getByRole("button", { name: "صحّة" }).click();
+  await o.getByRole("dialog").getByRole("button", { name: "طبيب سنين" }).waitFor();
+  await shot(o, "03b2-kinds-group", 700);
   await o.locator('input[type="search"]').fill("parfum");
   await shot(o, "03c-kinds-search", 400);
   await o.getByRole("dialog").getByRole("button", { name: "عطورات" }).click();
-  await o.getByRole("radio", { name: /عطورات/ }).waitFor();
+  await o.getByRole("button", { name: /عطورات.*بدّل/ }).waitFor();
   await shot(o, "03d-kinds-picked", 400);
-  await o.getByRole("radio", { name: /قهوة/ }).click();
+  // changed: the field opens the list again
+  await o.getByRole("button", { name: /عطورات.*بدّل/ }).click();
+  await o.getByRole("dialog").getByRole("button", { name: "قهوة", exact: true }).click();
+  await o.getByRole("button", { name: /قهوة.*بدّل/ }).waitFor();
   await shot(o, "02-owner-account", 300);
   await Promise.all([o.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   // ② the card on one screen, already answered for a café: a goal and a gift are taps, the card changes above them
