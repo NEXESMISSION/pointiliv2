@@ -595,6 +595,7 @@ export const t = {
   payWays: "كيفاش تنجم تخلّص",
   payHow: "كلّمنا ولا ابعثلنا على واتساب، ونكمّلو الخلاص مع بعضنا في دقيقة",
   payWhatsappMsg: "سلام، نحب نخلّص الأبونمان متاع «{shop}» ({months} شهر)",
+  payWhatsappWay: "سلام، نحب نخلّص الأبونمان متاع «{shop}» ({months} شهر) بـ {way}",
   payCard: "كارط بنكية",
   payCardSub: "Visa · Mastercard، في صفحة مضمونة",
   payD17: "D17",

@@ -32,8 +32,11 @@ export function Mission({ served, shopId }: { served: number; shopId: string }) 
     shown("mission", shopId);
   }, [all, shopId]);
 
-  return (
-    <section className="mt-[1.6dvh] shrink-0 rounded-[1.25rem] bg-surface px-3.5 py-3 shadow-card" aria-label={t.missionTitle}>
+  // waiting for the first customer, the whole card is the way to the code (owners tapped it, and nothing happened)
+  const toCode = at === 1;
+  const look = "mt-[1.6dvh] block shrink-0 rounded-[1.25rem] bg-surface px-3.5 py-3 shadow-card";
+  const body = (
+    <>
       {all && <Confetti count={70} />}
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-[0.9375rem] font-bold">{all ? t.missionDone : t.missionTitle}</h2>
@@ -54,13 +57,20 @@ export function Mission({ served, shopId }: { served: number; shopId: string }) 
       {/* the one thing to do now */}
       {all ? (
         <p className="mt-2 text-[0.8125rem] leading-snug text-muted">{t.missionDoneBody}</p>
-      ) : at === 1 ? (
-        <Link href="/shop/qr" className="mt-2 block text-[0.8125rem] font-semibold leading-snug text-brand">
-          {t.missionFirstHow} ←
-        </Link>
+      ) : toCode ? (
+        <span className="mt-2 block text-[0.8125rem] font-semibold leading-snug text-brand">{t.missionFirstHow} ←</span>
       ) : (
         <p className="mt-2 text-[0.8125rem] leading-snug text-muted">{fill(t.missionFiveHow, { n: GOAL - served })}</p>
       )}
+    </>
+  );
+  return toCode ? (
+    <Link href="/shop/qr" className={`press ${look}`} aria-label={t.missionTitle}>
+      {body}
+    </Link>
+  ) : (
+    <section className={look} aria-label={t.missionTitle}>
+      {body}
     </section>
   );
 }

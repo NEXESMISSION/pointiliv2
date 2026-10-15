@@ -146,7 +146,8 @@ try {
   await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 30000 }), o.getByRole("link", { name: "باهي، غدوة" }).click()]);
   // before the first customer the home has one job: no logo tip, no install, no offer over it — and its first steps
   await never(o, "a note before the first customer", o.getByRole("dialog"), 1500);
-  await o.getByRole("region", { name: "باش تبدا" }).waitFor({ timeout: 10000 });
+  // waiting for the first customer, the whole card is the way to the code
+  await o.getByRole("link", { name: "باش تبدا" }).waitFor({ timeout: 10000 });
   await shot(o, "05e-home-mission", 400);
   // the logo, from «المحل» (not asked on the way in): a picture from the phone, made small, shown beside the name
   await o.goto(BASE + "/shop/setup?edit=1", { waitUntil: "load" });
