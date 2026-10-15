@@ -24,7 +24,7 @@ function Bars() {
 /**
  * A new owner's third step: the customer's side, replayed in four beats on
  * their own phone (a phone cannot scan its own screen) — then the counter,
- * where the code is. Opened at night (`night`: 19:00 to 8:00 in Tunis), the
+ * where the code is. Opened at night (`night`: 22:00 to 6:00 in Tunis), the
  * shop is shut and nobody is there to scan it: the last word is for the
  * morning instead — put the phone on the counter and give the first tampon —
  * with the offer to be reminded then.

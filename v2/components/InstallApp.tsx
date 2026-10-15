@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Download, ExternalLink, Send } from "lucide-react";
+import { handoffPath } from "@/app/actions";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
 import { installApp, isIphone, outsideHref, startPwa, useCanInstall, useInApp, useIosBrowser } from "@/lib/pwa";
@@ -46,7 +47,7 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
     return (
       <>
         <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
-        <button type="button" onClick={go} className={`inline-flex items-center gap-1 font-bold text-[#B00D17] ${className}`}>
+        <button type="button" onClick={() => void go()} className={`inline-flex items-center gap-1 font-bold text-[#B00D17] ${className}`}>
           <Download className="size-3.5" /> {t.installApp}
         </button>
         {sheet}
@@ -56,7 +57,7 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
   if (look === "row") {
     return (
       <>
-        <button type="button" onClick={go} className={`press flex w-full items-center gap-3 rounded-[1.375rem] bg-surface p-4 text-start shadow-card ${className}`}>
+        <button type="button" onClick={() => void go()} className={`press flex w-full items-center gap-3 rounded-[1.375rem] bg-surface p-4 text-start shadow-card ${className}`}>
           <span className="grid size-10 shrink-0 place-items-center rounded-[0.875rem] bg-brand text-white">
             <Download className="size-5" />
           </span>
@@ -71,7 +72,7 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
   }
   return (
     <>
-      <button type="button" onClick={go} className={`press inline-flex h-10 items-center gap-2 rounded-full bg-brand px-4 text-[0.9375rem] font-bold text-white ${className}`}>
+      <button type="button" onClick={() => void go()} className={`press inline-flex h-10 items-center gap-2 rounded-full bg-brand px-4 text-[0.9375rem] font-bold text-white ${className}`}>
         <Download className="size-[1.125rem]" /> {t.installApp}
       </button>
       {sheet}
@@ -102,9 +103,11 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
 
   const iphone = isIphone();
   const label = fill(t.openOutside, { browser: iphone ? "Safari" : "Chrome" });
-  const go = () => {
+  // the other browser opens signed in: a one-time sign-in rides along (never in the WhatsApp link below, which stays in a chat)
+  const go = async () => {
     signal("pwa_out_tap", where);
-    window.location.href = outsideHref(path);
+    const to = await handoffPath(path).catch(() => path);
+    window.location.href = outsideHref(to);
     if (iphone) setTimeout(() => document.visibilityState === "visible" && setStuck(true), 1500);
   };
 
@@ -123,7 +126,7 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
         <button type="button" onClick={send} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.8125rem] font-bold text-brand">
           <Send className="size-4" /> {t.waSendSelf}
         </button>
-        <button type="button" onClick={go} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.8125rem] font-semibold text-muted">
+        <button type="button" onClick={() => void go()} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.8125rem] font-semibold text-muted">
           <ExternalLink className="size-4" /> {label}
         </button>
         {stuck && (
@@ -145,7 +148,7 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
           <span className="block text-[0.8125rem] leading-snug text-muted">{t.waSendHint}</span>
         </span>
       </button>
-      <button type="button" onClick={go} className="press mt-1.5 flex w-full items-center gap-3 rounded-[1.375rem] px-4 py-2.5 text-start">
+      <button type="button" onClick={() => void go()} className="press mt-1.5 flex w-full items-center gap-3 rounded-[1.375rem] px-4 py-2.5 text-start">
         <span className="grid size-7 shrink-0 place-items-center text-muted">
           <ExternalLink className="size-4" />
         </span>

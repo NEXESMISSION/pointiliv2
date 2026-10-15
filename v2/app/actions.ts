@@ -312,6 +312,27 @@ export async function quickJoin(token: string, name: string, phoneRaw: string): 
   return { ok: true, res: { kind: "error", code: r.error ?? "invalid", card: r.card, next_at: r.next_at, shop: r.shop } };
 }
 
+/**
+ * Leaving Facebook's browser for Chrome (or Safari), signed in: a one-time
+ * sign-in for this person, as the address the other browser opens
+ * (app/auth/handoff). Anything wrong, and it is just the address: they sign
+ * in over there as before.
+ */
+export async function handoffPath(next: string): Promise<string> {
+  const to = inside(String(next ?? "")) ?? "/";
+  try {
+    const { data: user } = await (await db()).auth.getUser();
+    const email = user.user?.email;
+    if (!email) return to;
+    const { data, error } = await service().auth.admin.generateLink({ type: "magiclink", email });
+    const th = data?.properties?.hashed_token;
+    if (error || !th) return to;
+    return `/auth/handoff?th=${encodeURIComponent(th)}&next=${encodeURIComponent(to)}`;
+  } catch {
+    return to;
+  }
+}
+
 // ── the owner ──────────────────────────────────────────────────────────────
 /** Where every logo is read from: the public «logos» box, one folder per owner. */
 const LOGOS = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/logos/`;
