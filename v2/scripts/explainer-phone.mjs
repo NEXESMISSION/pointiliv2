@@ -41,7 +41,10 @@ const browser = await chromium.launch({
   headless: true,
   args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", `--use-file-for-fake-video-capture=${resolve(TMP, "cam.y4m")}`],
 });
-const phone = { viewport: { width: 360, height: 640 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN" };
+// the film is recorded at the screen's own size (a recording is in CSS pixels: a bigger frame only pads
+// the page into its top-left corner), then scaled up whole to 720×1280
+const SCREEN = { width: 432, height: 768 };
+const phone = { viewport: SCREEN, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN" };
 
 /** the caption on top and the finger: drawn into the page, over everything, touching nothing */
 const OVERLAY = `
@@ -132,7 +135,7 @@ try {
   await c.context().close();
 
   // the film
-  const ctx = await browser.newContext({ ...phone, permissions: ["camera"], recordVideo: { dir: TMP, size: { width: 720, height: 1280 } } });
+  const ctx = await browser.newContext({ ...phone, permissions: ["camera"], recordVideo: { dir: TMP, size: SCREEN } });
   await ctx.addCookies(cookies);
   const p = await ctx.newPage();
   await p.goto(BASE + "/shop", { waitUntil: "load" });
@@ -179,7 +182,7 @@ try {
 
   // the recording → an MP4 WhatsApp plays
   const webm = readdirSync(TMP).find((f) => f.endsWith(".webm"));
-  execFileSync(FF, ["-y", "-i", `${TMP}/${webm}`, "-ss", "0.6", "-vf", "scale=720:1280,format=yuv420p", "-c:v", "libx264", "-preset", "slow", "-crf", "22", "-movflags", "+faststart", "-an", `${OUT}/tampon-by-phone.mp4`], { stdio: "inherit" });
+  execFileSync(FF, ["-y", "-i", `${TMP}/${webm}`, "-ss", "0.6", "-vf", "scale=720:1280:flags=lanczos,format=yuv420p", "-c:v", "libx264", "-preset", "slow", "-crf", "22", "-movflags", "+faststart", "-an", `${OUT}/tampon-by-phone.mp4`], { stdio: "inherit" });
   console.log(`→ ${OUT}/tampon-by-phone.mp4`);
 } finally {
   await browser.close();
