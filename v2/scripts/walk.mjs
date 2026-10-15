@@ -340,6 +340,10 @@ try {
   await o.getByRole("button", { name: "عندك سؤال؟" }).click();
   await o.getByRole("dialog", { name: "عندك سؤال؟" }).waitFor();
   await shot(o, "17c-help", 600);
+  // «المحل»: everything set once in a while, one list
+  await o.goto(BASE + "/shop/settings", { waitUntil: "load" });
+  await o.getByRole("link", { name: /^الكارط / }).waitFor({ timeout: 20000 });
+  await shot(o, "17g-shop-settings");
   await o.goto(BASE + "/shop/stats", { waitUntil: "load" });
   await shot(o, "18-owner-stats");
   await o.goto(BASE + "/shop/customers", { waitUntil: "load" });

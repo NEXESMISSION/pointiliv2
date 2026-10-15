@@ -27,5 +27,5 @@ export default async function ShopCard() {
   const help = await getHelp();
   // a first card: two questions on one screen, already answered for what the shop sells
   if (!editing) return <CardFirst shop={me.shop} help={help} />;
-  return <CardWizard shop={me.shop} owner={(me.name ?? "").split(" ")[0] ?? ""} next="/shop" editing help={help} />;
+  return <CardWizard shop={me.shop} next="/shop" editing help={help} />;
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Gift, ScanLine, X } from "lucide-react";
+import { Gift, ScanLine, Search, X } from "lucide-react";
 import { CardMoments } from "@/components/CardMoments";
 import { Pass, type PassShop } from "@/components/Pass";
 import { fill, giftsN, stampsN, t } from "@/lib/t";
@@ -21,6 +21,14 @@ const when = (iso: string | null) =>
  */
 export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop: PassShop; goal: number }) {
   const [open, setOpen] = useState<CustomerRow | null>(null);
+  // a long list: a search (a name, or a phone's digits) and a second order — the ones nearest their gift first
+  const [q, setQ] = useState("");
+  const [near, setNear] = useState(false);
+  const many = items.length > 6;
+  const digits = q.replace(/\D/g, "");
+  const shown = items
+    .filter((c) => !q.trim() || (c.name ?? "").toLowerCase().includes(q.trim().toLowerCase()) || (digits.length >= 2 && (c.phone ?? "").replace(/\D/g, "").includes(digits)))
+    .sort((a, b) => (near ? Number(b.ready) - Number(a.ready) || b.stamps / (b.goal ?? goal) - a.stamps / (a.goal ?? goal) : 0));
   useEffect(() => {
     if (!open) return;
     signal("customer_open");
@@ -31,8 +39,22 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
 
   return (
     <>
-      <ul data-list data-clarity-mask="true" className="mb-[2dvh] mt-[2.5dvh] min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
-        {items.map((c) => {
+      {many && (
+        <div className="mt-[2dvh] flex shrink-0 items-center gap-2">
+          <label className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute start-3.5 top-1/2 size-4 -translate-y-1/2 text-faint" />
+            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.customersSearch} aria-label={t.customersSearch} className="h-11 w-full rounded-full bg-surface pe-4 ps-10 text-[16px] shadow-card outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]" />
+          </label>
+          {!shop.store && (
+            <button type="button" onClick={() => setNear(!near)} aria-pressed={near} className={`press flex h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.875rem] font-bold shadow-card ${near ? "bg-brand text-white" : "bg-surface text-body"}`}>
+              <Gift className="size-4" /> {t.customersNear}
+            </button>
+          )}
+        </div>
+      )}
+      {shown.length === 0 && <p className="mt-4 text-center text-[0.9375rem] text-muted">{t.customersNone}</p>}
+      <ul data-list data-clarity-mask="true" className={`mb-[2dvh] min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card ${many ? "mt-[1.4dvh]" : "mt-[2.5dvh]"} ${shown.length ? "" : "hidden"}`}>
+        {shown.map((c) => {
           // each card has its own goal: the one it started with
           const of = c.goal ?? goal;
           const pct = Math.min(100, Math.round((c.stamps / of) * 100));

@@ -26,7 +26,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
   ];
   return (
     <Screen>
-      <Top back={me.admin ? "/admin" : me.shop ? "/shop" : "/"} />
+      <Top back={me.admin ? "/admin" : me.shop ? "/shop/settings" : "/"} />
       <Middle>
       <Heading title={t.account} />
       <div className="mt-[3dvh] space-y-[2dvh]">

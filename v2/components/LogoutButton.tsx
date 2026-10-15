@@ -12,7 +12,7 @@ import { t } from "@/lib/t";
  * phone that never gave a word, or one that is slow about it, never holds
  * the way out: two seconds, then out.
  */
-export function LogoutButton() {
+export function LogoutButton({ className = "mt-[3dvh]" }: { className?: string }) {
   const [busy, setBusy] = useState(false);
   const out = async () => {
     if (busy) return;
@@ -25,7 +25,7 @@ export function LogoutButton() {
     await logout();
   };
   return (
-    <button type="button" onClick={() => void out()} disabled={busy} className="press mt-[3dvh] flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0625rem] font-semibold text-coral shadow-card disabled:opacity-70">
+    <button type="button" onClick={() => void out()} disabled={busy} className={`press ${className} flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0625rem] font-semibold text-coral shadow-card disabled:opacity-70`}>
       <LogOut className="size-5" /> {busy ? t.checking : t.logout}
     </button>
   );

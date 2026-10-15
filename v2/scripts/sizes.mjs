@@ -359,6 +359,8 @@ const SCREENS = [
     wait: 1400,
   },
   { name: "customers", as: "owner", path: "/shop/customers" },
+  { name: "customers-near", as: "owner", path: "/shop/customers", act: (p) => press(p, "قربو للكادو") },
+  { name: "shop-settings", as: "owner", path: "/shop/settings" },
   { name: "stats", as: "owner", path: "/shop/stats" },
   { name: "pay", as: "owner", path: "/shop/pay" },
   { name: "settings", as: "owner", path: "/shop/setup?edit=1" },

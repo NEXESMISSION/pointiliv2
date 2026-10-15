@@ -87,7 +87,7 @@ export function Items({ names, on, kind }: { names: string[]; on: boolean; kind:
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-8 pt-3">
-      <Back home="/shop" />
+      <Back home="/shop/settings" />
       <h1 className="mt-2 text-[1.375rem] font-bold leading-tight">{t.itemsTitle}</h1>
       <p className="mt-1 text-[0.9375rem] leading-relaxed text-muted">{t.itemsWhat}</p>
 

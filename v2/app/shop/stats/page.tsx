@@ -19,7 +19,7 @@ const weekday = (d: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { week
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(iso));
 
 /**
- * The owner's numbers, on their own screen — the four that matter at the top,
+ * The owner's numbers, on their own screen — the three that matter at the top,
  * the week as a row of bars, and the customers who come back the most. It is
  * where today's three numbers went when they left the home: the home is for
  * the code, this is for looking.
@@ -34,25 +34,23 @@ export default async function ShopStats() {
   const selling = (Array.isArray(sold) ? sold : []).filter((x) => x.n > 0);
   const days = s?.days ?? [];
   const max = Math.max(1, ...days.map((d) => d.stamps));
+  // three numbers: today, the customers, and the ones who came back (what a loyalty card is for)
   const tiles = [
     { icon: "fire", value: s?.today ?? 0, label: t.numToday },
     { icon: "people", value: s?.customers ?? 0, label: t.statCustomers },
-    { icon: "star", value: s?.stamps ?? 0, label: t.statStamps },
-    { icon: "gift", value: s?.given ?? 0, label: t.statGiven },
+    { icon: "star", value: s?.returning ?? 0, label: t.statBack },
   ];
 
   return (
     <Screen>
       <Top back="/shop" title={t.statsTitle} hint={t.statsHint} />
 
-      <div className="mt-[2dvh] grid shrink-0 grid-cols-2 gap-2">
+      <div className="mt-[2dvh] grid shrink-0 grid-cols-3 gap-2">
         {tiles.map((x) => (
-          <div key={x.label} className="flex items-center gap-2.5 rounded-[1.125rem] bg-surface px-3 py-[clamp(0.625rem,1.6dvh,1rem)] shadow-card">
-            <Icon3D name={x.icon} size={28} className="shrink-0" />
-            <span className="min-w-0">
-              <span className="num block text-[1.375rem] font-bold leading-none">{x.value}</span>
-              <span className="mt-0.5 block truncate text-[0.75rem] text-muted">{x.label}</span>
-            </span>
+          <div key={x.label} className="flex flex-col items-center gap-1 rounded-[1.125rem] bg-surface px-2 py-[clamp(0.625rem,1.6dvh,1rem)] text-center shadow-card">
+            <Icon3D name={x.icon} size={26} />
+            <span className="num block text-[1.5rem] font-bold leading-none">{x.value}</span>
+            <span className="block w-full truncate text-[0.75rem] text-muted">{x.label}</span>
           </div>
         ))}
       </div>
@@ -75,16 +73,6 @@ export default async function ShopStats() {
         </div>
       </section>
 
-      <div className="mt-2 grid shrink-0 grid-cols-2 gap-2">
-        <p className="rounded-[1.125rem] bg-surface px-3.5 py-2.5 text-[0.8125rem] text-muted shadow-card">
-          <span className="num block text-[1.125rem] font-bold text-ink">{s?.returning ?? 0}</span>
-          {t.statReturning}
-        </p>
-        <p className="rounded-[1.125rem] bg-surface px-3.5 py-2.5 text-[0.8125rem] text-muted shadow-card">
-          <span className="num block text-[1.125rem] font-bold text-ink">{s?.new_week ?? 0}</span>
-          {t.statNewWeek}
-        </p>
-      </div>
 
       {/* «شنوّة يمشي أكثر»: one row of chips, the best first — slides sideways, never takes the screen */}
       {selling.length > 0 && (

@@ -105,6 +105,8 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   // is celebrated over the code, once in the shop's life: «شفت؟ هكّا!»
   const firstRef = useRef(firstWaits);
   const [first, setFirst] = useState<{ name: string | null } | null>(null);
+  // the last tampon given here since the screen opened: it stays under the code once its «+1» is gone
+  const [lastScan, setLastScan] = useState<{ name: string | null; at: string } | null>(null);
   const celebrate = useCallback(
     (who: string | null) => {
       shown("first_scan", shop.id);
@@ -207,6 +209,8 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           fresh.forEach((x) => seen.current.add(x.id));
           const shown = fresh.slice(-2);
           setFlashes((f) => [...f, ...shown]);
+          const newest = fresh[fresh.length - 1]!;
+          setLastScan({ name: newest.name, at: new Intl.DateTimeFormat("fr-TN", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date()) });
           navigator.vibrate?.(60);
           setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 2600);
           // the shop's very first customer (not the owner trying it): after the «+1», the bravo
@@ -490,12 +494,17 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
             <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.125rem] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
               <Check className="size-5" strokeWidth={3} /> <span className="num">+1</span> {latest.name ?? t.someone}
             </p>
+          ) : lastScan ? (
+            <p className="flex max-w-xs items-center gap-1.5 truncate text-center text-[0.9375rem] font-semibold text-white/85">
+              <Check className="size-4 shrink-0" strokeWidth={3} /> {fill(t.lateStamp, { who: lastScan.name ?? t.someone })} · <span className="num">{lastScan.at}</span>
+            </p>
           ) : (
             <p className="max-w-xs text-center text-[0.9375rem] text-white/80">{t.counterHint}</p>
           )}
         </div>
         {/* alone with one phone, the owner cannot scan their own screen: the customer's side, replayed here */}
-        {!gift && !paused && shop.goal && (
+        {/* only until the first customer: after that, the code alone */}
+        {firstWaits && !gift && !paused && shop.goal && (
           <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift ?? "" }} className="press flex h-10 shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 text-[0.875rem] font-bold text-white">
             <Eye className="size-4" /> {t.trySee}
           </TryItButton>

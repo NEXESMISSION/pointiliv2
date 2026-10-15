@@ -17,7 +17,7 @@ export default async function ShopSetup({ searchParams }: { searchParams: Promis
   const editing = !!edit && !!me.shop;
   return (
     <Screen>
-      <Top back={editing ? "/shop" : undefined} end={<HelpButton help={help} />} />
+      <Top back={editing ? "/shop/settings" : undefined} end={<HelpButton help={help} />} />
       <Middle>
         <Heading title={t.shopTitle}>{!editing && <Steps at={2} />}</Heading>
         <ShopForm name={me.shop?.name} kind={me.shop?.kind} logo={me.shop?.logo} next={editing ? "/shop" : undefined} />

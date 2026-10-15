@@ -241,6 +241,23 @@ export const t = {
   firstGiftSteps: ["انزل على «سكاني»", "سكاني الكود اللي في تليفونو", "انزل على «إيه، عطيه الكادو»"],
   firstGiftGo: "سكاني توّا",
   trialWaits: "التجربة تبدا مع أوّل حريف",
+  // «المحل»: everything the owner sets, one list
+  setTitle: "المحل",
+  setShop: "الإسم واللوغو",
+  setCard: "{goal} ← {gift}",
+  setItemsOn: "الكود يسأل شنوّة خذا الحريف",
+  setItemsOff: "شنوّة تبيع",
+  setStatsSub: "اليوم، الجمعة، أكثر الحرفاء",
+  setPaid: "خالص حتى {date}",
+  setTrial: "التجربة · مازال {n}",
+  setMine: "الكارطات اللي عندك في محلات أخرى",
+  // the home: today's tampons, one line
+  todayLine: "اليوم",
+  statBack: "رجعو",
+  customersSearch: "لوّج على حريف",
+  customersNear: "قربو للكادو",
+  customersNone: "ما لقينا حتى حريف بالإسم هذا",
+  todayNone: "حتى تامبون اليوم مازال",
   ownerName: "اسمك",
   shopTitle: "المحل",
   shopName: "اسم المحل",
@@ -1141,6 +1158,7 @@ export function counted(n: number, one: string, two: string, few: string, many: 
   const r = n % 100;
   return r >= 3 && r <= 10 ? `${n} ${few}` : `${n} ${many}`;
 }
+export const daysN = (n: number) => counted(n, "نهار واحد", "يومين", "أيّام", "يوم");
 export const stampsN = (n: number) => counted(n, "تامبون واحد", "زوز تامبونات", "تامبونات", "تامبون");
 export const customersN = (n: number) => counted(n, "حريف واحد", "زوز حرفاء", "حرفاء", "حريف");
 /** The same gift, written twice: «قهوة بلاش» = «  قهوة  بلاش » (as the database's same_gift sees it). */

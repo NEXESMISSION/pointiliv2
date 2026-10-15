@@ -11,8 +11,7 @@ import { Pass } from "@/components/Pass";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { CardConfirm, type CardImpact } from "@/components/CardConfirm";
-import { Btn, Icon3D, boxLook } from "@/components/ui";
-import { seenBefore, shown } from "@/lib/once";
+import { Btn, boxLook } from "@/components/ui";
 import { fill, sameGift, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { waitSays } from "@/lib/when";
@@ -22,15 +21,13 @@ const GOALS = [5, 6, 8, 10, 12];
 const TAP_LABEL = "جرّب: زيد تامبون على الكارط";
 /** the wait between two tampons, in minutes: an hour, once a day (the next day in Tunis), none — or hours typed */
 const WAITS = [60, 1440, 0];
-/** the steps: 0 is the hello, then the four questions, then the card made */
+/** the steps: the four questions, then the card as it will be */
 const GOAL = 1;
 const GIFT = 2;
 const WAIT = 3;
 const COLOR = 4;
 const READY = 5;
 const COLORS = ["#D7141A", "#FF6B4A", "#B45309", "#12B76A", "#0891B2", "#1D5FA8", "#6C47FF", "#E0457B", "#1F1B2E"];
-/** how long the hello stays before the first question slides in by itself */
-const HELLO_MS = 3400;
 /**
  * The card above the question: its height follows its width (a dot per
  * stamp: about 9rem + 0.4 × its width), so on a short screen it gets narrower.
@@ -41,7 +38,6 @@ const HELLO_MS = 3400;
  * cut: on the smallest screens the page scrolls a little instead.
  */
 const SHRINK = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(85.5dvh_-_31rem))))]";
-const SHRINK_HELLO = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(92dvh_-_31rem))))]";
 
 type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; stamp_gap?: number };
 
@@ -57,12 +53,11 @@ type Shop = { id: string; name: string; kind: string; goal: number | null; gift:
  * middle of their card: then one question first (CardConfirm): they finish
  * the card they started, or they switch to the new one now.
  */
-export function CardWizard({ shop, owner, next, editing, hello = false, help }: { shop: Shop; owner: string; next: string; editing: boolean; hello?: boolean; help?: HelpSettings }) {
+export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: string; editing: boolean; help?: HelpSettings }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const router = useRouter();
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
-  // the hello is once in a lifetime (`hello`: the person never had it)
-  const [step, setStep] = useState(() => (editing || !hello || seenBefore("card_hello", shop.id) ? 1 : 0));
+  const [step, setStep] = useState(GOAL);
   const [back, setBack] = useState(false);
   const [goal, setGoal] = useState(shop.goal ?? 8);
   const [tap, setTap] = useState<{ goal: number; n: number } | null>(null);
@@ -105,7 +100,7 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
   // a save whose answer never came back, and the card is still the old one
   const [lost, setLost] = useState(false);
 
-  useScreen(`${editing ? "edit-" : ""}${["hello", "goal", "gift", "wait", "color", "ready"][step] ?? "ready"}`);
+  useScreen(`${editing ? "edit-" : ""}${["", "goal", "gift", "wait", "color", "ready"][step] ?? "ready"}`);
   useEffect(() => {
     if (state?.error) signal("form_error", `card · ${state.error}`);
   }, [state]);
@@ -179,54 +174,9 @@ export function CardWizard({ shop, owner, next, editing, hello = false, help }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending]);
 
-  // the hello, written down the moment it shows: a reload or another phone goes straight to the first question
-  const claimed = useRef(false);
-  useEffect(() => {
-    if (step !== 0 || claimed.current) return;
-    claimed.current = true;
-    shown("card_hello", shop.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // the hello goes on by itself
-  useEffect(() => {
-    if (step !== 0) return;
-    const id = setTimeout(() => go(GOAL), HELLO_MS);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
-
   const preview = { name: shop.name, kind: shop.kind, logo: shop.logo, goal, gift: gift.trim() || "…", color, stamp_logo: stampLogo };
   // the preview's tampons: a step's own number, or the ones tapped onto it for this goal
   const onCard = tap && tap.goal === goal ? tap.n : step === READY ? 1 : Math.max(1, Math.round(goal * 0.6));
-
-  if (step === 0) {
-    return (
-      <main className="safe-t safe-b relative mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-[clamp(1.25rem,6vw,1.75rem)] text-center">
-        <style>{`@keyframes wz-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }`}</style>
-        <Icon3D name="party" size={86} className="animate-pop" />
-        <p className="mt-4 animate-rise text-[0.9375rem] font-semibold text-muted" style={{ animationDelay: "150ms" }}>
-          {fill(t.wizOpened, { shop: shop.name })}
-        </p>
-        <h1 className="mt-2 animate-rise text-[1.75rem] font-bold leading-snug" style={{ animationDelay: "450ms" }}>
-          {owner ? `${owner}، ` : ""}
-          {t.wizTitle}
-        </h1>
-        <p className="mt-3 animate-rise text-[1rem] text-body" style={{ animationDelay: "800ms" }}>
-          {t.wizBody}
-        </p>
-        <div className={`mt-[4dvh] animate-rise ${SHRINK_HELLO}`} style={{ animationDelay: "1100ms" }}>
-          <Pass shop={{ ...preview, gift: ideas[0] ?? "" }} stamps={0} />
-        </div>
-        <div className="mt-[4dvh] h-1 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
-          <span className="block h-full origin-right rounded-full bg-brand" style={{ animation: `wz-bar ${HELLO_MS}ms linear both` }} />
-        </div>
-        <button type="button" onClick={() => go(GOAL)} className="press mt-4 px-6 py-2 text-[1rem] font-bold text-brand">
-          {t.wizStart}
-        </button>
-      </main>
-    );
-  }
 
   const question = step === GOAL ? t.wizGoalQ : step === GIFT ? t.wizGiftQ : step === WAIT ? t.wizWaitQ : step === COLOR ? t.wizColorQ : editing ? t.wizReview : t.wizReady;
   const example =
