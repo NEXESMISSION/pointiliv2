@@ -361,11 +361,6 @@ try {
   await o.goto(BASE + "/shop/settings", { waitUntil: "load" });
   await o.getByRole("link", { name: /^الكارط / }).waitFor({ timeout: 20000 });
   await shot(o, "17g-shop-settings");
-  // the counter's poster: the A5 page, scaled into the screen, printed whole
-  await o.getByRole("link", { name: /بوستر للكاسة/ }).click();
-  await o.waitForURL("**/shop/poster");
-  await o.getByRole("button", { name: /اطبعها/ }).waitFor({ timeout: 20000 });
-  await shot(o, "17h-poster", 900);
   await o.goto(BASE + "/shop/stats", { waitUntil: "load" });
   await shot(o, "18-owner-stats");
   await o.goto(BASE + "/shop/customers", { waitUntil: "load" });

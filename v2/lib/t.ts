@@ -248,6 +248,7 @@ export const t = {
   setItemsOn: "الكود يسأل شنوّة خذا الحريف",
   setItemsOff: "شنوّة تبيع",
   setStatsSub: "اليوم، الجمعة، أكثر الحرفاء",
+  setMine: "الكارطات اللي عندك في محلات أخرى",
   setPaid: "خالص حتى {date}",
   setTrial: "التجربة · مازال {n}",
   // the home: today's tampons, one line
@@ -260,17 +261,6 @@ export const t = {
   quickGo: "خوذ التامبون",
   // the wallet asks for a password, gently, once an account was made at the counter
   passwordAsk: "حطّ كلمة سر باش ترجع لكارطاتك من أي تليفون",
-  // the counter's poster (A5, printed)
-  posterTitleScreen: "بوستر للكاسة",
-  posterTitle: "عندنا كارط الفيدليتي!",
-  posterStep1: "اطلب الكود من الكاسة",
-  posterStep2: "سكانيه بكاميرا تليفونك وخوذ تامبون",
-  posterStep3: "{n} تامبونات = {gift}",
-  posterStep3Other: "كل تامبون يقرّبك لكادو",
-  posterFoot: "بلا أبليكاسيون، بلا ورق",
-  posterPrint: "اطبعها",
-  posterHint: "ورقة A5: حطّها على الكاسة قدّام الحرفاء",
-  setPosterSub: "ورقة A5 تفسّر الكارط للحرفاء",
   customersNone: "ما لقينا حتى حريف بالإسم هذا",
   customerHowAdd: "باش تزيدلو تامبون: سكاني الكود اللي في تليفونو",
   todayNone: "حتى تامبون اليوم مازال",

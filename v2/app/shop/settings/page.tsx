@@ -37,7 +37,7 @@ const Group = ({ children }: { children: ReactNode }) => <div className="divide-
 /**
  * «المحل»: everything an owner sets, once in a while, in one list — the
  * name and the logo, the card (or the store, the wheel), what the shop sells,
- * the numbers, the subscription, the poster, the account — each line saying how it
+ * the numbers, the subscription, the account — each line saying how it
  * stands now, one tap from changing it. The home keeps the everyday things.
  */
 export default async function ShopSettings() {
@@ -82,15 +82,14 @@ export default async function ShopSettings() {
           />
           <Row href={card.href} mark={<Icon3D name={card.icon} size={30} />} title={card.title} sub={card.sub} />
           <Row href="/shop/items" mark={<Icon3D name="basket" size={30} />} title={t.itemsTile} sub={shop.items_on ? t.setItemsOn : t.setItemsOff} />
-          <Row href="/shop/poster" mark={<Icon3D name="printer" size={30} />} title={t.posterTitleScreen} sub={t.setPosterSub} />
         </Group>
         <Group>
           <Row href="/shop/stats" mark={<Icon3D name="chart" size={30} />} title={t.statsTitle} sub={t.setStatsSub} />
           {plan && <Row href="/shop/pay" mark={<Icon3D name="crown" size={30} />} title={t.payTitle} sub={plan} />}
         </Group>
         <Group>
-          {/* the account: the name, the password — and the owner's own cards elsewhere, one tap from there */}
           <Row href="/me" mark={<Icon3D name="wave" size={30} />} title={t.account} sub={me.name ?? null} />
+          <Row href="/wallet" mark={<Icon3D name="gift" size={30} />} title={t.myCards} sub={t.setMine} />
         </Group>
         <LogoutButton className="mt-0" />
       </div>
