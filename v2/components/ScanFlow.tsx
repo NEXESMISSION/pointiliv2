@@ -171,9 +171,8 @@ function useHoldLeft(): number {
 /**
  * No account on this phone: the tampon lands all the same — held for 20
  * minutes — and it must be plain that it is not theirs yet. One short step
- * on this very screen: a name and a phone number, and the tampon is theirs
- * (the account is made with a password nobody sees; the wallet asks for one
- * later). A phone that had an account is offered the way back in first.
+ * on this very screen: a name, a phone number and a password, and the tampon
+ * is theirs. A phone that had an account is offered the way back in first.
  * The minutes run down above it.
  */
 function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanResult, { kind: "held" }>; known?: boolean; onDone: (r: ScanResult) => void }) {
@@ -184,6 +183,8 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
   // a phone that had an account: the way back in first, the short form one tap away
   const [form, setForm] = useState(!known);
   const [name, setName] = useState("");
+  // kept by hand: the form is sent by code, and a mistake elsewhere never empties it
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<{ error: string; field?: string } | null>(null);
   const send = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -192,7 +193,8 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
     setBusy(true);
     setErr(null);
     try {
-      const r = await quickJoin(token, name, String(new FormData(e.currentTarget).get("phone") ?? ""));
+      const fd = new FormData(e.currentTarget);
+      const r = await quickJoin(token, name, String(fd.get("phone") ?? ""), password);
       if (r.ok) {
         signal("quick_join", r.res.kind);
         onDone(r.res);
@@ -243,6 +245,7 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
         <form onSubmit={(e) => void send(e)} noValidate className="mt-[1.8dvh] w-full animate-rise space-y-[1.2dvh] text-start" style={after(320)}>
           <Field label={t.name} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" maxLength={60} error={err?.field === "name" ? err.error : null} className="!h-[3.25rem]" />
           <PhoneField label={t.phone} error={err?.field === "phone" ? err.error : null} compact />
+          <Field label={t.password} name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPh} autoComplete="new-password" minLength={8} error={err?.field === "password" ? err.error : null} className="!h-[3.25rem]" />
           {err?.field === "phone" && err.error === t.errTaken && (
             <Link href={`/login?next=${next}`} className="block px-1 text-[0.9375rem] font-semibold text-brand">
               {t.toLogin}

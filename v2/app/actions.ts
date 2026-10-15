@@ -279,21 +279,21 @@ export async function scan(token: string): Promise<ScanResult> {
 }
 
 /**
- * The account at the counter, in twenty seconds: a phone scanned the code with
- * no account, the tampon is held for it — a name and a phone number make the
- * account (with a password nobody sees: the wallet asks for one later), sign
- * it in, and the held tampon lands, all in this one call. A number already
- * taken says so, with the way to sign in.
+ * The account at the counter, on the screen of the held tampon: a phone
+ * scanned the code with no account, the tampon is held for it — a name, a
+ * phone number and a password (the customer signs in with them on any phone)
+ * make the account, sign it in, and the held tampon lands, all in this one
+ * call. A number already taken says so, with the way to sign in.
  */
-export async function quickJoin(token: string, name: string, phoneRaw: string): Promise<{ ok: false; error: string; field?: string } | { ok: true; res: ScanResult }> {
+export async function quickJoin(token: string, name: string, phoneRaw: string, password: string): Promise<{ ok: false; error: string; field?: string } | { ok: true; res: ScanResult }> {
   if (!TOKEN.test(token)) return { ok: false, error: t.errNetwork };
   const who = String(name ?? "").trim();
   const phone = digits(String(phoneRaw ?? ""));
   if (who.length < 2 || who.length > 60) return { ok: false, error: t.errName, field: "name" };
   if (!validPhone(phone)) return { ok: false, error: t.errPhone, field: "phone" };
-  const made = await newAccount(who, phone, randomBytes(18).toString("base64url"));
+  if (String(password ?? "").length < PASSWORD_MIN) return { ok: false, error: t.errPassword, field: "password" };
+  const made = await newAccount(who, phone, String(password));
   if ("error" in made) return { ok: false, error: made.error, field: made.field };
-  await service().from("people").update({ password_set: false }).eq("id", made.id);
   // the tampon held for this phone, now theirs
   const jar = await cookies();
   const held = (jar.get(HOLD)?.value ?? "").split("|").map((x) => [x.slice(0, x.lastIndexOf(".")), x.slice(x.lastIndexOf(".") + 1)] as const);

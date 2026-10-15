@@ -165,9 +165,10 @@ try {
   await c.goto(BASE + new URL(url).pathname, { waitUntil: "load" });
   await c.getByText("حجزنالك التامبون").waitFor({ timeout: 30000 });
   await shot(c, "06-reserved", 1600);
-  // the account right there, at the counter: a name and a phone, no password (the wallet asks for one later)
+  // the account right there, at the counter: a name, a phone and a password, on the held tampon's own screen
   await c.locator('input[name="name"]').fill("سامي بن علي");
   await c.locator('input[name="phone"]').fill(customerPhone);
+  await c.locator('input[name="password"]').fill("sami1234");
   await shot(c, "07-join", 300);
   // the counter hears the stamp (Realtime): «+1 سامي» shows for a moment — caught as it lands
   const t0 = Date.now();
@@ -284,23 +285,18 @@ try {
 
   // ── the customer's other screens ──
   await c.goto(BASE + "/", { waitUntil: "load" });
-  await c.getByRole("link", { name: /حطّ كلمة سر/ }).waitFor({ timeout: 20000 });
   await shot(c, "13-wallet");
-  // the password, chosen now: the wallet stops asking
-  await c.getByRole("link", { name: /حطّ كلمة سر/ }).click();
-  await c.waitForURL("**/me");
-  await c.locator('input[name="password"]').fill("sami1234");
-  await c.locator('input[name="password"]').press("Enter");
+  // the account made at the counter has the customer's own password: no «حطّ كلمة سر» to ask, and it signs in elsewhere
+  await never(c, "the password ask (the customer chose one at the counter)", c.getByRole("link", { name: /حطّ كلمة سر/ }), 800);
   {
-    let set = false;
-    for (let i = 0; i < 20 && !set; i++) {
-      await c.waitForTimeout(500);
-      set = (await admin.from("people").select("password_set").eq("phone", `+216${customerPhone}`).single()).data?.password_set === true;
-    }
-    console.log(set ? "  · the password chosen after the counter: written down ✓" : "  ! the password was not written down");
+    const other = await (await browser.newContext(phone)).newPage();
+    await other.goto(BASE + "/login", { waitUntil: "load" });
+    await other.locator('input[name="phone"]').fill(customerPhone);
+    await other.locator('input[name="password"]').fill("sami1234");
+    await Promise.all([other.waitForURL((u) => u.pathname === "/", { timeout: 60000 }), other.locator('button[type="submit"]').click()]);
+    console.log("  · the customer signs in on another phone with the password chosen at the counter ✓");
+    await other.context().close();
   }
-  await c.goto(BASE + "/", { waitUntil: "load" });
-  await never(c, "the password ask (once set)", c.getByRole("link", { name: /حطّ كلمة سر/ }), 800);
   await c.locator('a[href^="/c/"]').first().click();
   await c.waitForURL("**/c/**");
   await shot(c, "14-card");

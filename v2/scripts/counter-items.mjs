@@ -38,11 +38,20 @@ try {
   await o.getByRole("dialog").getByRole("button", { name: "عطورات" }).click();
   await Promise.all([o.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   await Promise.all([o.waitForURL("**/shop/start", { timeout: 60000 }), o.getByRole("button", { name: "حلّ الكارط" }).click()]);
-  // what it sells, and the founder's switch on (as for Sultan al oud)
+  // the counter open BEFORE the founder's switch: a code with no thing on it
   const { data: p } = await admin.from("people").select("id").eq("phone", `+216${owner}`).single();
   const { data: shop } = await admin.from("shops").select("id").eq("owner_id", p.id).single();
+  await o.goto(BASE + "/shop/qr", { waitUntil: "load" });
+  await o.locator("[data-qr]").waitFor({ timeout: 30000 });
+  // what it sells, and the founder's switch on (as for Sultan al oud) — the open counter must notice by itself
   await admin.from("items").insert(["Parfum 30 ml", "Parfum 50 ml", "Parfum 100 ml"].map((name, i) => ({ shop_id: shop.id, name, rank: i })));
   await admin.from("shops").update({ items_on: true }).eq("id", shop.id);
+  const asked = await o
+    .getByRole("button", { name: /Parfum 50 ml/ })
+    .waitFor({ timeout: 120000 })
+    .then(() => true)
+    .catch(() => false);
+  console.log(asked ? "✓ a counter left open when the switch went on asks by itself at its next code" : "✗ the open counter never asked");
   await o.goto(BASE + "/shop/qr", { waitUntil: "load" });
   await o.waitForTimeout(1500);
   const qrBefore = await o.locator("[data-qr]").count();
@@ -76,6 +85,7 @@ try {
   await c.goto(BASE + new URL(url).pathname, { waitUntil: "load" });
   await c.locator('input[name="name"]').fill("حريف");
   await c.locator('input[name="phone"]').fill(cust);
+  await c.locator('input[name="password"]').fill("probe1234");
   await c.getByRole("button", { name: /خوذ التامبون/ }).click();
   await c.getByText("تامبون جديد!").waitFor({ timeout: 30000 });
   await c.screenshot({ path: "shots/items-stamped.png" });

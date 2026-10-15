@@ -81,6 +81,8 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   // is never left over from the customer before.
   const [item, setItem] = useState<Item | null>(null);
   const itemRef = useRef<Item | null>(null);
+  // the screen came without things to ask about (the shop was not on «شنوّة يبيع» when it opened)
+  const noItems = useRef(items.length === 0);
   const [flashes, setFlashes] = useState<Flash[]>([]);
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [offline, setOffline] = useState(false);
@@ -131,6 +133,12 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       return "paused";
     }
     setShut(false);
+    // the shop was switched to «شنوّة يبيع» while this screen was open (it has no things to ask about yet):
+    // the server makes no code without a thing — the page comes back with the question
+    if (j.error === "pick_item" && noItems.current) {
+      window.location.reload();
+      return "paused";
+    }
     if (!j.ok) throw new Error(j.error ?? "network");
     const offset = Date.parse(j.server_now) - Date.now();
     return { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset };
