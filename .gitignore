@@ -39,3 +39,7 @@ social/carousels/review/
 
 # reports built from the real leads (shop names, owners, phones, what each did): local only, like the CRM data
 /social/business/reports/
+
+# the voice-over takes made by edge-tts (judged not Tunisian enough, 14 Oct 2026): kept on disk, never in the repo
+social/voice/*.mp3
+social/voice/*.srt
