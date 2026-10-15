@@ -33,7 +33,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
         <NameForm name={me.name ?? ""} />
         {me.phone && (
           <div>
-            <p className="mb-1.5 px-1 text-[0.875rem] font-semibold text-muted">{t.phone}</p>
+            <p className="mb-1.5 px-1 text-[0.8125rem] font-semibold text-muted">{t.phone}</p>
             <p className="rounded-[1.125rem] bg-surface px-4 py-4 text-[1.0625rem] shadow-card">
               <span dir="ltr" className="num inline-block" data-clarity-mask="true">
                 +216 {spaced(me.phone)}
@@ -46,8 +46,8 @@ export default async function Account({ searchParams }: { searchParams: Promise<
           <Link key={l.href} href={l.href} className="press flex items-center gap-3 rounded-[1.375rem] bg-surface p-4 shadow-card">
             <Icon3D name={l.icon} size={40} className="shrink-0" />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[1.0312rem] font-bold">{l.title}</span>
-              <span className="block truncate text-[0.8438rem] text-muted">{l.hint}</span>
+              <span className="block truncate text-[1.0625rem] font-bold">{l.title}</span>
+              <span className="block truncate text-[0.8125rem] text-muted">{l.hint}</span>
             </span>
             <ChevronLeft className="size-5 shrink-0 text-faint" />
           </Link>

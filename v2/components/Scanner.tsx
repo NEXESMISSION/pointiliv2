@@ -134,14 +134,14 @@ export function Scanner({
         <Link href={back} className="press grid size-11 place-items-center rounded-full bg-white/15 backdrop-blur" aria-label={t.back}>
           <X className="size-5" />
         </Link>
-        <p className="text-[1.125rem] font-bold">{title}</p>
+        <p className="text-[1.0625rem] font-bold">{title}</p>
         <span className="size-11" />
       </div>
 
       <div className="absolute inset-0 grid place-items-center">
         {off ? (
           <div className="mx-8 rounded-[1.625rem] bg-white/10 p-6 text-center backdrop-blur">
-            <p className="text-[1.1875rem] font-bold">{t.cameraOff}</p>
+            <p className="text-[1.25rem] font-bold">{t.cameraOff}</p>
             <p className="mt-1.5 text-[0.9375rem] text-white/80">{t.cameraOffBody}</p>
           </div>
         ) : (
@@ -156,7 +156,7 @@ export function Scanner({
       </div>
 
       <div className="safe-b absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-3 px-5">
-        <p className="text-center text-[1rem] font-medium text-white/90">{hint}</p>
+        <p className="text-center text-[0.9375rem] font-medium text-white/90">{hint}</p>
         <label className="press grid size-16 cursor-pointer place-items-center rounded-full border border-white/30 bg-white/15 backdrop-blur" aria-label={t.photo}>
           <Camera className="size-7" />
           <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => void fromPhoto(e.target.files?.[0])} />

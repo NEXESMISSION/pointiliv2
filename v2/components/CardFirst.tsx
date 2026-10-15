@@ -89,24 +89,26 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
         {help ? <HelpButton help={help} compact /> : null}
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col justify-center-safe py-[1.8dvh]">
-        <h1 className="text-balance text-[1.375rem] font-bold leading-snug">{t.firstCardQ}</h1>
+      {/* never shorter than what it holds: on the smallest phones the whole screen scrolls, the button never sits on a chip */}
+      <div className="flex flex-1 flex-col justify-center-safe py-[1.8dvh]">
+        {/* the two labels under the card ask the same: the smallest phones keep them and drop this */}
+        <h1 className="text-balance text-[1.25rem] font-bold leading-snug [@media(max-height:520px)]:sr-only">{t.firstCardQ}</h1>
 
         {/* the card is a try: a tap lands one more tampon on it, up to the gift, then it starts over */}
         <button type="button" onClick={() => setTap({ goal, n: onCard >= goal ? 0 : onCard + 1 })} aria-label={TAP_LABEL} className={`press mt-[2dvh] block rounded-[1.75rem] text-start ${SHRINK}`}>
           <Pass shop={preview} stamps={onCard} fresh={tap?.goal === goal} />
         </button>
 
-        <p className="mb-1.5 mt-[2.4dvh] px-1 text-[0.875rem] font-semibold text-muted">{t.firstCardGoal}</p>
+        <p className="mb-1.5 mt-[2.4dvh] px-1 text-[0.8125rem] font-semibold text-muted">{t.firstCardGoal}</p>
         <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label={t.firstCardGoal}>
           {GOALS.map((g) => (
-            <button key={g} type="button" role="radio" aria-checked={goal === g} onClick={() => setGoal(g)} className={`num h-[2.875rem] text-[1.1875rem] ${chip(goal === g)} !rounded-[1rem]`}>
+            <button key={g} type="button" role="radio" aria-checked={goal === g} onClick={() => setGoal(g)} className={`num h-[2.875rem] text-[1.25rem] ${chip(goal === g)} !rounded-[1rem]`}>
               {g}
             </button>
           ))}
         </div>
 
-        <p className="mb-1.5 mt-[2dvh] px-1 text-[0.875rem] font-semibold text-muted">{t.firstCardGift}</p>
+        <p className="mb-1.5 mt-[2dvh] px-1 text-[0.8125rem] font-semibold text-muted">{t.firstCardGift}</p>
         {typing ? (
           <input
             ref={input}
@@ -121,7 +123,7 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
         ) : (
           <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t.firstCardGift}>
             {ideas.map((idea) => (
-              <button key={idea} type="button" role="radio" aria-checked={gift === idea} onClick={() => setGift(idea)} className={`h-[2.5rem] px-3.5 text-[0.9062rem] ${chip(gift === idea)}`}>
+              <button key={idea} type="button" role="radio" aria-checked={gift === idea} onClick={() => setGift(idea)} className={`h-[2.5rem] px-3.5 text-[0.9375rem] ${chip(gift === idea)}`}>
                 {idea}
               </button>
             ))}
@@ -131,14 +133,14 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
                 setGift("");
                 setTyping(true);
               }}
-              className="press flex h-[2.5rem] items-center gap-1.5 rounded-full bg-brand-soft px-3.5 text-[0.9062rem] font-bold text-brand"
+              className="press flex h-[2.5rem] items-center gap-1.5 rounded-full bg-brand-soft px-3.5 text-[0.9375rem] font-bold text-brand"
             >
               <Pencil className="size-3.5" strokeWidth={2.6} /> {t.firstCardOther}
             </button>
           </div>
         )}
-        {state?.error && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
-        {lost && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{t.cardLost}</p>}
+        {state?.error && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{state.error}</p>}
+        {lost && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{t.cardLost}</p>}
       </div>
 
       <div className="shrink-0 pb-3">
@@ -151,7 +153,7 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
             {pending ? t.checking : t.firstCardGo}
           </Btn>
         )}
-        <p className="mt-1.5 text-center text-[0.8125rem] text-faint">{t.firstCardLater}</p>
+        <p className="mt-1.5 text-center text-[0.8125rem] text-faint [@media(max-height:520px)]:hidden">{t.firstCardLater}</p>
       </div>
 
       <input type="hidden" name="goal" value={goal} />

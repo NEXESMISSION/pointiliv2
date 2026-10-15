@@ -465,6 +465,21 @@ function measure([read, tiny]) {
       break;
     }
   }
+  // a button, a link or a field with something else on top of it: a tap lands on the wrong thing
+  // (the first card's «حاجة أخرى» once sat under its own «حلّ الكارط» on the smallest phone). A popup
+  // over the page covers the page on purpose: then only the popup's own controls count
+  const overlay = [...document.querySelectorAll("[role='dialog'], [aria-modal='true']")].some(shown);
+  for (const el of things) {
+    if (!/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) continue;
+    if (overlay && !el.closest("[role='dialog'], [aria-modal='true']")) continue;
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    if (x < 0 || y < 0 || x > W || y > H) continue;
+    const top = document.elementFromPoint(x, y);
+    if (!top || el.contains(top) || top.contains(el) || el.closest("label")?.contains(top) || top.closest("nextjs-portal, [data-deco]")) continue;
+    out.push({ kind: "covered", el: desc(el), box: desc(top) });
+  }
   // one line per kind and element
   const seen = new Set();
   return out.filter((x) => {

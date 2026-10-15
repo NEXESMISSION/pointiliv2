@@ -56,13 +56,13 @@ export function RecentList({ rows, shop, fix = false }: { rows: RecentRow[]; sho
               {r.kind === "held" ? (
                 <HeldMark state={r.state ?? "waiting"} />
               ) : r.kind === "stamp" ? (
-                <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.7812rem] font-bold text-brand">+1</span>
+                <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.8125rem] font-bold text-brand">+1</span>
               ) : (
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-coral-soft">
                   <Icon3D name="gift" size={22} />
                 </span>
               )}
-              <span className={`min-w-0 flex-1 truncate text-[0.9062rem] font-medium ${r.kind === "held" && r.state === "lost" ? "text-coral" : ""}`}>
+              <span className={`min-w-0 flex-1 truncate text-[0.9375rem] font-medium ${r.kind === "held" && r.state === "lost" ? "text-coral" : ""}`}>
                 {r.line}
                 {/* what the tampon was for */}
                 {r.item && (
@@ -94,7 +94,7 @@ export function RecentList({ rows, shop, fix = false }: { rows: RecentRow[]; sho
             ) : (
               <>
             <p className="mt-1 text-[1.25rem] font-bold">{open.name}</p>
-            <p className="text-[0.9062rem] text-muted">
+            <p className="text-[0.9375rem] text-muted">
               {open.line} · <span className="num">{open.time}</span>
             </p>
             <div className="mt-4">
@@ -107,7 +107,7 @@ export function RecentList({ rows, shop, fix = false }: { rows: RecentRow[]; sho
             {open.card && <CardMoments card={open.card} color={shop.color} />}
             {/* the wrong thing tapped at the counter: put right in two taps */}
             {fix && open.kind === "stamp" && (
-              <Link href={`/shop/tampons?m=${open.id}`} className="press mt-3 flex h-11 items-center justify-center rounded-[1rem] bg-brand-soft text-[0.9062rem] font-bold text-brand">
+              <Link href={`/shop/tampons?m=${open.id}`} className="press mt-3 flex h-11 items-center justify-center rounded-[1rem] bg-brand-soft text-[0.9375rem] font-bold text-brand">
                 غلطت في الحاجة؟ بدّلها
               </Link>
             )}
@@ -152,7 +152,7 @@ function HeldSheet({ row }: { row: RecentRow }) {
         <h.icon className="size-8" strokeWidth={2.2} />
       </span>
       <p className="mt-3 text-balance text-[1.25rem] font-bold">{title}</p>
-      <p className="mt-1 text-[0.875rem] text-muted">
+      <p className="mt-1 text-[0.8125rem] text-muted">
         <span className="num">{row.time}</span>
         {row.item && (
           <>
@@ -170,7 +170,7 @@ function HeldSheet({ row }: { row: RecentRow }) {
         <div className="mt-4 space-y-2">
           <Link
             href={`/shop/collect?by=code&back=${row.id}`}
-            className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-[1rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]"
+            className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-[0.9375rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]"
           >
             <Undo2 className="size-5" /> {t.heldGiveBack}
           </Link>

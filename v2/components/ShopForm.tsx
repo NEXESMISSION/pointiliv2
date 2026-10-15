@@ -38,7 +38,7 @@ export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?:
       {/* the name, and the logo beside it */}
       <div>
         <div className="mb-1.5 flex items-baseline justify-between gap-2 px-1">
-          <label htmlFor="shop-name" className="text-[0.875rem] font-semibold text-muted">
+          <label htmlFor="shop-name" className="text-[0.8125rem] font-semibold text-muted">
             {t.shopName}
           </label>
           <span className="text-[0.8125rem] font-semibold text-muted">
@@ -59,16 +59,16 @@ export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?:
           />
           <LogoPicker value={mark} onChange={setMark} onError={setLogoError} onBusy={setLogoBusy} />
         </div>
-        {state?.field === "name" && state.error && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{state.error}</span>}
-        {logoError && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{logoError}</span>}
+        {state?.field === "name" && state.error && <span className="mt-1.5 block px-1 text-[0.8125rem] font-medium text-coral">{state.error}</span>}
+        {logoError && <span className="mt-1.5 block px-1 text-[0.8125rem] font-medium text-coral">{logoError}</span>}
       </div>
       <input type="hidden" name="logo" value={mark} />
-      <p className="mb-2 mt-[2.5dvh] px-1 text-[0.875rem] font-semibold text-muted">{t.shopKind}</p>
+      <p className="mb-2 mt-[2.5dvh] px-1 text-[0.8125rem] font-semibold text-muted">{t.shopKind}</p>
       <div className="grid grid-cols-4 gap-2">
         {shown.map((id) => (
           <KindTile key={id} id={id} on={k === id} onPick={setK} />
         ))}
-        <button type="button" onClick={() => setAll(true)} className="press flex flex-col items-center justify-center gap-1 rounded-[1.125rem] bg-brand px-1 py-3 text-[0.7812rem] font-bold leading-tight text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
+        <button type="button" onClick={() => setAll(true)} className="press flex flex-col items-center justify-center gap-1 rounded-[1.125rem] bg-brand px-1 py-3 text-[0.8125rem] font-bold leading-tight text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
           <LayoutGrid className="size-[1.875rem]" strokeWidth={2.2} />
           <span>
             {t.kindsAll} <span className="num font-semibold text-white/80">+{KINDS.length - shown.length}</span>
@@ -87,7 +87,7 @@ export function ShopForm({ name = "", kind = "cafe", logo = "", next }: { name?:
       )}
       <input type="hidden" name="kind" value={k} />
       {next && <input type="hidden" name="next" value={next} />}
-      {state?.error && !state.field && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
+      {state?.error && !state.field && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{state.error}</p>}
       <div className="mt-[3.5dvh]">
         <Btn type="submit" disabled={pending || logoBusy}>
           {pending ? t.checking : logoBusy ? t.logoWait : t.next}

@@ -51,7 +51,7 @@ export function NewsCard({
       )}
       <div className={pic ? "px-5 pb-5" : ""}>
         <div key={step?.index ?? 0} className="animate-rise">
-          <h2 className={`${pic ? "mt-[1.8dvh]" : "mt-2.5"} text-balance text-[1.3125rem] font-bold leading-snug`}>{news.title || "…"}</h2>
+          <h2 className={`${pic ? "mt-[1.8dvh]" : "mt-2.5"} text-balance text-[1.25rem] font-bold leading-snug`}>{news.title || "…"}</h2>
           {news.body && <p className="mt-1.5 whitespace-pre-line text-balance text-[0.9375rem] leading-relaxed text-body">{news.body}</p>}
         </div>
         {step && step.total > 1 && (
@@ -64,21 +64,21 @@ export function NewsCard({
         <div className="mt-[1.125rem] space-y-2">
           {more ? (
             <>
-              <button type="button" onClick={onNext} className="press h-[3.25rem] w-full rounded-[1.125rem] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-[1rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]">
+              <button type="button" onClick={onNext} className="press h-[3.25rem] w-full rounded-[1.125rem] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-[0.9375rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]">
                 {t.tourNext}
               </button>
-              <button type="button" onClick={onClose} className="press h-10 w-full rounded-[1.125rem] text-[0.875rem] font-semibold text-muted">
+              <button type="button" onClick={onClose} className="press h-10 w-full rounded-[1.125rem] text-[0.8125rem] font-semibold text-muted">
                 {t.newsOk}
               </button>
             </>
           ) : (
             <>
               {lead && (
-                <button type="button" onClick={onAction} className="press h-[3.25rem] w-full rounded-[1.125rem] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-[1rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]">
+                <button type="button" onClick={onAction} className="press h-[3.25rem] w-full rounded-[1.125rem] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-[0.9375rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]">
                   {news.cta_label}
                 </button>
               )}
-              <button type="button" onClick={onClose} className={`press w-full rounded-[1.125rem] font-bold ${lead ? "h-11 text-[0.9375rem] text-muted" : "h-[3.25rem] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-[1rem] text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]"}`}>
+              <button type="button" onClick={onClose} className={`press w-full rounded-[1.125rem] font-bold ${lead ? "h-11 text-[0.9375rem] text-muted" : "h-[3.25rem] bg-[linear-gradient(150deg,#9b7bff_-30%,#6c47ff_50%,#4a2ad6_130%)] text-[0.9375rem] text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]"}`}>
                 {t.newsOk}
               </button>
             </>

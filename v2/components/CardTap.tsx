@@ -48,10 +48,10 @@ export function CardTap({ shop, gift, stamps, goal, ready, children }: { shop: s
               </button>
             </div>
             <Icon3D name="gift" size={56} className="mx-auto animate-float" />
-            <p className="mt-2 text-balance text-[1.375rem] font-bold">{ready ? fill(say.ready, { gift }) : fill(say.left, { n: stampsN(Math.max(goal - stamps, 0)), gift })}</p>
-            <p className="mx-auto mt-2 max-w-xs text-balance text-[0.9688rem] text-muted">{ready ? say.readyHow : fill(say.how, { shop })}</p>
+            <p className="mt-2 text-balance text-[1.25rem] font-bold">{ready ? fill(say.ready, { gift }) : fill(say.left, { n: stampsN(Math.max(goal - stamps, 0)), gift })}</p>
+            <p className="mx-auto mt-2 max-w-xs text-balance text-[0.9375rem] text-muted">{ready ? say.readyHow : fill(say.how, { shop })}</p>
             {!ready && (
-              <Link href="/scan" className="press mt-5 flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-brand text-[1rem] font-bold text-white shadow-[0_12px_26px_-12px_rgb(108_71_255/0.8)]">
+              <Link href="/scan" className="press mt-5 flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-brand text-[0.9375rem] font-bold text-white shadow-[0_12px_26px_-12px_rgb(108_71_255/0.8)]">
                 <ScanLine className="size-5" /> {say.scan}
               </Link>
             )}

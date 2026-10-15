@@ -40,7 +40,7 @@ export function PlanOn({ grant }: { grant: Grant }) {
           <style>{`@keyframes plan-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }`}</style>
           <Icon3D name="hourglass" size={48} className="mx-auto" />
           <h2 className="mt-2 text-[1.25rem] font-bold">{t.trialMoreTitle}</h2>
-          <p className="mt-1.5 text-[0.9688rem] text-body">{fill(t.trialMoreUntil, { date: until })}</p>
+          <p className="mt-1.5 text-[0.9375rem] text-body">{fill(t.trialMoreUntil, { date: until })}</p>
           <Btn type="button" kind="soft" className="mt-4 h-12" onClick={() => setOpen(false)}>
             {t.trialMoreOk}
           </Btn>
@@ -54,11 +54,11 @@ export function PlanOn({ grant }: { grant: Grant }) {
       <div className="w-full max-w-sm rounded-[1.75rem] bg-surface px-6 pb-5 pt-[clamp(1.25rem,4dvh,1.75rem)] text-center text-ink" style={{ animation: "plan-in 420ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
         <Icon3D name="crown" size={72} className="mx-auto" />
         <h2 className="mt-2 text-balance text-[1.5rem] font-bold leading-tight">{t.grantTitle}</h2>
-        <p className="mt-3 rounded-[1rem] bg-mint-soft px-3 py-2.5 text-[1rem] font-bold text-mint">
+        <p className="mt-3 rounded-[1rem] bg-mint-soft px-3 py-2.5 text-[0.9375rem] font-bold text-mint">
           {grant.months ? fill(t.grantPaidFor, { d: monthsSaid(grant.months), date: until }) : fill(t.grantUntil, { date: until })}
         </p>
-        {grant.note && <p className="mt-3 text-balance text-[1rem] leading-relaxed text-body">«{grant.note}»</p>}
-        <p dir="ltr" lang="fr" className="mt-3 text-[1rem] font-semibold text-body">
+        {grant.note && <p className="mt-3 text-balance text-[0.9375rem] leading-relaxed text-body">«{grant.note}»</p>}
+        <p dir="ltr" lang="fr" className="mt-3 text-[0.9375rem] font-semibold text-body">
           {t.grantThanks}
         </p>
         <Btn type="button" className="mt-4" onClick={() => setOpen(false)}>

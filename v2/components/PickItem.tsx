@@ -24,7 +24,7 @@ export function PickItem({ items, onPick }: { items: Item[]; onPick: (item: Item
   return (
     <div className="flex min-h-0 flex-1 flex-col justify-center px-4 py-4">
       <p className="text-center text-[1.25rem] font-bold leading-tight">{t.pickAsk}</p>
-      <p className="mt-1 text-center text-[0.875rem] text-white/70">{t.pickHint}</p>
+      <p className="mt-1 text-center text-[0.8125rem] text-white/70">{t.pickHint}</p>
 
       <div className="mx-auto mt-4 grid w-full max-w-sm gap-1.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {items.map((it) => (

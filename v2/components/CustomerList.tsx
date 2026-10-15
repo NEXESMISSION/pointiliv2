@@ -46,7 +46,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.customersSearch} aria-label={t.customersSearch} className="h-11 w-full rounded-full bg-surface pe-4 ps-10 text-[16px] shadow-card outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]" />
           </label>
           {!shop.store && (
-            <button type="button" onClick={() => setNear(!near)} aria-pressed={near} className={`press flex h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.875rem] font-bold shadow-card ${near ? "bg-brand text-white" : "bg-surface text-body"}`}>
+            <button type="button" onClick={() => setNear(!near)} aria-pressed={near} className={`press flex h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.8125rem] font-bold shadow-card ${near ? "bg-brand text-white" : "bg-surface text-body"}`}>
               <Gift className="size-4" /> {t.customersNear}
             </button>
           )}
@@ -61,10 +61,10 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
           return (
             <li key={c.id}>
               <button type="button" onClick={() => setOpen(c)} className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors active:bg-canvas">
-                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1rem] font-bold text-white">{(c.name?.[0] ?? "؟").toUpperCase()}</span>
+                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[0.9375rem] font-bold text-white">{(c.name?.[0] ?? "؟").toUpperCase()}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[0.9688rem] font-semibold">{c.name ?? t.someone}</span>
-                  <span className="block truncate text-[0.7812rem] text-muted">
+                  <span className="block truncate text-[0.9375rem] font-semibold">{c.name ?? t.someone}</span>
+                  <span className="block truncate text-[0.8125rem] text-muted">
                     {when(c.last_at)}
                     {c.last_item && (
                       <>
@@ -89,13 +89,13 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                   )}
                 </span>
                 {shop.store ? (
-                  <span className="num shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[0.875rem] font-bold text-brand">{c.stamps}</span>
+                  <span className="num shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[0.8125rem] font-bold text-brand">{c.stamps}</span>
                 ) : c.ready ? (
-                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2.5 py-1 text-[0.7812rem] font-bold text-coral">
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-coral-soft px-2.5 py-1 text-[0.8125rem] font-bold text-coral">
                     <Gift className="size-3.5" /> {t.ready.replace("!", "")}
                   </span>
                 ) : (
-                  <span className="num shrink-0 text-[0.875rem] font-bold text-body">
+                  <span className="num shrink-0 text-[0.8125rem] font-bold text-body">
                     {Math.min(c.stamps, of)}/{of}
                   </span>
                 )}
@@ -117,10 +117,10 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
               </button>
             </div>
             <div className="mt-1 flex items-center gap-3">
-              <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.125rem] font-bold text-white">{(open.name?.[0] ?? "؟").toUpperCase()}</span>
+              <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.0625rem] font-bold text-white">{(open.name?.[0] ?? "؟").toUpperCase()}</span>
               <span className="min-w-0">
                 <span className="block truncate text-[1.25rem] font-bold">{open.name ?? t.someone}</span>
-                <span className="block text-[0.8438rem] text-muted">
+                <span className="block text-[0.8125rem] text-muted">
                   {fill(t.customerLast, { when: when(open.last_at) })}
                   {open.gifts > 0 ? ` · ${fill(t.customerGifts, { gifts: giftsN(open.gifts) })}` : ""}
                 </span>
@@ -130,7 +130,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
             {!!open.items?.length && (
               <div className="-mx-[clamp(1rem,5vw,1.5rem)] mt-2.5 flex gap-1.5 overflow-x-auto px-[clamp(1rem,5vw,1.5rem)] [scrollbar-width:none]">
                 {open.items.map((x) => (
-                  <span key={x.name} className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[0.875rem] font-bold text-brand">
+                  <span key={x.name} className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[0.8125rem] font-bold text-brand">
                     <bdi>{x.name}</bdi>
                     <span className="num text-[0.8125rem] text-brand/75">×{x.n}</span>
                   </span>
@@ -141,17 +141,17 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
               <Pass shop={{ ...shop, goal: open.goal ?? shop.goal, gift: open.gift ?? shop.gift }} stamps={open.stamps} />
             </div>
             {shop.store ? (
-              <p className="mt-3 text-center text-[0.9062rem] font-semibold text-body">{fill(t.storeHolds, { n: open.stamps })}</p>
+              <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">{fill(t.storeHolds, { n: open.stamps })}</p>
             ) : open.ready ? (
               <div className="mt-3 flex items-center gap-3 rounded-[1.25rem] bg-coral-soft p-3.5">
                 <Gift className="size-6 shrink-0 text-coral" />
-                <span className="min-w-0 flex-1 text-[0.9062rem] font-semibold text-coral">{t.customerGiftWaits}</span>
-                <Link href="/shop/collect?by=scan" className="press flex h-10 shrink-0 items-center gap-1.5 rounded-[0.875rem] bg-coral px-3.5 text-[0.9062rem] font-bold text-white">
+                <span className="min-w-0 flex-1 text-[0.9375rem] font-semibold text-coral">{t.customerGiftWaits}</span>
+                <Link href="/shop/collect?by=scan" className="press flex h-10 shrink-0 items-center gap-1.5 rounded-[0.875rem] bg-coral px-3.5 text-[0.9375rem] font-bold text-white">
                   <ScanLine className="size-4" /> {t.collectScanShort}
                 </Link>
               </div>
             ) : (
-              <p className="mt-3 text-center text-[0.9062rem] text-muted">{fill(t.customerLeft, { n: stampsN(Math.max((open.goal ?? goal) - open.stamps, 0)), gift: open.gift ?? shop.gift ?? "" })}</p>
+              <p className="mt-3 text-center text-[0.9375rem] text-muted">{fill(t.customerLeft, { n: stampsN(Math.max((open.goal ?? goal) - open.stamps, 0)), gift: open.gift ?? shop.gift ?? "" })}</p>
             )}
             {/* every tampon on the card, and what each one was for (the things' totals are above) */}
             <CardMoments card={open.id} color={shop.color} tally={!(open.items && open.items.length)} />

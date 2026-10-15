@@ -37,7 +37,7 @@ export function FirstGift({ shopId, name, gift }: { shopId: string; name: string
     <div className="fixed inset-0 z-50 grid animate-fade items-end justify-items-center bg-ink/45 p-4 backdrop-blur-[2px] sm:items-center" role="dialog" aria-modal="true" aria-label={t.firstGiftTitle} onClick={() => setOpen(false)}>
       <div className="w-full max-w-sm animate-rise rounded-[1.75rem] bg-surface p-5 text-center shadow-lift" onClick={(e) => e.stopPropagation()}>
         <Icon3D name="gift" size={60} className="mx-auto animate-float" />
-        <h2 className="mt-2 text-balance text-[1.375rem] font-bold leading-tight">{fill(t.firstGiftWon, { name: name ?? t.someone, gift })}</h2>
+        <h2 className="mt-2 text-balance text-[1.25rem] font-bold leading-tight">{fill(t.firstGiftWon, { name: name ?? t.someone, gift })}</h2>
         <p className="mt-1 text-[0.9375rem] font-semibold text-muted">{t.firstGiftTitle}</p>
         <ol className="mx-auto mt-3 max-w-[17rem] space-y-1.5 text-start">
           {t.firstGiftSteps.map((s, i) => (

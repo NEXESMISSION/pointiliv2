@@ -59,13 +59,13 @@ export function PushAsk({ shop, title, body, compact, fallback = null }: { shop:
         <BellRing className={compact ? "size-4" : "size-5"} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className={`block font-bold leading-snug ${compact ? "text-[0.875rem]" : "text-[0.9688rem]"}`}>{title ?? t.pushAskTitle}</span>
+        <span className={`block font-bold leading-snug ${compact ? "text-[0.8125rem]" : "text-[0.9375rem]"}`}>{title ?? t.pushAskTitle}</span>
         <span className={`mt-0.5 block leading-snug text-muted ${compact ? "text-[0.75rem]" : "text-[0.8125rem]"}`}>{body ?? fill(t.pushAskBody, { shop })}</span>
         <span className="mt-2 flex gap-1.5">
-          <button type="button" disabled={state === "busy"} onClick={() => void yes()} className={`press rounded-full bg-brand font-bold text-white disabled:opacity-60 ${compact ? "h-8 px-3 text-[0.8125rem]" : "h-9 px-4 text-[0.875rem]"}`}>
+          <button type="button" disabled={state === "busy"} onClick={() => void yes()} className={`press rounded-full bg-brand font-bold text-white disabled:opacity-60 ${compact ? "h-8 px-3 text-[0.8125rem]" : "h-9 px-4 text-[0.8125rem]"}`}>
             {state === "busy" ? t.checking : t.pushAskYes}
           </button>
-          <button type="button" disabled={state === "busy"} onClick={() => done("later")} className={`press rounded-full font-semibold text-muted ${compact ? "h-8 px-2.5 text-[0.8125rem]" : "h-9 px-3 text-[0.875rem]"}`}>
+          <button type="button" disabled={state === "busy"} onClick={() => done("later")} className={`press rounded-full font-semibold text-muted ${compact ? "h-8 px-2.5 text-[0.8125rem]" : "h-9 px-3 text-[0.8125rem]"}`}>
             {t.pushAskNo}
           </button>
         </span>

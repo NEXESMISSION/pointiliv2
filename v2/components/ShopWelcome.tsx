@@ -56,8 +56,8 @@ export function ShopWelcome({ name, shopId, show }: { name: string; shopId: stri
     <div className="fixed inset-0 z-50 grid items-end justify-items-center bg-ink/45 p-4 backdrop-blur-[2px] sm:items-center" role="dialog" aria-modal="true" aria-label={t.coachReady}>
       <div className="w-full max-w-sm animate-rise rounded-[1.75rem] bg-surface p-5 text-center shadow-lift">
         <Icon3D name="party" size={64} className="mx-auto animate-float" />
-        <h2 className="mt-2 text-[1.375rem] font-bold leading-tight">{name ? fill(t.coachBravo, { name }) : t.coachBravoAnon}</h2>
-        <p className="mt-1 text-[1rem] font-semibold text-body">{t.coachReady}</p>
+        <h2 className="mt-2 text-[1.25rem] font-bold leading-tight">{name ? fill(t.coachBravo, { name }) : t.coachBravoAnon}</h2>
+        <p className="mt-1 text-[0.9375rem] font-semibold text-body">{t.coachReady}</p>
         <p className="mx-auto mt-2 max-w-[17rem] text-[0.9375rem] leading-relaxed text-muted">{t.coachHomeTap}</p>
         <button type="button" onClick={go} className="press mt-4 flex h-[3.25rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.65)]">
           <QrCode className="size-5" /> {t.showCode}

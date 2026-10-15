@@ -217,7 +217,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
             ))}
           </span>
         ) : (
-          <span className="text-[0.875rem] font-semibold text-muted">{editing ? t.wizEdit : ""}</span>
+          <span className="text-[0.8125rem] font-semibold text-muted">{editing ? t.wizEdit : ""}</span>
         )}
         <span className="flex justify-end">{help ? <HelpButton help={help} compact /> : <span className="size-11" />}</span>
       </header>
@@ -238,7 +238,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
       {/* the question slides in from the side: clipped sideways only, at the screen's edge, so the page never widens */}
       <div className="-mx-[clamp(1rem,5vw,1.5rem)] mt-[3dvh] overflow-x-clip px-[clamp(1rem,5vw,1.5rem)]">
       <section key={step} style={{ animation: `${back ? "wz-in-back" : "wz-in-next"} 380ms cubic-bezier(0.2,0.8,0.2,1) both` }}>
-        <h1 className="text-[1.55rem] font-bold leading-snug">{question}</h1>
+        <h1 className="text-[1.5rem] font-bold leading-snug">{question}</h1>
         {/* the gift's example names the first two gifts already on the buttons under it: on a short screen, where those buttons may take two rows, it gives them its room */}
         {example && <p className={`mt-1.5 text-[0.9375rem] text-muted ${step === GIFT ? "[@media(max-height:700px)]:hidden" : ""}`}>{example}</p>}
 
@@ -254,14 +254,14 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
                     setOther("");
                   }}
                   aria-pressed={goal === g}
-                  className={`press num h-[3.6rem] rounded-[1.125rem] text-[1.3125rem] font-bold ${goal === g ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
+                  className={`press num h-[3.6rem] rounded-[1.125rem] text-[1.25rem] font-bold ${goal === g ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
                 >
                   {g}
                 </button>
               ))}
             </div>
             <label className="mt-[1.6dvh] flex items-center justify-center gap-2.5">
-              <span className="text-[0.9062rem] font-semibold text-muted">{t.wizGoalOther}</span>
+              <span className="text-[0.9375rem] font-semibold text-muted">{t.wizGoalOther}</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -293,7 +293,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
           <div className="mt-[2dvh]">
             <div className="flex flex-wrap gap-1.5">
               {ideas.map((idea) => (
-                <button key={idea} type="button" onClick={() => setGift(idea)} aria-pressed={gift === idea} className={`press rounded-full px-3.5 py-2 text-[0.875rem] font-semibold ${gift === idea ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}>
+                <button key={idea} type="button" onClick={() => setGift(idea)} aria-pressed={gift === idea} className={`press rounded-full px-3.5 py-2 text-[0.8125rem] font-semibold ${gift === idea ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}>
                   {idea}
                 </button>
               ))}
@@ -327,14 +327,14 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
                     setHours("");
                   }}
                   aria-pressed={gap === w && !hours}
-                  className={`press min-h-[3.6rem] rounded-[1.125rem] px-1.5 py-2 text-[0.9688rem] font-bold leading-tight ${gap === w && !hours ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
+                  className={`press min-h-[3.6rem] rounded-[1.125rem] px-1.5 py-2 text-[0.9375rem] font-bold leading-tight ${gap === w && !hours ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
                 >
                   {w === 60 ? t.waitHour : w === 1440 ? t.waitDay : t.waitNone}
                 </button>
               ))}
             </div>
             <label className="mt-[1.6dvh] flex items-center justify-center gap-2.5">
-              <span className="text-[0.9062rem] font-semibold text-muted">{t.wizWaitOther}</span>
+              <span className="text-[0.9375rem] font-semibold text-muted">{t.wizWaitOther}</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -376,7 +376,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
         {/* the card made: what each stamp looks like — the tick, or the shop's logo (the card above shows it at once) */}
         {step === READY && (
           <div className="mt-[2dvh]">
-            <p className="text-[0.875rem] font-semibold text-muted">{t.stampLook}</p>
+            <p className="text-[0.8125rem] font-semibold text-muted">{t.stampLook}</p>
             <div className="mt-1.5 grid grid-cols-2 gap-2">
               {[false, true].map((on) => {
                 const off = on && !shop.logo;
@@ -390,7 +390,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
                       setStampErr(false);
                     }}
                     aria-pressed={stampLogo === on}
-                    className={`press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] px-2 text-[0.9688rem] font-bold disabled:opacity-45 ${stampLogo === on ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
+                    className={`press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] px-2 text-[0.9375rem] font-bold disabled:opacity-45 ${stampLogo === on ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
                   >
                     {on ? (
                       shop.logo ? (
@@ -412,11 +412,11 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
                 {t.stampNoLogo} ←
               </Link>
             )}
-            {stampErr && <p className="mt-1.5 text-[0.8438rem] font-semibold text-coral">{t.errNetwork}</p>}
+            {stampErr && <p className="mt-1.5 text-[0.8125rem] font-semibold text-coral">{t.errNetwork}</p>}
           </div>
         )}
 
-        {state?.error && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
+        {state?.error && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{state.error}</p>}
       </section>
       </div>
 
@@ -428,7 +428,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
           </Btn>
         ) : lost ? (
           <>
-            <p className="mb-2 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{t.cardLost}</p>
+            <p className="mb-2 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{t.cardLost}</p>
             <Btn key="again" type="button" onClick={() => window.location.reload()}>
               {t.cardLostAgain}
             </Btn>

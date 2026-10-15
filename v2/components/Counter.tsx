@@ -377,7 +377,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-white/15 hover:bg-white/25" aria-label={t.back}>
           <ChevronRight className="size-5" />
         </Link>
-        <p className="min-w-0 flex-1 truncate text-center text-[1.1875rem] font-bold">{shop.name}</p>
+        <p className="min-w-0 flex-1 truncate text-center text-[1.25rem] font-bold">{shop.name}</p>
         <Link href="/me" aria-label={t.account} className="press grid size-11 shrink-0 place-items-center overflow-hidden rounded-full bg-white/20">
           <ShopMark shop={shop} size={28} />
         </Link>
@@ -387,13 +387,13 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         {coach === "tip" ? (
           // the note takes the title's place: above the code, never on it
           <div className="w-full rounded-[1.375rem] bg-surface p-4 text-ink shadow-[0_14px_40px_-12px_rgb(0_0_0/0.45)]" style={{ animation: "ct-in 420ms cubic-bezier(0.2,0.8,0.2,1) both" }} role="dialog" aria-label={t.coachTipTitle}>
-            <p className="flex items-center gap-2 text-[1.0312rem] font-bold leading-snug">
+            <p className="flex items-center gap-2 text-[1.0625rem] font-bold leading-snug">
               <span className="grid size-7 shrink-0 animate-bounce place-items-center rounded-full bg-brand-soft text-brand">
                 <ArrowDown className="size-4" strokeWidth={2.8} />
               </span>
               {t.coachTipTitle}
             </p>
-            <p className="mt-1.5 flex items-center gap-2 text-[0.875rem] leading-relaxed text-body">
+            <p className="mt-1.5 flex items-center gap-2 text-[0.8125rem] leading-relaxed text-body">
               <Icon3D name="phone" size={28} className="shrink-0" />
               {t.coachTip}
             </p>
@@ -441,7 +441,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
                 </div>
               ) : paused ? (
                 <div className="grid size-full place-items-center p-6 text-center">
-                  <p className="text-[1.1875rem] font-bold text-ink">{t.pausedBanner}</p>
+                  <p className="text-[1.25rem] font-bold text-ink">{t.pausedBanner}</p>
                 </div>
               ) : code ? (
                 <div key={code.id} className={`size-full animate-fade [&>svg]:size-full ${offline ? "opacity-25" : ""}`} dangerouslySetInnerHTML={{ __html: code.svg }} role="img" aria-label={t.counterTitle} data-qr="1" />
@@ -480,18 +480,18 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           </p>
         )}
         {item && !paused && (
-          <Link href="/shop/tampons" className="shrink-0 text-[0.8438rem] font-semibold text-white/80 underline underline-offset-4">
+          <Link href="/shop/tampons" className="shrink-0 text-[0.8125rem] font-semibold text-white/80 underline underline-offset-4">
             غلطت في تامبون؟ بدّل الحاجة متاعو
           </Link>
         )}
 
         <div className="flex h-12 shrink-0 items-center">
           {latest?.held ? (
-            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-[#fff4e0] px-5 py-2.5 text-[1rem] font-bold text-[#b45309]" style={{ animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
+            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-[#fff4e0] px-5 py-2.5 text-[0.9375rem] font-bold text-[#b45309]" style={{ animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
               <Hourglass className="size-5 shrink-0" strokeWidth={2.6} /> {t.counterHeld}
             </p>
           ) : latest ? (
-            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.125rem] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
+            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.0625rem] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
               <Check className="size-5" strokeWidth={3} /> <span className="num">+1</span> {latest.name ?? t.someone}
             </p>
           ) : lastScan ? (
@@ -505,7 +505,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         {/* alone with one phone, the owner cannot scan their own screen: the customer's side, replayed here */}
         {/* only until the first customer: after that, the code alone */}
         {firstWaits && !gift && !paused && shop.goal && (
-          <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift ?? "" }} className="press flex h-10 shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 text-[0.875rem] font-bold text-white">
+          <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift ?? "" }} className="press flex h-10 shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 text-[0.8125rem] font-bold text-white">
             <Eye className="size-4" /> {t.trySee}
           </TryItButton>
         )}
@@ -520,7 +520,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
               <span className="min-w-0 flex-1">
                 <bdi className="block truncate text-[1.25rem] font-bold leading-tight">{who.name ?? t.someone}</bdi>
                 {who.phone && (
-                  <span dir="ltr" className="num block text-end text-[0.875rem] text-muted">
+                  <span dir="ltr" className="num block text-end text-[0.8125rem] text-muted">
                     {pretty(who.phone)}
                   </span>
                 )}
@@ -559,7 +559,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
             </p>
             <p className="mt-0.5 text-[0.9375rem] text-muted">{t.giveNow}</p>
             {/* handed over by the customer's code, never by a tap alone */}
-            <Link href="/shop/collect?by=scan" className="press mt-3 flex h-[3.4rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[1.1875rem] font-bold text-white">
+            <Link href="/shop/collect?by=scan" className="press mt-3 flex h-[3.4rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[1.25rem] font-bold text-white">
               <ScanLine className="size-6" /> {t.collectScanShort}
             </Link>
             {gifts.length > 1 && <p className="num mt-1.5 text-[0.8125rem] text-muted">+{gifts.length - 1}</p>}
@@ -590,16 +590,16 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           <h1 className="mt-[2dvh] animate-rise text-[2.1rem] font-bold" style={{ animationDelay: "150ms" }}>
             {name ? fill(t.coachBravo, { name }) : t.coachBravoAnon}
           </h1>
-          <p className="mt-1 animate-rise text-[1.125rem] font-semibold text-body" style={{ animationDelay: "400ms" }}>
+          <p className="mt-1 animate-rise text-[1.0625rem] font-semibold text-body" style={{ animationDelay: "400ms" }}>
             {t.coachReady}
           </p>
-          <p className="mt-[2.5dvh] max-w-[17rem] animate-rise text-[1rem] leading-relaxed text-muted" style={{ animationDelay: "800ms" }}>
+          <p className="mt-[2.5dvh] max-w-[17rem] animate-rise text-[0.9375rem] leading-relaxed text-muted" style={{ animationDelay: "800ms" }}>
             {t.coachShow}
           </p>
           <div className="mt-[4dvh] h-1 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
             <span className="block h-full origin-right rounded-full bg-brand" style={{ animation: `ct-bar ${BRAVO_MS}ms linear both` }} />
           </div>
-          <button type="button" onClick={showCode} className="press mt-4 px-6 py-2 text-[1rem] font-bold text-brand">
+          <button type="button" onClick={showCode} className="press mt-4 px-6 py-2 text-[0.9375rem] font-bold text-brand">
             {t.coachShowCta}
           </button>
         </div>

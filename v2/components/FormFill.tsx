@@ -22,7 +22,7 @@ const shape = (raw: string) => {
 const isName = (f: FormField) => f.kind === "text" && /اسم|إسم|nom|name/i.test(f.label);
 
 const box =
-  "h-[3.25rem] w-full rounded-[1rem] bg-surface px-4 text-[1rem] font-semibold shadow-[var(--shadow-card),inset_0_0_0_1px_var(--color-line)] outline-none focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]";
+  "h-[3.25rem] w-full rounded-[1rem] bg-surface px-4 text-[0.9375rem] font-semibold shadow-[var(--shadow-card),inset_0_0_0_1px_var(--color-line)] outline-none focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]";
 
 /**
  * A form of identification, filled by the customer: the founder's fields,
@@ -74,8 +74,8 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
         <span className="grid size-20 animate-pop place-items-center rounded-full bg-mint text-white shadow-[0_16px_34px_-14px_rgb(18_183_106/0.8)]">
           <BadgeCheck className="size-11" strokeWidth={2.4} />
         </span>
-        <h1 className="mt-4 text-[1.625rem] font-bold">تسجّلت!</h1>
-        <p className="mt-1.5 max-w-xs text-balance text-[1rem] leading-relaxed text-body">
+        <h1 className="mt-4 text-[1.5rem] font-bold">تسجّلت!</h1>
+        <p className="mt-1.5 max-w-xs text-balance text-[0.9375rem] leading-relaxed text-body">
           كي تجي لـ<bdi className="font-bold">{shop}</bdi>، سكاني الكود اللي في الكاسة وخوذ التامبون متاعك.
         </p>
         <Link href="/wallet" className="press mt-6 flex h-[3.5rem] w-full items-center justify-center gap-1 rounded-[1.25rem] bg-surface text-[1.0625rem] font-bold text-brand shadow-card">
@@ -99,7 +99,7 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
           const Wrap = f.kind === "choice" ? "div" : "label";
           return (
             <Wrap key={f.key} className="block" {...(f.kind === "choice" ? { role: "radiogroup", "aria-label": f.label } : {})}>
-              <span className="mb-1.5 block px-1 text-[0.9062rem] font-semibold text-body">
+              <span className="mb-1.5 block px-1 text-[0.9375rem] font-semibold text-body">
                 {f.label}
                 {f.required && <span className="text-coral"> *</span>}
               </span>
@@ -140,10 +140,10 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
         })}
         {join && (
           <div className="space-y-3 border-t border-line pt-3">
-            <p className="px-1 text-[0.9062rem] font-bold text-ink">الكونت متاعك</p>
+            <p className="px-1 text-[0.9375rem] font-bold text-ink">الكونت متاعك</p>
             {!nameField && (
               <label className="block">
-                <span className="mb-1.5 block px-1 text-[0.9062rem] font-semibold text-body">اسمك</span>
+                <span className="mb-1.5 block px-1 text-[0.9375rem] font-semibold text-body">اسمك</span>
                 <input
                   value={acc.name}
                   onChange={(e) => {
@@ -157,7 +157,7 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
               </label>
             )}
             <label className="block">
-              <span className="mb-1.5 block px-1 text-[0.9062rem] font-semibold text-body">نومرو التليفون</span>
+              <span className="mb-1.5 block px-1 text-[0.9375rem] font-semibold text-body">نومرو التليفون</span>
               <span dir="ltr" className={`flex items-center ${box} px-0 ${error?.field === "acc_phone" ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-coral)]" : ""}`}>
                 <span className="num ps-4 pe-3 text-muted">+216</span>
                 <input
@@ -175,7 +175,7 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
               </span>
             </label>
             <label className="block">
-              <span className="mb-1.5 block px-1 text-[0.9062rem] font-semibold text-body">كلمة السر</span>
+              <span className="mb-1.5 block px-1 text-[0.9375rem] font-semibold text-body">كلمة السر</span>
               <input
                 value={acc.password}
                 onChange={(e) => {
@@ -189,7 +189,7 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
               />
             </label>
             {next && (
-              <Link href={`/login?next=${encodeURIComponent(next)}`} className="block px-1 text-[0.9062rem] font-semibold text-brand">
+              <Link href={`/login?next=${encodeURIComponent(next)}`} className="block px-1 text-[0.9375rem] font-semibold text-brand">
                 عندك كونت؟ ادخل
               </Link>
             )}
@@ -197,7 +197,7 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
         )}
       </div>
       <div className="shrink-0 pb-3 pt-3">
-        {error && <p className="mb-2 text-center text-[0.9062rem] font-semibold text-coral">{error.text}</p>}
+        {error && <p className="mb-2 text-center text-[0.9375rem] font-semibold text-coral">{error.text}</p>}
         <Btn type="submit" disabled={pending}>
           {pending ? "…" : mine ? "بدّل" : "سجّل"}
         </Btn>

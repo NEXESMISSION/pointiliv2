@@ -43,12 +43,12 @@ export function FirstLook({ shop, night }: { shop: DemoShop; night: boolean }) {
     <main className="safe-t safe-b fixed inset-0 z-50 flex animate-fade flex-col items-center justify-center bg-ink/95 px-5 text-center text-white">
       <Bars />
       <Icon3D name="bell" size={72} className="animate-float" />
-      <h1 className="mt-3 text-balance text-[1.625rem] font-bold leading-tight">{t.nightTitle}</h1>
-      <p className="mt-2 max-w-[20rem] text-balance text-[1rem] leading-relaxed text-white/80">{t.nightBody}</p>
+      <h1 className="mt-3 text-balance text-[1.5rem] font-bold leading-tight">{t.nightTitle}</h1>
+      <p className="mt-2 max-w-[20rem] text-balance text-[0.9375rem] leading-relaxed text-white/80">{t.nightBody}</p>
       <div className="mt-4 w-full max-w-[20rem] text-ink">
         <PushAsk shop={shop.name} title={t.pushOwnerAskTitle} body={fill(t.pushOwnerAskBody, { shop: shop.name })} compact />
       </div>
-      <Link href="/shop" className="press mt-5 flex h-12 w-full max-w-[19rem] items-center justify-center rounded-full bg-white text-[1rem] font-bold text-ink">
+      <Link href="/shop" className="press mt-5 flex h-12 w-full max-w-[19rem] items-center justify-center rounded-full bg-white text-[0.9375rem] font-bold text-ink">
         {t.nightOk}
       </Link>
       <Link href="/shop/qr?tip=1" className="press mt-1 flex h-11 items-center px-4 text-[0.9375rem] font-semibold text-white/75">

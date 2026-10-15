@@ -31,7 +31,7 @@ export default async function FormPage({ params }: { params: Promise<{ token: st
         </span>
         <span className="min-w-0">
           <bdi className="block truncate text-[0.9375rem] font-semibold text-muted">{form.shop.name}</bdi>
-          <bdi className="block truncate text-[1.375rem] font-bold leading-tight">{form.name}</bdi>
+          <bdi className="block truncate text-[1.25rem] font-bold leading-tight">{form.name}</bdi>
         </span>
       </header>
       {me ? (

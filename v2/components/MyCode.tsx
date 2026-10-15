@@ -62,11 +62,11 @@ export function MyCode({ code, svg, gift, startOpen = false, className, children
               </button>
             </div>
             {gift ? (
-              <h2 className="mt-1 flex items-center justify-center gap-2 text-balance text-[1.375rem] font-bold leading-tight">
+              <h2 className="mt-1 flex items-center justify-center gap-2 text-balance text-[1.25rem] font-bold leading-tight">
                 <Icon3D name="gift" size={34} className="shrink-0" /> {fill(t.giftCodeTitle, { gift })}
               </h2>
             ) : (
-              <h2 className="mt-1 text-[1.375rem] font-bold">{t.myCodeTitle}</h2>
+              <h2 className="mt-1 text-[1.25rem] font-bold">{t.myCodeTitle}</h2>
             )}
             {/* the person's own code and its QR: never in a visit's video */}
             <div

@@ -31,7 +31,7 @@ export default async function ShopPay() {
   return (
     <Screen>
       <Top back="/shop" />
-      <h1 className="mt-[1.6dvh] shrink-0 text-[1.75rem] font-bold leading-tight">{t.payTitle}</h1>
+      <h1 className="mt-[1.6dvh] shrink-0 text-[1.5rem] font-bold leading-tight">{t.payTitle}</h1>
 
       {/* the plan and the ways, centred in the room left: one screen, nothing scrolls (on a screen too short, it starts under the title) */}
       <div className="flex min-h-0 flex-1 flex-col pb-[3dvh]">
@@ -41,7 +41,7 @@ export default async function ShopPay() {
             <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_0%_0%,rgb(255_255_255/0.25),transparent_60%)]" aria-hidden />
             <div className="relative flex items-start justify-between gap-3">
               <span>
-                <span className="block text-[0.875rem] font-semibold text-white/80">{t.payPlan}</span>
+                <span className="block text-[0.8125rem] font-semibold text-white/80">{t.payPlan}</span>
                 <span className="mt-1 flex items-end gap-1.5">
                   <span className="num text-[2.75rem] font-bold leading-none">{t.payPrice}</span>
                   <span className="pb-1 text-[0.9375rem] font-bold">
@@ -54,7 +54,7 @@ export default async function ShopPay() {
             {offer && pay && (
               <div className="relative mt-3 flex items-center gap-2 rounded-[1rem] bg-white/15 px-3 py-2 backdrop-blur">
                 <Sparkles className="size-4 shrink-0" />
-                <span className="min-w-0 flex-1 text-[0.875rem] font-bold">
+                <span className="min-w-0 flex-1 text-[0.8125rem] font-bold">
                   <bdi className="num">+3</bdi> {t.payOfferPlus.replace("+3 ", "")}
                 </span>
                 <span className="flex shrink-0 items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[0.8125rem] font-bold text-brand">
@@ -66,7 +66,7 @@ export default async function ShopPay() {
                 screen: the perks step aside under 760px — the owner has used them for days already */}
             <ul className="relative mt-3 space-y-1.5 [@media(max-height:760px)]:hidden">
               {t.payPerks.map((p) => (
-                <li key={p} className="flex items-start gap-2 text-[0.875rem] text-white/95">
+                <li key={p} className="flex items-start gap-2 text-[0.8125rem] text-white/95">
                   <Check className="mt-0.5 size-4 shrink-0" strokeWidth={3} /> {p}
                 </li>
               ))}
@@ -74,7 +74,7 @@ export default async function ShopPay() {
           </section>
 
           {paid && pay?.paid_until ? (
-            <p className="mt-4 flex items-center justify-center gap-2 rounded-[1.25rem] bg-mint-soft px-4 py-3.5 text-[1rem] font-bold text-mint">
+            <p className="mt-4 flex items-center justify-center gap-2 rounded-[1.25rem] bg-mint-soft px-4 py-3.5 text-[0.9375rem] font-bold text-mint">
               <Check className="size-5" strokeWidth={3} /> {fill(t.payPaidUntil, { date: day(pay.paid_until) })}
             </p>
           ) : (

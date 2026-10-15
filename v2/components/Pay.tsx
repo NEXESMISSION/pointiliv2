@@ -60,7 +60,7 @@ export function Left({ until, className = "" }: { until: string; className?: str
 export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
   if (pay.last?.status === "pending" && pay.last.method !== "contact") {
     return (
-      <p className="mt-3 flex shrink-0 items-center gap-2 rounded-full bg-ink/[0.05] px-4 py-2 text-[0.8438rem] font-semibold text-body">
+      <p className="mt-3 flex shrink-0 items-center gap-2 rounded-full bg-ink/[0.05] px-4 py-2 text-[0.8125rem] font-semibold text-body">
         <Clock className="size-4 shrink-0 text-muted" /> {t.payPending}
       </p>
     );
@@ -75,7 +75,7 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
         <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/25">
           <Icon3D name="gift" size={22} />
         </span>
-        <span className="min-w-0 flex-1 truncate text-[0.875rem] font-bold">{t.payBanner}</span>
+        <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-bold">{t.payBanner}</span>
         <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[0.8125rem] font-bold">
           <Clock className="size-3.5" /> <Left until={pay.offer_until ?? new Date().toISOString()} />
         </span>
@@ -85,7 +85,7 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
   }
   return (
     <Link href="/shop/pay" className="press mt-3 flex shrink-0 items-center gap-2 rounded-full bg-surface py-2 pe-2 ps-4 shadow-card">
-      <span className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold text-body">{t.payBannerPlain}</span>
+      <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-semibold text-body">{t.payBannerPlain}</span>
       <span className="flex items-center gap-0.5 rounded-full bg-brand px-3 py-1 text-[0.8125rem] font-bold text-white">
         {t.payBannerCta} <ChevronLeft className="size-3.5" />
       </span>
@@ -111,7 +111,7 @@ export function TrialBanner({ pay, offer, phone }: { pay: Pay; offer: boolean; p
     <a
       href={`tel:+${phone}`}
       onClick={() => signal("trial_call", over ? "over" : "running")}
-      className={`press flex shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.875rem] font-bold text-white ${over ? "bg-coral" : "bg-brand"}`}
+      className={`press flex shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.8125rem] font-bold text-white ${over ? "bg-coral" : "bg-brand"}`}
       aria-label={t.helpCall}
     >
       <Phone className="size-4" /> {t.helpCall}
@@ -122,15 +122,15 @@ export function TrialBanner({ pay, offer, phone }: { pay: Pay; offer: boolean; p
       <Link href="/shop/pay" className={`press flex min-w-0 flex-1 items-center gap-2 rounded-full py-2 pe-3 ps-3.5 ${over ? "bg-coral-soft text-coral" : "bg-surface shadow-card"}`}>
         <Hourglass className={`size-4 shrink-0 ${over ? "" : "text-brand"}`} />
         {waits ? (
-          <span className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold text-body">{t.trialWaits}</span>
+          <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-semibold text-body">{t.trialWaits}</span>
         ) : over ? (
-          <span className="min-w-0 flex-1 truncate text-[0.875rem] font-bold">{t.trialOverTitle}</span>
+          <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-bold">{t.trialOverTitle}</span>
         ) : (
           <>
             {/* the words give way on a narrow phone, never the time: «1 يوم · 02:50» while
                 there are days left, the seconds ticking only on the last day */}
-            <span className="min-w-0 truncate text-[0.875rem] font-semibold text-body">{t.trialLeft}</span>
-            <b className="shrink-0 whitespace-nowrap text-[0.875rem] font-bold text-ink">
+            <span className="min-w-0 truncate text-[0.8125rem] font-semibold text-body">{t.trialLeft}</span>
+            <b className="shrink-0 whitespace-nowrap text-[0.8125rem] font-bold text-ink">
               {days > 0 && <>{fill(t.trialDays, { n: days })} · </>}
               <bdi className="num" suppressHydrationWarning>
                 {days > 0 ? `${two(left.h % 24)}:${two(left.m)}` : `${two(left.h)}:${two(left.m)}:${two(left.s)}`}
@@ -191,7 +191,7 @@ export function OfferPopup({ shopId, offerUntil }: { shopId: string; offerUntil:
               <Sparkles className="size-3.5" /> {t.payOfferBadge}
             </span>
             <h2 className="mt-2.5 text-[1.5rem] font-bold leading-snug">{t.payOfferTitle}</h2>
-            <p className="mx-auto mt-1 max-w-[17rem] text-[0.875rem] leading-snug text-white/90">{t.payOfferBody}</p>
+            <p className="mx-auto mt-1 max-w-[17rem] text-[0.8125rem] leading-snug text-white/90">{t.payOfferBody}</p>
           </div>
           {/* the colour does not stop on a ruled line: the paper curves up to meet the price */}
           <svg className="relative -mt-14 block h-[3.5rem] w-full [@media(max-height:560px)]:-mt-12 [@media(max-height:560px)]:h-[3rem]" viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden>
@@ -216,7 +216,7 @@ export function OfferPopup({ shopId, offerUntil }: { shopId: string; offerUntil:
                 <span key={x.v} className="num text-[1.5rem] font-bold leading-none" style={i === 2 ? { animation: "offer-tick 400ms ease-out" } : undefined}>
                   {two(x.v)}
                 </span>
-                <span className="mt-0.5 flex items-center gap-1 text-[0.6875rem] text-white/70">
+                <span className="mt-0.5 flex items-center gap-1 text-[0.75rem] text-white/70">
                   <Clock className="size-3" /> {x.l}
                 </span>
               </span>
@@ -225,7 +225,7 @@ export function OfferPopup({ shopId, offerUntil }: { shopId: string; offerUntil:
           {/* what is in it, on one sheet of paper instead of three loose lines */}
           <ul className="mx-5 mt-4 divide-y divide-line rounded-[1.25rem] bg-canvas text-start [@media(max-height:560px)]:mt-3">
             {t.payPerks.map((p) => (
-              <li key={p} className="flex items-start gap-2.5 px-3.5 py-2.5 text-[0.875rem] leading-snug [@media(max-height:560px)]:py-2">
+              <li key={p} className="flex items-start gap-2.5 px-3.5 py-2.5 text-[0.8125rem] leading-snug [@media(max-height:560px)]:py-2">
                 <span className="mt-px grid size-5 shrink-0 place-items-center rounded-full bg-mint text-white">
                   <Check className="size-3" strokeWidth={3.5} />
                 </span>

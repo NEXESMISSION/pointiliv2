@@ -57,7 +57,7 @@ export function CardMoments({ card, color, tally: showTally = true }: { card: st
       {showTally && tally.length > 0 && (
         <div className="mb-2.5 flex flex-wrap gap-1.5">
           {tally.map(([name, n]) => (
-            <span key={name} className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[0.8438rem] font-bold" style={{ background: `color-mix(in oklab, ${color} 14%, white)`, color }}>
+            <span key={name} className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[0.8125rem] font-bold" style={{ background: `color-mix(in oklab, ${color} 14%, white)`, color }}>
               <bdi>{name}</bdi>
               <span className="num rounded-full bg-white/80 px-1.5 text-[0.75rem]">×{n}</span>
             </span>
@@ -65,16 +65,16 @@ export function CardMoments({ card, color, tally: showTally = true }: { card: st
         </div>
       )}
       {rows.length === 0 ? (
-        <p className="rounded-[0.875rem] bg-surface px-4 py-3 text-center text-[0.875rem] text-muted shadow-card">{say.none}</p>
+        <p className="rounded-[0.875rem] bg-surface px-4 py-3 text-center text-[0.8125rem] text-muted shadow-card">{say.none}</p>
       ) : (
         <ul data-list className="max-h-[30dvh] divide-y divide-line overflow-y-auto overscroll-contain rounded-[1rem] bg-surface shadow-card">
           {rows.map((r) =>
             r.kind === "stamp" ? (
               <li key={r.id} className="flex items-center gap-3 px-3.5 py-2.5">
-                <span className="num grid size-9 shrink-0 place-items-center rounded-full text-[0.875rem] font-bold text-white" style={{ background: color }}>
+                <span className="num grid size-9 shrink-0 place-items-center rounded-full text-[0.8125rem] font-bold text-white" style={{ background: color }}>
                   {order.get(r.id)}
                 </span>
-                <span className={`min-w-0 flex-1 truncate text-[0.9688rem] ${r.item ? "font-bold text-ink" : "font-medium text-muted"}`}>
+                <span className={`min-w-0 flex-1 truncate text-[0.9375rem] ${r.item ? "font-bold text-ink" : "font-medium text-muted"}`}>
                   <bdi>{r.item ?? say.stamp}</bdi>
                 </span>
                 <span className="shrink-0 text-[0.75rem] tabular-nums text-muted">{when(r.at)}</span>

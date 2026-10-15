@@ -32,12 +32,12 @@ function Tip({ onDone }: { onDone: () => void }) {
     <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45 sm:items-center" role="dialog" aria-modal="true" aria-label="بدّل الحاجة">
       <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-5 pb-5 pt-6 sm:rounded-[1.75rem]" style={{ animation: "fix-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }}>
         <style>{`@keyframes fix-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }`}</style>
-        <h2 className="text-center text-[1.375rem] font-bold">تنجم تبدّل الحاجة متاع أي تامبون</h2>
+        <h2 className="text-center text-[1.25rem] font-bold">تنجم تبدّل الحاجة متاع أي تامبون</h2>
         <ol className="mt-4 space-y-2.5">
           {steps.map((s, i) => (
             <li key={i} className="flex animate-rise items-center gap-3 rounded-[1.125rem] bg-surface p-3 shadow-card" style={{ animationDelay: `${120 + i * 120}ms` }}>
-              <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-brand text-[1rem] font-bold text-white">{i + 1}</span>
-              <span className="min-w-0 flex-1 text-[0.9688rem] leading-snug">{s.text}</span>
+              <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-brand text-[0.9375rem] font-bold text-white">{i + 1}</span>
+              <span className="min-w-0 flex-1 text-[0.9375rem] leading-snug">{s.text}</span>
               <Icon3D name={s.icon} size={30} className="shrink-0" />
             </li>
           ))}
@@ -84,13 +84,13 @@ export function FixItems({ stamps: first, items, tip, focus }: { stamps: FixStam
       <Top back="/shop" title="بدّل الحاجة" hint="غلطت في الحاجة؟ اختار التامبون وبدّلها" />
       {items.length === 0 ? (
         <div className="my-auto text-center">
-          <p className="text-[1rem] text-muted">ما عندكش حاجات مكتوبة في «شنوّة تبيع».</p>
+          <p className="text-[0.9375rem] text-muted">ما عندكش حاجات مكتوبة في «شنوّة تبيع».</p>
           <Link href="/shop/items" className="press mt-3 inline-flex h-11 items-center rounded-full bg-brand px-5 text-[0.9375rem] font-bold text-white">
             شنوّة تبيع
           </Link>
         </div>
       ) : stamps.length === 0 ? (
-        <p className="my-auto text-center text-[1rem] text-muted">حتى تامبون هالجمعة</p>
+        <p className="my-auto text-center text-[0.9375rem] text-muted">حتى تامبون هالجمعة</p>
       ) : (
         <ul data-list className="mb-3 mt-[2dvh] min-h-0 shrink divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card">
           {stamps.map((s) => (
@@ -98,15 +98,15 @@ export function FixItems({ stamps: first, items, tip, focus }: { stamps: FixStam
               <button type="button" onClick={() => setOpen(open === s.id ? null : s.id)} aria-expanded={open === s.id} className="flex w-full items-center gap-3 px-3.5 py-3 text-start">
                 <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[0.9375rem] font-bold text-white">{(s.name?.[0] ?? "؟").toUpperCase()}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[0.9688rem] font-semibold">{s.name ?? "حريف"}</span>
-                  <span className="block text-[0.7812rem] text-muted">{time(s.at)}</span>
+                  <span className="block truncate text-[0.9375rem] font-semibold">{s.name ?? "حريف"}</span>
+                  <span className="block text-[0.8125rem] text-muted">{time(s.at)}</span>
                 </span>
                 {done === s.id ? (
-                  <span className="flex shrink-0 animate-pop items-center gap-1 rounded-full bg-mint px-3 py-1 text-[0.8438rem] font-bold text-white">
+                  <span className="flex shrink-0 animate-pop items-center gap-1 rounded-full bg-mint px-3 py-1 text-[0.8125rem] font-bold text-white">
                     <Check className="size-4" strokeWidth={3} /> {s.item_name}
                   </span>
                 ) : (
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-[0.8438rem] font-bold ${s.item_name ? "bg-brand-soft text-brand" : "bg-canvas text-faint"}`}>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-[0.8125rem] font-bold ${s.item_name ? "bg-brand-soft text-brand" : "bg-canvas text-faint"}`}>
                     <bdi>{s.item_name ?? "بلا حاجة"}</bdi>
                   </span>
                 )}
@@ -114,7 +114,7 @@ export function FixItems({ stamps: first, items, tip, focus }: { stamps: FixStam
               </button>
               {open === s.id && (
                 <div className="animate-rise px-3.5 pb-3.5">
-                  <p className="mb-2 text-[0.8438rem] font-semibold text-muted">التامبون هذا كان على:</p>
+                  <p className="mb-2 text-[0.8125rem] font-semibold text-muted">التامبون هذا كان على:</p>
                   <div className="grid grid-cols-3 gap-1.5">
                     {items.map((it) => (
                       <button
@@ -134,7 +134,7 @@ export function FixItems({ stamps: first, items, tip, focus }: { stamps: FixStam
           ))}
         </ul>
       )}
-      {error && <p className="mb-3 text-center text-[0.875rem] font-semibold text-coral">{error}</p>}
+      {error && <p className="mb-3 text-center text-[0.8125rem] font-semibold text-coral">{error}</p>}
       {showTip && <Tip onDone={() => setShowTip(false)} />}
     </>
   );

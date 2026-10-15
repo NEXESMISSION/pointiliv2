@@ -88,7 +88,7 @@ export function Items({ names, on, kind }: { names: string[]; on: boolean; kind:
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-8 pt-3">
       <Back home="/shop/settings" />
-      <h1 className="mt-2 text-[1.375rem] font-bold leading-tight">{t.itemsTitle}</h1>
+      <h1 className="mt-2 text-[1.25rem] font-bold leading-tight">{t.itemsTitle}</h1>
       <p className="mt-1 text-[0.9375rem] leading-relaxed text-muted">{t.itemsWhat}</p>
 
       {list.length > 0 && (
@@ -149,8 +149,8 @@ export function Items({ names, on, kind }: { names: string[]; on: boolean; kind:
 
       <label className="press mt-4 flex items-center justify-between gap-3 rounded-[1.25rem] bg-surface p-4 ring-1 ring-line">
         <span className="min-w-0">
-          <span className="block text-[1rem] font-bold">{t.itemsAskOn}</span>
-          <span className="mt-0.5 block text-[0.8438rem] leading-snug text-muted">{t.itemsAskOnHint}</span>
+          <span className="block text-[0.9375rem] font-bold">{t.itemsAskOn}</span>
+          <span className="mt-0.5 block text-[0.8125rem] leading-snug text-muted">{t.itemsAskOnHint}</span>
         </span>
         <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} className="size-6 shrink-0 accent-brand" />
       </label>

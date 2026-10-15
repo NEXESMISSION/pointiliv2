@@ -53,7 +53,7 @@ function EmptyWords() {
   return (
     <>
       <Icon3D name="phone" size={48} className="animate-float" />
-      <h3 className="mt-1.5 text-[1rem] font-bold">{t.customersEmpty}</h3>
+      <h3 className="mt-1.5 text-[0.9375rem] font-bold">{t.customersEmpty}</h3>
       <p className="mt-1 text-balance text-[0.8125rem] leading-snug text-muted">{t.customersEmptyBody}</p>
     </>
   );
@@ -123,20 +123,20 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
         </Link>
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate text-[0.8438rem] text-muted">
+            <span className="min-w-0 truncate text-[0.8125rem] text-muted">
               {t.hello}
               {first ? ` ${first}` : ""}
             </span>
             <HelpButton help={help} small />
           </span>
           {/* the name opens «المحل»: owners kept tapping it */}
-          <Link href="/shop/settings" className="block truncate text-[1.4375rem] font-bold leading-tight">
+          <Link href="/shop/settings" className="block truncate text-[1.5rem] font-bold leading-tight">
             {shop.name}
           </Link>
         </span>
       </header>
 
-      {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.875rem] font-semibold text-coral">{t.pausedBanner}</p>}
+      {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-semibold text-coral">{t.pausedBanner}</p>}
       {/* the trial's clock and a call, until the year is turned on (the founder's own and the tests: just the price) */}
       {!paid && pay && (pay.exempt || !pay.trial_until ? <PayBanner pay={pay} offer={offer} /> : trialLine ? <TrialBanner pay={pay} offer={offer} phone={help.phone} /> : null)}
       {/* in Facebook's own browser: the way out to the phone's browser, where Pointili stays */}
@@ -156,7 +156,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
           <QrCode className="size-[46%]" />
         </span>
         <span className="relative min-w-0">
-          <span className="block text-[1.375rem] font-bold leading-tight">{t.showCode}</span>
+          <span className="block text-[1.25rem] font-bold leading-tight">{t.showCode}</span>
           <span className="line-clamp-2 text-balance text-[0.8125rem] leading-snug text-white/85">{t.showCodeHint}</span>
         </span>
       </Link>
@@ -166,7 +166,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
         {options.map((o) => (
           <Link key={o.href} id={o.id} href={o.href} className="press flex items-center justify-center gap-2 rounded-[1.125rem] bg-surface px-2 py-[clamp(0.7rem,1.8dvh,1.05rem)] shadow-card">
             {o.mark}
-            <span className="min-w-0 truncate text-[0.9062rem] font-bold">{o.label}</span>
+            <span className="min-w-0 truncate text-[0.9375rem] font-bold">{o.label}</span>
           </Link>
         ))}
       </nav>
@@ -229,7 +229,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
                   .sort((a, b) => b.at.localeCompare(a.at))
                   .map(({ at, ...r }) => (void at, r))}
               />
-              <Link href="/shop/customers" className="mt-auto flex shrink-0 items-center justify-center gap-1 border-t border-line py-3 text-[0.875rem] font-bold text-brand">
+              <Link href="/shop/customers" className="mt-auto flex shrink-0 items-center justify-center gap-1 border-t border-line py-3 text-[0.8125rem] font-bold text-brand">
                 {t.seeAll} <ChevronLeft className="size-4" />
               </Link>
             </>

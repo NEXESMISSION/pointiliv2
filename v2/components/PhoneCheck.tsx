@@ -51,8 +51,8 @@ export function PhoneCheck() {
             <span className="mx-auto grid size-16 animate-pop place-items-center rounded-full bg-mint-soft text-mint">
               <CheckCircle2 className="size-9" />
             </span>
-            <h2 className="mt-3 text-[1.375rem] font-bold leading-tight">{t.phoneCheckSentTitle}</h2>
-            <p className="mt-2 flex items-center justify-center gap-1.5 text-balance text-[0.9688rem] leading-relaxed text-body">
+            <h2 className="mt-3 text-[1.25rem] font-bold leading-tight">{t.phoneCheckSentTitle}</h2>
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-balance text-[0.9375rem] leading-relaxed text-body">
               <PhoneCall className="size-4 shrink-0 text-brand" /> {t.phoneCheckSentBody}
             </p>
             <Btn type="button" className="mt-5" onClick={() => setGone(true)}>
@@ -64,8 +64,8 @@ export function PhoneCheck() {
             <span className="mx-auto grid size-16 place-items-center rounded-full bg-coral-soft text-coral">
               <TriangleAlert className="size-8" />
             </span>
-            <h2 className="mt-3 text-balance text-[1.375rem] font-bold leading-tight">{t.phoneCheckTitle}</h2>
-            <p className="mt-2 text-balance text-[0.9688rem] leading-relaxed text-body">{t.phoneCheckBody}</p>
+            <h2 className="mt-3 text-balance text-[1.25rem] font-bold leading-tight">{t.phoneCheckTitle}</h2>
+            <p className="mt-2 text-balance text-[0.9375rem] leading-relaxed text-body">{t.phoneCheckBody}</p>
             <form
               className="mt-4"
               onSubmit={(e) => {
@@ -89,7 +89,7 @@ export function PhoneCheck() {
                   className="num h-full min-w-0 flex-1 bg-transparent pe-4 text-[1.25rem] font-bold tracking-wide outline-none placeholder:font-semibold placeholder:text-faint"
                 />
               </span>
-              {error && <p className="mt-2 text-[0.875rem] font-semibold text-coral">{error}</p>}
+              {error && <p className="mt-2 text-[0.8125rem] font-semibold text-coral">{error}</p>}
               <Btn type="submit" className="mt-3" disabled={pending || digits.length !== 8}>
                 {pending ? t.checking : t.phoneCheckSend}
               </Btn>

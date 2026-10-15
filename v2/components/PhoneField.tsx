@@ -17,7 +17,7 @@ export function PhoneField({ label, name = "phone", error, compact }: { label: s
   const [value, setValue] = useState("");
   return (
     <label className="block">
-      <span className="mb-1.5 block px-1 text-[0.875rem] font-semibold text-muted">{label}</span>
+      <span className="mb-1.5 block px-1 text-[0.8125rem] font-semibold text-muted">{label}</span>
       <span dir="ltr" className={`flex ${compact ? "h-[3.25rem] [@media(max-height:520px)]:h-[2.875rem]" : "h-[3.5rem]"} w-full items-center ${boxLook} focus-within:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]`}>
         <span className="num ps-4 pe-3 text-[1.0625rem] font-semibold text-muted">+216</span>
         <span className="h-6 w-px bg-line" aria-hidden />
@@ -34,7 +34,7 @@ export function PhoneField({ label, name = "phone", error, compact }: { label: s
           className="num h-full min-w-0 flex-1 rounded-e-[1.125rem] bg-transparent px-3 text-[17px] tracking-wide text-ink outline-none placeholder:text-faint"
         />
       </span>
-      {error && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{error}</span>}
+      {error && <span className="mt-1.5 block px-1 text-[0.8125rem] font-medium text-coral">{error}</span>}
     </label>
   );
 }

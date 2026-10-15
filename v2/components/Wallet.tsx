@@ -33,7 +33,7 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
             <ChevronRight className="size-5" />
           </Link>
         ) : (
-          <Link href="/me" className="press grid size-11 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1rem] font-bold text-white shadow-card" aria-label={t.account}>
+          <Link href="/me" className="press grid size-11 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[0.9375rem] font-bold text-white shadow-card" aria-label={t.account}>
             {(first?.[0] ?? "؟").toUpperCase()}
           </Link>
         )}
@@ -46,10 +46,10 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
         </p>
         <h1 className="mt-0.5 truncate text-[1.5rem] font-bold leading-tight">{back ? t.myCards : first || t.myCards}</h1>
         {/* Pointili on the home screen: Android's own dialog, or on an iPhone the guide to the three taps */}
-        {!back && <InstallApp where="wallet" className="mt-2 h-9 text-[0.8438rem]" />}
+        {!back && <InstallApp where="wallet" className="mt-2 h-9 text-[0.8125rem]" />}
         {/* an account made at the counter has no password the person knows: one line asks for one, until it is set */}
         {me.password_set === false && (
-          <Link href="/me" className="press mt-2 flex items-center gap-2 rounded-full bg-brand-soft px-3.5 py-2 text-[0.8438rem] font-bold text-brand">
+          <Link href="/me" className="press mt-2 flex items-center gap-2 rounded-full bg-brand-soft px-3.5 py-2 text-[0.8125rem] font-bold text-brand">
             <Lock className="size-4 shrink-0" /> <span className="min-w-0 flex-1 truncate">{t.passwordAsk}</span> <ChevronLeft className="size-4 shrink-0" />
           </Link>
         )}
@@ -62,18 +62,18 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
             <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
               <Icon3D name="party" size={50} className="animate-float" />
             </span>
-            <b className="block text-[0.9688rem] font-bold">{t.wheelWaits}</b>
-            <span className="block truncate text-[0.875rem] text-muted">{waiting[0]!.shop.name}</span>
-            <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">{t.wheelGo}</span>
+            <b className="block text-[0.9375rem] font-bold">{t.wheelWaits}</b>
+            <span className="block truncate text-[0.8125rem] text-muted">{waiting[0]!.shop.name}</span>
+            <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.8125rem] font-bold text-coral">{t.wheelGo}</span>
           </Link>
         ) : me.code && svg ? (
           <MyCode code={me.code} svg={svg} gift={waiting[0]!.won ?? waiting[0]!.shop.gift} className="press relative mt-[2dvh] block w-full shrink-0 animate-rise overflow-hidden rounded-[1.25rem] bg-surface p-3.5 pe-20 text-start shadow-card">
             <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
               <Icon3D name="gift" size={52} className="animate-float" />
             </span>
-            <b className="block text-[0.9688rem] font-bold">{t.giftWaiting}</b>
-            <span className="block truncate text-[0.875rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.won ?? waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
-            <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">
+            <b className="block text-[0.9375rem] font-bold">{t.giftWaiting}</b>
+            <span className="block truncate text-[0.8125rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.won ?? waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
+            <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.8125rem] font-bold text-coral">
               <QrCode className="size-4" /> {t.giftShow}
             </span>
           </MyCode>
@@ -82,8 +82,8 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
             <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
               <Icon3D name="gift" size={52} className="animate-float" />
             </span>
-            <b className="block text-[0.9688rem] font-bold">{t.giftWaiting}</b>
-            <span className="block truncate text-[0.875rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.won ?? waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
+            <b className="block text-[0.9375rem] font-bold">{t.giftWaiting}</b>
+            <span className="block truncate text-[0.8125rem] text-muted">{fill(t.giftAt, { gift: waiting[0]!.won ?? waiting[0]!.shop.gift ?? "", shop: waiting[0]!.shop.name })}</span>
           </Link>
         ))}
 
@@ -96,9 +96,9 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
               <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
                 <Icon3D name="cart" size={50} className="animate-float" />
               </span>
-              <b className="block text-[0.9688rem] font-bold">{t.storeOrderWaits}</b>
-              <span className="block truncate text-[0.875rem] text-muted">{fill(t.storeOrderAt, { shop: ordered.shop.name })}</span>
-              <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-coral">
+              <b className="block text-[0.9375rem] font-bold">{t.storeOrderWaits}</b>
+              <span className="block truncate text-[0.8125rem] text-muted">{fill(t.storeOrderAt, { shop: ordered.shop.name })}</span>
+              <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.8125rem] font-bold text-coral">
                 <QrCode className="size-4" /> {t.storeShow}
               </span>
             </Link>
@@ -108,7 +108,7 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
       {cards.length === 0 ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">
           <Icon3D name="ticket" size={96} className="animate-float" />
-          <h2 className="mt-5 text-[1.375rem] font-bold">{t.noCards}</h2>
+          <h2 className="mt-5 text-[1.25rem] font-bold">{t.noCards}</h2>
           <p className="mt-1.5 max-w-[16rem] text-[0.9375rem] text-muted">{t.noCardsBody}</p>
           {/* an owner who took the customer's door by mistake (an ad sends owners): the way to their shop, from here */}
           <Link href="/shop/setup" className="press mt-4 flex h-11 items-center gap-1.5 rounded-full bg-surface px-4 text-[0.9375rem] font-bold text-brand shadow-card">
@@ -118,7 +118,7 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
       ) : (
         // the cards scroll inside their own box: the page, the title and the scan button stay put
         <section className="mt-[2.5dvh] flex min-h-0 flex-1 flex-col">
-          {!back && <h2 className="mb-2 shrink-0 px-0.5 text-[1rem] font-bold">{t.myCards}</h2>}
+          {!back && <h2 className="mb-2 shrink-0 px-0.5 text-[0.9375rem] font-bold">{t.myCards}</h2>}
           {/* one line a card: what the shop is, how far the gift is, what waits — the card itself one tap away */}
           <div data-list className="-mx-2 min-h-0 overflow-y-auto overscroll-contain px-2 pb-2">
             <ul className="divide-y divide-line overflow-hidden rounded-[1.375rem] bg-surface shadow-card">
@@ -168,11 +168,11 @@ function CardRow({ card: c }: { card: CardView }) {
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-2">
-          <span dir="auto" className="min-w-0 truncate text-[1rem] font-bold">
+          <span dir="auto" className="min-w-0 truncate text-[0.9375rem] font-bold">
             {c.shop.name}
           </span>
           {!c.shop.store && (
-            <span className="num shrink-0 text-[0.875rem] font-bold" style={{ color: c.shop.color }}>
+            <span className="num shrink-0 text-[0.8125rem] font-bold" style={{ color: c.shop.color }}>
               {done}
               <span className="text-muted">/{goal}</span>
             </span>

@@ -19,7 +19,7 @@ export default async function ShopNew() {
     <Screen>
       <Top back="/" end={<HelpButton help={help} />} />
       <Middle className="!py-[1.6dvh]">
-        <h1 className="text-[1.625rem] font-bold leading-tight">{t.shopNewTitle}</h1>
+        <h1 className="text-[1.5rem] font-bold leading-tight">{t.shopNewTitle}</h1>
         {/* the smallest phones keep every field on the screen: the three bars step aside */}
         <div className="[@media(max-height:520px)]:hidden">
           <Steps at={1} />

@@ -82,7 +82,7 @@ export function LogoPicker({ value, onChange, onError, onBusy }: { value: string
         ) : (
           <span className="flex flex-col items-center gap-0.5">
             <Camera className="size-5" />
-            <span className="text-[0.625rem] font-bold leading-none">{t.logo}</span>
+            <span className="text-[0.75rem] font-bold leading-none">{t.logo}</span>
           </span>
         )}
         {busy && (

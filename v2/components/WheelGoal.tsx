@@ -53,14 +53,14 @@ export function WheelGoal({ shop, editing }: { shop: PassShop; editing: boolean 
               setOther("");
             }}
             aria-pressed={goal === g}
-            className={`press num h-[3.6rem] rounded-[1.125rem] text-[1.3125rem] font-bold ${goal === g ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
+            className={`press num h-[3.6rem] rounded-[1.125rem] text-[1.25rem] font-bold ${goal === g ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
           >
             {g}
           </button>
         ))}
       </div>
       <label className="mt-[1.6dvh] flex shrink-0 items-center justify-center gap-2.5">
-        <span className="text-[0.9062rem] font-semibold text-muted">{t.wizGoalOther}</span>
+        <span className="text-[0.9375rem] font-semibold text-muted">{t.wizGoalOther}</span>
         <input
           type="text"
           inputMode="numeric"
@@ -79,7 +79,7 @@ export function WheelGoal({ shop, editing }: { shop: PassShop; editing: boolean 
       </label>
 
       <div className="mt-auto shrink-0 pb-3 pt-3">
-        {error && <p className="mb-1.5 text-center text-[0.875rem] font-semibold text-coral">{t.errNetwork}</p>}
+        {error && <p className="mb-1.5 text-center text-[0.8125rem] font-semibold text-coral">{t.errNetwork}</p>}
         <Btn type="button" onClick={save} disabled={pending || bad}>
           {pending ? t.checking : editing ? t.storeSave : "كمّل: الكادوات متاع الروليت"} {!pending && !editing && <ChevronLeft className="size-5" />}
         </Btn>

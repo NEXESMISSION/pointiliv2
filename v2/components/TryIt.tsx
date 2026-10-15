@@ -88,7 +88,7 @@ export function TryIt({ shop, onClose, finish, top }: { shop: DemoShop; onClose:
             <Phone>
               <Confetti count={40} />
               <StampLand color={shop.color} icon={kindIcon(shop.kind)} size={72} logo={stampFace} />
-              <p className="mt-1 text-balance text-[1.125rem] font-bold leading-tight">{fill(t.won, { gift })}</p>
+              <p className="mt-1 text-balance text-[1.0625rem] font-bold leading-tight">{fill(t.won, { gift })}</p>
               <div className="mt-2 w-full text-start">
                 <Pass shop={pass} stamps={goal} small />
               </div>
@@ -99,12 +99,12 @@ export function TryIt({ shop, onClose, finish, top }: { shop: DemoShop; onClose:
           )}
           {beat === 3 && (
             <Phone>
-              <p className="absolute top-8 text-[0.6875rem] font-bold text-muted">{t.tryYourScreen}</p>
+              <p className="absolute top-8 text-[0.75rem] font-bold text-muted">{t.tryYourScreen}</p>
               <Icon3D name="gift" size={56} className="animate-pop" />
-              <p className="mt-2 text-[1.125rem] font-bold">{fill(t.popGiftHas, { name: t.tryName })}</p>
-              <p className="mt-0.5 text-balance text-[1rem] font-bold text-coral">{gift}</p>
+              <p className="mt-2 text-[1.0625rem] font-bold">{fill(t.popGiftHas, { name: t.tryName })}</p>
+              <p className="mt-0.5 text-balance text-[0.9375rem] font-bold text-coral">{gift}</p>
               <p className="mt-1 text-[0.8125rem] text-muted">{t.popGiftAsk}</p>
-              <span className="mt-3 flex w-full items-center justify-center rounded-[0.875rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] py-2.5 text-[0.875rem] font-bold text-white">{t.popGiftGive}</span>
+              <span className="mt-3 flex w-full items-center justify-center rounded-[0.875rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] py-2.5 text-[0.8125rem] font-bold text-white">{t.popGiftGive}</span>
               <span className="mt-1.5 text-[0.8125rem] font-semibold text-muted">{t.popGiftLater}</span>
             </Phone>
           )}
@@ -117,7 +117,7 @@ export function TryIt({ shop, onClose, finish, top }: { shop: DemoShop; onClose:
             <ChevronLeft className="size-5 rotate-180" />
           </button>
         )}
-        <button type="button" onClick={next} className="press h-12 flex-1 rounded-full bg-white text-[1rem] font-bold text-ink">
+        <button type="button" onClick={next} className="press h-12 flex-1 rounded-full bg-white text-[0.9375rem] font-bold text-ink">
           {last ? (finish ?? t.tryGotIt) : t.next}
         </button>
       </div>

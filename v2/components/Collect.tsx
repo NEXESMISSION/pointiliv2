@@ -43,7 +43,7 @@ function GiftRow({ w, onOpen }: { w: WaitingGift; onOpen: () => void }) {
       <Icon3D name="gift" size={36} className="shrink-0" />
       <span className="min-w-0 flex-1">
         <span className="block text-[0.8125rem] font-semibold text-muted">{t.collectGiftWaits}</span>
-        <span className="block truncate text-[1rem] font-bold">
+        <span className="block truncate text-[0.9375rem] font-bold">
           {w.gift}
           {(w.n ?? 1) > 1 && <span className="num text-coral"> ×{w.n}</span>}
         </span>
@@ -67,7 +67,7 @@ function GiftPop({ who, w, won, busy, onGive, onLater, prizes = [], onSpun }: { 
       <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={t.wheelAtCounter} onClick={onLater}>
         <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-5 pt-[clamp(1rem,3dvh,1.75rem)] text-center" style={{ animation: "pop-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
           <style>{`@keyframes pop-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
-          <h2 className="text-balance text-[1.375rem] font-bold leading-tight">
+          <h2 className="text-balance text-[1.25rem] font-bold leading-tight">
             {who} · {t.wheelAtCounter}
           </h2>
           <p className="mb-3 mt-0.5 text-[0.9375rem] text-muted">{t.wheelAtCounterHint}</p>
@@ -90,8 +90,8 @@ function GiftPop({ who, w, won, busy, onGive, onLater, prizes = [], onSpun }: { 
         <style>{`@keyframes pop-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
         <Icon3D name="gift" size={76} className="mx-auto animate-pop" />
         <h2 className="mt-2 text-balance text-[1.5rem] font-bold leading-tight">{title}</h2>
-        {(!won || n > 1) && <p className="mt-1 text-balance text-[1.375rem] font-bold text-coral">{w.gift}</p>}
-        <p className="mt-1.5 text-[1rem] text-muted">{t.popGiftAsk}</p>
+        {(!won || n > 1) && <p className="mt-1 text-balance text-[1.25rem] font-bold text-coral">{w.gift}</p>}
+        <p className="mt-1.5 text-[0.9375rem] text-muted">{t.popGiftAsk}</p>
         <div className="mt-[2.5dvh] space-y-1.5">
           <Btn type="button" kind="coral" onClick={() => onGive(n > 1)} disabled={busy}>
             {busy ? t.checking : n > 1 ? fill(t.popGiftGiveAll, { n }) : t.popGiftGive}
@@ -320,7 +320,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
         <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
           <ChevronRight className="size-5" />
         </Link>
-        <h1 className="min-w-0 flex-1 truncate text-[1.375rem] font-bold">{t.collect}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-[1.25rem] font-bold">{t.collect}</h1>
       </header>
 
       {/* two ways: the camera, or the code typed */}
@@ -338,7 +338,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
               if (x.id === "scan") again();
               setMode(x.id);
             }}
-            className={`flex h-11 items-center justify-center gap-2 rounded-[0.875rem] text-[0.9688rem] font-bold ${mode === x.id ? "bg-surface text-ink shadow-card" : "text-muted"}`}
+            className={`flex h-11 items-center justify-center gap-2 rounded-[0.875rem] text-[0.9375rem] font-bold ${mode === x.id ? "bg-surface text-ink shadow-card" : "text-muted"}`}
           >
             <x.icon className="size-5" /> {x.label}
           </button>
@@ -352,7 +352,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             <span className="grid size-[clamp(3.5rem,10dvh,5rem)] animate-pop place-items-center rounded-full bg-mint text-white shadow-[0_16px_34px_-14px_rgb(18_183_106/0.8)]">
               {step.gift ? <Icon3D name="gift" size={46} /> : <Check className="size-10" strokeWidth={3} />}
             </span>
-            <h2 className="mt-3 text-[1.625rem] font-bold">
+            <h2 className="mt-3 text-[1.5rem] font-bold">
               {step.gift ? (
                 fill(t.collectGift, { name: who, gift: step.card.shop.gift ?? "" })
               ) : (
@@ -363,7 +363,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             </h2>
             {/* what it was for, written on the card's history and the owner's list */}
             {step.item && (
-              <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1 text-[1rem] font-bold text-brand">
+              <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1 text-[0.9375rem] font-bold text-brand">
                 <bdi>{step.item}</bdi>
               </p>
             )}
@@ -382,7 +382,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             </div>
             {/* a slip of the finger: the tampon goes back, for ten minutes */}
             {step.moment && !undoSaid && undo === "no" && (
-              <button type="button" onClick={() => setUndo("ask")} className="press mt-1 py-1.5 text-[0.875rem] font-semibold text-muted underline-offset-4 hover:underline">
+              <button type="button" onClick={() => setUndo("ask")} className="press mt-1 py-1.5 text-[0.8125rem] font-semibold text-muted underline-offset-4 hover:underline">
                 {t.collectUndo}
               </button>
             )}
@@ -390,23 +390,23 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
               <div className="mt-2 w-full rounded-[1.125rem] bg-coral-soft px-4 py-3 text-center">
                 <p className="text-[0.9375rem] font-semibold text-coral">{fill(t.collectUndoAsk, { name: who })}</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  <button type="button" disabled={undo === "busy"} onClick={() => setUndo("no")} className="press h-10 rounded-[0.875rem] bg-surface text-[0.9062rem] font-semibold">
+                  <button type="button" disabled={undo === "busy"} onClick={() => setUndo("no")} className="press h-10 rounded-[0.875rem] bg-surface text-[0.9375rem] font-semibold">
                     {t.back}
                   </button>
-                  <button type="button" disabled={undo === "busy"} onClick={() => void takeBack()} className="press h-10 rounded-[0.875rem] bg-coral text-[0.9062rem] font-bold text-white disabled:opacity-60">
+                  <button type="button" disabled={undo === "busy"} onClick={() => void takeBack()} className="press h-10 rounded-[0.875rem] bg-coral text-[0.9375rem] font-bold text-white disabled:opacity-60">
                     {undo === "busy" ? t.checking : t.collectUndoYes}
                   </button>
                 </div>
               </div>
             )}
-            {undoSaid && <p className="mt-2 text-[0.875rem] font-semibold text-coral">{undoSaid}</p>}
+            {undoSaid && <p className="mt-2 text-[0.8125rem] font-semibold text-coral">{undoSaid}</p>}
           </div>
         ) : step.kind === "undone" ? (
           <div className="my-auto flex flex-col items-center text-center">
             <span className="grid size-[clamp(3.5rem,10dvh,5rem)] animate-pop place-items-center rounded-full bg-ink/[0.08] text-ink">
               <Undo2 className="size-9" strokeWidth={2.5} />
             </span>
-            <h2 className="mt-3 text-[1.625rem] font-bold">{t.collectUndone}</h2>
+            <h2 className="mt-3 text-[1.5rem] font-bold">{t.collectUndone}</h2>
             <p className="mt-1 text-[0.9375rem] text-muted">{t.collectUndoneBody}</p>
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
               <Pass shop={step.card.shop} stamps={step.card.stamps} />
@@ -425,7 +425,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             <span className="grid size-[clamp(3.5rem,10dvh,5rem)] animate-pop place-items-center rounded-full bg-mint text-white">
               <Icon3D name="gift" size={46} />
             </span>
-            <h2 className="mt-3 text-balance text-[1.625rem] font-bold">{fill(t.collectHanded, { name: who, gift: step.gift })}</h2>
+            <h2 className="mt-3 text-balance text-[1.5rem] font-bold">{fill(t.collectHanded, { name: who, gift: step.gift })}</h2>
             {step.card && (
               <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
                 <Pass shop={step.card.shop} stamps={step.card.stamps} />
@@ -469,27 +469,27 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
 
             {/* who it is, and the tampon */}
             <div className="mt-[2.5dvh] min-h-[9.5rem]">
-              {step.kind === "looking" && <p className="animate-pulse text-center text-[1rem] font-semibold text-muted">{t.collectLooking}</p>}
+              {step.kind === "looking" && <p className="animate-pulse text-center text-[0.9375rem] font-semibold text-muted">{t.collectLooking}</p>}
               {step.kind === "unknown" && (
                 <div className="rounded-[1.375rem] bg-coral-soft px-4 py-3.5 text-center">
-                  <p className="text-[1rem] font-bold text-coral">{t.collectUnknown}</p>
-                  <p className="mt-1 text-[0.875rem] text-body">{t.collectUnknownHint}</p>
-                  <Link href="/shop/qr" className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-[0.875rem] font-bold text-brand shadow-card">
+                  <p className="text-[0.9375rem] font-bold text-coral">{t.collectUnknown}</p>
+                  <p className="mt-1 text-[0.8125rem] text-body">{t.collectUnknownHint}</p>
+                  <Link href="/shop/qr" className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-[0.8125rem] font-bold text-brand shadow-card">
                     <QrCode className="size-4" /> {t.showCode}
                   </Link>
                 </div>
               )}
               {step.kind === "own" && shop && (
                 <div className="rounded-[1.375rem] bg-brand-soft px-4 py-3.5 text-center">
-                  <p className="text-[1rem] font-bold text-ink">{t.collectOwnTry}</p>
-                  <p className="mt-1 text-[0.875rem] text-body">{t.collectOwnTryBody}</p>
-                  <TryItButton shop={shop} className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-[0.875rem] font-bold text-white">
+                  <p className="text-[0.9375rem] font-bold text-ink">{t.collectOwnTry}</p>
+                  <p className="mt-1 text-[0.8125rem] text-body">{t.collectOwnTryBody}</p>
+                  <TryItButton shop={shop} className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-[0.8125rem] font-bold text-white">
                     {t.trySee}
                   </TryItButton>
                 </div>
               )}
               {step.kind === "error" && (
-                <p className="flex items-center justify-center gap-2 rounded-[1.375rem] bg-coral-soft px-4 py-3.5 text-center text-[0.9688rem] font-semibold text-coral">
+                <p className="flex items-center justify-center gap-2 rounded-[1.375rem] bg-coral-soft px-4 py-3.5 text-center text-[0.9375rem] font-semibold text-coral">
                   <X className="size-5 shrink-0" /> {step.text}
                 </p>
               )}
@@ -505,20 +505,20 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
               {(step.kind === "found" || step.kind === "giving") && (
                 <div className="animate-rise">
                   {ordersDone && (
-                    <p className="mb-2 flex animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-mint-soft px-4 py-2.5 text-[0.9688rem] font-bold text-mint">
+                    <p className="mb-2 flex animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-mint-soft px-4 py-2.5 text-[0.9375rem] font-bold text-mint">
                       <Check className="size-5" strokeWidth={3} /> {ordersDone}
                     </p>
                   )}
                   <div className="flex items-center gap-3 rounded-[1.375rem] bg-surface p-3.5 shadow-card">
-                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.125rem] font-bold text-white">{(who[0] ?? "؟").toUpperCase()}</span>
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.0625rem] font-bold text-white">{(who[0] ?? "؟").toUpperCase()}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[1.125rem] font-bold">{who}</span>
+                      <span className="block truncate text-[1.0625rem] font-bold">{who}</span>
                       {step.card ? (
-                        <span className="num block text-[0.875rem] text-muted">
+                        <span className="num block text-[0.8125rem] text-muted">
                           {Math.min(step.card.stamps, step.card.shop.goal ?? 0)}/{step.card.shop.goal}
                         </span>
                       ) : (
-                        <span className="block text-[0.875rem] text-muted">{t.collectFirst}</span>
+                        <span className="block text-[0.8125rem] text-muted">{t.collectFirst}</span>
                       )}
                     </span>
                   </div>
@@ -546,7 +546,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
                             type="button"
                             disabled={step.kind === "giving"}
                             onClick={() => void give(it)}
-                            className="press flex min-h-[3rem] items-center justify-center rounded-[1rem] bg-brand px-2 text-center text-[1rem] font-bold leading-tight text-white shadow-[0_8px_18px_-10px_var(--color-brand)] disabled:opacity-60"
+                            className="press flex min-h-[3rem] items-center justify-center rounded-[1rem] bg-brand px-2 text-center text-[0.9375rem] font-bold leading-tight text-white shadow-[0_8px_18px_-10px_var(--color-brand)] disabled:opacity-60"
                           >
                             <span className="line-clamp-2">{it.name}</span>
                           </button>
@@ -554,7 +554,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
                       </div>
                     </div>
                   ) : (
-                    <Btn type="button" onClick={() => void give()} disabled={step.kind === "giving"} className="mt-3 h-[3.75rem] text-[1.125rem]">
+                    <Btn type="button" onClick={() => void give()} disabled={step.kind === "giving"} className="mt-3 h-[3.75rem] text-[1.0625rem]">
                       {step.kind === "giving" ? t.checking : name ? fill(t.collectGive, { name }) : t.collectGiveAnon}
                     </Btn>
                   )}
@@ -606,7 +606,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
       )}
 
       {mode === "code" && step.kind !== "done" && step.kind !== "handed" && step.kind !== "undone" && (
-        <Link href="/shop/qr" className="mb-[2dvh] flex shrink-0 items-center justify-center gap-1.5 text-[0.875rem] font-semibold text-brand">
+        <Link href="/shop/qr" className="mb-[2dvh] flex shrink-0 items-center justify-center gap-1.5 text-[0.8125rem] font-semibold text-brand">
           <QrCode className="size-4" /> {t.collectOr}
         </Link>
       )}

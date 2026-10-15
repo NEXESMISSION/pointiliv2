@@ -62,7 +62,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           <Pass shop={card.shop} stamps={card.stamps} />
         </CardTap>
       </div>
-      {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.875rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
+      {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.8125rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
 
       {/* the roulette: a popup that opens by itself, and a banner to open it again */}
       {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} />}
@@ -72,7 +72,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
         <div className="mt-3 flex shrink-0 animate-pop items-center gap-3 rounded-[1.25rem] bg-surface p-3.5 shadow-card">
           <Icon3D name="gift" size={44} className="animate-float" />
           <div className="min-w-0 flex-1">
-            <p className="text-[0.875rem] font-semibold text-coral">{(card.waiting_n ?? 1) > 1 ? fill(t.readyMany, { n: card.waiting_n ?? 2 }) : t.ready}</p>
+            <p className="text-[0.8125rem] font-semibold text-coral">{(card.waiting_n ?? 1) > 1 ? fill(t.readyMany, { n: card.waiting_n ?? 2 }) : t.ready}</p>
             <p className="truncate text-[1.0625rem] font-bold leading-tight">{card.won ?? card.shop.gift}</p>
             {!(me.code && svg) && <p className="text-[0.8125rem] text-muted">{t.readyBody}</p>}
           </div>
@@ -110,7 +110,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
                     <Gift className="size-4" />
                   </span>
                 )}
-                <span className="min-w-0 flex-1 truncate text-[0.875rem] font-medium">
+                <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-medium">
                   {h.kind === "stamp" ? (
                     <>
                       {t.hStamp}

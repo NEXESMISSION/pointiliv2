@@ -94,7 +94,7 @@ function Checking() {
           <ScanLine className="size-9" />
         </span>
       </span>
-      <p className="mt-6 text-[1.125rem] font-semibold text-muted">{t.checking}</p>
+      <p className="mt-6 text-[1.0625rem] font-semibold text-muted">{t.checking}</p>
     </div>
   );
 }
@@ -110,18 +110,18 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
       {gift && <Confetti count={70} delay={IMPACT_MS} />}
       <StampLand color={card.shop.color} icon={kindIcon(card.shop.kind)} logo={card.shop.stamp_logo ? card.shop.logo : null} />
       <h1
-        className={`mt-1 animate-rise text-balance text-[1.8rem] font-bold leading-tight [@media(max-height:700px)]:mt-0 ${long ? "[@media(max-height:700px)]:text-[1.5rem]" : ""}`}
+        className={`mt-1 animate-rise text-balance text-[1.5rem] font-bold leading-tight [@media(max-height:700px)]:mt-0 ${long ? "[@media(max-height:700px)]:text-[1.5rem]" : ""}`}
         style={after(80)}
       >
         {title}
       </h1>
       {/* what the tampon was for (a shop that says what it sells): the customer sees it, not only «+1» */}
       {item && (
-        <p className="mt-1 inline-flex animate-rise items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1 text-[1rem] font-bold text-brand" style={after(120)}>
+        <p className="mt-1 inline-flex animate-rise items-center gap-1.5 rounded-full bg-brand-soft px-3.5 py-1 text-[0.9375rem] font-bold text-brand" style={after(120)}>
           <span className="num">+1</span> · <bdi>{item}</bdi>
         </p>
       )}
-      <p className="animate-rise text-[1rem] font-semibold text-muted" style={after(140)}>
+      <p className="animate-rise text-[0.9375rem] font-semibold text-muted" style={after(140)}>
         {card.shop.name}
       </p>
 
@@ -133,7 +133,7 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
       {gift && (
         <a
           href={card.shop.wheel ? `/c/${card.id}` : `/c/${card.id}?show=1`}
-          className="press relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0312rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)] [@media(max-height:700px)]:mt-[1.4dvh] [@media(max-height:600px)]:py-2"
+          className="press relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)] [@media(max-height:700px)]:mt-[1.4dvh] [@media(max-height:600px)]:py-2"
           style={after(420)}
         >
           <Icon3D name={card.shop.wheel ? "party" : "gift"} size={30} className="animate-float" /> {card.shop.wheel ? t.wheelGo : t.wonBody}
@@ -210,19 +210,19 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
     <div className="flex flex-col items-center text-center">
       <Logo className="mb-2 scale-90 [@media(max-height:700px)]:hidden" />
       <StampLand color={res.color} icon={kindIcon(res.shopKind)} size={88} />
-      <h1 className="mt-1 animate-rise text-[1.625rem] font-bold leading-tight [@media(max-height:640px)]:text-[1.4rem]" style={after(80)}>
+      <h1 className="mt-1 animate-rise text-[1.5rem] font-bold leading-tight [@media(max-height:640px)]:text-[1.5rem]" style={after(80)}>
         {t.reserved}
       </h1>
-      <p className="animate-rise text-[1rem] font-semibold" style={{ ...after(140), color: res.color }}>
+      <p className="animate-rise text-[0.9375rem] font-semibold" style={{ ...after(140), color: res.color }}>
         {res.shop}
       </p>
 
       {/* the important part: not theirs yet — one short step, and the time it waits */}
       <div className="relative mt-[1.8dvh] w-full animate-rise rounded-[1.375rem] bg-surface px-3.5 py-2.5 shadow-card" style={after(240)}>
-        <p className="flex items-center justify-center gap-1.5 text-[0.9688rem] font-bold text-ink">
+        <p className="flex items-center justify-center gap-1.5 text-[0.9375rem] font-bold text-ink">
           <AlertTriangle className="size-[1.0625rem] shrink-0 text-coral" /> {form ? t.heldQuickMust : t.heldMust}
         </p>
-        <div className={`mt-2 flex items-center gap-2 rounded-full px-3 py-1 text-[0.8438rem] font-semibold ${gone ? "bg-coral-soft text-coral" : "bg-mint-soft text-mint"}`}>
+        <div className={`mt-2 flex items-center gap-2 rounded-full px-3 py-1 text-[0.8125rem] font-semibold ${gone ? "bg-coral-soft text-coral" : "bg-mint-soft text-mint"}`}>
           <Clock className="size-4 shrink-0" />
           {gone ? (
             <span className="min-w-0 flex-1 truncate text-start">{t.heldGone}</span>
@@ -244,22 +244,22 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
           <Field label={t.name} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" maxLength={60} error={err?.field === "name" ? err.error : null} className="!h-[3.25rem]" />
           <PhoneField label={t.phone} error={err?.field === "phone" ? err.error : null} compact />
           {err?.field === "phone" && err.error === t.errTaken && (
-            <Link href={`/login?next=${next}`} className="block px-1 text-[0.9062rem] font-semibold text-brand">
+            <Link href={`/login?next=${next}`} className="block px-1 text-[0.9375rem] font-semibold text-brand">
               {t.toLogin}
             </Link>
           )}
-          {err && !err.field && <p className="rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.9062rem] font-medium text-coral">{err.error}</p>}
-          <Btn type="submit" disabled={busy || gone} className="held-go relative h-[3.5rem] overflow-hidden text-[1.125rem] font-bold">
+          {err && !err.field && <p className="rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.9375rem] font-medium text-coral">{err.error}</p>}
+          <Btn type="submit" disabled={busy || gone} className="held-go relative h-[3.5rem] overflow-hidden text-[1.0625rem] font-bold">
             <span className="relative">{busy ? t.checking : t.quickGo}</span>
             {!busy && <ArrowLeft className="held-arrow relative size-5" strokeWidth={2.6} />}
           </Btn>
-          <Link href={`/login?next=${next}`} className="press flex h-10 items-center justify-center text-[0.9062rem] font-semibold text-muted">
+          <Link href={`/login?next=${next}`} className="press flex h-10 items-center justify-center text-[0.9375rem] font-semibold text-muted">
             {t.haveAccountLogin}
           </Link>
         </form>
       ) : (
         <div className="mt-[2.4dvh] w-full animate-rise space-y-2" style={after(340)}>
-          <LinkBtn href={`/login?next=${next}`} className="held-go relative h-[3.75rem] overflow-hidden text-[1.125rem] font-bold">
+          <LinkBtn href={`/login?next=${next}`} className="held-go relative h-[3.75rem] overflow-hidden text-[1.0625rem] font-bold">
             <span className="relative">{t.comeBackIn}</span>
             <ArrowLeft className="held-arrow relative size-5" strokeWidth={2.6} />
           </LinkBtn>
@@ -302,8 +302,8 @@ function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
       <span className="grid size-24 animate-pop place-items-center rounded-full bg-coral-soft text-coral">
         <Icon className="size-11" />
       </span>
-      <h1 className="mt-5 text-[1.625rem] font-bold">{v.title}</h1>
-      {v.body && <p className="mt-2 max-w-xs text-balance text-[1rem] text-muted">{v.body}</p>}
+      <h1 className="mt-5 text-[1.5rem] font-bold">{v.title}</h1>
+      {v.body && <p className="mt-2 max-w-xs text-balance text-[0.9375rem] text-muted">{v.body}</p>}
       {card && (
         <div className={`mt-6 text-start ${CARD}`}>
           <Pass shop={card.shop} stamps={card.stamps} />

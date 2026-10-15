@@ -71,8 +71,8 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
       <Top back={first ? undefined : "/shop"} title={t.storeOwnerTitle} hint={first ? undefined : t.storeOwnerHint} />
       {first && (
         <>
-          <h1 className="mt-1 shrink-0 text-balance text-[1.375rem] font-bold leading-tight">شنوّة يشريو الحرفاء بالتامبونات؟</h1>
-          <p className="shrink-0 text-[0.875rem] text-muted">اكتب الحاجات وقدّاش من تامبون كل وحدة. هذا كل شي.</p>
+          <h1 className="mt-1 shrink-0 text-balance text-[1.25rem] font-bold leading-tight">شنوّة يشريو الحرفاء بالتامبونات؟</h1>
+          <p className="shrink-0 text-[0.8125rem] text-muted">اكتب الحاجات وقدّاش من تامبون كل وحدة. هذا كل شي.</p>
         </>
       )}
 
@@ -96,7 +96,7 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
                     ))}
                   </span>
                 </span>
-                <button type="button" disabled={pending} onClick={() => give(w.card)} className="press h-10 shrink-0 rounded-[0.875rem] bg-brand px-4 text-[0.9062rem] font-bold text-white disabled:opacity-60">
+                <button type="button" disabled={pending} onClick={() => give(w.card)} className="press h-10 shrink-0 rounded-[0.875rem] bg-brand px-4 text-[0.9375rem] font-bold text-white disabled:opacity-60">
                   {t.storeGive}
                 </button>
               </li>
@@ -108,7 +108,7 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
       {/* the things on sale: a name and a price, each changed in place */}
       <section className="mt-[2dvh] flex min-h-0 flex-1 flex-col">
         <div data-list className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[1.25rem] bg-surface shadow-card">
-          {rows.length === 0 && <p className="px-4 pb-1 pt-4 text-center text-[0.9062rem] text-muted">{t.storeEmpty}</p>}
+          {rows.length === 0 && <p className="px-4 pb-1 pt-4 text-center text-[0.9375rem] text-muted">{t.storeEmpty}</p>}
           <ul className="divide-y divide-line">
             {rows.map((x) => (
               <li key={x.key} className="flex items-center gap-2 px-3 py-2">
@@ -116,7 +116,7 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
                   value={x.name}
                   onChange={(e) => change(x.key, { name: e.target.value.slice(0, 40) })}
                   aria-label={t.storeName}
-                  className="h-10 min-w-0 flex-1 rounded-[0.75rem] bg-canvas px-3 text-[0.9688rem] font-semibold outline-none focus:ring-2 focus:ring-brand/40"
+                  className="h-10 min-w-0 flex-1 rounded-[0.75rem] bg-canvas px-3 text-[0.9375rem] font-semibold outline-none focus:ring-2 focus:ring-brand/40"
                 />
                 <span className="flex shrink-0 items-center gap-1" dir="ltr">
                   <button type="button" onClick={() => change(x.key, { cost: Math.max(1, x.cost - 1) })} className="press grid size-9 place-items-center rounded-full bg-canvas" aria-label="-1">
@@ -127,7 +127,7 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
                     onChange={(e) => change(x.key, { cost: Math.min(9999, Math.max(1, Number(e.target.value.replace(/\D/g, "")) || 1)) })}
                     inputMode="numeric"
                     aria-label={fill(t.storeCost, { n: x.cost })}
-                    className="num h-9 w-12 rounded-[0.625rem] bg-brand-soft text-center text-[1rem] font-bold text-brand outline-none"
+                    className="num h-9 w-12 rounded-[0.625rem] bg-brand-soft text-center text-[0.9375rem] font-bold text-brand outline-none"
                   />
                   <button type="button" onClick={() => change(x.key, { cost: Math.min(9999, x.cost + 1) })} className="press grid size-9 place-items-center rounded-full bg-canvas" aria-label="+1">
                     <Plus className="size-4" />
@@ -153,9 +153,9 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
                 onChange={(e) => setFresh(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && add()}
                 placeholder={t.storeAdd}
-                className="h-10 min-w-0 flex-1 rounded-[0.75rem] border-2 border-dashed border-line bg-transparent px-3 text-[0.9688rem] outline-none focus:border-brand"
+                className="h-10 min-w-0 flex-1 rounded-[0.75rem] border-2 border-dashed border-line bg-transparent px-3 text-[0.9375rem] outline-none focus:border-brand"
               />
-              <button type="button" onClick={add} disabled={!fresh.trim()} className="press flex h-10 shrink-0 items-center gap-1 rounded-[0.75rem] bg-brand px-3.5 text-[0.9062rem] font-bold text-white disabled:opacity-40">
+              <button type="button" onClick={add} disabled={!fresh.trim()} className="press flex h-10 shrink-0 items-center gap-1 rounded-[0.75rem] bg-brand px-3.5 text-[0.9375rem] font-bold text-white disabled:opacity-40">
                 <Plus className="size-4" /> {t.storeAdd}
               </button>
             </li>
@@ -174,7 +174,7 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
         )}
 
         <div className="shrink-0 pb-3 pt-2">
-          {error && <p className="mb-1.5 text-center text-[0.875rem] font-semibold text-coral">{error}</p>}
+          {error && <p className="mb-1.5 text-center text-[0.8125rem] font-semibold text-coral">{error}</p>}
           <Btn type="button" onClick={save} disabled={pending || !dirty}>
             {saved && !dirty ? (
               <>

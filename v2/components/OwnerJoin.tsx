@@ -46,7 +46,7 @@ export function OwnerJoin() {
       </div>
 
       {/* what it sells: one row of the usual kinds, sliding sideways, and «الكل» at its end */}
-      <p className="mb-1.5 mt-[1.6dvh] px-1 text-[0.875rem] font-semibold text-muted">{t.kindAsk}</p>
+      <p className="mb-1.5 mt-[1.6dvh] px-1 text-[0.8125rem] font-semibold text-muted">{t.kindAsk}</p>
       <div data-list className="-mx-[clamp(1rem,5vw,1.5rem)] flex gap-1.5 overflow-x-auto overscroll-x-contain px-[clamp(1rem,5vw,1.5rem)] pb-1 [scrollbar-width:none]" role="radiogroup" aria-label={t.kindAsk}>
         {shown.map((id) => (
           <button
@@ -55,7 +55,7 @@ export function OwnerJoin() {
             role="radio"
             aria-checked={kind === id}
             onClick={() => setKind(id)}
-            className={`press flex h-[2.625rem] shrink-0 items-center gap-1.5 rounded-full ps-1.5 pe-3.5 text-[0.9062rem] font-semibold ${kind === id ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}
+            className={`press flex h-[2.625rem] shrink-0 items-center gap-1.5 rounded-full ps-1.5 pe-3.5 text-[0.9375rem] font-semibold ${kind === id ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}
           >
             <span className={`grid size-[1.875rem] place-items-center rounded-full ${kind === id ? "bg-white/90" : "bg-canvas"}`}>
               <Icon3D name={kindIcon(id)} size={20} />
@@ -63,12 +63,12 @@ export function OwnerJoin() {
             {t.kinds[id]}
           </button>
         ))}
-        <button type="button" onClick={() => setAll(true)} className="press flex h-[2.625rem] shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-3.5 text-[0.9062rem] font-bold text-brand">
+        <button type="button" onClick={() => setAll(true)} className="press flex h-[2.625rem] shrink-0 items-center gap-1.5 rounded-full bg-brand-soft px-3.5 text-[0.9375rem] font-bold text-brand">
           <LayoutGrid className="size-4" strokeWidth={2.4} />
           {t.kindsAll} <span className="num font-semibold opacity-75">+{KINDS.length - shown.length}</span>
         </button>
       </div>
-      {err("kind") && <span className="mt-1 block px-1 text-[0.8438rem] font-medium text-coral">{err("kind")}</span>}
+      {err("kind") && <span className="mt-1 block px-1 text-[0.8125rem] font-medium text-coral">{err("kind")}</span>}
       <input type="hidden" name="kind" value={kind} />
       {all && (
         <KindPicker
@@ -81,9 +81,9 @@ export function OwnerJoin() {
         />
       )}
 
-      {state?.error && !state.field && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
+      {state?.error && !state.field && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{state.error}</p>}
       {state?.field === "phone" && state.error === t.errTaken && (
-        <Link href="/login?next=%2Fshop%2Fnew" className="mt-2 px-1 text-[0.9062rem] font-semibold text-brand">
+        <Link href="/login?next=%2Fshop%2Fnew" className="mt-2 px-1 text-[0.9375rem] font-semibold text-brand">
           {t.toLogin}
         </Link>
       )}

@@ -88,20 +88,20 @@ export function LogoTip({ shopId, logo, show }: { shopId: string; logo: string |
           ) : (
             <Icon3D name="camera" size={46} className="shrink-0" />
           )}
-          <h2 className="text-[1.1875rem] font-bold leading-snug">{logo ? t.logoTipTitle : t.logoTipTitleNone}</h2>
+          <h2 className="text-[1.25rem] font-bold leading-snug">{logo ? t.logoTipTitle : t.logoTipTitleNone}</h2>
         </div>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-body">{logo ? t.logoTipBody : t.logoTipBodyNone}</p>
         <div className="mt-3.5 flex gap-2">
           {logo ? (
-            <button type="button" onClick={close} className="press h-11 flex-1 rounded-[0.875rem] bg-brand text-[0.9688rem] font-bold text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
+            <button type="button" onClick={close} className="press h-11 flex-1 rounded-[0.875rem] bg-brand text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
               {t.logoTipOk}
             </button>
           ) : (
             <>
-              <Link href="/shop/setup?edit=1" onClick={close} className="press grid h-11 flex-1 place-items-center rounded-[0.875rem] bg-brand text-[0.9688rem] font-bold text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
+              <Link href="/shop/setup?edit=1" onClick={close} className="press grid h-11 flex-1 place-items-center rounded-[0.875rem] bg-brand text-[0.9375rem] font-bold text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]">
                 {t.logoTipNow}
               </Link>
-              <button type="button" onClick={close} className="press h-11 flex-1 rounded-[0.875rem] bg-ink/[0.06] text-[0.9688rem] font-bold text-body">
+              <button type="button" onClick={close} className="press h-11 flex-1 rounded-[0.875rem] bg-ink/[0.06] text-[0.9375rem] font-bold text-body">
                 {t.logoTipLater}
               </button>
             </>

@@ -85,7 +85,7 @@ export function CardStore({ card, shop, balance: first, items, waiting: firstWai
             <Icon3D name="cart" size={40} className="shrink-0 animate-float" />
             <span className="min-w-0 flex-1">
               <span className="block text-[1.0625rem] font-bold">{t.storeBought}</span>
-              <span className="block truncate text-[0.875rem] text-white/90">
+              <span className="block truncate text-[0.8125rem] text-white/90">
                 <bdi>{said(waiting)}</bdi>
               </span>
             </span>
@@ -96,14 +96,14 @@ export function CardStore({ card, shop, balance: first, items, waiting: firstWai
                 <QrCode className="size-[1.125rem]" /> {t.storeShow}
               </MyCode>
             ) : (
-              <span className="flex-1 text-[0.875rem] text-white/90">{t.storeShow}</span>
+              <span className="flex-1 text-[0.8125rem] text-white/90">{t.storeShow}</span>
             )}
             {cancelAsk ? (
-              <button type="button" disabled={pending} onClick={() => cancel(cancelAsk)} className="press h-10 shrink-0 rounded-full bg-white/25 px-3.5 text-[0.8438rem] font-bold">
+              <button type="button" disabled={pending} onClick={() => cancel(cancelAsk)} className="press h-10 shrink-0 rounded-full bg-white/25 px-3.5 text-[0.8125rem] font-bold">
                 {t.storeCancelAsk}
               </button>
             ) : (
-              <button type="button" onClick={() => setCancelAsk(waiting[waiting.length - 1]!.batch)} className="press h-10 shrink-0 rounded-full px-3 text-[0.875rem] font-semibold text-white/85 underline-offset-4 hover:underline">
+              <button type="button" onClick={() => setCancelAsk(waiting[waiting.length - 1]!.batch)} className="press h-10 shrink-0 rounded-full px-3 text-[0.8125rem] font-semibold text-white/85 underline-offset-4 hover:underline">
                 {t.storeCancel}
               </button>
             )}
@@ -116,7 +116,7 @@ export function CardStore({ card, shop, balance: first, items, waiting: firstWai
         <h2 className="mb-1 flex items-center gap-1.5 px-0.5 text-[1.0625rem] font-bold">
           <ShoppingBag className="size-5 text-brand" /> {t.storeTitle}
         </h2>
-        <p className="mb-2 px-0.5 text-[0.8438rem] text-muted">{t.storeHint}</p>
+        <p className="mb-2 px-0.5 text-[0.8125rem] text-muted">{t.storeHint}</p>
         {items.length === 0 ? (
           <p className="rounded-[1.25rem] bg-surface p-4 text-center text-[0.9375rem] text-muted shadow-card">{t.storeEmpty}</p>
         ) : (
@@ -127,7 +127,7 @@ export function CardStore({ card, shop, balance: first, items, waiting: firstWai
               return (
                 <li key={x.id} className={`flex items-center gap-3 px-3.5 py-2.5 transition-colors ${q > 0 ? "bg-brand-soft/60" : ""}`}>
                   <span className="min-w-0 flex-1">
-                    <bdi className="block truncate text-[1rem] font-bold">{x.name}</bdi>
+                    <bdi className="block truncate text-[0.9375rem] font-bold">{x.name}</bdi>
                     <span className={`block text-[0.8125rem] font-semibold ${can || q > 0 ? "text-brand" : "text-faint"}`}>
                       {fill(t.storeCost, { n: x.cost })}
                       {!can && q === 0 && <span className="font-normal text-muted"> · {fill(t.storeShort, { n: x.cost - left })}</span>}
@@ -155,7 +155,7 @@ export function CardStore({ card, shop, balance: first, items, waiting: firstWai
         {/* the basket: what it costs, and the one button */}
         {count > 0 && (
           <div className="mt-2.5 shrink-0 animate-rise">
-            {error && <p className="mb-1.5 text-center text-[0.875rem] font-semibold text-coral">{error}</p>}
+            {error && <p className="mb-1.5 text-center text-[0.8125rem] font-semibold text-coral">{error}</p>}
             <button
               type="button"
               disabled={pending || left < 0}
@@ -167,7 +167,7 @@ export function CardStore({ card, shop, balance: first, items, waiting: firstWai
             </button>
           </div>
         )}
-        {count === 0 && error && <p className="mt-2 text-center text-[0.875rem] font-semibold text-coral">{error}</p>}
+        {count === 0 && error && <p className="mt-2 text-center text-[0.8125rem] font-semibold text-coral">{error}</p>}
       </section>
     </>
   );

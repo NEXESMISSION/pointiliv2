@@ -28,9 +28,9 @@ export default async function CustomerCode({ params }: { params: Promise<{ code:
       <Middle className="items-center text-center">
         <Logo />
         <Icon3D name="ticket" size={88} className="mt-[4dvh] animate-float" />
-        <h1 className="mt-4 text-[1.625rem] font-bold">{t.publicCodeTitle}</h1>
-        <p className="mt-1.5 max-w-xs text-[1rem] text-muted">{t.publicCodeBody}</p>
-        <Link href="/" className="press mt-[4dvh] inline-flex h-12 items-center rounded-full bg-brand px-6 text-[1rem] font-bold text-white">
+        <h1 className="mt-4 text-[1.5rem] font-bold">{t.publicCodeTitle}</h1>
+        <p className="mt-1.5 max-w-xs text-[0.9375rem] text-muted">{t.publicCodeBody}</p>
+        <Link href="/" className="press mt-[4dvh] inline-flex h-12 items-center rounded-full bg-brand px-6 text-[0.9375rem] font-bold text-white">
           Pointili
         </Link>
       </Middle>

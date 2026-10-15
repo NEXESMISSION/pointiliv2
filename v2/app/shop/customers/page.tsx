@@ -25,7 +25,7 @@ export default async function ShopCustomers() {
       {items.length === 0 ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center pb-[6dvh] text-center">
           <Icon3D name="people" size={88} className="animate-float" />
-          <h2 className="mt-4 text-[1.3125rem] font-bold">{t.customersEmpty}</h2>
+          <h2 className="mt-4 text-[1.25rem] font-bold">{t.customersEmpty}</h2>
           <p className="mt-1.5 max-w-[17rem] text-[0.9375rem] text-muted">{t.customersEmptyBody}</p>
         </div>
       ) : (

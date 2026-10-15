@@ -61,8 +61,8 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
             <Download className="size-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[1.0312rem] font-bold">{t.installApp}</span>
-            <span className="block truncate text-[0.8438rem] text-muted">{t.installAppHint}</span>
+            <span className="block truncate text-[1.0625rem] font-bold">{t.installApp}</span>
+            <span className="block truncate text-[0.8125rem] text-muted">{t.installAppHint}</span>
           </span>
         </button>
         {sheet}
@@ -71,7 +71,7 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
   }
   return (
     <>
-      <button type="button" onClick={go} className={`press inline-flex h-10 items-center gap-2 rounded-full bg-brand px-4 text-[0.9062rem] font-bold text-white ${className}`}>
+      <button type="button" onClick={go} className={`press inline-flex h-10 items-center gap-2 rounded-full bg-brand px-4 text-[0.9375rem] font-bold text-white ${className}`}>
         <Download className="size-[1.125rem]" /> {t.installApp}
       </button>
       {sheet}
@@ -120,10 +120,10 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
   if (look === "line") {
     return (
       <div className={className}>
-        <button type="button" onClick={send} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.875rem] font-bold text-brand">
+        <button type="button" onClick={send} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.8125rem] font-bold text-brand">
           <Send className="size-4" /> {t.waSendSelf}
         </button>
-        <button type="button" onClick={go} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.875rem] font-semibold text-muted">
+        <button type="button" onClick={go} className="press flex w-full items-center justify-center gap-1.5 py-1 text-[0.8125rem] font-semibold text-muted">
           <ExternalLink className="size-4" /> {label}
         </button>
         {stuck && (
@@ -141,8 +141,8 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
           <Send className="size-5" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[1.0312rem] font-bold">{t.waSendSelf}</span>
-          <span className="block text-[0.8438rem] leading-snug text-muted">{t.waSendHint}</span>
+          <span className="block truncate text-[1.0625rem] font-bold">{t.waSendSelf}</span>
+          <span className="block text-[0.8125rem] leading-snug text-muted">{t.waSendHint}</span>
         </span>
       </button>
       <button type="button" onClick={go} className="press mt-1.5 flex w-full items-center gap-3 rounded-[1.375rem] px-4 py-2.5 text-start">
@@ -207,7 +207,7 @@ export function InstallPopup({ where, who, show, force = false }: { where: strin
       <div className="w-full max-w-sm rounded-[1.75rem] bg-surface p-5 text-center text-ink shadow-[0_30px_70px_-25px_rgb(20_16_40/0.6)]" style={{ animation: "news-in 420ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
         <style>{`@keyframes news-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }`}</style>
         <Icon3D name="phone" size={64} className="mx-auto animate-float" />
-        <h2 className="mt-2 text-balance text-[1.375rem] font-bold leading-tight">{t.installApp}</h2>
+        <h2 className="mt-2 text-balance text-[1.25rem] font-bold leading-tight">{t.installApp}</h2>
         <p className="mx-auto mt-1.5 max-w-[17rem] text-balance text-[0.9375rem] leading-snug text-body">{t.installPopupBody}</p>
         <button type="button" onClick={yes} className="press mt-4 flex h-[3.25rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
           <Download className="size-5" /> {t.installPopupYes}
@@ -255,7 +255,7 @@ export function IosGuide({ where, onClose }: { where: string; onClose: () => voi
         <h2 className="mt-3 text-[1.25rem] font-bold leading-tight">
           <Mixed text={now.title} />
         </h2>
-        <p className="mx-auto mt-1 max-w-[19rem] text-balance text-[0.875rem] leading-snug text-body">
+        <p className="mx-auto mt-1 max-w-[19rem] text-balance text-[0.8125rem] leading-snug text-body">
           <Mixed text={now.hint} />
         </p>
         <div className="mt-3 flex justify-center gap-1.5" aria-hidden>

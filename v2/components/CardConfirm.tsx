@@ -22,8 +22,8 @@ function Line({ icon: Icon, children, sub }: { icon: typeof Gift; children: Reac
         <Icon className="size-[1.125rem]" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[0.9688rem] font-bold leading-snug">{children}</span>
-        {sub && <span className="mt-0.5 block text-[0.8438rem] leading-snug text-muted">{sub}</span>}
+        <span className="block text-[0.9375rem] font-bold leading-snug">{children}</span>
+        {sub && <span className="mt-0.5 block text-[0.8125rem] leading-snug text-muted">{sub}</span>}
       </span>
     </li>
   );
@@ -33,7 +33,7 @@ function Line({ icon: Icon, children, sub }: { icon: typeof Gift; children: Reac
 function Wins({ n }: { n: number }) {
   if (n <= 0) return null;
   return (
-    <span className="mt-1.5 flex items-center gap-1.5 text-[0.8438rem] font-bold leading-snug text-coral">
+    <span className="mt-1.5 flex items-center gap-1.5 text-[0.8125rem] font-bold leading-snug text-coral">
       <Gift className="size-4 shrink-0" /> {fill((n === 1 ? t.cardPopOne : t.cardPopMany).win, { who: customersN(n) })}
     </span>
   );
@@ -73,7 +73,7 @@ export function CardConfirm({ editing, after, impact, pending, onBack }: { editi
 
         {!editing ? (
           <>
-            <h2 className="shrink-0 text-center text-[1.375rem] font-bold">{title}</h2>
+            <h2 className="shrink-0 text-center text-[1.25rem] font-bold">{title}</h2>
             <div data-list className="mt-2 min-h-0 overflow-y-auto overscroll-contain">
               <ul className="divide-y divide-line">
                 <Line icon={ScanLine} sub={waitSays(after.gap)}>
@@ -90,8 +90,8 @@ export function CardConfirm({ editing, after, impact, pending, onBack }: { editi
           </>
         ) : ask > 0 ? (
           <>
-            <h2 className="shrink-0 text-balance text-center text-[1.375rem] font-bold leading-tight">{title}</h2>
-            <p className="mt-1 shrink-0 text-center text-[1rem] text-muted">{words.ask}</p>
+            <h2 className="shrink-0 text-balance text-center text-[1.25rem] font-bold leading-tight">{title}</h2>
+            <p className="mt-1 shrink-0 text-center text-[0.9375rem] text-muted">{words.ask}</p>
             {/* never a scroll box of their own (it would cut the cards' shadows into a pale band): on a screen too short, the whole sheet scrolls */}
             <div className="mt-3 grid shrink-0 gap-2 pb-3" role="radiogroup" aria-label={words.ask}>
               {[false, true].map((m) => (
@@ -107,8 +107,8 @@ export function CardConfirm({ editing, after, impact, pending, onBack }: { editi
                     {move === m && <span className="size-2 rounded-full bg-white" />}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[1.0312rem] font-bold leading-snug">{m ? words.move : words.keep}</span>
-                    <span className="mt-0.5 block text-[0.875rem] leading-snug text-muted">{m ? words.moveSub : words.keepSub}</span>
+                    <span className="block text-[1.0625rem] font-bold leading-snug">{m ? words.move : words.keep}</span>
+                    <span className="mt-0.5 block text-[0.8125rem] leading-snug text-muted">{m ? words.moveSub : words.keepSub}</span>
                     <Wins n={m ? (impact?.winMove ?? 0) : winKeep} />
                   </span>
                 </button>
@@ -119,8 +119,8 @@ export function CardConfirm({ editing, after, impact, pending, onBack }: { editi
           // nobody to choose for, but the new card fills some cards as they are: said before it is done
           <div className="shrink-0 pb-3 text-center">
             <Icon3D name="gift" size={64} className="mx-auto" />
-            <h2 className="mt-1 text-balance text-[1.375rem] font-bold leading-tight">{title}</h2>
-            <p className="mt-1 text-[1rem] text-muted">{winWords.winSub}</p>
+            <h2 className="mt-1 text-balance text-[1.25rem] font-bold leading-tight">{title}</h2>
+            <p className="mt-1 text-[0.9375rem] text-muted">{winWords.winSub}</p>
           </div>
         )}
 

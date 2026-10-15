@@ -23,7 +23,7 @@ function Row({ href, mark, title, sub }: { href: string; mark: ReactNode; title:
     <Link href={href} className="press flex items-center gap-3 px-3.5 py-[clamp(0.5rem,1.4dvh,0.8rem)] active:bg-canvas">
       <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[0.75rem]">{mark}</span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.9688rem] font-bold">{title}</span>
+        <span className="block truncate text-[0.9375rem] font-bold">{title}</span>
         {/* how it stands now: the smallest phones keep the list whole, without it */}
         {sub && <span className="block truncate text-[0.8125rem] text-muted [@media(max-height:520px)]:hidden">{sub}</span>}
       </span>

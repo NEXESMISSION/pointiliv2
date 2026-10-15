@@ -39,14 +39,14 @@ export function AuthForm({ mode, next, owner }: { mode: "join" | "login"; next?:
       </div>
       {next && <input type="hidden" name="next" value={next} />}
       {owner && <input type="hidden" name="owner" value="1" />}
-      {state?.error && !state.field && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">{state.error}</p>}
+      {state?.error && !state.field && <p className="mt-4 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{state.error}</p>}
       {state?.field === "phone" && state.error === t.errTaken && (
-        <Link href={`/login${q}`} className="mt-2 px-1 text-[0.9062rem] font-semibold text-brand">
+        <Link href={`/login${q}`} className="mt-2 px-1 text-[0.9375rem] font-semibold text-brand">
           {t.toLogin}
         </Link>
       )}
       {mode === "login" && (
-        <Link href="/forgot" className="mt-3 self-start px-1 text-[0.9062rem] font-semibold text-muted">
+        <Link href="/forgot" className="mt-3 self-start px-1 text-[0.9375rem] font-semibold text-muted">
           {t.forgot}
         </Link>
       )}

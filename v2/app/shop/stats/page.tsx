@@ -64,9 +64,9 @@ export default async function ShopStats() {
             const last = i === days.length - 1;
             return (
               <div key={d.day} className="flex h-full flex-1 flex-col items-center justify-end gap-1" title={`${weekday(d.day)} · ${d.stamps}`}>
-                {d.stamps > 0 && <span className="num text-[0.6875rem] font-bold text-muted">{d.stamps}</span>}
+                {d.stamps > 0 && <span className="num text-[0.75rem] font-bold text-muted">{d.stamps}</span>}
                 <span className={`w-full rounded-t-[0.25rem] ${last ? "bg-brand" : "bg-brand/30"}`} style={{ height: `${Math.max(4, (d.stamps / max) * 100)}%` }} />
-                <bdi className="text-[0.6875rem] text-faint">{weekday(d.day)}</bdi>
+                <bdi className="text-[0.75rem] text-faint">{weekday(d.day)}</bdi>
               </div>
             );
           })}
@@ -80,7 +80,7 @@ export default async function ShopStats() {
           <h2 className="mb-1.5 px-0.5 text-[0.9375rem] font-bold">{t.statSelling}</h2>
           <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
             {selling.map((x, i) => (
-              <span key={x.id} className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.875rem] font-bold shadow-card ${i === 0 ? "bg-brand text-white" : "bg-surface text-ink"}`}>
+              <span key={x.id} className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-[0.8125rem] font-bold shadow-card ${i === 0 ? "bg-brand text-white" : "bg-surface text-ink"}`}>
                 <bdi>{x.name}</bdi>
                 <span className={`num text-[0.8125rem] ${i === 0 ? "text-white/80" : "text-brand"}`}>×{x.n}</span>
               </span>
@@ -93,18 +93,18 @@ export default async function ShopStats() {
         <h2 className="mb-2 px-0.5 text-[0.9375rem] font-bold">{t.statTop}</h2>
         <div data-list className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[1.25rem] bg-surface shadow-card">
           {!s?.top.length ? (
-            <p className="grid h-full place-items-center p-4 text-center text-[0.9062rem] text-muted">{t.customersEmpty}</p>
+            <p className="grid h-full place-items-center p-4 text-center text-[0.9375rem] text-muted">{t.customersEmpty}</p>
           ) : (
             <ul className="divide-y divide-line">
               {s.top.map((c, i) => (
                 <li key={i} className="flex items-center gap-3 px-3.5 py-2.5">
                   <span className="num grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.8125rem] font-bold text-brand">{i + 1}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[0.9062rem] font-semibold">{c.name ?? t.someone}</span>
+                    <span className="block truncate text-[0.9375rem] font-semibold">{c.name ?? t.someone}</span>
                     {c.last_at && <span className="block text-[0.75rem] text-muted">{day(c.last_at)}</span>}
                   </span>
                   {c.gifts > 0 && <span className="num shrink-0 rounded-full bg-coral-soft px-2 py-0.5 text-[0.75rem] font-bold text-coral">🎁 {c.gifts}</span>}
-                  <span className="num shrink-0 text-[0.875rem] font-bold text-body">
+                  <span className="num shrink-0 text-[0.8125rem] font-bold text-body">
                     {c.goal ? `${Math.min(c.stamps, c.goal)}/${c.goal}` : c.stamps}
                   </span>
                 </li>

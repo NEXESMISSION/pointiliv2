@@ -56,8 +56,8 @@ export function CardWheel({ card, moment, prizes }: { card: string; moment: numb
           <X className="size-5" />
         </button>
       )}
-      <h2 className="animate-rise text-balance text-[1.875rem] font-bold leading-tight">{won ? fill(t.wheelWon, { prize: won }) : t.wheelTitle}</h2>
-      <p className="mt-1.5 text-[1rem] text-white/75">{won ? say.collect : t.wheelHint}</p>
+      <h2 className="animate-rise text-balance text-[1.5rem] font-bold leading-tight">{won ? fill(t.wheelWon, { prize: won }) : t.wheelTitle}</h2>
+      <p className="mt-1.5 text-[0.9375rem] text-white/75">{won ? say.collect : t.wheelHint}</p>
       <div className="mt-[4dvh]">
         <Wheel
           prizes={prizes}
@@ -77,7 +77,7 @@ export function CardWheel({ card, moment, prizes }: { card: string; moment: numb
         />
       </div>
       {won && (
-        <button type="button" onClick={done} className="press mt-[4dvh] h-14 w-full max-w-xs animate-pop rounded-[1.25rem] bg-white text-[1.125rem] font-bold text-ink">
+        <button type="button" onClick={done} className="press mt-[4dvh] h-14 w-full max-w-xs animate-pop rounded-[1.25rem] bg-white text-[1.0625rem] font-bold text-ink">
           {say.ok}
         </button>
       )}
@@ -92,9 +92,9 @@ export function CardWheel({ card, moment, prizes }: { card: string; moment: numb
           <Icon3D name="party" size={40} className="animate-float" />
           <span className="min-w-0 flex-1">
             <b className="block text-[1.0625rem]">{t.wheelWaits}</b>
-            <span className="block text-[0.875rem] text-white/70">{t.wheelHint}</span>
+            <span className="block text-[0.8125rem] text-white/70">{t.wheelHint}</span>
           </span>
-          <span className="shrink-0 rounded-full bg-white px-3.5 py-2 text-[0.9062rem] font-bold text-ink">{t.wheelGo}</span>
+          <span className="shrink-0 rounded-full bg-white px-3.5 py-2 text-[0.9375rem] font-bold text-ink">{t.wheelGo}</span>
         </button>
       )}
       {open && browser && createPortal(popup, document.body)}

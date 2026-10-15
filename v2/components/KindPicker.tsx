@@ -12,7 +12,7 @@ export function KindTile({ id, on, onPick, lazy }: { id: string; on: boolean; on
       type="button"
       onClick={() => onPick(id)}
       aria-pressed={on}
-      className={`press flex flex-col items-center gap-1 rounded-[1.125rem] px-1 py-3 text-[0.7812rem] font-semibold leading-tight ${on ? "bg-brand-soft text-brand shadow-[inset_0_0_0_2px_var(--color-brand)]" : "bg-surface text-body shadow-card"}`}
+      className={`press flex flex-col items-center gap-1 rounded-[1.125rem] px-1 py-3 text-[0.8125rem] font-semibold leading-tight ${on ? "bg-brand-soft text-brand shadow-[inset_0_0_0_2px_var(--color-brand)]" : "bg-surface text-body shadow-card"}`}
     >
       <Icon3D name={kindIcon(id)} size={32} lazy={lazy} />
       <span className="line-clamp-2 text-center">{t.kinds[id]}</span>
@@ -74,7 +74,7 @@ export function KindPicker({ value, onPick, onClose }: { value: string; onPick: 
           )}
           {groups.map((g) => (
             <section key={g.id} className="mt-3">
-              <h3 className="mb-2 px-1 text-[0.875rem] font-bold text-muted">{g.label}</h3>
+              <h3 className="mb-2 px-1 text-[0.8125rem] font-bold text-muted">{g.label}</h3>
               <div className="grid grid-cols-4 gap-2">
                 {g.kinds.map((id) => (
                   <KindTile key={id} id={id} on={value === id} onPick={onPick} lazy />

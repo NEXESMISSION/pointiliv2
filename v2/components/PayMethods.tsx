@@ -60,11 +60,11 @@ export function PayMethods({ support, shop, months, details }: { support: string
       <p className="mt-[2.4dvh] text-balance text-center text-[0.9375rem] leading-relaxed text-body [@media(max-height:600px)]:hidden">{t.payHow}</p>
       {support && (
         <div className="mt-3 grid grid-cols-2 gap-2 [@media(max-height:600px)]:mt-[2.4dvh]">
-          <a href={`tel:+${support}`} onClick={() => said("call")} className="press flex h-[3.5rem] items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1.0312rem] font-bold text-white">
+          <a href={`tel:+${support}`} onClick={() => said("call")} className="press flex h-[3.5rem] items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
             <Phone className="size-5" /> {t.helpCall}
           </a>
           {wa && (
-            <a href={wa} target="_blank" rel="noreferrer" onClick={() => said("whatsapp")} className="press flex h-[3.5rem] items-center justify-center gap-2 rounded-[1.25rem] bg-[#25D366] text-[1.0312rem] font-bold text-white">
+            <a href={wa} target="_blank" rel="noreferrer" onClick={() => said("whatsapp")} className="press flex h-[3.5rem] items-center justify-center gap-2 rounded-[1.25rem] bg-[#25D366] text-[1.0625rem] font-bold text-white">
               <MessageCircle className="size-5" /> {t.helpWhatsapp}
             </a>
           )}
@@ -88,7 +88,7 @@ function Detail({ label, value, sub }: { label: string; value: string; sub?: str
     <div className="flex items-center gap-3 px-3.5 py-2.5">
       <span className="w-12 shrink-0 text-[0.8125rem] font-bold text-muted" dir="ltr">{label}</span>
       <span className="min-w-0 flex-1">
-        <bdi dir="ltr" className="num block truncate text-[1rem] font-bold">{value}</bdi>
+        <bdi dir="ltr" className="num block truncate text-[0.9375rem] font-bold">{value}</bdi>
         {/* a bank's name in Latin letters loses its end, never its start */}
         {sub && (
           <bdi dir="auto" className="block truncate text-[0.75rem] text-muted">

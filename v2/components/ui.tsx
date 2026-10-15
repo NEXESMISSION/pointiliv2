@@ -35,13 +35,13 @@ export const boxFocus = "focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--
 export function Field({ label, error, className = "", ...rest }: ComponentProps<"input"> & { label: string; error?: string | null }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block px-1 text-[0.875rem] font-semibold text-muted">{label}</span>
+      <span className="mb-1.5 block px-1 text-[0.8125rem] font-semibold text-muted">{label}</span>
       <input
         className={`block h-[3.5rem] w-full px-4 text-[17px] text-ink outline-none placeholder:text-faint ${boxLook} ${boxFocus} ${className}`}
         aria-invalid={!!error}
         {...rest}
       />
-      {error && <span className="mt-1.5 block px-1 text-[0.8438rem] font-medium text-coral">{error}</span>}
+      {error && <span className="mt-1.5 block px-1 text-[0.8125rem] font-medium text-coral">{error}</span>}
     </label>
   );
 }
@@ -73,7 +73,7 @@ export function Middle({ children, className = "" }: { children: ReactNode; clas
 /** Pointili's mark — two loyalty cards, the front one with a sparkle — and the name. */
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 text-[1.3125rem] font-bold text-ink ${className}`} dir="ltr">
+    <span className={`inline-flex items-center gap-2 text-[1.25rem] font-bold text-ink ${className}`} dir="ltr">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/brand-mark.svg" alt="" width={40} height={29} style={{ width: "2.5rem", height: "1.8125rem" }} className="drop-shadow-[0_6px_10px_rgb(80_40_200/0.25)]" />
       Pointili
