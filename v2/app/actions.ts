@@ -396,6 +396,8 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
   const gap = gapRaw === "" ? null : Math.round(Number(gapRaw));
   // the customers on their way: they finish the card they started, unless the owner moves them to the new one now
   const res = await call<{ ok: boolean; error?: string }>("save_card", { p_goal: goal, p_gift: gift, p_color: str(fd, "color"), p_gap: gap !== null && Number.isFinite(gap) ? gap : null, p_move: str(fd, "move") === "1" });
+  // no shop under this account (signed out, or the account changed in another tab): the way in, not the same error nine times
+  if (res?.error === "no_shop" || res?.error === "not_signed_in") redirect((await getMe())?.id ? "/shop/setup" : "/shop/new");
   if (!res?.ok) return { error: t.errNetwork };
   revalidatePath("/", "layout");
   redirect(inside(str(fd, "next")) ?? "/shop");

@@ -10,17 +10,19 @@ import { t } from "@/lib/t";
 
 export const metadata = { title: "المحل" };
 
-/** Step 2 of 3 (and later, changing the shop's name or kind from the shop's home). */
-export default async function ShopSetup({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
-  const [me, { edit }, help] = await Promise.all([getMe(), searchParams, getHelp()]);
+/** Step 1 of 3 for somebody who has an account already (and later, changing the shop's name or kind from «المحل»). */
+export default async function ShopSetup({ searchParams }: { searchParams: Promise<{ edit?: string; name?: string; kind?: string }> }) {
+  const [me, { edit, name, kind }, help] = await Promise.all([getMe(), searchParams, getHelp()]);
   if (!me) redirect("/shop/new");
   const editing = !!edit && !!me.shop;
   return (
     <Screen>
       <Top back={editing ? "/shop/settings" : undefined} end={<HelpButton help={help} />} />
       <Middle>
-        <Heading title={t.shopTitle}>{!editing && <Steps at={2} />}</Heading>
-        <ShopForm name={me.shop?.name} kind={me.shop?.kind} logo={me.shop?.logo} next={editing ? "/shop" : undefined} />
+        {/* a person with an account already (a customer, or an owner who signed in) opens the shop here: step 1 of 3,
+            then the card, then what the customer sees — what they typed on /shop/new before signing in comes along */}
+        <Heading title={t.shopTitle}>{!editing && <Steps at={1} />}</Heading>
+        <ShopForm name={me.shop?.name ?? name?.slice(0, 60)} kind={me.shop?.kind ?? kind} logo={me.shop?.logo} next={editing ? "/shop" : undefined} />
       </Middle>
     </Screen>
   );

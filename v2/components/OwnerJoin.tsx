@@ -32,6 +32,9 @@ export function OwnerJoin() {
   useEffect(() => {
     if (state?.error) signal("form_error", `join-shop · ${state.field ?? "form"} · ${state.error}`);
   }, [state]);
+  // an account already (the phone is taken, or «عندك كونت؟»): signing in leads straight to the shop's screen,
+  // with the shop's name and kind already written there — nothing typed twice
+  const signIn = `/login?next=${encodeURIComponent(`/shop/setup?${new URLSearchParams({ ...(shop.trim() ? { name: shop.trim() } : {}), ...(kind ? { kind } : {}) })}`)}`;
   // a kind chosen from the full list takes the first place, lit
   const shown = !kind || POPULAR.includes(kind) ? POPULAR : [kind, ...POPULAR];
 
@@ -83,7 +86,7 @@ export function OwnerJoin() {
 
       {state?.error && !state.field && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-3 text-[0.9375rem] font-medium text-coral">{state.error}</p>}
       {state?.field === "phone" && state.error === t.errTaken && (
-        <Link href="/login?next=%2Fshop%2Fnew" className="mt-2 px-1 text-[0.9375rem] font-semibold text-brand">
+        <Link href={signIn} className="mt-2 px-1 text-[0.9375rem] font-semibold text-brand">
           {t.toLogin}
         </Link>
       )}
@@ -92,7 +95,7 @@ export function OwnerJoin() {
         <Btn type="submit" disabled={pending}>
           {pending ? t.checking : t.next}
         </Btn>
-        <Link href="/login?next=%2Fshop%2Fnew" className="press mt-1 flex h-11 items-center justify-center text-[0.9375rem] font-semibold text-muted [@media(max-height:520px)]:h-9">
+        <Link href={signIn} className="press mt-1 flex h-11 items-center justify-center text-[0.9375rem] font-semibold text-muted [@media(max-height:520px)]:h-9">
           {t.toLogin}
         </Link>
       </div>
