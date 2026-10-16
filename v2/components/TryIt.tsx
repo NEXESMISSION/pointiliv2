@@ -7,6 +7,7 @@ import { Confetti, StampLand } from "@/components/StampLand";
 import { Icon3D } from "@/components/ui";
 import { fill, kindIcon, t } from "@/lib/t";
 import { signal } from "@/lib/track";
+import { mix, useBars } from "@/lib/bars";
 
 /** what the demo needs to know of the shop: the card as the customer would get it */
 export type DemoShop = { name: string; kind: string; color: string; logo?: string | null; goal: number | null; gift: string | null; stamp_logo?: boolean };
@@ -22,6 +23,8 @@ export type DemoShop = { name: string; kind: string; color: string; logo?: strin
  */
 export function TryIt({ shop, onClose, finish, top }: { shop: DemoShop; onClose: () => void; finish?: string; top?: ReactNode }) {
   const [beat, setBeat] = useState(0);
+  // the demo dims the screen to near black: the phone's bars too
+  useBars(mix("#0f0e17", "#f4f3f9", 0.8));
   const goal = shop.goal ?? 10;
   const gift = shop.gift ?? "";
   const pass = { name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal, gift, stamp_logo: shop.stamp_logo };

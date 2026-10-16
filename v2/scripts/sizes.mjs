@@ -12,6 +12,7 @@
  *   node scripts/sizes.mjs                       (from v2/, dev server on :3200)
  *   SIZES=354x610d,360x540 ONLY=wizard,home node scripts/sizes.mjs
  *   UA="… FBAN/FBIOS …" ONLY=counter-tip,customer-me node scripts/sizes.mjs   (as Facebook's browser)
+ *   SIZES="384x832@32,24;390x797@0,34" node scripts/sizes.mjs   (the installed app, «;» between sizes: the system's bars over the page, top and bottom px)
  *
  * ONLY keeps the screens whose name starts with one of the words. It makes
  * its own throwaway accounts and deletes them at the end.
@@ -43,10 +44,14 @@ const ALL_SIZES = [
   "1280x720d", // a laptop
   "1440x900d",
 ];
-const SIZES = (process.env.SIZES ? process.env.SIZES.split(",") : ALL_SIZES).map((s) => {
-  const desk = s.trim().endsWith("d");
-  const [w, h] = s.trim().replace(/d$/, "").split("x").map(Number);
-  return [w, h, desk];
+// «@top,bottom»: the app added to the home screen, drawn under the phone's own bars (an Android
+// edge to edge, an iPhone's notch and home bar) — what sits under them is reported
+const SIZES = (process.env.SIZES ? process.env.SIZES.split(process.env.SIZES.includes("@") ? ";" : ",") : ALL_SIZES).map((s) => {
+  const [dims, bars] = s.trim().split("@");
+  const desk = dims.endsWith("d");
+  const [w, h] = dims.replace(/d$/, "").split("x").map(Number);
+  const [top, bottom] = bars ? bars.split(",").map(Number) : [0, 0];
+  return [w, h, desk, bars ? { top, bottom } : null];
 });
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",").map((s) => s.trim()) : null;
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -415,7 +420,7 @@ const needed = new Set(SCREENS_AS());
 for (const [key, who] of Object.entries({ owner, customer, fresh, noShop, boss, lonely })) if (needed.has(key)) states[key] = await signIn(who);
 
 // what is wrong on the screen as it stands
-function measure([read, tiny]) {
+function measure([read, tiny, bars]) {
   const W = innerWidth;
   const H = innerHeight;
   const se = document.scrollingElement;
@@ -453,6 +458,9 @@ function measure([read, tiny]) {
       if (st.overflowY !== "visible") break;
     }
     if (!read && pageY <= 1 && !inScroller && r.bottom - H > 1) out.push({ kind: "below the screen", px: Math.round(r.bottom - H), el: desc(el) });
+    // the installed app: nothing to read or tap under the phone's own bars (the page scrolled to its top)
+    if (bars && !inScroller && se.scrollTop < 1 && r.bottom > 0 && r.top < bars.top - 1) out.push({ kind: "under the status bar", px: Math.round(bars.top - r.top), el: desc(el) });
+    if (bars && !inScroller && pageY <= 1 && r.top < H && r.bottom > H - bars.bottom + 1) out.push({ kind: "under the home bar", px: Math.round(r.bottom - (H - bars.bottom)), el: desc(el) });
     // cut by the nearest box that hides what overflows it
     for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
       const st = getComputedStyle(a);
@@ -494,8 +502,8 @@ function measure([read, tiny]) {
 const report = [];
 let bad = 0;
 try {
-  for (const [i, [width, height, desk]] of SIZES.entries()) {
-    const size = `${width}x${height}${desk ? "d" : ""}`;
+  for (const [i, [width, height, desk, bars]] of SIZES.entries()) {
+    const size = `${width}x${height}${desk ? "d" : ""}${bars ? `@${bars.top},${bars.bottom}` : ""}`;
     mkdirSync(`${OUT}/${size}`, { recursive: true });
     console.log(`\n${size}${height < 548 ? " (may scroll, never cut)" : ""}`);
     const mobile = !desk && width < 900;
@@ -519,6 +527,11 @@ try {
     };
     for (const s of SCREENS) {
       const page = await (await ctxFor(s.as)).newPage();
+      if (bars) {
+        const cdp = await page.context().newCDPSession(page);
+        await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: bars.top, topMax: bars.top, bottom: bars.bottom, bottomMax: bars.bottom, left: 0, leftMax: 0, right: 0, rightMax: 0 } });
+        await cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "display-mode", value: "standalone" }] });
+      }
       let issues;
       try {
         if (s.before) await Promise.resolve(s.before(i));
@@ -538,7 +551,7 @@ try {
           return null;
         });
         await page.screenshot({ path: `${OUT}/${size}/${s.name}.png` });
-        issues = broken ? [{ kind: "could not open", el: broken }] : await page.evaluate(measure, [!!s.read, height < 548]);
+        issues = broken ? [{ kind: "could not open", el: broken }] : await page.evaluate(measure, [!!s.read, height < 548, bars]);
       } catch (e) {
         // the first line says what; the lines after it say why (what the click waited for, what stood in its way)
         const said = String(e.message).split("\n");

@@ -16,6 +16,7 @@ import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 import { pretty } from "@/lib/phone";
 import { nextTampon } from "@/lib/when";
+import { mix, useBars } from "@/lib/bars";
 import type { Said } from "@/lib/types";
 
 type Code = { id: string; svg: string; expiresLocal: number };
@@ -373,6 +374,8 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   }, [coach]);
 
   useScreen(coach === "bravo" || coach === "leaving" ? "bravo" : coach === "tip" ? "tip" : "code");
+  // the phone's bars in the counter's colour, top and bottom (an app on the home screen showed two grey bands)
+  useBars(mix(shop.color, "#ffffff", 0.75), mix(shop.color, "#000000", 0.62));
 
   const latest = flashes[flashes.length - 1];
   const who = known[0];

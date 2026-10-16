@@ -125,8 +125,9 @@ const FILTERS: { id: string; label: string; keep: (s: ShopRow, l: Level) => bool
   { id: "paid", label: "✓ خلّصو", keep: (_, l) => l === "paid" },
 ];
 const SORTS: { id: string; label: string; by: (a: Scored, b: Scored) => number }[] = [
+  // the first, and the list's own order: the owner who came in last on top (the founder's ask, 16 Oct 2026)
+  { id: "seen", label: "آخر ما جا", by: (a, b) => (b.s.seen_at ? Date.parse(b.s.seen_at) : 0) - (a.s.seen_at ? Date.parse(a.s.seen_at) : 0) || Date.parse(b.s.created_at) - Date.parse(a.s.created_at) },
   { id: "new", label: "الجدد", by: (a, b) => Date.parse(b.s.created_at) - Date.parse(a.s.created_at) },
-  { id: "seen", label: "آخر ما جا", by: (a, b) => (b.s.seen_at ? Date.parse(b.s.seen_at) : 0) - (a.s.seen_at ? Date.parse(a.s.seen_at) : 0) },
   { id: "time", label: "قعد أكثر", by: (a, b) => b.s.ms - a.s.ms },
   { id: "score", label: "الاهتمام", by: (a, b) => b.i.score - a.i.score || b.s.ms - a.s.ms },
   { id: "customers", label: "الحرفاء", by: (a, b) => b.s.real - a.s.real || b.s.customers - a.s.customers || b.s.stamps - a.s.stamps },
@@ -178,11 +179,11 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
     const f = o.f ?? filter.id;
     const so = o.sort ?? sort.id;
     if (f !== "all") p.set("f", f);
-    if (so !== "new") p.set("sort", so);
+    if (so !== SORTS[0]!.id) p.set("sort", so);
     const s = p.toString();
     return `/admin/shops${s ? `?${s}` : ""}`;
   };
-  const kept = { ...(onTests ? { tests: "1" } : {}), ...(filter.id !== "all" ? { f: filter.id } : {}), ...(sort.id !== "new" ? { sort: sort.id } : {}) };
+  const kept = { ...(onTests ? { tests: "1" } : {}), ...(filter.id !== "all" ? { f: filter.id } : {}), ...(sort.id !== SORTS[0]!.id ? { sort: sort.id } : {}) };
 
   return (
     <Page

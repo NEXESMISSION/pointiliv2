@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { spin } from "@/app/actions-wheel";
 import { Confetti } from "@/components/StampLand";
+import { useBars } from "@/lib/bars";
 import { useScreen } from "@/components/Tracker";
 import { Icon3D } from "@/components/ui";
 import { Wheel, type Prize } from "@/components/Wheel";
@@ -31,6 +32,7 @@ export function CardWheel({ card, moment, prizes }: { card: string; moment: numb
   useScreen("wheel");
   const router = useRouter();
   const [open, setOpen] = useState(true);
+  useBars(open ? "#24222e" : null);
   const [won, setWon] = useState<string | null>(null);
   const [spinning, setSpinning] = useState(false);
   // drawn over everything (on the page's body), so no card, header or scroll box clips it; not while the server draws

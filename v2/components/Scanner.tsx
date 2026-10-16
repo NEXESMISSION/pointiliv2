@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
 import { Camera, X } from "lucide-react";
 import { t } from "@/lib/t";
+import { useBars } from "@/lib/bars";
 
 /** Our codes only: a counter code (/s/…) on any host the app runs on. */
 function pathOf(text: string): string | null {
@@ -49,6 +50,8 @@ export function Scanner({
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [off, setOff] = useState(false);
+  // the camera fills the screen, the phone's bars too
+  useBars("#000000");
   const router = useRouter();
   const found = useRef(false);
   const readRef = useRef(read);
