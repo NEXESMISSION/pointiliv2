@@ -233,6 +233,19 @@ export function InstallPopup({ where, who, show, force = false }: { where: strin
 export function IosGuide({ where, onClose }: { where: string; onClose: () => void }) {
   const [step, setStep] = useState(0);
   const [chrome] = useState(() => typeof navigator !== "undefined" && /CriOS/i.test(navigator.userAgent));
+  // the app added from here opens signed in: its own cookies start empty on an iPhone (app/api/manifest)
+  useEffect(() => {
+    let gone = false;
+    handoffPath("/")
+      .then((to) => {
+        const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+        if (!gone && link && to.startsWith("/auth/handoff?")) link.href = `/api/manifest?start=${encodeURIComponent(to)}`;
+      })
+      .catch(() => {});
+    return () => {
+      gone = true;
+    };
+  }, []);
   const steps = [
     { pic: <PicShare chrome={chrome} />, title: t.iosStep1, hint: chrome ? t.iosStep1HintChrome : t.iosStep1Hint },
     { pic: <PicSheet />, title: t.iosStep2, hint: t.iosStep2Hint },
