@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, Phone, ScanLine, WifiOff } from "lucide-react";
+import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, Phone, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { TryItButton } from "@/components/TryIt";
@@ -15,11 +15,13 @@ import { seenBefore, shown } from "@/lib/once";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 import { pretty } from "@/lib/phone";
+import { nextTampon } from "@/lib/when";
 import type { Said } from "@/lib/types";
 
 type Code = { id: string; svg: string; expiresLocal: number };
 /** who just took a tampon — or, `held`, a phone without an account that scanned: not a tampon until they make one */
-type Flash = { id: number | string; name: string | null; held?: boolean };
+/** who just took a tampon — or, `held`, a phone without an account that scanned; or, `note`, a scan the code refused, and why */
+type Flash = { id: number | string; name: string | null; held?: boolean; note?: string };
 type Gift = { id: number; name: string | null; gift: string };
 /** a customer who filled one of the shop's forms of identification, just stamped: who they are, to check */
 type Known = { id: number; name: string | null; phone: string | null; said: Said };
@@ -52,9 +54,9 @@ function tuneIn(): SupabaseClient | null {
  * code itself never moves, so the next phone can scan at once) and a fresh
  * code takes its place at once: the next one is always made in advance, and
  * the database names the code the moment a phone takes it, so a used code
- * never stays on the screen. When a card fills up, the gift shows at the
- * bottom of the screen: the customer shows the gift's code on their phone,
- * and the owner scans it («سكاني») to hand it over.
+ * never stays on the screen. A card that fills up bursts confetti here, and
+ * that is all: a gift waiting is not the counter's business (the home lists
+ * it, and «سكاني» hands it over, from the customer's code, any day).
  *
  * It hears every scan at once over Supabase Realtime (the shop's own topic,
  * pinged by the database) and only then asks what happened; a slow question
@@ -64,8 +66,7 @@ function tuneIn(): SupabaseClient | null {
  * Right after a new card (`welcome` = the owner's first name), a bravo covers
  * the screen and fades by itself onto the code; then one note takes the
  * title's place, above the code — never on it: try it with another phone.
- * Everything fits one screen: when a gift waits, the title steps aside and
- * the code gets smaller, so the gift sits under the code, not over it.
+ * Everything fits one screen.
  */
 export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = [], firstWaits = false }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null; items?: Item[]; firstWaits?: boolean }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
@@ -84,7 +85,8 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   // the screen came without things to ask about (the shop was not on «شنوّة يبيع» when it opened)
   const noItems = useRef(items.length === 0);
   const [flashes, setFlashes] = useState<Flash[]>([]);
-  const [gifts, setGifts] = useState<Gift[]>([]);
+  const [, setGifts] = useState<Gift[]>([]);
+  const giftsKnown = useRef(false);
   const [offline, setOffline] = useState(false);
   const [paused, setPaused] = useState(!!shop.paused || !!shutAtFirst);
   // a stopped shop says so before it asks anything
@@ -209,7 +211,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
       } else {
         const res = await fetch(`/api/counter?code=${c.id}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" });
         if (!res.ok) throw new Error("state");
-        const s = (await res.json()) as { taken: boolean; expired: boolean; served?: number; stamps: { id: number; name: string | null }[]; gifts: Gift[]; held?: string[]; ids?: Known[] };
+        const s = (await res.json()) as { taken: boolean; expired: boolean; served?: number; stamps: { id: number; name: string | null }[]; gifts: Gift[]; held?: string[]; ids?: Known[]; tried?: { id: string; why: string; name: string | null; next_at: string | null }[] };
         // the code on screen changed while asking (the radio swapped it): its answer is about the old one
         const same = codeRef.current?.id === c.id;
         const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
@@ -243,8 +245,21 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           setFlashes((f) => [...f, ...shown]);
           setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 6000);
         }
+        // a scan the code refused (too soon after the last tampon, or the owner's own phone): said, and a new code
+        const triedNew = (s.tried ?? []).filter((x) => !seenHeld.current.has(`t-${x.id}`));
+        if (triedNew.length) {
+          triedNew.forEach((x) => seenHeld.current.add(`t-${x.id}`));
+          const x = triedNew[triedNew.length - 1]!;
+          const note = x.why === "own_shop" ? t.counterOwn : fill(t.counterSoon, { name: x.name ?? t.someone, when: x.next_at ? nextTampon(x.next_at) : "" });
+          const shown = [{ id: `t-${x.id}-${Date.now()}`, name: x.name, note }];
+          setFlashes((f) => [...f, ...shown]);
+          navigator.vibrate?.([40, 40, 40]);
+          setTimeout(() => setFlashes((f) => f.filter((y) => !shown.some((z) => z.id === y.id))), 5000);
+        }
+        // a card filled while the screen is open: confetti (the gifts already waiting when it opened are not news)
         setGifts((g) => {
-          if (s.gifts.length > g.length) setParty((p) => p + 1);
+          if (giftsKnown.current && s.gifts.length > g.length) setParty((p) => p + 1);
+          giftsKnown.current = true;
           return s.gifts;
         });
         if (same && (s.taken || s.expired)) await mint();
@@ -360,12 +375,11 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   useScreen(coach === "bravo" || coach === "leaving" ? "bravo" : coach === "tip" ? "tip" : "code");
 
   const latest = flashes[flashes.length - 1];
-  const gift = gifts[0];
   const who = known[0];
   // the code's size: as wide as the screen lets it, smaller when a gift needs room under it. On a
   // short screen its box gives way to the rest (the only thing in the column that does), and the
   // code inside stays square at whatever the box has left: as large as it can be, never covered
-  const qr = who ? "min(46vw, 16rem)" : gift ? "min(60vw, 22rem)" : "min(78vw, 30rem)";
+  const qr = who ? "min(46vw, 16rem)" : "min(78vw, 30rem)";
 
   return (
     <div
@@ -416,7 +430,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
             <OpenOutside where="coach" look="line" className="mt-1.5" />
           </div>
         ) : (
-          !gift && <h1 className="text-center text-[clamp(1.6rem,4.6dvh,2.6rem)] font-bold leading-tight">{t.counterTitle}</h1>
+          <h1 className="text-center text-[clamp(1.6rem,4.6dvh,2.6rem)] font-bold leading-tight">{t.counterTitle}</h1>
         )}
 
         {asking ? (
@@ -494,7 +508,11 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         )}
 
         <div className="flex h-12 shrink-0 items-center">
-          {latest?.held ? (
+          {latest?.note ? (
+            <p key={latest.id} className="flex max-w-xs items-center gap-2 rounded-full bg-[#fff4e0] px-4 py-2.5 text-[0.9375rem] font-bold text-[#b45309]" style={{ animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
+              <Hourglass className="size-5 shrink-0" strokeWidth={2.6} /> <span className="min-w-0">{latest.note}</span>
+            </p>
+          ) : latest?.held ? (
             <p key={latest.id} className="flex items-center gap-2 rounded-full bg-[#fff4e0] px-5 py-2.5 text-[0.9375rem] font-bold text-[#b45309]" style={{ animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
               <Hourglass className="size-5 shrink-0" strokeWidth={2.6} /> {t.counterHeld}
             </p>
@@ -512,7 +530,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
         </div>
         {/* alone with one phone, the owner cannot scan their own screen: the customer's side, replayed here */}
         {/* only until the first customer: after that, the code alone */}
-        {firstWaits && !gift && !paused && shop.goal && (
+        {firstWaits && !paused && shop.goal && (
           <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift ?? "" }} className="press flex h-10 shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 text-[0.8125rem] font-bold text-white">
             <Eye className="size-4" /> {t.trySee}
           </TryItButton>
@@ -558,21 +576,6 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           </div>
         )}
 
-        {/* a gift to hand over: under the code, in the page, never over the code */}
-        {gift && !who && (
-          <div className="w-full shrink-0 rounded-[1.75rem] bg-surface p-[1.1rem] text-center text-ink shadow-[0_-10px_40px_-10px_rgb(0_0_0/0.35)]" style={{ animation: "ct-in 480ms cubic-bezier(0.2,0.8,0.2,1) both" }}>
-            <p className="flex items-center justify-center gap-2 text-[1.25rem] font-bold leading-tight">
-              <Icon3D name="gift" size={36} className="animate-float" />
-              {fill(t.giftFor, { who: gift.name ?? t.someone, gift: gift.gift })}
-            </p>
-            <p className="mt-0.5 text-[0.9375rem] text-muted">{t.giveNow}</p>
-            {/* handed over by the customer's code, never by a tap alone */}
-            <Link href="/shop/collect?by=scan" className="press mt-3 flex h-[3.4rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[1.25rem] font-bold text-white">
-              <ScanLine className="size-6" /> {t.collectScanShort}
-            </Link>
-            {gifts.length > 1 && <p className="num mt-1.5 text-[0.8125rem] text-muted">+{gifts.length - 1}</p>}
-          </div>
-        )}
       </main>
 
       {/* the shop's first customer: what just happened, said plainly, once */}

@@ -357,6 +357,21 @@ export async function openShop(_: FormState, fd: FormData): Promise<FormState> {
   redirect(inside(str(fd, "next")) ?? "/shop/card");
 }
 
+/** The shop's logo, set from the card's screen: only a picture of this owner's own folder ("" takes it away). */
+export async function setShopLogo(url: string): Promise<boolean> {
+  const me = await getMe();
+  if (!me?.shop) return false;
+  const logo = String(url ?? "");
+  if (logo !== "" && !logo.startsWith(`${LOGOS}${me.id}/`)) return false;
+  const before = me.shop.logo ?? "";
+  if (logo === before) return true;
+  const { error } = await service().from("shops").update({ logo: logo || null }).eq("owner_id", me.id);
+  if (error) return false;
+  if (before.startsWith(`${LOGOS}${me.id}/`)) await service().storage.from("logos").remove([before.slice(LOGOS.length)]);
+  revalidatePath("/", "layout");
+  return true;
+}
+
 /**
  * A shop's logo, from the owner's phone (made small there first): read as a
  * picture whatever it was (a photo, a PNG with see-through corners), turned

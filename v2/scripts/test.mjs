@@ -96,7 +96,11 @@ try {
   const c2 = await rpc(owner, "new_code");
   const soon = await rpc(sami, "stamp", { p_token: c2.token });
   check("a second stamp within the hour is refused, with the time it opens", soon.error === "too_soon" && !!soon.next_at, soon);
+  const refused = await rpc(owner, "counter", { p_code: c2.id, p_since: ago(5) });
+  check("…and the counter hears it: who, why, when — and puts the next code up", refused.taken && refused.tried?.some((x) => x.why === "too_soon" && x.name === "سامي" && !!x.next_at), refused.tried);
   check("the owner never stamps his own card", (await rpc(owner, "stamp", { p_token: c2.token })).error === "own_shop");
+  const own = await rpc(owner, "counter", { p_code: c2.id, p_since: ago(5) });
+  check("…and the counter says it was the owner's own phone", own.tried?.some((x) => x.why === "own_shop"), own.tried);
   // a code scanned near the end of its minute still counts: a slow phone opens the page late (two minutes of grace)
   const cg = await rpc(owner, "new_code");
   await admin.from("codes").update({ expires_at: new Date(Date.now() - 90_000).toISOString() }).eq("id", cg.id);
@@ -130,19 +134,26 @@ try {
     const c = await rpc(owner, "new_code");
     last = await rpc(sami, "stamp", { p_token: c.token });
   }
-  check("the fifth stamp fills the card: a gift waits", last.ok && last.card.stamps === 5 && last.gift && last.card.ready && last.card.waiting, last);
+  check("the fifth stamp fills the card: a gift waits as a voucher, and the card starts again from zero", last.ok && last.card.stamps === 0 && last.gift && last.card.ready && last.card.waiting && last.card.waiting_n === 1, last);
   const waiting = (await rpc(owner, "counter", { p_code: c1.id, p_since: null })).gifts;
   check("the counter shows the waiting gift", waiting.length === 1 && waiting[0].gift === "قهوة بلاش" && waiting[0].name === "سامي", waiting);
   await admin.from("cards").update({ last_at: ago(61) }).eq("id", s1.card.id);
   const c6 = await rpc(owner, "new_code");
   const extra = await rpc(sami, "stamp", { p_token: c6.token });
-  check("a stamp while the gift waits carries over (6), no second gift", extra.ok && extra.card.stamps === 6 && !extra.gift, extra);
+  check("a stamp while the voucher waits starts the next card (1), no second gift", extra.ok && extra.card.stamps === 1 && !extra.gift, extra);
   check("handing it over", (await rpc(owner, "give", { p_moment: waiting[0].id })).ok);
   const after = await rpc(sami, "card", { p_id: s1.card.id });
-  check("the goal's stamps leave the card, the rest stays (6 → 1), one gift received", after.stamps === 1 && after.gifts === 1 && !after.waiting, after);
+  check("handed over: the card keeps its new start (1), one gift received", after.stamps === 1 && after.gifts === 1 && !after.waiting, after);
   check("handing it twice does nothing more", (await rpc(owner, "give", { p_moment: waiting[0].id })).already === true);
   check("another shop cannot hand it over", (await rpc(other, "give", { p_moment: waiting[0].id })).error === "no_shop");
   check("the card keeps its story", after.history.some((h) => h.kind === "gift" && h.given) && after.history.filter((h) => h.kind === "stamp").length === 6, after.history);
+  // two full cards before coming to take them: two vouchers side by side, the card at zero
+  await admin.from("cards").update({ stamps: 9, last_at: ago(61) }).eq("id", s1.card.id);
+  const twice = await rpc(sami, "stamp", { p_token: (await rpc(owner, "new_code")).token });
+  check("two full cards: two vouchers wait side by side, the card at zero", twice.ok && twice.card.waiting_n === 2 && twice.card.stamps === 0, twice.card);
+  const both = await rpc(owner, "give_all", { p_moment: (await rpc(owner, "counter", { p_code: c1.id, p_since: null })).gifts[0].id });
+  const afterBoth = await rpc(sami, "card", { p_id: s1.card.id });
+  check("…handed over together, the card still at zero", both.ok && both.n === 2 && afterBoth.stamps === 0 && !afterBoth.waiting && afterBoth.gifts === 3, [both, afterBoth.stamps, afterBoth.gifts]);
 
   console.log("\nA lower goal fills cards at once");
   await rpc(owner, "save_card", { p_goal: 3, p_gift: "قهوة بلاش", p_color: "#6C47FF" });
@@ -157,7 +168,7 @@ try {
   check("…and the shop's logo on the card", wallet[0].shop.logo?.endsWith("/test.webp"), wallet[0].shop);
   check("nobody reads another person's card", (await rpc(other, "card", { p_id: s1.card.id })) === null);
   const nums = await rpc(owner, "shop_numbers");
-  check("the owner's numbers", nums.ok && nums.customers === 2 && nums.gifts === 1 && nums.today >= 7, nums);
+  check("the owner's numbers", nums.ok && nums.customers === 2 && nums.gifts === 3 && nums.today >= 7, nums);
   const direct = await sami.client.from("cards").select("*");
   check("tables are closed to the app (functions only)", !!direct.error || (direct.data ?? []).length === 0, direct.error?.message);
 
@@ -580,7 +591,7 @@ try {
   const moved = await rpc(owner, "save_card", { p_goal: 4, p_gift: "كرواسون بلاش", p_color: sh.color, p_move: true });
   const nourMoved = (await admin.from("cards").select("goal, gift, stamps").eq("id", nourCard.id).single()).data;
   const wonNow = await rpc(owner, "customer_at", { p_who: nourMe.code });
-  check("moved: the new card now, their tampons kept, the gift at once with enough", moved.ok && moved.moved >= 1 && nourMoved.goal === 4 && nourMoved.stamps === 4 && wonNow.waiting?.gift === "كرواسون بلاش", [moved, nourMoved, wonNow.waiting]);
+  check("moved: the new card now, its 4 tampons a voucher at once, the card at zero", moved.ok && moved.moved >= 1 && nourMoved.goal === 4 && nourMoved.stamps === 0 && wonNow.waiting?.gift === "كرواسون بلاش", [moved, nourMoved, wonNow.waiting]);
   check("the card back as it was", (await rpc(owner, "save_card", { p_goal: sh.goal, p_gift: sh.gift, p_color: sh.color })).ok);
 
   console.log("\nPaying for the year");

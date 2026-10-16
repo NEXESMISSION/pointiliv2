@@ -219,6 +219,10 @@ export const t = {
   firstCardOther: "حاجة أخرى",
   firstCardOtherPh: "اكتب الكادو",
   firstCardGo: "حلّ الكارط",
+  firstCardLook: "شكلها، وكل قدّاش ياخو تامبون",
+  firstCardColor: "اللون",
+  firstCardLogo: "اللوغو وشكل التامبون",
+  firstCardWait: "كل قدّاش ينجم الحريف ياخو تامبون؟",
   firstCardLater: "تنجم تبدّلها وقتلّي تحب",
   startTitle: "هكّا يشوفها الحريف",
   startDone: "فهمت، ورّيني الكود",
@@ -264,6 +268,9 @@ export const t = {
   // the account at the counter: a name and a phone, the tampon is theirs
   heldQuickMust: "اعمل كونت، والتامبون يولّي متاعك",
   quickGo: "خوذ التامبون",
+  // the counter, when a scan is refused: who, and why
+  counterSoon: "{name} خذا تامبون قبل · يرجع {when}",
+  counterOwn: "هذا الكود متاعك: سكانيه بتليفون آخر",
   // the wallet asks for a password, gently, once an account was made at the counter
   passwordAsk: "حطّ كلمة سر باش ترجع لكارطاتك من أي تليفون",
   customersNone: "ما لقينا حتى حريف بالإسم هذا",

@@ -37,6 +37,7 @@ try {
   await o.locator('input[type="search"]').fill("parfum");
   await o.getByRole("dialog").getByRole("button", { name: "عطورات" }).click();
   await Promise.all([o.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
+  await o.getByRole("button", { name: "كمّل", exact: true }).click();
   await Promise.all([o.waitForURL("**/shop/start", { timeout: 60000 }), o.getByRole("button", { name: "حلّ الكارط" }).click()]);
   // the counter open BEFORE the founder's switch: a code with no thing on it
   const { data: p } = await admin.from("people").select("id").eq("phone", `+216${owner}`).single();

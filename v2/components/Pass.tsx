@@ -10,13 +10,16 @@ export type PassShop = { name: string; kind: string; color: string; goal: number
  * is. `small` is the wallet's card behind the front one: the top line only.
  * `fresh` makes the newest stamp land (after a scan).
  */
-export function Pass({ shop, stamps, small, fresh, className = "" }: { shop: PassShop; stamps: number; small?: boolean; fresh?: boolean; className?: string }) {
+export function Pass({ shop, stamps, waiting, small, fresh, className = "" }: { shop: PassShop; stamps: number; waiting?: number; small?: boolean; fresh?: boolean; className?: string }) {
   const goal = shop.goal ?? 10;
   const done = Math.min(stamps, goal);
-  const ready = stamps >= goal;
-  // stamps past the goal are kept: each full card is a gift waiting, and what is left over goes to the next one
-  const won = Math.floor(stamps / goal);
-  const rest = won > 0 ? stamps - won * goal : 0;
+  // `waiting`: the vouchers this card has earned (since 15 Oct 2026 a full card becomes a voucher and starts
+  // again from zero) — the dots show the new card, the line says the gifts that wait. A card from before
+  // still holds its stamps past the goal: each full card a gift, what is left over for the next one
+  const vouchers = shop.store ? 0 : (waiting ?? 0);
+  const ready = vouchers > 0 || stamps >= goal;
+  const won = vouchers > 0 ? vouchers : Math.floor(stamps / goal);
+  const rest = vouchers === 0 && won > 0 ? stamps - won * goal : 0;
   const left = goal - done;
   const cols = goal <= 6 ? goal : goal <= 10 ? 5 : goal <= 12 ? 6 : goal <= 16 ? 8 : 10;
   // the shop's own mark in place of the tick. The dot stays a white disc

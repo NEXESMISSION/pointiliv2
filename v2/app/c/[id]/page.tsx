@@ -59,7 +59,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       <div className="mx-auto mt-2 w-full max-w-[min(100%,52dvh)] shrink-0 animate-rise">
         {/* the card opens: how far the gift is, and how the next tampon is taken (customers kept tapping it) */}
         <CardTap shop={card.shop.name} gift={card.shop.gift ?? ""} stamps={card.stamps} goal={card.shop.goal ?? 10} ready={ready}>
-          <Pass shop={card.shop} stamps={card.stamps} />
+          <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} />
         </CardTap>
       </div>
       {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.8125rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}

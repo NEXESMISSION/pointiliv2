@@ -143,6 +143,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
               key={open.id}
               shop={{ ...shop, goal: open.goal ?? shop.goal, gift: open.gift ?? shop.gift }}
               stamps={open.stamps}
+              waiting={open.ready ? 1 : 0}
               line={
                 shop.store ? (
                   <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">{fill(t.storeHolds, { n: open.stamps })}</p>

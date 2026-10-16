@@ -369,7 +369,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             )}
             {/* the card a little smaller on a short screen (ranges that do not overlap: the CSS lists them by size) */}
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-              <Pass shop={step.card.shop} stamps={step.card.stamps} fresh />
+              <Pass shop={step.card.shop} stamps={step.card.stamps} waiting={step.card.waiting_n} fresh />
             </div>
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
             <div className="mt-[3dvh] w-full space-y-2 [@media(max-height:560px)]:mt-[2dvh] [@media(max-height:560px)]:space-y-1">
@@ -409,7 +409,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             <h2 className="mt-3 text-[1.5rem] font-bold">{t.collectUndone}</h2>
             <p className="mt-1 text-[0.9375rem] text-muted">{t.collectUndoneBody}</p>
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-              <Pass shop={step.card.shop} stamps={step.card.stamps} />
+              <Pass shop={step.card.shop} stamps={step.card.stamps} waiting={step.card.waiting_n} />
             </div>
             <div className="mt-[3dvh] w-full space-y-2">
               <Btn type="button" onClick={again}>
@@ -428,7 +428,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             <h2 className="mt-3 text-balance text-[1.5rem] font-bold">{fill(t.collectHanded, { name: who, gift: step.gift })}</h2>
             {step.card && (
               <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
-                <Pass shop={step.card.shop} stamps={step.card.stamps} />
+                <Pass shop={step.card.shop} stamps={step.card.stamps} waiting={step.card.waiting_n} />
               </div>
             )}
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}

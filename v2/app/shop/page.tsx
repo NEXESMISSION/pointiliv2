@@ -31,7 +31,7 @@ type Home = {
   today: number;
   visitors_today: number;
   given_today: number;
-  recent: { id: number; card: string; at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; stamps: number; goal: number; gift: string | null; item?: string | null }[];
+  recent: { id: number; card: string; at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; stamps: number; goal: number; gift: string | null; item?: string | null; waiting?: boolean }[];
   held?: { id: string; at: string; until: string; state: "waiting" | "lost" | "done" | "back"; name: string | null; item: string | null }[];
 };
 
@@ -209,6 +209,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
                     gift: r.gift,
                     item: r.kind === "stamp" ? (r.item ?? null) : null,
                     card: r.card,
+                    waiting: !!r.waiting,
                   })),
                   // the scans without an account, and how each ended (one finished shows as its tampon too)
                   ...held.map((h) => ({

@@ -126,7 +126,8 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
       </p>
 
       <div className={`mt-[2.4dvh] animate-rise text-start ${gift ? (long ? CARD_GIFT_LONG : CARD_GIFT) : CARD}`} style={after(220)}>
-        <Pass shop={card.shop} stamps={card.stamps} fresh />
+        {/* the scan that won the gift shows the card full; any other, the card as it is, its vouchers said */}
+        <Pass shop={card.shop} stamps={gift ? (card.shop.goal ?? card.stamps) : card.stamps} waiting={gift ? 0 : card.waiting_n} fresh />
       </div>
 
       {/* the gift: one line to show at the counter, not a second card */}
@@ -309,7 +310,7 @@ function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
       {v.body && <p className="mt-2 max-w-xs text-balance text-[0.9375rem] text-muted">{v.body}</p>}
       {card && (
         <div className={`mt-6 text-start ${CARD}`}>
-          <Pass shop={card.shop} stamps={card.stamps} />
+          <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} />
         </div>
       )}
       <div className="mt-8 w-full space-y-2.5">

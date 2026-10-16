@@ -112,6 +112,7 @@ try {
   await o0.locator('input[type="search"]').fill("parfum");
   await o0.getByRole("dialog").getByRole("button", { name: "عطورات" }).click();
   await Promise.all([o0.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o0.locator('button[type="submit"]').click()]);
+  await o0.getByRole("button", { name: "كمّل", exact: true }).click();
   await Promise.all([o0.waitForURL("**/shop/start", { timeout: 60000 }), o0.getByRole("button", { name: "حلّ الكارط" }).click()]);
   const { data: me } = await admin.from("people").select("id, seen").eq("phone", `+216${owner}`).single();
   const { data: shop } = await admin.from("shops").select("id").eq("owner_id", me.id).single();

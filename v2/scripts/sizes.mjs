@@ -383,6 +383,7 @@ const SCREENS = [
   // a new owner's three steps: the account and the shop (public-shop-new), the card on one screen, what the customer sees
   { name: "first-card", as: "fresh", path: "/shop/card?new=1" },
   { name: "first-card-other", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "حاجة أخرى") },
+  { name: "first-card-look", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "كمّل") },
   { name: "start", as: "owner", path: "/shop/start?night=0", wait: 900 },
   { name: "start-last", as: "owner", path: "/shop/start?night=0", act: async (p) => { for (let n = 0; n < 3; n++) await press(p, "كمّل"); }, wait: 900 },
   { name: "start-night", as: "owner", path: "/shop/start?night=1", act: async (p) => { for (let n = 0; n < 4; n++) await press(p, "كمّل"); }, wait: 900 },

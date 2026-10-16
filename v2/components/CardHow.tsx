@@ -14,7 +14,7 @@ import { signal } from "@/lib/track";
  * code on the customer's phone — with the button to it, in the place of the
  * line under the card. The one way to give stays the one way.
  */
-export function CardHow({ shop, stamps, line, className = "mt-3" }: { shop: PassShop; stamps: number; line: ReactNode; className?: string }) {
+export function CardHow({ shop, stamps, waiting, line, className = "mt-3" }: { shop: PassShop; stamps: number; waiting?: number; line: ReactNode; className?: string }) {
   const [how, setHow] = useState(false);
   return (
     <>
@@ -27,7 +27,7 @@ export function CardHow({ shop, stamps, line, className = "mt-3" }: { shop: Pass
         aria-label={t.customerHowAdd}
         className={`press block w-full rounded-[1.75rem] text-start ${className}`}
       >
-        <Pass shop={shop} stamps={stamps} />
+        <Pass shop={shop} stamps={stamps} waiting={waiting} />
       </button>
       {how && !shop.store ? (
         <div className="mt-3 flex animate-pop items-center gap-3 rounded-[1.25rem] bg-brand-soft p-3.5">

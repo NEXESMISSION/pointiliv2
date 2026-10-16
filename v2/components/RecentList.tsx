@@ -15,6 +15,8 @@ export type RecentRow = {
   id: number | string; kind: "stamp" | "gift" | "held"; name: string; line: string; time: string; stamps: number; goal: number; gift: string | null; item?: string | null;
   /** the customer's card (not on a scan without an account) */
   card?: string;
+  /** a gift of this card waits to be handed over (a voucher: the card may be back at zero) */
+  waiting?: boolean;
   /** a scan without an account: how it ended, and until when it waits */
   state?: "waiting" | "lost" | "done" | "back"; until?: string;
 };
@@ -104,9 +106,10 @@ export function RecentList({ rows, shop, fix = false }: { rows: RecentRow[]; sho
               className="mt-4"
               shop={{ ...shop, goal: open.goal, gift: open.gift ?? shop.gift }}
               stamps={open.stamps}
+              waiting={open.waiting ? 1 : 0}
               line={
                 <p className="mt-3 text-center text-[0.9375rem] font-semibold text-body">
-                  {shop.store ? fill(t.storeHolds, { n: open.stamps }) : open.stamps >= open.goal ? fill(say.ready, { gift: open.gift ?? shop.gift ?? "" }) : fill(say.left, { n: stampsN(open.goal - open.stamps), gift: open.gift ?? shop.gift ?? "" })}
+                  {shop.store ? fill(t.storeHolds, { n: open.stamps }) : open.waiting || open.stamps >= open.goal ? fill(say.ready, { gift: open.gift ?? shop.gift ?? "" }) : fill(say.left, { n: stampsN(open.goal - open.stamps), gift: open.gift ?? shop.gift ?? "" })}
                 </p>
               }
             />

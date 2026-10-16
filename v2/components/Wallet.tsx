@@ -151,7 +151,7 @@ function CardRow({ card: c }: { card: CardView }) {
   const goal = c.shop.goal ?? 10;
   const done = Math.min(c.stamps, goal);
   const left = goal - done;
-  const waits = c.spin ? t.wheelWaits : c.ready ? fill(t.won, { gift: c.won ?? c.shop.gift ?? "" }) : (c.orders_n ?? 0) > 0 ? t.storeOrderWaits : null;
+  const waits = c.spin ? t.wheelWaits : c.ready ? fill((c.waiting_n ?? 1) > 1 ? t.wonMany : t.won, { gift: c.won ?? c.shop.gift ?? "", n: c.waiting_n ?? 1 }) : (c.orders_n ?? 0) > 0 ? t.storeOrderWaits : null;
   const line = c.shop.store
     ? `${c.stamps} ${t.storeBalance}`
     : c.shop.wheel

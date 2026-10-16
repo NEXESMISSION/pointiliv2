@@ -118,7 +118,21 @@ try {
   await o.getByRole("radio", { name: "5", exact: true }).click();
   await o.getByRole("button", { name: /جرّب: زيد تامبون/ }).click();
   await shot(o, "04b-card-goal", 600);
+  // a number typed by hand works too (3 to 30), then back to one of the five
+  await o.getByRole("textbox", { name: "ولا اكتب العدد" }).fill("15");
+  await shot(o, "04b2-card-goal-typed", 400);
+  await o.getByRole("radio", { name: "5", exact: true }).click();
+  // ② its look and its rule: the colour, the logo and the tampon's shape, the wait between two tampons
+  await o.getByRole("button", { name: "كمّل", exact: true }).click();
+  await o.getByRole("heading", { name: /شكلها/ }).waitFor({ timeout: 20000 });
+  await o.getByRole("radio", { name: "#FF6B4A" }).click();
+  await shot(o, "04c-card-look", 600);
   await Promise.all([o.waitForURL((u) => u.pathname === "/shop/start", { timeout: 60000 }), o.getByRole("button", { name: "حلّ الكارط" }).click()]);
+  {
+    const { data: me } = await admin.from("people").select("id").eq("phone", `+216${ownerPhone}`).single();
+    const { data: card } = await admin.from("shops").select("goal, color, stamp_gap").eq("owner_id", me.id).single();
+    console.log(card.goal === 5 && card.color.toUpperCase() === "#FF6B4A" && card.stamp_gap === 60 ? "  · the first card saved with its goal, its colour and its wait ✓" : `  ! the first card: ${JSON.stringify(card)}`);
+  }
   // ③ what the customer sees, in four beats (by day: then the counter; ?night=0 whatever the walk's hour)
   await o.goto(BASE + "/shop/start?night=0", { waitUntil: "load" });
   const demo = o.getByRole("dialog", { name: "هكّا يشوفها الحريف" });
@@ -252,9 +266,9 @@ try {
     return r ? { w: Math.round(r.width), top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), vw: innerWidth, vh: innerHeight } : null;
   });
   console.log(giftQr && giftQr.w >= 170 && giftQr.top >= 0 && giftQr.bottom <= giftQr.vh && giftQr.left >= 0 && giftQr.right <= giftQr.vw ? "  · the gift's code: whole on the screen ✓" : `  ! the gift's code is cut: ${JSON.stringify(giftQr)}`);
-  // the counter shows who won, and the camera to hand it over (never a tap alone)
-  await o.getByRole("link", { name: "سكاني" }).waitFor({ timeout: 20000 });
-  await shot(o, "11-counter-gift", 1200);
+  // the counter keeps only its code: a gift waits as a voucher on the customer's phone, handed over from «سكاني» (no panel on the counter)
+  await never(o, "a gift panel on the counter", o.getByRole("link", { name: "سكاني" }), 1500);
+  await shot(o, "11-counter-gift", 300);
   // the shop's first gift won: the home says how to hand it over, once
   await o.goto(BASE + "/shop", { waitUntil: "load" });
   {
