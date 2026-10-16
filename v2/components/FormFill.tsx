@@ -8,6 +8,7 @@ import { formJoin } from "@/app/actions";
 import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { Btn } from "@/components/ui";
+import { Trap } from "@/components/Trap";
 import { signal } from "@/lib/track";
 import { western } from "@/lib/phone";
 
@@ -45,10 +46,10 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
   // signing up, the number is asked once, in the account part
   const shown = join ? fields.filter((f) => f.kind !== "phone") : fields;
 
-  const send = () =>
+  const send = (trap: string) =>
     start(async () => {
       const res = join
-        ? await formJoin(token, data, { name: nameField ? (data[nameField.key] ?? "") : acc.name, phone: acc.phone, password: acc.password })
+        ? await formJoin(token, data, { name: nameField ? (data[nameField.key] ?? "") : acc.name, phone: acc.phone, password: acc.password, trap })
         : await formFill(token, data);
       if (res.ok) {
         setDone(true);
@@ -90,9 +91,10 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
       className="flex min-h-0 flex-1 flex-col"
       onSubmit={(e) => {
         e.preventDefault();
-        send();
+        send(String(new FormData(e.currentTarget).get("pl_site") ?? ""));
       }}
     >
+      <Trap />
       <div data-list className="-mx-1 min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-1 py-1">
         {shown.map((f) => {
           // a list to pick from is a group of buttons, not a label (a label would name every button with its own text)

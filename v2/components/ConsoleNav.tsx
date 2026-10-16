@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { BarChart3, Building2, FlaskConical, LayoutGrid, Megaphone, PhoneCall, Settings2, Users, Wallet } from "lucide-react";
+import { BarChart3, Building2, FlaskConical, LayoutGrid, Megaphone, PhoneCall, Settings2, ShieldCheck, Users, Wallet } from "lucide-react";
 
 const ITEMS = [
   { href: "/admin", label: "الكونسول", icon: LayoutGrid, exact: true },
@@ -13,6 +13,7 @@ const ITEMS = [
   { href: "/admin/payments", label: "الحسابات", icon: Wallet },
   { href: "/admin/traffic", label: "الترافيك", icon: BarChart3 },
   { href: "/admin/news", label: "الأخبار", icon: Megaphone },
+  { href: "/admin/security", label: "الأمان", icon: ShieldCheck },
   { href: "/admin/settings", label: "الريڤلاج", icon: Settings2 },
   { href: "/admin/tester", label: "التجربة", icon: FlaskConical },
 ];

@@ -9,6 +9,7 @@ import { Pass } from "@/components/Pass";
 import { useScreen } from "@/components/Tracker";
 import { Confetti, IMPACT_MS, StampLand } from "@/components/StampLand";
 import { Btn, Field, Icon3D, LinkBtn, Logo } from "@/components/ui";
+import { Trap } from "@/components/Trap";
 import { fill, kindIcon, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { nextTampon } from "@/lib/when";
@@ -195,7 +196,7 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
     setErr(null);
     try {
       const fd = new FormData(e.currentTarget);
-      const r = await quickJoin(token, name, String(fd.get("phone") ?? ""), password);
+      const r = await quickJoin(token, name, String(fd.get("phone") ?? ""), password, String(fd.get("pl_site") ?? ""));
       if (r.ok) {
         signal("quick_join", r.res.kind);
         onDone(r.res);
@@ -244,6 +245,7 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
       {form ? (
         // noValidate: the browser's own bubbles never show inside Facebook's browser; each mistake is said under its field
         <form onSubmit={(e) => void send(e)} noValidate className="mt-[1.8dvh] w-full animate-rise space-y-[1.2dvh] text-start" style={after(320)}>
+          <Trap />
           <Field label={t.name} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" maxLength={60} error={err?.field === "name" ? err.error : null} className="!h-[3.25rem]" />
           <PhoneField label={t.phone} error={err?.field === "phone" ? err.error : null} compact />
           <Field label={t.password} name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPh} autoComplete="new-password" minLength={8} error={err?.field === "password" ? err.error : null} className="!h-[3.25rem]" />

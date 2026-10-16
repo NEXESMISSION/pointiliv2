@@ -5,6 +5,7 @@ import { useActionState, useEffect, useState } from "react";
 import { join, login } from "@/app/actions";
 import { PhoneField } from "@/components/PhoneField";
 import { Btn, Field, LinkBtn } from "@/components/ui";
+import { Trap } from "@/components/Trap";
 import { signal } from "@/lib/track";
 import { t } from "@/lib/t";
 import type { FormState } from "@/lib/types";
@@ -30,6 +31,7 @@ export function AuthForm({ mode, next, owner }: { mode: "join" | "login"; next?:
     // noValidate: the browser's own bubble for an empty field never showed inside Facebook's browser, so «كمّل»
     // looked dead (7 owners left that way); the server checks every field and says it under the field
     <form action={action} noValidate className="mt-[3dvh] flex flex-col">
+      <Trap />
       <div className="space-y-[1.8dvh]">
         {mode === "join" && (
           <Field label={owner ? t.ownerName : t.name} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" required maxLength={60} error={err("name")} />

@@ -6,6 +6,7 @@ import { joinShop } from "@/app/actions";
 import { KindField } from "@/components/KindPicker";
 import { PhoneField } from "@/components/PhoneField";
 import { Btn, Field } from "@/components/ui";
+import { Trap } from "@/components/Trap";
 import { t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import type { FormState } from "@/lib/types";
@@ -35,6 +36,7 @@ export function OwnerJoin() {
   return (
     // noValidate: the browser's own bubbles never show inside Facebook's browser; the server says each mistake under its field
     <form action={action} noValidate className="mt-[2.4dvh] flex flex-col">
+      <Trap />
       <div className="space-y-[1.3dvh]">
         <Field label={t.ownerName} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" maxLength={60} error={err("name")} className="!h-[3.25rem] [@media(max-height:520px)]:!h-[2.875rem]" />
         <Field label={t.joinShopName} name="shop" value={shop} onChange={(e) => setShop(e.target.value)} placeholder={t.shopNamePh} autoComplete="organization" maxLength={60} error={err("shop")} className="!h-[3.25rem] [@media(max-height:520px)]:!h-[2.875rem]" />

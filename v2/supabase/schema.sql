@@ -3446,6 +3446,118 @@ begin
   return jsonb_build_object('ok', true, 'name', v_name);
 end $$;
 
+-- ═══ the guard ═════════════════════════════════════════════════════════════
+-- Every knock at a door that makes or opens an account (a new account, a
+-- sign-in, a form with an account): who knocked (the address, the number),
+-- and whether it was let through — or stopped, and why: blocked by the
+-- founder, too many from one address, a bot's trap, a wrong password. The
+-- console's «الأمان» reads it; it keeps a month.
+create table if not exists public.guard_log (
+  id     bigint generated always as identity primary key,
+  at     timestamptz not null default now(),
+  door   text not null,
+  ip     text,
+  phone  text,
+  ok     boolean not null,
+  why    text
+);
+create index if not exists guard_log_at_idx on public.guard_log (at desc);
+create index if not exists guard_log_ip_idx on public.guard_log (ip, door, at desc);
+alter table public.guard_log enable row level security;
+
+-- an address or a number the founder shut out (until a day, or for good)
+create table if not exists public.blocks (
+  value   text primary key,
+  kind    text not null check (kind in ('ip', 'phone')),
+  reason  text,
+  at      timestamptz not null default now(),
+  until   timestamptz
+);
+alter table public.blocks enable row level security;
+
+-- one knock: 'ok', or why not ('blocked', 'limit': p_max in p_minutes from
+-- this address at this door, 'day': p_day in a day). A trailing '!' is the
+-- first stop of this address in an hour: the founder hears of it once.
+create or replace function public.guard(p_door text, p_ip text, p_phone text, p_max int, p_minutes int, p_day int) returns text
+language plpgsql security definer set search_path = '' as $$
+declare v_n int; v_d int; v_why text; v_first boolean;
+begin
+  if exists (select 1 from public.blocks b where b.value in (p_ip, p_phone) and (b.until is null or b.until > now())) then
+    v_why := 'blocked';
+  else
+    select count(*) filter (where g.at > now() - make_interval(mins => p_minutes)), count(*) into v_n, v_d
+    from public.guard_log g where g.ip = p_ip and g.door = p_door and g.at > now() - interval '1 day';
+    if v_n >= p_max then v_why := 'limit';
+    elsif p_day is not null and v_d >= p_day then v_why := 'day';
+    end if;
+  end if;
+  v_first := v_why is not null and v_why <> 'blocked'
+    and not exists (select 1 from public.guard_log g where g.ip = p_ip and not g.ok and g.why in ('limit', 'day') and g.at > now() - interval '1 hour');
+  insert into public.guard_log (door, ip, phone, ok, why) values (p_door, p_ip, p_phone, v_why is null, v_why);
+  if random() < 0.02 then delete from public.guard_log where at < now() - interval '30 days'; end if;
+  return coalesce(v_why, 'ok') || case when v_first then '!' else '' end;
+end $$;
+
+-- a knock that went wrong after the door: a wrong password, a bot's trap
+create or replace function public.guard_note(p_door text, p_ip text, p_phone text, p_why text) returns void
+language sql security definer set search_path = '' as $$
+  insert into public.guard_log (door, ip, phone, ok, why) values (p_door, p_ip, p_phone, false, p_why)
+$$;
+
+-- «الأمان»: the last day and two weeks at the doors, the addresses that knock
+-- the most, the latest stops, the blocks, and the week's accounts never used
+create or replace function public.admin_guard() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return jsonb_build_object(
+    'day', (select jsonb_build_object(
+        'made', count(*) filter (where g.door = 'join' and g.ok),
+        'stopped', count(*) filter (where not g.ok and g.why <> 'wrong'),
+        'wrong', count(*) filter (where g.why = 'wrong'),
+        'trap', count(*) filter (where g.why = 'trap'),
+        'ips', count(distinct g.ip))
+      from public.guard_log g where g.at > now() - interval '1 day'),
+    'days', coalesce((select jsonb_agg(jsonb_build_object('d', x.d, 'made', x.made, 'stopped', x.stopped) order by x.d)
+      from (select (g.at at time zone 'Africa/Tunis')::date d, count(*) filter (where g.door = 'join' and g.ok) made, count(*) filter (where not g.ok and g.why <> 'wrong') stopped
+            from public.guard_log g where g.at > now() - interval '14 days' group by 1) x), '[]'::jsonb),
+    'ips', coalesce((select jsonb_agg(row_to_json(x) order by x.made desc, x.stopped desc) from (
+        select g.ip, count(*) filter (where g.door = 'join' and g.ok) made, count(*) filter (where not g.ok and g.why <> 'wrong') stopped,
+               count(*) filter (where g.why = 'wrong') wrong, max(g.at) last,
+               array_remove(array_agg(distinct g.phone) filter (where g.door = 'join' and g.ok), null) phones,
+               exists (select 1 from public.blocks b where b.value = g.ip and (b.until is null or b.until > now())) blocked
+        from public.guard_log g where g.at > now() - interval '7 days' and g.ip is not null
+        group by g.ip having count(*) filter (where g.door = 'join' and g.ok) >= 2 or count(*) filter (where not g.ok) >= 3
+        order by 2 desc, 3 desc limit 20) x), '[]'::jsonb),
+    'recent', coalesce((select jsonb_agg(row_to_json(x) order by x.at desc) from (
+        select g.at, g.door, g.ip, g.phone, g.why from public.guard_log g where not g.ok order by g.at desc limit 40) x), '[]'::jsonb),
+    'blocks', coalesce((select jsonb_agg(row_to_json(b) order by b.at desc) from public.blocks b where b.until is null or b.until > now()), '[]'::jsonb),
+    -- accounts of the week that never did anything: no shop, no card
+    'empty', (select count(*) from public.people p
+      where p.created_at > now() - interval '7 days' and not p.is_admin and not p.is_tester
+        and not exists (select 1 from public.shops s where s.owner_id = p.id)
+        and not exists (select 1 from public.cards c where c.user_id = p.id)));
+end $$;
+
+create or replace function public.admin_block(p_value text, p_kind text, p_reason text, p_days int) returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  if p_kind not in ('ip', 'phone') or coalesce(trim(p_value), '') = '' then return false; end if;
+  insert into public.blocks (value, kind, reason, until)
+  values (trim(p_value), p_kind, nullif(trim(coalesce(p_reason, '')), ''), case when p_days is null or p_days <= 0 then null else now() + make_interval(days => p_days) end)
+  on conflict (value) do update set kind = excluded.kind, reason = excluded.reason, until = excluded.until, at = now();
+  return true;
+end $$;
+
+create or replace function public.admin_unblock(p_value text) returns boolean
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  delete from public.blocks where value = p_value;
+  return found;
+end $$;
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 -- ═══ once: the owners from before the notes were kept here ═════════════════
@@ -3479,7 +3591,8 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),
   public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),
   public.customer_at(text), public.give_stamp(text, bigint), public.push_subscribe(text, text, text), public.push_unsubscribe(text),
-  public.my_payment(), public.pay_request(text), public.admin_payments(), public.admin_payment_decide(uuid, boolean) to authenticated;
+  public.my_payment(), public.pay_request(text), public.admin_payments(), public.admin_payment_decide(uuid, boolean),
+  public.admin_guard(), public.admin_block(text, text, text, int), public.admin_unblock(text) to authenticated;
 grant execute on all functions in schema public to service_role;
 
 -- nothing a visitor without an account can call

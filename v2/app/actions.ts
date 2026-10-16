@@ -1,7 +1,7 @@
 "use server";
 
 import { randomBytes, randomInt } from "node:crypto";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath, updateTag } from "next/cache";
 import { after } from "next/server";
@@ -9,6 +9,7 @@ import { sendPush } from "@/lib/push";
 import { alertGift, alertNewShop, alertPay, alertStamp } from "@/lib/telegram";
 import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
+import { gate, note, TRAP, trapped } from "@/lib/guard";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, phoneEmail, validPhone } from "@/lib/phone";
 import { NEWS_ICONS, newsHref } from "@/lib/news";
@@ -26,12 +27,6 @@ const UUID = /^[0-9a-f-]{36}$/i;
 const HOLD = "p2_hold";
 /** The auth server's own minimum (Supabase password_min_length): the forms ask for the same. */
 const PASSWORD_MIN = 8;
-
-/** The caller's address, as Vercel saw it. */
-async function address(): Promise<string> {
-  const h = await headers();
-  return h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-}
 
 /**
  * One more try at a door that counts (tries in the database). When the count
@@ -54,7 +49,7 @@ export async function join(_: FormState, fd: FormData): Promise<FormState> {
   if (name.length < 2 || name.length > 60) return { error: t.errName, field: "name" };
   if (!validPhone(phone)) return { error: t.errPhone, field: "phone" };
   if (password.length < PASSWORD_MIN) return { error: t.errPassword, field: "password" };
-  const made = await newAccount(name, phone, password);
+  const made = await newAccount(name, phone, password, fd.get(TRAP));
   if ("error" in made) return made;
   redirect(owner ? "/shop/setup" : (next ?? "/"));
 }
@@ -64,9 +59,14 @@ export async function join(_: FormState, fd: FormData): Promise<FormState> {
  * and signed in on this phone. Gives the signed-in client back (what comes
  * next runs as the new person), or the form's error.
  */
-async function newAccount(name: string, phone: string, password: string): Promise<{ supabase: Awaited<ReturnType<typeof db>>; id: string } | { error: string; field?: string }> {
-  // a phone shop's wifi or a mobile network can share one address: the limit is wide
-  if (!(await allowed(`join-ip:${await address()}`, 30, 60))) return { error: t.errTooMany };
+async function newAccount(name: string, phone: string, password: string, trap?: unknown): Promise<{ supabase: Awaited<ReturnType<typeof db>>; id: string } | { error: string; field?: string }> {
+  // a bot that filled the field no person sees: turned away, with nothing said that helps it
+  if (trapped(trap)) {
+    await note("join", phone, "trap");
+    return { error: t.errNetwork };
+  }
+  // a shop's wifi or a mobile network can share one address: the limits are wide
+  if (!(await gate("join", phone, 30, 60, 120))) return { error: t.errTooMany };
   const admin = service();
   const { data, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password, email_confirm: true, app_metadata: { phone: `+216${phone}` } });
   if (error) {
@@ -102,7 +102,7 @@ export async function joinShop(_: FormState, fd: FormData): Promise<FormState> {
   if (!validPhone(phone)) return { error: t.errPhone, field: "phone" };
   if (password.length < PASSWORD_MIN) return { error: t.errPassword, field: "password" };
   if (!kind) return { error: t.errKind, field: "kind" };
-  const made = await newAccount(name, phone, password);
+  const made = await newAccount(name, phone, password, fd.get(TRAP));
   if ("error" in made) return made;
   const { data: res } = await made.supabase.rpc("open_shop", { p_name: shop, p_kind: kind });
   if (!(res as { ok?: boolean } | null)?.ok) redirect("/shop/setup");
@@ -123,7 +123,7 @@ export async function joinShop(_: FormState, fd: FormData): Promise<FormState> {
 export async function formJoin(
   token: string,
   data: Record<string, string>,
-  account: { name: string; phone: string; password: string },
+  account: { name: string; phone: string; password: string; trap?: string },
 ): Promise<{ ok: boolean; error?: string; field?: string }> {
   if (!/^[A-Za-z0-9_-]{8,40}$/.test(token)) return { ok: false, error: t.errNetwork };
   const name = String(account.name ?? "").trim();
@@ -150,7 +150,11 @@ export async function formJoin(
   if (name.length < 2 || name.length > 60) return { ok: false, error: t.errName, field: "acc_name" };
   if (!validPhone(phone)) return { ok: false, error: t.errPhone, field: "acc_phone" };
   if (password.length < PASSWORD_MIN) return { ok: false, error: t.errPassword, field: "acc_password" };
-  if (!(await allowed(`join-ip:${await address()}`, 30, 60))) return { ok: false, error: t.errTooMany };
+  if (trapped(account.trap)) {
+    await note("join", phone, "trap");
+    return { ok: false, error: t.errNetwork };
+  }
+  if (!(await gate("join", phone, 30, 60, 120))) return { ok: false, error: t.errTooMany };
 
   const admin = service();
   const { data: made, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password, email_confirm: true, app_metadata: { phone: `+216${phone}` } });
@@ -187,12 +191,20 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   const next = inside(str(fd, "next"));
   if (!validPhone(phone)) return { error: t.errPhone, field: "phone" };
   if (!password) return { error: t.errPassword, field: "password" };
+  if (trapped(fd.get(TRAP))) {
+    await note("login", phone, "trap");
+    return { error: t.errLogin };
+  }
   // guessing a password: 8 tries per number, 60 per address, every 15 minutes
-  if (!(await allowed(`login:${phone}`, 8, 15)) || !(await allowed(`login-ip:${await address()}`, 60, 15))) return { error: t.errTooMany };
+  if (!(await allowed(`login:${phone}`, 8, 15)) || !(await gate("login", phone, 60, 15))) return { error: t.errTooMany };
 
   const supabase = await db();
   const { error } = await supabase.auth.signInWithPassword({ email: phoneEmail(phone), password });
-  if (error) return { error: /invalid|credentials/i.test(error.message) ? t.errLogin : t.errNetwork };
+  if (error) {
+    const wrong = /invalid|credentials/i.test(error.message);
+    if (wrong) await note("login", phone, "wrong");
+    return { error: wrong ? t.errLogin : t.errNetwork };
+  }
   await service().rpc("forget_tries", { p_key: `login:${phone}` });
   await markKnown();
   const { data: me } = await supabase.rpc("me");
@@ -285,14 +297,14 @@ export async function scan(token: string): Promise<ScanResult> {
  * make the account, sign it in, and the held tampon lands, all in this one
  * call. A number already taken says so, with the way to sign in.
  */
-export async function quickJoin(token: string, name: string, phoneRaw: string, password: string): Promise<{ ok: false; error: string; field?: string } | { ok: true; res: ScanResult }> {
+export async function quickJoin(token: string, name: string, phoneRaw: string, password: string, trap?: string): Promise<{ ok: false; error: string; field?: string } | { ok: true; res: ScanResult }> {
   if (!TOKEN.test(token)) return { ok: false, error: t.errNetwork };
   const who = String(name ?? "").trim();
   const phone = digits(String(phoneRaw ?? ""));
   if (who.length < 2 || who.length > 60) return { ok: false, error: t.errName, field: "name" };
   if (!validPhone(phone)) return { ok: false, error: t.errPhone, field: "phone" };
   if (String(password ?? "").length < PASSWORD_MIN) return { ok: false, error: t.errPassword, field: "password" };
-  const made = await newAccount(who, phone, String(password));
+  const made = await newAccount(who, phone, String(password), trap);
   if ("error" in made) return { ok: false, error: made.error, field: made.field };
   // the tampon held for this phone, now theirs
   const jar = await cookies();
@@ -645,6 +657,21 @@ export async function giveAll(moment: number): Promise<boolean> {
 }
 
 // ── the founder ────────────────────────────────────────────────────────────
+/** «الأمان»: an address or a number shut out (for some days, or for good: 0), or let in again. */
+export async function adminBlock(value: string, kind: "ip" | "phone", reason: string, days: number): Promise<boolean> {
+  const v = kind === "phone" ? (digits(value).length === 8 ? `+216${digits(value)}` : value.trim()) : value.trim();
+  if (!v || v.length > 64) return false;
+  const res = await call<boolean>("admin_block", { p_value: v, p_kind: kind, p_reason: reason.slice(0, 120), p_days: Math.max(0, Math.min(3650, Math.round(days))) });
+  revalidatePath("/admin/security");
+  return !!res;
+}
+
+export async function adminUnblock(value: string): Promise<boolean> {
+  const res = await call<boolean>("admin_unblock", { p_value: String(value).slice(0, 64) });
+  revalidatePath("/admin/security");
+  return !!res;
+}
+
 export async function adminPause(id: string, paused: boolean): Promise<boolean> {
   const res = await call<{ ok: boolean }>("admin_set_paused", { p_id: id, p_paused: paused });
   revalidatePath("/admin", "layout");

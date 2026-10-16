@@ -412,6 +412,7 @@ const SCREENS = [
   { name: "console-news", as: "boss", path: "/admin/news", read: true },
   { name: "console-payments", as: "boss", path: "/admin/payments", read: true },
   { name: "console-settings", as: "boss", path: "/admin/settings", read: true },
+  { name: "console-security", as: "boss", path: "/admin/security", read: true },
 ].filter((s) => !ONLY || ONLY.some((w) => s.name.startsWith(w)));
 function SCREENS_AS() {
   return SCREENS.map((s) => s.as).filter(Boolean);
