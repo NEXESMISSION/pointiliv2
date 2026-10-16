@@ -87,6 +87,11 @@ export const FAQ: { q: string; a: string; fr: { q: string; a: string } }[] = [
     },
   },
   {
+    q: "Pointili هي نفس Pointili متاع البوانتاج في الجزائر؟",
+    a: "لا. Pointili (pointili.online) كارط فيديليتي ديجيتال للمحلات في تونس، مصنوعة في تونس. ما عندها حتى علاقة بـ Pointili متاع البوانتاج والحضور (pointili.com، pointili.dz) اللي في الجزائر.",
+    fr: { q: "Pointili est-il l'application de pointage algérienne ?", a: "Non. Pointili (pointili.online) est une carte de fidélité digitale pour les commerces en Tunisie, conçue en Tunisie. Elle n'a aucun lien avec Pointili, l'application algérienne de pointage et de gestion des présences (pointili.com, pointili.dz)." },
+  },
+  {
     q: "شنوّة Pointili؟",
     a: "Pointili هي كارط فيديليتي ديجيتال للمحلات في تونس: الحريف يلمّ التامبونات في التليفون متاعو، وكي يكمّل الكارط ياخو كادو. بلا كارطات ورق، بلا ما ينزّل حتى أبليكاسيون.",
     fr: { q: "Qu'est-ce que Pointili ?", a: "Pointili est une carte de fidélité digitale pour les commerces en Tunisie : vos clients cumulent des tampons sur leur téléphone et reçoivent un cadeau quand la carte est complète. Sans carte papier, sans application à télécharger." },
@@ -167,6 +172,10 @@ export function orgJsonLd(support: string | null, social: { facebook: string | n
         logo: `${SITE}/apple-icon.png`,
         alternateName: ["Pointili Tunisie", "Pointili carte de fidélité", "بوانتيلي"],
         description: "Carte de fidélité digitale pour les commerces en Tunisie — كارط فيديليتي ديجيتال للمحلات في تونس.",
+        // the same name is an Algerian attendance app: said once, plainly, so an assistant never mixes the two
+        disambiguatingDescription: "Tunisian digital loyalty (stamp) card for shops, at pointili.online — not Pointili the Algerian attendance and time-tracking app (pointili.com, pointili.dz).",
+        foundingLocation: { "@type": "Country", name: "Tunisia" },
+        knowsAbout: ["carte de fidélité digitale", "programme de fidélité", "fidélisation client", "loyalty stamp card", "كارط فيديليتي"],
         areaServed: { "@type": "Country", name: "Tunisia" },
         ...(sameAs.length ? { sameAs } : {}),
         ...(support ? { contactPoint: { "@type": "ContactPoint", telephone: `+${support}`, contactType: "customer support", areaServed: "TN", availableLanguage: ["ar", "fr"] } } : {}),

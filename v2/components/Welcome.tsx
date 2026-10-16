@@ -149,6 +149,9 @@ export function Welcome({ video, known, ad }: { video?: HelpVideo | null; known?
         <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
         <Link href="/faq">أسئلة</Link>
         <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
+        {/* the pages a search lands on (a kind of shop, the comparison): linked from the front door so they are found */}
+        <Link href="/pour">لكل محل</Link>
+        <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
         <Link href="/privacy">الخصوصية</Link>
         <InstallApp where="welcome" look="link" />
       </nav>

@@ -57,6 +57,12 @@ export function SiteFrame({ support, social, children }: { support: string | nul
             <Link href="/guide" className="text-body hover:text-brand">
               كيفاش تختار
             </Link>
+            <Link href="/pour" className="text-body hover:text-brand">
+              لكل محل
+            </Link>
+            <Link href="/comparatif" className="text-body hover:text-brand">
+              مقارنة
+            </Link>
             <Link href="/shop/new" className="text-body hover:text-brand">
               حلّ محلّك
             </Link>

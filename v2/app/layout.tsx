@@ -53,6 +53,11 @@ export const metadata: Metadata = {
   category: "business",
   appleWebApp: { capable: true, title: "Pointili", statusBarStyle: "default" },
   formatDetection: { telephone: false },
+  // Google Search Console and Bing Webmaster Tools prove the site is ours with these (set on Vercel)
+  verification: {
+    ...(process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : {}),
+    ...(process.env.BING_SITE_VERIFICATION ? { other: { "msvalidate.01": process.env.BING_SITE_VERIFICATION } } : {}),
+  },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#F4F3F9" };

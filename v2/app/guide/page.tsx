@@ -50,8 +50,8 @@ const POINTS: { q: string; a: string; fr: { q: string; a: string } }[] = [
   },
   {
     q: "يخدم لنوع المحل متاعك؟",
-    a: "قهاوي، حلّاقة، كوافير، مخابز، حلويات، ريستوات، فاست فود، عطورات، حوايج، لافاج… أكثر من 50 نوع محل، في تونس الكل.",
-    fr: { q: "Adapté à votre type de commerce ?", a: "Cafés, barbiers, coiffeurs, boulangeries, pâtisseries, restaurants, fast-foods, parfumeries, boutiques, lavages… plus de 50 types de commerces, partout en Tunisie." },
+    a: "قهاوي، حلّاقة، كوافير، مخابز، حلويات، ريستوات، فاست فود، عطورات، حوايج، لافاج… أكثر من 100 نوع محل، في تونس الكل.",
+    fr: { q: "Adapté à votre type de commerce ?", a: "Cafés, barbiers, coiffeurs, boulangeries, pâtisseries, restaurants, fast-foods, parfumeries, boutiques, lavages… plus de 100 types de commerces, partout en Tunisie." },
   },
 ];
 
