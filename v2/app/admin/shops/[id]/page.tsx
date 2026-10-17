@@ -15,7 +15,7 @@ import { Ago } from "@/components/Ago";
 import { Presence } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Lat, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
-import { screenName } from "@/lib/screens";
+import { Trail } from "@/components/Trail";
 import { siteOrigin } from "@/lib/origin";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
@@ -450,20 +450,8 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                         {v.ms > 0 ? dur(v.ms) : "—"}
                       </Cell>
                       <Cell muted className="min-w-[16rem]">
-                        {/* the pages in the order they went through them, with the time on each */}
-                        <span className="flex flex-wrap items-center gap-1">
-                          {v.path.map((w, i) => (
-                            <span key={i} className="inline-flex items-center gap-1">
-                              {i > 0 && <span className="text-faint" aria-hidden>←</span>}
-                              <span className="inline-flex items-center gap-1 rounded-full bg-canvas px-2 py-0.5 text-[0.75rem] font-semibold text-body">
-                                <bdi>{screenName(w.route, w.screen)}</bdi>
-                                {w.ms >= 1000 && <bdi className="font-normal text-muted">{dur(w.ms)}</bdi>}
-                              </span>
-                            </span>
-                          ))}
-                          {v.pages > v.path.length && <span className="text-[0.75rem] text-muted">+<Num>{v.pages - v.path.length}</Num></span>}
-                          {!v.path.length && <span className="text-faint">—</span>}
-                        </span>
+                        {/* the visit drawn, not written: each screen as wide as the time on it */}
+                        <Trail path={v.path} pages={v.pages} />
                       </Cell>
                       <Cell muted>
                         <Parts of={[DEVICES[v.device ?? ""] ?? v.device, v.browser]} />
