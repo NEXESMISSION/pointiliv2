@@ -16,7 +16,8 @@ const OUT = path.join(DIR, "out");
 const IDEAS = process.argv.includes("--ideas");
 const ADS = process.argv.includes("--ads");
 const NEW = process.argv.includes("--new");
-const DEST = (process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : path.join(os.homedir(), "Desktop", "Pointili posts")) + (IDEAS ? path.sep + "_ideas" : ADS ? path.sep + "_ads" : NEW ? path.sep + "_new" : "");
+const V2 = process.argv.includes("--v2");
+const DEST = (process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : path.join(os.homedir(), "Desktop", "Pointili posts")) + (IDEAS ? path.sep + "_ideas" : ADS ? path.sep + "_ads" : NEW ? path.sep + "_new" : V2 ? path.sep + "_v2" : "");
 
 // what it is → the doubts → what it brings → the price
 const POSTS = [
@@ -56,6 +57,13 @@ const NEW_POSTS = [
   ["c55", "15 - Imagine"],
   ["c56", "16 - He bought once and never came back"],
 ];
+// October 2026: the v2 app's own screens, photos from the founder's own shoots
+const V2_POSTS = [
+  ["c60", "17 - Why they want to finish the card"],
+  ["c61", "18 - Pointili for fast food"],
+  ["c62", "19 - He forgot his gift"],
+];
+if (V2) POSTS.splice(0, POSTS.length, ...V2_POSTS);
 if (IDEAS) POSTS.splice(0, POSTS.length, ...IDEA_POSTS);
 if (NEW) POSTS.splice(0, POSTS.length, ...NEW_POSTS);
 if (ADS) POSTS.splice(0, POSTS.length, ...AD_POSTS);

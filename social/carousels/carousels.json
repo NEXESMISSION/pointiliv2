@@ -3070,6 +3070,276 @@
           "pillIcon": "message-circle"
         }
       ]
+    },
+    {
+      "id": "c60",
+      "title": "علاش الحريف يحب يكمّل الكارط؟",
+      "backlog": "7.5 The psychology of loyalty — The power of giving customers a visible goal / Why «one more visit and I get something free» works",
+      "notes": "October 2026, v2 screens (Café El Medina, robots) and photos from the founder's own café shoot (clip1).",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "SC-60-1.png",
+          "photoY": 30,
+          "title": "علاش الحريف يحب\nيكمّل الكارط؟",
+          "hl": "يكمّل الكارط",
+          "sub": "موش على القهوة برك…"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-60-2.png",
+          "photoY": 35,
+          "title": "يشوف وين وصل",
+          "hl": "وين وصل",
+          "sub": "5 من 8: الهدف قدّام عينيه",
+          "screen": "v2-cafe-card-5.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "كل تامبون يقرّبو",
+          "pillIcon": "target"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-60-3.png",
+          "photoY": 40,
+          "title": "كي يقرب، يرجع أسرع",
+          "hl": "يرجع أسرع",
+          "sub": "مازالو 2؟ ما يستنّاش الجمعة الجاية",
+          "screen": "v2-cafe-card-6.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "مازالولك 2 باش تربح قهوة بلاش",
+          "pillIcon": "gift",
+          "pillStyle": "violet"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-60-4.png",
+          "photoY": 40,
+          "title": "كادو صغير… وعادة كبيرة",
+          "hl": "عادة كبيرة",
+          "sub": "قهوة بلاش كل 8، والحريف ولّا يجي كل يوم",
+          "screen": "v2-cafe-card-7.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "مازالك تامبون واحد",
+          "pillIcon": "coffee"
+        },
+        {
+          "type": "screen",
+          "title": "الكارط في تليفونو، ديما معاه",
+          "hl": "ديما معاه",
+          "sub": "يحلّ تليفونو، يشوف قدّاش مازالو",
+          "screen": "v2-cafe-home.png",
+          "screenY": 0,
+          "phoneTop": 560
+        },
+        {
+          "type": "cta",
+          "title": "عطي حرفاءك هدف يشوفوه",
+          "hl": "هدف يشوفوه",
+          "sub": "كل شي نجهّزوهولك:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c61",
+      "title": "Pointili في الفاست فود",
+      "backlog": "7.7 Business-specific examples — Pointili for a juice/fast-food shop",
+      "notes": "October 2026, v2 screens (Snack El Bahja, robots: counter, the scan's own screen, the card) and photos from the founder's snack shoot (clip2).",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "SC-61-1.png",
+          "photoY": 25,
+          "title": "Pointili\nفي الفاست فود",
+          "hl": "الفاست فود",
+          "sub": "كل ساندويتش = تامبون"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-61-2.png",
+          "photoY": 30,
+          "title": "الكود على الكونتوار",
+          "hl": "على الكونتوار",
+          "sub": "يتبدّل وحدو بعد كل سكان",
+          "screen": "v2-food-counter.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "سكاني وخوذ تامبون",
+          "pillIcon": "qr-code"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-61-3.png",
+          "photoY": 30,
+          "title": "يسكاني… وتامبون تزاد",
+          "hl": "تامبون تزاد",
+          "sub": "في ثانية، بلا ما يحمّل أبليكاسيون",
+          "screen": "v2-food-stamped.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "تامبون جديد!",
+          "pillIcon": "smartphone"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-61-4.png",
+          "photoY": 40,
+          "title": "مازالو 3 وساندويتش بلاش",
+          "hl": "ساندويتش بلاش",
+          "sub": "يحسب معاك… ويرجع",
+          "screen": "v2-food-card.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "مازالولك 3 باش تربح ساندويتش بلاش",
+          "pillIcon": "gift",
+          "pillStyle": "violet"
+        },
+        {
+          "type": "screen",
+          "title": "وإنت تعرف شكون جا",
+          "hl": "شكون جا",
+          "sub": "في الكونتوار: «ياسين خذا تامبون»",
+          "screen": "v2-food-counter-after.png",
+          "screenY": 0,
+          "phoneTop": 560
+        },
+        {
+          "type": "cta",
+          "title": "حريف اليوم يرجع غدوة",
+          "hl": "يرجع غدوة",
+          "sub": "كل شي نجهّزوهولك:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
+    },
+    {
+      "id": "c62",
+      "title": "الحريف كمّل الكارط ونسى الكادو؟",
+      "backlog": "7.4 Answer the questions in the owner's head — How does the business know when a reward is being used? (and the vouchers of 16 Oct 2026)",
+      "notes": "October 2026, v2 screens (Maison Lina, robots: two gifts waiting, the card back at 1, the gift's code, the owner's give-all) and photos from the founder's shop shoot (clip3).",
+      "slides": [
+        {
+          "type": "hook",
+          "photo": "SC-62-1.png",
+          "photoY": 12,
+          "title": "الحريف كمّل الكارط…\nونسى الكادو؟",
+          "hl": "ونسى الكادو؟",
+          "sub": "ما يضيع شي: الكادو يستنّى فيه"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-62-2.png",
+          "photoY": 30,
+          "title": "الكادو يتسجّل وحدو",
+          "hl": "وحدو",
+          "sub": "الكارط تكمل، والكادو يتحطّ على جنب",
+          "screen": "v2-store-home.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "عندك كادو يستنّى فيك",
+          "pillIcon": "gift"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-62-3.png",
+          "photoY": 30,
+          "title": "والكارط تبدا من جديد",
+          "hl": "من جديد",
+          "sub": "يكمّل يلمّ، والكادوات يستنّاو",
+          "screen": "v2-store-card.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "عندو 2 كادوات حاضرين",
+          "pillIcon": "gift",
+          "pillStyle": "violet"
+        },
+        {
+          "type": "scene",
+          "photo": "SC-62-4.png",
+          "photoY": 45,
+          "title": "وقت يحب، يورّيك الكود",
+          "hl": "الكود",
+          "sub": "من تليفونو، في الكاسة",
+          "screen": "v2-store-gift-code.png",
+          "screenY": 0,
+          "phone": {
+            "x": "right",
+            "top": 560,
+            "w": 420
+          },
+          "pill": "تسكانيه وتعطيه الكادو",
+          "pillIcon": "scan-line"
+        },
+        {
+          "type": "screen",
+          "title": "تسكاني، وتختار: الكل ولا واحد",
+          "hl": "الكل ولا واحد",
+          "sub": "Pointili تقلّك قدّاش من كادو يستنّى",
+          "screen": "v2-store-owner-give.png",
+          "screenY": 0,
+          "phoneTop": 560
+        },
+        {
+          "type": "cta",
+          "title": "حتى كادو ما يضيع",
+          "hl": "ما يضيع",
+          "sub": "كل شي نجهّزوهولك:",
+          "next": [
+            "نحلّولك الكونت",
+            "نجهّزولك الكارط والكود",
+            "وإنت تبدا توّا"
+          ],
+          "pill": "كلّمنا اليوم",
+          "pillIcon": "message-circle"
+        }
+      ]
     }
   ]
 }
