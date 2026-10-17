@@ -133,19 +133,41 @@ try {
     const { data: card } = await admin.from("shops").select("goal, color, stamp_gap").eq("owner_id", me.id).single();
     console.log(card.goal === 5 && card.color.toUpperCase() === "#FF6B4A" && card.stamp_gap === 60 ? "  · the first card saved with its goal, its colour and its wait ✓" : `  ! the first card: ${JSON.stringify(card)}`);
   }
-  // ③ how it works, filmed for real: the clip plays by itself, then the shop's own code — nothing over it
-  await o.getByRole("heading", { name: "هكّا تخدم في المحل" }).waitFor({ timeout: 20000 });
-  const played = await o
-    .waitForFunction(() => (document.querySelector("video")?.currentTime ?? 0) > 0.5, null, { timeout: 20000 })
-    .then(() => true)
-    .catch(() => false);
-  console.log(played ? "  · the clip plays by itself ✓" : "  ! the clip did not play");
-  await shot(o, "05c-clip", 300);
-  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), o.getByRole("button", { name: "ورّيني الكود متاعي" }).click()]);
+  // ③ how it works, filmed for real: three slides like stories, then the shop's own code with its one note
+  const story = o.getByRole("dialog", { name: "هكّا تخدم في المحل" });
+  await story.waitFor({ timeout: 20000 });
+  const plays = (n) =>
+    o
+      .waitForFunction((k) => (document.querySelectorAll("video")[k]?.currentTime ?? 0) > 0.4, n, { timeout: 20000 })
+      .then(() => true)
+      .catch(() => false);
+  console.log((await plays(0)) ? "  · the first slide plays by itself ✓" : "  ! the first slide did not play");
+  await shot(o, "05c-clip-1", 300);
+  await story.getByRole("button", { name: "كمّل", exact: true }).click();
+  console.log((await plays(1)) ? "  · «كمّل» slides to the second, which plays ✓" : "  ! the second slide did not play");
+  await shot(o, "05c-clip-2", 300);
+  await story.getByRole("button", { name: "كمّل", exact: true }).click();
+  await story.getByRole("button", { name: "ورّيني الكود متاعي" }).waitFor({ timeout: 10000 });
+  await shot(o, "05c-clip-3", 300);
+  await Promise.all([o.waitForURL((u) => u.pathname === "/shop/qr", { timeout: 60000 }), story.getByRole("button", { name: "ورّيني الكود متاعي" }).click()]);
+  // the code is theirs: one note says why it keeps changing — above the code, never on it
+  const note = o.getByRole("dialog", { name: "هذا هو الكود متاعك" });
+  await note.waitFor({ timeout: 20000 });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
-  await never(o, "a tip over the code", o.getByText("عندك تليفون آخر"), 1500);
+  await shot(o, "05b-tip", 1100);
+  const covered = await o.evaluate(() => {
+    const q = document.querySelector("[data-qr]").getBoundingClientRect();
+    const d = document.querySelector('[role="dialog"]').getBoundingClientRect();
+    return Math.min(q.bottom, d.bottom) > Math.max(q.top, d.top) && Math.min(q.right, d.right) > Math.max(q.left, d.left);
+  });
+  if (covered) console.log("  ! the note covers the code");
+  await note.getByRole("button", { name: "فهمت" }).click();
+  await o.waitForURL((u) => u.pathname === "/shop/qr" && !u.search, { timeout: 20000 });
+  await o.locator("[data-qr]").waitFor({ timeout: 30000 });
   await shot(o, "05-counter", 1200);
-  console.log("  · the clip, then straight to the shop's own code ✓");
+  await o.reload({ waitUntil: "load" });
+  await never(o, "the note on the code (reload)", o.getByRole("dialog", { name: "هذا هو الكود متاعك" }));
+  console.log("  · the slides, then the shop's own code and its one note ✓");
   await o.goto(BASE + "/shop", { waitUntil: "load" });
   // before the first customer the home has one job: no logo tip, no install, no offer over it — and its first steps
   await never(o, "a note before the first customer", o.getByRole("dialog"), 1500);

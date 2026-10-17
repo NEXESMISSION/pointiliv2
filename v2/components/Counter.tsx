@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, Phone, WifiOff } from "lucide-react";
+import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, Phone, RefreshCw, ScanLine, ShieldCheck, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
 import { ClipButton } from "@/components/HowClip";
@@ -418,10 +418,19 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
               </span>
               {t.coachTipTitle}
             </p>
-            <p className="mt-1.5 flex items-center gap-2 text-[0.8125rem] leading-relaxed text-body">
-              <Icon3D name="phone" size={28} className="shrink-0" />
-              {t.coachTip}
-            </p>
+            {/* the code is theirs, and why it keeps changing — three short lines, each with its sign */}
+            <ul className="mt-2 space-y-1.5 text-[0.8125rem] leading-snug text-body">
+              {[
+                { icon: <ScanLine className="size-4" />, text: t.coachTip, tone: "bg-brand-soft text-brand" },
+                { icon: <RefreshCw className="size-4 animate-[spin_2.4s_linear_infinite]" />, text: t.coachTipChange, tone: "bg-[#fff4e0] text-[#d97706]" },
+                { icon: <ShieldCheck className="size-4" />, text: t.coachTipSafe, tone: "bg-mint-soft text-mint" },
+              ].map((r, i) => (
+                <li key={i} className="flex items-center gap-2.5" style={{ animation: `ct-in 420ms cubic-bezier(0.2,0.8,0.2,1) ${160 + i * 140}ms both` }}>
+                  <span className={`grid size-7 shrink-0 place-items-center rounded-full ${r.tone}`}>{r.icon}</span>
+                  <span className="min-w-0">{r.text}</span>
+                </li>
+              ))}
+            </ul>
             <button
               type="button"
               onClick={() => setCoach(null)}

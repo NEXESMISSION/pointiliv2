@@ -10,7 +10,6 @@ import { InstallPopup, OpenOutside } from "@/components/InstallApp";
 import { OfferPopup, PayBanner, TrialBanner, type Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
 import { PlanOn } from "@/components/PlanOn";
-import { PushAsk } from "@/components/PushAsk";
 import { RecentList } from "@/components/RecentList";
 import { ClipButton } from "@/components/HowClip";
 import { ShopWelcome } from "@/components/ShopWelcome";
@@ -237,13 +236,8 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
           ) : (
             // before the first customer: how it goes, in three steps
             <div className="m-auto flex w-full max-w-[21rem] flex-col items-center px-3 py-3 text-center">
-              {/* a card made at night, no customer yet: a word tomorrow morning (asked once) — in the place of
-                  the picture and the two lines, never under them: a short phone's one screen is already full */}
-              {!seen.includes("push") ? (
-                <PushAsk shop={shop.name} title={t.pushOwnerAskTitle} body={fill(t.pushOwnerAskBody, { shop: shop.name })} compact fallback={<EmptyWords />} />
-              ) : (
-                <EmptyWords />
-              )}
+              {/* the picture and the two lines; no ask for a word tomorrow morning here (the founder, 17 Oct 2026) */}
+              <EmptyWords />
               {/* how it goes, filmed for real, one tap away (the steps themselves are the mission's, above) */}
               <ClipButton className="press mt-2 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-center text-[0.8125rem] font-bold text-brand">
                 {t.tryLobby} ←

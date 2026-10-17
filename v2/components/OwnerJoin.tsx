@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
+import { LogIn } from "lucide-react";
 import { joinShop } from "@/app/actions";
 import { KindField } from "@/components/KindPicker";
 import { MorphCard } from "@/components/Morph";
 import { PhoneField } from "@/components/PhoneField";
-import { Btn, Field } from "@/components/ui";
+import { Btn, Field, LinkBtn } from "@/components/ui";
 import { Trap } from "@/components/Trap";
 import { cardDefaults } from "@/lib/card-defaults";
 import { t } from "@/lib/t";
@@ -68,9 +69,10 @@ export function OwnerJoin() {
         <Btn type="submit" disabled={pending}>
           {pending ? t.checking : t.next}
         </Btn>
-        <Link href={signIn} className="press mt-1 flex h-11 items-center justify-center text-[0.9375rem] font-semibold text-muted [@media(max-height:520px)]:h-9">
-          {t.toLogin}
-        </Link>
+        {/* an account already: a real second button, not a line of grey text (the founder, 17 Oct 2026) */}
+        <LinkBtn href={signIn} kind="line" className="mt-2 !h-12 !text-[0.9375rem] [@media(max-height:560px)]:!h-10">
+          <LogIn className="size-[1.125rem]" /> {t.toLogin}
+        </LinkBtn>
       </div>
     </form>
   );
