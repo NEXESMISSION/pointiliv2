@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Pointili — mock: the owner, simpler</title>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Readex Pro", system-ui, sans-serif; background: #e9e6f5; color: #0f0e17; padding: 28px; }
+  .row { display: flex; gap: 28px; direction: ltr; align-items: flex-start; }
+  .col { width: 390px; direction: rtl; }
+  .lbl { font-size: 20px; font-weight: 700; margin-bottom: 10px; direction: ltr; text-align: left; color: #2a2740; }
+  .lbl small { display: block; font-size: 13px; font-weight: 500; color: #6b6880; margin-top: 2px; }
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 44px; overflow: hidden; background: radial-gradient(28rem 28rem at 12% 14%, rgba(108,71,255,.11), transparent 70%), radial-gradient(32rem 32rem at 92% 86%, rgba(255,107,74,.09), transparent 70%), linear-gradient(180deg,#f7f5ff,#ece8fb); box-shadow: 0 30px 60px -30px rgba(40,20,120,.45); }
+  .pad { padding: 22px 20px; }
+  .top { display: flex; align-items: center; gap: 12px; padding-top: 18px; }
+  .lg { width: 46px; height: 46px; border-radius: 15px; background: #fff; display: grid; place-items: center; font-size: 24px; box-shadow: 0 8px 20px -14px rgba(40,20,120,.5); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; background: #fff; font-weight: 700; font-size: 13px; box-shadow: 0 8px 20px -14px rgba(40,20,120,.5); }
+  h1 { font-size: 28px; font-weight: 700; }
+  h2 { font-size: 18px; font-weight: 700; }
+  .sub { font-size: 14px; color: #6b6880; }
+  .card { background: #fff; border-radius: 24px; padding: 16px; box-shadow: 0 14px 32px -22px rgba(40,20,120,.5); }
+  .big { display: flex; flex-direction: column; justify-content: space-between; border-radius: 24px; padding: 16px; color: #fff; height: 150px; }
+  .big b { font-size: 21px; } .big span { font-size: 13px; opacity: .85; }
+  .ic { width: 46px; height: 46px; border-radius: 15px; background: rgba(255,255,255,.2); display: grid; place-items: center; font-size: 24px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 56px; border-radius: 20px; font-weight: 700; font-size: 17px; color: #fff; background: linear-gradient(150deg,#9b7bff -30%,#6c47ff 50%,#4a2ad6 130%); box-shadow: 0 14px 30px -12px rgba(108,71,255,.65); }
+  .btn.wa { background: linear-gradient(150deg,#3ee07f,#25d366 50%,#1aa851); box-shadow: 0 14px 30px -12px rgba(37,211,102,.6); }
+  .btn.line { background: #fff; color: #6c47ff; box-shadow: 0 10px 24px -16px rgba(40,20,120,.5), inset 0 0 0 1.5px rgba(108,71,255,.25); }
+  .foot { position: absolute; inset-inline: 20px; bottom: 26px; }
+  .stat { display: flex; gap: 10px; } .stat div { flex: 1; background: #fff; border-radius: 18px; padding: 10px 12px; box-shadow: 0 10px 24px -18px rgba(40,20,120,.5); } .stat b { font-size: 22px; display: block; direction: ltr; text-align: right; } .stat span { font-size: 12px; color: #6b6880; }
+  .li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #eee; font-size: 14px; font-weight: 600; } .li:last-child { border: 0; }
+  .av { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(145deg,#ffb18a,#ff6b4a); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .t { margin-inline-start: auto; color: #6b6880; font-size: 12px; font-weight: 500; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: #fff; border-radius: 18px; padding: 4px; box-shadow: 0 10px 24px -18px rgba(40,20,120,.5); }
+  .seg span { height: 44px; border-radius: 14px; display: grid; place-items: center; font-weight: 700; font-size: 15px; color: #6b6880; } .seg .on { background: #6c47ff; color: #fff; }
+  .field { display: flex; align-items: center; gap: 12px; height: 76px; background: #fff; border-radius: 22px; padding: 0 18px; box-shadow: 0 0 0 2.5px #6c47ff, 0 14px 30px -18px rgba(108,71,255,.6); direction: ltr; font-size: 32px; font-weight: 700; letter-spacing: 2px; }
+  .field small { font-size: 20px; color: #6b6880; font-weight: 600; letter-spacing: 0; }
+  .pill { display: inline-flex; align-items: center; height: 38px; padding: 0 14px; border-radius: 999px; font-weight: 700; font-size: 14px; background: #fff; margin: 3px; box-shadow: 0 8px 18px -14px rgba(40,20,120,.5); }
+  .pill.on { background: #6c47ff; color: #fff; }
+  .step { display: flex; gap: 12px; align-items: flex-start; }
+  .step .n { width: 30px; height: 30px; border-radius: 50%; background: #6c47ff; color: #fff; display: grid; place-items: center; font-weight: 700; flex-shrink: 0; }
+  .step .n.done { background: #12b76a; }
+  .way { flex: 1; height: 64px; border-radius: 16px; background: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; box-shadow: 0 8px 18px -14px rgba(40,20,120,.5); }
+  .way.on { box-shadow: 0 0 0 2.5px #6c47ff; color: #6c47ff; }
+  .copy { display: flex; align-items: center; justify-content: space-between; background: #f4f3f9; border-radius: 14px; padding: 10px 12px; margin-top: 8px; font-weight: 700; direction: ltr; }
+  .copy em { font-style: normal; color: #6c47ff; font-size: 13px; }
+  .switch { width: 54px; height: 32px; border-radius: 999px; background: #12b76a; position: relative; flex-shrink: 0; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; }
+  .bar { height: 10px; border-radius: 99px; background: #6c47ff; }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const screens = [
+  ["A · El home", "7aja wa7da kbira: «عطي تامبون» b zouz tor9 wadh7in", `
+    <div class="pad">
+      <div class="top"><span class="lg">☕</span><div style="flex:1"><h1 style="font-size:22px">Café Yasmine</h1><span class="sub">التجربة: مازال يومين</span></div><span class="chip" style="background:#6c47ff;color:#fff">خلّص ←</span></div>
+      <h2 style="margin-top:22px">عطي تامبون</h2>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <div class="big" style="flex:1;background:linear-gradient(150deg,#9b7bff,#6c47ff 55%,#4a2ad6)"><span class="ic">▦</span><div><b>ورّي الكود</b><br><span>الحريف يسكانيه بتليفونو</span></div></div>
+        <div class="big" style="flex:1;background:linear-gradient(150deg,#ffa183,#ff6b4a)"><span class="ic">📱</span><div><b>بالنومرو</b><br><span>اكتب نومرو الحريف</span></div></div>
+      </div>
+      <div class="card" style="margin-top:10px;display:flex;align-items:center;gap:10px;padding:12px 16px"><span style="font-size:20px">⌗</span><b style="font-size:15px">سكاني الكود متاع الحريف</b><span class="t">←</span></div>
+      <div class="stat" style="margin-top:18px"><div><b>8</b><span>تامبونات اليوم</span></div><div><b>23</b><span>حرفاء</span></div><div><b>2</b><span>كادوات يستنّاو</span></div></div>
+      <h2 style="margin-top:18px">آخر حركة</h2>
+      <div class="card" style="margin-top:8px;padding:6px 16px">
+        <div class="li"><span class="av">ن</span>نور خذا تامبون<span class="t">08:29</span></div>
+        <div class="li"><span class="av">س</span>سامي ربح قهوة بلاش 🎁<span class="t">08:12</span></div>
+        <div class="li"><span class="av">م</span>محمد خذا تامبون<span class="t">07:40</span></div>
+      </div>
+    </div>`],
+  ["B · Bel numero", "el numero howa el par défaut; yetla3 el client w bouton wa7ed", `
+    <div class="pad">
+      <div class="top"><span class="chip">›</span><h1 style="font-size:22px">عطي تامبون</h1></div>
+      <div class="seg" style="margin-top:18px"><span class="on">النومرو</span><span>الكود</span></div>
+      <p class="sub" style="margin-top:22px;font-size:15px">اكتب نومرو الحريف</p>
+      <div class="field" style="margin-top:8px"><small>+216</small> 22 123 456</div>
+      <div class="card" style="margin-top:16px;display:flex;align-items:center;gap:12px"><span class="av" style="width:46px;height:46px;font-size:18px">س</span><div style="flex:1"><b style="font-size:17px">سامي</b><div class="sub">3/8 · مازالولو 5 ويربح قهوة بلاش</div></div></div>
+      <p class="sub" style="margin-top:14px;text-align:center">نومرو جديد؟ نحلّولو كارط ويلقاها كي يعمل كونت</p>
+    </div>
+    <div class="foot"><div class="btn">+1 تامبون لسامي</div></div>`],
+  ["C · «شنوّة تبيع؟»", "nfassrou 3lech fi 3 sṭour w mini-mock, ba3d el liste w switch wadh7", `
+    <div class="pad">
+      <div class="top"><span class="chip">›</span><h1 style="font-size:22px">شنوّة تبيع؟</h1></div>
+      <div class="card" style="margin-top:16px">
+        <div class="step"><span class="n">1</span><div><b>كي تعطي تامبون، Pointili يسألك: شنوّة خذا؟</b></div></div>
+        <div style="margin:10px 0 0 0"><span class="pill on">كابوسة</span><span class="pill">اكسبراس</span><span class="pill">شاي</span></div>
+        <div class="step" style="margin-top:14px"><span class="n">2</span><div><b>وتعرف شنوّة يتباع أكثر، وكل حريف شنوّة يحب</b></div></div>
+        <div style="margin-top:10px;display:grid;gap:6px;font-size:12px;font-weight:600">
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:62px">كابوسة</span><div class="bar" style="width:70%"></div></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:62px">اكسبراس</span><div class="bar" style="width:45%;opacity:.7"></div></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:62px">شاي</span><div class="bar" style="width:20%;opacity:.5"></div></div>
+        </div>
+      </div>
+      <h2 style="margin-top:18px">اللي تبيع فيه</h2>
+      <div style="margin-top:6px"><span class="pill on">كابوسة ✕</span><span class="pill on">اكسبراس ✕</span><span class="pill on">شاي ✕</span><span class="pill">+ ديريكت</span><span class="pill">+ عصير</span></div>
+      <div class="card" style="margin-top:16px;display:flex;align-items:center;gap:12px"><div style="flex:1"><b>اسألني في الكاسة</b><div class="sub">قبل كل تامبون: شنوّة خذا الحريف؟</div></div><span class="switch"></span></div>
+    </div>
+    <div class="foot"><div class="btn">سجّل</div></div>`],
+  ["D · El khlas", "3 marhlét: tekhtar, tab3ath, tab3athlna el wasl → nkhaddmoulek", `
+    <div class="pad">
+      <div class="top"><span class="chip">›</span><h1 style="font-size:22px">خدّم العام متاعك</h1></div>
+      <div class="card" style="margin-top:14px;background:linear-gradient(140deg,#7c4dff,#6c47ff 45%,#3f22c9);color:#fff;display:flex;align-items:center;gap:12px"><span style="font-size:34px">👑</span><div style="flex:1"><b style="font-size:30px">120 د</b> <span style="opacity:.8">في العام</span><div style="font-size:13px;opacity:.9">+3 شهور كي تخلّص قبل 46:57</div></div></div>
+      <div class="card" style="margin-top:12px">
+        <div class="step"><span class="n done">✓</span><div style="flex:1"><b>كيفاش تخلّص؟</b><div style="display:flex;gap:6px;margin-top:8px"><span class="way on">D17</span><span class="way">Virement</span><span class="way">Versement</span><span class="way">Mandat</span></div></div></div>
+        <div class="step" style="margin-top:14px"><span class="n">2</span><div style="flex:1"><b>ابعث 120 د للنومرو هذا</b><div class="copy">58 415 520 <em>كوبي</em></div></div></div>
+        <div class="step" style="margin-top:14px"><span class="n" style="background:#d9d4f0;color:#6c47ff">3</span><div style="flex:1"><b>ابعثلنا صورة الوصل على واتساب</b><div class="sub">نخدّمولك العام في نفس النهار</div></div></div>
+      </div>
+    </div>
+    <div class="foot"><div class="btn wa">ابعث الوصل على واتساب</div><div class="btn line" style="margin-top:10px;height:46px;font-size:15px">عندك سؤال؟ عيّطلنا</div></div>`],
+];
+document.getElementById("row").innerHTML = screens.map(([t, s, h]) => `<div class="col"><div class="lbl">${t}<small>${s}</small></div><div class="phone">${h}</div></div>`).join("");
+</script>
+</body>
+</html>

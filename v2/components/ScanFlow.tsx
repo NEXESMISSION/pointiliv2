@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
+import { ArrowLeft, Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
 import Link from "next/link";
 import { quickJoin, scan } from "@/app/actions";
 import { PhoneField } from "@/components/PhoneField";
 import { Pass } from "@/components/Pass";
 import { useScreen } from "@/components/Tracker";
 import { Confetti, IMPACT_MS, StampLand } from "@/components/StampLand";
-import { Btn, Field, Icon3D, LinkBtn, Logo } from "@/components/ui";
+import { Btn, Field, Icon3D, LinkBtn } from "@/components/ui";
 import { Trap } from "@/components/Trap";
 import { fill, kindIcon, t } from "@/lib/t";
 import { signal } from "@/lib/track";
@@ -212,35 +212,24 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
   };
   return (
     <div className="flex flex-col items-center text-center">
-      <Logo className="mb-2 scale-90 [@media(max-height:700px)]:hidden" />
-      <StampLand color={res.color} icon={kindIcon(res.shopKind)} size={88} />
-      <h1 className="mt-1 animate-rise text-[1.5rem] font-bold leading-tight [@media(max-height:640px)]:text-[1.5rem]" style={after(80)}>
-        {t.reserved}
+      <StampLand color={res.color} icon={kindIcon(res.shopKind)} size={80} />
+      {/* one title, the shop, and one quiet line: what to do, and how long it waits (the founder's «simpler», 17 Oct 2026) */}
+      <h1 className="mt-1 animate-rise text-[1.625rem] font-bold leading-tight" style={after(80)}>
+        {t.heldTitle}
       </h1>
       <p className="animate-rise text-[0.9375rem] font-semibold" style={{ ...after(140), color: res.color }}>
         {res.shop}
       </p>
-
-      {/* the important part: not theirs yet — one short step, and the time it waits */}
-      <div className="relative mt-[1.8dvh] w-full animate-rise rounded-[1.375rem] bg-surface px-3.5 py-2.5 shadow-card" style={after(240)}>
-        <p className="flex items-center justify-center gap-1.5 text-[0.9375rem] font-bold text-ink">
-          <AlertTriangle className="size-[1.0625rem] shrink-0 text-coral" /> {form ? t.heldQuickMust : t.heldMust}
-        </p>
-        <div className={`mt-2 flex items-center gap-2 rounded-full px-3 py-1 text-[0.8125rem] font-semibold ${gone ? "bg-coral-soft text-coral" : "bg-mint-soft text-mint"}`}>
-          <Clock className="size-4 shrink-0" />
-          {gone ? (
-            <span className="min-w-0 flex-1 truncate text-start">{t.heldGone}</span>
-          ) : (
-            <>
-              <span className="shrink-0">{t.heldLeft}</span>
-              <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-mint/20" aria-hidden>
-                <span className="absolute inset-y-0 start-0 rounded-full bg-mint transition-[width] duration-1000 ease-linear" style={{ width: `${(left / HOLD_S) * 100}%` }} />
-              </span>
-              <bdi className="num shrink-0 tabular-nums">{clock}</bdi>
-            </>
-          )}
-        </div>
-      </div>
+      <p className={`mt-1.5 flex animate-rise items-center justify-center gap-1.5 text-[0.8125rem] ${gone ? "font-semibold text-coral" : "text-muted"}`} style={after(200)}>
+        <Clock className="size-4 shrink-0" />
+        {gone ? (
+          t.heldGone
+        ) : (
+          <>
+            {form ? t.heldQuickMust : t.heldMust} · <bdi className="num tabular-nums">{fill(t.heldKeep, { clock })}</bdi>
+          </>
+        )}
+      </p>
 
       {form ? (
         // noValidate: the browser's own bubbles never show inside Facebook's browser; each mistake is said under its field

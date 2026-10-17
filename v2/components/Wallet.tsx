@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { ChevronLeft, ChevronRight, Lock, QrCode, ScanLine } from "lucide-react";
 import { InstallApp, InstallPopup } from "@/components/InstallApp";
 import { MyCode } from "@/components/MyCode";
-import { ShopMark } from "@/components/ShopMark";
+import { Pass } from "@/components/Pass";
 import { Mark } from "@/components/Tracker";
 import { Icon3D, LinkBtn, Logo, Screen } from "@/components/ui";
 import { siteOrigin } from "@/lib/origin";
@@ -12,8 +12,9 @@ import { fill, t } from "@/lib/t";
 import type { CardView } from "@/lib/types";
 
 /**
- * The customer's cards, the newest visit first, the gift that waits on top,
- * and the one thing to do here: scan. An owner opens it from the account
+ * The customer's cards as cards — the newest visit whole, the others a
+ * coloured strip each — the gift that waits on top, and the one thing to do
+ * here: scan (the founder's «simpler», 17 Oct 2026). An owner opens it from the account
  * page (`back` then leads home to the shop). «الكود متاعي» at the top: the
  * customer's own code, for a shop that gives the tampon itself.
  */
@@ -41,10 +42,7 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
       </header>
 
       <div className="mt-[1.5dvh] shrink-0">
-        <p className="flex items-center gap-1.5 text-[0.9375rem] text-muted">
-          {t.hello} <Icon3D name="wave" size={22} />
-        </p>
-        <h1 className="mt-0.5 truncate text-[1.5rem] font-bold leading-tight">{back ? t.myCards : first || t.myCards}</h1>
+        <h1 className="truncate text-[1.75rem] font-bold leading-tight">{t.myCards}</h1>
         {/* Pointili on the home screen: Android's own dialog, or on an iPhone the guide to the three taps */}
         {!back && <InstallApp where="wallet" className="mt-2 h-9 text-[0.8125rem]" />}
         {/* an account made at the counter has no password the person knows: one line asks for one, until it is set */}
@@ -117,16 +115,23 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
         </div>
       ) : (
         // the cards scroll inside their own box: the page, the title and the scan button stay put
-        <section className="mt-[2.5dvh] flex min-h-0 flex-1 flex-col">
-          {!back && <h2 className="mb-2 shrink-0 px-0.5 text-[0.9375rem] font-bold">{t.myCards}</h2>}
-          {/* one line a card: what the shop is, how far the gift is, what waits — the card itself one tap away */}
-          <div data-list className="-mx-2 min-h-0 overflow-y-auto overscroll-contain px-2 pb-2">
-            <ul className="divide-y divide-line overflow-hidden rounded-[1.375rem] bg-surface shadow-card">
-              {cards.map((c, i) => (
-                <li key={c.id} className="animate-rise" style={{ animationDelay: `${i * 60}ms` }}>
-                  <CardRow card={c} />
-                </li>
-              ))}
+        <section className="mt-[2dvh] flex min-h-0 flex-1 flex-col">
+          {/* as cards, the way they look at the counter: the newest whole, every other one its coloured strip — each a tap away */}
+          <div data-list className="-mx-1 min-h-0 overflow-y-auto overscroll-contain px-1 pb-2">
+            <ul className="space-y-2">
+              {cards.map((c, i) => {
+                const l = lineOf(c);
+                return (
+                  <li key={c.id} className="animate-rise" style={{ animationDelay: `${i * 60}ms` }}>
+                    <Link href={`/c/${c.id}`} className="press relative block rounded-[1.5rem]" aria-label={c.shop.name}>
+                      <Pass shop={c.shop} stamps={c.stamps} waiting={c.waiting_n} small={i > 0} />
+                      {i > 0 && (
+                        <span className={`pointer-events-none absolute inset-x-4 bottom-1.5 truncate text-[0.75rem] text-white ${l.waits ? "font-bold" : "font-medium text-white/80"}`}>{l.text}</span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </section>
@@ -143,16 +148,15 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
 }
 
 /**
- * One card in the wallet, as a line: the shop's mark in its colour, its name,
- * a bar that fills to the gift, and the count — or what waits (the gift, the
- * roulette, an order), said in the shop's colour.
+ * What a card's strip says under its name: what waits — the gift, the turns
+ * of the wheel, an order — or how far the gift is.
  */
-function CardRow({ card: c }: { card: CardView }) {
+function lineOf(c: CardView): { text: string; waits: boolean } {
   const goal = c.shop.goal ?? 10;
-  const done = Math.min(c.stamps, goal);
-  const left = goal - done;
+  const left = goal - Math.min(c.stamps, goal);
   const waits = c.spin ? ((c.spins_n ?? 1) > 1 ? fill(t.wheelWaitsMany, { n: c.spins_n ?? 2 }) : t.wheelWaits) : c.ready ? fill((c.waiting_n ?? 1) > 1 ? t.wonMany : t.won, { gift: c.won ?? c.shop.gift ?? "", n: c.waiting_n ?? 1 }) : (c.orders_n ?? 0) > 0 ? t.storeOrderWaits : null;
-  const line = c.shop.store
+  if (waits) return { text: waits, waits: true };
+  const text = c.shop.store
     ? `${c.stamps} ${t.storeBalance}`
     : c.shop.wheel
       ? left === 1
@@ -161,33 +165,5 @@ function CardRow({ card: c }: { card: CardView }) {
       : left === 1
         ? fill(t.toGoOne, { gift: c.shop.gift ?? "" })
         : fill(t.toGo, { n: left, gift: c.shop.gift ?? "" });
-  return (
-    <Link href={`/c/${c.id}`} className="press flex items-center gap-3 px-3.5 py-3 active:bg-canvas">
-      <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-[0.9rem]" style={{ background: c.shop.color }}>
-        <ShopMark shop={c.shop} size={30} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-2">
-          <span dir="auto" className="min-w-0 truncate text-[0.9375rem] font-bold">
-            {c.shop.name}
-          </span>
-          {!c.shop.store && (
-            <span className="num shrink-0 text-[0.8125rem] font-bold" style={{ color: c.shop.color }}>
-              {done}
-              <span className="text-muted">/{goal}</span>
-            </span>
-          )}
-        </span>
-        {!c.shop.store && (
-          <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-canvas" aria-hidden>
-            <span className="block h-full rounded-full" style={{ width: `${Math.round((done / goal) * 100)}%`, background: c.shop.color }} />
-          </span>
-        )}
-        <span className={`mt-1 block truncate text-[0.8125rem] ${waits ? "font-bold" : "text-muted"}`} style={waits ? { color: c.shop.color } : undefined}>
-          {waits ?? line}
-        </span>
-      </span>
-      <ChevronLeft className="size-5 shrink-0 text-faint" />
-    </Link>
-  );
+  return { text, waits: false };
 }

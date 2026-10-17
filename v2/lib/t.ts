@@ -940,6 +940,13 @@ export const t = {
   clipLine2: "في ثانية، على الكارط متاع محلّك",
   clipLine3: "قهوة، ريستو، حانوت… والكادو يستنّاه في تليفونو",
   clipSkip: "تخطّى",
+  // the customer's card, simpler (17 Oct 2026): one quiet line, one thing to do
+  cardLast: "آخر تامبون: {when}",
+  cardGiftsTaken: "خذيت {n} كادو هوني",
+  giftShowCounter: "ورّي الكود في الكاسة",
+  giftCodeKicker: "الكادو متاعك",
+  heldTitle: "خوذ التامبون متاعك",
+  heldKeep: "محجوزلك {clock}",
   clipSwipe: "زلّق",
   clipGo: "ورّيني الكود متاعي",
   clipPlay: "شوف الفيديو",

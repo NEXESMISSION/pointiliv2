@@ -94,7 +94,8 @@ export function HowStory({ onDone, done, skip, close = false }: { onDone: (how: 
       if (!v) return;
       if (i === at) {
         v.currentTime = 0;
-        v.play().then(() => setStuck(false)).catch(() => setStuck(true));
+        // only a phone that refuses to play by itself shows the play button; a play cut short by the clip loading is no refusal
+        v.play().then(() => setStuck(false)).catch((e: unknown) => setStuck((e as { name?: string } | null)?.name === "NotAllowedError"));
       } else {
         v.pause();
         v.currentTime = 0;

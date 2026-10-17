@@ -98,7 +98,8 @@ export function Scanner({
           stream = s;
           if (video.current) {
             video.current.srcObject = s;
-            void video.current.play();
+            // a new stream arriving interrupts the last play(): not an error, the new one plays
+            video.current.play().catch(() => {});
           }
           frame = requestAnimationFrame(tick);
         })

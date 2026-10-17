@@ -370,6 +370,7 @@ const SCREENS = [
   { name: "customers", as: "owner", path: "/shop/customers" },
   { name: "customers-near", as: "owner", path: "/shop/customers", act: (p) => press(p, "قربو للكادو") },
   { name: "shop-settings", as: "owner", path: "/shop/settings" },
+  { name: "shop-items", as: "owner", path: "/shop/items" },
   { name: "stats", as: "owner", path: "/shop/stats" },
   { name: "pay", as: "owner", path: "/shop/pay" },
   { name: "settings", as: "owner", path: "/shop/setup?edit=1" },

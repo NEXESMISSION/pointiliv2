@@ -188,7 +188,7 @@ try {
   if (!url) throw new Error("could not read the counter's code");
   const c = await (await browser.newContext(phone)).newPage();
   await c.goto(BASE + new URL(url).pathname, { waitUntil: "load" });
-  await c.getByText("حجزنالك التامبون").waitFor({ timeout: 30000 });
+  await c.getByText("خوذ التامبون متاعك").waitFor({ timeout: 30000 });
   await shot(c, "06-reserved", 1600);
   // the account right there, at the counter: a name, a phone and a password, on the held tampon's own screen
   await c.locator('input[name="name"]').fill("سامي بن علي");
