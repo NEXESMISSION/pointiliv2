@@ -1,59 +1,70 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { PushAsk } from "@/components/PushAsk";
+import { useCallback, useEffect, useRef } from "react";
+import { markSeen } from "@/app/actions";
+import { HowClip } from "@/components/HowClip";
+import { MorphGround, MorphHead } from "@/components/Morph";
 import { useScreen } from "@/components/Tracker";
-import { TryIt, type DemoShop } from "@/components/TryIt";
-import { Icon3D } from "@/components/ui";
+import { Btn } from "@/components/ui";
 import { pixelOnce } from "@/lib/pixel";
-import { fill, t } from "@/lib/t";
+import { t } from "@/lib/t";
+import { signal } from "@/lib/track";
 
-/** The three steps over the lavender: all three lit, the last one full. */
+/** The three steps: all three lit. */
 function Bars() {
   return (
-    <div className="mb-5 flex w-full max-w-[19rem] gap-1.5" aria-label="3/3">
+    <div className="flex w-full gap-1.5" aria-label="3/3">
       {[1, 2, 3].map((i) => (
-        <span key={i} className={`h-1.5 flex-1 rounded-full ${i === 3 ? "bg-brand" : "bg-brand/40"}`} />
+        <span key={i} className="h-1.5 flex-1 rounded-full bg-brand" />
       ))}
     </div>
   );
 }
 
 /**
- * A new owner's third step: the customer's side, replayed in four beats on
- * their own phone (a phone cannot scan its own screen) — then the counter,
- * where the code is. Opened at night (`night`: 22:00 to 6:00 in Tunis), the
- * shop is shut and nobody is there to scan it: the last word is for the
- * morning instead — put the phone on the counter and give the first tampon —
- * with the offer to be reminded then. Both in the onboarding's light «Morph» look.
+ * A new owner's third and last step: how it works, filmed for real in a
+ * café, a restaurant and a shop (components/HowClip) — then straight to the
+ * shop's own code at the counter, by the button or when the clip ends. The
+ * drawn demo of four beats, the night's screen and the counter's tip were
+ * the founder's «too many steps» (17 Oct 2026): the card, the clip, the code.
  */
-export function FirstLook({ shop, night }: { shop: DemoShop; night: boolean }) {
+export function FirstLook() {
   const router = useRouter();
-  const [over, setOver] = useState(false);
-  useScreen(over ? "start-night" : "start");
-  // the card is made: for Facebook's pixel, the owner is in for real
-  useEffect(() => pixelOnce("CardCreated"), []);
-  const done = useCallback(() => (night ? setOver(true) : router.push("/shop/qr?tip=1")), [night, router]);
-
-  if (!over) return <TryIt shop={shop} onClose={done} finish={night ? t.next : t.startDone} top={<Bars />} light />;
+  useScreen("start");
+  // the card is made: for Facebook's pixel, the owner is in for real — and the counter's welcome
+  // (the tip, the bravo) is this clip's, so the counter opens on the code alone, now and later
+  useEffect(() => {
+    pixelOnce("CardCreated");
+    void markSeen("coach").catch(() => {});
+  }, []);
+  useEffect(() => router.prefetch("/shop/qr"), [router]);
+  const gone = useRef(false);
+  const go = useCallback(
+    (how: string) => {
+      if (gone.current) return;
+      gone.current = true;
+      signal("start_done", how);
+      router.push("/shop/qr");
+    },
+    [router],
+  );
 
   return (
-    <main className="morph-ground safe-t safe-b fixed inset-0 z-50 flex animate-fade flex-col items-center justify-center px-5 text-center text-ink">
-      <Bars />
-      <Icon3D name="bell" size={72} className="animate-float" />
-      <h1 className="mt-3 text-balance text-[1.5rem] font-bold leading-tight">{t.nightTitle}</h1>
-      <p className="mt-2 max-w-[20rem] text-balance text-[0.9375rem] leading-relaxed text-muted">{t.nightBody}</p>
-      <div className="mt-4 w-full max-w-[20rem] text-ink">
-        <PushAsk shop={shop.name} title={t.pushOwnerAskTitle} body={fill(t.pushOwnerAskBody, { shop: shop.name })} compact />
+    <main className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col overflow-x-clip overflow-y-auto px-[clamp(1rem,5vw,1.5rem)]">
+      <MorphGround />
+      <div className="shrink-0 pt-4 [@media(max-height:520px)]:hidden">
+        <Bars />
       </div>
-      <Link href="/shop" className="press mt-5 flex h-12 w-full max-w-[19rem] items-center justify-center rounded-full bg-brand text-[0.9375rem] font-bold text-white shadow-[0_12px_24px_-12px_rgb(108_71_255/0.8)]">
-        {t.nightOk}
-      </Link>
-      <Link href="/shop/qr?tip=1" className="press mt-1 flex h-11 items-center px-4 text-[0.9375rem] font-semibold text-muted">
-        {t.nightCode}
-      </Link>
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center-safe py-[1.6dvh]">
+        <MorphHead title={t.clipTitle} sub={t.clipSub} />
+        <HowClip className="mt-[1.8dvh] h-[min(62dvh,calc((100vw-2.5rem)*16/9))] shrink-0" onEnd={() => setTimeout(() => go("ended"), 600)} />
+      </div>
+      <div className="shrink-0 pb-3">
+        <Btn type="button" onClick={() => go("button")}>
+          {t.clipGo}
+        </Btn>
+      </div>
     </main>
   );
 }

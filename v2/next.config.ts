@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // the clips (public/clips): named with their version, so a phone keeps them a year
+      { source: "/clips/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       {
         source: "/:path*",
         headers: [

@@ -12,7 +12,7 @@ import { ShopMark } from "@/components/ShopMark";
 import { PlanOn } from "@/components/PlanOn";
 import { PushAsk } from "@/components/PushAsk";
 import { RecentList } from "@/components/RecentList";
-import { TryItButton } from "@/components/TryIt";
+import { ClipButton } from "@/components/HowClip";
 import { ShopWelcome } from "@/components/ShopWelcome";
 import { Icon3D } from "@/components/ui";
 import { getMe } from "@/lib/session";
@@ -244,10 +244,10 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
               ) : (
                 <EmptyWords />
               )}
-              {/* the customer's side, replayed, one tap away (the steps themselves are the mission's, above) */}
-              <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift }} className="press mt-2 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-center text-[0.8125rem] font-bold text-brand">
+              {/* how it goes, filmed for real, one tap away (the steps themselves are the mission's, above) */}
+              <ClipButton className="press mt-2 w-full rounded-[1rem] bg-canvas px-3 py-2.5 text-center text-[0.8125rem] font-bold text-brand">
                 {t.tryLobby} ←
-              </TryItButton>
+              </ClipButton>
             </div>
           )}
         </div>

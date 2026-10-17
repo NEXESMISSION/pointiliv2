@@ -28,6 +28,9 @@ export type ScanResult =
   | { kind: "error"; code: string; card?: CardView; next_at?: string; shop?: string };
 
 /** a customer's answers to the shop's forms of identification: each form, its fields as label and value */
+/** a shop as its card shows it: the name, the kind, the colour, the logo, the goal and the gift */
+export type DemoShop = { name: string; kind: string; color: string; logo?: string | null; goal: number | null; gift: string | null; stamp_logo?: boolean };
+
 export type Said = { form: string; fields: { label: string; value: string }[] }[];
 
 /** the store of a shop switched to it (v2.store_list, orders_waiting, card_store) */

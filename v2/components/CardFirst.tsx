@@ -6,6 +6,7 @@ import { saveCard, setShopLogo } from "@/app/actions";
 import { setStampLogo } from "@/app/shop/card/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
 import { LogoPicker } from "@/components/LogoPicker";
+import { prefetchClip } from "@/components/HowClip";
 import { MadePill, MorphCard, MorphGround, MorphHead, SlideChoice } from "@/components/Morph";
 import { Confetti } from "@/components/StampLand";
 import { Steps } from "@/components/Steps";
@@ -84,6 +85,10 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
   useEffect(() => {
     if (typing) input.current?.focus();
   }, [typing]);
+  // the clip of the next step, into the phone's cache while the look is chosen
+  useEffect(() => {
+    if (part === 2) prefetchClip();
+  }, [part]);
   // a save whose answer dies on the way back (a connection that drops): the database is asked
   // instead — the card is there, on to the next screen; still nothing after half a minute, said
   const [lost, setLost] = useState(false);

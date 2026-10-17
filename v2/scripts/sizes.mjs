@@ -317,7 +317,7 @@ const SCREENS = [
   },
   { name: "counter", as: "owner", path: "/shop/qr", wait: 1800 },
   { name: "home-empty", as: "lonely", path: "/shop", wait: 1200 },
-  { name: "home-empty-try", as: "lonely", path: "/shop", act: async (p) => { await p.getByRole("button", { name: /جرّب بروحك/ }).click(); await p.getByRole("dialog", { name: "هكّا يشوفها الحريف" }).waitFor({ timeout: 15000 }); for (let n = 0; n < 2; n++) await p.getByRole("button", { name: "كمّل", exact: true }).click(); }, wait: 1200 },
+  { name: "home-empty-try", as: "lonely", path: "/shop", act: async (p) => { await p.getByRole("button", { name: /شوف كيفاش تخدم في المحل/ }).click(); await p.getByRole("dialog", { name: "هكّا تخدم في المحل" }).waitFor({ timeout: 15000 }); }, wait: 1200 },
   // the trial over and the year not on: the home's line turns red, the code's place says why, with a call
   { name: "home-shut", as: "owner", before: () => admin.from("shops").update({ trial_days: 3 }).eq("id", shop.id), path: "/shop", wait: 1500, after: () => admin.from("shops").update({ trial_days: 7 }).eq("id", shop.id) },
   { name: "counter-shut", as: "owner", before: () => admin.from("shops").update({ trial_days: 3 }).eq("id", shop.id), path: "/shop/qr", wait: 2500, after: () => admin.from("shops").update({ trial_days: 7 }).eq("id", shop.id) },
@@ -389,9 +389,7 @@ const SCREENS = [
   { name: "first-card", as: "fresh", path: "/shop/card?new=1" },
   { name: "first-card-other", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "حاجة أخرى") },
   { name: "first-card-look", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "كمّل") },
-  { name: "start", as: "owner", path: "/shop/start?night=0", wait: 900 },
-  { name: "start-last", as: "owner", path: "/shop/start?night=0", act: async (p) => { for (let n = 0; n < 3; n++) await press(p, "كمّل"); }, wait: 900 },
-  { name: "start-night", as: "owner", path: "/shop/start?night=1", act: async (p) => { for (let n = 0; n < 4; n++) await press(p, "كمّل"); }, wait: 900 },
+  { name: "start", as: "owner", path: "/shop/start", wait: 900 },
   { name: "setup", as: "noShop", path: "/shop/setup" },
 
   { name: "console", as: "boss", path: "/admin", read: true },

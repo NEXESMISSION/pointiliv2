@@ -9,14 +9,14 @@ import { spinAtCounter } from "@/app/actions-wheel";
 import { Wheel, type Prize } from "@/components/Wheel";
 import { Pass } from "@/components/Pass";
 import type { Item } from "@/components/PickItem";
-import { TryItButton, type DemoShop } from "@/components/TryIt";
+import { ClipButton } from "@/components/HowClip";
 import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
 import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 import { nextTampon } from "@/lib/when";
-import type { CardView, Order, Said } from "@/lib/types";
+import type { CardView, DemoShop, Order, Said } from "@/lib/types";
 
 type Step =
   | { kind: "idle" }
@@ -483,9 +483,9 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
                 <div className="rounded-[1.375rem] bg-brand-soft px-4 py-3.5 text-center">
                   <p className="text-[0.9375rem] font-bold text-ink">{t.collectOwnTry}</p>
                   <p className="mt-1 text-[0.8125rem] text-body">{t.collectOwnTryBody}</p>
-                  <TryItButton shop={shop} className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-[0.8125rem] font-bold text-white">
+                  <ClipButton className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-[0.8125rem] font-bold text-white">
                     {t.trySee}
-                  </TryItButton>
+                  </ClipButton>
                 </div>
               )}
               {step.kind === "error" && (

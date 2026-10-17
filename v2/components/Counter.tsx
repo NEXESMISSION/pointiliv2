@@ -6,7 +6,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, Phone, WifiOff } from "lucide-react";
 import { OpenOutside } from "@/components/InstallApp";
 import { Confetti } from "@/components/StampLand";
-import { TryItButton } from "@/components/TryIt";
+import { ClipButton } from "@/components/HowClip";
 import { PickItem, type Item } from "@/components/PickItem";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
@@ -531,12 +531,12 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
             <p className="max-w-xs text-center text-[0.9375rem] text-white/80">{t.counterHint}</p>
           )}
         </div>
-        {/* alone with one phone, the owner cannot scan their own screen: the customer's side, replayed here */}
+        {/* alone with one phone, the owner cannot scan their own screen: how it goes, filmed for real */}
         {/* only until the first customer: after that, the code alone */}
         {firstWaits && !paused && shop.goal && (
-          <TryItButton shop={{ name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift ?? "" }} className="press flex h-10 shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 text-[0.8125rem] font-bold text-white">
+          <ClipButton className="press flex h-10 shrink-0 items-center gap-2 rounded-full bg-white/15 px-4 text-[0.8125rem] font-bold text-white">
             <Eye className="size-4" /> {t.trySee}
-          </TryItButton>
+          </ClipButton>
         )}
 
         {/* who just scanned, known by a form: their answers to check, until «next» (never gone by itself) */}
