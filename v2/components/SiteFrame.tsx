@@ -63,6 +63,9 @@ export function SiteFrame({ support, social, children }: { support: string | nul
             <Link href="/comparatif" className="text-body hover:text-brand">
               مقارنة
             </Link>
+            <Link href="/a-propos" className="text-body hover:text-brand">
+              شكون Pointili
+            </Link>
             <Link href="/shop/new" className="text-body hover:text-brand">
               حلّ محلّك
             </Link>

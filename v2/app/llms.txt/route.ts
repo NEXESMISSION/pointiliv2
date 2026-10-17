@@ -36,6 +36,7 @@ Not to be confused with Pointili, the Algerian attendance and time-tracking app 
 - [Questions](${SITE}/faq): price, how it works, security, payment, support
 - [Comparison](${SITE}/comparatif): the digital loyalty cards sold in Tunisia side by side (Pointili, Stampi, Fidèle, Poinety, Raba7ni)
 - [By kind of shop](${SITE}/pour): one page per kind of shop, with the card and gifts that suit it
+- [About](${SITE}/a-propos): who Pointili Tunisie is, and what it is not (not the Algerian attendance app pointili.com)
 
 ## Kinds of shop it is used in
 ${NICHES.map((n) => `- [${n.en} (${n.fr})](${SITE}/pour/${n.slug})`).join("\n")}
