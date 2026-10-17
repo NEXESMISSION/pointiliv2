@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<title>Pointili — 5 s cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #F4F3F9; }
+  body { font-family: "Readex Pro", system-ui, sans-serif; color: #0F0E17; -webkit-font-smoothing: antialiased; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  .abs { position: absolute; }
+  .rtl { direction: rtl; }
+  .center { left: 50%; top: 0; }
+  .num { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+  /* the card, as the app draws it (components/Pass.tsx), at 1080 scale */
+  .card { position: absolute; border-radius: 64px; color: #fff; overflow: hidden; }
+  .card .in { position: relative; padding: 46px 52px 40px; }
+  .card .top { display: flex; align-items: center; gap: 28px; direction: rtl; }
+  .card .logo { width: 104px; height: 104px; border-radius: 30px; background: rgba(255,255,255,.96); display: grid; place-items: center; flex-shrink: 0; }
+  .card .logo img { width: 76px; height: 76px; object-fit: contain; }
+  .card .name { flex: 1; font-size: 46px; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-align: right; }
+  .card .count { font-weight: 700; line-height: 1; white-space: nowrap; }
+  .card .count b { font-size: 68px; }
+  .card .count i { font-style: normal; font-size: 40px; opacity: .72; font-weight: 600; }
+  .card .dots { display: grid; justify-items: center; gap: 22px; margin-top: 40px; direction: rtl; }
+  .card .dot { border-radius: 50%; display: grid; place-items: center; aspect-ratio: 1; width: 100%; }
+  .card .dot.off { background: rgba(255,255,255,.2); color: rgba(255,255,255,.85); }
+  .card .dot.on { background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.16); }
+  .card .dot svg { width: 50%; height: 50%; }
+  .card .line { margin-top: 38px; border-top: 2px solid rgba(255,255,255,.22); padding-top: 26px; display: flex; align-items: center; gap: 18px; direction: rtl; font-size: 36px; font-weight: 600; white-space: nowrap; overflow: hidden; }
+  .card .line svg { width: 42px; height: 42px; flex-shrink: 0; }
+  .shine { position: absolute; inset: 0; pointer-events: none; }
+  .head { position: absolute; left: 0; right: 0; text-align: center; direction: rtl; font-weight: 700; }
+  .chip { position: absolute; height: 120px; border-radius: 60px; display: grid; place-items: center; font-size: 52px; font-weight: 700; }
+  .pill { position: absolute; border-radius: 999px; }
+  .conf { position: absolute; border-radius: 4px; }
+  .badge { position: absolute; display: flex; align-items: center; gap: 26px; direction: rtl; background: #fff; border-radius: 48px; padding: 30px 46px; box-shadow: 0 30px 70px -30px rgba(40,20,120,.45); }
+  .badge img { width: 120px; height: 120px; }
+  .badge .t1 { font-size: 30px; font-weight: 600; color: #6B6880; }
+  .badge .t2 { font-size: 58px; font-weight: 700; line-height: 1.15; }
+  .end { position: absolute; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .brand { display: flex; align-items: center; gap: 22px; direction: ltr; font-size: 74px; font-weight: 700; }
+  .brand img { width: 92px; height: 92px; }
+  .url { font-size: 36px; font-weight: 600; letter-spacing: .5px; direction: ltr; }
+  .tap { position: absolute; width: 120px; height: 120px; border-radius: 50%; pointer-events: none; }
+  .phone { position: absolute; border-radius: 120px; background: #15131F; box-shadow: 0 60px 120px -40px rgba(30,15,90,.55); }
+  .screen { position: absolute; inset: 22px; border-radius: 100px; overflow: hidden; background: #F4F3F9; }
+  .btn { position: absolute; border-radius: 40px; display: grid; place-items: center; font-weight: 700; color: #fff; direction: rtl; }
+  .lbl { position: absolute; direction: rtl; font-weight: 700; }
+  .cdot { position: absolute; border-radius: 50%; }
+  .ichip { position: absolute; height: 84px; border-radius: 42px; padding: 0 30px; display: flex; align-items: center; font-size: 32px; font-weight: 600; direction: rtl; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+// ── shared ──────────────────────────────────────────────────────────────
+const W = 1080, H = 1920;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, x) => a + (b - a) * x;
+const eo = (x) => 1 - Math.pow(1 - x, 3);
+const eo5 = (x) => 1 - Math.pow(1 - x, 5);
+const eio = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const back = (x, s = 1.70158) => 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2);
+const pop = (t, a, d = 0.28) => back(prog(t, a, a + d), 2.2);
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mixc = (a, b, x) => { const p = hex(a), q = hex(b); return "#" + p.map((v, i) => Math.round(lerp(v, q[i], x)).toString(16).padStart(2, "0")).join(""); };
+const shade = (c, x) => mixc(c, x > 0 ? "#ffffff" : "#000000", Math.abs(x));
+let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+const ICO = {
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>',
+};
+const A3 = (n) => `../../v2/public/3d/${n}.webp`;
+const MARK = "../../v2/public/brand-mark.svg";
+
+// the shops: a café first, then the others the card is made for
+const CAFE = { name: "Café Yasmine", logo: "coffee", color: "#B45309", gift: "قهوة بلاش" };
+const NICHES = [
+  { name: "Barber Shop Hamza", logo: "barber", color: "#1D5FA8", goal: 6, done: 4, gift: "حجامة بلاش" },
+  { name: "Pâtisserie Sucrée", logo: "cake", color: "#E0457B", goal: 8, done: 5, gift: "قاتو بلاش" },
+  { name: "Parfumerie Rym", logo: "sparkles", color: "#6C47FF", goal: 5, done: 3, gift: "عطر صغير بلاش" },
+  { name: "Lavage Pro", logo: "car", color: "#0891B2", goal: 6, done: 2, gift: "لافاج بلاش" },
+  { name: "Pizzeria Napoli", logo: "pizza", color: "#D7141A", goal: 8, done: 6, gift: "بيتزا بلاش" },
+];
+const FINAL = { name: "Salon Nour", logo: "scissors", color: "#12B76A", goal: 6, gift: "بروشينغ بلاش" };
+
+const lineOf = (c, goal, done) => (done >= goal ? `ربحت ${c.gift}!` : goal - done === 1 ? `مازالك تامبون واحد باش تربح ${c.gift}` : `مازالولك ${goal - done} باش تربح ${c.gift}`);
+const colsOf = (g) => (g <= 6 ? g : g <= 10 ? 5 : g <= 12 ? 6 : 8);
+
+/**
+ * One card. o: {x, y (centre), w, color, name, logo, goal, done, gift, scale, rot, alpha,
+ * dotPop(i) → scale of dot i (1 = still), nameShow 0..1 (typed), lineShow, logoScale, clip (0..1 colour wipe)}
+ */
+function card(o) {
+  const w = o.w ?? 880;
+  const goal = o.goal ?? 10, done = Math.min(o.done ?? 0, goal);
+  const cols = colsOf(goal);
+  const maxDot = goal <= 6 ? 116 : 100;
+  const inner = w - 104;
+  const dot = Math.min(maxDot, (inner - 22 * (cols - 1)) / cols);
+  const c = o.color;
+  const name = o.nameShow == null ? o.name : o.name.slice(0, Math.round(o.name.length * clamp(o.nameShow)));
+  const dots = Array.from({ length: goal }, (_, i) => {
+    const on = i < done, last = i === goal - 1;
+    const s = o.dotPop ? o.dotPop(i) : 1;
+    const inner = on ? (last ? ICO.gift : ICO.check) : last ? ICO.gift : "";
+    return `<span class="dot ${on ? "on" : "off"}" style="max-width:${dot}px;transform:scale(${s});opacity:${clamp(s * 3)};${on ? `color:${c}` : ""}">${inner}</span>`;
+  }).join("");
+  const sc = o.scale ?? 1;
+  const wipe = o.clip == null ? "" : `clip-path: circle(${(o.clip * 140).toFixed(1)}% at 88% 14%);`;
+  return `<div class="card" style="width:${w}px;left:${o.x - w / 2}px;top:${o.y}px;transform:translateY(-50%) rotate(${o.rot ?? 0}deg) scale(${sc});opacity:${o.alpha ?? 1};
+    background:linear-gradient(165deg, ${shade(c, 0.18)} 0%, ${c} 55%, ${shade(c, -0.12)} 100%);
+    box-shadow:0 50px 90px -50px ${shade(c, -0.35)};${o.ry ? `transform:translateY(-50%) perspective(2400px) rotateY(${o.ry}deg) rotate(${o.rot ?? 0}deg) scale(${sc});` : ""}${wipe}">
+    <div class="in">
+      <div class="top">
+        <span class="logo" style="transform:scale(${o.logoScale ?? 1})"><img src="${A3(o.logo)}"></span>
+        <span class="name" dir="auto">${name}<span style="opacity:${o.nameShow != null && o.nameShow < 1 ? 1 : 0}">|</span></span>
+        <span class="count num" style="opacity:${o.countAlpha ?? 1}"><b>${done}</b><i>/${goal}</i></span>
+      </div>
+      <div class="dots" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${dots}</div>
+      <div class="line" style="opacity:${o.lineShow ?? 1};transform:translateY(${(1 - (o.lineShow ?? 1)) * 20}px)">${ICO.gift}<span>${lineOf(o, goal, done)}</span></div>
+    </div>
+    ${o.shine != null ? `<div class="shine" style="background:linear-gradient(105deg, transparent ${o.shine * 140 - 40}%, rgba(255,255,255,.38) ${o.shine * 140 - 25}%, transparent ${o.shine * 140 - 10}%)"></div>` : ""}
+  </div>`;
+}
+
+function head(text, y, show, size = 84, color = "#0F0E17", sub) {
+  const s = eo(clamp(show));
+  return `<div class="head" style="top:${y}px;font-size:${size}px;color:${color};opacity:${s};transform:translateY(${(1 - s) * 40}px)">${text}${sub ? `<div style="font-size:${size * 0.46}px;font-weight:500;opacity:.62;margin-top:10px">${sub}</div>` : ""}</div>`;
+}
+/** a headline that changes: each [from, to, text, sub] fades in and out on its own */
+function heads(t, list, y, size, color) {
+  return list.map(([a, b, text, sub]) => {
+    const inn = prog(t, a, a + 0.22), out = b == null ? 0 : prog(t, b - 0.14, b);
+    if (t < a || (b != null && t > b)) return "";
+    const s = eo(inn) * (1 - out);
+    return `<div class="head" style="top:${y}px;font-size:${size}px;color:${color};opacity:${s};transform:translateY(${(1 - eo(inn)) * 46 - out * 30}px)">${text}${sub ? `<div style="font-size:${size * 0.44}px;font-weight:500;opacity:.6;margin-top:12px">${sub}</div>` : ""}</div>`;
+  }).join("");
+}
+
+/** confetti from (x, y) starting at t0, deterministic */
+const CONF = Array.from({ length: 70 }, () => ({ a: -Math.PI / 2 + (rnd() - 0.5) * 2.6, v: 900 + rnd() * 1300, c: ["#FFB020", "#FF6B4A", "#12B76A", "#6C47FF", "#0891B2", "#E0457B", "#FFFFFF"][Math.floor(rnd() * 7)], s: 14 + rnd() * 16, r: rnd() * 360, vr: (rnd() - 0.5) * 900, w: rnd() > 0.5 }));
+function confetti(t, t0, x, y, life = 1.1) {
+  const d = t - t0;
+  if (d < 0 || d > life) return "";
+  return CONF.map((p) => {
+    const px = x + Math.cos(p.a) * p.v * d * (1 - d * 0.35), py = y + Math.sin(p.a) * p.v * d + 1900 * d * d;
+    const fade = 1 - prog(d, life * 0.6, life);
+    return `<span class="conf" style="left:${px}px;top:${py}px;width:${p.s}px;height:${p.w ? p.s * 0.45 : p.s}px;background:${p.c};opacity:${fade};transform:rotate(${p.r + p.vr * d}deg)"></span>`;
+  }).join("");
+}
+
+function endCard(t, a, y, dark) {
+  const s = eo(prog(t, a, a + 0.35));
+  return `<div class="end" style="top:${y}px;opacity:${s};transform:translateY(${(1 - s) * 50}px)">
+    <div class="brand" style="color:${dark ? "#fff" : "#0F0E17"}"><img src="${MARK}">Pointili</div>
+    <div class="url" style="color:${dark ? "rgba(255,255,255,.75)" : "#6C47FF"}">www.pointili.online</div>
+  </div>`;
+}
+
+function bg(top, bottom, blobs = []) {
+  return `<div class="abs" style="inset:0;background:linear-gradient(180deg, ${top}, ${bottom})"></div>` +
+    blobs.map(([x, y, r, c]) => `<div class="abs" style="left:${x - r}px;top:${y - r}px;width:${2 * r}px;height:${2 * r}px;border-radius:50%;background:radial-gradient(circle, ${c}, transparent 70%)"></div>`).join("");
+}
+
+// ── A · one card that becomes everything ───────────────────────────────
+function sceneA(t) {
+  let h = bg("#F7F5FF", "#ECE8FB", [[200, 360, 420, "rgba(108,71,255,.10)"], [900, 1500, 520, "rgba(255,107,74,.08)"]]);
+  h += heads(t, [
+    [0.0, 1.32, "قدّاش من تامبون؟", "إنت تختار"],
+    [1.32, 2.42, "وشنوّة يربح الحريف؟", "الكادو اللي تحبّو"],
+    [2.42, 3.72, "لكل محل الكارط متاعو", "اللوغو، الإسم، اللون"],
+    [3.72, null, "حلّ الكارط متاعك", "في دقيقتين"],
+  ], 290, 92, "#0F0E17");
+
+  const cy = 980;
+  // ① the number of tampons: 5 → 6 → 8 → 10
+  if (t < 1.4) {
+    const steps = [[0, 5], [0.42, 6], [0.72, 8], [1.0, 10]];
+    let k = 0; for (let i = 0; i < steps.length; i++) if (t >= steps[i][0]) k = i;
+    const [at, goal] = steps[k];
+    const intro = eo5(prog(t, 0, 0.3));
+    const bump = k > 0 ? 1 + 0.045 * Math.sin(Math.PI * prog(t, at, at + 0.18)) : 1;
+    h += card({ ...CAFE, x: W / 2, y: cy, goal, done: 0, scale: lerp(0.86, 1, intro) * bump, alpha: intro,
+      dotPop: (i) => (k > 0 && i >= steps[k - 1][1] ? pop(t, at + (i - steps[k - 1][1]) * 0.035, 0.2) : 1), lineShow: 1 });
+    // the chooser: chips under the card, the active one lit
+    const nums = [5, 6, 8, 10, 12], cw = 160, gap = 24, x0 = W / 2 - (nums.length * cw + (nums.length - 1) * gap) / 2;
+    const cyc = 1440, ca = eo(prog(t, 0.08, 0.36)) * (1 - prog(t, 1.24, 1.38));
+    const idx = nums.indexOf(goal);
+    const prevIdx = k > 0 ? nums.indexOf(steps[k - 1][1]) : idx;
+    const px = lerp(prevIdx, idx, eio(prog(t, at, at + 0.16)));
+    h += `<div style="opacity:${ca};transform:translateY(${(1 - ca) * 30}px)">`;
+    h += `<div class="pill" style="left:${x0}px;top:${cyc}px;width:${nums.length * cw + (nums.length - 1) * gap}px;height:120px;background:#fff;box-shadow:0 20px 50px -30px rgba(40,20,120,.35)"></div>`;
+    h += `<div class="pill" style="left:${x0 + (nums.length - 1 - px) * (cw + gap)}px;top:${cyc}px;width:${cw}px;height:120px;background:#6C47FF"></div>`;
+    nums.forEach((n, i) => {
+      const on = n === goal;
+      h += `<div class="chip num" style="left:${x0 + (nums.length - 1 - i) * (cw + gap)}px;top:${cyc}px;width:${cw}px;color:${on ? "#fff" : "#6B6880"}">${n}</div>`;
+    });
+    h += `</div>`;
+  }
+  // ② what the customer gets: the card fills, the gift lands
+  else if (t < 2.5) {
+    const fillAt = (i) => 1.42 + i * 0.055;
+    let done = 0; for (let i = 0; i < 10; i++) if (t >= fillAt(i)) done = i + 1;
+    const out = eo(prog(t, 2.34, 2.5));
+    h += card({ ...CAFE, x: W / 2, y: cy - lerp(0, 120, eo(prog(t, 2.0, 2.25))), goal: 10, done, scale: 1 - out * 0.08, alpha: 1 - out,
+      dotPop: (i) => (i < done ? lerp(1.7, 1, eo5(prog(t, fillAt(i), fillAt(i) + 0.16))) : 1) });
+    const bs = pop(t, 2.0, 0.32) * (1 - out);
+    h += `<div class="badge" style="left:${W / 2}px;top:1400px;transform:translateX(-50%) scale(${bs});opacity:${clamp(bs * 2)}"><img src="${A3("coffee")}"><div><div class="t1">الحريف يربح</div><div class="t2">قهوة بلاش</div></div></div>`;
+    h += confetti(t, 2.0, W / 2, cy - 60);
+  }
+  // ③ one card per kind of shop: the colour, the logo, the name change
+  else if (t < 3.75) {
+    const per = 0.25, t0 = 2.48;
+    const i = clamp(Math.floor((t - t0) / per), 0, NICHES.length - 1);
+    const local = prog(t, t0 + i * per, t0 + i * per + 0.14);
+    const prev = i > 0 ? NICHES[i - 1] : CAFE;
+    const n = NICHES[i];
+    const color = mixc(prev.color, n.color, eio(local));
+    const swing = Math.sin(Math.PI * local);
+    const enter = eo5(prog(t, 2.42, 2.6));
+    const leave = eo(prog(t, 3.62, 3.76));
+    h += card({ ...n, color, x: W / 2 + swing * 26, y: cy, rot: swing * -2.2, scale: (lerp(0.9, 1, enter) - leave * 0.2) * (1 + 0.03 * swing), alpha: enter * (1 - leave),
+      logoScale: lerp(0.4, 1, back(local, 2.4)), dotPop: (j) => lerp(0.6, 1, eo(prog(t, t0 + i * per + j * 0.012, t0 + i * per + 0.16 + j * 0.012))) });
+    // the colours of the shops in a row under it, the current one lit
+    const ry = 1450, d = 92, gap = 34, xs = W / 2 - (NICHES.length * d + (NICHES.length - 1) * gap) / 2;
+    NICHES.forEach((m, j) => {
+      const on = j === i, s = on ? 1.28 : 1;
+      h += `<div class="cdot" style="left:${xs + (NICHES.length - 1 - j) * (d + gap)}px;top:${ry}px;width:${d}px;height:${d}px;background:${m.color};transform:scale(${s * enter * (1 - leave)});box-shadow:${on ? `0 0 0 10px #fff, 0 0 0 14px ${m.color}` : "none"}"></div>`;
+    });
+  }
+  // ④ made: a blank card fills with its colour, the logo pops, the name types, the dots land
+  else {
+    const a = 3.76;
+    const blank = eo5(prog(t, a, a + 0.18));
+    h += `<div class="card" style="width:880px;height:640px;left:${W / 2 - 440}px;top:${cy}px;transform:translateY(-50%) scale(${lerp(0.9, 1, blank)});opacity:${blank * (1 - prog(t, a + 0.3, a + 0.4))};background:#fff;border:6px dashed #D9D4F0"></div>`;
+    h += card({ ...FINAL, x: W / 2, y: cy, done: 0, clip: eio(prog(t, a + 0.12, a + 0.42)),
+      logoScale: pop(t, a + 0.3, 0.3), nameShow: prog(t, a + 0.36, a + 0.62), countAlpha: prog(t, a + 0.5, a + 0.6),
+      dotPop: (j) => pop(t, a + 0.5 + j * 0.04, 0.22), lineShow: eo(prog(t, a + 0.7, a + 0.86)), shine: prog(t, a + 0.82, a + 1.1) });
+    const ok = pop(t, a + 0.86, 0.3);
+    h += `<div class="pill rtl" style="left:${W / 2}px;top:1380px;transform:translateX(-50%) scale(${ok});opacity:${clamp(ok * 2)};background:#12B76A;color:#fff;font-size:44px;font-weight:700;padding:22px 46px;display:flex;gap:16px;align-items:center;white-space:nowrap"><span style="width:44px;height:44px;display:inline-block">${ICO.check}</span>الكارط تحلّت</div>`;
+    h += confetti(t, a + 0.86, W / 2, cy - 40);
+    h += endCard(t, a + 0.78, 1580, false);
+  }
+  return h;
+}
+
+// ── B · dark, a picker wheel, the card turns to show the gift, a fan of shops ──
+function sceneB(t) {
+  let h = bg("#1A1033", "#2B1670", [[860, 420, 520, "rgba(124,77,255,.35)"], [160, 1560, 560, "rgba(255,107,74,.16)"]]);
+  h += heads(t, [
+    [0.0, 1.3, "قدّاش من تامبون؟", "إنت تختار"],
+    [1.3, 2.45, "وشنوّة يربح الحريف؟", null],
+    [2.45, 3.7, "لكل محل الكارط متاعو", "قهوة، حجامة، باتيسري، لافاج…"],
+    [3.7, null, "حلّ الكارط متاعك", "بالألوان واللوغو متاعك"],
+  ], 230, 84, "#fff");
+  const cy = 880;
+  if (t < 1.36) {
+    // a ruler that rolls under the card: its centre is the number of tampons
+    const v = lerp(4, 10, eio(prog(t, 0.18, 1.05)));
+    const goal = Math.round(v);
+    const intro = eo5(prog(t, 0, 0.3));
+    h += card({ ...CAFE, x: W / 2, y: cy, goal, done: 0, scale: lerp(0.85, 1, intro), alpha: intro, dotPop: (i) => (i === goal - 2 ? pop(t, 0.18 + ((goal - 4) / 6) * 0.87 - 0.06, 0.18) : 1) });
+    const ry = 1330, step = 150, out = prog(t, 1.2, 1.36);
+    h += `<div class="pill" style="left:${W / 2 - 90}px;top:${ry - 20}px;width:180px;height:180px;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35);opacity:${intro * (1 - out)}"></div>`;
+    for (let n = 3; n <= 16; n++) {
+      const x = W / 2 + (n - v) * step * -1;
+      const dist = Math.abs(n - v);
+      const s = clamp(1.25 - dist * 0.28, 0.45, 1.25);
+      h += `<div class="chip num" style="left:${x - 80}px;top:${ry}px;width:160px;height:140px;font-size:${64 * s}px;color:rgba(255,255,255,${clamp(1 - dist * 0.3, 0.12, 1)});opacity:${intro * (1 - out)}">${n}</div>`;
+    }
+  } else if (t < 2.5) {
+    // the card turns over: its back is the gift
+    const turn = eio(prog(t, 1.36, 1.7));
+    const ry = turn * 180;
+    const front = ry < 90;
+    const out = eo(prog(t, 2.34, 2.5));
+    if (front) h += card({ ...CAFE, x: W / 2, y: cy, goal: 10, done: 10, ry, scale: 1 - out * 0.1 });
+    else {
+      const s = 1 - out * 0.1;
+      h += `<div class="card" style="width:880px;height:640px;left:${W / 2 - 440}px;top:${cy}px;transform:translateY(-50%) perspective(2400px) rotateY(${ry - 180}deg) scale(${s});opacity:${1 - out};background:linear-gradient(165deg, #FFFFFF, #F1ECFF);color:#0F0E17;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;direction:rtl">
+        <img src="${A3("gift")}" style="width:220px;height:220px;transform:scale(${pop(t, 1.62, 0.34)}) rotate(${(1 - eo(prog(t, 1.62, 1.95))) * -18}deg)">
+        <div style="font-size:84px;font-weight:700;color:#B45309">قهوة بلاش</div>
+        <div class="rtl" style="font-size:36px;font-weight:600;color:#6B6880">بعد <span class="num">10</span> تامبونات · الكادو يستنّاه في تليفونو</div></div>`;
+    }
+    h += confetti(t, 1.66, W / 2, cy - 80);
+  } else if (t < 3.78) {
+    // a fan of shops opens behind the café, then turns through them
+    const open = eo5(prog(t, 2.45, 2.85));
+    const leave = eo(prog(t, 3.62, 3.78));
+    const shops = [CAFE, ...NICHES].map((c, i) => ({ ...c, goal: c.goal ?? 10, done: c.done ?? 7 }));
+    // a carousel: the card in front always in the middle, the others fanned behind it on both sides
+    const spin = eio(prog(t, 2.62, 3.58)) * (shops.length - 1);
+    shops.forEach((c, i) => {
+      const r = i - spin, d = Math.abs(r);
+      const z = Math.round(100 - d * 10);
+      const fade = clamp(3.1 - d) * open * (1 - leave);
+      h += `<div style="position:absolute;inset:0;z-index:${z}">` + card({ ...c, w: 720, x: W / 2 + r * 150 * open, y: cy + 150 + d * 34 * open - (d < 0.5 ? 40 * (1 - d * 2) : 0), rot: r * 7 * open, scale: (1.04 - Math.min(d, 3) * 0.07) * (1 - leave * 0.3), alpha: fade }) + `</div>`;
+    });
+  } else {
+    const a = 3.78;
+    const s = eo5(prog(t, a, a + 0.32));
+    h += card({ ...FINAL, x: W / 2, y: cy, done: 0, scale: lerp(0.4, 1, s), rot: lerp(-12, 0, s), alpha: s,
+      logoScale: pop(t, a + 0.2, 0.3), nameShow: prog(t, a + 0.24, a + 0.5), dotPop: (j) => pop(t, a + 0.36 + j * 0.04, 0.22), lineShow: eo(prog(t, a + 0.56, a + 0.72)), shine: prog(t, a + 0.62, a + 0.95) });
+    h += confetti(t, a + 0.7, W / 2, cy - 40);
+    const ok = pop(t, a + 0.7, 0.3);
+    h += `<div class="pill rtl" style="left:${W / 2}px;top:1240px;transform:translateX(-50%) scale(${ok});opacity:${clamp(ok * 2)};background:#12B76A;color:#fff;font-size:44px;font-weight:700;padding:22px 46px;display:flex;gap:16px;align-items:center;white-space:nowrap"><span style="width:44px;height:44px;display:inline-block">${ICO.check}</span>الكارط تحلّت</div>`;
+    h += endCard(t, a + 0.62, 1520, true);
+  }
+  return h;
+}
+
+// ── C · in the phone: a finger makes the card ─────────────────────────
+function sceneC(t) {
+  let h = bg("#FFF7F2", "#F1ECFF", [[880, 300, 460, "rgba(255,107,74,.12)"], [150, 1700, 520, "rgba(108,71,255,.12)"]]);
+  h += heads(t, [
+    [0.0, 1.3, "قدّاش من تامبون؟", null],
+    [1.3, 2.4, "شنوّة الكادو؟", null],
+    [2.4, 3.65, "اللون واللوغو متاعك", null],
+    [3.65, null, "والكارط تحلّت!", null],
+  ], 120, 76, "#0F0E17");
+
+  // the phone and its screen
+  const pw = 860, ph = 1560, px = W / 2 - pw / 2, py = 300;
+  const fly = eo5(prog(t, 3.62, 3.95));
+  const pin = eo5(prog(t, 0, 0.3));
+  h += `<div class="phone" style="left:${px}px;top:${py + (1 - pin) * 120 + fly * 380}px;width:${pw}px;height:${ph}px;opacity:${pin * (1 - fly)};transform:scale(${1 - fly * 0.15})"><div class="screen">`;
+  // the screen's own coordinates (0..816 × 0..1516)
+  const sw = pw - 44;
+  // state
+  const goals = [[0, 5], [0.45, 6], [0.75, 8], [1.02, 10]];
+  let goal = 5; for (const [a, g] of goals) if (t >= a) goal = g;
+  const gifts = ["قهوة بلاش", "كرواسون بلاش", "عصير بلاش"];
+  const giftOn = t >= 1.62 ? 0 : -1;
+  const colorTaps = [[2.55, 0], [2.8, 1], [3.05, 2], [3.3, 4]];
+  let shop = { ...CAFE }, from = CAFE.color, at = 0;
+  for (const [a, i] of colorTaps) if (t >= a) { from = shop.color; shop = { ...NICHES[i], gift: NICHES[i].gift }; at = a; }
+  const color = t >= 2.55 ? mixc(from, shop.color, eio(prog(t, at, at + 0.14))) : CAFE.color;
+  const giftText = t < 1.62 ? CAFE.gift : t < 2.55 ? gifts[0] : shop.gift;
+  // the card preview at the top of the screen
+  h += `<div style="position:absolute;inset:0;transform:scale(0.86);transform-origin:50% 0">` +
+    card({ ...shop, color, gift: giftText, x: sw / 2, y: 360, w: 900, goal: t < 2.55 ? goal : shop.goal, done: t >= 1.62 && t < 2.55 ? Math.min(goal, Math.floor(prog(t, 1.62, 2.1) * goal)) : 0,
+      logoScale: t >= 2.55 ? lerp(0.5, 1, back(prog(t, at, at + 0.2), 2.4)) : 1,
+      dotPop: (i) => (t < 1.3 && i >= 5 ? pop(t, goals.find(([, g]) => g > i)[0] + (i - 5) * 0.02, 0.2) : 1) }) + `</div>`;
+  // the chooser rows
+  const row = (y, label, show) => `<div class="lbl" style="right:48px;top:${y}px;font-size:34px;color:#6B6880;opacity:${show}">${label}</div>`;
+  const s1 = 1 - prog(t, 1.24, 1.34), s2 = prog(t, 1.32, 1.46) * (1 - prog(t, 2.36, 2.46)), s3 = prog(t, 2.44, 2.58);
+  // ① numbers
+  if (s1 > 0) {
+    h += row(760, "قدّاش من تامبون؟", s1);
+    [5, 6, 8, 10, 12].forEach((n, i) => {
+      const on = n === goal; const x = sw - 48 - (i + 1) * 128 - i * 14;
+      h += `<div class="chip num" style="left:${x}px;top:830px;width:128px;height:110px;font-size:44px;border-radius:30px;background:${on ? "#6C47FF" : "#fff"};color:${on ? "#fff" : "#2A2740"};opacity:${s1};box-shadow:0 10px 24px -16px rgba(40,20,120,.4)">${n}</div>`;
+    });
+  }
+  // ② gift ideas
+  if (s2 > 0) {
+    h += row(760, "شنوّة يربح الحريف؟", s2);
+    let x = sw - 48;
+    gifts.forEach((g, i) => {
+      const wdt = 70 + g.length * 26; x -= wdt;
+      const on = i === giftOn;
+      h += `<div class="ichip" style="left:${x}px;top:${830 + (i > 1 ? 104 : 0)}px;background:${on ? "#6C47FF" : "#fff"};color:${on ? "#fff" : "#2A2740"};opacity:${s2};box-shadow:0 10px 24px -16px rgba(40,20,120,.4)">${g}</div>`;
+      x -= 18; if (i === 1) x = sw - 48;
+    });
+  }
+  // ③ colours and the button
+  if (s3 > 0) {
+    h += row(760, "اللون", s3);
+    [CAFE, NICHES[0], NICHES[1], NICHES[2], NICHES[4], NICHES[3]].forEach((c, i) => {
+      const x = sw - 48 - (i + 1) * 96 - i * 22;
+      const on = c.color === shop.color && t >= 2.55;
+      h += `<div class="cdot" style="left:${x}px;top:830px;width:96px;height:96px;background:${c.color};opacity:${s3};box-shadow:${on ? `0 0 0 8px #fff, 0 0 0 12px ${c.color}` : "none"}"></div>`;
+    });
+  }
+  const press = 1 - 0.06 * Math.sin(Math.PI * prog(t, 3.42, 3.6));
+  h += `<div class="btn" style="left:48px;right:48px;top:1300px;height:130px;font-size:46px;background:#6C47FF;transform:scale(${press});box-shadow:0 24px 40px -24px rgba(108,71,255,.8)">${t < 2.4 ? "كمّل" : "حلّ الكارط"}</div>`;
+  // the finger: a soft circle that moves and taps
+  const taps = [[0.45, 1, 885], [0.75, 2, 885], [1.02, 3, 885], [1.6, -1, 875], [2.55, 0, 878], [2.8, 1, 878], [3.05, 2, 878], [3.3, 4, 878], [3.5, -2, 1365]];
+  const posOf = ([, i, y]) => {
+    if (i === -2) return [sw / 2, y];
+    if (y === 885) return [sw - 48 - (i + 1) * 128 - i * 14 + 64, y];
+    if (y === 875) { const g = gifts[0]; return [sw - 48 - (70 + g.length * 26) / 2, y]; }
+    // the dots read CAFE, then the shops 0, 1, 2, 4, 3: a shop's place in that row
+    const ci = { 0: 1, 1: 2, 2: 3, 4: 4, 3: 5 }[i]; return [sw - 48 - (ci + 1) * 96 - ci * 22 + 48, y];
+  };
+  let fx = sw * 0.7, fy = 1500, down = 0;
+  for (let k = 0; k < taps.length; k++) {
+    const [a] = taps[k];
+    const [tx, ty] = posOf(taps[k]);
+    const [ox, oy] = k === 0 ? [sw * 0.7, 1500] : posOf(taps[k - 1]);
+    const m = eio(prog(t, a - 0.2, a - 0.04));
+    if (t >= a - 0.2) { fx = lerp(ox, tx, m); fy = lerp(oy, ty, m); }
+    if (t >= a - 0.04 && t < a + 0.12) down = Math.sin(Math.PI * prog(t, a - 0.04, a + 0.12));
+  }
+  const fa = prog(t, 0.2, 0.32) * (1 - prog(t, 3.56, 3.64));
+  h += `<div class="tap" style="left:${fx - 60}px;top:${fy - 60}px;background:rgba(15,14,23,${0.16 + down * 0.14});border:4px solid rgba(255,255,255,.9);transform:scale(${1 - down * 0.25});opacity:${fa}"></div>`;
+  h += `</div></div>`;
+  // ④ the card leaves the phone, big, and lands made
+  if (t >= 3.6) {
+    const a = 3.6, s = eo5(prog(t, a, a + 0.4));
+    h += card({ ...shop, color: shop.color, x: W / 2, y: lerp(py + 360, 860, s), w: 880, goal: shop.goal, done: 0, scale: lerp(0.74, 1, s), rot: lerp(0, -3, Math.sin(Math.PI * s)),
+      dotPop: (j) => pop(t, a + 0.3 + j * 0.04, 0.22), shine: prog(t, a + 0.5, a + 0.85) });
+    h += confetti(t, a + 0.38, W / 2, 820);
+    const ok = pop(t, a + 0.5, 0.3);
+    h += `<div class="pill rtl" style="left:${W / 2}px;top:1240px;transform:translateX(-50%) scale(${ok});opacity:${clamp(ok * 2)};background:#12B76A;color:#fff;font-size:44px;font-weight:700;padding:22px 46px;display:flex;gap:16px;align-items:center;white-space:nowrap"><span style="width:44px;height:44px;display:inline-block">${ICO.check}</span>الكارط تحلّت</div>`;
+    h += endCard(t, a + 0.75, 1520, false);
+  }
+  return h;
+}
+
+const SCENES = { A: sceneA, B: sceneB, C: sceneC };
+let current = "A";
+window.DURATION = 5;
+window.setup = (v) => { current = v; };
+window.seek = (t) => { document.getElementById("stage").innerHTML = SCENES[current](Math.min(t, 4.999)); };
+window.ready = async () => {
+  await document.fonts.ready;
+  const srcs = [...new Set([...[CAFE, FINAL, ...NICHES].map((c) => A3(c.logo)), A3("gift"), MARK])];
+  await Promise.all(srcs.map((s) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = s; })));
+  return true;
+};
+seek(0);
+</script>
+</body>
+</html>
