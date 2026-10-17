@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { HelpButton } from "@/components/Help";
+import { MorphGround, MorphHead } from "@/components/Morph";
 import { OwnerJoin } from "@/components/OwnerJoin";
 import { Steps } from "@/components/Steps";
 import { Top } from "@/components/Top";
@@ -17,13 +18,14 @@ export default async function ShopNew() {
   const help = await getHelp();
   return (
     <Screen>
+      <MorphGround />
       <Top back="/" end={<HelpButton help={help} />} />
       <Middle className="!py-[1.6dvh]">
-        <h1 className="text-[1.5rem] font-bold leading-tight">{t.shopNewTitle}</h1>
         {/* the smallest phones keep every field on the screen: the three bars step aside */}
         <div className="[@media(max-height:520px)]:hidden">
           <Steps at={1} />
         </div>
+        <MorphHead title={t.shopNewTitle} sub={t.morphNewSub} className="mt-[1.2dvh]" />
         <OwnerJoin />
       </Middle>
     </Screen>

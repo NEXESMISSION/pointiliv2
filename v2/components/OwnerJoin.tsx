@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { joinShop } from "@/app/actions";
 import { KindField } from "@/components/KindPicker";
+import { MorphCard } from "@/components/Morph";
 import { PhoneField } from "@/components/PhoneField";
 import { Btn, Field } from "@/components/ui";
 import { Trap } from "@/components/Trap";
+import { cardDefaults } from "@/lib/card-defaults";
 import { t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import type { FormState } from "@/lib/types";
@@ -16,7 +18,9 @@ import type { FormState } from "@/lib/types";
  * the shop's name, the phone, a password, and what the shop sells (one
  * field that opens every kind, in groups, with a search). Nothing is chosen at first: the
  * kind decides the card's gift ideas, so it is a choice, not a default. The
- * logo comes later, from «المحل».
+ * logo comes later, from «المحل». On a phone tall enough, the card is born
+ * above the fields as they are filled: the shop's name as it is typed, and
+ * the colour and face of what it sells once that is picked (the «Morph» look).
  */
 export function OwnerJoin() {
   const [state, action, pending] = useActionState<FormState, FormData>(joinShop, null);
@@ -35,8 +39,12 @@ export function OwnerJoin() {
 
   return (
     // noValidate: the browser's own bubbles never show inside Facebook's browser; the server says each mistake under its field
-    <form action={action} noValidate className="mt-[2.4dvh] flex flex-col">
+    <form action={action} noValidate className="mt-[1.8dvh] flex flex-col">
       <Trap />
+      {/* the card, being born: a tall screen has the room, a short one keeps every field in sight */}
+      <div className="mb-[1.2dvh] [@media(max-height:779px)]:hidden" aria-hidden>
+        <MorphCard small shop={{ name: shop.trim() || t.morphNameSoon, kind: kind || "other", color: kind ? cardDefaults(kind).color : "#6C47FF", goal: kind ? cardDefaults(kind).goal : 8, gift: null }} stamps={0} />
+      </div>
       <div className="space-y-[1.3dvh]">
         <Field label={t.ownerName} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" maxLength={60} error={err("name")} className="!h-[3.25rem] [@media(max-height:520px)]:!h-[2.875rem]" />
         <Field label={t.joinShopName} name="shop" value={shop} onChange={(e) => setShop(e.target.value)} placeholder={t.shopNamePh} autoComplete="organization" maxLength={60} error={err("shop")} className="!h-[3.25rem] [@media(max-height:520px)]:!h-[2.875rem]" />

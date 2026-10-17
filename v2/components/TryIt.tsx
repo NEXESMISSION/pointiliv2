@@ -19,12 +19,13 @@ export type DemoShop = { name: string; kind: string; color: string; logo?: strin
  * shop's colours, the gift won when the card is full, and the owner's part
  * («سكاني», then «إيه، عطيه الكادو»). Nothing is written anywhere.
  * A new owner meets it as the third step of opening the shop: `top` (the
- * steps) over it, and `finish` on its last button.
+ * steps) over it, and `finish` on its last button — in the onboarding's
+ * light «Morph» look (`light`) instead of the dark veil over the counter.
  */
-export function TryIt({ shop, onClose, finish, top }: { shop: DemoShop; onClose: () => void; finish?: string; top?: ReactNode }) {
+export function TryIt({ shop, onClose, finish, top, light = false }: { shop: DemoShop; onClose: () => void; finish?: string; top?: ReactNode; light?: boolean }) {
   const [beat, setBeat] = useState(0);
-  // the demo dims the screen to near black: the phone's bars too
-  useBars(mix("#0f0e17", "#f4f3f9", 0.8));
+  // the demo dims the screen to near black (or lays the onboarding's lavender): the phone's bars too
+  useBars(light ? "#f7f5ff" : mix("#0f0e17", "#f4f3f9", 0.8), light ? "#ece8fb" : undefined);
   const goal = shop.goal ?? 10;
   const gift = shop.gift ?? "";
   const pass = { name: shop.name, kind: shop.kind, color: shop.color, logo: shop.logo, goal, gift, stamp_logo: shop.stamp_logo };
@@ -47,14 +48,14 @@ export function TryIt({ shop, onClose, finish, top }: { shop: DemoShop; onClose:
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex animate-fade flex-col items-center justify-center bg-ink/80 px-5 text-center text-white backdrop-blur-[3px]" role="dialog" aria-modal="true" aria-label={t.tryTitle}>
-      <button type="button" onClick={onClose} className="press absolute end-4 top-[max(1rem,env(safe-area-inset-top))] grid size-10 place-items-center rounded-full bg-white/15" aria-label={t.back}>
+    <div className={`fixed inset-0 z-50 flex animate-fade flex-col items-center justify-center px-5 text-center ${light ? "morph-ground text-ink" : "bg-ink/80 text-white backdrop-blur-[3px]"}`} role="dialog" aria-modal="true" aria-label={t.tryTitle}>
+      <button type="button" onClick={onClose} className={`press absolute end-4 top-[max(1rem,env(safe-area-inset-top))] grid size-10 place-items-center rounded-full ${light ? "bg-surface shadow-card" : "bg-white/15"}`} aria-label={t.back}>
         <X className="size-5" />
       </button>
       {top}
-      <p className="text-[0.8125rem] font-semibold text-white/70">{t.tryTitle}</p>
+      <p className={`text-[0.8125rem] font-semibold ${light ? "text-muted" : "text-white/70"}`}>{t.tryTitle}</p>
       <p key={beat} className="mt-1 min-h-[3.2rem] max-w-[22rem] animate-rise text-balance text-[1.0625rem] font-bold leading-snug">
-        <span className="num me-1.5 inline-grid size-6 place-items-center rounded-full bg-white/20 align-[-3px] text-[0.75rem]">{beat + 1}</span>
+        <span className={`num me-1.5 inline-grid size-6 place-items-center rounded-full align-[-3px] text-[0.75rem] ${light ? "bg-brand text-white" : "bg-white/20"}`}>{beat + 1}</span>
         {captions[beat]}
       </p>
 
@@ -116,11 +117,11 @@ export function TryIt({ shop, onClose, finish, top }: { shop: DemoShop; onClose:
 
       <div className="mt-4 flex w-full max-w-[19rem] items-center gap-2">
         {beat > 0 && (
-          <button type="button" onClick={() => setBeat(beat - 1)} className="press grid size-12 shrink-0 place-items-center rounded-full bg-white/15" aria-label={t.back}>
+          <button type="button" onClick={() => setBeat(beat - 1)} className={`press grid size-12 shrink-0 place-items-center rounded-full ${light ? "bg-surface shadow-card" : "bg-white/15"}`} aria-label={t.back}>
             <ChevronLeft className="size-5 rotate-180" />
           </button>
         )}
-        <button type="button" onClick={next} className="press h-12 flex-1 rounded-full bg-white text-[0.9375rem] font-bold text-ink">
+        <button type="button" onClick={next} className={`press h-12 flex-1 rounded-full text-[0.9375rem] font-bold ${light ? "bg-brand text-white shadow-[0_12px_24px_-12px_rgb(108_71_255/0.8)]" : "bg-white text-ink"}`}>
           {last ? (finish ?? t.tryGotIt) : t.next}
         </button>
       </div>

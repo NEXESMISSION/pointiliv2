@@ -6,7 +6,8 @@ import { saveCard, setShopLogo } from "@/app/actions";
 import { setStampLogo } from "@/app/shop/card/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
 import { LogoPicker } from "@/components/LogoPicker";
-import { Pass } from "@/components/Pass";
+import { MadePill, MorphCard, MorphGround, MorphHead, SlideChoice } from "@/components/Morph";
+import { Confetti } from "@/components/StampLand";
 import { Steps } from "@/components/Steps";
 import { useScreen } from "@/components/Tracker";
 import { Btn, boxLook } from "@/components/ui";
@@ -22,13 +23,14 @@ const COLORS = ["#D7141A", "#FF6B4A", "#B45309", "#12B76A", "#0891B2", "#1D5FA8"
 const TAP_LABEL = "جرّب: زيد تامبون على الكارط";
 /**
  * The card above the questions. Its height follows its width (about 9rem +
- * 0.4 × its width); everything else on a part takes about 24rem + 14dvh, so
- * the card may be as wide as 2.5 × (86dvh − 33rem) and all of it still fits
+ * 0.4 × its width); everything else on a part takes about 26rem + 14dvh (the
+ * headline is the «Morph» one, bigger), so the card may be as wide as
+ * 2.5 × (86dvh − 35rem) and all of it still fits
  * on a short phone. Never under 16rem.
  */
-const SHRINK = "mx-auto w-full max-w-[min(100%,max(16rem,calc(2.5*(86dvh_-_33rem))))]";
+const SHRINK = "mx-auto w-full max-w-[min(100%,max(16rem,calc(2.5*(86dvh_-_35rem))))]";
 /** the second part holds more under the card: a smaller card, and none at all on the smallest phones */
-const SHRINK_LOOK = "mx-auto w-full max-w-[min(100%,max(15rem,calc(2.5*(84dvh_-_33rem))))] [@media(max-height:520px)]:hidden";
+const SHRINK_LOOK = "mx-auto w-full max-w-[min(100%,max(15rem,calc(2.5*(84dvh_-_36rem))))] [@media(max-height:520px)]:hidden";
 
 type Shop = { name: string; kind: string; color?: string | null; logo?: string | null; stamp_logo?: boolean };
 
@@ -46,7 +48,9 @@ const numBox = (bad: boolean, lit: boolean) =>
  *     between two tampons (an hour, once a day, none, or hours typed).
  * Everything is already answered for what the shop sells, so «كمّل» and «حلّ
  * الكارط» alone are enough; the card above changes with every answer, and a
- * tap on it lands one more tampon.
+ * tap on it lands one more tampon. It wears the «Morph» reel's look
+ * (components/Morph.tsx): the card bumps and drops its new dots, colours flow
+ * into it, and «حلّ الكارط» makes it shine before the next screen.
  */
 export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
@@ -69,6 +73,8 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
   const hoursBad = hours !== "" && !(Number(hours) >= 1 && Number(hours) <= 72);
   const [saveErr, setSaveErr] = useState(false);
   const [tap, setTap] = useState<{ goal: number; n: number } | null>(null);
+  // «حلّ الكارط» tapped: the card shines while it is saved, then «الكارط تحلّت»
+  const [made, setMade] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const form = useRef<HTMLFormElement>(null);
   useScreen(part === 1 ? "first-card" : "first-card-look");
@@ -107,13 +113,20 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
   // the logo and the tampon's shape belong to the shop: saved first, then the card itself
   const send = async () => {
     setSaveErr(false);
+    setMade(true);
     if (logo !== (shop.logo ?? "")) {
       const ok = await setShopLogo(logo).catch(() => false);
-      if (!ok) return setSaveErr(true);
+      if (!ok) {
+        setMade(false);
+        return setSaveErr(true);
+      }
     }
     if (stampLogo !== (!!shop.stamp_logo && !!shop.logo)) {
       const r = await setStampLogo(stampLogo && !!logo).catch(() => ({ ok: false }));
-      if (!r.ok) return setSaveErr(true);
+      if (!r.ok) {
+        setMade(false);
+        return setSaveErr(true);
+      }
     }
     form.current?.requestSubmit();
   };
@@ -122,11 +135,14 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
   const preview = { name: shop.name, kind: shop.kind, logo: logo || null, goal, gift: gift.trim() || "…", color, stamp_logo: stampLogo && !!logo };
   const label = "mb-1.5 mt-[1.6dvh] px-1 text-[0.8125rem] font-semibold text-muted";
   const canGo = !otherBad && gift.trim().length >= 2;
+  // the card shines and says it is made while it is saved — and stops at once on any word of trouble
+  const making = made && !state?.error && !saveErr && !lost;
 
   return (
     <form ref={form} action={action} className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col overflow-x-clip overflow-y-auto px-[clamp(1rem,5vw,1.5rem)]">
+      <MorphGround />
       <header className="flex shrink-0 items-center gap-3 pt-2">
-        {part === 2 ? (
+        {part === 2 && !making ? (
           <button type="button" onClick={() => setPart(1)} className="press grid size-10 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
             <ChevronRight className="size-5" />
           </button>
@@ -139,33 +155,32 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
 
       {/* never shorter than what it holds: on the smallest phones the whole screen scrolls, the button never sits on a chip */}
       <div className="flex flex-1 flex-col justify-center-safe py-[1.6dvh]">
-        <h1 className="text-balance text-[1.25rem] font-bold leading-snug [@media(max-height:520px)]:sr-only">{part === 1 ? t.firstCardQ : t.firstCardLook}</h1>
+        <MorphHead k={making ? "making" : part} title={making ? t.morphMade : part === 1 ? t.morphGoalTitle : t.morphLookTitle} sub={making ? shop.name : part === 1 ? t.morphGoalSub : t.morphLookSub} />
 
         {/* the card is a try: a tap lands one more tampon on it, up to the gift, then it starts over */}
-        <button type="button" onClick={() => setTap({ goal, n: onCard >= goal ? 0 : onCard + 1 })} aria-label={TAP_LABEL} className={`press mt-[1.6dvh] block rounded-[1.75rem] text-start ${part === 1 ? SHRINK : SHRINK_LOOK}`}>
-          <Pass shop={preview} stamps={onCard} fresh={tap?.goal === goal} />
+        <button type="button" onClick={() => setTap({ goal, n: onCard >= goal ? 0 : onCard + 1 })} aria-label={TAP_LABEL} className={`press mt-[1.8dvh] block rounded-[1.75rem] text-start ${part === 1 || making ? SHRINK : SHRINK_LOOK}`}>
+          <MorphCard shop={preview} stamps={making ? 0 : onCard} fresh={tap?.goal === goal && !making} made={making} />
         </button>
 
-        {part === 1 ? (
+        {making ? (
+          // the card is made: its word, and the confetti — the next screen follows by itself
+          <div className="mt-[2.4dvh]">
+            <MadePill>{t.morphMade}</MadePill>
+            <Confetti count={46} delay={250} />
+          </div>
+        ) : part === 1 ? (
           <>
             <p className={label}>{t.firstCardGoal}</p>
-            <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label={t.firstCardGoal}>
-              {GOALS.map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  role="radio"
-                  aria-checked={goal === g && !other}
-                  onClick={() => {
-                    setGoal(g);
-                    setOther("");
-                  }}
-                  className={`num h-[2.75rem] rounded-[1rem] text-[1.0625rem] ${box(goal === g && !other)}`}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
+            <SlideChoice
+              options={GOALS}
+              value={other ? null : goal}
+              label={t.firstCardGoal}
+              render={(g) => <span className="num text-[1.0625rem]">{g}</span>}
+              onPick={(g) => {
+                setGoal(g);
+                setOther("");
+              }}
+            />
             <label className="mt-1.5 flex items-center justify-center gap-2">
               <span className="text-[0.8125rem] font-semibold text-muted">{t.wizGoalOther}</span>
               <input
@@ -201,7 +216,7 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
             ) : (
               <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t.firstCardGift}>
                 {ideas.map((idea) => (
-                  <button key={idea} type="button" role="radio" aria-checked={gift === idea} onClick={() => setGift(idea)} className={`h-[2.375rem] rounded-full px-3.5 text-[0.9375rem] ${box(gift === idea)}`}>
+                  <button key={idea} type="button" role="radio" aria-checked={gift === idea} onClick={() => setGift(idea)} className={`h-[2.375rem] rounded-full px-3.5 text-[0.9375rem] transition-[background-color,color,transform] duration-200 ${box(gift === idea)}`}>
                     {idea}
                   </button>
                 ))}
@@ -220,11 +235,20 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
           </>
         ) : (
           <>
-            {/* the colour */}
+            {/* the colour: the chosen one ringed and a little bigger, the card fills with it */}
             <p className={label}>{t.firstCardColor}</p>
-            <div className="flex justify-between gap-1" role="radiogroup" aria-label={t.firstCardColor}>
+            <div className="flex justify-between gap-1 px-0.5" role="radiogroup" aria-label={t.firstCardColor}>
               {COLORS.map((c) => (
-                <button key={c} type="button" role="radio" onClick={() => setColor(c)} aria-label={c} aria-checked={color === c} className="press grid size-[1.875rem] shrink-0 place-items-center rounded-full text-white" style={{ background: c, boxShadow: color === c ? `0 0 0 2px var(--color-canvas), 0 0 0 4px ${c}` : undefined }}>
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  onClick={() => setColor(c)}
+                  aria-label={c}
+                  aria-checked={color === c}
+                  className="press grid size-[1.875rem] shrink-0 place-items-center rounded-full text-white transition-[transform,box-shadow] duration-300 [transition-timing-function:cubic-bezier(0.3,1.4,0.4,1)]"
+                  style={{ background: c, transform: color === c ? "scale(1.18)" : undefined, boxShadow: color === c ? `0 0 0 3px #fff, 0 0 0 5px ${c}` : undefined }}
+                >
                   {color === c && <Check className="size-3.5" strokeWidth={3} />}
                 </button>
               ))}
@@ -234,43 +258,29 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
             <p className={label}>{t.firstCardLogo}</p>
             <div className="flex items-center gap-2">
               <LogoPicker value={logo} onChange={(url) => { setLogo(url); if (url) setStampLogoOn(true); }} onError={setLogoErr} onBusy={setLogoBusy} />
-              <div className="grid flex-1 grid-cols-2 gap-1.5" role="radiogroup" aria-label={t.stampLook}>
-                {[false, true].map((on) => (
-                  <button
-                    key={String(on)}
-                    type="button"
-                    role="radio"
-                    disabled={on && !logo}
-                    aria-checked={stampLogo === on}
-                    onClick={() => setStampLogoOn(on)}
-                    className={`flex h-[2.75rem] items-center justify-center gap-1.5 rounded-[1rem] px-1 text-[0.8125rem] disabled:opacity-45 ${box(stampLogo === on)}`}
-                  >
-                    {on ? t.stampLogo : t.stampTick}
-                  </button>
-                ))}
-              </div>
+              <SlideChoice
+                className="flex-1"
+                options={["tick", "logo"]}
+                value={stampLogo && logo ? "logo" : "tick"}
+                label={t.stampLook}
+                render={(v) => <span className={`text-[0.8125rem] ${v === "logo" && !logo ? "opacity-45" : ""}`}>{v === "logo" ? t.stampLogo : t.stampTick}</span>}
+                onPick={(v) => (v === "tick" || logo ? setStampLogoOn(v === "logo") : null)}
+              />
             </div>
             {logoErr && <span className="mt-1 block px-1 text-[0.8125rem] font-medium text-coral">{logoErr}</span>}
 
             {/* how long a customer waits between two tampons */}
             <p className={label}>{t.firstCardWait}</p>
-            <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label={t.firstCardWait}>
-              {WAITS.map((w) => (
-                <button
-                  key={w}
-                  type="button"
-                  role="radio"
-                  aria-checked={gap === w && !hours}
-                  onClick={() => {
-                    setGap(w);
-                    setHours("");
-                  }}
-                  className={`h-[2.75rem] rounded-[1rem] px-1 text-[0.8125rem] leading-tight ${box(gap === w && !hours)}`}
-                >
-                  {w === 60 ? t.waitHour : w === 1440 ? t.waitDay : t.waitNone}
-                </button>
-              ))}
-            </div>
+            <SlideChoice
+              options={WAITS}
+              value={hours ? null : gap}
+              label={t.firstCardWait}
+              render={(w) => <span className="text-[0.8125rem] leading-tight">{w === 60 ? t.waitHour : w === 1440 ? t.waitDay : t.waitNone}</span>}
+              onPick={(w) => {
+                setGap(w);
+                setHours("");
+              }}
+            />
             <label className="mt-1.5 flex items-center justify-center gap-2">
               <span className="text-[0.8125rem] font-semibold text-muted">{t.wizWaitOther}</span>
               <input
@@ -308,8 +318,8 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
             {t.next}
           </Btn>
         ) : (
-          <Btn key="send" type="button" disabled={pending || logoBusy || hoursBad || !canGo} onClick={() => void send()}>
-            {pending ? t.checking : logoBusy ? t.logoWait : t.firstCardGo}
+          <Btn key="send" type="button" disabled={making || pending || logoBusy || hoursBad || !canGo} onClick={() => void send()}>
+            {making || pending ? t.checking : logoBusy ? t.logoWait : t.firstCardGo}
           </Btn>
         )}
         {part === 1 && <p className="mt-1.5 text-center text-[0.8125rem] text-faint [@media(max-height:520px)]:hidden">{t.firstCardLater}</p>}

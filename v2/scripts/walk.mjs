@@ -113,7 +113,7 @@ try {
   await shot(o, "02-owner-account", 300);
   await Promise.all([o.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
   // ② the card on one screen, already answered for a café: a goal and a gift are taps, the card changes above them
-  await o.getByRole("heading", { name: "قدّاش من تامبون، وشنوّة يربح؟" }).waitFor({ timeout: 30000 });
+  await o.getByRole("heading", { name: "قدّاش من تامبون؟" }).waitFor({ timeout: 30000 });
   await shot(o, "04-owner-card", 900);
   await o.getByRole("radio", { name: "5", exact: true }).click();
   await o.getByRole("button", { name: /جرّب: زيد تامبون/ }).click();
@@ -124,7 +124,7 @@ try {
   await o.getByRole("radio", { name: "5", exact: true }).click();
   // ② its look and its rule: the colour, the logo and the tampon's shape, the wait between two tampons
   await o.getByRole("button", { name: "كمّل", exact: true }).click();
-  await o.getByRole("heading", { name: /شكلها/ }).waitFor({ timeout: 20000 });
+  await o.getByRole("heading", { name: "اللون واللوغو متاعك" }).waitFor({ timeout: 20000 });
   await o.getByRole("radio", { name: "#FF6B4A" }).click();
   await shot(o, "04c-card-look", 600);
   await Promise.all([o.waitForURL((u) => u.pathname === "/shop/start", { timeout: 60000 }), o.getByRole("button", { name: "حلّ الكارط" }).click()]);

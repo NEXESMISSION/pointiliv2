@@ -53,7 +53,7 @@ export function Pass({ shop, stamps, waiting, small, fresh, className = "" }: { 
     >
       <div className={`relative ${small ? "px-4 pb-6 pt-3.5" : "px-5 pb-4 pt-4"}`}>
         <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[0.75rem] bg-white/95">
+          <span data-mark className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[0.75rem] bg-white/95">
             <ShopMark shop={shop} size={26} />
           </span>
           {/* a name in Latin letters too long for the card loses its end, never its start: «Pâtisserie El Me…» */}
@@ -91,6 +91,7 @@ export function Pass({ shop, stamps, waiting, small, fresh, className = "" }: { 
                 return on ? (
                   <span
                     key={i}
+                    data-dot={i}
                     className={`grid aspect-square w-full place-items-center rounded-full bg-white shadow-[0_2px_6px_rgb(0_0_0/0.15)] ${dot} ${landing ? "pass-land" : ""}`}
                     style={{ color: shop.color, animationDelay: landing ? "380ms" : undefined }}
                   >
@@ -104,7 +105,7 @@ export function Pass({ shop, stamps, waiting, small, fresh, className = "" }: { 
                     )}
                   </span>
                 ) : (
-                  <span key={i} className={`grid aspect-square w-full place-items-center rounded-full bg-white/20 text-white/80 ${dot}`}>
+                  <span key={i} data-dot={i} className={`grid aspect-square w-full place-items-center rounded-full bg-white/20 text-white/80 ${dot}`}>
                     {last && <Gift className="size-[46%]" />}
                   </span>
                 );
@@ -113,7 +114,7 @@ export function Pass({ shop, stamps, waiting, small, fresh, className = "" }: { 
 
             {shop.gift && (
               // one plain line under a thin rule: how far the gift is
-              <p className="mt-3.5 flex items-center gap-2 border-t border-white/20 pt-2.5 text-[0.8438rem] font-semibold text-white/95">
+              <p data-line className="mt-3.5 flex items-center gap-2 border-t border-white/20 pt-2.5 text-[0.8438rem] font-semibold text-white/95">
                 <Gift className="size-[1.0625rem] shrink-0" />
                 <span className="min-w-0 flex-1 truncate">{line}</span>
                 {rest > 0 && (
