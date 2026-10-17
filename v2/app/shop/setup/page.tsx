@@ -4,7 +4,7 @@ import { ShopForm } from "@/components/ShopForm";
 import { Steps } from "@/components/Steps";
 import { Heading, Top } from "@/components/Top";
 import { Middle, Screen } from "@/components/ui";
-import { getMe } from "@/lib/session";
+import { getMe, homeOf } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
 import { t } from "@/lib/t";
 
@@ -14,6 +14,8 @@ export const metadata = { title: "المحل" };
 export default async function ShopSetup({ searchParams }: { searchParams: Promise<{ edit?: string; name?: string; kind?: string }> }) {
   const [me, { edit, name, kind }, help] = await Promise.all([getMe(), searchParams, getHelp()]);
   if (!me) redirect("/shop/new");
+  // a shop already open (signing in from «/shop/new», where the sign-in leads here): its home, never step 1 again
+  if (me.shop && !edit) redirect(homeOf(me));
   const editing = !!edit && !!me.shop;
   return (
     <Screen>
