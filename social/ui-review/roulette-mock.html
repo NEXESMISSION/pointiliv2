@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Pointili — mock: wallet + roulette</title>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Readex Pro", system-ui, sans-serif; background: #e9e6f5; color: #0f0e17; padding: 28px; }
+  .row { display: flex; gap: 28px; direction: ltr; align-items: flex-start; }
+  .col { width: 390px; direction: rtl; }
+  .lbl { font-size: 20px; font-weight: 700; margin-bottom: 10px; direction: ltr; text-align: left; color: #2a2740; }
+  .lbl small { display: block; font-size: 13px; font-weight: 500; color: #6b6880; margin-top: 2px; }
+  .phone { position: relative; width: 390px; height: 844px; border-radius: 44px; overflow: hidden; background: linear-gradient(180deg, #f7f5ff, #ece8fb); box-shadow: 0 30px 60px -30px rgba(40,20,120,.45); }
+  .pad { padding: 22px 20px; }
+  .top { display: flex; align-items: center; justify-content: space-between; padding-top: 18px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 999px; background: #fff; font-weight: 700; font-size: 14px; box-shadow: 0 8px 20px -14px rgba(40,20,120,.5); }
+  .av { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(145deg,#ffb18a,#ff6b4a); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  h1 { font-size: 30px; font-weight: 700; margin-top: 18px; }
+  .sub { font-size: 14px; color: #6b6880; margin-top: 2px; }
+  .card { position: relative; border-radius: 26px; color: #fff; padding: 16px 18px; box-shadow: 0 18px 30px -20px rgba(0,0,0,.5); }
+  .card .hd { display: flex; align-items: center; gap: 12px; }
+  .card .lg { width: 38px; height: 38px; border-radius: 12px; background: rgba(255,255,255,.96); display: grid; place-items: center; font-size: 22px; }
+  .card .nm { flex: 1; font-weight: 700; font-size: 17px; text-align: right; }
+  .card .ct { font-weight: 700; direction: ltr; } .card .ct b { font-size: 24px; } .card .ct i { font-style: normal; opacity: .7; font-size: 15px; }
+  .dots { display: grid; gap: 9px; margin-top: 14px; }
+  .dot { aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: 15px; }
+  .dot.on { background: #fff; }
+  .line { margin-top: 12px; border-top: 1px solid rgba(255,255,255,.25); padding-top: 9px; font-size: 13px; font-weight: 600; }
+  .coin { display: inline-grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff3b0, #ffc93c 45%, #e79a00 100%); box-shadow: inset 0 -3px 0 rgba(0,0,0,.15), 0 6px 14px -6px rgba(200,120,0,.7); color: #7a4a00; font-weight: 700; }
+  .badge { position: absolute; top: -10px; left: 14px; display: flex; align-items: center; gap: 6px; background: #fff; color: #0f0e17; border-radius: 999px; padding: 4px 10px 4px 6px; font-weight: 700; font-size: 14px; box-shadow: 0 8px 18px -10px rgba(0,0,0,.5); direction: ltr; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 56px; border-radius: 20px; font-weight: 700; font-size: 17px; color: #fff; background: linear-gradient(150deg,#9b7bff -30%,#6c47ff 50%,#4a2ad6 130%); box-shadow: 0 14px 30px -12px rgba(108,71,255,.65); }
+  .btn.gold { background: linear-gradient(150deg,#ffd65c,#ffb020 60%,#e08a00); color: #4a2a00; box-shadow: 0 14px 30px -12px rgba(230,150,0,.7); }
+  .btn.ghost { background: none; box-shadow: none; color: #6b6880; height: 44px; font-size: 15px; }
+  .foot { position: absolute; inset-inline: 20px; bottom: 26px; }
+  .stack .card { margin-top: -54px; }
+  .stack .card:first-child { margin-top: 0; }
+  .note { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 20px; padding: 14px; box-shadow: 0 10px 24px -18px rgba(40,20,120,.6); }
+  .note b { font-size: 15px; } .note span { font-size: 13px; color: #6b6880; display: block; }
+  .chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; font-size: 13px; font-weight: 600; margin: 3px; box-shadow: 0 6px 14px -10px rgba(40,20,120,.5); }
+  .switch { width: 54px; height: 32px; border-radius: 999px; background: #12b76a; position: relative; flex-shrink: 0; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; }
+  .prize { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 16px; padding: 10px 12px; margin-top: 8px; font-size: 15px; font-weight: 600; }
+  .prize .sw { width: 14px; height: 14px; border-radius: 4px; }
+  .prize .pc { margin-inline-start: auto; color: #6b6880; font-weight: 700; direction: ltr; }
+  .conf { position: absolute; width: 10px; height: 14px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+const PZ = { name: "Pizzeria Napoli", lg: "🍕", c: "#D7141A" };
+const card = (s, goal, done, line, extra = "") => {
+  const cols = goal <= 6 ? goal : goal <= 10 ? 5 : 6;
+  const dots = Array.from({ length: goal }, (_, i) => `<span class="dot ${i < done ? "on" : ""}" style="color:${s.c}">${i < done ? "✓" : i === goal - 1 ? "🎁" : ""}</span>`).join("");
+  return `<div class="card" style="background:linear-gradient(165deg, color-mix(in oklab, ${s.c} 82%, white), ${s.c} 55%, color-mix(in oklab, ${s.c} 85%, black))">${extra}
+    <div class="hd"><span class="lg">${s.lg}</span><span class="nm">${s.name}</span><span class="ct"><b>${done}</b><i>/${goal}</i></span></div>
+    ${goal ? `<div class="dots" style="grid-template-columns:repeat(${cols},1fr)">${dots}</div><div class="line">${line}</div>` : ""}</div>`;
+};
+const mini = (s, goal, done) => `<div class="card" style="background:linear-gradient(165deg, color-mix(in oklab, ${s.c} 82%, white), ${s.c} 55%, color-mix(in oklab, ${s.c} 85%, black));padding-bottom:62px"><div class="hd"><span class="lg">${s.lg}</span><span class="nm">${s.name}</span><span class="ct"><b>${done}</b><i>/${goal}</i></span></div></div>`;
+const coin = (n, size = 26) => `<span class="coin" style="width:${size}px;height:${size}px;font-size:${size * 0.5}px">${n}</span>`;
+const wheel = (size, rot = 0) => {
+  const P = [["بيتزا بلاش", "#D7141A"], ["مشروب", "#FF6B4A"], ["20%", "#B45309"], ["حاول مرّة أخرى", "#6C47FF"], ["كوكا", "#0891B2"], ["فريت", "#12B76A"]];
+  const r = size / 2, n = P.length;
+  const seg = P.map(([t, c], i) => {
+    const a0 = (i / n) * 2 * Math.PI - Math.PI / 2, a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
+    const x0 = r + r * Math.cos(a0), y0 = r + r * Math.sin(a0), x1 = r + r * Math.cos(a1), y1 = r + r * Math.sin(a1);
+    const am = (a0 + a1) / 2, tx = r + r * 0.62 * Math.cos(am), ty = r + r * 0.62 * Math.sin(am);
+    return `<path d="M${r},${r} L${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${c}"/><text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" fill="#fff" font-size="${size / 17}" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(${((am * 180) / Math.PI + 90).toFixed(1)} ${tx.toFixed(1)} ${ty.toFixed(1)})" font-family="Readex Pro">${t}</text>`;
+  }).join("");
+  return `<div style="position:relative;width:${size}px;height:${size}px;margin:0 auto">
+    <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="transform:rotate(${rot}deg);border-radius:50%;box-shadow:0 0 0 8px #fff, 0 20px 40px -18px rgba(0,0,0,.5)">${seg}</svg>
+    <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid #0f0e17"></div>
+    <div style="position:absolute;inset:0;margin:auto;width:${size * 0.22}px;height:${size * 0.22}px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 4px 12px rgba(0,0,0,.3)">${coin("", size * 0.13)}</div></div>`;
+};
+const confetti = Array.from({ length: 34 }, (_, i) => `<span class="conf" style="left:${(i * 37) % 380}px;top:${(i * 53) % 300 + 10}px;background:${["#ffb020", "#ff6b4a", "#12b76a", "#6c47ff", "#0891b2", "#e0457b"][i % 6]};transform:rotate(${i * 47}deg)"></span>`).join("");
+
+const screens = [
+  ["A · El wallet, asa7el", "el kartat kif kartat 7a9i9iyin, el jeton bayen 3al kart", `
+    <div class="pad">
+      <div class="top"><span class="av">ن</span><span class="pill">▦ الكود متاعي</span></div>
+      <h1>الكارطات متاعي</h1>
+      <div class="note" style="margin-top:14px"><span style="font-size:30px">🎁</span><div><b>عندك كادو يستنّى: قهوة بلاش</b><span>Pâtisserie El Medina · ورّي الكود في الكاسة</span></div></div>
+      <div class="stack" style="margin-top:22px">
+        ${mini({ name: "Boulangerie", lg: "🥖", c: "#B45309" }, 10, 9)}
+        ${mini({ name: "Barber Shop Hamza", lg: "💈", c: "#1D5FA8" }, 6, 4)}
+        ${card(PZ, 8, 3, "مازالولك 5 باش تربح جيتون للروليت", `<span class="badge">${coin("", 22)} 2 جيتونات</span>`)}
+      </div>
+    </div>
+    <div class="foot"><div class="btn">⌗ سكاني</div></div>`],
+  ["B · Kart fiha roulette", "el jetonat mte3 el 7anout hedha, w el roulette ta7t el kart", `
+    <div class="pad">
+      <div class="top"><span class="pill">›</span><span></span></div>
+      <div style="margin-top:16px">${card(PZ, 8, 3, "مازالولك 5 باش تربح جيتون")}</div>
+      <div class="note" style="margin-top:14px;justify-content:space-between"><div style="display:flex;align-items:center;gap:12px">${coin("2", 46)}<div><b>عندك 2 جيتونات</b><span>كل كارط تكمّلها = جيتون</span></div></div></div>
+      <div style="margin-top:22px">${wheel(230, -12)}</div>
+    </div>
+    <div class="foot"><div class="btn gold">دوّر الروليت · جيتون واحد</div></div>`],
+  ["C · Kammel el kart", "ykhou jeton, el kart terja3 0, ydawwer tawa wala ba3d", `
+    ${confetti}
+    <div class="pad" style="text-align:center;padding-top:110px">
+      <div>${coin("🍕", 120)}</div>
+      <h1 style="margin-top:22px">كمّلت الكارط!</h1>
+      <p class="sub" style="font-size:16px">ربحت جيتون في Pizzeria Napoli</p>
+      <div style="margin-top:26px;text-align:right">${card(PZ, 8, 0, "الكارط بدات من جديد")}</div>
+    </div>
+    <div class="foot"><div class="btn gold">دوّر الروليت توّا</div><div class="btn ghost">نخلّيه لمرّة أخرى</div></div>`],
+  ["D · Ydawwer", "el roulette t9oul chnouwa rbe7, w el kado yestanna fel kaissa", `
+    ${confetti}
+    <div class="pad" style="text-align:center;padding-top:70px">
+      <p class="sub" style="font-size:16px">Pizzeria Napoli</p>
+      <div style="margin-top:34px">${wheel(300, 0)}</div>
+      <div style="margin-top:34px;display:inline-flex;background:#12b76a;color:#fff;font-weight:700;font-size:22px;border-radius:999px;padding:12px 26px">ربحت: بيتزا بلاش!</div>
+      <p class="sub" style="font-size:15px;margin-top:12px">الكادو يستنّاك: ورّي الكود متاعك في الكاسة</p>
+    </div>
+    <div class="foot"><div class="btn">ورّي الكود</div></div>`],
+  ["E · El owner", "ybanlou ken ki n7ellouhalou a7na; ychaghghel w yzid el kadowet", `
+    <div class="pad">
+      <div class="top"><span class="pill">›</span><span></span></div>
+      <h1>الروليت</h1>
+      <p class="sub">الحريف كي يكمّل الكارط ياخو جيتون، يدوّر بيه الروليت</p>
+      <div class="note" style="margin-top:16px;justify-content:space-between"><div><b>خدّم الروليت للحرفاء</b><span>تنجم تطفيها وقتلّي تحب</span></div><span class="switch"></span></div>
+      <p style="margin-top:20px;font-weight:700;font-size:15px">شنوّة ينجم يربح؟</p>
+      ${[["بيتزا بلاش", "#D7141A", "10%"], ["مشروب بلاش", "#FF6B4A", "25%"], ["ريميز 20%", "#B45309", "20%"], ["كوكا", "#0891B2", "20%"], ["فريت", "#12B76A", "15%"], ["حاول مرّة أخرى", "#6C47FF", "10%"]].map(([n, c, p]) => `<div class="prize"><span class="sw" style="background:${c}"></span>${n}<span class="pc">${p}</span></div>`).join("")}
+      <div class="chip" style="margin-top:12px;color:#6c47ff">+ زيد كادو</div>
+    </div>`],
+];
+document.getElementById("row").innerHTML = screens.map(([t, s, h]) => `<div class="col"><div class="lbl">${t}<small>${s}</small></div><div class="phone">${h}</div></div>`).join("");
+</script>
+</body>
+</html>

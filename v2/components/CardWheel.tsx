@@ -28,7 +28,7 @@ const say = {
  * back with it as the gift waiting, its code to show at the counter.
  * Closed before spinning, a banner on the page opens it again.
  */
-export function CardWheel({ card, moment, prizes }: { card: string; moment: number; prizes: Prize[] }) {
+export function CardWheel({ card, moment, prizes, turns = 1 }: { card: string; moment: number; prizes: Prize[]; turns?: number }) {
   useScreen("wheel");
   const router = useRouter();
   const [open, setOpen] = useState(true);
@@ -93,7 +93,7 @@ export function CardWheel({ card, moment, prizes }: { card: string; moment: numb
         <button type="button" onClick={() => setOpen(true)} className="press mt-3 flex w-full shrink-0 animate-pop items-center gap-3 rounded-[1.25rem] bg-ink px-4 py-3.5 text-start text-white">
           <Icon3D name="party" size={40} className="animate-float" />
           <span className="min-w-0 flex-1">
-            <b className="block text-[1.0625rem]">{t.wheelWaits}</b>
+            <b className="block text-[1.0625rem]">{turns > 1 ? fill(t.wheelWaitsMany, { n: turns }) : t.wheelWaits}</b>
             <span className="block text-[0.8125rem] text-white/70">{t.wheelHint}</span>
           </span>
           <span className="shrink-0 rounded-full bg-white px-3.5 py-2 text-[0.9375rem] font-bold text-ink">{t.wheelGo}</span>

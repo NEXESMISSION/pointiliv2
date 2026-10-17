@@ -14,6 +14,6 @@ export default async function ShopCollect({ searchParams }: { searchParams: Prom
   // a shop that says what it sells: the tampon by hand asks what it was for, as the counter does
   const items = me.shop.items_on ? ((await call<{ id: number; name: string }[]>("my_items")) ?? []) : [];
   // a wheel shop: its prizes, to spin a customer's turn at the counter
-  const wheel = me.shop.wheel_on ? await call<{ prizes: { id: number; name: string; chance: number }[] }>("my_wheel") : null;
+  const wheel = me.shop.wheel_on || me.shop.wheel_allowed ? await call<{ prizes: { id: number; name: string; chance: number }[] }>("my_wheel") : null;
   return <Collect by={by === "scan" ? "scan" : "code"} items={items} prizes={wheel?.prizes ?? []} back={back && /^[0-9a-f-]{36}$/i.test(back) ? back : undefined} shop={{ name: me.shop.name, kind: me.shop.kind, color: me.shop.color, logo: me.shop.logo, goal: me.shop.goal, gift: me.shop.gift }} />;
 }

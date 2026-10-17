@@ -58,12 +58,14 @@ export default async function ShopSettings() {
         : pay?.trial_started === false
           ? t.trialWaits
           : fill(t.setTrial, { n: daysN(daysLeft) });
-  // the card's line: the store or the wheel in its place, for a shop the founder switched
+  // the card's line: the store in its place, for a shop the founder switched; a card on the wheel says so
   const card = shop.store_on
     ? { href: "/shop/store", icon: "cart", title: t.storeOwnerTitle, sub: null }
     : shop.wheel_on
-      ? { href: "/shop/wheel", icon: "party", title: t.wheelOwnerTitle, sub: null }
+      ? { href: "/shop/card", icon: "ticket", title: t.cardTitle, sub: fill(t.setCardWheel, { goal: shop.goal ?? 0 }) }
       : { href: "/shop/card", icon: "ticket", title: t.cardTitle, sub: fill(t.setCard, { goal: shop.goal ?? 0, gift: shop.gift ?? "" }) };
+  // the wheel's own line: only for a shop the founder allowed it (on or off, the owner's choice)
+  const wheel = shop.wheel_allowed && !shop.store_on ? { href: "/shop/wheel", icon: "party", title: t.wheelOwnerTitle, sub: shop.wheel_on ? t.wheelSetOn : t.wheelSetOff } : null;
 
   return (
     <Screen>
@@ -81,6 +83,7 @@ export default async function ShopSettings() {
             sub={`${t.setShop} · ${t.kinds[shop.kind] ?? ""}`}
           />
           <Row href={card.href} mark={<Icon3D name={card.icon} size={30} />} title={card.title} sub={card.sub} />
+          {wheel && <Row href={wheel.href} mark={<Icon3D name={wheel.icon} size={30} />} title={wheel.title} sub={wheel.sub} />}
           <Row href="/shop/items" mark={<Icon3D name="basket" size={30} />} title={t.itemsTile} sub={shop.items_on ? t.setItemsOn : t.setItemsOff} />
         </Group>
         <Group>

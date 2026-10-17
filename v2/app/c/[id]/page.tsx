@@ -65,7 +65,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.8125rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
 
       {/* the roulette: a popup that opens by itself, and a banner to open it again */}
-      {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} />}
+      {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} turns={card.spins_n ?? 1} />}
 
       {/* the gift waiting: what it is, and the one thing to do — show the code at the counter */}
       {ready && (

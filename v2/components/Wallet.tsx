@@ -62,7 +62,7 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
             <span className="absolute end-3 top-1/2 -translate-y-1/2" aria-hidden>
               <Icon3D name="party" size={50} className="animate-float" />
             </span>
-            <b className="block text-[0.9375rem] font-bold">{t.wheelWaits}</b>
+            <b className="block text-[0.9375rem] font-bold">{(waiting[0]!.spins_n ?? 1) > 1 ? fill(t.wheelWaitsMany, { n: waiting[0]!.spins_n ?? 2 }) : t.wheelWaits}</b>
             <span className="block truncate text-[0.8125rem] text-muted">{waiting[0]!.shop.name}</span>
             <span className="mt-1.5 inline-flex items-center gap-1.5 text-[0.8125rem] font-bold text-coral">{t.wheelGo}</span>
           </Link>
@@ -151,7 +151,7 @@ function CardRow({ card: c }: { card: CardView }) {
   const goal = c.shop.goal ?? 10;
   const done = Math.min(c.stamps, goal);
   const left = goal - done;
-  const waits = c.spin ? t.wheelWaits : c.ready ? fill((c.waiting_n ?? 1) > 1 ? t.wonMany : t.won, { gift: c.won ?? c.shop.gift ?? "", n: c.waiting_n ?? 1 }) : (c.orders_n ?? 0) > 0 ? t.storeOrderWaits : null;
+  const waits = c.spin ? ((c.spins_n ?? 1) > 1 ? fill(t.wheelWaitsMany, { n: c.spins_n ?? 2 }) : t.wheelWaits) : c.ready ? fill((c.waiting_n ?? 1) > 1 ? t.wonMany : t.won, { gift: c.won ?? c.shop.gift ?? "", n: c.waiting_n ?? 1 }) : (c.orders_n ?? 0) > 0 ? t.storeOrderWaits : null;
   const line = c.shop.store
     ? `${c.stamps} ${t.storeBalance}`
     : c.shop.wheel

@@ -41,6 +41,7 @@ type Shop = {
   /** false: the trial's clock waits for the shop's first customer (shops opened since 14 Oct 2026) */
   trial_started?: boolean;
   wheel_on: boolean;
+  wheel_allowed: boolean;
   wheel: { id: number; name: string; chance: number }[];
   wheel_fell: { name: string; n: number }[];
   store: { id: number; name: string; cost: number }[];
@@ -308,10 +309,10 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
             <AdminForms shop={s.id} forms={forms ?? []} origin={origin} />
           </Card>
 
-          {/* the wheel: the founder's switch for this shop, its prizes and chances, and what fell */}
-          <Card title="الروليت" actions={<Pill tone={s.wheel_on ? "brand" : "grey"}>{s.wheel_on ? "مخدومة" : "الكادو العادي"}</Pill>}>
-            <AdminWheelSwitch id={s.id} on={s.wheel_on} hasCard={!!s.goal} store={s.store_on} />
-            {s.wheel_on && (
+          {/* the wheel: the founder allows it for this shop, the owner turns it on; its prizes and chances, and what fell */}
+          <Card title="الروليت" actions={<Pill tone={s.wheel_on ? "brand" : s.wheel_allowed ? "mint" : "grey"}>{s.wheel_on ? "المولى خدّمها" : s.wheel_allowed ? "مسموحة · المولى طافيها" : "موش مسموحة"}</Pill>}>
+            <AdminWheelSwitch id={s.id} on={s.wheel_allowed} hasCard={!!s.goal} store={s.store_on} />
+            {s.wheel_allowed && (
               <div className="mt-4 grid gap-4 border-t border-line pt-3 lg:grid-cols-2">
                 <div>
                   <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">الكادوات والحظ</p>

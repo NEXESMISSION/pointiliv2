@@ -14,6 +14,8 @@ export type CardView = {
   shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; store?: boolean; wheel?: boolean };
   /** a wheel shop: the turn waiting to be spun (a gift moment's id) */
   spin?: number | null;
+  /** a wheel shop: how many turns («دورات») wait to be spun */
+  spins_n?: number;
   /** the gift waiting, by its own name (a wheel's prize once spun) */
   won?: string | null;
   /** a shop with a store: the orders this customer made and has not taken yet */

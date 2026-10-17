@@ -96,6 +96,8 @@ alter table public.shops add constraint shops_trial_days_check check (trial_days
 -- customer — a tampon to somebody else than the owner — not at the sign-up, so an owner who opens at night
 -- or takes a few days to start loses none of it. The shops opened before keep their clock from the opening.
 alter table public.shops add column if not exists trial_first boolean not null default false;
+-- the founder lets this shop have the wheel (17 Oct 2026; its owner turns it on: wheel_on, «the wheel» below)
+alter table public.shops add column if not exists wheel_allowed boolean not null default false;
 alter table public.shops alter column trial_first set default true;
 
 -- an owner's payment: the way they chose, then the founder's word (paid or not);
@@ -592,9 +594,10 @@ language sql stable security definer set search_path = '' as $$
                                'store', s.store_on, 'wheel', s.wheel_on),
     -- the gift waiting, by its own name (a wheel's prize once spun; the card's gift otherwise)
     'won', (select m.gift from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null order by m.created_at, m.id limit 1),
-    -- a wheel shop: the turn waiting to be spun (its gift is the prize once spun)
+    -- a wheel shop: the turn waiting to be spun (its gift is the prize once spun), and how many turns wait («دورات»)
     'spin', (select m.id from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.wheel and m.spun_at is null and m.given_at is null
              order by m.created_at, m.id limit 1),
+    'spins_n', (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.wheel and m.spun_at is null and m.given_at is null),
     -- a shop with a store: what this customer ordered and has not taken yet
     'orders_n', (select count(distinct o.batch) from public.orders o where o.card_id = c.id and o.status = 'waiting'),
     'next', case when s.goal is not null
@@ -627,7 +630,7 @@ begin
     'phone_check', public.phone_state(p),
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
-      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on, 'stamp_gap', s.stamp_gap, 'store_on', s.store_on, 'wheel_on', s.wheel_on) end);
+      'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on, 'stamp_gap', s.stamp_gap, 'store_on', s.store_on, 'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed) end);
 end $$;
 
 -- the owner's choice for the stamps on the card: the tick, or the shop's logo
@@ -1340,7 +1343,7 @@ language sql stable security definer set search_path = '' as $$
            from (select * from public.moments where card_id = c.id order by created_at desc limit 30) m), '[]'::jsonb),
          'orders', public.orders_story(c.id),
          -- a wheel shop: the prizes, to draw the wheel
-         'prizes', (select case when s.wheel_on then public.wheel_list(s.id) end from public.shops s where s.id = c.shop_id))
+         'prizes', (select case when s.wheel_on or s.wheel_allowed then public.wheel_list(s.id) end from public.shops s where s.id = c.shop_id))
   from public.cards c where c.id = p_id and c.user_id = auth.uid()
 $$;
 
@@ -1547,7 +1550,7 @@ begin
     -- (a second object: one jsonb_build_object takes 100 arguments at most)
     || jsonb_build_object('held', public.held_list(s.id, 14), 'store_on', s.store_on,
          'trial_until', public.trial_end(s), 'trial_started', public.trial_started(s),
-         'wheel_on', s.wheel_on, 'wheel', public.wheel_list(s.id),
+         'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed, 'wheel', public.wheel_list(s.id),
          'wheel_fell', coalesce((select jsonb_agg(jsonb_build_object('name', x.gift, 'n', x.n) order by x.n desc)
                                  from (select m.gift, count(*) as n from public.moments m where m.shop_id = s.id and m.wheel and m.spun_at is not null group by m.gift) x), '[]'::jsonb), 'trial_over', now() >= public.trial_end(s), 'store', public.store_list(s.id),
          'orders', coalesce((select jsonb_agg(jsonb_build_object('at', o.created_at, 'name', o.name, 'qty', o.qty, 'cost', o.cost, 'status', o.status,
@@ -3131,6 +3134,11 @@ end $$;
 -- card, or by the owner at the counter — and then it is the prize, handed over
 -- like any gift (the customer's code). Other shops never see any of it.
 alter table public.shops add column if not exists wheel_on boolean not null default false;
+-- since 17 Oct 2026 the wheel is two switches: the founder lets a shop have it (wheel_allowed,
+-- the console's — the column is made with the shops, above: functions read it), and its owner
+-- turns it on and off for his customers (wheel_on, «الروليت»)
+-- the shops the founder had put on the wheel before: allowed. Only ever true where it is on — never undone
+update public.shops set wheel_allowed = true where wheel_on and not wheel_allowed;
 alter table public.moments add column if not exists wheel boolean not null default false;
 alter table public.moments add column if not exists spun_at timestamptz;
 
@@ -3163,8 +3171,8 @@ begin
   perform public.require_admin();
   select * into s from public.shops where id = p_id;
   if s.id is null then return public.err('not_found'); end if;
-  -- a shop with no card yet starts on the wheel: the owner's set-up is the goal and the prizes, nothing else
-  update public.shops set wheel_on = coalesce(p_on, false), store_on = case when coalesce(p_on, false) then false else store_on end where id = p_id;
+  -- the founder allows the wheel; the owner turns it on («الروليت»). Taken away, it is off too
+  update public.shops set wheel_allowed = coalesce(p_on, false), wheel_on = case when coalesce(p_on, false) then wheel_on else false end where id = p_id;
   return jsonb_build_object('ok', true);
 end $$;
 
@@ -3175,7 +3183,7 @@ declare s public.shops%rowtype;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
-  return jsonb_build_object('ok', true, 'on', s.wheel_on, 'prizes', public.wheel_list(s.id),
+  return jsonb_build_object('ok', true, 'on', s.wheel_on, 'allowed', s.wheel_allowed, 'prizes', public.wheel_list(s.id),
     'fell', coalesce((select jsonb_agg(jsonb_build_object('name', x.gift, 'n', x.n) order by x.n desc)
                       from (select m.gift, count(*) as n from public.moments m
                             where m.shop_id = s.id and m.wheel and m.spun_at > now() - interval '30 days' group by m.gift) x), '[]'::jsonb));
@@ -3188,7 +3196,7 @@ declare s public.shops%rowtype; x jsonb; v_rank int := 0; v_keep bigint[] := '{}
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
-  if not s.wheel_on then return public.err('wheel_off'); end if;
+  if not s.wheel_allowed then return public.err('wheel_off'); end if;
   if jsonb_typeof(p_prizes) <> 'array' or jsonb_array_length(p_prizes) not between 2 and 12 then return public.err('count'); end if;
   for x in select * from jsonb_array_elements(p_prizes) loop
     v_chance := case when coalesce(x ->> 'chance', '') ~ '^\d{1,3}$' then (x ->> 'chance')::int end;
@@ -3210,6 +3218,25 @@ begin
   end loop;
   update public.wheel_prizes set gone = true where shop_id = s.id and not gone and not (id = any (v_keep));
   return jsonb_build_object('ok', true, 'prizes', public.wheel_list(s.id));
+end $$;
+
+-- the owner turns the wheel on for his customers, or off: only a shop the founder allowed, with a card,
+-- not on the store, and at least two prizes to turn it on. Off, a full card is the card's own gift again;
+-- the turns already won stay, to be spun
+create or replace function public.set_wheel(p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if not s.wheel_allowed then return public.err('not_allowed'); end if;
+  if coalesce(p_on, false) then
+    if s.store_on then return public.err('store'); end if;
+    if s.goal is null then return public.err('no_card'); end if;
+    if (select count(*) from public.wheel_prizes w where w.shop_id = s.id and not w.gone) < 2 then return public.err('no_prizes'); end if;
+  end if;
+  update public.shops set wheel_on = coalesce(p_on, false) where id = s.id;
+  return jsonb_build_object('ok', true, 'on', coalesce(p_on, false));
 end $$;
 
 -- the turn itself (server only): a prize by its chance, written on the gift; its place on the wheel for the spin
@@ -3592,7 +3619,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),
   public.customer_at(text), public.give_stamp(text, bigint), public.push_subscribe(text, text, text), public.push_unsubscribe(text),
   public.my_payment(), public.pay_request(text), public.admin_payments(), public.admin_payment_decide(uuid, boolean),
-  public.admin_guard(), public.admin_block(text, text, text, int), public.admin_unblock(text) to authenticated;
+  public.admin_guard(), public.admin_block(text, text, text, int), public.admin_unblock(text), public.set_wheel(boolean) to authenticated;
 grant execute on all functions in schema public to service_role;
 
 -- nothing a visitor without an account can call

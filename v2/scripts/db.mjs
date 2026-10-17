@@ -53,7 +53,7 @@ async function logosBucket() {
  * perfume shop's counter stopped asking which perfume. So: read before,
  * read after, and anything that moved is put back and said loudly.
  */
-const KEPT = ["items_on", "store_on", "wheel_on", "paused", "paid_until", "trial_days", "trial_first"];
+const KEPT = ["items_on", "store_on", "wheel_on", "wheel_allowed", "paused", "paid_until", "trial_days", "trial_first"];
 const keptNow = async () => new Map((await sql(`select id, name, ${KEPT.join(", ")} from public.shops`)).map((r) => [r.id, r]));
 const lit = (v) => (v === null ? "null" : typeof v === "boolean" || typeof v === "number" ? String(v) : `'${String(v).replace(/'/g, "''")}'`);
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Check, ChevronLeft, Minus, Plus, X } from "lucide-react";
-import { wheelSave } from "@/app/actions-wheel";
+import { setWheel, wheelSave } from "@/app/actions-wheel";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
 import { Btn } from "@/components/ui";
@@ -21,12 +21,15 @@ const even = (rows: Row[]): Row[] => {
 };
 
 /**
- * The owner's wheel (a shop the founder switched to it): the prizes a full
- * card can win, each with its chance in percent — 100 in all, shown as it
- * goes, with one tap to share them out evenly — and the wheel itself as the
- * customers will see it. The card's goal stays on «الكارط».
+ * The owner's wheel (a shop the founder allowed it): the switch that turns
+ * it on for his customers — a full card is then a turn («دورة»), not the
+ * card's gift — the prizes it can give, each with its chance in percent —
+ * 100 in all, shown as it goes, with one tap to share them out evenly — and
+ * the wheel itself as the customers will see it. The card's goal stays on
+ * «الكارط». On only with two prizes saved; off, a card made on the wheel
+ * goes to «الكارط» for a gift of its own.
  */
-export function WheelEditor({ prizes, fell, goal, first = false }: { prizes: Prize[]; fell: { name: string; n: number }[]; goal: number | null; first?: boolean }) {
+export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst = false, gift = null }: { prizes: Prize[]; fell: { name: string; n: number }[]; goal: number | null; first?: boolean; on?: boolean; gift?: string | null }) {
   useScreen("wheel");
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>(() => prizes.map((p) => ({ key: `p${p.id}`, id: p.id, name: p.name, chance: p.chance })));
@@ -35,6 +38,25 @@ export function WheelEditor({ prizes, fell, goal, first = false }: { prizes: Pri
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [on, setOn] = useState(onAtFirst);
+  const [flipping, flip] = useTransition();
+  const [flipErr, setFlipErr] = useState<string | null>(null);
+  // the switch needs two prizes saved (what the customers would spin is what is saved, not what is typed)
+  const canOn = prizes.length >= 2 || (saved && rows.length >= 2);
+  const toggle = () =>
+    flip(async () => {
+      const next = !on;
+      const res = await setWheel(next);
+      if (!res.ok) {
+        setFlipErr(res.error === "no_prizes" ? t.wheelNeedPrizes : res.error === "no_card" ? t.wheelNeedCard : t.storeErr);
+        return;
+      }
+      setFlipErr(null);
+      setOn(next);
+      // off, and the card was made on the wheel: it needs a gift of its own
+      if (!next && (!gift || gift === "الروليت")) router.push("/shop/card");
+      else router.refresh();
+    });
 
   const sum = rows.reduce((n, r) => n + r.chance, 0);
   const touch = (next: Row[]) => {
@@ -73,6 +95,27 @@ export function WheelEditor({ prizes, fell, goal, first = false }: { prizes: Pri
           <h1 className="shrink-0 text-balance text-[1.25rem] font-bold leading-tight">شنوّة يربح الحريف في الروليت؟</h1>
           <p className="shrink-0 text-[0.8125rem] text-muted">اكتب الكادوات، وقدّاش حظ كل وحدة (المجموع 100%)</p>
         </>
+      )}
+
+      {/* on or off for the customers: one switch, said plainly */}
+      {!first && (
+        <div className="mt-[1.2dvh] flex shrink-0 items-center gap-3 rounded-[1.25rem] bg-surface p-3.5 shadow-card">
+          <span className="min-w-0 flex-1">
+            <b className="block text-[0.9375rem] font-bold">{t.wheelSwitch}</b>
+            <span className="block text-[0.8125rem] leading-snug text-muted">{flipErr ?? (on ? t.wheelSwitchOn : canOn ? t.wheelSwitchOff : t.wheelNeedPrizes)}</span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={on}
+            aria-label={t.wheelSwitch}
+            disabled={flipping || (!on && !canOn)}
+            onClick={toggle}
+            className={`relative h-8 w-[3.25rem] shrink-0 rounded-full transition-colors duration-300 disabled:opacity-45 ${on ? "bg-mint" : "bg-line"}`}
+          >
+            <span className={`absolute top-1 size-6 rounded-full bg-white shadow transition-[inset-inline-start] duration-300 ${on ? "start-1" : "start-[1.375rem]"}`} />
+          </button>
+        </div>
       )}
 
       {/* the wheel as the customers will see it (it does not turn here) */}
