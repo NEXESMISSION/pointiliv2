@@ -17,6 +17,9 @@ import { fill, t } from "@/lib/t";
 import { pretty } from "@/lib/phone";
 import { nextTampon } from "@/lib/when";
 import { mix, useBars } from "@/lib/bars";
+
+/** the counter's colour: Pointili's purple, as on every owner screen */
+const COUNTER = "#6C47FF";
 import type { Said } from "@/lib/types";
 
 type Code = { id: string; svg: string; expiresLocal: number };
@@ -375,7 +378,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
 
   useScreen(coach === "bravo" || coach === "leaving" ? "bravo" : coach === "tip" ? "tip" : "code");
   // the phone's bars in the counter's colour, top and bottom (an app on the home screen showed two grey bands)
-  useBars(mix(shop.color, "#ffffff", 0.75), mix(shop.color, "#000000", 0.62));
+  useBars(mix(COUNTER, "#ffffff", 0.75), mix(COUNTER, "#000000", 0.62));
 
   const latest = flashes[flashes.length - 1];
   const who = known[0];
@@ -387,7 +390,8 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   return (
     <div
       className="fixed inset-0 flex flex-col overflow-hidden text-white"
-      style={{ background: `linear-gradient(170deg, color-mix(in oklab, ${shop.color} 70%, white) -10%, ${shop.color} 42%, color-mix(in oklab, ${shop.color} 60%, black) 110%)` }}
+      // one purple for every owner screen (17 Oct 2026): the shop is its logo and its name, at the top
+      style={{ background: `linear-gradient(170deg, #9a82ff -10%, ${COUNTER} 42%, #2f1a9e 110%)` }}
     >
       <style>{`
         @keyframes ct-ring { 0% { transform: scale(0.85); opacity: 0.7; } 100% { transform: scale(1.5); opacity: 0; } }
@@ -529,7 +533,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
               <Hourglass className="size-5 shrink-0" strokeWidth={2.6} /> {t.counterHeld}
             </p>
           ) : latest ? (
-            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.0625rem] font-bold" style={{ color: shop.color, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
+            <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.0625rem] font-bold" style={{ color: COUNTER, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
               <Check className="size-5" strokeWidth={3} /> <span className="num">+1</span> {latest.name ?? t.someone}
             </p>
           ) : lastScan ? (

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MessageCircle, Phone, Play, X } from "lucide-react";
+import { ClipSheet } from "@/components/HowClip";
 import { signal, watching } from "@/lib/track";
 import { t } from "@/lib/t";
 
@@ -70,15 +71,20 @@ export function VideoPill({ video, className = "" }: { video: HelpVideo | null; 
 }
 
 /**
- * «عندك سؤال؟» for an owner: a small button in the corner that opens a sheet —
- * call us, write on WhatsApp, or watch the two videos (all set by the founder
- * in the console).
+ * «عندك سؤال؟» for an owner: a quiet round «؟» in the corner (no words: it sat
+ * beside the shop's name and competed with it — 17 Oct 2026) that opens a sheet —
+ * call us, write on WhatsApp, see the filmed slides again («هكّا تخدم في
+ * المحل», the onboarding's three clips — the founder asked for them here, 17
+ * Oct 2026), or watch the two videos (the number and the videos set by the
+ * founder in the console).
  */
-export function HelpButton({ help, light = false, compact = false, small = false }: { help: HelpSettings; light?: boolean; compact?: boolean; small?: boolean }) {
+// `compact` is kept for the callers that pass it: every help is the round one now
+export function HelpButton({ help, light = false, small = false }: { help: HelpSettings; light?: boolean; compact?: boolean; small?: boolean }) {
   const [open, setOpen] = useState(false);
   const [video, setVideo] = useState<HelpVideo | null>(null);
   const videos = [help.video1, help.video2].filter((v): v is HelpVideo => !!v);
-  if (!help.phone && !videos.length) return null;
+  const [clips, setClips] = useState(false);
+  const closeClips = useCallback(() => setClips(false), []);
   return (
     <>
       <button
@@ -88,12 +94,9 @@ export function HelpButton({ help, light = false, compact = false, small = false
           signal("help_open");
         }}
         aria-label={t.helpCta}
-        className={`press relative flex shrink-0 items-center gap-1.5 rounded-full font-bold ${small ? "h-8 pe-3 ps-1.5 text-[0.8125rem] after:absolute after:-inset-1.5" : "h-11 text-[0.8125rem]"} ${compact ? "w-11 justify-center" : small ? "" : "pe-3.5 ps-2.5"} ${light ? "bg-white/15 text-white" : "bg-surface text-brand shadow-card"}`}
+        className={`press relative grid shrink-0 place-items-center rounded-full text-[1.125rem] font-bold ${small ? "size-10" : "size-11"} ${light ? "bg-white/15 text-white" : "bg-surface text-brand shadow-card"}`}
       >
-        <span className={`grid place-items-center rounded-full bg-brand text-white ${small ? "size-5 text-[0.75rem]" : "size-6 text-[0.8125rem]"}`} aria-hidden>
-          ؟
-        </span>
-        {!compact && t.helpCta}
+        <span aria-hidden>؟</span>
       </button>
       {open && (
         <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/40" onClick={() => setOpen(false)} role="dialog" aria-modal="true" aria-label={t.helpTitle}>
@@ -118,6 +121,22 @@ export function HelpButton({ help, light = false, compact = false, small = false
                   {pretty(help.phone)}
                 </p>
               )}
+              {/* the filmed slides, first: the café, the restaurant, the shop — the owner's own work, seen */}
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setClips(true);
+                }}
+                className="press flex h-[3.25rem] w-full items-center gap-3 rounded-[1.125rem] bg-surface px-3 text-start text-[0.9375rem] font-semibold shadow-card"
+              >
+                <span className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-ink text-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/clips/how-1-v2.webp" alt="" className="absolute inset-0 size-full object-cover opacity-80" />
+                  <Play className="relative size-4 fill-white" />
+                </span>
+                <span className="min-w-0 flex-1 truncate">{t.clipTitle}</span>
+              </button>
               {videos.map((v) => (
                 <button key={v.id} type="button" onClick={() => setVideo(v)} className="press flex h-[3.25rem] w-full items-center gap-3 rounded-[1.125rem] bg-surface px-3 text-start text-[0.9375rem] font-semibold shadow-card">
                   <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#D7141A] text-white">
@@ -131,6 +150,7 @@ export function HelpButton({ help, light = false, compact = false, small = false
         </div>
       )}
       {video && <VideoModal video={video} onClose={() => setVideo(null)} />}
+      {clips && <ClipSheet onClose={closeClips} />}
     </>
   );
 }

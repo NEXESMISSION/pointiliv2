@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Check, Minus, Plus, X } from "lucide-react";
+import { Check, Minus, Plus, ShoppingCart, X } from "lucide-react";
 import { storeGive, storeSave } from "@/app/actions-store";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
-import { Btn, Icon3D } from "@/components/ui";
+import { Btn } from "@/components/ui";
 import { fill, t } from "@/lib/t";
 import type { Order, StoreItem } from "@/lib/types";
 
@@ -80,7 +80,7 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
       {waiting.length > 0 && (
         <section className="mt-[2dvh] shrink-0 rounded-[1.25rem] bg-brand-soft p-3">
           <h2 className="mb-2 flex items-center gap-1.5 px-0.5 text-[0.9375rem] font-bold text-brand">
-            <Icon3D name="cart" size={22} /> {t.storeOrders} <span className="num">({waiting.length})</span>
+            <ShoppingCart className="size-5" strokeWidth={2.2} /> {t.storeOrders} <span className="num">({waiting.length})</span>
           </h2>
           <ul className="max-h-[22dvh] space-y-1.5 overflow-y-auto overscroll-contain" data-list>
             {waiting.map((w) => (

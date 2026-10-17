@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Check, ChevronLeft, Minus, Plus, X } from "lucide-react";
 import { setWheel, wheelSave } from "@/app/actions-wheel";
+import { Switch } from "@/components/Owner";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
 import { Btn } from "@/components/ui";
@@ -104,17 +105,7 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
             <b className="block text-[0.9375rem] font-bold">{t.wheelSwitch}</b>
             <span className="block text-[0.8125rem] leading-snug text-muted">{flipErr ?? (on ? t.wheelSwitchOn : canOn ? t.wheelSwitchOff : t.wheelNeedPrizes)}</span>
           </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={on}
-            aria-label={t.wheelSwitch}
-            disabled={flipping || (!on && !canOn)}
-            onClick={toggle}
-            className={`relative h-8 w-[3.25rem] shrink-0 rounded-full transition-colors duration-300 disabled:opacity-45 ${on ? "bg-mint" : "bg-line"}`}
-          >
-            <span className={`absolute top-1 size-6 rounded-full bg-white shadow transition-[inset-inline-start] duration-300 ${on ? "start-1" : "start-[1.375rem]"}`} />
-          </button>
+          <Switch on={on} onClick={toggle} label={t.wheelSwitch} disabled={flipping || (!on && !canOn)} />
         </div>
       )}
 

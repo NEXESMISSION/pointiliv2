@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { Top } from "@/components/Top";
-import { Icon3D, Screen } from "@/components/ui";
+import { Repeat, Stamp, Users } from "lucide-react";
+import { Mark } from "@/components/Owner";
+import { Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { t } from "@/lib/t";
@@ -36,9 +38,9 @@ export default async function ShopStats() {
   const max = Math.max(1, ...days.map((d) => d.stamps));
   // three numbers: today, the customers, and the ones who came back (what a loyalty card is for)
   const tiles = [
-    { icon: "fire", value: s?.today ?? 0, label: t.numToday },
-    { icon: "people", value: s?.customers ?? 0, label: t.statCustomers },
-    { icon: "star", value: s?.returning ?? 0, label: t.statBack },
+    { icon: Stamp, value: s?.today ?? 0, label: t.numToday },
+    { icon: Users, value: s?.customers ?? 0, label: t.statCustomers },
+    { icon: Repeat, value: s?.returning ?? 0, label: t.statBack },
   ];
 
   return (
@@ -48,7 +50,7 @@ export default async function ShopStats() {
       <div className="mt-[2dvh] grid shrink-0 grid-cols-3 gap-2">
         {tiles.map((x) => (
           <div key={x.label} className="flex flex-col items-center gap-1 rounded-[1.125rem] bg-surface px-2 py-[clamp(0.625rem,1.6dvh,1rem)] text-center shadow-card">
-            <Icon3D name={x.icon} size={26} />
+            <Mark icon={x.icon} size={32} />
             <span className="num block text-[1.5rem] font-bold leading-none">{x.value}</span>
             <span className="block w-full truncate text-[0.75rem] text-muted">{x.label}</span>
           </div>

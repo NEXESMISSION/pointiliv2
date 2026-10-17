@@ -6,7 +6,7 @@ import { Check, ChevronDown } from "lucide-react";
 import { markSeen, setMomentItem } from "@/app/actions";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
-import { Btn, Icon3D } from "@/components/ui";
+import { Btn } from "@/components/ui";
 import { signal } from "@/lib/track";
 
 export type FixStamp = { id: number; at: string; name: string | null; phone: string | null; item: number | null; item_name: string | null };
@@ -24,9 +24,9 @@ function Tip({ onDone }: { onDone: () => void }) {
     void markSeen("fix_tip").catch(() => {});
   }, []);
   const steps = [
-    { icon: "fire", text: "غلطت وعطيت التامبون على حاجة موش هي؟ عادي." },
-    { icon: "people", text: "اختار التامبون من الليستة (آخر جمعة)." },
-    { icon: "star", text: "اختار الحاجة الصحيحة. تتبدّل وحدها، والتامبون يقعد كيف ما هو." },
+    { text: "غلطت وعطيت التامبون على حاجة موش هي؟ عادي." },
+    { text: "اختار التامبون من الليستة (آخر جمعة)." },
+    { text: "اختار الحاجة الصحيحة. تتبدّل وحدها، والتامبون يقعد كيف ما هو." },
   ];
   return (
     <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45 sm:items-center" role="dialog" aria-modal="true" aria-label="بدّل الحاجة">
@@ -38,7 +38,6 @@ function Tip({ onDone }: { onDone: () => void }) {
             <li key={i} className="flex animate-rise items-center gap-3 rounded-[1.125rem] bg-surface p-3 shadow-card" style={{ animationDelay: `${120 + i * 120}ms` }}>
               <span className="num grid size-9 shrink-0 place-items-center rounded-full bg-brand text-[0.9375rem] font-bold text-white">{i + 1}</span>
               <span className="min-w-0 flex-1 text-[0.9375rem] leading-snug">{s.text}</span>
-              <Icon3D name={s.icon} size={30} className="shrink-0" />
             </li>
           ))}
         </ol>

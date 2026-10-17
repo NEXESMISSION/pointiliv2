@@ -285,7 +285,6 @@ const SCREENS = [
   // the shop's first gift waiting: how to hand it over, before any other note
   { name: "home-first-gift", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "first_gift")), path: "/shop", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   // a new owner's first steps, all done: the bravo (shown once)
-  { name: "home-mission-done", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "mission")), path: "/shop", wait: 1500, after: () => notes(owner, ALL_NOTES) },
   { name: "home-logo-tip", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "logo_tip")), path: "/shop", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "home-offer", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "offer")), path: "/shop", wait: 2000, after: () => notes(owner, ALL_NOTES) },
   { name: "home-news", as: "owner", before: newsOnlyOurs, path: "/shop", wait: 1800 },
@@ -375,6 +374,12 @@ const SCREENS = [
   { name: "pay", as: "owner", path: "/shop/pay" },
   { name: "settings", as: "owner", path: "/shop/setup?edit=1" },
   { name: "wizard-edit-goal", as: "owner", path: "/shop/card" },
+  { name: "wizard-edit-gift", as: "owner", path: "/shop/card", act: (p) => press(p, "كمّل") },
+  // «الروليت» among the gifts, for a shop the founder allowed it: the chips are then what the wheel holds
+  { name: "wizard-edit-gift-wheel", as: "owner", before: () => admin.from("shops").update({ wheel_allowed: true }).eq("id", shop.id), path: "/shop/card", act: async (p) => {
+    await press(p, "كمّل");
+    await press(p, "الروليت");
+  }, after: () => admin.from("shops").update({ wheel_allowed: false, wheel_on: false }).eq("id", shop.id) },
   { name: "wizard-edit-review", as: "owner", path: "/shop/card", act: async (p) => {
     await p.getByRole("button", { name: "10", exact: true }).click();
     for (let n = 0; n < 4; n++) await press(p, "كمّل");

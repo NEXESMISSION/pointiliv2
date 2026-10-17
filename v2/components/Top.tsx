@@ -25,7 +25,7 @@ export function Top({ back, title, hint, end, children }: { back?: string; title
 export function Heading({ title, hint, className = "", children }: { title: string; hint?: string; className?: string; children?: React.ReactNode }) {
   return (
     <div className={className}>
-      <h1 className="text-[1.5rem] font-bold leading-tight">{title}</h1>
+      <h1 className="text-[1.625rem] font-bold leading-tight">{title}</h1>
       {hint && <p className="mt-1 text-[0.9375rem] text-muted">{hint}</p>}
       {children}
     </div>

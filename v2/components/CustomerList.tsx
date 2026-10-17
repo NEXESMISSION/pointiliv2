@@ -62,7 +62,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
           return (
             <li key={c.id}>
               <button type="button" onClick={() => setOpen(c)} className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors active:bg-canvas">
-                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[0.9375rem] font-bold text-white">{(c.name?.[0] ?? "؟").toUpperCase()}</span>
+                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.9375rem] font-bold text-brand">{(c.name?.[0] ?? "؟").toUpperCase()}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[0.9375rem] font-semibold">{c.name ?? t.someone}</span>
                   <span className="block truncate text-[0.8125rem] text-muted">

@@ -20,7 +20,7 @@ export default async function ShopSetup({ searchParams }: { searchParams: Promis
   return (
     <Screen>
       <Top back={editing ? "/shop/settings" : undefined} end={<HelpButton help={help} />} />
-      <Middle>
+      <Middle className={editing ? "justify-start!" : ""}>
         {/* a person with an account already (a customer, or an owner who signed in) opens the shop here: step 1 of 3,
             then the card, then what the customer sees — what they typed on /shop/new before signing in comes along */}
         <Heading title={t.shopTitle}>{!editing && <Steps at={1} />}</Heading>

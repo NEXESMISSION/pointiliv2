@@ -172,8 +172,9 @@ try {
   // before the first customer the home has one job: no logo tip, no install, no offer over it — and its first steps
   await never(o, "a note before the first customer", o.getByRole("dialog"), 1500);
   // waiting for the first customer, the whole card is the way to the code
-  await o.getByRole("link", { name: "باش تبدا" }).waitFor({ timeout: 10000 });
-  await shot(o, "05e-home-mission", 400);
+  // the home's one thing: a tampon, two ways — the code shown, or the customer's number
+  await o.getByRole("link", { name: /بالنومرو/ }).waitFor({ timeout: 15000 });
+  await shot(o, "05e-home", 400);
   // the logo, from «المحل» (not asked on the way in): a picture from the phone, made small, shown beside the name
   await o.goto(BASE + "/shop/setup?edit=1", { waitUntil: "load" });
   await o.locator('input[type="file"]').setInputFiles("app/apple-icon.png");

@@ -98,6 +98,9 @@ alter table public.shops add constraint shops_trial_days_check check (trial_days
 alter table public.shops add column if not exists trial_first boolean not null default false;
 -- the founder lets this shop have the wheel (17 Oct 2026; its owner turns it on: wheel_on, «the wheel» below)
 alter table public.shops add column if not exists wheel_allowed boolean not null default false;
+-- a number an owner gave a tampon to before it had an account (17 Oct 2026): the account is made for it,
+-- with no password anyone knows; the person signing up with that number later takes it, cards and all
+alter table public.people add column if not exists made_by_shop uuid references public.shops (id) on delete set null;
 alter table public.shops alter column trial_first set default true;
 
 -- an owner's payment: the way they chose, then the founder's word (paid or not);

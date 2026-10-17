@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { LogoutButton } from "@/components/LogoutButton";
 import type { Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
 import { Top } from "@/components/Top";
-import { Icon3D, Screen } from "@/components/ui";
+import { Mark } from "@/components/Owner";
+import { Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
 import { call } from "@/lib/supabase";
@@ -32,7 +33,7 @@ function Row({ href, mark, title, sub }: { href: string; mark: ReactNode; title:
   );
 }
 
-const Group = ({ children }: { children: ReactNode }) => <div className="divide-y divide-line overflow-hidden rounded-[1.25rem] bg-surface shadow-card">{children}</div>;
+const Group = ({ children }: { children: ReactNode }) => <div className="divide-y divide-line overflow-hidden rounded-[1.375rem] bg-surface shadow-card">{children}</div>;
 
 /**
  * «المحل»: everything an owner sets, once in a while, in one list — the
@@ -59,13 +60,12 @@ export default async function ShopSettings() {
           ? t.trialWaits
           : fill(t.setTrial, { n: daysN(daysLeft) });
   // the card's line: the store in its place, for a shop the founder switched; a card on the wheel says so
+  // (the wheel is chosen there, among the gifts: no line of its own since 17 Oct 2026)
   const card = shop.store_on
-    ? { href: "/shop/store", icon: "cart", title: t.storeOwnerTitle, sub: null }
+    ? { href: "/shop/store", icon: ShoppingCart, title: t.storeOwnerTitle, sub: null }
     : shop.wheel_on
-      ? { href: "/shop/card", icon: "ticket", title: t.cardTitle, sub: fill(t.setCardWheel, { goal: shop.goal ?? 0 }) }
-      : { href: "/shop/card", icon: "ticket", title: t.cardTitle, sub: fill(t.setCard, { goal: shop.goal ?? 0, gift: shop.gift ?? "" }) };
-  // the wheel's own line: only for a shop the founder allowed it (on or off, the owner's choice)
-  const wheel = shop.wheel_allowed && !shop.store_on ? { href: "/shop/wheel", icon: "party", title: t.wheelOwnerTitle, sub: shop.wheel_on ? t.wheelSetOn : t.wheelSetOff } : null;
+      ? { href: "/shop/card", icon: Ticket, title: t.cardTitle, sub: fill(t.setCardWheel, { goal: shop.goal ?? 0 }) }
+      : { href: "/shop/card", icon: Ticket, title: t.cardTitle, sub: fill(t.setCard, { goal: shop.goal ?? 0, gift: shop.gift ?? "" }) };
 
   return (
     <Screen>
@@ -82,17 +82,16 @@ export default async function ShopSettings() {
             title={shop.name}
             sub={`${t.setShop} · ${t.kinds[shop.kind] ?? ""}`}
           />
-          <Row href={card.href} mark={<Icon3D name={card.icon} size={30} />} title={card.title} sub={card.sub} />
-          {wheel && <Row href={wheel.href} mark={<Icon3D name={wheel.icon} size={30} />} title={wheel.title} sub={wheel.sub} />}
-          <Row href="/shop/items" mark={<Icon3D name="basket" size={30} />} title={t.itemsTile} sub={shop.items_on ? t.setItemsOn : t.setItemsOff} />
+          <Row href={card.href} mark={<Mark icon={card.icon} />} title={card.title} sub={card.sub} />
+          <Row href="/shop/items" mark={<Mark icon={ShoppingBasket} />} title={t.itemsTile} sub={shop.items_on ? t.setItemsOn : t.setItemsOff} />
         </Group>
         <Group>
-          <Row href="/shop/stats" mark={<Icon3D name="chart" size={30} />} title={t.statsTitle} sub={t.setStatsSub} />
-          {plan && <Row href="/shop/pay" mark={<Icon3D name="crown" size={30} />} title={t.payTitle} sub={plan} />}
+          <Row href="/shop/stats" mark={<Mark icon={ChartColumn} />} title={t.statsTitle} sub={t.setStatsSub} />
+          {plan && <Row href="/shop/pay" mark={<Mark icon={Crown} />} title={t.payTitle} sub={plan} />}
         </Group>
         <Group>
-          <Row href="/me" mark={<Icon3D name="wave" size={30} />} title={t.account} sub={me.name ?? null} />
-          <Row href="/wallet" mark={<Icon3D name="gift" size={30} />} title={t.myCards} sub={t.setMine} />
+          <Row href="/me" mark={<Mark icon={UserRound} />} title={t.account} sub={me.name ?? null} />
+          <Row href="/wallet" mark={<Mark icon={WalletCards} />} title={t.myCards} sub={t.setMine} />
         </Group>
         <LogoutButton className="mt-0" />
       </div>

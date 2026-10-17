@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, QrCode, ScanLine } from "lucide-react";
+import { ChevronLeft, QrCode, ScanLine, Smartphone, Store, Users } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { FirstGift } from "@/components/FirstGift";
 import { LogoTip } from "@/components/LogoTip";
-import { Mission } from "@/components/Mission";
 import { NewsPopup } from "@/components/NewsPopup";
 import { InstallPopup, OpenOutside } from "@/components/InstallApp";
+import { Mark } from "@/components/Owner";
 import { OfferPopup, PayBanner, TrialBanner, type Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
 import { PlanOn } from "@/components/PlanOn";
@@ -18,7 +18,7 @@ import { getMe } from "@/lib/session";
 import type { News } from "@/lib/news";
 import { getHelp } from "@/lib/settings";
 import { call } from "@/lib/supabase";
-import { fill, stampsN, t } from "@/lib/t";
+import { fill, t } from "@/lib/t";
 
 export const metadata = { title: "المحل" };
 
@@ -64,7 +64,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
   // a wheel or a store shop is set up by one thing only: until it is there, that is where home goes
-  if (me.shop.wheel_on && !((await call<{ prizes: unknown[] }>("my_wheel"))?.prizes?.length ?? 0)) redirect("/shop/wheel?start=1");
+  if (me.shop.wheel_on && !((await call<{ prizes: unknown[] }>("my_wheel"))?.prizes?.length ?? 0)) redirect("/shop/card");
   if (me.shop.store_on && !((await call<{ items: unknown[] }>("my_store"))?.items?.length ?? 0)) redirect("/shop/store?start=1");
   const shop = me.shop;
   const [home, help, news, pay, { welcome }] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), searchParams]);
@@ -87,22 +87,6 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   const offerLastDay = !!pay?.offer_until && Date.parse(pay.offer_until) - Date.now() < 24 * 3600_000;
   const offerNote = !coachNow && !firstGift && !logoTip && !grant && offer && (served || offerLastDay) && !seen.includes("offer") && !(pay?.last?.status === "pending" && pay.last.method !== "contact");
   const first = (me.name ?? "").split(" ")[0];
-  // three places to go: the camera for a customer's own code, the customers, and «المحل» (everything set once in a while)
-  const options = [
-    { href: "/shop/collect?by=scan", mark: <ScanLine className="size-[1.875rem]" style={{ color: shop.color }} strokeWidth={2.2} />, label: t.collectScanShort },
-    { href: "/shop/customers", mark: <Icon3D name="people" size={30} />, label: t.customersTitle },
-    {
-      // the shop's own tile shows its logo: the logo tip lights this one
-      href: "/shop/settings",
-      id: "shop-tile",
-      mark: (
-        <span className="grid size-[1.875rem] place-items-center overflow-hidden rounded-[0.5rem]" style={{ background: shop.color }}>
-          <ShopMark shop={shop} size={24} />
-        </span>
-      ),
-      label: t.shopTitle,
-    },
-  ];
   // the trial's line only when it matters: its last two days, once it is over, or a payment waiting for the founder's word
   const pending = pay?.last?.status === "pending" && pay.last.method !== "contact";
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
@@ -115,24 +99,23 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   return (
     // nothing is clipped: on a phone too short for it all, the page scrolls as a whole
     <main className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col px-5">
+      {/* the shop's own page: its logo and its name lead, the greeting above the name, the help a quiet «؟» at the end */}
       <header className="flex items-center gap-3 pt-3">
-        {/* the shop's picture opens «المحل», like a profile picture */}
-        <Link href="/shop/settings" aria-label={t.shopTitle} className="press grid size-12 shrink-0 place-items-center overflow-hidden rounded-full shadow-card" style={{ background: shop.color }}>
+        {/* the shop's picture opens «المحل», like a profile picture (the logo tip points at it) */}
+        <Link href="/shop/settings" id="shop-tile" aria-label={t.shopTitle} className="press grid size-12 shrink-0 place-items-center overflow-hidden rounded-full shadow-card" style={{ background: shop.color }}>
           <ShopMark shop={shop} size={30} />
         </Link>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate text-[0.8125rem] text-muted">
-              {t.hello}
-              {first ? ` ${first}` : ""}
-            </span>
-            <HelpButton help={help} small />
+          <span className="block truncate text-[0.8125rem] text-muted">
+            {t.hello}
+            {first ? ` ${first}` : ""}
           </span>
           {/* the name opens «المحل»: owners kept tapping it */}
           <Link href="/shop/settings" className="block truncate text-[1.5rem] font-bold leading-tight">
             {shop.name}
           </Link>
         </span>
+        <HelpButton help={help} />
       </header>
 
       {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-semibold text-coral">{t.pausedBanner}</p>}
@@ -141,45 +124,63 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
       {/* in Facebook's own browser: the way out to the phone's browser, where Pointili stays */}
       <OpenOutside where="home" look="line" className="mt-1" />
 
-      {/* the one thing an owner opens all day */}
-      <Link
-        href="/shop/qr"
-        className="press relative mt-[2.2dvh] flex shrink-0 items-center gap-3 overflow-hidden rounded-[1.625rem] px-4 py-[clamp(0.875rem,2.6dvh,1.75rem)] text-white"
-        style={{
-          background: `linear-gradient(150deg, color-mix(in oklab, ${shop.color} 72%, white) -20%, ${shop.color} 45%, color-mix(in oklab, ${shop.color} 68%, black) 120%)`,
-          boxShadow: `0 6px 14px -10px color-mix(in oklab, ${shop.color} 70%, black)`,
-        }}
-      >
-        <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_80%_at_0%_0%,rgb(255_255_255/0.28),transparent_55%)]" aria-hidden />
-        <span className="relative grid size-[clamp(3.5rem,7dvh,4.5rem)] shrink-0 place-items-center rounded-[1.125rem] bg-white/20">
-          <QrCode className="size-[46%]" />
-        </span>
-        <span className="relative min-w-0">
-          <span className="block text-[1.25rem] font-bold leading-tight">{t.showCode}</span>
-          <span className="line-clamp-2 text-balance text-[0.8125rem] leading-snug text-white/85">{t.showCodeHint}</span>
-        </span>
-      </Link>
-
-      {/* the three places to go, in one row */}
-      <nav className="mt-[1.6dvh] grid shrink-0 grid-cols-3 gap-2">
-        {options.map((o) => (
-          <Link key={o.href} id={o.id} href={o.href} className="press flex items-center justify-center gap-2 rounded-[1.125rem] bg-surface px-2 py-[clamp(0.7rem,1.8dvh,1.05rem)] shadow-card">
-            {o.mark}
-            <span className="min-w-0 truncate text-[0.9375rem] font-bold">{o.label}</span>
+      {/* the one thing an owner does all day: a tampon — the code shown, or the customer's number typed — and
+          the camera for a customer's own code under them (the founder's «simpler», 17 Oct 2026) */}
+      <h2 className="mt-[2dvh] shrink-0 px-0.5 text-[1rem] font-bold">{t.giveTitle}</h2>
+      {/* the code is the main way (purple, filled); the number is the other one (white, its icon purple) */}
+      <div className="mt-2 grid shrink-0 grid-cols-2 gap-2">
+        <Link
+          href="/shop/qr"
+          className="press relative flex min-h-[clamp(6.25rem,15dvh,8.5rem)] flex-col justify-between overflow-hidden rounded-[1.5rem] bg-[linear-gradient(150deg,#8f75ff,#6c47ff_50%,#4a2ad6)] p-3.5 text-white shadow-[0_8px_18px_-12px_rgb(74_42_214/0.7)]"
+        >
+          <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_80%_at_0%_0%,rgb(255_255_255/0.22),transparent_55%)]" aria-hidden />
+          <span className="relative grid size-11 place-items-center rounded-[0.875rem] bg-white/20">
+            <QrCode className="size-6" />
+          </span>
+          <span className="relative">
+            <b className="block text-[1.1875rem] font-bold leading-tight">{t.showCode}</b>
+            <span className="block text-[0.75rem] leading-snug text-white/85">{t.giveQrSub}</span>
+          </span>
+        </Link>
+        <Link href="/shop/collect?by=phone" className="press flex min-h-[clamp(6.25rem,15dvh,8.5rem)] flex-col justify-between rounded-[1.5rem] bg-surface p-3.5 shadow-card">
+          <Mark icon={Smartphone} size={44} />
+          <span>
+            <b className="block text-[1.1875rem] font-bold leading-tight">{t.giveByPhone}</b>
+            <span className="block text-[0.75rem] leading-snug text-muted">{t.giveByPhoneSub}</span>
+          </span>
+        </Link>
+      </div>
+      {/* the three places, as they always were: the camera for a customer's own code, the customers, and
+          «المحل» — the account and the shop. «relative»: drawn over the shadow of the code's tile above */}
+      <nav className="relative mt-2 grid shrink-0 grid-cols-3 gap-2">
+        {[
+          { href: "/shop/collect?by=scan", icon: ScanLine, label: t.collectScanShort },
+          { href: "/shop/customers", icon: Users, label: t.customersTitle },
+          { href: "/shop/settings", icon: Store, label: t.shopTitle },
+        ].map((x) => (
+          <Link key={x.href} href={x.href} className="press flex items-center justify-center gap-2 rounded-[1.125rem] bg-surface px-2 py-[clamp(0.6rem,1.6dvh,0.875rem)] shadow-card">
+            <x.icon className="size-5 shrink-0 text-brand" strokeWidth={2.2} />
+            <span className="min-w-0 truncate text-[0.9375rem] font-bold">{x.label}</span>
           </Link>
         ))}
       </nav>
 
-      {/* today, in one line: the numbers one tap away */}
-      <Link href="/shop/stats" className="press mt-[1.4dvh] flex shrink-0 items-center gap-2 rounded-full px-1 text-[0.9375rem]">
-        <span className="font-bold">{t.todayLine}</span>
-        <span className="text-muted">·</span>
-        <span className="font-semibold text-body">{home?.today ? stampsN(home.today) : t.todayNone}</span>
-        <ChevronLeft className="ms-auto size-4 text-faint" />
-      </Link>
+      {/* today, in three numbers: one card, each number one tap from its page */}
+      <div className="relative mt-2 grid shrink-0 grid-cols-3 overflow-hidden rounded-[1.125rem] bg-surface shadow-card [&>*+*]:border-s [&>*+*]:border-line">
+        {[
+          { href: "/shop/stats", n: home?.today ?? 0, label: t.statToday },
+          { href: "/shop/customers", n: home?.served ?? 0, label: t.statCustomers },
+          { href: "/shop/customers", n: home?.waiting?.length ?? 0, label: t.statWaiting },
+        ].map((x) => (
+          <Link key={x.label} href={x.href} className="press px-3 py-[clamp(0.4rem,1.2dvh,0.7rem)] active:bg-canvas">
+            <b className="num block text-[1.375rem] font-bold leading-tight">{x.n}</b>
+            <span className="block truncate text-[0.75rem] text-muted">{x.label}</span>
+          </Link>
+        ))}
+      </div>
 
       {/* a new owner's first steps (the card, the first customer, five), until the bravo has shown */}
-      {!seen.includes("mission") && <Mission served={home?.served ?? 0} shopId={shop.id} />}
+      {/* «باش تبدا», the three first steps, went (the founder, 17 Oct 2026: «useless»): the two ways above say it */}
 
       {/* who came lately: a box that takes all the room left, never less than a row
           and the link; before the first customer, as tall as its three steps */}

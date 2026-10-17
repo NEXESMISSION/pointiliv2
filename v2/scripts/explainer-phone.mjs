@@ -150,7 +150,7 @@ try {
   await p.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((e) => e.remove()));
   await caption(p, 2, "انزل على «اكتب الكود»", true);
   await p.waitForTimeout(1500);
-  await tap(p, p.getByRole("button", { name: /اكتب الكود/ }).first());
+  await tap(p, p.getByRole("button", { name: /بالنومرو/ }).first());
   await p.waitForTimeout(700);
   await caption(p, 3, "اكتب النومرو متاع الحريف");
   await p.waitForTimeout(1200);

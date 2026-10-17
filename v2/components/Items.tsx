@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Plus, X } from "lucide-react";
 import { Back } from "@/components/Back";
+import { Switch } from "@/components/Owner";
 import { useScreen } from "@/components/Tracker";
 import { saveItems } from "@/app/actions";
 import { t } from "@/lib/t";
@@ -52,7 +53,8 @@ export function Items({ names, on, kind }: { names: string[]; on: boolean; kind:
   useScreen("shop-items");
 
   const has = (n: string) => list.some((x) => x.toLowerCase() === n.toLowerCase());
-  const add = (raw: string) => {
+  // typed: the field keeps the focus for the next one; tapped from the usual ones: no keyboard opening on a phone
+  const add = (raw: string, typed = true) => {
     const fresh = raw.split(/[,،\n]/).map((x) => x.trim()).filter((x) => x && x.length <= 40);
     if (!fresh.length) return;
     setList((old) => {
@@ -60,6 +62,7 @@ export function Items({ names, on, kind }: { names: string[]; on: boolean; kind:
       for (const n of fresh) if (!out.some((x) => x.toLowerCase() === n.toLowerCase()) && out.length < 20) out.push(n);
       return out;
     });
+    if (!typed) return;
     setSaid("");
     box.current?.focus();
   };
@@ -88,72 +91,88 @@ export function Items({ names, on, kind }: { names: string[]; on: boolean; kind:
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-8 pt-3">
       <Back home="/shop/settings" />
-      <h1 className="mt-2 text-[1.25rem] font-bold leading-tight">{t.itemsTitle}</h1>
-      <p className="mt-1 text-[0.9375rem] leading-relaxed text-muted">{t.itemsWhat}</p>
+      <h1 className="mt-2 text-[1.625rem] font-bold leading-tight">{t.itemsTitle}</h1>
+      {/* what it is for, said in words only: an example drawn with chips and bars looked like buttons
+          that did nothing (the founder, 17 Oct 2026: «look like steps and buttons, not clickable») */}
+      <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted">{t.itemsIntro}</p>
 
-      {list.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-1.5">
-          {list.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setList((old) => old.filter((x) => x !== n))}
-              className="press flex items-center gap-1.5 rounded-full bg-brand px-3 py-2 text-[0.9375rem] font-bold text-white"
-            >
-              {n}
-              <X className="size-3.5 opacity-70" strokeWidth={3} />
-            </button>
-          ))}
+      {/* everything that can be tapped, in one card: what the shop sells (a tap takes one off), the
+          trade's usual ones (a tap adds one), and the field for anything else */}
+      <section className="mt-[2.4dvh] rounded-[1.375rem] bg-surface p-4 shadow-card">
+        <h2 className="text-[1rem] font-bold">{t.itemsYours}</h2>
+        {list.length > 0 ? (
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {list.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setList((old) => old.filter((x) => x !== n))}
+                aria-label={`${n} ✕`}
+                className="press flex items-center gap-1.5 rounded-full bg-brand py-2 pe-2.5 ps-3.5 text-[0.9375rem] font-bold text-white"
+              >
+                {n}
+                <span className="grid size-5 place-items-center rounded-full bg-white/25">
+                  <X className="size-3" strokeWidth={3} />
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-1 text-[0.8125rem] text-faint">{t.itemsNone}</p>
+        )}
+
+        {/* the trade's usual ones: one tap each, and they disappear as they are taken */}
+        {rest.length > 0 && (
+          <>
+            <p className="mt-4 text-[0.8125rem] font-semibold text-muted">{t.itemsPick}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {rest.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => add(n, false)}
+                  className="press flex items-center gap-1 rounded-full border-[1.5px] border-dashed border-brand/45 bg-canvas py-[0.4375rem] pe-3.5 ps-2.5 text-[0.9375rem] font-semibold text-body"
+                >
+                  <Plus className="size-4 text-brand" strokeWidth={3} />
+                  {n}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="mt-4 flex gap-1.5">
+          <input
+            ref={box}
+            value={said}
+            onChange={(e) => setSaid(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add(said);
+              }
+            }}
+            dir="auto"
+            maxLength={200}
+            placeholder={t.itemsAdd}
+            // in px, not rem: the root shrinks on a small phone and anything
+            // under 16px makes iOS zoom in on the first tap
+            className="min-w-0 flex-1 rounded-[1rem] bg-canvas px-4 py-3 text-[17px] focus:outline-none focus:ring-2 focus:ring-brand"
+          />
+          <button type="button" onClick={() => add(said)} disabled={!said.trim()} aria-label={t.itemsAdd} className="press grid size-[3.1rem] shrink-0 place-items-center rounded-[1rem] bg-brand text-white disabled:opacity-30">
+            <Plus className="size-5" strokeWidth={3} />
+          </button>
         </div>
-      )}
+      </section>
 
-      {/* the trade's usual ones: one tap each, and they disappear as they are taken */}
-      {rest.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {rest.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => add(n)}
-              className="press flex items-center gap-1 rounded-full bg-surface px-3 py-2 text-[0.9375rem] font-semibold text-body ring-1 ring-line"
-            >
-              <Plus className="size-3.5 text-brand" strokeWidth={3} />
-              {n}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-3 flex gap-1.5">
-        <input
-          ref={box}
-          value={said}
-          onChange={(e) => setSaid(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add(said);
-            }
-          }}
-          dir="auto"
-          maxLength={200}
-          placeholder={t.itemsAdd}
-          // in px, not rem: the root shrinks on a small phone and anything
-          // under 16px makes iOS zoom in on the first tap
-          className="min-w-0 flex-1 rounded-[1rem] bg-surface px-4 py-3 text-[17px] ring-1 ring-line focus:outline-none focus:ring-2 focus:ring-brand"
-        />
-        <button type="button" onClick={() => add(said)} disabled={!said.trim()} className="press grid size-[3.1rem] shrink-0 place-items-center rounded-[1rem] bg-ink text-white disabled:opacity-30">
-          <Plus className="size-5" strokeWidth={3} />
-        </button>
-      </div>
-
-      <label className="press mt-4 flex items-center justify-between gap-3 rounded-[1.25rem] bg-surface p-4 ring-1 ring-line">
+      {/* the counter asks, or not: a real switch, said in one line */}
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-[1.375rem] bg-surface p-4 shadow-card">
         <span className="min-w-0">
           <span className="block text-[0.9375rem] font-bold">{t.itemsAskOn}</span>
           <span className="mt-0.5 block text-[0.8125rem] leading-snug text-muted">{t.itemsAskOnHint}</span>
         </span>
-        <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} className="size-6 shrink-0 accent-brand" />
-      </label>
+        <Switch on={live} onClick={() => setLive(!live)} label={t.itemsAskOn} />
+      </div>
 
       {err && <p className="mt-3 text-center text-[0.9375rem] font-semibold text-coral">{err}</p>}
 

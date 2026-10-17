@@ -65,21 +65,20 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
       </p>
     );
   }
+  // the offer, calm: the clock large — information, not an advert shouting under the shop's own name —
+  // the offer under it, on the ink card, and «خلّص» at the end (the founder chose it, 17 Oct 2026)
   if (offer) {
     return (
-      <Link
-        href="/shop/pay"
-        className="press relative mt-3 flex shrink-0 items-center gap-2.5 overflow-hidden rounded-full bg-[linear-gradient(110deg,#ff8a3d,#ff4f7b_45%,#8b5cf6)] py-2 pe-3 ps-2 text-white"
-      >
-        <span className="pay-shine pointer-events-none absolute inset-y-0 w-1/3 bg-[linear-gradient(100deg,transparent,rgb(255_255_255/0.45),transparent)]" aria-hidden />
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/25">
-          <Icon3D name="gift" size={22} />
+      <Link href="/shop/pay" className="press mt-3 flex shrink-0 items-center gap-3 rounded-[1.125rem] bg-ink px-3.5 py-3 text-white">
+        <span className="shrink-0 text-center leading-tight">
+          <Left until={pay.offer_until ?? new Date().toISOString()} className="block text-[1.25rem] font-bold" />
+          <span className="mt-0.5 block text-[0.625rem] text-white/60">{t.payOfferClock}</span>
         </span>
-        <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-bold">{t.payBanner}</span>
-        <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[0.8125rem] font-bold">
-          <Clock className="size-3.5" /> <Left until={pay.offer_until ?? new Date().toISOString()} />
+        <span className="min-w-0 flex-1 border-s border-white/15 ps-3 leading-snug">
+          <span className="block truncate text-[0.8125rem] font-bold">{t.payOfferShort}</span>
+          <span className="block truncate text-[0.6875rem] text-white/65">{t.payOfferWhen}</span>
         </span>
-        <style>{`@keyframes pay-shine { from { inset-inline-start: -40%; } to { inset-inline-start: 120%; } } .pay-shine { animation: pay-shine 2.8s ease-in-out infinite; }`}</style>
+        <span className="shrink-0 rounded-[0.5625rem] bg-brand px-3 py-1.5 text-[0.78rem] font-bold">{t.payBannerCta}</span>
       </Link>
     );
   }
@@ -194,7 +193,7 @@ export function OfferPopup({ shopId, offerUntil }: { shopId: string; offerUntil:
       <div className="relative w-full max-w-sm pt-10" style={{ animation: "offer-in 620ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
         <div className="relative overflow-hidden rounded-[2rem] bg-surface text-center text-ink shadow-[0_40px_90px_-30px_rgb(20_16_40/0.7)]">
           {/* the ribbon of colour on top, slowly moving */}
-          <div className="offer-glow relative bg-[linear-gradient(120deg,#ff8a3d,#ff4f7b,#8b5cf6,#ff8a3d)] px-5 pb-16 pt-12 text-white [@media(max-height:560px)]:pb-14">
+          <div className="offer-glow relative bg-[linear-gradient(120deg,#9a82ff,#6c47ff,#4a2ad6,#9a82ff)] px-5 pb-16 pt-12 text-white [@media(max-height:560px)]:pb-14">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[0.75rem] font-bold backdrop-blur">
               <Sparkles className="size-3.5" /> {t.payOfferBadge}
             </span>
@@ -207,7 +206,7 @@ export function OfferPopup({ shopId, offerUntil }: { shopId: string; offerUntil:
           </svg>
           {/* the price, on a card of its own, straddling the two */}
           <p className="relative z-10 -mt-8 mb-1 inline-flex items-end gap-1.5 rounded-[1.375rem] bg-surface px-6 py-3 shadow-[0_18px_34px_-18px_rgb(20_16_40/0.45)] [@media(max-height:560px)]:py-2">
-            <span className="num bg-[linear-gradient(120deg,#ff4f7b,#8b5cf6)] bg-clip-text text-[2.75rem] font-bold leading-none text-transparent">{t.payPrice}</span>
+            <span className="num text-[2.75rem] font-bold leading-none text-brand">{t.payPrice}</span>
             <span className="pb-1 text-start text-[0.9375rem] font-bold leading-tight text-ink">
               {t.payCurrency}
               <span className="block text-[0.75rem] font-semibold text-muted">{t.payPer}</span>
@@ -245,7 +244,7 @@ export function OfferPopup({ shopId, offerUntil }: { shopId: string; offerUntil:
             <Link
               href="/shop/pay"
               onClick={() => signal("offer", "pay")}
-              className="press relative flex h-[3.5rem] w-full items-center justify-center overflow-hidden rounded-[1.25rem] bg-[linear-gradient(110deg,#ff6a3d,#ff3d77_50%,#7c4dff)] text-[1.0625rem] font-bold text-white shadow-[0_16px_34px_-14px_rgb(255_61_119/0.9)] [@media(max-height:560px)]:h-[3.25rem]"
+              className="press relative flex h-[3.5rem] w-full items-center justify-center overflow-hidden rounded-[1.25rem] bg-[linear-gradient(110deg,#8f75ff,#6c47ff_50%,#4a2ad6)] text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(108_71_255/0.7)] [@media(max-height:560px)]:h-[3.25rem]"
             >
               <span className="pay-shine pointer-events-none absolute inset-y-0 w-1/3 bg-[linear-gradient(100deg,transparent,rgb(255_255_255/0.5),transparent)]" aria-hidden />
               <style>{`@keyframes pay-shine { from { inset-inline-start: -40%; } to { inset-inline-start: 120%; } } .pay-shine { animation: pay-shine 2.6s ease-in-out infinite; }`}</style>

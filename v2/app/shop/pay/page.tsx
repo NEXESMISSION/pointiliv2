@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { Check, Clock, Sparkles } from "lucide-react";
+import { Check, Clock, Crown, Sparkles } from "lucide-react";
 import { Left, type Pay } from "@/components/Pay";
 import { PayMethods } from "@/components/PayMethods";
 import { Top } from "@/components/Top";
-import { Icon3D, Screen } from "@/components/ui";
+import { Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
@@ -31,7 +31,7 @@ export default async function ShopPay() {
   return (
     <Screen>
       <Top back="/shop" />
-      <h1 className="mt-[1.6dvh] shrink-0 text-[1.5rem] font-bold leading-tight">{t.payTitle}</h1>
+      <h1 className="mt-[1.6dvh] shrink-0 text-[1.625rem] font-bold leading-tight">{paid ? t.payTitle : t.payPageTitle}</h1>
 
       {/* the plan and the ways, centred in the room left: one screen, nothing scrolls (on a screen too short, it starts under the title) */}
       <div className="flex min-h-0 flex-1 flex-col pb-[3dvh]">
@@ -49,13 +49,18 @@ export default async function ShopPay() {
                   </span>
                 </span>
               </span>
-              <Icon3D name="crown" size={52} className="shrink-0 drop-shadow-[0_8px_14px_rgb(0_0_0/0.3)]" />
+              {/* the owner screens' icons are line icons (components/Owner.tsx): on the purple card, white on its soft square */}
+              <span className="grid size-12 shrink-0 place-items-center rounded-[0.875rem] bg-white/20">
+                <Crown className="size-6" strokeWidth={2.2} />
+              </span>
             </div>
             {offer && pay && (
               <div className="relative mt-3 flex items-center gap-2 rounded-[1rem] bg-white/15 px-3 py-2 backdrop-blur">
                 <Sparkles className="size-4 shrink-0" />
                 <span className="min-w-0 flex-1 text-[0.8125rem] font-bold">
                   <bdi className="num">+3</bdi> {t.payOfferPlus.replace("+3 ", "")}
+                  {/* owners count in dinars, not months: the same three months, said as what they save */}
+                  <span className="font-semibold text-white/85"> · {fill(t.payOfferSave, { n: Math.round((Number(t.payPrice) / 12) * 3) })}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[0.8125rem] font-bold text-brand">
                   <Clock className="size-3.5" /> <Left until={pay.offer_until!} />

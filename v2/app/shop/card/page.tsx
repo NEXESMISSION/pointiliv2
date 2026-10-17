@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { CardFirst } from "@/components/CardFirst";
 import { CardWizard } from "@/components/CardWizard";
-import { Screen } from "@/components/ui";
-import { WheelGoal } from "@/components/WheelGoal";
+import type { Prize } from "@/components/Wheel";
 import { getMe } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
+import { call } from "@/lib/supabase";
 
 export const metadata = { title: "الكارط" };
 
@@ -16,16 +16,10 @@ export default async function ShopCard() {
   // a store shop has no card to make: its store is all there is to set
   if (me.shop.store_on) redirect(me.shop.goal ? "/shop/store" : "/shop/store?start=1");
   const editing = !!me.shop.goal;
-  // a wheel shop: one question (how many tampons for a turn), then the wheel's prizes
-  if (me.shop.wheel_on) {
-    return (
-      <Screen>
-        <WheelGoal shop={me.shop} editing={editing} />
-      </Screen>
-    );
-  }
   const help = await getHelp();
   // a first card: two questions on one screen, already answered for what the shop sells
   if (!editing) return <CardFirst shop={me.shop} help={help} />;
-  return <CardWizard shop={me.shop} next="/shop" editing help={help} />;
+  // a shop the founder allowed the wheel: «الروليت» is one of the answers to the gift, with what it holds
+  const wheel = me.shop.wheel_allowed || me.shop.wheel_on ? await call<{ on: boolean; prizes: Prize[] }>("my_wheel") : null;
+  return <CardWizard shop={me.shop} next="/shop" editing help={help} wheel={wheel ? { on: !!me.shop.wheel_on, prizes: wheel.prizes ?? [] } : null} />;
 }

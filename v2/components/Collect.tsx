@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Undo2, X } from "lucide-react";
-import { customerAt, give as handOver, giveAll, giveStamp, unstamp, type WaitingGift } from "@/app/actions";
+import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Smartphone, Undo2, X } from "lucide-react";
+import { customerAt, give as handOver, giveAll, giveStamp, giveStampNew, unstamp, type WaitingGift } from "@/app/actions";
 import { storeGive } from "@/app/actions-store";
 import { spinAtCounter } from "@/app/actions-wheel";
 import { Wheel, type Prize } from "@/components/Wheel";
@@ -24,15 +24,19 @@ type Step =
   | { kind: "unknown" }
   | { kind: "error"; text: string }
   | { kind: "own" }
-  | { kind: "found"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
-  | { kind: "giving"; name: string | null; card: CardView | null; waiting: WaitingGift | null }
+  // `fresh`: a number with no account yet — the tampon makes its card (giveStampNew)
+  | { kind: "found"; name: string | null; card: CardView | null; waiting: WaitingGift | null; fresh?: boolean }
+  | { kind: "giving"; name: string | null; card: CardView | null; waiting: WaitingGift | null; fresh?: boolean }
   | { kind: "done"; name: string | null; card: CardView; gift: boolean; waiting: WaitingGift | null; moment: number | null; item: string | null }
   | { kind: "undone"; name: string | null; card: CardView }
   | { kind: "soon"; name: string | null; at: string; card?: CardView; waiting: WaitingGift | null }
   | { kind: "handed"; name: string | null; gift: string; card: CardView | null; waiting: WaitingGift | null };
 
-/** 6 digits are a customer's code; 8 (or 216 + 8) their number. */
-const complete = (d: string) => d.length === 6 || d.length === 8 || (d.length === 11 && d.startsWith("216"));
+/** 6 digits are a customer's code; 8 (or 216 + 8) their number — by the way chosen, when one is. */
+const complete = (d: string, mode?: Mode) =>
+  mode === "phone" ? d.length === 8 : mode === "code" ? d.length === 6 : d.length === 6 || d.length === 8 || (d.length === 11 && d.startsWith("216"));
+/** the three ways to say who the customer is: their number (typed), their code (typed), their code (the camera) */
+type Mode = "phone" | "code" | "scan";
 /** A customer's own QR (…/u/123456), or the bare 6 digits. */
 export const codeOf = (text: string): string | null => text.match(/\/u\/(\d{6})(?:[/?#]|$)/)?.[1] ?? (/^\s*\d{6}\s*$/.test(text) ? text.trim() : null);
 
@@ -162,8 +166,8 @@ function errorText(code?: string): string {
  * code in their wallet is the same one), and a question comes up — give it
  * now, or not now.
  */
-export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }: { by: "scan" | "code"; preset?: string; shop?: DemoShop; items?: Item[]; back?: string; prizes?: Prize[] }) {
-  const [mode, setMode] = useState(by);
+export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }: { by: Mode; preset?: string; shop?: DemoShop; items?: Item[]; back?: string; prizes?: Prize[] }) {
+  const [mode, setMode] = useState<Mode>(by);
   const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
   const [step, setStep] = useState<Step>({ kind: "idle" });
   const [round, setRound] = useState(0);
@@ -183,7 +187,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
 
   // a complete code: who is it?
   useEffect(() => {
-    if (!complete(digits) || asked.current === digits) return;
+    if (!complete(digits, mode) || asked.current === digits) return;
     const id = setTimeout(async () => {
       asked.current = digits;
       setStep({ kind: "looking" });
@@ -196,7 +200,11 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
         if (res.orders?.length && res.card) setOrders({ card: res.card.id, list: res.orders });
         else if (res.waiting && later.current !== res.waiting.id) setPop({ w: res.waiting, won: false });
       }
-      else if (res.error === "unknown") {
+      else if (res.error === "unknown" && mode === "phone") {
+        // a number with no account yet: the tampon makes its card, the person finds it when they sign up with it
+        setStep({ kind: "found", name: null, card: null, waiting: null, fresh: true });
+        signal("collect_new_number");
+      } else if (res.error === "unknown") {
         setStep({ kind: "unknown" });
         signal("collect_unknown", mode);
       } else if (res.error === "own_shop" && shop) {
@@ -212,13 +220,14 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
   const give = async (item?: Item) => {
     if (step.kind !== "found" && step.kind !== "handed") return;
     const { name, card } = step;
+    const fresh = step.kind === "found" && !!step.fresh;
     if (items.length && !item) {
       // after a gift handed over: back to the question «على شنوّة؟»
-      setStep({ kind: "found", name, card, waiting: step.waiting });
+      setStep({ kind: "found", name, card, waiting: step.waiting, fresh });
       return;
     }
-    setStep({ kind: "giving", name, card, waiting: null });
-    const res = await giveStamp(digits, item?.id, back).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
+    setStep({ kind: "giving", name, card, waiting: null, fresh });
+    const res = await (fresh ? giveStampNew(digits, item?.id) : giveStamp(digits, item?.id, back)).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
     if (res.ok && res.card) {
       navigator.vibrate?.(60);
       setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null, moment: res.moment ?? null, item: item?.name ?? null });
@@ -303,8 +312,8 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
           asked.current = "";
         }}
       >
-        <button type="button" onClick={() => setMode("code")} className="press mt-1 flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[0.9375rem] font-bold text-ink">
-          <Keyboard className="size-5" /> {t.collectTypeShort}
+        <button type="button" onClick={() => setMode("phone")} className="press mt-1 flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[0.9375rem] font-bold text-ink">
+          <Smartphone className="size-5" /> {t.collectByPhone}
         </button>
       </Scanner>
     );
@@ -323,24 +332,25 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
         <h1 className="min-w-0 flex-1 truncate text-[1.25rem] font-bold">{t.collect}</h1>
       </header>
 
-      {/* two ways: the camera, or the code typed */}
-      <div className="mt-[2dvh] grid shrink-0 grid-cols-2 gap-1 rounded-[1.125rem] bg-ink/[0.06] p-1">
+      {/* three ways to say who it is: the number (the easiest at a counter), the code, the camera */}
+      <div className="mt-[2dvh] grid shrink-0 grid-cols-3 gap-1 rounded-[1.125rem] bg-ink/[0.06] p-1">
         {(
           [
-            { id: "scan", label: t.collectScanShort, icon: ScanLine },
+            { id: "phone", label: t.collectPhoneShort, icon: Smartphone },
             { id: "code", label: t.collectTypeShort, icon: Keyboard },
+            { id: "scan", label: t.collectScanShort, icon: ScanLine },
           ] as const
         ).map((x) => (
           <button
             key={x.id}
             type="button"
             onClick={() => {
-              if (x.id === "scan") again();
+              if (x.id !== mode) again();
               setMode(x.id);
             }}
-            className={`flex h-11 items-center justify-center gap-2 rounded-[0.875rem] text-[0.9375rem] font-bold ${mode === x.id ? "bg-surface text-ink shadow-card" : "text-muted"}`}
+            className={`flex h-11 items-center justify-center gap-1.5 rounded-[0.875rem] text-[0.875rem] font-bold ${mode === x.id ? "bg-surface text-ink shadow-card" : "text-muted"}`}
           >
-            <x.icon className="size-5" /> {x.label}
+            <x.icon className="size-[1.125rem]" /> {x.label}
           </button>
         ))}
       </div>
@@ -443,6 +453,31 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
           </div>
         ) : (
           <div className="my-auto">
+            {mode === "phone" && (
+              <label className="block">
+                <span className="mb-2 block text-center text-[0.9375rem] font-semibold text-muted">{t.collectPhoneInput}</span>
+                <span dir="ltr" className="flex h-[4.5rem] w-full items-center gap-3 rounded-[1.375rem] bg-surface px-5 shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]">
+                  <span className="num shrink-0 text-[1.25rem] font-semibold text-muted">+216</span>
+                  <input
+                    value={digits.replace(/^(\d{2})(\d{1,3})?(\d{1,3})?$/, (_, a, b, c) => [a, b, c].filter(Boolean).join(" "))}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").replace(/^216(?=\d{8})/, "").slice(0, 8);
+                      if (v !== digits) {
+                        asked.current = "";
+                        setStep({ kind: "idle" });
+                      }
+                      setDigits(v);
+                    }}
+                    inputMode="tel"
+                    autoComplete="off"
+                    autoFocus
+                    placeholder="22 123 456"
+                    aria-label={t.collectPhoneInput}
+                    className="num min-w-0 flex-1 bg-transparent text-[2rem] font-bold tracking-[0.06em] text-ink outline-none placeholder:font-semibold placeholder:text-faint"
+                  />
+                </span>
+              </label>
+            )}
             {mode === "code" && (
               <label className="block">
                 <span className="mb-2 block text-center text-[0.9375rem] font-semibold text-muted">{t.collectInput}</span>
@@ -510,10 +545,12 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
                     </p>
                   )}
                   <div className="flex items-center gap-3 rounded-[1.375rem] bg-surface p-3.5 shadow-card">
-                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.0625rem] font-bold text-white">{(who[0] ?? "؟").toUpperCase()}</span>
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.0625rem] font-bold text-white">{step.fresh ? "+" : (who[0] ?? "؟").toUpperCase()}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[1.0625rem] font-bold">{who}</span>
-                      {step.card ? (
+                      <span className="block truncate text-[1.0625rem] font-bold">{step.fresh ? t.collectNewNumber : who}</span>
+                      {step.fresh ? (
+                        <span className="block text-[0.8125rem] leading-snug text-muted">{t.collectNewNumberHint}</span>
+                      ) : step.card ? (
                         <span className="num block text-[0.8125rem] text-muted">
                           {Math.min(step.card.stamps, step.card.shop.goal ?? 0)}/{step.card.shop.goal}
                         </span>
@@ -555,7 +592,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
                     </div>
                   ) : (
                     <Btn type="button" onClick={() => void give()} disabled={step.kind === "giving"} className="mt-3 h-[3.75rem] text-[1.0625rem]">
-                      {step.kind === "giving" ? t.checking : name ? fill(t.collectGive, { name }) : t.collectGiveAnon}
+                      {step.kind === "giving" ? t.checking : step.fresh ? t.collectGiveNew : name ? fill(t.collectGive, { name }) : t.collectGiveAnon}
                     </Btn>
                   )}
                 </div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Plus } from "lucide-react";
 import { cardChange, saveCard } from "@/app/actions";
 import { setStampLogo } from "@/app/shop/card/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
@@ -12,6 +12,7 @@ import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { CardConfirm, type CardImpact } from "@/components/CardConfirm";
 import { Btn, boxLook } from "@/components/ui";
+import type { Prize } from "@/components/Wheel";
 import { fill, sameGift, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { waitSays } from "@/lib/when";
@@ -38,6 +39,10 @@ const COLORS = ["#D7141A", "#FF6B4A", "#B45309", "#12B76A", "#0891B2", "#1D5FA8"
  * cut: on the smallest screens the page scrolls a little instead.
  */
 const SHRINK = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(85.5dvh_-_31rem))))]";
+/** the card's gift while the wheel is on (a card made on the wheel, with no gift of its own) */
+const SPIN_GIFT = "الروليت";
+/** a little wheel, for the «الروليت» answer */
+const WHEEL_DOT = "conic-gradient(#FF6B4A 0 25%, #FFC53D 0 50%, #12B76A 0 75%, #6C47FF 0)";
 
 type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; stamp_gap?: number };
 
@@ -52,8 +57,16 @@ type Shop = { id: string; name: string; kind: string; goal: number | null; gift:
  * works. A change is saved at once — unless it touches customers in the
  * middle of their card: then one question first (CardConfirm): they finish
  * the card they started, or they switch to the new one now.
+ *
+ * A shop the founder allowed the wheel has one more answer to «what does the
+ * customer win»: «الروليت», among the gifts, not a page of its own (the
+ * founder, 17 Oct 2026: «not separate, something nice and clean»). Chosen,
+ * the same chips pick what the wheel holds — two or more, the same chance
+ * each, the chances changed later on /shop/wheel — and a full card is a turn;
+ * a gift chosen again turns the wheel off. The card keeps its own gift under
+ * the wheel, for the day it is turned off.
  */
-export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: string; editing: boolean; help?: HelpSettings }) {
+export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: Shop; next: string; editing: boolean; help?: HelpSettings; wheel?: { on: boolean; prizes: Prize[] } | null }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const router = useRouter();
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
@@ -64,7 +77,21 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
   // a number typed by hand (3 to 30) instead of one of the five
   const [other, setOther] = useState(shop.goal && !GOALS.includes(shop.goal) ? String(shop.goal) : "");
   const otherBad = other !== "" && !(Number(other) >= 3 && Number(other) <= 30);
-  const [gift, setGift] = useState(shop.gift ?? ideas[0] ?? "");
+  // a card made on the wheel has «الروليت» for a gift: back to a gift, the first idea is offered
+  const [gift, setGift] = useState(shop.gift && shop.gift !== SPIN_GIFT ? shop.gift : (ideas[0] ?? ""));
+  // the wheel (a shop the founder allowed it): on or off, and what it holds — its saved prizes, or the trade's ideas
+  const [spin, setSpin] = useState(!!wheel?.on);
+  const [prizes, setPrizes] = useState<string[]>(() => (wheel?.prizes.length ? wheel.prizes.map((p) => p.name) : ideas.slice(0, 3)));
+  const [fresh, setFresh] = useState("");
+  const chips = spin ? [...ideas, ...prizes].filter((x, i, a) => a.indexOf(x) === i) : ideas;
+  const addPrize = () => {
+    const name = fresh.trim().slice(0, 40);
+    if (name.length < 2) return;
+    if (!prizes.includes(name) && prizes.length < 12) setPrizes([...prizes, name]);
+    setFresh("");
+  };
+  // under the wheel the card keeps a gift of its own (shown again the day the wheel is off)
+  const cardGift = spin ? (shop.gift && shop.gift !== SPIN_GIFT ? shop.gift : gift.trim().length >= 2 ? gift.trim() : SPIN_GIFT) : gift.trim();
   const [color, setColor] = useState((shop.color || COLORS[0]!).toUpperCase());
   // each stamp: the tick, or the shop's own logo (only with a logo to draw)
   const stampAtFirst = !!shop.stamp_logo && !!shop.logo;
@@ -79,7 +106,8 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
   const formRef = useRef<HTMLFormElement>(null);
   const anyChange = goal !== shop.goal || gift.trim() !== (shop.gift ?? "").trim() || gap !== (shop.stamp_gap ?? 60) || color !== (shop.color || "").toUpperCase();
   // the rule itself changed (how many tampons, which gift): the only change a customer's card can feel
-  const ruleChanged = editing && (goal !== shop.goal || !sameGift(gift, shop.gift));
+  // (the wheel turned on or off is not one of them: the turns follow the switch, as on /shop/wheel)
+  const ruleChanged = editing && (goal !== shop.goal || !sameGift(cardGift, shop.gift));
   // what that change does to the customers in the middle of their card: asked as
   // soon as the card is final (the last step), so «سجّل» has its answer at once
   const asked = useRef<{ key: string; answer: Promise<CardImpact | null> } | null>(null);
@@ -111,8 +139,8 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
   };
 
   useEffect(() => {
-    if (step === READY && ruleChanged) void impactOf(goal, gift.trim());
-  }, [step, ruleChanged, goal, gift]);
+    if (step === READY && ruleChanged) void impactOf(goal, cardGift);
+  }, [step, ruleChanged, goal, cardGift]);
 
   const send = async () => {
     // the stamps' look is the shop's own setting, saved first (the card's save does not carry it)
@@ -125,7 +153,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
     // nothing a customer's card feels (the colour, the wait, or nothing at all): saved at once
     if (!ruleChanged) return formRef.current?.requestSubmit();
     setLooking(true);
-    const found = await Promise.race([impactOf(goal, gift.trim()), new Promise<null>((r) => setTimeout(() => r(null), 6000))]);
+    const found = await Promise.race([impactOf(goal, cardGift), new Promise<null>((r) => setTimeout(() => r(null), 6000))]);
     setLooking(false);
     // someone to choose for, or a gift won at once: the sheet. Nobody (or no
     // answer): saved, and whoever started a card keeps it
@@ -174,7 +202,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending]);
 
-  const preview = { name: shop.name, kind: shop.kind, logo: shop.logo, goal, gift: gift.trim() || "…", color, stamp_logo: stampLogo };
+  const preview = { name: shop.name, kind: shop.kind, logo: shop.logo, goal, gift: spin ? SPIN_GIFT : gift.trim() || "…", color, stamp_logo: stampLogo, wheel: spin };
   // the preview's tampons: a step's own number, or the ones tapped onto it for this goal
   const onCard = tap && tap.goal === goal ? tap.n : step === READY ? 1 : Math.max(1, Math.round(goal * 0.6));
 
@@ -183,7 +211,9 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
     step === GOAL
       ? t.wizGoalEx
       : step === GIFT
-        ? fill(t.wizGiftEx, { a: ideas[0] ?? "", b: ideas[1] ?? "" })
+        ? spin
+          ? t.wizSpinEx
+          : fill(t.wizGiftEx, { a: ideas[0] ?? "", b: ideas[1] ?? "" })
         : step === WAIT
           ? waitSays(gap)
           : step === COLOR
@@ -191,7 +221,7 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
             : editing
               ? null
               : t.wizReadyBody;
-  const canGo = step === GOAL ? !otherBad : step === GIFT ? gift.trim().length >= 2 : step === WAIT ? !hoursBad : true;
+  const canGo = step === GOAL ? !otherBad : step === GIFT ? (spin ? prizes.length >= 2 : gift.trim().length >= 2) : step === WAIT ? !hoursBad : true;
 
   return (
     <form ref={formRef} action={action} className="safe-t safe-b relative mx-auto flex min-h-dvh max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
@@ -240,7 +270,20 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
       <section key={step} style={{ animation: `${back ? "wz-in-back" : "wz-in-next"} 380ms cubic-bezier(0.2,0.8,0.2,1) both` }}>
         <h1 className="text-[1.5rem] font-bold leading-snug">{question}</h1>
         {/* the gift's example names the first two gifts already on the buttons under it: on a short screen, where those buttons may take two rows, it gives them its room */}
-        {example && <p className={`mt-1.5 text-[0.9375rem] text-muted ${step === GIFT ? "[@media(max-height:700px)]:hidden" : ""}`}>{example}</p>}
+        {/* on the wheel it says what the chips are now — the wheel's prizes — so it stays, short as it is */}
+        {example && (
+          <p className={`mt-1.5 text-[0.9375rem] text-muted ${step === GIFT && !spin ? "[@media(max-height:700px)]:hidden" : ""}`}>
+            {example}
+            {step === GIFT && spin && wheel?.on && (
+              <>
+                {" "}
+                <Link href="/shop/wheel" className="font-semibold text-brand">
+                  {t.wizSpinOdds} ←
+                </Link>
+              </>
+            )}
+          </p>
+        )}
 
         {step === GOAL && (
           <>
@@ -291,27 +334,73 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
 
         {step === GIFT && (
           <div className="mt-[2dvh]">
+            {/* the gifts — one of them; on the wheel, the same chips are what it holds (as many as wanted) —
+                and «الروليت» last, among them, for a shop the founder allowed it */}
             <div className="flex flex-wrap gap-1.5">
-              {ideas.map((idea) => (
-                <button key={idea} type="button" onClick={() => setGift(idea)} aria-pressed={gift === idea} className={`press rounded-full px-3.5 py-2 text-[0.8125rem] font-semibold ${gift === idea ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}>
-                  {idea}
+              {chips.map((idea) => {
+                const on = spin ? prizes.includes(idea) : gift === idea;
+                return (
+                  <button
+                    key={idea}
+                    type="button"
+                    onClick={() => (spin ? setPrizes(on ? prizes.filter((x) => x !== idea) : prizes.length < 12 ? [...prizes, idea] : prizes) : setGift(idea))}
+                    aria-pressed={on}
+                    className={`press flex items-center gap-1 rounded-full px-3.5 py-2 text-[0.8125rem] font-semibold ${on ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}
+                  >
+                    {spin && on && <Check className="size-3.5" strokeWidth={3} />}
+                    {idea}
+                  </button>
+                );
+              })}
+              {wheel && (
+                <button
+                  type="button"
+                  onClick={() => setSpin(!spin)}
+                  aria-pressed={spin}
+                  className={`press flex items-center gap-1.5 rounded-full py-2 pe-3.5 ps-2 text-[0.8125rem] font-bold ${spin ? "bg-ink text-white" : "bg-surface text-ink shadow-card"}`}
+                >
+                  <span className={`size-[1.125rem] rounded-full ${spin ? "animate-[spin_3s_linear_infinite]" : ""}`} style={{ background: WHEEL_DOT }} aria-hidden />
+                  {t.wheelOwnerTitle}
                 </button>
-              ))}
+              )}
             </div>
-            <input
-              value={ideas.includes(gift) ? "" : gift}
-              onChange={(e) => setGift(e.target.value)}
-              // Enter goes to the next question, it does not send the card half made
-              onKeyDown={(e) => {
-                if (e.key !== "Enter") return;
-                e.preventDefault();
-                if (gift.trim().length >= 2) go(WAIT);
-              }}
-              placeholder={t.wizGiftPh}
-              maxLength={60}
-              aria-label={t.wizGiftPh}
-              className={`mt-2.5 block h-[3.25rem] w-full px-4 text-[16px] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)] ${boxLook}`}
-            />
+            {spin ? (
+              // one more prize, typed: added to the wheel, the field empty again
+              <div className="relative mt-2.5">
+                <input
+                  value={fresh}
+                  onChange={(e) => setFresh(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    e.preventDefault();
+                    if (fresh.trim()) addPrize();
+                    else if (prizes.length >= 2) go(WAIT);
+                  }}
+                  placeholder={t.wizSpinPh}
+                  maxLength={40}
+                  aria-label={t.wizSpinPh}
+                  className={`block h-[3.25rem] w-full pe-14 ps-4 text-[16px] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)] ${boxLook}`}
+                />
+                <button type="button" onClick={addPrize} disabled={fresh.trim().length < 2} aria-label={t.wheelAdd} className="press absolute inset-y-1.5 end-1.5 grid w-10 place-items-center rounded-[0.875rem] bg-brand text-white disabled:opacity-30">
+                  <Plus className="size-5" strokeWidth={2.6} />
+                </button>
+              </div>
+            ) : (
+              <input
+                value={ideas.includes(gift) ? "" : gift}
+                onChange={(e) => setGift(e.target.value)}
+                // Enter goes to the next question, it does not send the card half made
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  if (gift.trim().length >= 2) go(WAIT);
+                }}
+                placeholder={t.wizGiftPh}
+                maxLength={60}
+                aria-label={t.wizGiftPh}
+                className={`mt-2.5 block h-[3.25rem] w-full px-4 text-[16px] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)] ${boxLook}`}
+              />
+            )}
           </div>
         )}
 
@@ -443,11 +532,14 @@ export function CardWizard({ shop, next, editing, help }: { shop: Shop; next: st
       </div>
 
       <input type="hidden" name="goal" value={goal} />
-      <input type="hidden" name="gift" value={gift.trim()} />
+      <input type="hidden" name="gift" value={cardGift} />
+      {/* the wheel, for a shop allowed it: on with what it holds, or off */}
+      {wheel && <input type="hidden" name="wheel" value={spin ? "1" : "0"} />}
+      {wheel && spin && <input type="hidden" name="prizes" value={JSON.stringify(prizes)} />}
       <input type="hidden" name="color" value={color} />
       <input type="hidden" name="gap" value={gap} />
       <input type="hidden" name="next" value={next} />
-      {confirm && !lost && step === READY && <CardConfirm editing={editing} after={{ goal, gift, gap }} impact={editing ? impact : null} pending={pending} onBack={() => setConfirm(false)} />}
+      {confirm && !lost && step === READY && <CardConfirm editing={editing} after={{ goal, gift: spin ? SPIN_GIFT : gift, gap }} impact={editing ? impact : null} pending={pending} onBack={() => setConfirm(false)} />}
     </form>
   );
 }

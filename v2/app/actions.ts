@@ -69,18 +69,38 @@ async function newAccount(name: string, phone: string, password: string, trap?: 
   if (!(await gate("join", phone, 30, 60, 120))) return { error: t.errTooMany };
   const admin = service();
   const { data, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password, email_confirm: true, app_metadata: { phone: `+216${phone}` } });
+  let id = data?.user?.id ?? null;
   if (error) {
-    if (/already|registered|exists/i.test(error.message)) return { error: t.errTaken, field: "phone" };
-    if (/password/i.test(error.message)) return { error: t.errPassword, field: "password" };
-    console.error("[join]", error.message);
-    return { error: t.errNetwork };
-  }
-  await admin.from("people").upsert({ id: data.user.id, name, phone: `+216${phone}` });
+    // a number an owner gave tampons to before it had an account: the person signing up with it takes it
+    if (/already|registered|exists/i.test(error.message)) id = await claim(name, phone, password);
+    if (!id && /already|registered|exists/i.test(error.message)) return { error: t.errTaken, field: "phone" };
+    if (!id && /password/i.test(error.message)) return { error: t.errPassword, field: "password" };
+    if (!id) {
+      console.error("[join]", error.message);
+      return { error: t.errNetwork };
+    }
+  } else await admin.from("people").upsert({ id: id!, name, phone: `+216${phone}` });
   const supabase = await db();
   const { error: e2 } = await supabase.auth.signInWithPassword({ email: phoneEmail(phone), password });
   if (e2) return { error: t.errNetwork };
   await markKnown();
-  return { supabase, id: data.user.id };
+  return { supabase, id: id! };
+}
+
+/**
+ * A number an owner gave a tampon to before it had an account (people.made_by_shop,
+ * no password anyone knows): the person signing up with that number takes the
+ * account — their name, their password — and finds the cards and tampons
+ * already on it. Any other account with the number stays taken. Gives its id.
+ */
+async function claim(name: string, phone: string, password: string): Promise<string | null> {
+  const admin = service();
+  const { data: p } = await admin.from("people").select("id, made_by_shop, password_set").eq("phone", `+216${phone}`).maybeSingle();
+  if (!p?.made_by_shop || p.password_set) return null;
+  const { error } = await admin.auth.admin.updateUserById(p.id, { password });
+  if (error) return null;
+  await admin.from("people").update({ name, password_set: true }).eq("id", p.id);
+  return p.id;
 }
 
 /**
@@ -159,12 +179,15 @@ export async function formJoin(
   const admin = service();
   const { data: made, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password, email_confirm: true, app_metadata: { phone: `+216${phone}` } });
   if (error) {
-    if (/already|registered|exists/i.test(error.message)) return { ok: false, error: t.errTaken, field: "acc_phone" };
-    if (/password/i.test(error.message)) return { ok: false, error: t.errPassword, field: "acc_password" };
-    console.error("[formJoin]", error.message);
-    return { ok: false, error: t.errNetwork };
-  }
-  await admin.from("people").upsert({ id: made.user.id, name, phone: `+216${phone}` });
+    // a number an owner gave tampons to before it had an account: taken by the person signing up with it
+    const claimed = /already|registered|exists/i.test(error.message) ? await claim(name, phone, password) : null;
+    if (!claimed) {
+      if (/already|registered|exists/i.test(error.message)) return { ok: false, error: t.errTaken, field: "acc_phone" };
+      if (/password/i.test(error.message)) return { ok: false, error: t.errPassword, field: "acc_password" };
+      console.error("[formJoin]", error.message);
+      return { ok: false, error: t.errNetwork };
+    }
+  } else await admin.from("people").upsert({ id: made.user.id, name, phone: `+216${phone}` });
   const supabase = await db();
   const { error: e2 } = await supabase.auth.signInWithPassword({ email: phoneEmail(phone), password });
   if (e2) return { ok: false, error: t.errNetwork };
@@ -203,6 +226,11 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   if (error) {
     const wrong = /invalid|credentials/i.test(error.message);
     if (wrong) await note("login", phone, "wrong");
+    // a number an owner gave tampons to, never signed up: no password exists yet — it is made by signing up
+    if (wrong) {
+      const { data: p } = await service().from("people").select("made_by_shop, password_set").eq("phone", `+216${phone}`).maybeSingle();
+      if (p?.made_by_shop && !p.password_set) return { error: t.errClaim, field: "phone" };
+    }
     return { error: wrong ? t.errLogin : t.errNetwork };
   }
   await service().rpc("forget_tries", { p_key: `login:${phone}` });
@@ -426,8 +454,41 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
   // no shop under this account (signed out, or the account changed in another tab): the way in, not the same error nine times
   if (res?.error === "no_shop" || res?.error === "not_signed_in") redirect((await getMe())?.id ? "/shop/setup" : "/shop/new");
   if (!res?.ok) return { error: t.errNetwork };
+  // the wheel, chosen among the gifts (a shop the founder allowed it): what it holds, then on — or off
+  const wheel = str(fd, "wheel");
+  if (wheel === "1") {
+    const err = await wheelFromCard(str(fd, "prizes"));
+    if (err) {
+      revalidatePath("/", "layout");
+      return { error: err };
+    }
+  } else if (wheel === "0") await call("set_wheel", { p_on: false });
   revalidatePath("/", "layout");
   redirect(inside(str(fd, "next")) ?? "/shop");
+}
+
+/**
+ * The wheel, from the card's gift question: the prizes chosen there (names
+ * only), written only when they changed — each the same chance, a prize kept
+ * keeps its id (and what fell on it) — then the wheel on. An error, said.
+ */
+async function wheelFromCard(raw: string): Promise<string | null> {
+  let names: string[] = [];
+  try {
+    const list: unknown = JSON.parse(raw || "[]");
+    if (Array.isArray(list)) names = list.map((n) => String(n ?? "").trim().slice(0, 40)).filter((n, i, a) => n && a.indexOf(n) === i).slice(0, 12);
+  } catch {}
+  if (names.length < 2) return t.wheelCount;
+  const had = (await call<{ prizes?: { id: number; name: string }[] }>("my_wheel"))?.prizes ?? [];
+  const same = had.length === names.length && had.every((p) => names.includes(p.name));
+  if (!same) {
+    const base = Math.floor(100 / names.length);
+    const rest = 100 - base * names.length;
+    const res = await call<{ ok: boolean; error?: string }>("wheel_save", { p_prizes: names.map((name, i) => ({ id: had.find((p) => p.name === name)?.id ?? null, name, chance: base + (i < rest ? 1 : 0) })) });
+    if (!res?.ok) return res?.error === "count" ? t.wheelCount : t.errNetwork;
+  }
+  const on = await call<{ ok: boolean }>("set_wheel", { p_on: true });
+  return on?.ok ? null : t.errNetwork;
 }
 
 /** Before a change of card is saved: what it would do to the customers (on their way, eased, winning at once — if moved, or whatever is chosen). */
@@ -491,6 +552,26 @@ export async function giveStamp(who: string, item?: number | null, back?: string
     });
   }
   return res ?? { ok: false, error: "network" };
+}
+
+/**
+ * A tampon to a number with no account yet (the owner typed it at the
+ * counter): an account is made for that number — no name, no password anyone
+ * knows, marked as the shop's (people.made_by_shop) — and the tampon given as
+ * to anyone. Whoever signs up with the number later takes the account and its
+ * cards (claim). Kept to a few dozen new numbers an hour from one place.
+ */
+export async function giveStampNew(phoneRaw: string, item?: number | null): Promise<Awaited<ReturnType<typeof giveStamp>>> {
+  const me = await getMe();
+  if (!me?.shop) return { ok: false, error: "no_shop" };
+  const phone = digits(String(phoneRaw ?? ""));
+  if (!validPhone(phone)) return { ok: false, error: "invalid" };
+  if (!(await gate("phone_card", phone, 40, 60, 200))) return { ok: false, error: "too_many" };
+  const admin = service();
+  const { data, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password: randomBytes(24).toString("base64url"), email_confirm: true, app_metadata: { phone: `+216${phone}` } });
+  if (error && !/already|registered|exists/i.test(error.message)) return { ok: false, error: "network" };
+  if (data?.user) await admin.from("people").upsert({ id: data.user.id, name: "", phone: `+216${phone}`, password_set: false, made_by_shop: me.shop.id });
+  return giveStamp(phone, item);
 }
 
 /** The phone said «إيه، فكّروني»: written down, so the shop's reminders reach it. */
