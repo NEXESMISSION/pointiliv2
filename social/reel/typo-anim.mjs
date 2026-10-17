@@ -7,6 +7,9 @@
  *   node social/reel/typo-anim.mjs --speed 0.85    → slower (said more slowly); 1.2 = faster
  *   node social/reel/typo-anim.mjs --preview       → a few still frames per style over a b-roll frame, to look first
  *   node social/reel/typo-anim.mjs --bg <video>    → the footage the previews are laid over (default: vedio pointili 3/clip1.mp4)
+ *   … --times 0.02,0.46,… --end 4.5               → the real start of each of the 13 words in a take (from its transcript), and when it leaves
+ *   … --theme light --at 0 --out clip4            → dark type for light footage; the preview starts at second 0 of --bg, with its sound;
+ *                                                   files go to typo-3-minutes/clip4/ and line up when dropped at --at in the edit
  *
  * For each style: <n>-<id>-alpha.mov (ProRes 4444, transparent: CapCut PC, Premiere, Resolve),
  * <n>-<id>-green.mp4 (green screen: CapCut phone → Overlay → Chroma key) and <n>-<id>-preview.mp4
@@ -25,7 +28,7 @@ const DIR = import.meta.dirname;
 const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const FF = process.env.FFMPEG || "ffmpeg";
 const FPS = 30;
-const KIT = path.join(os.homedir(), "Desktop", "Pointili reel kit", "typo-3-minutes");
+const KIT = path.join(os.homedir(), "Desktop", "Pointili reel kit", "typo-3-minutes", ...(process.argv.includes("--out") ? [process.argv[process.argv.indexOf("--out") + 1]] : []));
 const WORK = path.join(DIR, ".work", "typo-anim");
 
 const argv = process.argv.slice(2);
@@ -33,8 +36,9 @@ const arg = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : nu
 const preview = argv.includes("--preview");
 const speed = Number(arg("--speed") || 1);
 const only = arg("--only")?.split(",").map(Number);
+const times = arg("--times"), end = arg("--end"), theme = arg("--theme"), at = arg("--at"), sub = arg("--out");
 const BG = arg("--bg") || path.join(os.homedir(), "Desktop", "vedio pointili 3", "clip1.mp4");
-const url = (s, extra = "") => "file:///" + path.join(DIR, "typo-anim.html").replace(/\\/g, "/") + `?s=${s}&speed=${speed}${extra}`;
+const url = (s, extra = "") => "file:///" + path.join(DIR, "typo-anim.html").replace(/\\/g, "/") + `?s=${s}&speed=${speed}${times ? `&times=${times}` : ""}${end ? `&end=${end}` : ""}${theme ? `&theme=${theme}` : ""}${extra}`;
 
 await rm(WORK, { recursive: true, force: true });
 await mkdir(WORK, { recursive: true });
@@ -91,9 +95,11 @@ try {
     await page.screenshot({ path: label, omitBackground: true });
     if (existsSync(BG)) {
       // over the footage, from second 1 of it (as long as the overlay)
-      await run(FF, ["-v", "error", "-y", "-ss", "1", "-t", String(duration), "-i", BG, ...seq,
-        "-filter_complex", `[0]scale=1080:1920,fps=${FPS},setsar=1[b];[b][1]overlay=shortest=1,format=yuv420p`, "-an", ...h264, prev]);
+      // with --at: from that second of the footage, with its sound, to check the timing
+      await run(FF, ["-v", "error", "-y", "-ss", at ?? "1", "-t", String(duration), "-i", BG, ...seq,
+        "-filter_complex", `[0:v]scale=1080:1920,fps=${FPS},setsar=1[b];[b][1]overlay=shortest=1,format=yuv420p`, ...(at ? ["-c:a", "aac", "-b:a", "192k"] : ["-an"]), ...h264, prev]);
       const lab = path.join(WORK, `${name}-labelled.mp4`);
+      if (sub) { await rm(frames, { recursive: true, force: true }); console.log(`  ✓ ${name} — ${duration}s`); continue; }
       await run(FF, ["-v", "error", "-y", "-i", prev, "-i", label, "-filter_complex", "[0][1]overlay,format=yuv420p", ...h264, lab]);
       done.push(lab);
     }
