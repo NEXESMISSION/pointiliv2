@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8" />
+<title>Pointili logo animations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Inter:ital,wght@0,700;0,800;0,900;1,900&family=Lalezar&display=swap" rel="stylesheet" />
+<style>
+  /* «مع Pointili تنجم تعمل carte de fidélité digital», said in clip4 from 4.4 s to 7.1 s, with the
+   * Pointili mark built on screen. Times are the footage's own: the render starts at 0, so the clip
+   * lines up when it is dropped at 0:00 over the take. Light footage (a white wall): ink type.
+   * Nothing animates on its own: logo-anim.mjs calls seek(t). ?s=1..3, &play=1 to watch, &bg=1 for a backdrop. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+  body { position: relative; font-family: Cairo, sans-serif; color: #17141F; }
+  body.bg { background: linear-gradient(170deg, #f1f1f3, #dcdde2); }
+  .ink { color: #17141F; text-shadow: 0 0 2px #fff, 0 0 26px rgba(255,255,255,0.95), 0 0 60px rgba(255,255,255,0.7); }
+  .row { position: absolute; left: 0; right: 0; display: flex; justify-content: center; align-items: center; }
+  .w { display: inline-block; }
+  .lat { font-family: Inter, sans-serif; letter-spacing: -0.03em; }
+  .lock { display: inline-flex; align-items: center; gap: 0.18em; direction: ltr; font: 900 1em/1 Inter, sans-serif; letter-spacing: -0.035em; }
+  .lock svg { width: 1.32em; height: auto; overflow: visible; filter: drop-shadow(0 0.08em 0.12em rgba(80,40,200,0.3)); }
+  .lock .ch { display: inline-block; margin-right: -0.045em; }
+  .burst line { stroke: #FFC93C; stroke-width: 5; stroke-linecap: round; }
+
+  /* 1 · the logo, then the digital card */
+  .card { position: absolute; left: 150px; width: 780px; top: 1300px; height: 380px; border-radius: 46px; padding: 34px 40px; overflow: hidden;
+          background: linear-gradient(150deg, #8A5CFF 0%, #6C47FF 45%, #4A24B5 100%); color: #fff;
+          box-shadow: 0 44px 80px -30px rgba(40,14,120,0.6), 0 0 0 5px #17141F; transform-origin: 50% 50%; }
+  .card .top { display: flex; align-items: center; gap: 22px; direction: ltr; }
+  .card .tile { width: 86px; height: 86px; border-radius: 24px; background: #fff; display: grid; place-items: center; flex: none; }
+  .card .tile svg { width: 58px; }
+  .card .title { font: 900 58px/1.05 Inter, sans-serif; letter-spacing: -0.03em; white-space: nowrap; }
+  .card .title i { font-style: normal; display: inline-block; margin-right: 14px; }
+  .card .stamps { margin-top: 44px; display: flex; justify-content: space-between; direction: ltr; }
+  .card .s { width: 76px; height: 76px; border-radius: 50%; border: 4px dashed rgba(255,255,255,0.5); position: relative; }
+  .card .s b { position: absolute; inset: -4px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+  .card .s b svg { width: 40px; }
+  .card .shine { position: absolute; inset: -60% -100%; background: linear-gradient(74deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%); }
+  .chip { position: absolute; padding: 10px 30px 12px; border-radius: 22px; background: #3DDC97; color: #17141F; font: 900 64px/1 Inter, sans-serif; letter-spacing: 0.02em;
+          border: 5px solid #17141F; box-shadow: 0 9px 0 #17141F; display: flex; align-items: center; gap: 14px; }
+  .chip svg { width: 46px; }
+
+  /* 2 · kinetic */
+  .k { position: absolute; left: 30px; right: 30px; top: 1380px; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .k .big { font-family: Lalezar, Cairo, sans-serif; line-height: 1.08; }
+  .k .mark { position: relative; z-index: 0; padding: 0 26px; }
+  .k .mark::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 22%; bottom: 8%; background: #3DDC97; border-radius: 14px;
+                     transform: scaleX(var(--m, 0)) skewX(-8deg); transform-origin: left; }
+  .glitch { position: relative; font: 900 200px/1 Inter, sans-serif; letter-spacing: -0.03em; }
+  .glitch span { position: absolute; inset: 0; }
+  .pix { position: absolute; width: 26px; height: 26px; border-radius: 6px; }
+
+  /* 3 · bubbles */
+  .bp { position: absolute; left: 0; right: 0; top: 1180px; display: flex; justify-content: center; }
+  .bub { position: relative; padding: 18px 54px 28px; border-radius: 60px; background: #fff; color: #17141F; border: 7px solid #17141F; box-shadow: 0 12px 0 #17141F;
+         font: 900 96px/1.25 Cairo, sans-serif; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 26px; transform-origin: 50% 0; }
+  .bub .tail { position: absolute; top: -31px; left: 50%; width: 52px; height: 52px; margin-left: -26px; transform: rotate(45deg);
+               background: var(--bub, #fff); border-top: 7px solid #17141F; border-left: 7px solid #17141F; border-radius: 6px 0 0 0; }
+  .bub .lat { font: 900 90px/1.3 Inter, sans-serif; letter-spacing: -0.025em; }
+  .stk { position: absolute; width: 190px; height: 190px; border-radius: 50%; background: #fff; display: grid; place-items: center;
+         box-shadow: 0 12px 0 #17141F, inset 0 0 0 8px #17141F; }
+  .stk svg { width: 118px; height: 118px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+  const Q = new URLSearchParams(location.search);
+  const SHIFT = Number(Q.get("shift") || 0);
+  // when each word is said in clip4 (seconds, from the transcript and the sound's envelope)
+  const AT = { ma: 4.4, pointili: 4.58, tnajem: 5.0, ta3mel: 5.36, carte: 5.68, de: 5.9, fidelite: 6.02, digital: 6.64 };
+  for (const k in AT) AT[k] += SHIFT;
+  const END = 7.15 + SHIFT;
+  const DURATION = Math.round((END + 0.35) * 10) / 10;
+
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const P = (t, t0, d) => clamp((t - t0) / d);
+  const out3 = (p) => 1 - Math.pow(1 - p, 3);
+  const in3 = (p) => p * p * p;
+  const back = (p, s = 1.7) => 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2);
+  const wob = (t, t0, f = 3, d = 5) => (t < t0 ? 0 : Math.sin((t - t0) * f * 6.283) * Math.exp(-(t - t0) * d));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const el = (tag, cls, html, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (parent) parent.appendChild(e); return e; };
+  const stage = document.getElementById("stage");
+  const leave = (t, d = 0.16) => 1 - in3(P(t, END - d, d));
+
+  // ---- the Pointili mark, in parts: back card, front card, the sparkle ------------------------
+  let uid = 0;
+  const STAR = "M41 29C42.2 38.6 44.4 41.2 56 43 44.4 44.8 42.2 47.4 41 57 39.8 47.4 37.6 44.8 26 43 37.6 41.2 39.8 38.6 41 29Z";
+  const markSvg = (star = "#fff") => {
+    const n = ++uid;
+    return `<svg viewBox="0 0 96 70"><defs><linearGradient id="b${n}" x1="0" y1="0" x2="0.2" y2="1"><stop offset="0" stop-color="#7244EC"/><stop offset="1" stop-color="#4F28C6"/></linearGradient><linearGradient id="f${n}" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#7143E6"/><stop offset="1" stop-color="#5029C5"/></linearGradient><mask id="m${n}"><rect x="-40" y="-40" width="180" height="150" fill="#fff"/><rect class="mk" x="-2" y="14" width="86" height="58" rx="10" fill="#000"/></mask></defs>
+      <g class="back" style="transform-box: fill-box; transform-origin: 50% 50%"><rect x="16" y="5" width="72" height="50" rx="7" transform="rotate(8 52 30)" fill="url(#b${n})" mask="url(#m${n})"/></g>
+      <g class="front" style="transform-box: fill-box; transform-origin: 50% 100%"><rect x="1" y="17" width="80" height="52" rx="8" fill="url(#f${n})"/></g>
+      <g class="star" style="transform-box: fill-box; transform-origin: 50% 50%"><path d="${STAR}" fill="${star}"/></g>
+      <g class="burst">${Array.from({ length: 8 }, (_, k) => { const a = (k / 8) * 6.283; return `<line x1="${41 + Math.cos(a) * 18}" y1="${43 + Math.sin(a) * 18}" x2="${41 + Math.cos(a) * 30}" y2="${43 + Math.sin(a) * 30}"/>`; }).join("")}</g></svg>`;
+  };
+  /** the mark assembling from t0: the front card rises, the back one swings in behind it, the sparkle spins on, a flash */
+  const buildMark = (svg) => {
+    const back_ = svg.querySelector(".back"), front = svg.querySelector(".front"), star = svg.querySelector(".star"), burst = svg.querySelector(".burst"), mk = svg.querySelector(".mk");
+    const lines = [...burst.querySelectorAll("line")];
+    return (t, t0) => {
+      const f = P(t, t0, 0.18), b = P(t, t0 + 0.06, 0.2), s = P(t, t0 + 0.12, 0.22), x = P(t, t0 + 0.24, 0.3);
+      front.style.opacity = f > 0 ? 1 : 0;
+      front.style.transform = `translateY(${(1 - out3(f)) * 30}px) scale(${lerp(0.3, 1, back(f, 2))})`;
+      back_.style.opacity = b > 0 ? 1 : 0;
+      back_.style.transform = `translate(${(1 - out3(b)) * -26}px, ${(1 - out3(b)) * 16}px) rotate(${(1 - out3(b)) * -22}deg)`;
+      star.style.opacity = s > 0 ? 1 : 0;
+      star.style.transform = `scale(${back(s, 3)}) rotate(${(1 - out3(s)) * -180}deg)`;
+      burst.style.opacity = x > 0 && x < 1 ? 1 - x : 0;
+      lines.forEach((l) => { l.style.transform = `scale(${lerp(0.6, 1.5, out3(x))})`; l.style.transformOrigin = "41px 43px"; });
+    };
+  };
+  /** «[mark] Pointili» with its letters stepping in after the mark */
+  const lockup = (parent, size) => {
+    const e = el("span", "lock", markSvg() + [..."Pointili"].map((c) => `<span class="ch">${c}</span>`).join(""), parent);
+    e.style.fontSize = size + "px";
+    const mark = buildMark(e.querySelector("svg"));
+    const chs = [...e.querySelectorAll(".ch")];
+    return { e, seek: (t, t0) => {
+      mark(t, t0);
+      chs.forEach((c, k) => { const a = P(t, t0 + 0.1 + k * 0.025, 0.18); c.style.opacity = out3(a); c.style.transform = `translateY(${(1 - out3(a)) * 0.35}em) rotate(${(1 - out3(a)) * 10}deg)`; });
+    } };
+  };
+
+  const ICON = {
+    check: `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="#3DDC97" stroke="#17141F" stroke-width="7"/><path d="M38 62 L53 77 L83 45" fill="none" stroke="#17141F" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    card: `<svg viewBox="0 0 120 120"><rect x="10" y="28" width="100" height="66" rx="14" fill="#6C47FF" stroke="#17141F" stroke-width="6"/>${[0, 1, 2, 3, 4].map((k) => `<circle cx="${26 + k * 17}" cy="72" r="6.5" fill="${k < 3 ? "#FFD84D" : "rgba(255,255,255,0.4)"}"/>`).join("")}<rect x="22" y="40" width="40" height="9" rx="4.5" fill="#fff"/></svg>`,
+    phone: `<svg viewBox="0 0 120 120"><rect x="32" y="8" width="56" height="104" rx="13" fill="#17141F"/><rect x="38" y="20" width="44" height="80" rx="6" fill="#fff"/>${[[44, 30], [62, 30], [44, 48], [53, 66], [66, 56], [44, 76], [66, 80]].map(([x, y]) => `<rect x="${x}" y="${y}" width="${x === 53 ? 10 : 12}" height="${x === 53 ? 10 : 12}" rx="2" fill="#6C47FF"/>`).join("")}</svg>`,
+  };
+  ICON.mark = markSvg().replace("<svg ", '<svg style="width:128px;height:auto" ').replace('class="burst"', 'class="burst" style="display:none"');
+  const PHONE_SMALL = `<svg viewBox="0 0 24 24" fill="none" stroke="#17141F" stroke-width="2.6" stroke-linecap="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/></svg>`;
+
+  const STYLES = [
+    { id: "logo-card", name: "Logo + digital card", build() {
+      // «مع [Pointili]» on one line, «تنجم تعمل» under it, then the card itself flips in and fills; «DIGITAL» is slapped on
+      const r1 = el("div", "row ink", null, stage); r1.style.top = "1000px"; r1.dir = "rtl"; r1.style.gap = "34px";
+      const ma = el("span", "w", "مع", r1); ma.style.font = "900 104px/1.2 Cairo, sans-serif";
+      const lock = lockup(r1, 118);
+      const r2 = el("div", "row ink", null, stage); r2.style.top = "1150px"; r2.dir = "rtl"; r2.style.gap = "26px";
+      const tn = el("span", "w", "تنجم", r2), ta = el("span", "w", "تعمل", r2);
+      [tn, ta].forEach((e) => (e.style.font = "900 100px/1.2 Cairo, sans-serif"));
+      ta.style.color = "#6C47FF";
+      const card = el("div", "card", `<div class="top"><div class="tile">${markSvg("#fff").replace('fill="#fff"/></g>', 'fill="#fff"/></g>')}</div><div class="title"><i>carte</i><i>de</i><i>fidélité</i></div></div><div class="stamps">${Array.from({ length: 8 }, () => `<div class="s"><b><svg viewBox="22 25 38 36"><path d="${STAR}" fill="#6C47FF"/></svg></b></div>`).join("")}</div><div class="shine"></div>`, stage);
+      const tileMark = buildMark(card.querySelector(".tile svg"));
+      const words = [...card.querySelectorAll(".title i")], stamps = [...card.querySelectorAll(".s b")], shine = card.querySelector(".shine");
+      const chip = el("div", "chip", `${PHONE_SMALL}DIGITAL`, stage); chip.style.left = "600px"; chip.style.top = "1592px";
+      const dots = Array.from({ length: 14 }, (_, k) => { const d = el("div", "pix", null, stage); d.style.background = ["#FFD84D", "#3DDC97", "#6C47FF", "#FF7A6B"][k % 4]; return { d, a: (k / 14) * 6.283 + 0.4, r: 170 + (k % 3) * 70 }; });
+      return (t) => {
+        const L = leave(t);
+        const a = P(t, AT.ma, 0.2);
+        ma.style.opacity = a > 0 ? L : 0; ma.style.transform = `scale(${lerp(0.4, 1, back(a, 2.4))})`;
+        lock.seek(t, AT.pointili); lock.e.style.opacity = t >= AT.pointili ? L : 0;
+        [[tn, AT.tnajem], [ta, AT.ta3mel]].forEach(([e, t0]) => { const p = P(t, t0, 0.2); e.style.opacity = p > 0 ? L : 0; e.style.transform = `translateY(${(1 - out3(p)) * 40}px) scale(${lerp(0.6, 1, back(p, 2))})`; });
+        const c = P(t, AT.carte - 0.04, 0.34);
+        card.style.opacity = c > 0 ? L : 0;
+        card.style.transform = `perspective(1400px) rotateY(${(1 - out3(c)) * -95}deg) translateY(${(1 - out3(c)) * 80}px) scale(${lerp(0.7, 1, out3(c)) * lerp(0.85, 1, L)}) rotate(${-2 + wob(t, AT.carte + 0.3, 2, 5) * 3}deg)`;
+        tileMark(t, AT.carte + 0.05);
+        [AT.carte, AT.de, AT.fidelite].forEach((t0, k) => { const p = P(t, t0, 0.2); words[k].style.opacity = out3(p); words[k].style.transform = `translateY(${(1 - out3(p)) * 30}px)`; });
+        stamps.forEach((s, k) => { const p = P(t, AT.de + k * 0.11, 0.2); s.style.transform = `scale(${p > 0 ? back(p, 2.6) : 0})`; });
+        shine.style.transform = `translateX(${lerp(-60, 60, out3(P(t, AT.digital + 0.05, 0.5)))}%)`;
+        const d = P(t, AT.digital, 0.24);
+        chip.style.opacity = d > 0 ? L : 0;
+        chip.style.transform = `scale(${lerp(2.4, 1, out3(d))}) rotate(${-9 + wob(t, AT.digital + 0.22, 3, 6) * 8}deg)`;
+        const x = P(t, AT.digital + 0.12, 0.6);
+        dots.forEach(({ d: e, a: ang, r }) => { e.style.display = x > 0 && x < 1 ? "block" : "none"; e.style.left = 760 + Math.cos(ang) * r * out3(x) - 13 + "px"; e.style.top = 1630 + Math.sin(ang) * r * out3(x) - 13 + "px"; e.style.opacity = 1 - in3(x); e.style.transform = `rotate(${x * 180}deg)`; });
+      };
+    } },
+
+    { id: "logo-kinetic", name: "Logo kinetic", build() {
+      // the Big-kinetic look: one phrase at a time, huge — the mark built big, then «DIGITAL» glitches in
+      const pages = [];
+      const page = (from, to) => { const k = el("div", "k ink", null, stage); pages.push({ k, from, to }); return k; };
+      const p0 = page(AT.ma, AT.tnajem);
+      const ma = el("div", "big", "مع", p0); ma.style.fontSize = "120px"; ma.style.marginBottom = "310px";
+      const anchor = el("div", "row ink", null, stage); anchor.style.top = "1300px";
+      const lock = lockup(anchor, 150);
+      const p1 = page(AT.tnajem, AT.carte);
+      const r1 = el("div", null, null, p1); r1.dir = "rtl"; r1.style.display = "flex"; r1.style.gap = "34px";
+      const tn = el("span", "big w", "تنجم", r1), ta = el("span", "big w", "تعمل", r1);
+      tn.style.fontSize = ta.style.fontSize = "190px"; ta.style.color = "#6C47FF";
+      const p2 = page(AT.carte, AT.digital);
+      const cd = el("div", "lat", "CARTE DE", p2); cd.style.font = "900 88px/1.1 Inter, sans-serif"; cd.style.letterSpacing = "0.08em";
+      const fid = el("div", "lat mark", "fidélité", p2); fid.style.font = "italic 900 200px/1.1 Inter, sans-serif"; fid.style.letterSpacing = "-0.03em";
+      const p3 = page(AT.digital, END);
+      const g = el("div", "glitch", `<span style="color:#3DDC97">DIGITAL</span><span style="color:#6C47FF">DIGITAL</span><b style="position:relative">DIGITAL</b>`, p3);
+      const [gA, gB] = g.querySelectorAll("span"), gC = g.querySelector("b");
+      const pix = Array.from({ length: 18 }, (_, k) => { const d = el("div", "pix", null, stage); d.style.background = ["#6C47FF", "#3DDC97", "#FFD84D", "#17141F"][k % 4]; return { d, x: 120 + ((k * 137) % 840), y: 1250 + ((k * 71) % 260), dl: (k % 6) * 0.03 }; });
+      const slam = (e, t0, from = 1.7) => { const p = P(t0.t, t0.at, 0.18); e.style.opacity = p > 0 ? out3(p) : 0; e.style.transform = `scale(${lerp(from, 1, out3(p))})`; e.style.filter = p < 1 ? `blur(${(1 - out3(p)) * 16}px)` : "none"; };
+      return (t) => {
+        pages.forEach(({ k, from, to }) => {
+          const on = t >= from && t < to; k.style.display = on ? "flex" : "none"; if (!on) return;
+          const o = P(t, to - 0.1, 0.1); k.style.opacity = 1 - in3(o); k.style.transform = `translateY(-50%) scale(${1 + 0.16 * in3(o)})`;
+        });
+        slam(ma, { t, at: AT.ma });
+        lock.seek(t, AT.pointili - 0.04);
+        // the logo, once built, rises and stays on top while the rest is said
+        const up = out3(P(t, AT.tnajem - 0.06, 0.3));
+        anchor.style.opacity = t >= AT.pointili - 0.04 ? leave(t) : 0;
+        anchor.style.transform = `translateY(${up * -250}px) scale(${lerp(1, 0.62, up)})`;
+        slam(tn, { t, at: AT.tnajem }); slam(ta, { t, at: AT.ta3mel });
+        slam(cd, { t, at: AT.carte }); slam(fid, { t, at: AT.fidelite });
+        fid.style.setProperty("--m", out3(P(t, AT.fidelite + 0.12, 0.26)));
+        const q = P(t, AT.digital, 0.32), j = 1 - out3(q);
+        const jit = (n) => Math.sin(t * 97 + n) * 26 * j;
+        gA.style.transform = `translate(${jit(1) - 14 * j}px, ${jit(2) * 0.4}px)`; gB.style.transform = `translate(${jit(3) + 14 * j}px, ${jit(4) * 0.4}px)`;
+        gA.style.opacity = gB.style.opacity = j > 0.02 ? 0.9 : 0;
+        gC.style.clipPath = q < 1 ? `inset(0 0 ${Math.round((1 - q) * 4) * 12}% 0)` : "none";
+        g.style.opacity = q > 0 ? 1 : 0; g.style.transform = `scale(${lerp(1.25, 1, out3(q))}) skewX(${jit(5) * 0.3}deg)`;
+        pix.forEach(({ d, x, y, dl }) => { const p = P(t, AT.digital + 0.05 + dl, 0.4); d.style.display = p > 0 && p < 1 ? "block" : "none"; d.style.left = x + "px"; d.style.top = y - out3(p) * 120 + "px"; d.style.opacity = 1 - p; d.style.transform = `scale(${1 - p * 0.7})`; });
+      };
+    } },
+
+    { id: "logo-bubbles", name: "Logo bubbles", build() {
+      // the Bubbles look: one outlined bubble per phrase, the logo inside the first, a sticker on the others
+      const LOOK = [
+        { from: AT.ma, to: AT.tnajem + 0.14, bg: "#fff" },
+        { from: AT.tnajem + 0.14, to: AT.carte, bg: "#fff", stk: "mark", x: 850, y: 70, r: 10 },
+        { from: AT.carte, to: AT.digital, bg: "#6C47FF", fg: "#fff", stk: "card", x: 30, y: -90, r: -12 },
+        { from: AT.digital, to: END, bg: "#FFD84D", stk: "phone", x: 790, y: -70, r: 12 },
+      ];
+      const pages = LOOK.map((L, p) => {
+        const pg = el("div", "bp", null, stage);
+        const bub = el("div", "bub", '<i class="tail"></i>', pg);
+        bub.style.background = L.bg; bub.style.color = L.fg || "#17141F"; bub.style.setProperty("--bub", L.bg);
+        let parts = [], lock = null;
+        if (p === 0) { bub.dir = "rtl"; parts.push([el("span", "w", "مع", bub), AT.ma]); lock = lockup(bub, 96); }
+        if (p === 1) { bub.dir = "rtl"; parts.push([el("span", "w", "تنجم", bub), AT.tnajem], [el("span", "w", "تعمل", bub), AT.ta3mel]); }
+        if (p === 2) { bub.dir = "ltr"; parts.push([el("span", "w lat", "carte", bub), AT.carte], [el("span", "w lat", "de", bub), AT.de], [el("span", "w lat", "fidélité", bub), AT.fidelite]); }
+        if (p === 3) { bub.dir = "ltr"; const w = el("span", "w lat", "digital", bub); w.style.fontSize = "120px"; parts.push([w, AT.digital]); }
+        let stk = null;
+        if (L.stk) { stk = el("div", "stk", ICON[L.stk], pg); stk.style.left = L.x + "px"; stk.style.top = L.y + "px"; }
+        return { pg, bub, parts, lock, stk, L };
+      });
+      return (t) => pages.forEach(({ pg, bub, parts, lock, stk, L }) => {
+        const on = t >= L.from && t < L.to; pg.style.display = on ? "flex" : "none"; if (!on) return;
+        const a = P(t, L.from, 0.3), o = in3(P(t, L.to - 0.12, 0.12));
+        bub.style.transform = `scale(${back(a, 2) * (1 - o * 0.4)}) rotate(${wob(t, L.from, 2.5, 7) * 3}deg)`; pg.style.opacity = 1 - o;
+        parts.forEach(([e, t0]) => { const b = P(t, t0, 0.16); e.style.opacity = out3(b); e.style.transform = `translateY(${(1 - out3(b)) * 30}px)`; });
+        if (lock) lock.seek(t, AT.pointili - 0.02);
+        if (stk) { const t0 = L.from + 0.12, s = P(t, t0, 0.3); stk.style.transform = `scale(${s > 0 ? back(s, 2.6) : 0}) rotate(${L.r + wob(t, t0, 2, 4) * 18}deg)`; }
+      });
+    } },
+  ];
+
+  const S = clamp(Number(Q.get("s") || 1), 1, STYLES.length);
+  if (Q.get("bg")) document.body.classList.add("bg");
+  let update = () => {};
+  window.DURATION = DURATION;
+  window.STYLES = STYLES.map((s) => ({ id: s.id, name: s.name }));
+  window.seek = (t) => update(t);
+  window.ready = document.fonts.ready.then(async () => {
+    await Promise.all(["900 100px Cairo", "100px Lalezar", "900 100px Inter", "italic 900 100px Inter"].map((f) => document.fonts.load(f, "مع abc")));
+    update = STYLES[S - 1].build();
+    update(0);
+    if (Q.get("play")) { const t0 = performance.now(); const loop = () => { update(4.2 + (((performance.now() - t0) / 1000) % (DURATION - 3.6))); requestAnimationFrame(loop); }; loop(); }
+    return true;
+  });
+</script>
+</body>
+</html>
