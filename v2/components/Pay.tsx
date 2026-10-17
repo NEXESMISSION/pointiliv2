@@ -83,11 +83,19 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
       </Link>
     );
   }
+  // Not a button inside a button: the price is the thing to read, and the way
+  // to pay is a word at the end of the same line. A hairline rather than a
+  // shadow, so it sits under the shop's name instead of competing with it.
   return (
-    <Link href="/shop/pay" className="press mt-3 flex shrink-0 items-center gap-2 rounded-full bg-surface py-2 pe-2 ps-4 shadow-card">
-      <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-semibold text-body">{t.payBannerPlain}</span>
-      <span className="flex items-center gap-0.5 rounded-full bg-brand px-3 py-1 text-[0.8125rem] font-bold text-white">
-        {t.payBannerCta} <ChevronLeft className="size-3.5" />
+    <Link href="/shop/pay" className="press mt-3 flex shrink-0 items-center gap-3 rounded-[1.125rem] bg-surface px-4 py-2.5 ring-1 ring-line">
+      <span className="min-w-0 flex-1 leading-tight">
+        <span className="block text-[0.6875rem] font-semibold text-muted">{t.payTitle}</span>
+        <span className="mt-0.5 block truncate text-[0.9375rem] font-bold text-ink">
+          <bdi className="num">{t.payPrice}</bdi> {t.payCurrency} <span className="font-semibold text-body">{t.payPer}</span>
+        </span>
+      </span>
+      <span className="flex shrink-0 items-center gap-0.5 text-[0.875rem] font-bold text-brand">
+        {t.payBannerCta} <ChevronLeft className="size-4" />
       </span>
     </Link>
   );
