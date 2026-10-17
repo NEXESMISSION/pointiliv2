@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8" />
+<title>Pointili typo animations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@600;700&family=Inter:ital,wght@0,700;0,800;0,900;1,800;1,900&family=Lalezar&display=swap" rel="stylesheet" />
+<style>
+  /* Six typography overlays for one sentence, said to camera:
+   *   «شقولك كان نقلك كيفاش تعمل programme de fidélité للcommerce متاعك في 3 دقايق»
+   * Nothing animates on its own: typo-anim.mjs calls seek(t) and every element is placed for
+   * that exact instant, so a frame renders the same way every time. Transparent background:
+   * the text sits over the footage, the face (top half) stays clear.
+   * Open with ?s=1..6 (&bg=1 for a dark backdrop, &play=1 to watch it in a browser). */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: transparent; }
+  body { position: relative; font-family: Cairo, sans-serif; color: #fff; }
+  body.bg { background: linear-gradient(170deg, #4a4458 0%, #2a2733 55%, #1d1b24 100%); }
+  .abs { position: absolute; }
+  .lat { font-family: Inter, sans-serif; }
+  #label { display: none; position: absolute; top: 70px; left: 70px; padding: 14px 34px; border-radius: 999px; background: #fff; color: #17141F;
+           font: 800 46px Inter, sans-serif; letter-spacing: -0.01em; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+  body.label #label { display: block; }
+  body.label #stage { display: none; }
+
+  /* 1 · karaoke captions */
+  .k-page { position: absolute; left: 60px; right: 60px; top: 1270px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px 18px; }
+  .k-w { display: inline-block; font: 900 104px/1.22 Cairo, sans-serif; color: #fff; padding: 0 24px 8px; border-radius: 26px;
+         text-shadow: 0 7px 0 rgba(0,0,0,0.85), 0 0 34px rgba(0,0,0,0.5); transform-origin: 50% 65%; }
+  .k-w.lat { font: 900 98px/1.22 Inter, sans-serif; letter-spacing: -0.025em; }
+  .k-w.key { color: #FFD84D; }
+  .k-w.on { background: #6C47FF; color: #fff; text-shadow: none; box-shadow: 0 10px 0 #33188F; }
+
+  /* 2 · paper cut-outs */
+  .p-page { position: absolute; left: 0; right: 0; top: 1150px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .p-line { filter: drop-shadow(0 18px 18px rgba(0,0,0,0.42)); }
+  .p-paper { padding: 4px 40px 18px; background: #F5F0E4; color: #1B2A4A; font: 900 92px/1.25 Cairo, sans-serif;
+             clip-path: polygon(1.5% 4%, 99% 0, 100% 93%, 0 100%); white-space: nowrap; }
+  .p-paper.lat { font: 900 80px/1.3 Inter, sans-serif; letter-spacing: -0.02em; padding: 10px 40px 18px; }
+  .p-paper.ink { background: #1B2A4A; color: #F5F0E4; clip-path: polygon(0 0, 98.5% 5%, 100% 100%, 1% 94%); }
+  .p-paper.violet { background: #6C47FF; color: #fff; clip-path: polygon(0 6%, 100% 0, 98.8% 96%, 1.2% 100%); }
+  .p-txt { display: inline-block; }
+  .p-brush { position: absolute; left: 6%; right: 6%; bottom: -34px; height: 56px; overflow: visible; }
+
+  /* 3 · big kinetic words */
+  .h-page { position: absolute; left: 30px; right: 30px; top: 1390px; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .h-row { display: flex; gap: 0 30px; justify-content: center; align-items: baseline; }
+  .h-w { display: inline-block; font-family: Lalezar, Cairo, sans-serif; line-height: 1.08; color: #fff;
+         text-shadow: 0 10px 0 rgba(0,0,0,0.55), 0 0 50px rgba(0,0,0,0.45); }
+  .h-w.lat { font-family: Inter, sans-serif; font-weight: 900; letter-spacing: -0.03em; }
+  .h-mark { position: relative; z-index: 0; padding: 0 26px; }
+  .h-mark::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 22%; bottom: 8%; background: #3DDC97; border-radius: 14px;
+                    transform: scaleX(var(--m, 0)) skewX(-8deg); transform-origin: left; }
+  .h-three { position: relative; display: grid; place-items: center; width: 520px; height: 520px; }
+  .h-three svg { position: absolute; inset: 0; }
+  .h-three b { font: 900 400px/1 Inter, sans-serif; letter-spacing: -0.04em; color: #fff; margin-top: -14px;
+               text-shadow: 0 14px 0 rgba(0,0,0,0.5), 0 0 60px rgba(0,0,0,0.45); }
+
+  /* 4 · the loyalty card */
+  .c-cap { position: absolute; left: 70px; right: 70px; top: 1020px; display: flex; justify-content: center; }
+  .c-pill { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; padding: 10px 40px 18px; border-radius: 34px; background: rgba(15,14,23,0.86);
+            font: 800 64px/1.3 Cairo, sans-serif; box-shadow: 0 20px 40px -18px rgba(0,0,0,0.6); }
+  .c-pill .lat { font: 800 58px/1.4 Inter, sans-serif; letter-spacing: -0.02em; }
+  .c-card { position: absolute; left: 120px; width: 840px; top: 1230px; height: 440px; border-radius: 48px; padding: 38px 46px; direction: rtl;
+            background: linear-gradient(150deg, #8A5CFF 0%, #6C47FF 45%, #4A24B5 100%); box-shadow: 0 50px 90px -30px rgba(20,6,70,0.75), inset 0 0 0 2px rgba(255,255,255,0.18); overflow: hidden; }
+  .c-card::after { content: ""; position: absolute; inset: -50% -30%; background: radial-gradient(40% 30% at 20% 10%, rgba(255,255,255,0.35), transparent 70%); pointer-events: none; }
+  .c-top { display: flex; align-items: center; gap: 22px; height: 92px; }
+  .c-logo { width: 92px; height: 92px; border-radius: 26px; background: #fff; display: grid; place-items: center; flex: none; }
+  .c-logo svg { width: 60px; }
+  .c-name { font: 800 54px/1.1 Cairo, sans-serif; white-space: nowrap; }
+  .c-sub { font: 700 34px/1.2 Inter, sans-serif; opacity: 0.8; direction: ltr; text-align: right; white-space: nowrap; }
+  .c-stamps { margin-top: 40px; display: grid; grid-template-columns: repeat(5, 112px); justify-content: space-between; row-gap: 26px; }
+  .c-s { width: 112px; height: 112px; border-radius: 50%; border: 5px dashed rgba(255,255,255,0.45); display: grid; place-items: center; position: relative; }
+  .c-s i { position: absolute; inset: -5px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 10px 20px -8px rgba(0,0,0,0.4); }
+  .c-s i svg { width: 58px; }
+  .c-badge { position: absolute; left: 70px; top: 1180px; padding: 12px 30px; border-radius: 999px; background: #FFD84D; color: #17141F; transform-origin: 50% 50%;
+             font: 900 52px/1.2 Inter, sans-serif; display: flex; align-items: center; gap: 14px; box-shadow: 0 16px 30px -12px rgba(0,0,0,0.55); direction: ltr; }
+  .c-badge svg { width: 54px; }
+  .c-dot { position: absolute; width: 22px; height: 22px; border-radius: 50%; }
+
+  /* 5 · minimal lower third */
+  .m-wrap { position: absolute; right: 80px; left: 80px; top: 1300px; }
+  .m-tag { display: flex; justify-content: flex-end; align-items: center; gap: 14px; font: 700 30px Inter, sans-serif; letter-spacing: 0.22em; color: rgba(255,255,255,0.85);
+           text-shadow: 0 2px 14px rgba(0,0,0,0.6); }
+  .m-tag span { width: 18px; height: 18px; border-radius: 6px; background: #6C47FF; }
+  .m-body { position: relative; margin-top: 18px; padding-right: 36px; min-height: 260px; }
+  .m-bar { position: absolute; right: 0; top: 8px; width: 9px; border-radius: 9px; background: #6C47FF; box-shadow: 0 0 24px rgba(108,71,255,0.8); }
+  .m-page { position: absolute; right: 36px; left: 0; top: 0; display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 0 22px; direction: rtl; }
+  .m-page.ltr { direction: ltr; justify-content: flex-end; }
+  .m-w { position: relative; display: inline-block; font: 700 88px/1.35 "IBM Plex Sans Arabic", sans-serif; text-shadow: 0 4px 26px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.4); }
+  .m-w.lat { font: 800 82px/1.4 Inter, sans-serif; letter-spacing: -0.025em; }
+  .m-w u { position: absolute; left: 0; right: 0; bottom: 14px; height: 16px; border-radius: 8px; background: #6C47FF; z-index: -1; transform-origin: right; text-decoration: none; }
+  .m-page.ltr .m-w u { transform-origin: left; }
+
+  /* 6 · speech bubbles and stickers */
+  .b-page { position: absolute; left: 0; right: 0; top: 1180px; display: flex; justify-content: center; }
+  .b-bub { position: relative; max-width: 900px; padding: 18px 54px 30px; border-radius: 60px; background: #fff; color: #17141F;
+           font: 900 90px/1.28 Cairo, sans-serif; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 22px; transform-origin: 50% 0;
+           box-shadow: 0 30px 50px -22px rgba(0,0,0,0.6); }
+  .b-bub::before { content: ""; position: absolute; top: -40px; left: 50%; margin-left: -34px; border: 34px solid transparent; border-bottom: 46px solid var(--bub, #fff); border-top: 0; }
+  .b-bub .lat { font: 900 84px/1.35 Inter, sans-serif; letter-spacing: -0.025em; }
+  .b-w { display: inline-block; }
+  .b-stk { position: absolute; width: 190px; height: 190px; border-radius: 50%; background: #fff; display: grid; place-items: center;
+           box-shadow: 0 22px 40px -16px rgba(0,0,0,0.6), inset 0 0 0 8px #17141F; }
+  .b-stk svg { width: 120px; height: 120px; }
+</style>
+</head>
+<body>
+<div id="label"></div>
+<div id="stage"></div>
+<script>
+  // ---- the sentence, word by word, when each one is said (seconds) ----------------------------
+  const Q = new URLSearchParams(location.search);
+  const SPEED = Number(Q.get("speed") || 1);
+  const WORDS = [
+    { w: "شقولك", t: 0.15 },
+    { w: "كان", t: 0.62 }, { w: "نقلك", t: 0.86 }, { w: "كيفاش", t: 1.14 }, { w: "تعمل", t: 1.48 },
+    { w: "programme", t: 1.84, lat: 1, key: 1 }, { w: "de", t: 2.2, lat: 1, key: 1 }, { w: "fidélité", t: 2.34, lat: 1, key: 1 },
+    { w: "للcommerce", t: 2.96 }, { w: "متاعك", t: 3.42 },
+    { w: "في", t: 3.82 }, { w: "3", t: 3.98, key: 1 }, { w: "دقايق", t: 4.22, key: 1 },
+  ].map((x, i) => ({ ...x, i, t: x.t / SPEED }));
+  const PAGES = [[0], [1, 2, 3, 4], [5, 6, 7], [8, 9], [10, 11, 12]];
+  const END = 5.5 / SPEED;                 // the last words leave
+  const DURATION = Math.round((END + 0.45) * 10) / 10;
+  const T = (i) => WORDS[i].t;
+  const pageIn = (p) => T(PAGES[p][0]);
+  const pageOut = (p) => (p + 1 < PAGES.length ? pageIn(p + 1) : END);
+
+  // ---- easing ---------------------------------------------------------------------------------
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const P = (t, t0, d) => clamp((t - t0) / d);
+  const out3 = (p) => 1 - Math.pow(1 - p, 3);
+  const in3 = (p) => p * p * p;
+  const back = (p, s = 1.7) => 1 + (s + 1) * Math.pow(p - 1, 3) + s * Math.pow(p - 1, 2);
+  const wob = (t, t0, f = 3, d = 5) => (t < t0 ? 0 : Math.sin((t - t0) * f * 6.283) * Math.exp(-(t - t0) * d));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  /** 1 while the page is on, eased in over `din` and out over the last `dout` before the next one */
+  const life = (t, p, din = 0.16, dout = 0.14) => Math.min(out3(P(t, pageIn(p), din)), 1 - in3(P(t, pageOut(p) - dout, dout)));
+
+  const MARK = (n, fill) => `<svg viewBox="0 0 96 70"><defs><linearGradient id="b${n}" x1="0" y1="0" x2="0.2" y2="1"><stop offset="0" stop-color="#7244EC"/><stop offset="1" stop-color="#4F28C6"/></linearGradient><linearGradient id="f${n}" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#7143E6"/><stop offset="1" stop-color="#5029C5"/></linearGradient><mask id="m${n}"><rect width="96" height="70" fill="#fff"/><rect x="-2" y="14" width="86" height="58" rx="10" fill="#000"/></mask></defs><rect x="16" y="5" width="72" height="50" rx="7" transform="rotate(8 52 30)" fill="url(#b${n})" mask="url(#m${n})"/><rect x="1" y="17" width="80" height="52" rx="8" fill="url(#f${n})"/><path d="M41 29C42.2 38.6 44.4 41.2 56 43 44.4 44.8 42.2 47.4 41 57 39.8 47.4 37.6 44.8 26 43 37.6 41.2 39.8 38.6 41 29Z" fill="${fill || "#fff"}"/></svg>`;
+  const STAR = `<svg viewBox="22 25 38 36"><path d="M41 29C42.2 38.6 44.4 41.2 56 43 44.4 44.8 42.2 47.4 41 57 39.8 47.4 37.6 44.8 26 43 37.6 41.2 39.8 38.6 41 29Z" fill="#6C47FF"/></svg>`;
+  const el = (tag, cls, html, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (parent) parent.appendChild(e); return e; };
+  const stage = document.getElementById("stage");
+
+  // ---- the six styles: each builds its elements once and returns seek(t) ----------------------
+  const STYLES = [
+    { id: "karaoke", name: "Karaoke pop", build() {
+      // TikTok-style captions: each word pops in as it is said, the one being said sits on a violet chip
+      const pages = PAGES.map((ids) => {
+        const pg = el("div", "k-page", null, stage);
+        pg.dir = WORDS[ids[0]].lat ? "ltr" : "rtl";
+        return { pg, ws: ids.map((i) => ({ i, e: el("span", "k-w" + (WORDS[i].lat ? " lat" : "") + (WORDS[i].key ? " key" : ""), WORDS[i].w, pg) })) };
+      });
+      return (t) => pages.forEach(({ pg, ws }, p) => {
+        const l = life(t, p, 0.01, 0.12);
+        pg.style.display = l > 0 ? "flex" : "none";
+        pg.style.opacity = l; pg.style.transform = `scale(${lerp(0.92, 1, l)})`;
+        ws.forEach(({ i, e }, k) => {
+          const a = P(t, T(i), 0.2);
+          const next = k + 1 < ws.length ? T(ws[k + 1].i) : pageOut(p);
+          e.style.opacity = a > 0 ? 1 : 0;
+          e.style.transform = `scale(${a > 0 ? lerp(0.45, 1, back(a, 2.6)) : 0.45}) rotate(${t >= T(i) && t < next ? -2.5 : 0}deg)`;
+          e.classList.toggle("on", t >= T(i) && t < next);
+        });
+      });
+    } },
+
+    { id: "paper", name: "Paper cut", build() {
+      // cream paper strips slapped on one after the other, navy type, the key words on violet with a teal brush
+      const LINES = [
+        [{ s: [0], k: "", r: -3 }],
+        [{ s: [1, 2], k: "", r: 2 }, { s: [3, 4], k: "ink", r: -2, z: 1.2 }],
+        [{ s: [5, 6], k: "", r: -2 }, { s: [7], k: "violet", r: 2, z: 1.75, brush: 1 }],
+        [{ s: [8], k: "", r: -2, z: 1.1 }, { s: [9], k: "ink", r: 3 }],
+        [{ s: [10], k: "", r: -4, z: 0.8 }, { s: [11, 12], k: "violet", r: -2, z: 1.8, brush: 1 }],
+      ];
+      const pages = LINES.map((lines) => {
+        const pg = el("div", "p-page", null, stage);
+        return { pg, lines: lines.map((ln) => {
+          const lat = WORDS[ln.s[0]].lat;
+          const line = el("div", "p-line", null, pg);
+          const paper = el("div", "p-paper" + (lat ? " lat" : "") + (ln.k ? " " + ln.k : ""), null, line);
+          paper.dir = lat ? "ltr" : "rtl";
+          if (ln.z) paper.style.fontSize = (lat ? 80 : 92) * ln.z + "px";
+          const txt = el("span", "p-txt", ln.s.map((i) => WORDS[i].w).join(" "), paper);
+          let brush = null;
+          if (ln.brush) {
+            line.style.position = "relative";
+            brush = el("div", null, `<svg class="p-brush" viewBox="0 0 400 40" preserveAspectRatio="none"><path d="M6 26 C 90 12, 180 30, 260 18 S 370 14, 394 22" fill="none" stroke="#14C8B4" stroke-width="13" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1"/></svg>`, line).firstChild;
+          }
+          return { ...ln, lat, line, paper, txt, brush };
+        }) };
+      });
+      return (t) => pages.forEach(({ pg, lines }, p) => {
+        const on = t >= pageIn(p) && t < pageOut(p);
+        pg.style.display = on ? "flex" : "none";
+        if (!on) return;
+        const o = 1 - in3(P(t, pageOut(p) - 0.14, 0.14));
+        pg.style.opacity = o; pg.style.transform = `translateY(${(1 - o) * -60}px)`;
+        lines.forEach((ln) => {
+          const t0 = T(ln.s[0]);
+          const a = P(t, t0, 0.2), b = P(t, t0 + 0.06, 0.2);
+          ln.line.style.visibility = a > 0 ? "visible" : "hidden";
+          const w = ln.line.offsetWidth + 120, cut = (1 - out3(a)) * w - 60;
+          ln.line.style.clipPath = ln.lat ? `inset(-80px ${cut}px -80px -80px)` : `inset(-80px -80px -80px ${cut}px)`;
+          ln.line.style.transform = `rotate(${ln.r}deg) scale(${lerp(1.18, 1, back(a, 1.4))})`;
+          ln.txt.style.transform = `translateY(${(1 - out3(b)) * 40}px)`;
+          ln.txt.style.opacity = out3(b);
+          if (ln.brush) ln.brush.firstChild.style.strokeDashoffset = 1 - out3(P(t, t0 + 0.22, 0.4));
+        });
+      });
+    } },
+
+    { id: "kinetic", name: "Big kinetic", build() {
+      // one phrase at a time, huge, each word slammed in from blur; «3» in a stopwatch ring
+      const ROWS = [
+        [[{ i: 0, s: 230 }]],
+        [[{ i: 1, s: 130 }, { i: 2, s: 130 }], [{ i: 3, s: 180, y: 1 }, { i: 4, s: 180 }]],
+        [[{ i: 5, s: 84 }, { i: 6, s: 84 }], [{ i: 7, s: 200, mark: 1 }]],
+        [[{ i: 8, s: 170 }], [{ i: 9, s: 150, y: 1 }]],
+        [[{ i: 10, s: 100 }], [{ i: 11, three: 1 }], [{ i: 12, s: 170, y: 1 }]],
+      ];
+      const pages = ROWS.map((rows, p) => {
+        const pg = el("div", "h-page", null, stage);
+        const ws = [];
+        rows.forEach((row) => {
+          const r = el("div", "h-row", null, pg);
+          r.dir = WORDS[row[0].i].lat ? "ltr" : "rtl";
+          row.forEach((x) => {
+            const W = WORDS[x.i];
+            if (x.three) {
+              const e = el("div", "h-three", `<svg viewBox="0 0 520 520"><circle cx="260" cy="260" r="232" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="22"/><circle class="ring" cx="260" cy="260" r="232" fill="none" stroke="#6C47FF" stroke-width="22" stroke-linecap="round" pathLength="1" stroke-dasharray="1 1" transform="rotate(-90 260 260)"/><rect x="232" y="-6" width="56" height="34" rx="10" fill="#fff"/><g class="hand"><circle cx="260" cy="28" r="18" fill="#FFD84D"/></g></svg><b>3</b>`, r);
+              ws.push({ ...x, e, ring: e.querySelector(".ring"), hand: e.querySelector(".hand") });
+            } else {
+              const e = el("span", "h-w" + (W.lat ? " lat" : "") + (x.mark ? " h-mark" : ""), W.w, r);
+              e.style.fontSize = x.s + "px";
+              if (x.y) e.style.color = "#FFD84D";
+              if (W.lat && x.s > 150) e.style.fontStyle = "italic";
+              if (W.lat && x.s < 100) { e.style.letterSpacing = "0.08em"; e.textContent = W.w.toUpperCase(); }
+              ws.push({ ...x, e });
+            }
+          });
+        });
+        return { pg, ws };
+      });
+      return (t) => pages.forEach(({ pg, ws }, p) => {
+        const on = t >= pageIn(p) && t < pageOut(p);
+        pg.style.display = on ? "flex" : "none";
+        if (!on) return;
+        const o = P(t, pageOut(p) - 0.12, 0.12);
+        pg.style.opacity = 1 - in3(o); pg.style.transform = `translateY(-50%) scale(${1 + 0.18 * in3(o)})`;
+        ws.forEach((x) => {
+          const a = P(t, T(x.i), 0.18);
+          x.e.style.opacity = a > 0 ? out3(a) : 0;
+          x.e.style.transform = `scale(${lerp(1.7, 1, out3(a))})`;
+          x.e.style.filter = a < 1 ? `blur(${(1 - out3(a)) * 16}px)` : "none";
+          if (x.mark) x.e.style.setProperty("--m", out3(P(t, T(x.i) + 0.12, 0.28)));
+          if (x.three) {
+            const r = out3(P(t, T(x.i) + 0.05, 1.2));
+            x.ring.style.strokeDashoffset = 1 - r;
+            x.hand.setAttribute("transform", `rotate(${r * 360} 260 260)`);
+            x.e.style.transform += ` rotate(${wob(t, T(x.i) + 1.25, 4, 6) * 4}deg)`;
+          }
+        });
+      });
+    } },
+
+    { id: "card", name: "Pointili card", build() {
+      // the caption in a dark pill, and under it a loyalty card that fills a stamp per word
+      const caps = PAGES.map((ids) => {
+        const wrap = el("div", "c-cap", null, stage);
+        const pill = el("div", "c-pill", null, wrap);
+        pill.dir = WORDS[ids[0]].lat ? "ltr" : "rtl";
+        return { wrap, ws: ids.map((i) => ({ i, e: el("span", WORDS[i].lat ? "lat" : "", WORDS[i].w, pill) })) };
+      });
+      const card = el("div", "c-card", `<div class="c-top"><div class="c-logo">${MARK("c")}</div><div><div class="c-name">الكارط متاعك</div><div class="c-sub">programme de fidélité</div></div></div><div class="c-stamps"></div>`, stage);
+      const grid = card.querySelector(".c-stamps");
+      const AT = [0, 1, 3, 4, 5, 7, 8, 9, 11, 12].map(T);           // a stamp on the beat of these words
+      const stamps = AT.map(() => { const s = el("div", "c-s", null, grid); return el("i", null, STAR, s); });
+      const badge = el("div", "c-badge", `<svg viewBox="0 0 24 24" fill="none" stroke="#17141F" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13.5" r="8"/><path d="M12 9.5v4l2.6 1.8M9.5 2.5h5"/></svg>3:00`, stage);
+      const dots = Array.from({ length: 16 }, (_, k) => {
+        const d = el("div", "c-dot", null, stage);
+        d.style.background = ["#FFD84D", "#3DDC97", "#fff", "#FF7A6B"][k % 4];
+        return { d, a: (k / 16) * 6.283 + 0.3, r: 260 + (k % 3) * 90 };
+      });
+      const sub = card.querySelector(".c-sub");
+      return (t) => {
+        caps.forEach(({ wrap, ws }, p) => {
+          const l = life(t, p, 0.12, 0.1);
+          wrap.style.display = l > 0 ? "flex" : "none";
+          wrap.style.opacity = l; wrap.style.transform = `translateY(${(1 - l) * 24}px)`;
+          ws.forEach(({ i, e }) => { const a = P(t, T(i), 0.14); e.style.opacity = lerp(0.18, 1, a); });
+        });
+        const inn = back(P(t, 0, 0.45), 1.3), outp = in3(P(t, END - 0.25, 0.3));
+        card.style.transform = `translateY(${(1 - inn) * 520 + outp * 620}px) rotate(${(1 - inn) * 6 - outp * 4}deg)`;
+        card.style.opacity = Math.min(P(t, 0, 0.2), 1 - outp);
+        sub.style.opacity = out3(P(t, T(5), 0.3));
+        stamps.forEach((s, k) => { const a = P(t, AT[k], 0.22); s.style.transform = `scale(${a > 0 ? back(a, 2.4) : 0}) rotate(${(1 - a) * -40}deg)`; });
+        const b = P(t, T(12) + 0.15, 0.3);
+        badge.style.opacity = b > 0 ? 1 - outp : 0;
+        badge.style.transform = `scale(${back(b, 2.2)}) rotate(${-8 + wob(t, T(12) + 0.45, 3, 5) * 10}deg) translateY(${outp * 620}px)`;
+        const c = P(t, T(12) + 0.1, 0.9);
+        dots.forEach(({ d, a, r }) => {
+          d.style.display = c > 0 && c < 1 ? "block" : "none";
+          const e = out3(c);
+          d.style.left = 540 + Math.cos(a) * r * e - 11 + "px"; d.style.top = 1450 + Math.sin(a) * r * e * 0.7 - 11 + "px";
+          d.style.opacity = 1 - in3(c); d.style.transform = `scale(${1 - c * 0.6})`;
+        });
+      };
+    } },
+
+    { id: "minimal", name: "Clean lower third", build() {
+      // calm and clean: a violet bar, words wiped in one by one, the key words underlined
+      const wrap = el("div", "m-wrap", `<div class="m-tag">POINTILI<span></span></div><div class="m-body"><div class="m-bar"></div></div>`, stage);
+      const body = wrap.querySelector(".m-body"), bar = wrap.querySelector(".m-bar"), tag = wrap.querySelector(".m-tag");
+      const pages = PAGES.map((ids) => {
+        const pg = el("div", "m-page" + (WORDS[ids[0]].lat ? " ltr" : ""), null, body);
+        return { pg, ws: ids.map((i) => { const e = el("span", "m-w" + (WORDS[i].lat ? " lat" : ""), WORDS[i].w, pg); return { i, e, u: WORDS[i].key ? el("u", null, null, e) : null }; }) };
+      });
+      return (t) => {
+        const inn = out3(P(t, 0, 0.35)), outp = in3(P(t, END - 0.2, 0.3));
+        bar.style.height = Math.max(0, inn * (1 - outp) * 230) + "px";
+        tag.style.opacity = inn * (1 - outp); tag.style.transform = `translateX(${(1 - inn) * -40}px)`;
+        pages.forEach(({ pg, ws }, p) => {
+          const l = life(t, p, 0.01, 0.16);
+          pg.style.display = l > 0 ? "flex" : "none";
+          pg.style.opacity = l; pg.style.transform = `translateY(${(1 - l) * (t > pageOut(p) - 0.2 ? -40 : 0)}px)`;
+          const ltr = pg.classList.contains("ltr");
+          ws.forEach(({ i, e, u }) => {
+            const a = out3(P(t, T(i), 0.26));
+            e.style.clipPath = ltr ? `inset(-20px ${(1 - a) * 100}% -20px -20px)` : `inset(-20px -20px -20px ${(1 - a) * 100}%)`;
+            e.style.transform = `translateX(${(1 - a) * (ltr ? -24 : 24)}px)`;
+            if (u) u.style.transform = `scaleX(${out3(P(t, T(i) + 0.18, 0.3))})`;
+          });
+        });
+      };
+    } },
+
+    { id: "bubbles", name: "Bubbles + stickers", build() {
+      // a speech bubble per phrase, coming out of the speaker, with a sticker on the key ones
+      const ICON = {
+        ask: `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="#6C47FF"/><text x="60" y="84" text-anchor="middle" font-family="Cairo" font-weight="900" font-size="74" fill="#fff">؟</text></svg>`,
+        card: `<svg viewBox="0 0 120 120"><rect x="10" y="28" width="100" height="66" rx="14" fill="#6C47FF"/>${[0, 1, 2, 3, 4].map((k) => `<circle cx="${26 + k * 17}" cy="72" r="6.5" fill="${k < 3 ? "#FFD84D" : "rgba(255,255,255,0.35)"}"/>`).join("")}<rect x="22" y="40" width="40" height="9" rx="4.5" fill="#fff"/></svg>`,
+        shop: `<svg viewBox="0 0 120 120"><rect x="20" y="50" width="80" height="52" rx="6" fill="#fff" stroke="#17141F" stroke-width="6"/><path d="M14 50 L24 22 H96 L106 50Z" fill="#FF7A6B" stroke="#17141F" stroke-width="6" stroke-linejoin="round"/><path d="M40 22 L36 50 M60 22 V50 M80 22 L84 50" stroke="#17141F" stroke-width="5"/><rect x="48" y="68" width="24" height="34" rx="4" fill="#6C47FF"/></svg>`,
+        clock: `<svg viewBox="0 0 120 120"><rect x="50" y="6" width="20" height="14" rx="4" fill="#17141F"/><circle cx="60" cy="66" r="44" fill="#FFD84D" stroke="#17141F" stroke-width="7"/><line class="hand" x1="60" y1="66" x2="60" y2="34" stroke="#17141F" stroke-width="7" stroke-linecap="round"/><circle cx="60" cy="66" r="6" fill="#17141F"/></svg>`,
+      };
+      const LOOK = [
+        { bg: "#fff", fg: "#17141F", stk: "ask", x: 820, y: -70, r: 14 },
+        { bg: "#fff", fg: "#17141F" },
+        { bg: "#6C47FF", fg: "#fff", stk: "card", x: 40, y: -90, r: -12 },
+        { bg: "#FFD84D", fg: "#17141F", stk: "shop", x: 850, y: 90, r: 10 },
+        { bg: "#fff", fg: "#17141F", stk: "clock", x: 40, y: 60, r: -10 },
+      ];
+      const pages = PAGES.map((ids, p) => {
+        const L = LOOK[p];
+        const pg = el("div", "b-page", null, stage);
+        const bub = el("div", "b-bub", null, pg);
+        bub.dir = WORDS[ids[0]].lat ? "ltr" : "rtl";
+        bub.style.background = L.bg; bub.style.color = L.fg; bub.style.setProperty("--bub", L.bg);
+        if (p === 4) bub.style.fontSize = "112px";
+        if (p === 1) bub.style.fontSize = "78px";
+        const ws = ids.map((i) => ({ i, e: el("span", "b-w" + (WORDS[i].lat ? " lat" : ""), WORDS[i].w, bub) }));
+        let stk = null;
+        if (L.stk) { stk = el("div", "b-stk", ICON[L.stk], pg); stk.style.left = L.x + "px"; stk.style.top = L.y + "px"; }
+        return { pg, bub, ws, stk, L, hand: stk && stk.querySelector(".hand") };
+      });
+      return (t) => pages.forEach(({ pg, bub, ws, stk, L, hand }, p) => {
+        const on = t >= pageIn(p) && t < pageOut(p);
+        pg.style.display = on ? "flex" : "none";
+        if (!on) return;
+        const a = P(t, pageIn(p), 0.3), o = in3(P(t, pageOut(p) - 0.12, 0.12));
+        bub.style.transform = `scale(${back(a, 2) * (1 - o * 0.4)}) rotate(${wob(t, pageIn(p), 2.5, 7) * 3}deg)`;
+        pg.style.opacity = 1 - o;
+        ws.forEach(({ i, e }) => { const b = P(t, T(i), 0.16); e.style.opacity = out3(b); e.style.transform = `translateY(${(1 - out3(b)) * 30}px)`; });
+        if (stk) {
+          const t0 = pageIn(p) + 0.18, s = P(t, t0, 0.32);
+          stk.style.transform = `scale(${s > 0 ? back(s, 2.6) : 0}) rotate(${L.r + wob(t, t0, 2, 4) * 18}deg)`;
+          if (hand) hand.setAttribute("transform", `rotate(${out3(P(t, t0, 1.3)) * 360} 60 66)`);
+        }
+      });
+    } },
+  ];
+
+  // ---- one style per page: ?s=1..6 ------------------------------------------------------------
+  const S = clamp(Number(Q.get("s") || 1), 1, STYLES.length);
+  document.getElementById("label").textContent = `${S} · ${STYLES[S - 1].name}`;
+  if (Q.get("bg")) document.body.classList.add("bg");
+  let update = () => {};
+  window.DURATION = DURATION;
+  window.STYLES = STYLES.map((s) => ({ id: s.id, name: s.name }));
+  window.seek = (t) => update(t);
+  window.ready = document.fonts.ready.then(async () => {
+    await Promise.all(["900 100px Cairo", "800 100px Cairo", "100px Lalezar", "700 100px 'IBM Plex Sans Arabic'", "900 100px Inter", "italic 900 100px Inter", "800 100px Inter"].map((f) => document.fonts.load(f, "شقولك abc")));
+    update = STYLES[S - 1].build();
+    update(0);
+    if (Q.get("play")) { const t0 = performance.now(); const loop = () => { update(((performance.now() - t0) / 1000) % (DURATION + 0.6)); requestAnimationFrame(loop); }; loop(); }
+    return true;
+  });
+</script>
+</body>
+</html>
