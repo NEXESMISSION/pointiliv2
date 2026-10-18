@@ -228,6 +228,11 @@ const SCREENS = [
   { name: "public-welcome", path: "/" },
   { name: "public-welcome-ad", path: "/?utm_source=fb" },
   // the four things a computer can show around the front door, to be chosen between
+  // four front doors to choose between, on a phone
+  { name: "door-1-card", path: "/?v=1", wait: 1800 },
+  { name: "door-2-film", path: "/?v=2", wait: 2500 },
+  { name: "door-3-two", path: "/?v=3", wait: 1500 },
+  { name: "door-4-beats", path: "/?v=4", wait: 1500 },
   { name: "desk-1-sides", path: "/?desk=1", wait: 2500 },
   { name: "desk-2-behind", path: "/?desk=2", wait: 2500 },
   { name: "desk-3-quiet", path: "/?desk=3", wait: 2500 },

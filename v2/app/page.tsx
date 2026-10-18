@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Wallet } from "@/components/Wallet";
 import { JsonLd } from "@/components/SiteFrame";
 import { Welcome } from "@/components/Welcome";
+import { WelcomeNew } from "@/components/WelcomeNew";
 import { getMe, homeOf } from "@/lib/session";
 import { faqJsonLd, FAQ, orgJsonLd } from "@/lib/seo";
 import { getHelp, getSettings } from "@/lib/settings";
@@ -29,7 +30,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <JsonLd data={faqJsonLd(FAQ.slice(0, 5).flatMap((f) => [{ q: f.q, a: f.a }, f.fr]))} />
         {/* somebody who has signed in on this phone before is offered the way back in first */}
         {/* from an ad (Facebook's click id, or the ad's utm): an owner, most likely — the shop's door alone */}
-        <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} desk={["1", "2", "3", "4"].includes(String(q.desk)) ? (String(q.desk) as "1" | "2" | "3" | "4") : undefined} />
+        {/* four front doors to choose between (?v=1..4); without one, the door that is live */}
+        {["1", "2", "3", "4"].includes(String(q.v)) ? (
+          <WelcomeNew v={String(q.v) as "1" | "2" | "3" | "4"} video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} />
+        ) : (
+          <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} desk={["1", "2", "3", "4"].includes(String(q.desk)) ? (String(q.desk) as "1" | "2" | "3" | "4") : undefined} />
+        )}
       </>
     );
   }
