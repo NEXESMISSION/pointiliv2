@@ -242,13 +242,10 @@ const SCREENS = [
 
   { name: "customer-wallet", as: "customer", before: () => giftBack(), path: "/" },
   // the customer's app built again, beside the live one (/next): the cards, and a card that opens where it is
-  { name: "next-home", as: "customer", path: "/next" },
-  { name: "next-home-open", as: "customer", path: "/next", act: async (p) => {
-    // on a short screen the list scrolls: the first card may start below the fold
-    const card = p.locator("button[aria-expanded]").first();
-    await card.scrollIntoViewIfNeeded();
-    await card.click({ timeout: 15000 });
-  } },
+  { name: "next-a", as: "customer", path: "/next?look=a" },
+  { name: "next-b", as: "customer", path: "/next?look=b" },
+  { name: "next-c", as: "customer", path: "/next?look=c" },
+  { name: "next-code", as: "customer", path: "/next", act: (p) => press(p, "الكود متاعي") },
   {
     name: "customer-gift-code",
     as: "customer",
