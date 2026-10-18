@@ -242,9 +242,7 @@ const SCREENS = [
 
   { name: "customer-wallet", as: "customer", before: () => giftBack(), path: "/" },
   // the customer's app built again, beside the live one (/next): the cards, and a card that opens where it is
-  { name: "next-a", as: "customer", path: "/next?look=a" },
-  { name: "next-b", as: "customer", path: "/next?look=b" },
-  { name: "next-c", as: "customer", path: "/next?look=c" },
+  { name: "next-home", as: "customer", path: "/next" },
   { name: "next-code", as: "customer", path: "/next", act: (p) => press(p, "الكود متاعي") },
   {
     name: "customer-gift-code",
@@ -410,7 +408,8 @@ const SCREENS = [
   // a new owner's three steps: the account and the shop (public-shop-new), the card on one screen, what the customer sees
   { name: "first-card", as: "fresh", path: "/shop/card?new=1" },
   { name: "first-card-other", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "حاجة أخرى") },
-  { name: "first-card-look", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "كمّل") },
+  // the colour, the logo and the wait: no longer in the way of a first card, a quiet line under the button
+  { name: "first-card-look", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "اللون واللوغو متاعك") },
   { name: "start", as: "owner", path: "/shop/start", wait: 900 },
   { name: "setup", as: "noShop", path: "/shop/setup" },
 

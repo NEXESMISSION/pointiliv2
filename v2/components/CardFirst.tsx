@@ -144,7 +144,7 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
   const making = made && !state?.error && !saveErr && !lost;
 
   return (
-    <form ref={form} action={action} className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col overflow-x-clip overflow-y-auto px-[clamp(1rem,5vw,1.5rem)]">
+    <form ref={form} action={action} className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col overflow-x-clip overflow-y-auto px-[clamp(1rem,5vw,1.5rem)] [@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
       <MorphGround />
       <header className="flex shrink-0 items-center gap-3 pt-2">
         {part === 2 && !making ? (
@@ -318,16 +318,26 @@ export function CardFirst({ shop, help }: { shop: Shop; help?: HelpSettings }) {
           <Btn key="again" type="button" onClick={() => window.location.reload()}>
             {t.cardLostAgain}
           </Btn>
-        ) : part === 1 ? (
-          <Btn key="next" type="button" disabled={!canGo} onClick={() => setPart(2)}>
-            {t.next}
-          </Btn>
         ) : (
+          /* The first card is finished by the first screen (18 Oct 2026). Opening a
+             shop took a median of 92 seconds over ten screens to reach a code a
+             customer can scan, and the screen under this one — the colour, the logo,
+             the wait — was where owners got angriest: 57% of the taps on the colour
+             and 34% on the wait were people hammering at it. None of it is needed to
+             take a first tampon: the colour is the trade's own, the wait is an hour,
+             and both are two taps away in «المحل». It is still here, under the
+             button, for whoever wants it now rather than later. */
           <Btn key="send" type="button" disabled={making || pending || logoBusy || hoursBad || !canGo} onClick={() => void send()}>
             {making || pending ? t.checking : logoBusy ? t.logoWait : t.firstCardGo}
           </Btn>
         )}
-        {part === 1 && <p className="mt-1.5 text-center text-[0.8125rem] text-faint [@media(max-height:520px)]:hidden">{t.firstCardLater}</p>}
+        {/* never hidden: on a small phone this was the only way to the colour and the
+            logo, and hiding it left an owner there with no way to them at all */}
+        {part === 1 && !lost && (
+          <button type="button" onClick={() => setPart(2)} className="press mt-1 h-9 w-full text-[0.8125rem] font-semibold text-muted [@media(max-height:560px)]:mt-0 [@media(max-height:560px)]:h-6 [@media(max-height:560px)]:text-[0.75rem]">
+            {t.morphLookTitle}
+          </button>
+        )}
       </div>
 
       <input type="hidden" name="goal" value={goal} />

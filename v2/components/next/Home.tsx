@@ -20,15 +20,15 @@ import type { CardView } from "@/lib/types";
  * The code is one thing, in one place, reached the same way from anywhere; a
  * card says how far the gift is and nothing else.
  *
- * Three looks of that same screen are drawn here, to be chosen between rather
- * than argued about: /next?look=a|b|c. They differ in the eye, not the model.
+ * Three looks were drawn and the founder chose this one (18 Oct 2026): the
+ * shop's own colour, a block each — «tal9a elli t7eb 3la 7sab el loun», you
+ * find the card you want by its colour before you have read a word. The quiet
+ * paper and the one-big-card are gone rather than kept as options; a screen
+ * with three moods is a screen nobody designed.
  */
 
-export type Look = "a" | "b" | "c";
-
-export function NextHome({ me, name, code, svg, cards, look = "a" }: { me: string; name: string; code: string | null; svg: string | null; cards: CardView[]; look?: Look }) {
+export function NextHome({ me, name, code, svg, cards }: { me: string; name: string; code: string | null; svg: string | null; cards: CardView[] }) {
   const [codeOpen, setCodeOpen] = useState(false);
-  const [pick, setPick] = useState(0);
   const first = (name.split(" ")[0] ?? "").trim();
   const ready = (c: CardView) => c.ready || (c.waiting_n ?? 0) > 0;
   // the clock is read after mounting, never while the server renders: a time
@@ -61,7 +61,7 @@ export function NextHome({ me, name, code, svg, cards, look = "a" }: { me: strin
 
   return (
     <main className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
-      <Mark screen={`next-home-${look}`} />
+      <Mark screen="next-home" />
       {/* the tampon lands here by itself: no pull to refresh */}
       <Live me={me} />
 
@@ -76,10 +76,6 @@ export function NextHome({ me, name, code, svg, cards, look = "a" }: { me: strin
         <p className="my-auto text-balance px-6 text-center text-[0.9375rem] leading-relaxed text-muted">
           مازال ما عندك كارط. سكاني الكود اللي عند الكاسة في أي محل يخدم بـ Pointili، والكارط تتعمل وحدها.
         </p>
-      ) : look === "b" ? (
-        <Quiet cards={cards} line={line} ready={ready} />
-      ) : look === "c" ? (
-        <One cards={cards} pick={pick} setPick={setPick} line={line} ready={ready} />
       ) : (
         <Blocks cards={cards} line={line} ready={ready} />
       )}
@@ -151,72 +147,4 @@ function Blocks({ cards, line, ready }: Bits) {
   );
 }
 
-/** B — paper: white rows, the shop's colour only as a thread, the number doing the talking. */
-function Quiet({ cards, line, ready }: Bits) {
-  return (
-    // the scroller takes the room; the paper inside it hugs its rows, since a panel
-    // stretched to the whole screen is mostly empty paper
-    <div data-list className="mt-[2dvh] min-h-0 flex-1 overflow-y-auto overscroll-contain">
-      <div className="divide-y divide-line rounded-[1.25rem] bg-surface shadow-card">
-      {cards.map((c) => {
-        const goal = c.shop.goal ?? 10;
-        return (
-          <div key={c.id} className="flex items-center gap-3 px-4 py-3.5">
-            <span className="h-10 w-1 shrink-0 rounded-full" style={{ background: tone(c, ready(c)) }} aria-hidden />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[1rem] font-bold text-ink">{c.shop.name}</span>
-              <span className={`block truncate text-[0.8125rem] ${ready(c) ? "font-bold text-coral" : "text-muted"}`}>{line(c)}</span>
-            </span>
-            <span className="num shrink-0 text-[1.125rem] font-bold tabular-nums text-ink">
-              {c.stamps}
-              <span className="text-[0.8125rem] text-faint">/{goal}</span>
-            </span>
-          </div>
-        );
-      })}
-      </div>
-    </div>
-  );
-}
 
-/** C — one card, whole: the nearest gift fills the screen, the others are chips under it. */
-function One({ cards, pick, setPick, line, ready }: Bits & { pick: number; setPick: (n: number) => void }) {
-  const c = cards[Math.min(pick, cards.length - 1)]!;
-  const goal = c.shop.goal ?? 10;
-  return (
-    <div className="flex min-h-0 flex-1 flex-col justify-center">
-      <div className="mx-auto w-full rounded-[1.75rem] p-5 text-white shadow-card" style={{ background: tone(c, ready(c)) }}>
-        <div className="flex items-center gap-3">
-          <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-[1rem] bg-white/15">
-            <ShopMark shop={c.shop} size={30} />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[1.25rem] font-bold">{c.shop.name}</span>
-        </div>
-        {/* the dots: the card as a card, read in one look */}
-        <div className="mt-5 flex flex-wrap gap-1.5">
-          {Array.from({ length: goal }, (_, i) => (
-            <span key={i} className={`size-[1.375rem] rounded-full ${i < c.stamps ? "bg-white" : "bg-white/25"}`} aria-hidden />
-          ))}
-        </div>
-        <p className="mt-4 text-[1rem] font-bold">{line(c)}</p>
-      </div>
-      {cards.length > 1 && (
-        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-          {cards.map((x, i) => (
-            <button
-              key={x.id}
-              type="button"
-              onClick={() => setPick(i)}
-              aria-current={i === pick}
-              className={`press size-9 overflow-hidden rounded-full ring-2 ${i === pick ? "ring-ink" : "ring-transparent opacity-60"}`}
-              style={{ background: tone(x, ready(x)) }}
-              aria-label={x.shop.name}
-            >
-              <ShopMark shop={x.shop} size={22} />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}

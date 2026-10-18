@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
-import { NextHome, type Look } from "@/components/next/Home";
+import { NextHome } from "@/components/next/Home";
 import { siteOrigin } from "@/lib/origin";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
@@ -9,8 +9,8 @@ import type { CardView } from "@/lib/types";
 export const metadata = { title: "Pointili", robots: { index: false } };
 
 /** The new customer home: the cards, and the one thing a customer came to do.
- *  `?look=a|b|c` picks between three treatments of the same screen. */
-export default async function NextCustomerHome({ searchParams }: { searchParams: Promise<{ look?: string }> }) {
+ */
+export default async function NextCustomerHome() {
   const me = await getMe();
   if (!me) redirect("/login?next=/next");
   const cards = (await call<CardView[]>("wallet")) ?? [];
@@ -19,7 +19,5 @@ export default async function NextCustomerHome({ searchParams }: { searchParams:
   const svg = me.code
     ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
     : null;
-  const asked = (await searchParams).look;
-  const look: Look = asked === "b" || asked === "c" ? asked : "a";
-  return <NextHome me={me.id} name={me.name ?? ""} code={me.code ?? null} svg={svg} cards={cards} look={look} />;
+  return <NextHome me={me.id} name={me.name ?? ""} code={me.code ?? null} svg={svg} cards={cards} />;
 }
