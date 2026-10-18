@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
-import { QrCode, ScanLine } from "lucide-react";
+import { Check, Gift, QrCode, ScanLine } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
 import { CardWheel } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
@@ -68,22 +68,46 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       {/* the roulette: a popup that opens by itself, and a banner to open it again */}
       {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} turns={card.spins_n ?? 1} />}
 
-      {/* when it last saw a tampon, and the gifts already taken here: one quiet line, in place of the list */}
-      {card.last_at && (
+      {/* when it last saw a tampon, and the gifts already taken here — only without the list below,
+          whose first row says the same thing and says it better */}
+      {card.last_at && card.history.length === 0 && (
         <p className="mt-2.5 shrink-0 text-center text-[0.8125rem] text-muted">
           {fill(t.cardLast, { when: when(card.last_at) })}
           {card.gifts > 0 ? ` · ${fill(t.cardGiftsTaken, { n: card.gifts })}` : ""}
         </p>
       )}
 
-      {/* How the next tampon is taken, in the middle of the screen rather than behind a tap on the
-          card. The sheet that used to hold it said what the card already says — how far the gift is
-          — and then one sentence that was not anywhere else; so the sentence is here, in the space
-          that was blank under the card and was the most tapped dead area of the app (18 Oct 2026). */}
-      {!ready && (
-        <p className="my-auto shrink-0 text-balance px-6 py-3 text-center text-[0.9375rem] leading-relaxed text-muted">
-          {fill(t.cardHow, { shop: card.shop.name })}
-        </p>
+      {/* The half under the card, where 135 dead taps landed over this page's life: people were
+          reaching for what happened here. With a story to tell, it tells it — every tampon, what it
+          was for when the shop says what it sells, and every gift. A card with nothing on it yet has
+          no story, and that is exactly when how-it-works is worth the room instead. */}
+      {card.history.length > 0 ? (
+        <div className="mx-auto mt-[1.6dvh] flex w-full max-w-[min(100%,52dvh)] min-h-0 flex-1 flex-col">
+          <p className="shrink-0 px-1 pb-1.5 text-[0.75rem] font-bold text-faint">{t.cardStory}</p>
+          {/* a real list: it may scroll inside itself, the page may not */}
+          <ol data-list className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pb-1">
+            {card.history.map((h, i) => {
+              const gift = h.kind === "gift";
+              return (
+                <li key={`${h.at}-${i}`} className="flex items-center gap-2.5 rounded-[0.875rem] bg-surface px-3 py-2 shadow-card">
+                  <span className={`grid size-7 shrink-0 place-items-center rounded-full ${gift ? "bg-coral-soft text-coral" : "bg-brand-soft text-brand"}`}>
+                    {gift ? <Gift className="size-[0.875rem]" /> : <Check className="size-[0.875rem]" strokeWidth={3} />}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[0.875rem] font-semibold text-ink">
+                    {gift ? fill(h.given ? t.cardRowGift : t.cardRowWaiting, { gift: h.gift ?? "" }) : h.item ? `${t.cardRowStamp} · ${h.item}` : t.cardRowStamp}
+                  </span>
+                  <span className="num shrink-0 text-[0.75rem] text-faint">{when(h.at)}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ) : (
+        !ready && (
+          <p className="my-auto shrink-0 text-balance px-6 py-3 text-center text-[0.9375rem] leading-relaxed text-muted">
+            {fill(t.cardHow, { shop: card.shop.name })}
+          </p>
+        )
       )}
 
       {/* once, on a card with a tampon on it: a word to this phone when the gift is near, or waiting */}

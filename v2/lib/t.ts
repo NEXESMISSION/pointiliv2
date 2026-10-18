@@ -976,6 +976,11 @@ export const t = {
   cardHow: "كل مرّة تشري من {shop}، سكاني الكود اللي عند الكاسة، والتامبون يطيح وحدو على الكارط هاذي.",
   cardLast: "آخر تامبون: {when}",
   cardGiftsTaken: "خذيت {n} كادو هوني",
+  // the card's story, under it (18 Oct 2026): every tampon, what it was for, and every gift
+  cardStory: "شنوّة صار",
+  cardRowStamp: "تامبون",
+  cardRowGift: "خذيت {gift}",
+  cardRowWaiting: "كادو يستنّاك: {gift}",
   giftShowCounter: "ورّي الكود في الكاسة",
   giftCodeKicker: "الكادو متاعك",
   heldTitle: "خوذ التامبون متاعك",
