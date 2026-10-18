@@ -7,6 +7,10 @@
  * whether a Latin run has flipped inside the Arabic. Everything it made is
  * deleted at the end, even if a check fails.
  *
+ * Its admin sees every account, the real ones too — names and phone numbers
+ * on the shots. Keep them in shots/ (ignored by git); never point OUT at a
+ * folder that gets committed: the repository is public.
+ *
  *   node scripts/console.mjs            (from v2/, with the dev server on :3200)
  *   SIZE=1280x800 node scripts/console.mjs
  */
