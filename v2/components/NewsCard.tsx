@@ -30,16 +30,35 @@ export function NewsCard({
   return (
     <div className={`relative w-full rounded-[1.75rem] bg-surface text-center text-ink shadow-[0_30px_70px_-24px_rgb(20_16_40/0.55)] ${pic ? "overflow-hidden" : "px-5 pb-5 pt-[3.25rem]"}`}>
       {pic ? (
-        // the screen itself: a real screenshot, the place to tap lit up
+        // the screen itself: a real screenshot, the place to tap lit up — or, when what is being
+        // told is a setting with several steps, a short clip of it being done (no sound, round and
+        // round, and it never asks to be started)
         <div className="relative bg-[linear-gradient(160deg,#f5f2ff,#e9e4fb)] px-[clamp(1rem,5vw,1.25rem)] pb-0 pt-[clamp(0.875rem,2.4dvh,1.25rem)]">
           <span className="relative z-10 inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-[0.75rem] font-bold text-brand shadow-sm">✨ {t.newsBadge}</span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            key={pic + (step?.index ?? 0)}
-            src={pic}
-            alt=""
-            className="mx-auto mt-[1.4dvh] block max-h-[min(30dvh,17rem)] w-full animate-rise rounded-t-[1.25rem] object-cover object-center shadow-[0_-12px_30px_-20px_rgb(20_16_40/0.45)] ring-1 ring-ink/10"
-          />
+          {pic.endsWith(".mp4") ? (
+            <video
+              key={pic + (step?.index ?? 0)}
+              src={pic}
+              poster={pic.replace(/\.mp4$/, ".webp")}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label={news.title}
+              // taller than a screenshot is allowed to be: a clip of a phone is a tall thing, and at
+              // a screenshot's height it shrank to a thumbnail nobody could follow
+              className="mx-auto mt-[1.4dvh] block max-h-[min(42dvh,24rem)] w-full animate-rise rounded-t-[1.25rem] object-contain shadow-[0_-12px_30px_-20px_rgb(20_16_40/0.45)] ring-1 ring-ink/10"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={pic + (step?.index ?? 0)}
+              src={pic}
+              alt=""
+              className="mx-auto mt-[1.4dvh] block max-h-[min(30dvh,17rem)] w-full animate-rise rounded-t-[1.25rem] object-cover object-center shadow-[0_-12px_30px_-20px_rgb(20_16_40/0.45)] ring-1 ring-ink/10"
+            />
+          )}
         </div>
       ) : (
         <>

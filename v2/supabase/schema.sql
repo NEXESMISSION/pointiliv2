@@ -96,7 +96,8 @@ alter table public.shops add constraint shops_trial_days_check check (trial_days
 -- customer — a tampon to somebody else than the owner — not at the sign-up, so an owner who opens at night
 -- or takes a few days to start loses none of it. The shops opened before keep their clock from the opening.
 alter table public.shops add column if not exists trial_first boolean not null default false;
--- the founder lets this shop have the wheel (17 Oct 2026; its owner turns it on: wheel_on, «the wheel» below)
+-- the founder lets this shop have the wheel (17 Oct 2026; its owner turns it on: wheel_on, «the wheel» below).
+-- Since 18 Oct every new shop is allowed it — the default is set where the wheel is explained, below
 alter table public.shops add column if not exists wheel_allowed boolean not null default false;
 -- a number an owner gave a tampon to before it had an account (17 Oct 2026): the account is made for it,
 -- with no password anyone knows; the person signing up with that number later takes it, cards and all
@@ -440,6 +441,10 @@ alter table public.news add column if not exists steps jsonb check (steps is nul
 alter table public.news add column if not exists only_testers boolean not null default false;
 -- the first slide's screen (a screenshot in public/news), like a step's `pic`
 alter table public.news add column if not exists pic text check (pic is null or pic ~ '^/news/[a-z0-9-]{2,60}\.(webp|png|jpg)$');
+-- …or a short clip of the thing being done (public/clips, as the owner's first story uses): some
+-- news is a setting with several steps, and watching it done once is shorter than reading it
+alter table public.news drop constraint if exists news_pic_check;
+alter table public.news add constraint news_pic_check check (pic is null or pic ~ '^/(news|clips)/[a-z0-9-]{2,60}\.(webp|png|jpg|mp4)$');
 
 -- cards and gifts from before cards were promises
 update public.cards c set goal = s.goal, gift = s.gift from public.shops s where s.id = c.shop_id and c.goal is null and s.goal is not null;
@@ -3159,6 +3164,14 @@ alter table public.shops add column if not exists wheel_on boolean not null defa
 -- turns it on and off for his customers (wheel_on, «الروليت»)
 -- the shops the founder had put on the wheel before: allowed. Only ever true where it is on — never undone
 update public.shops set wheel_allowed = true where wheel_on and not wheel_allowed;
+-- From 18 Oct 2026 the wheel is offered to every shop (the founder): a shop is allowed it from the
+-- day it opens, so a brand-new owner meets it on their very first card.
+--
+-- Only the default. The shops already open that day were allowed in one deliberate pass, by hand,
+-- and this file does NOT do it: wheel_allowed is one of the switches scripts/db.mjs watches, and a
+-- line here that set it would be read — rightly — as this file trampling the founder's hand, put
+-- back, and shouted about. A switch the founder turns off has to stay off through every re-run.
+alter table public.shops alter column wheel_allowed set default true;
 alter table public.moments add column if not exists wheel boolean not null default false;
 alter table public.moments add column if not exists spun_at timestamptz;
 

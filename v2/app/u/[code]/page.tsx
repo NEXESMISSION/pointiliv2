@@ -16,9 +16,12 @@ export default async function CustomerCode({ params }: { params: Promise<{ code:
   const [{ code }, me] = await Promise.all([params, getMe()]);
   const valid = /^\d{6}$/.test(code);
   if (valid && me?.shop?.goal && me.code !== code) {
-    const items = me.shop.items_on ? ((await call<{ id: number; name: string }[]>("my_items")) ?? []) : [];
-    const wheel = me.shop.wheel_on || me.shop.wheel_allowed ? await call<{ prizes: { id: number; name: string; chance: number }[] }>("my_wheel") : null;
-    return <Collect by="code" preset={code} items={items} prizes={wheel?.prizes ?? []} />;
+    // in one breath, not one after the other: every shop is allowed the wheel since 18 Oct
+    const [items, wheel] = await Promise.all([
+      me.shop.items_on ? call<{ id: number; name: string }[]>("my_items") : Promise.resolve(null),
+      me.shop.wheel_on || me.shop.wheel_allowed ? call<{ prizes: { id: number; name: string; chance: number }[] }>("my_wheel") : Promise.resolve(null),
+    ]);
+    return <Collect by="code" preset={code} items={items ?? []} prizes={wheel?.prizes ?? []} />;
   }
   return (
     <Screen>

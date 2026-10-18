@@ -57,7 +57,9 @@ export function NewsPopup({ news, who }: { news: News | null; who: string }) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-[rgb(20_16_40/0.5)] px-6 pt-10 backdrop-blur-[2px] transition-opacity duration-200 ${leaving ? "opacity-0" : "animate-fade"}`}
+      // a note that carries a clip is taller than one that carries a line: on a short phone the
+      // card may be taller than the screen, and then it scrolls rather than losing its button
+      className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-[rgb(20_16_40/0.5)] px-6 py-10 backdrop-blur-[2px] transition-opacity duration-200 ${leaving ? "opacity-0" : "animate-fade"}`}
       role="dialog"
       aria-modal="true"
       aria-label={news.title}
@@ -70,9 +72,11 @@ export function NewsPopup({ news, who }: { news: News | null; who: string }) {
           {(news.steps ?? []).map((s, i) => (
             <Icon3D key={i} name={s.icon} size={52} />
           ))}
-          {[news.pic, ...(news.steps ?? []).map((s) => s.pic)].filter(Boolean).map((p) => (
+          {/* pictures only: a clip is not fetched twice — the <video> loads it, and an <img> pointed
+              at an .mp4 would pull half a megabyte down only to fail to decode it */}
+          {[news.pic, ...(news.steps ?? []).map((s) => s.pic)].filter((p): p is string => !!p && !p.endsWith(".mp4")).map((p) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={p!} src={p!} alt="" />
+            <img key={p} src={p} alt="" />
           ))}
         </span>
         {(() => {
