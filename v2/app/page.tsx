@@ -5,6 +5,7 @@ import { Wallet } from "@/components/Wallet";
 import { JsonLd } from "@/components/SiteFrame";
 import { Welcome } from "@/components/Welcome";
 import { WelcomeNew } from "@/components/WelcomeNew";
+import { WelcomeWild } from "@/components/WelcomeWild";
 import { getMe, homeOf } from "@/lib/session";
 import { faqJsonLd, FAQ, orgJsonLd } from "@/lib/seo";
 import { getHelp, getSettings } from "@/lib/settings";
@@ -31,7 +32,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         {/* somebody who has signed in on this phone before is offered the way back in first */}
         {/* from an ad (Facebook's click id, or the ad's utm): an owner, most likely — the shop's door alone */}
         {/* four front doors to choose between (?v=1..4); without one, the door that is live */}
-        {["1", "2", "3", "4"].includes(String(q.v)) ? (
+        {["5", "6", "7", "8"].includes(String(q.v)) ? (
+          <WelcomeWild v={String(q.v) as "5" | "6" | "7" | "8"} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} />
+        ) : ["1", "2", "3", "4"].includes(String(q.v)) ? (
           <WelcomeNew v={String(q.v) as "1" | "2" | "3" | "4"} video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} />
         ) : (
           <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} desk={["1", "2", "3", "4"].includes(String(q.desk)) ? (String(q.desk) as "1" | "2" | "3" | "4") : undefined} />
