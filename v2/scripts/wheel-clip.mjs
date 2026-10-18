@@ -100,7 +100,11 @@ async function film(name, cookies, act) {
 async function cut(src, name, { from, length, speed, crop, size, poster }) {
   const mp4 = join(OUT, `${name}.mp4`);
   const vf = [`setpts=PTS/${speed}`, crop ? `crop=${crop}` : null, `scale=${size}:flags=lanczos`, "fps=24"].filter(Boolean).join(",");
-  execFileSync("ffmpeg", ["-y", "-ss", String(from), "-i", src, "-t", String(length), "-an", "-c:v", "libx264", "-preset", "slow", "-b:v", "430k", "-maxrate", "600k", "-bufsize", "1200k", "-vf", vf, "-pix_fmt", "yuv420p", "-movflags", "+faststart", mp4], { stdio: "pipe" });
+  // a screen recording is flat colour and sharp edges: asked for a quality instead
+  // of a bitrate, and told it is animation, x264 spends a seventh of the bytes on it
+  // and nothing is visibly lost — 504KB became 72KB on the clip this filmed first,
+  // which a phone was waiting six seconds for (the founder, 18 Oct 2026).
+  execFileSync("ffmpeg", ["-y", "-ss", String(from), "-i", src, "-t", String(length), "-an", "-c:v", "libx264", "-preset", "veryslow", "-tune", "animation", "-crf", "28", "-vf", vf, "-pix_fmt", "yuv420p", "-movflags", "+faststart", mp4], { stdio: "pipe" });
   const png = join(RAW, `${name}.png`);
   execFileSync("ffmpeg", ["-y", "-ss", String(poster), "-i", mp4, "-vframes", "1", png], { stdio: "pipe" });
   await sharp(png).webp({ quality: 72 }).toFile(mp4.replace(/\.mp4$/, ".webp"));
@@ -141,7 +145,7 @@ try {
       await p.waitForTimeout(7000);
     });
     // the wheel sits in the middle of a tall dark screen: cut to it and the words around it
-    await cut(raw, "wheel-win-v1", { from: 1.2, length: 11, speed: 1.25, crop: "540:660:0:150", size: "540:660", poster: 6.2 });
+    await cut(raw, "wheel-win-v2", { from: 1.2, length: 11, speed: 1.25, crop: "540:660:0:150", size: "540:660", poster: 6.2 });
   }
 
   // ── how the owner prepares it ───────────────────────────────────────────
@@ -173,7 +177,7 @@ try {
       await p.waitForTimeout(2200);
     });
     // cut to the wheel, the prizes and the save button: the header and the foot carry nothing
-    await cut(raw, "wheel-set-v1", { from: 2.4, length: 19.6, speed: 1.6, crop: "540:720:0:170", size: "540:720", poster: 5 });
+    await cut(raw, "wheel-set-v2", { from: 2.4, length: 19.6, speed: 1.6, crop: "540:720:0:170", size: "540:720", poster: 5 });
   }
 } finally {
   await browser.close();
