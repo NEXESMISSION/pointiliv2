@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChartColumn, ChevronLeft, Crown, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, PieChart, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { LogoutButton } from "@/components/LogoutButton";
 import type { Pay } from "@/components/Pay";
@@ -83,6 +83,11 @@ export default async function ShopSettings() {
             sub={`${t.setShop} · ${t.kinds[shop.kind] ?? ""}`}
           />
           <Row href={card.href} mark={<Mark icon={card.icon} />} title={card.title} sub={card.sub} />
+          {/* the wheel's own page — its prizes, each one's chance, and what fell — for a shop the
+              founder allowed it. It had no way in since the wheel moved into the card's question. */}
+          {(shop.wheel_allowed || shop.wheel_on) && (
+            <Row href="/shop/wheel" mark={<Mark icon={PieChart} />} title={t.wheelOwnerTitle} sub={shop.wheel_on ? t.wheelSetOn : t.wheelSetOff} />
+          )}
           <Row href="/shop/items" mark={<Mark icon={ShoppingBasket} />} title={t.itemsTile} sub={shop.items_on ? t.setItemsOn : t.setItemsOff} />
         </Group>
         <Group>

@@ -376,7 +376,14 @@ const SCREENS = [
   { name: "wizard-edit-goal", as: "owner", path: "/shop/card" },
   { name: "wizard-edit-gift", as: "owner", path: "/shop/card", act: (p) => press(p, "كمّل") },
   // «الروليت» among the gifts, for a shop the founder allowed it: the chips are then what the wheel holds
+  // (choosing it explains itself first, so «باهي» closes that before the picker is looked at)
   { name: "wizard-edit-gift-wheel", as: "owner", before: () => admin.from("shops").update({ wheel_allowed: true }).eq("id", shop.id), path: "/shop/card", act: async (p) => {
+    await press(p, "كمّل");
+    await press(p, "الروليت");
+    await press(p, "باهي");
+  }, after: () => admin.from("shops").update({ wheel_allowed: false, wheel_on: false }).eq("id", shop.id) },
+  // and the three lines themselves, as they open
+  { name: "wizard-gift-wheel-how", as: "owner", before: () => admin.from("shops").update({ wheel_allowed: true }).eq("id", shop.id), path: "/shop/card", act: async (p) => {
     await press(p, "كمّل");
     await press(p, "الروليت");
   }, after: () => admin.from("shops").update({ wheel_allowed: false, wheel_on: false }).eq("id", shop.id) },

@@ -9,7 +9,7 @@ import { Switch } from "@/components/Owner";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
 import { Btn } from "@/components/ui";
-import { Wheel, type Prize } from "@/components/Wheel";
+import { Wheel, WheelHow, type Prize } from "@/components/Wheel";
 import { stampsN, t } from "@/lib/t";
 
 type Row = { key: string; id?: number; name: string; chance: number };
@@ -42,6 +42,8 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
   const [on, setOn] = useState(onAtFirst);
   const [flipping, flip] = useTransition();
   const [flipErr, setFlipErr] = useState<string | null>(null);
+  // how the wheel works, from the «؟» in the header
+  const [how, setHow] = useState(false);
   // the switch needs two prizes saved (what the customers would spin is what is saved, not what is typed)
   const canOn = prizes.length >= 2 || (saved && rows.length >= 2);
   const toggle = () =>
@@ -89,7 +91,18 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
 
   return (
     <>
-      <Top back={first ? "/shop/card" : "/shop"} title={t.wheelOwnerTitle} hint={first ? undefined : t.wheelOwnerHint} />
+      <Top
+        back={first ? "/shop/card" : "/shop"}
+        title={t.wheelOwnerTitle}
+        hint={first ? undefined : t.wheelOwnerHint}
+        // the same three lines as in the card's question: how it works, wherever the wheel is
+        end={
+          <button type="button" onClick={() => setHow(true)} aria-label={t.wheelHowTitle} className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface text-[1.125rem] font-bold text-brand shadow-card">
+            <span aria-hidden>؟</span>
+          </button>
+        }
+      />
+      {how && <WheelHow goal={goal ?? 0} prizes={rows.map((r) => ({ name: r.name, chance: r.chance }))} onClose={() => setHow(false)} />}
       {first && (
         <>
           <p className="mt-1 shrink-0 text-[0.9375rem] font-semibold text-brand">الخطوة 2 من 2</p>

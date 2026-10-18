@@ -12,7 +12,7 @@ import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { CardConfirm, type CardImpact } from "@/components/CardConfirm";
 import { Btn, boxLook } from "@/components/ui";
-import { prizeColor, WheelFace, type Prize } from "@/components/Wheel";
+import { prizeColor, WheelFace, WheelHow, type Prize } from "@/components/Wheel";
 import { fill, sameGift, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { waitSays } from "@/lib/when";
@@ -83,6 +83,9 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
   const [spin, setSpin] = useState(!!wheel?.on);
   const [prizes, setPrizes] = useState<string[]>(() => (wheel?.prizes.length ? wheel.prizes.map((p) => p.name) : ideas.slice(0, 3)));
   const [fresh, setFresh] = useState("");
+  // how the wheel works: opened the first time it is chosen, and from the line under the question
+  const [how, setHow] = useState(false);
+  const toldHow = useRef(false);
   const addPrize = () => {
     const name = fresh.trim().slice(0, 40);
     if (name.length < 2) return;
@@ -272,13 +275,25 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
         {/* on the wheel it says what the chips are now — the wheel's prizes — so it stays, short as it is */}
         {example && (
           <p className={`mt-1.5 text-[0.9375rem] text-muted ${step === GIFT && !spin ? "[@media(max-height:700px)]:hidden" : ""}`}>
-            {example}
-            {step === GIFT && spin && wheel?.on && (
+            {/* on a short screen the wheel's line gives its words to the link: «كيفاش تخدم» is worth
+                more there than a sentence saying what the buttons above already say */}
+            <span className={step === GIFT && spin ? "[@media(max-height:700px)]:hidden" : ""}>{example}</span>
+            {/* on the wheel the same line carries the way to understand it, and — once it is on —
+                the way to its own page: no row of its own, the question has no height to spare */}
+            {step === GIFT && spin && (
               <>
                 {" "}
-                <Link href="/shop/wheel" className="font-semibold text-brand">
-                  {t.wizSpinOdds} ←
-                </Link>
+                <button type="button" onClick={() => setHow(true)} className="press font-semibold text-brand underline-offset-2 hover:underline">
+                  {t.wheelHowTitle}
+                </button>
+                {wheel?.on && (
+                  <>
+                    {" · "}
+                    <Link href="/shop/wheel" className="font-semibold text-brand">
+                      {t.wizSpinOdds} ←
+                    </Link>
+                  </>
+                )}
               </>
             )}
           </p>
@@ -341,7 +356,15 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
                   <button
                     key={String(on)}
                     type="button"
-                    onClick={() => setSpin(on)}
+                    // choosing the wheel explains itself, once: «when they click on it explain how
+                    // it work nice and easy». Tapping it again, already chosen, opens it back up.
+                    onClick={() => {
+                      if (on && (!spin || !toldHow.current)) {
+                        toldHow.current = true;
+                        setHow(true);
+                      }
+                      setSpin(on);
+                    }}
                     aria-pressed={spin === on}
                     className={`press flex h-11 items-center justify-center gap-1.5 rounded-[0.875rem] text-[0.9375rem] font-bold [@media(max-height:700px)]:h-10 ${spin === on ? "bg-surface text-ink shadow-card" : "text-muted"}`}
                   >
@@ -585,6 +608,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
       <input type="hidden" name="gap" value={gap} />
       <input type="hidden" name="next" value={next} />
       {confirm && !lost && step === READY && <CardConfirm editing={editing} after={{ goal, gift: spin ? SPIN_GIFT : gift, gap }} impact={editing ? impact : null} pending={pending} onBack={() => setConfirm(false)} />}
+      {how && <WheelHow goal={goal} prizes={prizes.map((name) => ({ name, chance: 0 }))} onClose={() => setHow(false)} />}
     </form>
   );
 }

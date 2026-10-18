@@ -84,6 +84,12 @@ export const t = {
   wheelPrize: "الكادو",
   wheelAdd: "زيد كادو",
   wheelDrop: "نحّي {prize}",
+  // how it works, for the owner who just chose it (18 Oct 2026)
+  wheelHowTitle: "كيفاش تخدم الروليت؟",
+  wheelHow1: "الحريف يلمّ {n} ويكمّل الكارط، ياخو دورة",
+  wheelHow2: "يدوّر الروليت في تليفونو، والكادو يطلع بالحظ",
+  wheelHow3: "يجي للمحل، يوريك الكود، وتعطيه الكادو اللي ربحو",
+  wheelHowChance: "الحظ متاع كل كادو تنجم تبدّلو من صفحة الروليت",
   wheelTotal: "المجموع",
   wheelEven: "قسّم بالتساوي",
   wheelSumBad: "لازم المجموع يكون 100%",

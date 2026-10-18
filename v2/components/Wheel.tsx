@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { t } from "@/lib/t";
+import { fill, stampsN, t } from "@/lib/t";
 
 export type Prize = { id?: number; name: string; chance: number };
 export type SpinResult = { prize: string; index: number | null } | null;
@@ -65,6 +65,46 @@ export function WheelFace({ prizes, turn = 0, spinning = false, onStopped, class
         <circle key={i} cx={r2(100 + 96.5 * Math.sin((i * 15 * Math.PI) / 180))} cy={r2(100 - 96.5 * Math.cos((i * 15 * Math.PI) / 180))} r="1.6" fill="#fff" opacity="0.9" />
       ))}
     </svg>
+  );
+}
+
+/**
+ * How the wheel works, said in three lines to the owner — it opens by itself
+ * the first time they choose «الروليت», and from the «؟» beside it after that
+ * (the founder, 18 Oct 2026: «when they click on it explain how it work nice
+ * and easy»). The wheel they are building is drawn at the top, so the words
+ * are about the thing in front of them.
+ */
+export function WheelHow({ goal, prizes = [], onClose }: { goal: number; prizes?: Prize[]; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/40" onClick={onClose} role="dialog" aria-modal="true" aria-label={t.wheelHowTitle}>
+      <div
+        className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink shadow-[0_-20px_50px_-20px_rgb(0_0_0/0.5)]"
+        style={{ animation: "wheel-how-up 360ms cubic-bezier(0.2,0.8,0.2,1) both" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <style>{`@keyframes wheel-how-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
+        <span className="mx-auto mb-3 block h-1.5 w-10 rounded-full bg-line" aria-hidden />
+        {prizes.length > 0 && (
+          <div className="mx-auto mb-3 w-[clamp(4.5rem,13dvh,6.5rem)] [@media(max-height:620px)]:hidden" aria-hidden>
+            <WheelFace prizes={prizes} />
+          </div>
+        )}
+        <h2 className="text-[1.25rem] font-bold">{t.wheelHowTitle}</h2>
+        <ol className="mt-3 space-y-2">
+          {[fill(t.wheelHow1, { n: stampsN(goal) }), t.wheelHow2, t.wheelHow3].map((line, i) => (
+            <li key={i} className="flex items-start gap-3 rounded-[1.125rem] bg-surface p-3 text-start shadow-card">
+              <span className="num grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.875rem] font-bold text-brand">{i + 1}</span>
+              <span className="min-w-0 flex-1 text-[0.9375rem] font-semibold leading-snug">{line}</span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-2.5 text-center text-[0.8125rem] text-muted">{t.wheelHowChance}</p>
+        <button type="button" onClick={onClose} className="press mt-3 h-[3.25rem] w-full rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
+          {t.ok}
+        </button>
+      </div>
+    </div>
   );
 }
 
