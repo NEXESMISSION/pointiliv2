@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, QrCode, ScanLine, Smartphone, Store, Users } from "lucide-react";
+import { ChevronLeft, QrCode, ScanLine, Smartphone, Store, Ticket, Users } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { FirstGift } from "@/components/FirstGift";
 import { LogoTip } from "@/components/LogoTip";
@@ -19,6 +19,7 @@ import type { News } from "@/lib/news";
 import { getHelp } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { fill, t } from "@/lib/t";
+import type { CardView } from "@/lib/types";
 
 export const metadata = { title: "المحل" };
 
@@ -67,7 +68,11 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   if (me.shop.wheel_on && !((await call<{ prizes: unknown[] }>("my_wheel"))?.prizes?.length ?? 0)) redirect("/shop/card");
   if (me.shop.store_on && !((await call<{ items: unknown[] }>("my_store"))?.items?.length ?? 0)) redirect("/shop/store?start=1");
   const shop = me.shop;
-  const [home, help, news, pay, { welcome }] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), searchParams]);
+  // an owner is somebody's customer too: their own cards, asked for beside the rest
+  // so it costs nothing. Never a card at their own shop — the counter refuses one —
+  // so every card here is at another business (the founder, 18 Oct 2026)
+  const [home, help, news, pay, mine, { welcome }] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), call<CardView[]>("wallet"), searchParams]);
+  const myCards = mine ?? [];
   const seen = me.seen ?? [];
   const paid = !!pay?.paid;
   const offer = !!pay?.offer;
@@ -115,6 +120,14 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
             {shop.name}
           </Link>
         </span>
+        {/* the owner's own cards, where they are a customer: a door that is only
+            there when something is behind it, and a coral dot when a gift waits */}
+        {myCards.length > 0 && (
+          <Link href="/wallet" aria-label={t.myCards} className="press relative grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card">
+            <Ticket className="size-5 text-brand" strokeWidth={2.2} />
+            {myCards.some((c) => c.ready) && <span className="absolute -end-0.5 -top-0.5 size-3 rounded-full bg-coral ring-2 ring-canvas" aria-hidden />}
+          </Link>
+        )}
         <HelpButton help={help} />
       </header>
 

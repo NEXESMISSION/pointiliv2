@@ -11,7 +11,7 @@ import { Pass } from "@/components/Pass";
 import { Top } from "@/components/Top";
 import { Icon3D, LinkBtn, Screen } from "@/components/ui";
 import { siteOrigin } from "@/lib/origin";
-import { getMe } from "@/lib/session";
+import { cardsHome, getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { fill, stampsN, t } from "@/lib/t";
 import type { CardStore as Store, CardView } from "@/lib/types";
@@ -43,7 +43,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       : null;
     return (
       <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
-        <Top back="/" title={card.shop.name} />
+        <Top back={cardsHome(me)} title={card.shop.name} />
         <CardStore card={id} shop={card.shop} balance={store?.balance ?? card.stamps} items={store?.items ?? []} waiting={store?.waiting ?? []} code={me.code ?? null} svg={code} />
       </Screen>
     );
@@ -60,7 +60,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   return (
     // one screen: the card, one quiet line, and one thing to do (shorter than 548px, the page scrolls)
     <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
-      <Top back="/" />
+      <Top back={cardsHome(me)} />
       <div className="mx-auto mt-2 w-full max-w-[min(100%,52dvh)] shrink-0 animate-rise">
         {/* the card opens: how far the gift is, and how the next tampon is taken (customers kept tapping it) */}
         <CardTap shop={card.shop.name} gift={card.shop.gift ?? ""} stamps={card.stamps} goal={card.shop.goal ?? 10} ready={ready}>

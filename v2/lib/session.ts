@@ -43,3 +43,16 @@ export function homeOf(me: Me): string {
   if (!me.shop.goal) return "/shop/card";
   return "/shop";
 }
+
+/**
+ * Where this person's own cards live.
+ *
+ * An owner shops somewhere else too, and takes a tampon there like anybody.
+ * For them `/` is their shop — so coming back from a card used to land them
+ * at their own counter, and the card they had just taken was four taps away
+ * behind the account page. Their cards are at `/wallet`; a customer's are at
+ * `/`, which is the wallet itself (the founder, 18 Oct 2026).
+ */
+export function cardsHome(me: Me): string {
+  return me.shop || me.admin ? "/wallet" : "/";
+}
