@@ -4,6 +4,7 @@ import { ChevronLeft, Store, WalletCards } from "lucide-react";
 import { VideoPill, type HelpVideo } from "@/components/Help";
 import { Pass } from "@/components/Pass";
 import { Mark } from "@/components/Tracker";
+import { WelcomeDesk } from "@/components/WelcomeDesk";
 import { Logo } from "@/components/ui";
 import { t } from "@/lib/t";
 
@@ -53,6 +54,9 @@ export function Welcome({ video, known, ad }: { video?: HelpVideo | null; known?
     // data-welcome: the front door as a stranger sees it (Facebook's pixel counts this one, not a customer's wallet)
     <main data-welcome className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-center overflow-hidden bg-[#FBF6EF] px-5 safe-t safe-b max-[448px]:max-w-none">
       <Mark screen="welcome" />
+      {/* the cream behind the whole window, and — on a computer, where this column
+          leaves room — the counter's own clips either side of it */}
+      <WelcomeDesk />
       {/* a corner of Sidi Bou Said, behind everything */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/tn/sidibou.webp" alt="" aria-hidden width={220} height={520} className="pointer-events-none absolute -start-3 -top-[3dvh] h-[36dvh] w-auto [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
