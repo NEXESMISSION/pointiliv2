@@ -4,6 +4,7 @@ import { ChevronLeft, Lock, QrCode, ScanLine } from "lucide-react";
 import { Back } from "@/components/Back";
 import { InstallApp, InstallPopup } from "@/components/InstallApp";
 import { MyCode } from "@/components/MyCode";
+import { PushAsk } from "@/components/PushAsk";
 import { Pass } from "@/components/Pass";
 import { Mark } from "@/components/Tracker";
 import { Icon3D, LinkBtn, Logo, Screen } from "@/components/ui";
@@ -103,6 +104,14 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
             </Link>
           ) : null;
         })()}
+
+      {/* a word when the gift is near: asked here because here is where customers are.
+          It only ever sat on a card's own page, which most never open — 21 of 86 with a
+          card were ever asked, and 62% of those said yes. Not while a gift waits above:
+          one thing is asked at a time (18 Oct 2026) */}
+      {waiting.length === 0 && cards.some((c) => c.stamps > 0) && !(me.seen ?? []).includes("push") && (
+        <PushAsk shop={cards.find((c) => c.stamps > 0)!.shop.name} compact />
+      )}
 
       {cards.length === 0 ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">

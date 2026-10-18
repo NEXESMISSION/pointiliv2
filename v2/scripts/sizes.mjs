@@ -368,6 +368,9 @@ const SCREENS = [
     },
     wait: 1400,
   },
+  // the reminder, asked where customers actually are. After the gift was handed over, so
+  // nothing waits above it: the wallet asks one thing at a time
+  { name: "wallet-push", as: "customer", before: () => notes(customer, ["card_hello", "coach", "logo_tip", "offer"]), path: "/", after: () => notes(customer, ALL_NOTES) },
   { name: "customers", as: "owner", path: "/shop/customers" },
   { name: "customers-near", as: "owner", path: "/shop/customers", act: (p) => press(p, "قربو للكادو") },
   { name: "shop-settings", as: "owner", path: "/shop/settings" },
