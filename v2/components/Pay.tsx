@@ -26,7 +26,6 @@ export type Pay = {
   shut?: boolean;
   /** the founder's own shop or a test account: no trial, never stopped */
   exempt?: boolean;
-  last: { id: string; method: string; months: number; status: "pending" | "paid" | "refused"; at: string } | null;
 };
 
 /** Hours, minutes and seconds left until `until`, ticking every second (zeros once it is over). */
@@ -54,17 +53,9 @@ export function Left({ until, className = "" }: { until: string; className?: str
 
 /**
  * The thin line under the shop's name until the year is paid: during the
- * first 48 hours, the offer with its clock ticking; after, the price; while
- * a payment waits for the founder's word, just that.
+ * first 48 hours, the offer with its clock ticking; after, the price.
  */
 export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
-  if (pay.last?.status === "pending" && pay.last.method !== "contact") {
-    return (
-      <p className="mt-3 flex shrink-0 items-center gap-2 rounded-full bg-ink/[0.05] px-4 py-2 text-[0.8125rem] font-semibold text-body">
-        <Clock className="size-4 shrink-0 text-muted" /> {t.payPending}
-      </p>
-    );
-  }
   // the offer, calm: the clock large — information, not an advert shouting under the shop's own name —
   // the offer under it, on the ink card, and «خلّص» at the end (the founder chose it, 17 Oct 2026)
   if (offer) {
@@ -104,12 +95,10 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
  * The trial on the owner's home, until the year is turned on: «التجربة: مازال
  * 2 يوم · 05:12:33», ticking, the way to the year — and a call to the founder,
  * who turns it on. Once it is over (or the clock reaches zero on screen) the
- * same line turns red: the counter gives nothing until then. A payment
- * waiting for the founder's word says only that.
+ * same line turns red: the counter gives nothing until then.
  */
-export function TrialBanner({ pay, offer, phone }: { pay: Pay; offer: boolean; phone: string | null }) {
+export function TrialBanner({ pay, phone }: { pay: Pay; phone: string | null }) {
   const left = useLeft(pay.trial_until ?? new Date().toISOString());
-  if (pay.last?.status === "pending" && pay.last.method !== "contact") return <PayBanner pay={pay} offer={offer} />;
   // a clock that waits for the first customer: no countdown yet, just that
   const waits = pay.trial_started === false && !pay.shut;
   const over = !waits && (!!pay.shut || left.over);

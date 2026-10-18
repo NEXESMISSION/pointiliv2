@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Check, Copy, MessageCircle, Phone } from "lucide-react";
-import { payRequest } from "@/app/actions";
 import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
@@ -22,14 +21,14 @@ const WAYS = [
  * the D17 number or the account, each with its copy button — ③ the receipt
  * on WhatsApp, already written with the shop and the way, and the year is
  * turned on the same day. Steps 2 and 3 wait, faded, until a way is chosen;
- * a call is always there for a question. Any tap tells the founder.
+ * a call is always there for a question. The WhatsApp message or the call is
+ * the whole of it: the founder hears it from them, and turns the year on by
+ * hand. A tap is only counted in the visits — it is not a payment waiting for
+ * an answer (the founder, 18 Oct 2026: there is no request to manage).
  */
 export function PayMethods({ support, shop, months, details }: { support: string | null; shop: string; months: number; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] } }) {
   const [way, setWay] = useState<string | null>(null);
-  const said = (how: string) => {
-    signal("pay", how);
-    void payRequest("contact").catch(() => {});
-  };
+  const said = (how: string) => signal("pay", how);
   const amount = t.payPrice;
   const receipt = support && way ? `https://wa.me/${support}?text=${encodeURIComponent(fill(t.payReceiptMsg, { shop, months, way }))}` : null;
   const how =

@@ -186,6 +186,8 @@ try {
   await check("07-news", "/admin/news");
   await check("08-news-new", "/admin/news?new=1");
   await check("09-settings", "/admin/settings");
+  // the money: in and out, the shops paid — and no payment waiting for an answer (there is none to give)
+  await check("10-payments", "/admin/payments");
 } finally {
   await browser.close();
   console.log("· cleaning up");

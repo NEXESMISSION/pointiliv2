@@ -47,7 +47,6 @@ type Shop = {
   plan: {
     paid_until: string | null; paid: boolean; offer_until: string | null; offer: boolean;
     log: { id: number; kind: "paid" | "until" | "end" | "trial"; months: number | null; until: string | null; note: string | null; method: string | null; amount: number | null; shown: boolean; seen: string | null; at: string }[];
-    payments: { id: string; method: string; months: number; status: "pending" | "paid" | "refused"; at: string }[];
   };
   customers: number; stamps: number; today: number; given: number; waiting: number;
   recent: { at: string; kind: "stamp" | "gift"; given: boolean; name: string | null; phone: string | null; item: string | null }[];
@@ -373,22 +372,12 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
             <AdminPlan shopId={s.id} paidUntil={s.plan.paid_until} paid={s.plan.paid} shop={s.name} owner={s.owner?.name ?? null} />
             {/* more days of trial: not a subscription, the owner is told plainly */}
             {!s.plan.paid && <AdminTrial shopId={s.id} until={s.trial_until} over={s.trial_over} started={s.trial_started !== false} />}
-            {(s.plan.log.length > 0 || s.plan.payments.some((y) => y.status === "pending")) && (
+            {s.plan.log.length > 0 && (
               <div className="mt-4 border-t border-line pt-3">
                 <p className="mb-2 flex items-center gap-1.5 text-[0.8125rem] font-bold text-muted">
                   <CalendarClock className="size-4" /> شنوّة صار في الأبونمان
                 </p>
                 <ul className="space-y-2.5 text-[0.8438rem]">
-                  {s.plan.payments
-                    .filter((y) => y.status === "pending")
-                    .map((y) => (
-                      <li key={y.id} className="flex items-center justify-between gap-3">
-                        <span className="font-semibold text-brand">
-                          طلب يخلّص · {monthsSaid(y.months)}
-                        </span>
-                        <span className="text-[0.75rem] text-muted">{when(y.at)}</span>
-                      </li>
-                    ))}
                   {s.plan.log.map((l) => (
                     <li key={l.id} className="flex items-start justify-between gap-3">
                       <span className="min-w-0">

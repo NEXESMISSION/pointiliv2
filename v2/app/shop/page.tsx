@@ -90,13 +90,12 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   // the offer's popup: once the shop has a customer (it means something then), or on its last day whatever happens
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const offerLastDay = !!pay?.offer_until && Date.parse(pay.offer_until) - Date.now() < 24 * 3600_000;
-  const offerNote = !coachNow && !firstGift && !logoTip && !grant && offer && (served || offerLastDay) && !seen.includes("offer") && !(pay?.last?.status === "pending" && pay.last.method !== "contact");
+  const offerNote = !coachNow && !firstGift && !logoTip && !grant && offer && (served || offerLastDay) && !seen.includes("offer");
   const first = (me.name ?? "").split(" ")[0];
-  // the trial's line only when it matters: its last two days, once it is over, or a payment waiting for the founder's word
-  const pending = pay?.last?.status === "pending" && pay.last.method !== "contact";
+  // the trial's line only when it matters: its last two days, or once it is over
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const lastDays = !!pay?.trial_until && Date.parse(pay.trial_until) - Date.now() < 48 * 3600_000;
-  const trialLine = !paid && !!pay && !pay.exempt && !!pay.trial_until && pay.trial_started !== false && (!!pay.shut || lastDays || pending);
+  const trialLine = !paid && !!pay && !pay.exempt && !!pay.trial_until && pay.trial_started !== false && (!!pay.shut || lastDays);
   const recent = home?.recent ?? [];
   const held = home?.held ?? [];
   const lately = recent.length > 0 || held.length > 0;
@@ -133,7 +132,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
 
       {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-semibold text-coral">{t.pausedBanner}</p>}
       {/* the trial's clock and a call, until the year is turned on (the founder's own and the tests: just the price) */}
-      {!paid && pay && (pay.exempt || !pay.trial_until ? <PayBanner pay={pay} offer={offer} /> : trialLine ? <TrialBanner pay={pay} offer={offer} phone={help.phone} /> : null)}
+      {!paid && pay && (pay.exempt || !pay.trial_until ? <PayBanner pay={pay} offer={offer} /> : trialLine ? <TrialBanner pay={pay} phone={help.phone} /> : null)}
       {/* in Facebook's own browser: the way out to the phone's browser, where Pointili stays */}
       <OpenOutside where="home" look="line" className="mt-1" />
 

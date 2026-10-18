@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath, updateTag } from "next/cache";
 import { after } from "next/server";
 import { sendPush } from "@/lib/push";
-import { alertGift, alertNewShop, alertPay, alertStamp } from "@/lib/telegram";
+import { alertGift, alertNewShop, alertStamp } from "@/lib/telegram";
 import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
 import { gate, note, TRAP, trapped } from "@/lib/guard";
@@ -595,26 +595,6 @@ export async function unstamp(moment: number): Promise<{ ok: boolean; error?: st
   if (!Number.isInteger(moment) || moment <= 0) return { ok: false, error: "invalid" };
   const res = await call<{ ok: boolean; error?: string; card?: CardView }>("unstamp", { p_moment: moment });
   return res ?? { ok: false, error: "network" };
-}
-
-/** The owner chose a way to pay and says the money is sent: one payment waits for the founder's word. */
-export async function payRequest(method: string): Promise<{ ok: boolean; months?: number; error?: string }> {
-  const res = await call<{ ok: boolean; months?: number; error?: string }>("pay_request", { p_method: method });
-  // the founder's Telegram: money on its way (or a call wanted)
-  if (res?.ok) {
-    const me = await getMe();
-    if (me) after(() => alertPay(me.id, method));
-  }
-  revalidatePath("/shop");
-  return res ?? { ok: false, error: "network" };
-}
-
-/** The founder's word on a payment: the money came (the year starts) or it did not. */
-export async function adminPaymentDecide(id: string, paid: boolean): Promise<boolean> {
-  if (!UUID.test(id)) return false;
-  const res = await call<{ ok: boolean }>("admin_payment_decide", { p_id: id, p_paid: paid });
-  revalidatePath("/admin/payments");
-  return !!res?.ok;
 }
 
 /** The founder writes a line in the books: what came in (in) or what the business spent (out) — on what, how much (dinars, millimes if any), which day (today in Tunis when not said), its kind. */

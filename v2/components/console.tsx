@@ -141,8 +141,8 @@ export function Stat({ label, value, sub, tone = "ink", icon: Icon }: { label: s
 }
 
 /** A row of tiles that reflows: four across on a wide screen, two on a small one. */
-export const Stats = ({ children, cols = 4 }: { children: ReactNode; cols?: 3 | 4 | 5 | 6 }) => (
-  <div className={`grid gap-3 ${{ 3: "grid-cols-2 lg:grid-cols-3", 4: "grid-cols-2 lg:grid-cols-4", 5: "grid-cols-2 md:grid-cols-3 xl:grid-cols-5", 6: "grid-cols-2 md:grid-cols-3 xl:grid-cols-6" }[cols]}`}>{children}</div>
+export const Stats = ({ children, cols = 4 }: { children: ReactNode; cols?: 2 | 3 | 4 | 5 | 6 }) => (
+  <div className={`grid gap-3 ${{ 2: "grid-cols-2", 3: "grid-cols-2 lg:grid-cols-3", 4: "grid-cols-2 lg:grid-cols-4", 5: "grid-cols-2 md:grid-cols-3 xl:grid-cols-5", 6: "grid-cols-2 md:grid-cols-3 xl:grid-cols-6" }[cols]}`}>{children}</div>
 );
 
 /** A side box's lines: what it is on the start side, how it stands on the end side (and a quiet line under). */

@@ -77,7 +77,6 @@ export async function GET(request: NextRequest) {
     const h = tunisHour(s.created_at);
     return (h >= 19 || h < 8) && !stamped.has(s.id);
   });
-  const { count: waitingPay } = await db.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending");
 
   const text = [
     `☀️ <b>صباح الخير · Pointili البارح</b> (${yesterday})`,
@@ -86,7 +85,6 @@ export async function GET(request: NextRequest) {
     list(born.map((s) => esc(s.name))),
     `🎟 تامبونات لحرفاء حقيقيين: <b>${realYesterday.length}</b> في ${shopsYesterday.length} محلّات`,
     list(shopsYesterday.map(esc), 6),
-    waitingPay ? `💰 طلبات خلاص تستنّى: <b>${waitingPay}</b>` : "",
     "",
     `📞 <b>عيّطلهم اليوم</b>`,
     endsToday.length ? `⏳ التجربة توفى اليوم (ويخدمو بيها):\n${list(endsToday.map((s) => esc(s.name)))}` : "",

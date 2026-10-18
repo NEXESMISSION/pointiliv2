@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 import { PlanImage } from "@/components/PlanImage";
-import { BadgeCheck, CalendarPlus, Download, Hourglass } from "lucide-react";
+import { BadgeCheck, CalendarPlus, Download } from "lucide-react";
 import { AdminBookAdd, AdminBookDelete } from "@/components/AdminBooks";
-import { AdminPayActions } from "@/components/AdminPayActions";
 import { box, Card, Cell, CFile, Empty, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
-import { BankMark, CardMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
+import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
 import { pretty } from "@/lib/phone";
 import { call } from "@/lib/supabase";
 import { fill, monthsSaid, t } from "@/lib/t";
@@ -24,7 +23,6 @@ type Line = {
   shop: { id: string; name: string };
   owner: Who;
 };
-type Waiting = { id: string; method: string; months: number; amount: number; at: string; shop: { id: string; name: string }; owner: Who };
 /** a line the founder wrote himself, either side */
 type Hand = { id: number; side: "in" | "out"; on: string; amount: number; what: string; kind: string };
 type Books = {
@@ -39,14 +37,12 @@ type Books = {
   paying: number;
   rows: Line[];
   lines: Hand[];
-  waiting: Waiting[];
 };
 /** the income book: a shop's line, or a line by hand, in one order */
 type Income = { key: string; at: string; plan?: Line; hand?: Hand };
 
 const TZ = "Africa/Tunis";
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", year: "numeric", timeZone: TZ }).format(new Date(iso));
-const when = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: TZ }).format(new Date(iso));
 // 1 440, not 1440: a sum read at a glance (47,35 when there are millimes)
 const dt = (n: number) => new Intl.NumberFormat("fr-TN", { maximumFractionDigits: 3 }).format(n);
 const WAYS: Record<string, { label: string; mark: ReactNode }> = {
@@ -55,8 +51,6 @@ const WAYS: Record<string, { label: string; mark: ReactNode }> = {
   virement: { label: t.payVirement, mark: <BankMark className="size-6" /> },
   versement: { label: t.payVersement, mark: <CashMark className="size-6" /> },
   mandat: { label: t.payMandat, mark: <PostMark className="size-6" /> },
-  card: { label: t.payCard, mark: <CardMark className="size-6" /> },
-  contact: { label: t.aPayContact, mark: <span className="grid size-6 place-items-center rounded-[0.5rem] bg-[#25D366] text-[0.8125rem] text-white">☎</span> },
 };
 
 function Way({ method }: { method: string | null }) {
@@ -129,14 +123,15 @@ function Period({ title, inn, out }: { title: string; inn: number; out: number }
  * since the start (the shops' subscriptions, and the lines he wrote himself),
  * the shops paid right now and the months added with no money. What went
  * out, under each of them, and what is left. One line to write a line of
- * either side by hand. The payments owners said are on their way (his two
- * buttons). Then the two books side by side on a wide screen: what came in
+ * either side by hand. (No payment waits here for an answer: an owner pays,
+ * then calls or sends the receipt on WhatsApp, and the founder turns the
+ * year on from the shop's page.) Then the two books side by side on a wide screen: what came in
  * — every time a shop's access was turned on or stopped, and his own lines,
  * in one order — and what went out. «نزّل Excel» saves either as a
  * spreadsheet.
  */
 export default async function AdminPayments() {
-  const b = (await call<Books>("admin_ledger")) ?? { today: "", month: 0, year: 0, all: 0, out_month: 0, out_year: 0, out_all: 0, extra_months: 0, paying: 0, rows: [], lines: [], waiting: [] };
+  const b = (await call<Books>("admin_ledger")) ?? { today: "", month: 0, year: 0, all: 0, out_month: 0, out_year: 0, out_all: 0, extra_months: 0, paying: 0, rows: [], lines: [] };
   const hand = b.lines ?? [];
   const spent = hand.filter((l) => l.side === "out");
   const income: Income[] = [...b.rows.map((l) => ({ key: `p${l.id}`, at: l.at, plan: l })), ...hand.filter((l) => l.side === "in").map((l) => ({ key: `h${l.id}`, at: l.on, hand: l }))].sort((x, y) =>
@@ -160,9 +155,8 @@ export default async function AdminPayments() {
         <Period title="من الأوّل" inn={b.all} out={b.out_all} />
       </div>
       <div className="mt-4">
-        <Stats cols={3}>
+        <Stats cols={2}>
           <Stat icon={BadgeCheck} label="محلات خلّصت" value={b.paying} sub="الأبونمان متاعهم يخدم توّا" tone="mint" />
-          <Stat icon={Hourglass} label="قالو خلّصنا" value={b.waiting.length} sub={b.waiting.length ? "ثبّت كي توصلك الفلوس" : "حتى حد يستنّى"} tone={b.waiting.length ? "brand" : "ink"} />
           <Stat icon={CalendarPlus} label="شهور زيادة" value={b.extra_months} sub="تعطاو بلا فلوس" />
         </Stats>
       </div>
@@ -170,31 +164,6 @@ export default async function AdminPayments() {
       <Card className="mt-5" title="زيد سطر" hint="فلوس دخلت ولا خرجت، تكتبها بيدك">
         <AdminBookAdd today={b.today} />
       </Card>
-
-      {b.waiting.length > 0 && (
-        <Card className="mt-5" title="قالو خلّصنا" hint="ثبّت كي توصلك الفلوس، والأبونمان يخدم وحدو" pad={false}>
-          <Table head={["المحل", "كيفاش خلّص", "شهور", "وقتاش", ""]} words={[1]}>
-            {b.waiting.map((w) => (
-              <Row key={w.id}>
-                <Cell strong>
-                  {w.shop.name}
-                  <Owner who={w.owner} />
-                </Cell>
-                <Cell>
-                  <Way method={w.method} />
-                </Cell>
-                <Cell n>{w.months}</Cell>
-                <Cell n muted>
-                  {when(w.at)}
-                </Cell>
-                <Cell className="text-end">
-                  <AdminPayActions id={w.id} />
-                </Cell>
-              </Row>
-            ))}
-          </Table>
-        </Card>
-      )}
 
       {/* in and out, side by side on a wide screen */}
       <div className="mt-5 grid items-start gap-5 xl:grid-cols-[1.35fr_1fr]">

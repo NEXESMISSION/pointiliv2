@@ -3,8 +3,9 @@ import { service } from "@/lib/supabase";
 
 /**
  * The founder's alerts on Telegram: a word on his phone when something worth
- * a call happens — a shop opened, its first real customer, a milestone, a
- * payment asked, «كلّمنا» tapped — and a digest every morning.
+ * a call happens — a shop opened, its first real customer, a milestone,
+ * «كلّمنا» tapped — and a digest every morning. (Paying is not one of them:
+ * the owner calls or sends the receipt on WhatsApp, and that is the word.)
  *
  * TELEGRAM_BOT_TOKEN (from @BotFather) and TELEGRAM_CHAT_ID (scripts/telegram.mjs
  * finds it) in the environment; without them nothing is sent, quietly. Robots,
@@ -159,17 +160,6 @@ export async function alertGift(moment: number): Promise<void> {
   const f = await shopFacts({ shop: m.shop_id });
   if (!f) return;
   await tg([`🎁 <b>أوّل كادو تعطى</b>`, shopLine(f), m.gift ? esc(m.gift) : "", "الدورة كاملة خدمت عندو: وقت مزيان باش تعيّطلو."].filter(Boolean).join("\n"), shopButtons(f));
-}
-
-/** The owner says the money is sent (or asks to be called about paying). */
-export async function alertPay(owner: string, method: string): Promise<void> {
-  const f = await shopFacts({ owner });
-  if (!f) return;
-  const how: Record<string, string> = { contact: "يحب تعيّطلو", d17: "D17", virement: "فيرمان", versement: "فرسمان", cash: "كاش", mandat: "ماندا" };
-  await tg([`💰 <b>طلب خلاص</b>`, shopLine(f), `الطريقة: ${esc(how[method] ?? method)}`, "ثبّت وفعّل الأبونمان من الحسابات."].join("\n"), [
-    ...shopButtons(f),
-    [{ text: "💳 الحسابات", url: `${SITE}/admin/payments` }],
-  ]);
 }
 
 /** The owner tapped «كلّمنا» (on the trial's line): he wants a word now. */
