@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { QrCode, ScanLine } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
-import { CardTap } from "@/components/CardTap";
 import { CardWheel } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
 import { MyCode } from "@/components/MyCode";
@@ -62,10 +61,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
     <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
       <Top back={cardsHome(me)} />
       <div className="mx-auto mt-2 w-full max-w-[min(100%,52dvh)] shrink-0 animate-rise">
-        {/* the card opens: how far the gift is, and how the next tampon is taken (customers kept tapping it) */}
-        <CardTap shop={card.shop.name} gift={card.shop.gift ?? ""} stamps={card.stamps} goal={card.shop.goal ?? 10} ready={ready}>
-          <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} />
-        </CardTap>
+        <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} />
       </div>
       {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.8125rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
 
@@ -77,6 +73,16 @@ export default async function CardPage({ params, searchParams }: { params: Promi
         <p className="mt-2.5 shrink-0 text-center text-[0.8125rem] text-muted">
           {fill(t.cardLast, { when: when(card.last_at) })}
           {card.gifts > 0 ? ` · ${fill(t.cardGiftsTaken, { n: card.gifts })}` : ""}
+        </p>
+      )}
+
+      {/* How the next tampon is taken, in the middle of the screen rather than behind a tap on the
+          card. The sheet that used to hold it said what the card already says — how far the gift is
+          — and then one sentence that was not anywhere else; so the sentence is here, in the space
+          that was blank under the card and was the most tapped dead area of the app (18 Oct 2026). */}
+      {!ready && (
+        <p className="my-auto shrink-0 text-balance px-6 py-3 text-center text-[0.9375rem] leading-relaxed text-muted">
+          {fill(t.cardHow, { shop: card.shop.name })}
         </p>
       )}
 

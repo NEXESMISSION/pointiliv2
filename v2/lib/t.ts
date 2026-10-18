@@ -972,6 +972,8 @@ export const t = {
   clipLine3: "قهوة، ريستو، حانوت… والكادو يستنّاه في تليفونو",
   clipSkip: "تخطّى",
   // the customer's card, simpler (17 Oct 2026): one quiet line, one thing to do
+  // on the card itself, in the space under it: the one thing the card does not already say
+  cardHow: "كل مرّة تشري من {shop}، سكاني الكود اللي عند الكاسة، والتامبون يطيح وحدو على الكارط هاذي.",
   cardLast: "آخر تامبون: {when}",
   cardGiftsTaken: "خذيت {n} كادو هوني",
   giftShowCounter: "ورّي الكود في الكاسة",
