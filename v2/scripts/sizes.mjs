@@ -241,6 +241,14 @@ const SCREENS = [
   { name: "public-prix", path: "/prix", read: true },
 
   { name: "customer-wallet", as: "customer", before: () => giftBack(), path: "/" },
+  // the customer's app built again, beside the live one (/next): the cards, and a card that opens where it is
+  { name: "next-home", as: "customer", path: "/next" },
+  { name: "next-home-open", as: "customer", path: "/next", act: async (p) => {
+    // on a short screen the list scrolls: the first card may start below the fold
+    const card = p.locator("button[aria-expanded]").first();
+    await card.scrollIntoViewIfNeeded();
+    await card.click({ timeout: 15000 });
+  } },
   {
     name: "customer-gift-code",
     as: "customer",
