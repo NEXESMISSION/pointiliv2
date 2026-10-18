@@ -21,5 +21,5 @@ export default async function NextCustomerHome({ searchParams }: { searchParams:
     : null;
   const asked = (await searchParams).look;
   const look: Look = asked === "b" || asked === "c" ? asked : "a";
-  return <NextHome name={me.name ?? ""} code={me.code ?? null} svg={svg} cards={cards} look={look} />;
+  return <NextHome me={me.id} name={me.name ?? ""} code={me.code ?? null} svg={svg} cards={cards} look={look} />;
 }

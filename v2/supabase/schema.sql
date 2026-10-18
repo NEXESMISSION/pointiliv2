@@ -2867,6 +2867,16 @@ begin
       'ping', 'pointili:' || (select s.signal from public.shops s where s.id = new.shop_id), false);
   exception when others then null;
   end;
+  -- and the person it happened to, on a topic of their own uuid (18 Oct 2026): their
+  -- cards are open on a phone at the counter while the shop scans, and they should
+  -- see the tampon land without being told to pull the page down. Their own id only,
+  -- never a shop's signal, which stays the counter's private radio.
+  begin
+    if tg_table_name = 'moments' then
+      perform realtime.send('{}'::jsonb, 'ping', 'pointili:p:' || (select c.user_id from public.cards c where c.id = new.card_id and c.user_id is not null), false);
+    end if;
+  exception when others then null;
+  end;
   return null;
 end $$;
 drop trigger if exists moments_ping on public.moments;

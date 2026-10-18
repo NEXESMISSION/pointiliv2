@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { QrCode, ScanLine, X } from "lucide-react";
+import { Go } from "@/components/next/Go";
+import { Live } from "@/components/next/Live";
 import { ShopMark } from "@/components/ShopMark";
 import { Mark } from "@/components/Tracker";
 import { t } from "@/lib/t";
@@ -23,7 +25,7 @@ import type { CardView } from "@/lib/types";
 
 export type Look = "a" | "b" | "c";
 
-export function NextHome({ name, code, svg, cards, look = "a" }: { name: string; code: string | null; svg: string | null; cards: CardView[]; look?: Look }) {
+export function NextHome({ me, name, code, svg, cards, look = "a" }: { me: string; name: string; code: string | null; svg: string | null; cards: CardView[]; look?: Look }) {
   const [codeOpen, setCodeOpen] = useState(false);
   const [pick, setPick] = useState(0);
   const first = (name.split(" ")[0] ?? "").trim();
@@ -37,6 +39,8 @@ export function NextHome({ name, code, svg, cards, look = "a" }: { name: string;
   return (
     <main className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
       <Mark screen={`next-home-${look}`} />
+      {/* the tampon lands here by itself: no pull to refresh */}
+      <Live me={me} />
 
       <header className="flex shrink-0 items-center justify-between pt-2">
         <Link href="/me" aria-label={t.account} className="press grid size-11 place-items-center rounded-full bg-surface text-[1.0625rem] font-bold text-ink shadow-card">
@@ -66,9 +70,9 @@ export function NextHome({ name, code, svg, cards, look = "a" }: { name: string;
         >
           <QrCode className="size-5" /> الكود متاعي
         </button>
-        <Link href="/scan" className="press flex h-[3.5rem] items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(108_71_255/0.9)]">
-          <ScanLine className="size-5" /> سكاني
-        </Link>
+        <Go href="/scan" icon={<ScanLine className="size-5" />} className="flex h-[3.5rem] items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(108_71_255/0.9)]">
+          سكاني
+        </Go>
       </div>
 
       {/* the code: one screen, white, nothing drawn around it — a counter's camera reads it at arm's length */}
