@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, ExternalLink, Send } from "lucide-react";
 import { handoffPath } from "@/app/actions";
+import { Sheet, SheetGo } from "@/components/Client";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
 import { installApp, isIphone, outsideHref, startPwa, useCanInstall, useInApp, useIosBrowser } from "@/lib/pwa";
@@ -175,7 +176,6 @@ export function InstallPopup({ where, who, show, force = false }: { where: strin
   const can = useCanInstall();
   const ios = useIosBrowser();
   const [open, setOpen] = useState(false);
-  const [leaving, setLeaving] = useState(false);
   const done = useRef(false);
   useEffect(() => {
     if (!(can || ios) || done.current || !(show || force)) return;
@@ -193,33 +193,28 @@ export function InstallPopup({ where, who, show, force = false }: { where: strin
   // an iPhone: no dialog to open, so the sheet is the guide itself
   if (!can) return <IosGuide where={`popup · ${where}`} onClose={() => setOpen(false)} />;
 
-  const close = () => {
-    setLeaving(true);
-    setTimeout(() => setOpen(false), 220);
-  };
   const later = () => {
     signal("pwa_later", where);
-    close();
+    setOpen(false);
   };
   const yes = () => {
-    close();
+    setOpen(false);
     void installApp(`popup · ${where}`);
   };
   return (
-    <div className={`fixed inset-0 z-50 flex items-end justify-center bg-[rgb(20_16_40/0.5)] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-opacity duration-200 ${leaving ? "opacity-0" : "animate-fade"}`} role="dialog" aria-modal="true" aria-label={t.installApp} onClick={later}>
-      <div className="w-full max-w-sm rounded-[1.75rem] bg-surface p-5 text-center text-ink shadow-[0_30px_70px_-25px_rgb(20_16_40/0.6)]" style={{ animation: "news-in 420ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
-        <style>{`@keyframes news-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }`}</style>
-        <Icon3D name="phone" size={64} className="mx-auto animate-float" />
-        <h2 className="mt-2 text-balance text-[1.25rem] font-bold leading-tight">{t.installApp}</h2>
-        <p className="mx-auto mt-1.5 max-w-[17rem] text-balance text-[0.9375rem] leading-snug text-body">{t.installPopupBody}</p>
-        <button type="button" onClick={yes} className="press mt-4 flex h-[3.25rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
+    <Sheet
+      label={t.installApp}
+      icon={<Icon3D name="phone" size={64} className="mx-auto animate-float" />}
+      title={t.installApp}
+      under={t.installPopupBody}
+      onClose={later}
+      action={
+        <SheetGo onClick={yes}>
           <Download className="size-5" /> {t.installPopupYes}
-        </button>
-        <button type="button" onClick={later} className="press mt-1 h-10 w-full text-[0.9375rem] font-semibold text-muted">
-          {t.installPopupLater}
-        </button>
-      </div>
-    </div>
+        </SheetGo>
+      }
+      dismiss={t.installPopupLater}
+    />
   );
 }
 
@@ -259,31 +254,29 @@ export function IosGuide({ where, onClose }: { where: string; onClose: () => voi
   };
   const now = steps[step]!;
   return (
-    <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-[rgb(20_16_40/0.5)] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" role="dialog" aria-modal="true" aria-label={t.iosGuideTitle} onClick={onClose}>
-      <style>{`@keyframes ios-ring { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.25; } } .ios-ring { animation: ios-ring 1.4s ease-in-out infinite; }`}</style>
-      <div className="w-full max-w-sm rounded-[1.75rem] bg-surface p-4 text-center text-ink shadow-[0_30px_70px_-25px_rgb(20_16_40/0.6)]" onClick={(e) => e.stopPropagation()}>
-        <p className="text-[0.8125rem] font-bold text-muted">
-          {t.iosGuideTitle} · <bdi className="num">{step + 1}/3</bdi>
-        </p>
-        <div key={step} className="mt-2.5 animate-fade overflow-hidden rounded-[1.25rem] bg-canvas ring-1 ring-line" dir="ltr">
-          {now.pic}
-        </div>
-        <h2 className="mt-3 text-[1.25rem] font-bold leading-tight">
-          <Mixed text={now.title} />
-        </h2>
-        <p className="mx-auto mt-1 max-w-[19rem] text-balance text-[0.8125rem] leading-snug text-body">
-          <Mixed text={now.hint} />
-        </p>
-        <div className="mt-3 flex justify-center gap-1.5" aria-hidden>
-          {steps.map((_, i) => (
-            <span key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-brand" : "w-1.5 bg-line"}`} />
-          ))}
-        </div>
-        <button type="button" onClick={next} className="press mt-3 h-[3.25rem] w-full rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
-          {last ? t.iosDone : t.iosNext}
-        </button>
+    <Sheet
+      label={t.iosGuideTitle}
+      icon={
+        <>
+          <style>{`@keyframes ios-ring { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.25; } } .ios-ring { animation: ios-ring 1.4s ease-in-out infinite; }`}</style>
+          <p className="text-[0.8125rem] font-bold text-muted">{t.iosGuideTitle}</p>
+          {/* the phone's own screen, drawn: which step it is is told by the dots under it, not by «1/3» */}
+          <div key={step} className="mt-2 animate-fade overflow-hidden rounded-[1.25rem] bg-canvas ring-1 ring-line" dir="ltr">
+            {now.pic}
+          </div>
+        </>
+      }
+      title={<Mixed text={now.title} />}
+      under={<Mixed text={now.hint} />}
+      onClose={onClose}
+      action={<SheetGo onClick={next}>{last ? t.iosDone : t.iosNext}</SheetGo>}
+    >
+      <div className="mt-3 flex justify-center gap-1.5" aria-hidden>
+        {steps.map((_, i) => (
+          <span key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-brand" : "w-1.5 bg-line"}`} />
+        ))}
       </div>
-    </div>
+    </Sheet>
   );
 }
 

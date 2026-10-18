@@ -1,18 +1,12 @@
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { Back } from "@/components/Back";
 
-/** A screen's top: a round back button — and, on a list screen, the title under it. */
+/** A screen's top: the one back button of the app (components/Back) — and, on
+ *  a list screen, the title under it. */
 export function Top({ back, title, hint, end, children }: { back?: string; title?: string; hint?: string; end?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <header className="shrink-0 pt-2">
       <div className="flex items-center justify-between gap-3">
-        {back ? (
-          <Link href={back} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label="back">
-            <ChevronRight className="size-5" />
-          </Link>
-        ) : (
-          <span className="block size-11" aria-hidden />
-        )}
+        {back ? <Back home={back} /> : <span className="block size-11" aria-hidden />}
         {end}
       </div>
       {title && <Heading title={title} hint={hint} className="mt-[2.2dvh]" />}

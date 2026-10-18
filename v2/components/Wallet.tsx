@@ -1,6 +1,7 @@
 import Link from "next/link";
 import QRCode from "qrcode";
-import { ChevronLeft, ChevronRight, Lock, QrCode, ScanLine } from "lucide-react";
+import { ChevronLeft, Lock, QrCode, ScanLine } from "lucide-react";
+import { Back } from "@/components/Back";
 import { InstallApp, InstallPopup } from "@/components/InstallApp";
 import { MyCode } from "@/components/MyCode";
 import { Pass } from "@/components/Pass";
@@ -30,11 +31,11 @@ export async function Wallet({ me, cards, back }: { me: Me; cards: CardView[]; b
       {!back && <InstallPopup where="wallet" who={me.id} show={!(me.seen ?? []).includes("install")} />}
       <header className="flex shrink-0 items-center justify-between pt-2">
         {back ? (
-          <Link href={back} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
-            <ChevronRight className="size-5" />
-          </Link>
+          <Back home={back} />
         ) : (
-          <Link href="/me" className="press grid size-11 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[0.9375rem] font-bold text-white shadow-card" aria-label={t.account}>
+          // the way to the account: the person's own initial, quiet — coral is a gift
+          // here, and an account is not one (the founder, 18 Oct 2026)
+          <Link href="/me" className="press grid size-11 place-items-center rounded-full bg-surface text-[1.0625rem] font-bold text-ink shadow-card" aria-label={t.account}>
             {(first?.[0] ?? "؟").toUpperCase()}
           </Link>
         )}

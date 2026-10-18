@@ -98,7 +98,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
                 svg={svg}
                 gift={card.won ?? card.shop.gift}
                 startOpen={show === "1"}
-                className="press mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(255_107_74/0.6)]"
+                className="press mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-[1.25rem] bg-coral text-[1.0625rem] font-bold text-white"
               >
                 <QrCode className="size-6" /> {t.giftShowCounter}
               </MyCode>
