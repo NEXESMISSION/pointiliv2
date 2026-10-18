@@ -227,6 +227,11 @@ const press = (page, name) => page.getByRole("button", { name, exact: true }).fi
 const SCREENS = [
   { name: "public-welcome", path: "/" },
   { name: "public-welcome-ad", path: "/?utm_source=fb" },
+  // the four things a computer can show around the front door, to be chosen between
+  { name: "desk-1-sides", path: "/?desk=1", wait: 2500 },
+  { name: "desk-2-behind", path: "/?desk=2", wait: 2500 },
+  { name: "desk-3-quiet", path: "/?desk=3", wait: 2500 },
+  { name: "desk-4-edges", path: "/?desk=4", wait: 2500 },
   { name: "public-join", path: "/join" },
   { name: "public-login", path: "/login" },
   { name: "public-forgot", path: "/forgot" },

@@ -29,7 +29,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <JsonLd data={faqJsonLd(FAQ.slice(0, 5).flatMap((f) => [{ q: f.q, a: f.a }, f.fr]))} />
         {/* somebody who has signed in on this phone before is offered the way back in first */}
         {/* from an ad (Facebook's click id, or the ad's utm): an owner, most likely — the shop's door alone */}
-        <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} />
+        <Welcome video={help.video1} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} desk={["1", "2", "3", "4"].includes(String(q.desk)) ? (String(q.desk) as "1" | "2" | "3" | "4") : undefined} />
       </>
     );
   }
