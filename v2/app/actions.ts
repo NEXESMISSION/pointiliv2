@@ -299,12 +299,13 @@ export async function scan(token: string): Promise<ScanResult> {
     const { data, error } = await supabase.rpc("stamp", { p_token: token, p_hold: hold });
     if (error || !data) return { kind: "error", code: "network" };
     if (hold) keepHeld(held.filter(([k]) => k !== token));
-    const res = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null };
+    const res = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null; prizes?: { id?: number; name: string; chance: number }[] | null };
     if (res.ok && res.card) {
       const c = res.card;
       // the founder's Telegram: a shop's first real customer, then 5, 10, 25… (lib/telegram)
       after(() => alertStamp(c.shop.id, c.id));
-      return { kind: "stamped", card: c, gift: !!res.gift, item: res.item ?? null };
+      // the wheel's prizes come back only when this scan filled the card in a wheel shop: the turn is spun there and then
+      return { kind: "stamped", card: c, gift: !!res.gift, item: res.item ?? null, prizes: res.prizes ?? null };
     }
     return { kind: "error", code: res.error ?? "invalid", card: res.card, next_at: res.next_at, shop: res.shop };
   }
@@ -343,11 +344,12 @@ export async function quickJoin(token: string, name: string, phoneRaw: string, p
   else jar.delete(HOLD);
   const { data, error } = await made.supabase.rpc("stamp", { p_token: token, p_hold: hold });
   if (error || !data) return { ok: true, res: { kind: "error", code: "network" } };
-  const r = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null };
+  const r = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null; prizes?: { id?: number; name: string; chance: number }[] | null };
   if (r.ok && r.card) {
     const c = r.card;
     after(() => alertStamp(c.shop.id, c.id));
-    return { ok: true, res: { kind: "stamped", card: c, gift: !!r.gift, item: r.item ?? null } };
+    // an account made at the counter can fill a card at once: its turn is spun on this screen too
+    return { ok: true, res: { kind: "stamped", card: c, gift: !!r.gift, item: r.item ?? null, prizes: r.prizes ?? null } };
   }
   return { ok: true, res: { kind: "error", code: r.error ?? "invalid", card: r.card, next_at: r.next_at, shop: r.shop } };
 }

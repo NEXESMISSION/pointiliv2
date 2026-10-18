@@ -7,7 +7,9 @@ export type Prize = { id?: number; name: string; chance: number };
 export type SpinResult = { prize: string; index: number | null } | null;
 
 /** the wheel's colours, one per slice in turn — bright, and white text reads on each */
-const COLORS = ["#6C47FF", "#FF6B4A", "#12B76A", "#F59E0B", "#0EA5E9", "#EC4899", "#8B5CF6", "#14B8A6", "#EF4444", "#3B82F6", "#D946EF", "#22C55E"];
+export const WHEEL_COLORS = ["#6C47FF", "#FF6B4A", "#12B76A", "#F59E0B", "#0EA5E9", "#EC4899", "#8B5CF6", "#14B8A6", "#EF4444", "#3B82F6", "#D946EF", "#22C55E"];
+/** the colour a prize wears everywhere: on its slice, and on its chip while the owner builds the wheel */
+export const prizeColor = (i: number) => WHEEL_COLORS[i % WHEEL_COLORS.length]!;
 const short = (s: string) => (s.length > 13 ? `${s.slice(0, 12)}…` : s);
 
 /** a number cut to two places: the server and the phone work out sin and cos a hair apart, and the page must match */
@@ -22,6 +24,51 @@ function slice(a: number, b: number, r: number): string {
 }
 
 /**
+ * The wheel's face, slices and all: drawn the same whether it is being spun or
+ * only looked at, so the owner building it sees exactly the wheel his
+ * customers will. Turned (and, while turning, eased) from the outside.
+ */
+export function WheelFace({ prizes, turn = 0, spinning = false, onStopped, className = "" }: { prizes: Prize[]; turn?: number; spinning?: boolean; onStopped?: () => void; className?: string }) {
+  const n = Math.max(prizes.length, 1);
+  const seg = 360 / n;
+  return (
+    <svg
+      viewBox="0 0 200 200"
+      className={`size-full drop-shadow-[0_18px_30px_rgb(20_16_40/0.28)] ${className}`}
+      style={{ transform: `rotate(${turn}deg)`, transition: spinning ? "transform 4.6s cubic-bezier(0.15, 0.8, 0.12, 1)" : undefined }}
+      onTransitionEnd={onStopped}
+      role="img"
+      aria-label={prizes.map((p) => p.name).join("، ")}
+    >
+      <circle cx="100" cy="100" r="99" fill="#fff" />
+      {prizes.map((p, i) => (
+        <g key={`${p.name}-${i}`}>
+          <path d={slice(i * seg, (i + 1) * seg, 94)} fill={prizeColor(i)} stroke="#fff" strokeWidth="1.5" />
+          <text
+            x="100"
+            y="100"
+            // the slices in the lower half turn their words round, so none reads upside down
+            transform={`rotate(${r2((i + 0.5) * seg)} 100 100) translate(0 -58)${(i + 0.5) * seg > 90 && (i + 0.5) * seg < 270 ? " rotate(180 100 100)" : ""}`}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="#fff"
+            fontWeight="700"
+            fontSize={n > 8 ? 8 : n > 5 ? 9.5 : 11}
+            style={{ fontFamily: "inherit" }}
+          >
+            {short(p.name)}
+          </text>
+        </g>
+      ))}
+      {/* the little bulbs round the edge */}
+      {Array.from({ length: 24 }, (_, i) => (
+        <circle key={i} cx={r2(100 + 96.5 * Math.sin((i * 15 * Math.PI) / 180))} cy={r2(100 - 96.5 * Math.cos((i * 15 * Math.PI) / 180))} r="1.6" fill="#fff" opacity="0.9" />
+      ))}
+    </svg>
+  );
+}
+
+/**
  * The wheel: the owner's prizes as equal slices (what a slice is worth is its
  * chance, kept on the server — the wheel only shows where it lands). A tap
  * asks the server for the prize, then the wheel turns five times and slows
@@ -32,8 +79,7 @@ export function Wheel({ prizes, spin, onDone, size = 280, label = t.wheelSpin }:
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const won = useRef<string | null>(null);
-  const n = Math.max(prizes.length, 1);
-  const seg = 360 / n;
+  const seg = 360 / Math.max(prizes.length, 1);
 
   const go = async () => {
     if (busy) return;
@@ -61,41 +107,7 @@ export function Wheel({ prizes, spin, onDone, size = 280, label = t.wheelSpin }:
           <path d="M20 38 L6 8 Q20 0 34 8 Z" fill="#0F0E17" />
           <circle cx="20" cy="12" r="4" fill="#fff" />
         </svg>
-        <svg
-          viewBox="0 0 200 200"
-          className="size-full drop-shadow-[0_18px_30px_rgb(20_16_40/0.28)]"
-          style={{ transform: `rotate(${turn}deg)`, transition: busy ? "transform 4.6s cubic-bezier(0.15, 0.8, 0.12, 1)" : undefined }}
-          onTransitionEnd={() => {
-            if (won.current) onDone(won.current);
-          }}
-          role="img"
-          aria-label={prizes.map((p) => p.name).join("، ")}
-        >
-          <circle cx="100" cy="100" r="99" fill="#fff" />
-          {prizes.map((p, i) => (
-            <g key={`${p.name}-${i}`}>
-              <path d={slice(i * seg, (i + 1) * seg, 94)} fill={COLORS[i % COLORS.length]} stroke="#fff" strokeWidth="1.5" />
-              <text
-                x="100"
-                y="100"
-                // the slices in the lower half turn their words round, so none reads upside down
-                transform={`rotate(${r2((i + 0.5) * seg)} 100 100) translate(0 -58)${(i + 0.5) * seg > 90 && (i + 0.5) * seg < 270 ? " rotate(180 100 100)" : ""}`}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#fff"
-                fontWeight="700"
-                fontSize={n > 8 ? 8 : n > 5 ? 9.5 : 11}
-                style={{ fontFamily: "inherit" }}
-              >
-                {short(p.name)}
-              </text>
-            </g>
-          ))}
-          {/* the little bulbs round the edge */}
-          {Array.from({ length: 24 }, (_, i) => (
-            <circle key={i} cx={r2(100 + 96.5 * Math.sin((i * 15 * Math.PI) / 180))} cy={r2(100 - 96.5 * Math.cos((i * 15 * Math.PI) / 180))} r="1.6" fill="#fff" opacity="0.9" />
-          ))}
-        </svg>
+        <WheelFace prizes={prizes} turn={turn} spinning={busy} onStopped={() => won.current && onDone(won.current)} />
         {/* the hub: the button */}
         <button
           type="button"

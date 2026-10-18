@@ -25,7 +25,8 @@ export type CardView = {
 };
 
 export type ScanResult =
-  | { kind: "stamped"; card: CardView; gift: boolean; item?: string | null }
+  /** `prizes`: a wheel shop whose card this scan filled — the turn is spun here, on the scan's own screen */
+  | { kind: "stamped"; card: CardView; gift: boolean; item?: string | null; prizes?: { id?: number; name: string; chance: number }[] | null }
   | { kind: "held"; shop: string; color: string; shopKind: string }
   | { kind: "error"; code: string; card?: CardView; next_at?: string; shop?: string };
 

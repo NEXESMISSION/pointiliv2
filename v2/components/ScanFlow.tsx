@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
 import Link from "next/link";
 import { quickJoin, scan } from "@/app/actions";
+import { spin } from "@/app/actions-wheel";
+import { Sheet, SheetGo } from "@/components/Client";
+import { Wheel } from "@/components/Wheel";
 import { PhoneField } from "@/components/PhoneField";
 import { Pass } from "@/components/Pass";
 import { useScreen } from "@/components/Tracker";
@@ -26,6 +29,9 @@ const after = (ms: number) => ({ animationDelay: `${IMPACT_MS + ms}ms` });
 const CARD = "w-full max-w-[min(100%,50dvh)]";
 const CARD_GIFT = "w-full max-w-[min(100%,44dvh)]";
 const CARD_GIFT_LONG = "w-full max-w-[min(100%,44dvh)] [@media(max-height:700px)]:max-w-[min(100%,36dvh)]";
+/** the coral line under the card: the gift to show at the counter, or the turn that opens the wheel */
+const GIFT_LINE =
+  "press relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)] [@media(max-height:700px)]:mt-[1.4dvh] [@media(max-height:600px)]:py-2";
 
 /** The answer this phone got for a code, kept for the tab: the back button brings the «stamped» screen back, not a second scan of a code already used. */
 const kept = (token: string): ScanResult | null => {
@@ -102,7 +108,19 @@ function Checking() {
 
 function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   const { card, gift, item } = res;
-  const title = gift ? (card.shop.wheel ? t.wheelTitle : fill(t.won, { gift: card.shop.gift ?? "" })) : t.newStamp;
+  /**
+   * A wheel shop, and this scan filled the card: the turn is spun here (the
+   * founder, 18 Oct 2026: «the client should see what he got from the scan»).
+   * It used to send them to /c/[id] to spin, so the moment of winning was a
+   * page away from the moment of scanning. Once it has stopped, the prize
+   * stays on this screen, with the code to show at the counter.
+   */
+  const prizes = res.prizes ?? [];
+  const turn = gift && card.shop.wheel && card.spin && prizes.length >= 2 ? card.spin : null;
+  const [prize, setPrize] = useState<string | null>(card.won ?? null);
+  const [sheet, setSheet] = useState(!!turn);
+  const [spinning, setSpinning] = useState(false);
+  const title = gift ? (card.shop.wheel ? (prize ? fill(t.wheelWon, { prize }) : t.wheelTitle) : fill(t.won, { gift: card.shop.gift ?? "" })) : t.newStamp;
   // a gift with a long name (up to 60 letters) takes two lines: smaller on a short screen, and the card gives way
   const long = title.length > 24;
   return (
@@ -131,15 +149,52 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
         <Pass shop={card.shop} stamps={gift ? (card.shop.goal ?? card.stamps) : card.stamps} waiting={gift ? 0 : card.waiting_n} fresh />
       </div>
 
-      {/* the gift: one line to show at the counter, not a second card */}
+      {/* the gift: one line to show at the counter, not a second card. On the wheel it is the turn
+          itself — it opens the wheel back up here, and once spun it is the prize and its code */}
       {gift && (
-        <a
-          href={card.shop.wheel ? `/c/${card.id}` : `/c/${card.id}?show=1`}
-          className="press relative mt-[1.8dvh] flex w-full animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-[linear-gradient(150deg,#ffa183,#ff6b4a)] px-4 py-2.5 text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)] [@media(max-height:700px)]:mt-[1.4dvh] [@media(max-height:600px)]:py-2"
-          style={after(420)}
+        turn && !prize ? (
+          <button type="button" onClick={() => setSheet(true)} className={GIFT_LINE} style={after(420)}>
+            <Icon3D name="party" size={30} className="animate-float" /> {t.wheelGo}
+          </button>
+        ) : (
+          <a href={`/c/${card.id}?show=1`} className={GIFT_LINE} style={after(420)}>
+            <Icon3D name="gift" size={30} className="animate-float" /> {prize ? t.wheelShow : t.wonBody}
+          </a>
+        )
+      )}
+
+      {/* the wheel, where the scan happened */}
+      {turn && sheet && (
+        <Sheet
+          title={prize ? fill(t.wheelWon, { prize }) : t.wheelTitle}
+          under={prize ? t.wheelShow : t.wheelHint}
+          tone={prize ? "coral" : "brand"}
+          // mid-spin it holds: the server has already drawn the prize, and a tap away would lose the sight of it
+          hold={spinning}
+          onClose={() => setSheet(false)}
+          action={prize ? <SheetGo tone="coral" href={`/c/${card.id}?show=1`}>{t.wheelShow}</SheetGo> : undefined}
+          dismiss={prize ? t.done : undefined}
         >
-          <Icon3D name={card.shop.wheel ? "party" : "gift"} size={30} className="animate-float" /> {card.shop.wheel ? t.wheelGo : t.wonBody}
-        </a>
+          {prize && <Confetti count={110} />}
+          <div className="mt-3 flex justify-center">
+            <Wheel
+              prizes={prizes}
+              size="min(72vw, 38dvh, 19rem)"
+              spin={async () => {
+                setSpinning(true);
+                const r = await spin(turn, card.id);
+                if (!r) setSpinning(false);
+                return r;
+              }}
+              onDone={(won) => {
+                setSpinning(false);
+                setPrize(won);
+                navigator.vibrate?.([60, 40, 60]);
+                signal("wheel_won", won);
+              }}
+            />
+          </div>
+        </Sheet>
       )}
 
       <div className="mt-[3dvh] w-full animate-rise space-y-1.5 [@media(max-height:660px)]:mt-[2dvh]" style={after(500)}>

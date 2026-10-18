@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Check, ChevronRight, Plus } from "lucide-react";
+import { Check, ChevronRight, Plus, X } from "lucide-react";
 import { cardChange, saveCard } from "@/app/actions";
 import { setStampLogo } from "@/app/shop/card/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
@@ -12,7 +12,7 @@ import { Confetti } from "@/components/StampLand";
 import { useScreen } from "@/components/Tracker";
 import { CardConfirm, type CardImpact } from "@/components/CardConfirm";
 import { Btn, boxLook } from "@/components/ui";
-import type { Prize } from "@/components/Wheel";
+import { prizeColor, WheelFace, type Prize } from "@/components/Wheel";
 import { fill, sameGift, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { waitSays } from "@/lib/when";
@@ -83,7 +83,6 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
   const [spin, setSpin] = useState(!!wheel?.on);
   const [prizes, setPrizes] = useState<string[]>(() => (wheel?.prizes.length ? wheel.prizes.map((p) => p.name) : ideas.slice(0, 3)));
   const [fresh, setFresh] = useState("");
-  const chips = spin ? [...ideas, ...prizes].filter((x, i, a) => a.indexOf(x) === i) : ideas;
   const addPrize = () => {
     const name = fresh.trim().slice(0, 40);
     if (name.length < 2) return;
@@ -334,58 +333,103 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
 
         {step === GIFT && (
           <div className="mt-[2dvh]">
-            {/* the gifts — one of them; on the wheel, the same chips are what it holds (as many as wanted) —
-                and «الروليت» last, among them, for a shop the founder allowed it */}
-            <div className="flex flex-wrap gap-1.5">
-              {chips.map((idea) => {
-                const on = spin ? prizes.includes(idea) : gift === idea;
-                return (
+            {/* one gift, or the wheel: a shop the founder allowed it chooses between the two first — the
+                wheel is a way of giving, not a gift called «الروليت» among the others (it read as one) */}
+            {wheel && (
+              <div className="mb-2.5 grid grid-cols-2 gap-1 rounded-[1.125rem] bg-canvas p-1 [@media(max-height:700px)]:mb-1.5">
+                {[false, true].map((on) => (
                   <button
-                    key={idea}
+                    key={String(on)}
                     type="button"
-                    onClick={() => (spin ? setPrizes(on ? prizes.filter((x) => x !== idea) : prizes.length < 12 ? [...prizes, idea] : prizes) : setGift(idea))}
-                    aria-pressed={on}
-                    className={`press flex items-center gap-1 rounded-full px-3.5 py-2 text-[0.8125rem] font-semibold ${on ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}
+                    onClick={() => setSpin(on)}
+                    aria-pressed={spin === on}
+                    className={`press flex h-11 items-center justify-center gap-1.5 rounded-[0.875rem] text-[0.9375rem] font-bold [@media(max-height:700px)]:h-10 ${spin === on ? "bg-surface text-ink shadow-card" : "text-muted"}`}
                   >
-                    {spin && on && <Check className="size-3.5" strokeWidth={3} />}
-                    {idea}
+                    {on && <span className={`size-[1.125rem] rounded-full ${spin ? "animate-[spin_3s_linear_infinite]" : ""}`} style={{ background: WHEEL_DOT }} aria-hidden />}
+                    {on ? t.wheelOwnerTitle : t.wizGiftOne}
                   </button>
-                );
-              })}
-              {wheel && (
-                <button
-                  type="button"
-                  onClick={() => setSpin(!spin)}
-                  aria-pressed={spin}
-                  className={`press flex items-center gap-1.5 rounded-full py-2 pe-3.5 ps-2 text-[0.8125rem] font-bold ${spin ? "bg-ink text-white" : "bg-surface text-ink shadow-card"}`}
-                >
-                  <span className={`size-[1.125rem] rounded-full ${spin ? "animate-[spin_3s_linear_infinite]" : ""}`} style={{ background: WHEEL_DOT }} aria-hidden />
-                  {t.wheelOwnerTitle}
-                </button>
-              )}
-            </div>
-            {spin ? (
-              // one more prize, typed: added to the wheel, the field empty again
-              <div className="relative mt-2.5">
-                <input
-                  value={fresh}
-                  onChange={(e) => setFresh(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key !== "Enter") return;
-                    e.preventDefault();
-                    if (fresh.trim()) addPrize();
-                    else if (prizes.length >= 2) go(WAIT);
-                  }}
-                  placeholder={t.wizSpinPh}
-                  maxLength={40}
-                  aria-label={t.wizSpinPh}
-                  className={`block h-[3.25rem] w-full pe-14 ps-4 text-[16px] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)] ${boxLook}`}
-                />
-                <button type="button" onClick={addPrize} disabled={fresh.trim().length < 2} aria-label={t.wheelAdd} className="press absolute inset-y-1.5 end-1.5 grid w-10 place-items-center rounded-[0.875rem] bg-brand text-white disabled:opacity-30">
-                  <Plus className="size-5" strokeWidth={2.6} />
-                </button>
+                ))}
               </div>
+            )}
+            {spin ? (
+              <>
+                {/* the wheel as the customer will see it, drawn from the chips below: the owner builds it
+                    looking at it. It only appears where the question still fits without the page
+                    scrolling — on a phone the chips and the field take all there is, and the chips
+                    already wear the slices' colours, so nothing is lost by leaving it out there. */}
+                <div className="mx-auto w-[clamp(4.5rem,11dvh,8rem)] [@media(max-height:860px)]:hidden" aria-hidden>
+                  <WheelFace prizes={prizes.map((name) => ({ name, chance: 0 }))} />
+                </div>
+                {/* what it holds: each prize in its own slice's colour, the × takes it off */}
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {prizes.map((name, i) => (
+                    <span key={name} className="flex items-center gap-1 rounded-full py-1.5 pe-1.5 ps-3 text-[0.8125rem] font-bold text-white" style={{ background: prizeColor(i) }}>
+                      <bdi>{name}</bdi>
+                      <button
+                        type="button"
+                        onClick={() => setPrizes(prizes.filter((x) => x !== name))}
+                        aria-label={fill(t.wheelDrop, { prize: name })}
+                        className="press grid size-5 place-items-center rounded-full bg-white/25"
+                      >
+                        <X className="size-3.5" strokeWidth={3} />
+                      </button>
+                    </span>
+                  ))}
+                  {/* the trade's ideas it does not hold yet: quieter, and a + says what tapping does */}
+                  {prizes.length < 12 &&
+                    ideas
+                      .filter((idea) => !prizes.includes(idea))
+                      .map((idea) => (
+                        <button
+                          key={idea}
+                          type="button"
+                          onClick={() => setPrizes([...prizes, idea])}
+                          className="press flex items-center gap-1 rounded-full border border-dashed border-line px-3 py-1.5 text-[0.8125rem] font-semibold text-muted"
+                        >
+                          <Plus className="size-3.5" strokeWidth={3} />
+                          {idea}
+                        </button>
+                      ))}
+                </div>
+                {/* one more prize, typed: added to the wheel, the field empty again */}
+                <div className="relative mt-2.5 [@media(max-height:700px)]:mt-1.5">
+                  <input
+                    value={fresh}
+                    onChange={(e) => setFresh(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      e.preventDefault();
+                      if (fresh.trim()) addPrize();
+                      else if (prizes.length >= 2) go(WAIT);
+                    }}
+                    placeholder={t.wizSpinPh}
+                    maxLength={40}
+                    aria-label={t.wizSpinPh}
+                    className={`block h-[3.25rem] w-full pe-14 ps-4 text-[16px] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)] ${boxLook}`}
+                  />
+                  <button type="button" onClick={addPrize} disabled={fresh.trim().length < 2} aria-label={t.wheelAdd} className="press absolute inset-y-1.5 end-1.5 grid w-10 place-items-center rounded-[0.875rem] bg-brand text-white disabled:opacity-30">
+                    <Plus className="size-5" strokeWidth={2.6} />
+                  </button>
+                </div>
+                {/* two at least, or the wheel has nothing to land on */}
+                {prizes.length < 2 && <p className="mt-1.5 text-center text-[0.8125rem] font-semibold text-coral">{t.wheelCount}</p>}
+              </>
             ) : (
+              <>
+                <div className="flex flex-wrap gap-1.5">
+                  {ideas.map((idea) => (
+                    <button
+                      key={idea}
+                      type="button"
+                      onClick={() => setGift(idea)}
+                      aria-pressed={gift === idea}
+                      className={`press flex items-center gap-1 rounded-full px-3.5 py-2 text-[0.8125rem] font-semibold ${gift === idea ? "bg-brand text-white" : "bg-surface text-body shadow-card"}`}
+                    >
+                      {gift === idea && <Check className="size-3.5" strokeWidth={3} />}
+                      {idea}
+                    </button>
+                  ))}
+                </div>
               <input
                 value={ideas.includes(gift) ? "" : gift}
                 onChange={(e) => setGift(e.target.value)}
@@ -399,7 +443,8 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
                 maxLength={60}
                 aria-label={t.wizGiftPh}
                 className={`mt-2.5 block h-[3.25rem] w-full px-4 text-[16px] outline-none placeholder:text-faint focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)] ${boxLook}`}
-              />
+                />
+              </>
             )}
           </div>
         )}
