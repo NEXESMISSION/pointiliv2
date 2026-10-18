@@ -142,6 +142,9 @@ export function Scanner({
         <span className="size-11" />
       </div>
 
+      {/* one picker, reached from two places: the frame and the button under it */}
+      <input id="pl-photo" type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => void fromPhoto(e.target.files?.[0])} />
+
       <div className="absolute inset-0 grid place-items-center">
         {off ? (
           <div className="mx-8 rounded-[1.625rem] bg-white/10 p-6 text-center backdrop-blur">
@@ -149,21 +152,24 @@ export function Scanner({
             <p className="mt-1.5 text-[0.9375rem] text-white/80">{t.cameraOffBody}</p>
           </div>
         ) : (
-          // the frame follows the width, and the height too: it never reaches the hint and the buttons below
-          <div className="relative size-[min(68vw,20rem,40dvh)]">
+          // the frame follows the width, and the height too: it never reaches the hint and the buttons below.
+          // It is the picker too: the middle of it was the most tapped dead spot in the app — 19 taps on
+          // nothing — and somebody pressing the middle of a viewfinder is telling us the code is not being
+          // read. That is exactly what the photo is for (the founder, 18 Oct 2026).
+          <label htmlFor="pl-photo" className="press relative block size-[min(68vw,20rem,40dvh)] cursor-pointer" aria-label={t.photo}>
             {CORNERS.map((c) => (
               <span key={c} className={`absolute size-16 border-white ${c}`} />
             ))}
             <span className="absolute inset-x-6 top-1/2 h-0.5 animate-pulse rounded-full bg-white/80 shadow-[0_0_14px_white]" />
-          </div>
+          </label>
         )}
       </div>
 
-      <div className="safe-b absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-3 px-5">
+      <div className="safe-b absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-2.5 px-5">
         <p className="text-center text-[0.9375rem] font-medium text-white/90">{hint}</p>
-        <label className="press grid size-16 cursor-pointer place-items-center rounded-full border border-white/30 bg-white/15 backdrop-blur" aria-label={t.photo}>
-          <Camera className="size-7" />
-          <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => void fromPhoto(e.target.files?.[0])} />
+        {/* a word on it: a bare circle read as decoration, and the taps landed beside it */}
+        <label htmlFor="pl-photo" className="press flex h-12 cursor-pointer items-center gap-2 rounded-full border border-white/30 bg-white/15 px-5 text-[0.9375rem] font-bold backdrop-blur">
+          <Camera className="size-5" /> {t.photo}
         </label>
         {children}
       </div>
