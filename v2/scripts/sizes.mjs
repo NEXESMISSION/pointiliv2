@@ -265,6 +265,8 @@ const SCREENS = [
     },
   },
   { name: "customer-card", as: "customer", path: () => `/c/${cardBarber}` },
+  // the card tapped: the sheet is drawn on the body, so it is centred and whole whatever clips the page
+  { name: "customer-card-tap", as: "customer", path: () => `/c/${cardBarber}`, act: (p) => press(p, "كيفاش ناخذ تامبون؟") },
   // the card asks once for a word to this phone
   { name: "customer-card-push", as: "customer", before: () => notes(customer, ["card_hello", "coach", "logo_tip", "offer"]), path: () => `/c/${cardBarber}`, after: () => notes(customer, ALL_NOTES) },
   { name: "customer-me", as: "customer", path: "/me" },

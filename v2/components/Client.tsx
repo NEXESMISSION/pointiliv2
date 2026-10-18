@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { t } from "@/lib/t";
+
+/** a sheet is drawn on the body: nothing to subscribe to, false while the server renders */
+const never = () => () => {};
+const useBrowser = () => useSyncExternalStore(never, () => true, () => false);
 
 /*
  * The customer's screens, one look (the founder, 18 Oct 2026: «all the UIs of
@@ -67,6 +72,7 @@ export function Sheet({
   dismiss?: string;
   label?: string;
 }) {
+  const browser = useBrowser();
   useEffect(() => {
     if (hold) return;
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -76,7 +82,7 @@ export function Sheet({
 
   const bar = tone === "mint" ? "bg-mint" : tone === "coral" ? "bg-coral" : "bg-brand";
 
-  return (
+  const panel = (
     <div
       className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45 backdrop-blur-[2px] sm:items-center sm:p-4"
       role="dialog"
@@ -111,6 +117,12 @@ export function Sheet({
       </div>
     </div>
   );
+
+  // drawn on the body, never where it was written: a sheet sits inside the page's
+  // <main>, which is max-w-md, scrolls and clips, so «fixed» was measured against
+  // that column — the sheet came up off-centre and cut (the founder, 18 Oct 2026:
+  // «the popup dont get centred its croped»). CardWheel has always done this.
+  return browser ? createPortal(panel, document.body) : null;
 }
 
 /** The one button inside a sheet: full width, nothing beside it. Purple for
@@ -147,13 +159,14 @@ export function SheetGo({ children, tone = "brand", onClick, href }: { children:
  * whole job is to be held still.
  */
 export function FullSheet({ onClose, label, children }: { onClose: () => void; label?: string; children: ReactNode }) {
+  const browser = useBrowser();
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  return (
+  const panel = (
     <div className="safe-t safe-b fixed inset-0 z-50 flex animate-fade flex-col bg-white px-[clamp(1rem,5vw,1.5rem)] text-center text-ink" role="dialog" aria-modal="true" aria-label={label}>
       <div className="flex shrink-0 justify-end pt-2">
         <button type="button" onClick={onClose} className="press grid size-11 place-items-center rounded-full bg-canvas" aria-label={t.closeIt}>
@@ -163,4 +176,7 @@ export function FullSheet({ onClose, label, children }: { onClose: () => void; l
       <div className="flex min-h-0 flex-1 animate-rise flex-col items-center justify-center pb-[4dvh]">{children}</div>
     </div>
   );
+
+  // on the body, for the same reason as Sheet: the page's <main> clips and scrolls
+  return browser ? createPortal(panel, document.body) : null;
 }
