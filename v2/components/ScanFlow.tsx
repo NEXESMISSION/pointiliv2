@@ -303,9 +303,12 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
             <span className="relative">{busy ? t.checking : t.quickGo}</span>
             {!busy && <ArrowLeft className="held-arrow relative size-5" strokeWidth={2.6} />}
           </Btn>
-          <Link href={`/login?next=${next}`} className="press flex h-10 items-center justify-center text-[0.9375rem] font-semibold text-muted">
+          {/* the other door, and it has to look like one: as grey text under the button it read as a
+              note, and somebody who already has an account was left filling the form again
+              (the founder, 18 Oct 2026). The app's «line» button is what this is for. */}
+          <LinkBtn href={`/login?next=${next}`} kind="line" className="h-[3.25rem] text-[1rem]">
             {t.haveAccountLogin}
-          </Link>
+          </LinkBtn>
         </form>
       ) : (
         <div className="mt-[2.4dvh] w-full animate-rise space-y-2" style={after(340)}>
