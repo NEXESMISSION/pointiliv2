@@ -599,7 +599,10 @@ language sql stable security definer set search_path = '' as $$
                                'gift', case when s.wheel_on then coalesce((select m.gift from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null
                                                                              and m.wheel and m.spun_at is not null order by m.created_at, m.id limit 1), 'الروليت')
                                             else coalesce(c.gift, s.gift) end,
-                               'store', s.store_on, 'wheel', s.wheel_on),
+                               'store', s.store_on, 'wheel', s.wheel_on,
+                               -- two things a customer could not know and met only as a refusal (18 Oct 2026):
+                               -- how long between two tampons here, and whether this shop is stopped at all
+                               'gap', s.stamp_gap, 'paused', s.paused),
     -- the gift waiting, by its own name (a wheel's prize once spun; the card's gift otherwise)
     'won', (select m.gift from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null order by m.created_at, m.id limit 1),
     -- a wheel shop: the turn waiting to be spun (its gift is the prize once spun), and how many turns wait («دورات»)

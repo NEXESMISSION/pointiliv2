@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QrCode, ScanLine, X } from "lucide-react";
 import { Go } from "@/components/next/Go";
 import { Live } from "@/components/next/Live";
 import { ShopMark } from "@/components/ShopMark";
 import { Mark } from "@/components/Tracker";
 import { t } from "@/lib/t";
+import { nextTampon } from "@/lib/when";
 import type { CardView } from "@/lib/types";
 
 /*
@@ -30,10 +31,32 @@ export function NextHome({ me, name, code, svg, cards, look = "a" }: { me: strin
   const [pick, setPick] = useState(0);
   const first = (name.split(" ")[0] ?? "").trim();
   const ready = (c: CardView) => c.ready || (c.waiting_n ?? 0) > 0;
+  // the clock is read after mounting, never while the server renders: a time
+  // drawn on both sides never agrees, and it has to keep itself anyway
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const beat = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(beat);
+  }, []);
+
+  /**
+   * What this card has to say, in the order it matters: a shop that is stopped
+   * says so (the app looked broken when it was the shop that stopped); then a
+   * gift waiting; then, when another tampon cannot land yet, WHEN it can —
+   * the wait between two tampons used to be met only as a refusal after
+   * scanning (the founder, 18 Oct 2026).
+   */
   const line = (c: CardView) => {
-    const goal = c.shop.goal ?? 10;
-    const left = Math.max(goal - c.stamps, 0);
-    return ready(c) ? "الكادو متاعك حاضر" : `مازالولك ${left} على ${c.shop.gift ?? ""}`;
+    if (c.shop.paused) return "المحل موقّف توّا";
+    if (ready(c)) return "الكادو متاعك حاضر";
+    const gap = c.shop.gap ?? 0;
+    if (now && gap > 0 && c.last_at) {
+      const next = new Date(c.last_at).getTime() + gap * 60_000;
+      if (next > now) return `تامبون جديد ${nextTampon(new Date(next).toISOString())}`;
+    }
+    const left = Math.max((c.shop.goal ?? 10) - c.stamps, 0);
+    return `مازالولك ${left} على ${c.shop.gift ?? ""}`;
   };
 
   return (
@@ -102,12 +125,15 @@ export function NextHome({ me, name, code, svg, cards, look = "a" }: { me: strin
 
 type Bits = { cards: CardView[]; line: (c: CardView) => string; ready: (c: CardView) => boolean };
 
+/** a card's colour: a stopped shop goes grey (nothing will land on it), a gift is coral, else the shop's own */
+const tone = (c: CardView, ready: boolean) => (c.shop.paused ? "var(--color-faint)" : ready ? "var(--color-coral)" : c.shop.color);
+
 /** A — the shop's own colour, a block each: the card you are looking for is found by its colour. */
 function Blocks({ cards, line, ready }: Bits) {
   return (
     <div data-list className="mt-[2dvh] min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pb-2">
       {cards.map((c) => (
-        <div key={c.id} className="flex items-center gap-3 rounded-[1.5rem] px-3.5 py-3 text-white shadow-card" style={{ background: ready(c) ? "var(--color-coral)" : c.shop.color }}>
+        <div key={c.id} className="flex items-center gap-3 rounded-[1.5rem] px-3.5 py-3 text-white shadow-card" style={{ background: tone(c, ready(c)) }}>
           <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-[0.875rem] bg-white/15">
             <ShopMark shop={c.shop} size={26} />
           </span>
@@ -136,7 +162,7 @@ function Quiet({ cards, line, ready }: Bits) {
         const goal = c.shop.goal ?? 10;
         return (
           <div key={c.id} className="flex items-center gap-3 px-4 py-3.5">
-            <span className="h-10 w-1 shrink-0 rounded-full" style={{ background: ready(c) ? "var(--color-coral)" : c.shop.color }} aria-hidden />
+            <span className="h-10 w-1 shrink-0 rounded-full" style={{ background: tone(c, ready(c)) }} aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[1rem] font-bold text-ink">{c.shop.name}</span>
               <span className={`block truncate text-[0.8125rem] ${ready(c) ? "font-bold text-coral" : "text-muted"}`}>{line(c)}</span>
@@ -159,7 +185,7 @@ function One({ cards, pick, setPick, line, ready }: Bits & { pick: number; setPi
   const goal = c.shop.goal ?? 10;
   return (
     <div className="flex min-h-0 flex-1 flex-col justify-center">
-      <div className="mx-auto w-full rounded-[1.75rem] p-5 text-white shadow-card" style={{ background: ready(c) ? "var(--color-coral)" : c.shop.color }}>
+      <div className="mx-auto w-full rounded-[1.75rem] p-5 text-white shadow-card" style={{ background: tone(c, ready(c)) }}>
         <div className="flex items-center gap-3">
           <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-[1rem] bg-white/15">
             <ShopMark shop={c.shop} size={30} />
@@ -183,7 +209,7 @@ function One({ cards, pick, setPick, line, ready }: Bits & { pick: number; setPi
               onClick={() => setPick(i)}
               aria-current={i === pick}
               className={`press size-9 overflow-hidden rounded-full ring-2 ${i === pick ? "ring-ink" : "ring-transparent opacity-60"}`}
-              style={{ background: ready(x) ? "var(--color-coral)" : x.shop.color }}
+              style={{ background: tone(x, ready(x)) }}
               aria-label={x.shop.name}
             >
               <ShopMark shop={x.shop} size={22} />

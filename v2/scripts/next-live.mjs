@@ -106,6 +106,10 @@ try {
   }
   check("coming back to the tab looks again", back);
   check("  → still no reload", reloads.n === 0, `${reloads.n} reload(s)`);
+} catch (e) {
+  failed.push("the run itself");
+  console.error(`
+  the run broke: ${e?.stack || e}`);
 } finally {
   await browser.close();
   if (shopId) await admin.from("shops").delete().eq("id", shopId);

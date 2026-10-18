@@ -11,7 +11,7 @@ export type CardView = {
   /** a gift waits for the shop to hand it over */
   waiting: boolean;
   /** the shop, with this card's own goal and gift (the promise it started with) */
-  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; store?: boolean; wheel?: boolean };
+  shop: { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; store?: boolean; wheel?: boolean; /** minutes between two tampons here */ gap?: number | null; /** the shop is stopped: no tampon will land */ paused?: boolean };
   /** a wheel shop: the turn waiting to be spun (a gift moment's id) */
   spin?: number | null;
   /** a wheel shop: how many turns («دورات») wait to be spun */
