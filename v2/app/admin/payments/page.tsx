@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
 import { PlanImage } from "@/components/PlanImage";
-import { Download } from "lucide-react";
+import { BadgeCheck, CalendarPlus, Download, Hourglass } from "lucide-react";
 import { AdminBookAdd, AdminBookDelete } from "@/components/AdminBooks";
 import { AdminPayActions } from "@/components/AdminPayActions";
-import { Card, Cell, CFile, Empty, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
+import { box, Card, Cell, CFile, Empty, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
 import { BankMark, CardMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
 import { pretty } from "@/lib/phone";
 import { call } from "@/lib/supabase";
 import { fill, monthsSaid, t } from "@/lib/t";
 
-export const metadata = { title: "الحسابات", robots: { index: false } };
+export const metadata = { title: "الفلوس", robots: { index: false } };
 
 type Who = { name: string | null; phone: string | null };
 type Line = {
@@ -96,7 +96,33 @@ function Left({ n }: { n: number }) {
   const v = Math.round(n * 1000) / 1000;
   return <Num>{`${v > 0 ? "+" : v < 0 ? "−" : ""}${dt(Math.abs(v))}`}</Num>;
 }
-const leftTone = (n: number) => (n > 0 ? "mint" : n < 0 ? "coral" : "ink");
+/** One stretch of time: what is left, large (green above nothing, coral under), what came in and went out under it. */
+function Period({ title, inn, out }: { title: string; inn: number; out: number }) {
+  const left = inn - out;
+  return (
+    <div className={`${box} p-5`}>
+      <p className="text-[0.875rem] font-bold text-ink">{title}</p>
+      <p className={`mt-3 text-[2rem] font-bold leading-none ${left > 0 ? "text-mint" : left < 0 ? "text-coral" : "text-ink"}`}>
+        <Left n={left} /> <span className="text-[1rem] font-semibold text-muted">{t.payCurrency}</span>
+      </p>
+      <p className="mt-1.5 text-[0.75rem] text-muted">الباقي: اللي دخل ناقص اللي خرج</p>
+      <div className="mt-4 grid grid-cols-2 gap-3 border-t border-line/80 pt-3">
+        <div>
+          <span className="block text-[0.75rem] font-semibold text-muted">دخل</span>
+          <b className="text-[1rem] text-ink">
+            <Sum n={inn} />
+          </b>
+        </div>
+        <div>
+          <span className="block text-[0.75rem] font-semibold text-muted">خرج</span>
+          <b className="text-[1rem] text-ink">
+            <Sum n={out} />
+          </b>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /**
  * The founder's accounting room. What came in: this month, this year and
@@ -119,39 +145,35 @@ export default async function AdminPayments() {
 
   return (
     <Page
-      title={t.aPayments}
-      hint={t.aLedgerHint}
+      title="الفلوس"
+      hint="كل فلس دخل وكل فلس خرج، والباقي"
       actions={
         <CFile href="/admin/payments/csv">
-          <Download className="size-4" /> {t.aLedgerExport}
+          <Download className="size-4" /> نزّل Excel
         </CFile>
       }
     >
-      <Stats cols={5}>
-        <Stat label={t.aLedgerMonth} value={dt(b.month)} sub={t.payCurrency} tone="mint" />
-        <Stat label={t.aLedgerYear} value={dt(b.year)} sub={t.payCurrency} />
-        <Stat label={t.aLedgerAll} value={dt(b.all)} sub={t.payCurrency} />
-        <Stat label={t.aLedgerPaying} value={b.paying} sub={t.aLedgerPayingSub} tone="brand" />
-        <Stat label={t.aLedgerExtra} value={b.extra_months} sub={t.aLedgerExtraSub} />
-      </Stats>
-      {/* the other side, under the same columns: out this month, this year, since the start — then what is left */}
-      <div className="mt-3">
-        <Stats cols={5}>
-          <Stat label={t.aOutMonth} value={dt(b.out_month)} sub={t.payCurrency} tone="coral" />
-          <Stat label={t.aOutYear} value={dt(b.out_year)} sub={t.payCurrency} />
-          <Stat label={t.aOutAll} value={dt(b.out_all)} sub={t.payCurrency} />
-          <Stat label={t.aNetMonth} value={<Left n={b.month - b.out_month} />} sub={t.aNetSub} tone={leftTone(b.month - b.out_month)} />
-          <Stat label={t.aNetYear} value={<Left n={b.year - b.out_year} />} sub={t.aNetSub} tone={leftTone(b.year - b.out_year)} />
+      {/* three stretches of time, each read the same way: what is left large, what came in and went out under it */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Period title="الشهر هذا" inn={b.month} out={b.out_month} />
+        <Period title="العام هذا" inn={b.year} out={b.out_year} />
+        <Period title="من الأوّل" inn={b.all} out={b.out_all} />
+      </div>
+      <div className="mt-4">
+        <Stats cols={3}>
+          <Stat icon={BadgeCheck} label="محلات خلّصت" value={b.paying} sub="الأبونمان متاعهم يخدم توّا" tone="mint" />
+          <Stat icon={Hourglass} label="قالو خلّصنا" value={b.waiting.length} sub={b.waiting.length ? "ثبّت كي توصلك الفلوس" : "حتى حد يستنّى"} tone={b.waiting.length ? "brand" : "ink"} />
+          <Stat icon={CalendarPlus} label="شهور زيادة" value={b.extra_months} sub="تعطاو بلا فلوس" />
         </Stats>
       </div>
 
-      <Card className="mt-5" title={t.aBookTitle} hint={t.aBookHint}>
+      <Card className="mt-5" title="زيد سطر" hint="فلوس دخلت ولا خرجت، تكتبها بيدك">
         <AdminBookAdd today={b.today} />
       </Card>
 
       {b.waiting.length > 0 && (
-        <Card className="mt-5" title={t.aLedgerWaiting} hint={t.aPaymentsHint} pad={false}>
-          <Table head={["المحل", "كيفاش", "شهور", "وقتاش", ""]} words={[1]}>
+        <Card className="mt-5" title="قالو خلّصنا" hint="ثبّت كي توصلك الفلوس، والأبونمان يخدم وحدو" pad={false}>
+          <Table head={["المحل", "كيفاش خلّص", "شهور", "وقتاش", ""]} words={[1]}>
             {b.waiting.map((w) => (
               <Row key={w.id}>
                 <Cell strong>
@@ -176,11 +198,11 @@ export default async function AdminPayments() {
 
       {/* in and out, side by side on a wide screen */}
       <div className="mt-5 grid items-start gap-5 xl:grid-cols-[1.35fr_1fr]">
-        <Card title={t.aLedgerBook} pad={false}>
+        <Card title="اللي دخل" hint="كل أبونمان خدّمتو، وكل سطر كتبتو" pad={false}>
           {income.length === 0 ? (
-            <Empty>{t.aLedgerEmpty}</Empty>
+            <Empty>مازال حتى فلس ما تسجّل</Empty>
           ) : (
-            <Table head={["المحل", "شنوّة", "كيفاش", "نهار", "قدّاش", ""]} words={[1, 2]}>
+            <Table head={["المحل ولا الحاجة", "شنوّة", "كيفاش خلّص", "نهار", "قدّاش", ""]} words={[1, 2]}>
               {income.map(({ key, plan: l, hand: h }) =>
                 l ? (
                   <Row key={key} href={`/admin/shops/${l.shop.id}`}>
@@ -241,19 +263,19 @@ export default async function AdminPayments() {
         </Card>
 
         <Card
-          title={t.aBookOutTitle}
-          hint={t.aBookOutHint}
+          title="اللي خرج"
+          hint="المصاريف، كل فلس"
           pad={false}
           actions={
             spent.length > 0 ? (
               <CFile href="/admin/payments/csv?book=out">
-                <Download className="size-4" /> {t.aLedgerExport}
+                <Download className="size-4" /> Excel
               </CFile>
             ) : undefined
           }
         >
           {spent.length === 0 ? (
-            <Empty>{t.aBookOutEmpty}</Empty>
+            <Empty>مازال حتى مصروف ما تسجّل</Empty>
           ) : (
             <Table head={["على شنوّة", "نهار", "قدّاش", ""]}>
               {spent.map((e) => (

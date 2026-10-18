@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, Flame, ListFilter, MousePointerClick, TriangleAlert, X } from "lucide-react";
 import { HeatMap, type HeatTap } from "@/components/HeatMap";
-import { Bidi, Card, Cell, Empty, Lat, Num, Page, Pill, Row, Segments, Stat, Stats, Table, When } from "@/components/console";
+import { Bidi, Card, Cell, Empty, howLong, Lat, Num, Page, Pill, Row, Segments, Stat, Stats, Table, When } from "@/components/console";
 import { OnlineNow, Presence, Reach } from "@/components/Presence";
 import { TrafficFilters, type Menu } from "@/components/TrafficFilters";
 import { pretty } from "@/lib/phone";
@@ -10,7 +10,7 @@ import { getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { ROUTES, screenName } from "@/lib/screens";
 
-export const metadata = { title: "الترافيك" };
+export const metadata = { title: "الزيارات" };
 
 type Step = { step: string; visits: number };
 type PageRow = { route: string; screen: string | null; views: number; visits: number; ms: number; exits: number; taps: number; rage: number };
@@ -96,14 +96,8 @@ const dayName = (d: string) => fmt({ day: "numeric", month: "short" }).format(ne
 const two = (n: number) => String(n).padStart(2, "0");
 /** when the beacon began telling the installed app from a browser (visits.standalone): 8 Oct 2026, 00:40 in Tunis */
 const APP_SINCE = Date.parse("2026-10-07T23:40:00Z");
-/** 45ث · 2د 10ث · 1س 5د */
-function dur(ms: number): string {
-  const s = Math.round((ms || 0) / 1000);
-  if (s < 60) return `${s}ث`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return s % 60 ? `${m}د ${s % 60}ث` : `${m}د`;
-  return `${Math.floor(m / 60)}س ${m % 60}د`;
-}
+/** how long, in words («45 ثانية», «12 دقيقة», «ساعة و5 دقايق»): the kit's own */
+const dur = howLong;
 const pct = (a: number, b: number) => (b ? `${Math.round((a * 100) / b)}%` : "—");
 /** A length of time holds Arabic letters, so it reads right to left like the rest. */
 const D = ({ ms }: { ms: number }) => <bdi className="tabular-nums">{dur(ms)}</bdi>;
@@ -123,8 +117,8 @@ const slug = (route: string, screen: string | null) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "") || "home";
 
-const SOURCES: Record<string, string> = { facebook: "فيسبوك", fb: "فيسبوك", instagram: "إنستغرام", ig: "إنستغرام", google: "Google", tiktok: "تيك توك", whatsapp: "واتساب", x: "X", direct: "مباشر" };
-const sourceName = (s: string | null) => SOURCES[(s ?? "direct").toLowerCase()] ?? s ?? "مباشر";
+const SOURCES: Record<string, string> = { facebook: "فيسبوك", fb: "فيسبوك", instagram: "إنستغرام", ig: "إنستغرام", google: "Google", tiktok: "تيك توك", whatsapp: "واتساب", x: "X", direct: "دخل وحدو" };
+const sourceName = (s: string | null) => SOURCES[(s ?? "direct").toLowerCase()] ?? s ?? "دخل وحدو";
 const DEVICES: Record<string, string> = { phone: "تليفون", tablet: "تابلات", computer: "PC" };
 const SIGNALS: Record<string, string> = {
   video: "▶ شاف فيديو",
@@ -149,7 +143,7 @@ const SIGNALS: Record<string, string> = {
   news_click: "📣 نزل على زرّ الخبر",
   offer: "🏷 العرض متاع 15 شهر",
   pay: "💳 اختار كيفاش يخلّص",
-  plan_on: "✅ شاف إنّو الأبونمان تفعّل",
+  plan_on: "✅ شاف اللي الأبونمان خدم",
   collect: "📷 عطى تامبون بالكود متاع الحريف",
   collect_gift: "🎁 عطى كادو بالكود متاع الحريف",
   collect_unknown: "📷 كود حريف موش موجود",
@@ -203,14 +197,14 @@ type Filters = Partial<Record<Key, string>>;
 type Params = { tab?: string; d?: string; all?: string; v?: string; h?: string; from?: string; to?: string; n?: string } & Filters;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NAMES: Record<Key, string> = { src: "منين", camp: "الإعلان", who: "شكون", seen: "أوّل مرّة؟", dev: "التليفون", os: "السيستام", br: "البراوزر", city: "البلاد", page: "عدّى على", did: "عمل", hour: "الساعة", same: "تليفون واحد" };
-const WHO: Record<string, string> = { anon: "بلا كونت", acct: "عندو كونت", owner: "صاحب محل", client: "حريف" };
+const WHO: Record<string, string> = { anon: "بلا كونت", acct: "عندو كونت", owner: "مولى محل", client: "حريف" };
 const SEEN: Record<string, string> = { new: "أوّل مرّة", back: "رجع" };
-const DID: Record<string, string> = { signup: "✅ حلّ كونت", shop: "🏪 حلّ محل", rage: "🔥 ضرب نرفزة" };
+const DID: Record<string, string> = { signup: "✅ عمل كونت", shop: "🏪 فتح محل", rage: "🔥 ضرب بالنرفزة" };
 /** The questions asked every day, one tap each. */
 const QUICK: { k: Key; v: string; label: string }[] = [
   { k: "src", v: "meta", label: "من فيسبوك وإنستا" },
-  { k: "did", v: "signup", label: "حلّو كونت" },
-  { k: "who", v: "owner", label: "أصحاب المحلات" },
+  { k: "did", v: "signup", label: "عملو كونت" },
+  { k: "who", v: "owner", label: "موالي المحلات" },
   { k: "who", v: "client", label: "الحرفاء" },
   { k: "who", v: "anon", label: "ما سجّلوش" },
   { k: "seen", v: "back", label: "رجعو" },
@@ -345,8 +339,8 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
 
   return (
     <Page
-      title="الترافيك"
-      hint="منين جاو، وشنوّة عملو قبل ما يسجّلو"
+      title="الزيارات"
+      hint="منين جاو الناس، شنوّة عملو، ووين حبسو"
       actions={
         <>
           <Segments now={from ? "" : String(days)} items={RANGES.map((r) => ({ id: String(r.d), label: r.label, href: href({ d: String(r.d), from: null, to: null }) }))} />
@@ -411,7 +405,7 @@ export default async function TrafficPage({ searchParams }: { searchParams: Prom
       </div>
 
       {!data ? (
-        <p className="rounded-[1rem] bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">ما نجمناش نجيبو الترافيك. عاود بعد شويّة.</p>
+        <p className="rounded-[1rem] bg-coral-soft px-4 py-3 text-[0.9062rem] font-medium text-coral">ما نجمناش نجيبو الزيارات. عاود بعد شويّة.</p>
       ) : tab === "overview" ? (
         <Overview data={data} f={f} href={href} live={!from} />
       ) : tab === "pages" ? (
@@ -494,7 +488,7 @@ function Overview({ data, f, href, live }: { data: Traffic; f: Filters; href: Hr
           />
           <Stat label="من فيسبوك" value={data.from_ads} sub={<><Delta now={data.from_ads} before={b.from_ads} />وإنستا · <Pct a={data.from_ads} b={data.visits} /></>} tone="brand" />
           <Stat label="كونتات جدد" value={data.accounts} sub={<><Delta now={data.accounts} before={b.accounts} />{data.shops} محل جديد</>} tone="mint" />
-          <Stat label="ضربات نرفزة" value={data.rage} sub={`3 ضربات في بلاصة وحدة · من ${data.taps} ضربة`} tone={data.rage ? "coral" : "ink"} />
+          <Stat label="ضربات بالنرفزة" value={data.rage} sub={`3 ضربات في نفس البلاصة · من ${data.taps} ضربة`} tone={data.rage ? "coral" : "ink"} />
         </Stats>
         {b.visits > 0 && <p className="mt-1.5 text-[0.75rem] text-faint">▲▼ مقارنة بنفس المدّة اللي قبلها، بنفس الفلتر</p>}
       </div>
@@ -505,10 +499,10 @@ function Overview({ data, f, href, live }: { data: Traffic; f: Filters; href: Hr
       </div>
 
       <div className="grid gap-4 2xl:grid-cols-2">
-        <Card title="الموالي: قدّاش وصلو" hint="من أوّل صفحة للكود">
+        <Card title="موالي المحلات: لوين وصلو" hint="من الصفحة الأولى حتى الكود">
           <Funnel steps={data.funnel.owner} names={OWNER_STEPS} link={(s) => href({ tab: "visits", page: STEP_PAGES[s] ?? s })} />
         </Card>
-        <Card title="الحرفاء: قدّاش وصلو" hint="من السكان للتامبون">
+        <Card title="الحرفاء: لوين وصلو" hint="من السكان حتى التامبون">
           <Funnel steps={data.funnel.customer} names={CUSTOMER_STEPS} link={(s) => href({ tab: "visits", page: STEP_PAGES[s] ?? s })} />
         </Card>
       </div>
@@ -560,7 +554,7 @@ function Overview({ data, f, href, live }: { data: Traffic; f: Filters; href: Hr
       </div>
 
       {/* the plain question: is Pointili being opened as an app, or as a page in somebody's browser */}
-      <Card title="منين يخدمو بيها؟" hint="أبليكاسيون ولّا براوزر">
+      <Card title="يحلّوها من وين؟" hint="من الأبليكاسيون ولا من البراوزر">
         <Stats cols={3}>
           <Stat
             label="من الأبليكاسيون"
@@ -625,7 +619,7 @@ function Days({ days, pick }: { days: Traffic["days"]; pick: (day: string) => st
   const max = Math.max(1, ...days.map((d) => d.visits));
   const many = days.length > 31;
   return (
-    <Card title="الزيارات كل نهار" hint="انزل على نهار">
+    <Card title="الزيارات نهار بنهار" hint="انزل على نهار باش تشوفو وحدو">
       <div className={`flex h-[9rem] items-end ${many ? "gap-px" : "gap-1"}`} dir="ltr">
         {days.map((d, i) => {
           const last = i === days.length - 1;
@@ -887,9 +881,9 @@ function WhoCell({ v }: { v: VisitRow }) {
       {(v.back || v.signup || v.opened || v.who === "owner" || v.who === "client") && (
         <span className="mt-1 flex flex-wrap gap-1">
           {v.back && <Pill>رجع</Pill>}
-          {v.signup && <Pill tone="mint">حلّ كونت</Pill>}
-          {v.opened && <Pill tone="mint">حلّ محل</Pill>}
-          {v.who === "owner" && !v.opened && <Pill tone="brand">صاحب محل</Pill>}
+          {v.signup && <Pill tone="mint">عمل كونت</Pill>}
+          {v.opened && <Pill tone="mint">فتح محل</Pill>}
+          {v.who === "owner" && !v.opened && <Pill tone="brand">مولى محل</Pill>}
           {v.who === "client" && <Pill tone="brand">حريف</Pill>}
         </span>
       )}
@@ -938,7 +932,7 @@ function Visits({ rows, total, open, more }: { rows: VisitRow[]; total: number; 
       {more && (
         <div className="border-t border-line p-3 text-center">
           <Link href={more} scroll={false} className="inline-flex h-9 items-center rounded-[0.625rem] border border-line bg-surface px-4 text-[0.8438rem] font-semibold text-body hover:border-brand hover:text-brand">
-            زيد 100 زيارة
+            ورّي 100 زيارة أخرين
           </Link>
         </div>
       )}
@@ -968,7 +962,7 @@ function Visit({ data, back, samePhone }: { data: VisitDetail; back: string; sam
     ],
     ["جا من", v.referrer ? <Lat key="d">{hostOf(v.referrer)}</Lat> : "—"],
     ["التليفون", <Parts key="dev" of={[DEVICES[v.device ?? ""] ?? v.device, v.os, v.browser]} />],
-    ["الإيكران", v.screen ? <Lat key="e">{v.screen}</Lat> : "—"],
+    ["قدّ الشاشة", v.screen ? <Lat key="e">{v.screen}</Lat> : "—"],
     ["البلاد", v.city || v.country ? <Parts key="place" of={[v.city, v.country]} /> : "—"],
     ["قبل", data.visits_before ? `جا ${data.visits_before} مرّات قبل` : "أوّل مرّة"],
     ["بعد", data.visits_after ? `رجع ${data.visits_after} مرّات بعد` : "ما رجعش"],

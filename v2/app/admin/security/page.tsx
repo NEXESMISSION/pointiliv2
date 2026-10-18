@@ -1,10 +1,11 @@
+import { Bot, KeyRound, ShieldAlert, UserPlus, UserX } from "lucide-react";
 import { Ago } from "@/components/Ago";
 import { BlockButtons, BlockForm, UnblockButton } from "@/components/AdminGuard";
 import { Bars, Card, Cell, Empty, Lat, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
 import { pretty } from "@/lib/phone";
 import { call } from "@/lib/supabase";
 
-export const metadata = { title: "الأمان", robots: { index: false } };
+export const metadata = { title: "الحماية", robots: { index: false } };
 
 type Guard = {
   day: { made: number; stopped: number; wrong: number; trap: number; ips: number };
@@ -37,22 +38,22 @@ const day = (d: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "nu
  */
 export default async function Security() {
   const g = (await call<Guard>("admin_guard")) ?? null;
-  if (!g) return <Page title="الأمان">{<Empty>ما نجمناش نقراو الأمان توّا</Empty>}</Page>;
+  if (!g) return <Page title="الحماية">{<Empty>ما نجمناش نجيبو الحماية توّا، عاود بعد شويّة</Empty>}</Page>;
   return (
-    <Page title="الأمان" hint="شكون يدقّ على الكونتات: الأدرسات (IP) اللي تعمل برشا كونتات ولا تتسكّر، وتسكّرها بكليك">
+    <Page title="الحماية" hint="شكون يحاول يعمل كونتات ولا يدخل: اللي يعمل برشا ولا يتسكّر، تسكّرو بكليك">
       <Stats cols={5}>
-        <Stat label="كونتات جديدة · 24س" value={<Num>{g.day.made}</Num>} />
-        <Stat label="محاولات تسكّرت · 24س" value={<Num>{g.day.stopped}</Num>} tone={g.day.stopped ? "coral" : "ink"} />
-        <Stat label="روبوات (الفخ) · 24س" value={<Num>{g.day.trap}</Num>} tone={g.day.trap ? "coral" : "ink"} />
-        <Stat label="كلمة سرّ غالطة · 24س" value={<Num>{g.day.wrong}</Num>} />
-        <Stat label="كونتات فارغة · 7 أيّام" value={<Num>{g.empty}</Num>} sub="لا محل لا كارط" />
+        <Stat icon={UserPlus} label="كونتات جديدة" value={<Num>{g.day.made}</Num>} sub="آخر 24 ساعة" />
+        <Stat icon={ShieldAlert} label="محاولات تسكّرت" value={<Num>{g.day.stopped}</Num>} sub="آخر 24 ساعة" tone={g.day.stopped ? "coral" : "ink"} />
+        <Stat icon={Bot} label="روبوات" value={<Num>{g.day.trap}</Num>} sub="طاحو في الفخ · 24 ساعة" tone={g.day.trap ? "coral" : "ink"} />
+        <Stat icon={KeyRound} label="كلمة سرّ غالطة" value={<Num>{g.day.wrong}</Num>} sub="آخر 24 ساعة" />
+        <Stat icon={UserX} label="كونتات فارغة" value={<Num>{g.empty}</Num>} sub="لا محل لا كارط · 7 أيّام" />
       </Stats>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <Card title="الكونتات الجديدة · 14 يوم">
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <Card title="الكونتات الجديدة" hint="آخر 14 يوم">
           {g.days.length ? <Bars rows={g.days.map((x) => ({ key: x.d, label: <Num>{day(x.d)}</Num>, sub: x.stopped ? `${x.stopped} تسكّرو` : undefined, n: x.made }))} /> : <Empty>مازال حتى حاجة</Empty>}
         </Card>
-        <Card title="سكّر بالإيد" hint="IP ولا نومرو تليفون: ما عادش ينجم يعمل كونت ولا يدخل">
+        <Card title="سكّر بيدك" hint="IP ولا نومرو تليفون: ما عادش ينجم يعمل كونت ولا يدخل">
           <BlockForm />
           <div className="mt-4">
             {g.blocks.length === 0 ? (
@@ -76,11 +77,11 @@ export default async function Security() {
         </Card>
       </div>
 
-      <Card className="mt-4" pad={false} title="الأدرسات اللي تستاهل تشوفها · 7 أيّام" hint="زوز كونتات ولا أكثر، ولا 3 مرّات تسكّر · الـ4G يجمع برشا ناس في IP واحد: شوف النومروات قبل">
+      <Card className="mt-5" pad={false} title="IP لازمك تشوفهم" hint="آخر 7 أيّام: زوز كونتات ولا أكثر، ولا 3 مرّات تسكّرو. ردّ بالك: الـ4G يجمع برشا ناس في IP واحد، شوف النومروات قبل.">
         {g.ips.length === 0 ? (
           <Empty>حتى أدرسة مشبوهة</Empty>
         ) : (
-          <Table head={["IP", "كونتات", "تسكّرو", "غلطو", "النومروات", "آخر مرّة", ""]} words={[0, 4]}>
+          <Table head={["IP", "كونتات", "تسكّرو", "غلطو في كلمة السر", "النومروات", "آخر مرّة", ""]} words={[0, 4]}>
             {g.ips.map((x) => (
               <Row key={x.ip}>
                 <Cell>
@@ -108,11 +109,11 @@ export default async function Security() {
         )}
       </Card>
 
-      <Card className="mt-4" pad={false} title="آخر المحاولات اللي تسكّرت">
+      <Card className="mt-5" pad={false} title="آخر المحاولات اللي تسكّرت" hint="شكون، وين، وعلاش">
         {g.recent.length === 0 ? (
           <Empty>حتى محاولة تسكّرت</Empty>
         ) : (
-          <Table head={["وقتاش", "الباب", "علاش", "IP", "النومرو", ""]} words={[1, 2]}>
+          <Table head={["وقتاش", "وين", "علاش", "IP", "النومرو", ""]} words={[1, 2]}>
             {g.recent.map((r, i) => (
               <Row key={`${r.at}-${i}`}>
                 <Cell muted>

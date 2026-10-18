@@ -95,11 +95,11 @@ export function whereSaid(path: string | null): string {
     [/^\/shop\/stats/, "في الأرقام"],
     [/^\/shop\/card/, "في الكارط"],
     [/^\/shop\/pay/, "في الخلاص"],
-    [/^\/shop\/items/, "في الحاجات"],
-    [/^\/shop\/settings/, "في الإعدادات"],
-    [/^\/shop\/setup/, "في المحل متاعو"],
+    [/^\/shop\/items/, "في شنوّة يبيع"],
+    [/^\/shop\/settings/, "في صفحة المحل"],
+    [/^\/shop\/setup/, "في اسم المحل"],
     [/^\/shop\/new/, "يسجّل"],
-    [/^\/shop\/?$/, "في المحل"],
+    [/^\/shop\/?$/, "في الرئيسية"],
     [/^\/me\b/, "في الكونت"],
     [/^\/wallet/, "في الكارطات متاعو"],
     [/^\/c\//, "يشوف كارط"],
@@ -109,7 +109,7 @@ export function whereSaid(path: string | null): string {
     [/^\/u\//, "يشوف صفحة محل"],
     [/^\/privacy/, "يقرا الخصوصية"],
     [/^\/(login|forgot)/, "يدخل للكونت"],
-    [/^\/join/, "يحلّ كونت"],
+    [/^\/join/, "يعمل كونت"],
     [/^\/$/, "الصفحة الأولى"],
   ];
   // a page with no name yet: its path, sealed, so its slash does not jump to the end of the Arabic line
@@ -136,7 +136,7 @@ export function Presence({ user, className = "" }: { user: string | null | undef
   if (!p) return null;
   const where = whereSaid(p.path);
   const since = p.since ? agoSaid(serverNow() - Date.parse(p.since)).replace(/^من /, "") : null;
-  const words = p.state === "here" ? "متّصل توّا" : p.state === "idle" ? "مفتوحة عندو" : `كان هنا ${agoSaid(serverNow() - Date.parse(p.at))}`;
+  const words = p.state === "here" ? "داخل توّا" : p.state === "idle" ? "الصفحة مفتوحة عندو" : `كان هنا ${agoSaid(serverNow() - Date.parse(p.at))}`;
   const tone = p.state === "here" ? "text-mint" : p.state === "idle" ? "text-amber-700" : "text-muted";
   return (
     <span className={`inline-flex min-w-0 items-center gap-1.5 text-[0.75rem] font-semibold ${tone} ${className}`} title={since && p.state !== "gone" ? `من ${since}` : undefined}>
@@ -186,11 +186,11 @@ export function OnlineNow({ className = "" }: { className?: string }) {
   const on = d.people.filter((p) => p.state !== "gone");
   const gone = d.people.filter((p) => p.state === "gone").slice(0, 6);
   return (
-    <section className={`overflow-hidden rounded-[1rem] border border-line bg-surface ${className}`}>
-      <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-        <h2 className="flex min-w-0 items-center gap-2 text-[0.9375rem] font-bold text-ink">
+    <section className={`overflow-hidden rounded-[1.25rem] border border-line/80 bg-surface shadow-[0_1px_2px_rgb(15_14_23/0.04)] ${className}`}>
+      <div className="flex items-center justify-between gap-3 border-b border-line/80 px-5 py-3.5">
+        <h2 className="flex min-w-0 items-center gap-2 text-[1rem] font-bold text-ink">
           <Dot state={on.length ? "here" : "gone"} />
-          متّصلين توّا
+          داخلين توّا
           <span className="text-[0.875rem] font-semibold text-muted">
             <bdi className="tabular-nums">{on.length}</bdi>
             {d.strangers > 0 && (
@@ -204,15 +204,15 @@ export function OnlineNow({ className = "" }: { className?: string }) {
         <span className="shrink-0 text-[0.75rem] text-faint">يتبدّل وحدو</span>
       </div>
       {!on.length && !gone.length ? (
-        <p className="px-4 py-5 text-center text-[0.875rem] text-muted">حتى حد ما هو على السيت توّا</p>
+        <p className="px-5 py-5 text-center text-[0.875rem] text-muted">حتى حد ما هو داخل توّا</p>
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="divide-y divide-line/70">
           {[...on, ...gone].map((p) => {
             const href = p.shop ? `/admin/shops/${p.shop.id}` : `/admin/people/${p.user}`;
             const title = p.shop?.name ?? (p.name || "بلا اسم");
             const since = p.since && p.state !== "gone" ? agoSaid(serverNow() - Date.parse(p.since)) : null;
             return (
-              <li key={p.user} className={`relative flex items-center gap-3 px-4 py-2.5 ${p.state === "gone" ? "opacity-70" : ""}`}>
+              <li key={p.user} className={`relative flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-brand-soft/35 ${p.state === "gone" ? "opacity-70" : ""}`}>
                 <Link href={href} className="absolute inset-0 z-[1]" aria-label={title} />
                 <Dot state={p.state} />
                 <span className="min-w-0 flex-1">
@@ -229,7 +229,7 @@ export function OnlineNow({ className = "" }: { className?: string }) {
                     ) : null}
                   </span>
                   <span className="block truncate text-[0.75rem] text-muted">
-                    {p.state === "gone" ? `كان هنا ${agoSaid(serverNow() - Date.parse(p.at))}` : `${p.state === "here" ? "متّصل" : "مفتوحة عندو"} · ${whereSaid(p.path)}${since ? ` · ${since}` : ""}`}
+                    {p.state === "gone" ? `كان هنا ${agoSaid(serverNow() - Date.parse(p.at))}` : `${p.state === "here" ? "داخل" : "الصفحة مفتوحة عندو"} · ${whereSaid(p.path)}${since ? ` · ${since}` : ""}`}
                   </span>
                 </span>
                 <Reach phone={p.phone} />

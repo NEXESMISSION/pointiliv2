@@ -3,7 +3,7 @@ import { Card, Page } from "@/components/console";
 import { getSettings } from "@/lib/settings";
 import { t } from "@/lib/t";
 
-export const metadata = { title: "الريڤلاج" };
+export const metadata = { title: "الإعدادات" };
 
 /** The founder's settings: the help number and the two videos owners (and the front door) show. */
 export default async function AdminSettings() {

@@ -1327,7 +1327,11 @@ begin
   -- the thing it was for goes back with the answer, so the phone that just
   -- scanned can say «كابوسة» and not only «+1»
   return jsonb_build_object('ok', true, 'gift', v_gift, 'card', public.card_view(c.id),
-                            'item', (select i.name from public.items i where i.id = k.item_id));
+                            'item', (select i.name from public.items i where i.id = k.item_id),
+                            -- a wheel shop whose card this scan filled: the prizes ride back with the
+                            -- answer, so the turn is spun on the scan screen itself and the customer
+                            -- sees what he won where he won it (18 Oct 2026), not a page away
+                            'prizes', case when v_gift and s.wheel_on then public.wheel_list(s.id) end);
 end $$;
 
 create or replace function public.wallet() returns jsonb
@@ -1521,17 +1525,30 @@ begin
         'last_at',  (select greatest(max(v.last_at), max(v.here_at)) from public.visits v where v.user_id = p.id),
         'n',        (select count(*) from public.visits v where v.user_id = p.id),
         'ms',       (select coalesce(sum(w.active_ms), 0) from public.views w join public.visits v on v.id = w.visit_id where v.user_id = p.id),
+        -- day by day over the last 30 days (Tunis time): how many times and how long — the console draws it as a strip
+        'days', coalesce((select jsonb_agg(jsonb_build_object('day', d.day, 'n', d.n, 'ms', d.ms) order by d.day)
+                          from (select (v.started_at at time zone 'Africa/Tunis')::date as day, count(*) as n,
+                                       coalesce(sum((select coalesce(sum(w.active_ms), 0) from public.views w where w.visit_id = v.id)), 0) as ms
+                                from public.visits v
+                                where v.user_id = p.id and v.started_at > now() - interval '30 days'
+                                group by 1) d), '[]'::jsonb),
         'visits', coalesce((
           select jsonb_agg(jsonb_build_object(
                    'id', x.id, 'at', x.started_at, 'end_at', x.last_at, 'ms', x.ms, 'pages', x.pages,
                    'device', x.device, 'os', x.os, 'browser', x.browser,
                    'city', x.city, 'country', x.country, 'source', coalesce(x.source, 'direct'),
+                   -- the tampons the shop gave while the owner was in (the counter open, or not): what the visit was for
+                   'stamps', x.stamps,
                    -- the pages of the visit, in order, with the time on each
                    'path', coalesce((select jsonb_agg(jsonb_build_object('route', w.route, 'screen', w.screen, 'ms', w.active_ms) order by w.entered_at)
                                      from (select * from public.views w where w.visit_id = x.id order by w.entered_at limit 40) w), '[]'::jsonb)) order by x.started_at desc)
           from (select v.*,
                        (select count(*) from public.views w where w.visit_id = v.id) as pages,
-                       (select coalesce(sum(w.active_ms), 0) from public.views w where w.visit_id = v.id) as ms
+                       (select coalesce(sum(w.active_ms), 0) from public.views w where w.visit_id = v.id) as ms,
+                       (select count(*) from public.moments m
+                         where m.shop_id = s.id and m.kind = 'stamp'
+                           and m.created_at >= v.started_at
+                           and m.created_at <= coalesce(greatest(v.last_at, v.here_at), v.started_at) + interval '1 minute') as stamps
                 from public.visits v where v.user_id = p.id order by v.started_at desc limit 30) x), '[]'::jsonb))
       from public.people p where p.id = s.owner_id),
     'customers', (select count(*) from public.cards where shop_id = s.id),

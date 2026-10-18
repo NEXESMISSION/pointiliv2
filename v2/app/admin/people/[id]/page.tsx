@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, MessageCircle, Phone } from "lucide-react";
+import { ChevronLeft, ChevronRight, Gift, MessageCircle, Phone, Stamp, WalletCards } from "lucide-react";
 import { AdminPersonActions } from "@/components/AdminPersonActions";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
-import { Card, Cell, Empty, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
+import { box, Card, Cell, CLink, Empty, Num, Page, Pill, Row, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
 import { Presence } from "@/components/Presence";
@@ -22,7 +22,7 @@ const TZ = "Africa/Tunis";
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).format(new Date(iso));
 const short = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(iso));
 
-/** One account: who they are on the side, the cards they hold in the middle. */
+/** One account: who they are and how to reach them on top, the cards they hold under it, the founder's tools on the side. */
 export default async function AdminPerson({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
@@ -34,72 +34,56 @@ export default async function AdminPerson({ params }: { params: Promise<{ id: st
   return (
     <Page
       title={p.name || t.someone}
-      hint={`${t.aCreated} ${day(p.created_at)}`}
+      hint={`عمل الكونت نهار ${day(p.created_at)}`}
       actions={
-        <Link href="/admin/people" className="inline-flex h-9 items-center gap-1 rounded-[0.625rem] border border-line bg-surface px-3 text-[0.8438rem] font-semibold text-body hover:border-brand hover:text-brand">
-          <ChevronRight className="size-4" /> {t.aPeople}
-        </Link>
+        <CLink href="/admin/people">
+          <ChevronRight className="size-4" /> الكونتات
+        </CLink>
       }
     >
-      <div className="grid gap-4 xl:grid-cols-[18rem_1fr]">
-        <div className="space-y-4">
-          <Card>
-            <div className="flex items-center gap-3">
-              <span className="grid size-14 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[1.25rem] font-bold text-white">{(p.name?.[0] ?? "؟").toUpperCase()}</span>
-              <div className="min-w-0">
-                <p className="flex items-center gap-1.5">
-                  <b className="truncate text-[1.0625rem] text-ink">{p.name || t.someone}</b>
-                  {p.admin && <Pill tone="ink">{t.aAdminBadge}</Pill>}
-                  {p.tester && <Pill>{t.aTestBadge}</Pill>}
-                </p>
-                <p className="text-[0.8125rem] text-muted">{p.phone ? <Num>{pretty(p.phone)}</Num> : "بلا نومرو"}</p>
-                <Presence user={p.id} />
-              </div>
-            </div>
-            {p.phone && (
-              <span className="mt-4 flex flex-wrap gap-2">
-                <a href={`tel:+216${digits(p.phone)}`} className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-brand px-3.5 text-[0.8438rem] font-bold text-white hover:bg-brand-deep">
-                  <Phone className="size-4" /> {t.aCall}
-                </a>
-                <a href={`https://wa.me/216${digits(p.phone)}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-[#25D366] px-3.5 text-[0.8438rem] font-bold text-white hover:opacity-90">
-                  <MessageCircle className="size-4" /> واتساب
-                </a>
-              </span>
-            )}
-          </Card>
-
-          {p.shop && (
-            <Card title={t.aShopOf}>
-              <Link href={`/admin/shops/${p.shop.id}`} className="group flex items-center gap-3">
-                <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-[0.75rem]" style={{ background: p.shop.color }}>
-                  <ShopMark shop={p.shop} size={28} />
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-bold text-ink group-hover:text-brand">{p.shop.name}</span>
-                <ChevronLeft className="size-4 shrink-0 text-faint" />
-              </Link>
-            </Card>
-          )}
-
-          {p.admin ? <p className="rounded-[1rem] border border-line bg-canvas px-4 py-3 text-center text-[0.875rem] font-medium text-muted">{t.aIsAdmin}</p> : <AdminPersonActions id={p.id} name={p.name} phone={p.phone} tester={p.tester} />}
+      {/* who they are, and the two ways to reach them */}
+      <section className={`${box} flex flex-wrap items-center gap-x-6 gap-y-4 p-5`}>
+        <span className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-soft text-[1.5rem] font-bold text-brand">{(p.name?.[0] ?? "؟").toUpperCase()}</span>
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-center gap-2">
+            <b className="truncate text-[1.25rem] text-ink">{p.name || t.someone}</b>
+            {p.admin && <Pill tone="ink">أدمين</Pill>}
+            {p.tester && <Pill>تجربة</Pill>}
+            {p.shop && <Pill tone="brand">مولى محل</Pill>}
+          </p>
+          <p className="mt-1 text-[0.875rem] text-muted">{p.phone ? <Num>{pretty(p.phone)}</Num> : "بلا نومرو"}</p>
+          <Presence user={p.id} />
         </div>
+        {p.phone && (
+          <span className="flex gap-2">
+            <a href={`tel:+216${digits(p.phone)}`} className="inline-flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-brand px-4 text-[0.875rem] font-bold text-white hover:bg-brand-deep">
+              <Phone className="size-4" /> كلّمو
+            </a>
+            <a href={`https://wa.me/216${digits(p.phone)}`} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-[#25D366] px-4 text-[0.875rem] font-bold text-white hover:opacity-90">
+              <MessageCircle className="size-4" /> واتساب
+            </a>
+          </span>
+        )}
+      </section>
 
-        <div className="min-w-0 space-y-4">
+      <div className="mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0 space-y-5">
           <Stats cols={3}>
-            <Stat label={t.aCards} value={p.cards.length} />
-            <Stat label={t.aStamps} value={stamps} tone="brand" />
-            <Stat label={t.aGiven} value={gifts} tone="coral" />
+            <Stat icon={WalletCards} label="كارطات" value={p.cards.length} />
+            <Stat icon={Stamp} label="تامبونات" value={stamps} tone="brand" />
+            <Stat icon={Gift} label="كادوات خذاهم" value={gifts} tone="coral" />
           </Stats>
 
-          <Card title={t.aCardsOf} pad={false}>
+          <Card title="الكارطات متاعو" hint="في كل محل، وين وصل" pad={false}>
             {p.cards.length === 0 ? (
-              <Empty>{t.aNoCardsOf}</Empty>
+              <Empty>ما عندو حتى كارط</Empty>
             ) : (
-              <Table head={["المحل", "كادو", "تامبون", t.aLast]}>
+              <Table head={["المحل", "كادوات", "الكارط", "آخر مرّة"]}>
                 {p.cards.map((c, i) => (
                   <Row key={i}>
                     <Cell strong>
                       <span className="flex min-w-0 items-center gap-2.5">
-                        <span className="grid size-9 shrink-0 place-items-center rounded-[0.625rem]" style={{ background: c.color }}>
+                        <span className="grid size-9 shrink-0 place-items-center rounded-[0.75rem]" style={{ background: c.color }}>
                           <Icon3D name={kindIcon(c.kind)} size={22} />
                         </span>
                         <span className="truncate">{c.shop}</span>
@@ -118,6 +102,24 @@ export default async function AdminPerson({ params }: { params: Promise<{ id: st
             )}
           </Card>
         </div>
+
+        <aside className="min-w-0 space-y-5">
+          {p.shop && (
+            <Card title="المحل متاعو">
+              <Link href={`/admin/shops/${p.shop.id}`} className="group flex items-center gap-3">
+                <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-[0.875rem]" style={{ background: p.shop.color }}>
+                  <ShopMark shop={p.shop} size={28} />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-bold text-ink group-hover:text-brand">{p.shop.name}</span>
+                <ChevronLeft className="size-4 shrink-0 text-faint" />
+              </Link>
+            </Card>
+          )}
+
+          <Card title="حاجات أخرى">
+            {p.admin ? <p className="text-center text-[0.875rem] font-medium text-muted">هذا أدمين: ما يتبدّلش من هوني</p> : <AdminPersonActions id={p.id} name={p.name} phone={p.phone} tester={p.tester} />}
+          </Card>
+        </aside>
       </div>
     </Page>
   );

@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Ago } from "@/components/Ago";
 import { OnlineCount, OnlineNow, Presence, Reach } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
-import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, Table } from "@/components/console";
+import { Card, Cell, Empty, Find, howLong, Num, Page, Pill, Row, Segments, Stat, Stats, Table, timesN } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { pretty } from "@/lib/phone";
-import { fill, t } from "@/lib/t";
+import { daysN, fill, hoursN, t } from "@/lib/t";
 
 export const metadata = { title: "المحلات" };
 
@@ -43,13 +43,6 @@ type ShopRow = {
 };
 type Level = "paid" | "hot" | "warm" | "cold" | "nocard";
 
-/** 45ث · 12د · 1س 5د */
-function dur(ms: number): string {
-  const s = Math.round((ms || 0) / 1000);
-  if (s < 60) return `${s}ث`;
-  const m = Math.round(s / 60);
-  return m < 60 ? `${m}د` : `${Math.floor(m / 60)}س ${m % 60}د`;
-}
 
 /**
  * How interested an owner is, out of what they did — never out of a number
@@ -73,7 +66,7 @@ function interest(s: ShopRow): { level: Level; score: number; why: string[] } {
   }
   if (s.days > 1) {
     score += 3 + Math.min(3, s.days - 2);
-    why.push(`رجع: ${s.days} أيّام`);
+    why.push(`رجع في ${daysN(s.days)}`);
   }
   if (s.app) {
     score += 2;
@@ -81,7 +74,7 @@ function interest(s: ShopRow): { level: Level; score: number; why: string[] } {
   }
   if (s.pay) {
     score += 2;
-    why.push("حلّ الخلاص");
+    why.push("حلّ صفحة الخلاص");
   }
   if (s.push) {
     score += 1;
@@ -98,7 +91,7 @@ function interest(s: ShopRow): { level: Level; score: number; why: string[] } {
     why.push(s.early === 1 ? "جرّب مع حد كي حلّ" : `جرّب مع ${s.early} كي حلّ`);
   }
   const level: Level = s.paid ? "paid" : !s.goal ? "nocard" : score >= 8 ? "hot" : score >= 3 ? "warm" : "cold";
-  if ((level === "cold" || level === "nocard") && s.visits <= 1) why.unshift("جا مرّة وحدة");
+  if ((level === "cold" || level === "nocard") && s.visits <= 1) why.unshift("جا مرّة برك");
   return { level, score, why };
 }
 
@@ -107,7 +100,7 @@ const LEVELS: Record<Level, { label: string; tone: "mint" | "coral" | "brand" | 
   hot: { label: "🔥 سخون", tone: "coral" },
   warm: { label: "دافي", tone: "brand" },
   cold: { label: "❄ بارد", tone: "grey" },
-  nocard: { label: "ما كمّلش", tone: "grey" },
+  nocard: { label: "ما عملش الكارط", tone: "grey" },
 };
 
 /** The lists the founder asks for, one tap each. */
@@ -117,11 +110,11 @@ const FILTERS: { id: string; label: string; keep: (s: ShopRow, l: Level) => bool
   { id: "stamps", label: "عطاو تامبون", keep: (s) => s.stamps > 0 },
   { id: "real", label: "عندهم حرفاء حقيقيين", keep: (s) => s.real > 0 },
   { id: "back", label: "رجعو نهار آخر", keep: (s) => s.days > 1 },
-  { id: "pay", label: "حلّو الخلاص", keep: (s) => s.pay },
+  { id: "pay", label: "حلّو صفحة الخلاص", keep: (s) => s.pay },
   { id: "hot", label: "🔥 سخون", keep: (_, l) => l === "hot" },
   { id: "warm", label: "دافي", keep: (_, l) => l === "warm" },
   { id: "cold", label: "❄ بارد", keep: (_, l) => l === "cold" },
-  { id: "nocard", label: "ما كمّلوش الكارط", keep: (_, l) => l === "nocard" },
+  { id: "nocard", label: "ما عملوش الكارط", keep: (_, l) => l === "nocard" },
   { id: "paid", label: "✓ خلّصو", keep: (_, l) => l === "paid" },
 ];
 const SORTS: { id: string; label: string; by: (a: Scored, b: Scored) => number }[] = [
@@ -139,7 +132,7 @@ function PlanPill({ paid, shut, hours, test }: { paid: boolean; shut: boolean; h
   if (test) return null;
   if (paid) return <Pill tone="mint">{t.aPlanPaid}</Pill>;
   if (shut) return <Pill tone="coral">{t.aTrialOver}</Pill>;
-  return <Pill tone="brand">{hours >= 24 ? fill(t.aTrialDays, { n: Math.floor(hours / 24) }) : fill(t.aTrialHours, { n: hours })}</Pill>;
+  return <Pill tone="brand">{hours >= 24 ? fill(t.aTrialDays, { n: daysN(Math.floor(hours / 24)) }) : fill(t.aTrialHours, { n: hoursN(Math.max(1, hours)) })}</Pill>;
 }
 
 /**
@@ -188,7 +181,7 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
   return (
     <Page
       title={t.aShops}
-      hint={onTests ? t.aTestsHint : "كل محل، والمولى متاعو قدّاش مهتم"}
+      hint={onTests ? t.aTestsHint : "كل محل، وقدّاش مولاه مهتم بيه"}
       actions={
         <>
           <Segments
@@ -208,13 +201,13 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
       {/* how interested they are, each tile a list of its own */}
       <Stats cols={6}>
         {/* the owners on the site now, live (the same people as the «متّصلين توّا» list below, which is drawn once) */}
-        {!onTests && <Stat label="متّصلين توّا" value={<OnlineCount owners />} sub="أصحاب محلات · يتبدّل وحدو" tone="mint" />}
+        {!onTests && <Stat label="داخلين توّا" value={<OnlineCount owners />} sub="موالي محلات · يتبدّل وحدو" tone="mint" />}
         {(["hot", "warm", "cold", "nocard", "paid"] as const).map((l) => {
           const n = scored.filter((x) => x.i.level === l).length;
-          const sub = { hot: "عيّطلهم اليوم", warm: "تليفون ينجم يقلبها", cold: "شافو وخرجو", nocard: "ما ينجمو ياخذو حتى تامبون", paid: `من ${shops.length}` }[l];
+          const sub = { hot: "كلّمهم اليوم", warm: "تليفون ينجم يربحهولك", cold: "شافو وخرجو", nocard: "ما ينجموش يعطيو تامبون", paid: `من ${shops.length} محل` }[l];
           const id: string = l;
           return (
-            <Link key={l} href={href({ f: filter.id === id ? "all" : id })} className={`block rounded-[1rem] transition-shadow hover:ring-2 hover:ring-brand/40 ${filter.id === id ? "ring-2 ring-brand" : ""}`}>
+            <Link key={l} href={href({ f: filter.id === id ? "all" : id })} className={`block rounded-[1.25rem] transition-shadow hover:ring-2 hover:ring-brand/40 ${filter.id === id ? "ring-2 ring-brand" : ""}`}>
               <Stat label={LEVELS[l].label} value={n} sub={sub} tone={l === "hot" ? "coral" : l === "warm" ? "brand" : l === "paid" ? "mint" : "ink"} />
             </Link>
           );
@@ -243,14 +236,14 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
         <span className="text-[0.8125rem] font-semibold text-muted">رتّب:</span>
         <Segments now={sort.id} items={SORTS.map((x) => ({ id: x.id, label: x.label, href: href({ sort: x.id }) }))} />
       </div>
-      <p className="mt-2 text-[0.75rem] text-faint">«حريف حقيقي»: خذا تامبون بعد ساعة ولا أكثر من ما تحلّ المحل. «كي حلّ»: في الساعة الأولى، عادة واحد قدّامو يجرّب.</p>
+      <p className="mt-2 text-[0.75rem] text-muted">«حريف حقيقي»: خذا تامبون ساعة ولا أكثر بعد ما تحلّ المحل. «كي حلّ»: في الساعة الأولى، عادة واحد قدّامو يجرّب.</p>
 
       <Card className="mt-3" pad={false} title={filter.id === "all" ? undefined : `${filter.label} · ${rows.length}`}>
         {rows.length === 0 ? (
           <Empty>{t.aNothing}</Empty>
         ) : (
           // six columns, so the list fits a laptop's screen: when it opened and when its owner was last here ride under the shop and the time
-          <Table head={["المحل", t.aOwner, "الاهتمام", "قعد", t.aCustomers, "تامبون"]} words={[1, 2]}>
+          <Table head={["المحل", "مولى المحل", "قدّاش مهتم", "قعد", "حرفاء حقيقيين", "تامبونات"]} words={[1, 2]}>
             {rows.map(({ s, i }) => (
               <Row key={s.id} href={`/admin/shops/${s.id}`}>
                 <Cell>
@@ -299,10 +292,10 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                   </span>
                 </Cell>
                 <Cell n>
-                  <bdi className="block font-semibold text-ink">{dur(s.ms)}</bdi>
+                  <bdi className="block font-semibold text-ink">{s.ms > 0 ? howLong(s.ms) : "—"}</bdi>
                   <span className="block text-[0.6875rem] text-muted">
-                    {s.days > 1 ? `${s.days} أيّام · ` : ""}
-                    {s.visits === 1 ? "مرّة وحدة" : `${s.visits} مرّات`}
+                    {s.days > 1 ? `${daysN(s.days)} · ` : ""}
+                    دخل {timesN(Math.max(1, s.visits))}
                   </span>
                   <span className="block text-[0.6875rem] text-muted">
                     {s.online ? <b className="text-mint">توّا</b> : s.seen_at ? <Ago at={s.seen_at} /> : "—"}
@@ -333,10 +326,10 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
         {left > 0 && (
           <Link
             href={`/admin/shops?${new URLSearchParams({ ...kept, ...(q ? { q } : {}), n: String(want + PAGE) })}`}
-            className="flex items-center justify-center gap-2 border-t border-line py-3 text-[0.875rem] font-bold text-brand hover:bg-canvas"
+            className="flex items-center justify-center gap-2 border-t border-line/80 py-3 text-[0.875rem] font-bold text-brand hover:bg-brand-soft/35"
           >
-            ورّي {Math.min(PAGE, left)} أخرى
-            <span className="font-medium text-muted">باقي {left}</span>
+            ورّي {Math.min(PAGE, left)} أخرين
+            <span className="font-medium text-muted">مازال {left}</span>
           </Link>
         )}
       </Card>

@@ -7,7 +7,7 @@ import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, T
 import { PAID, STAGE_ORDER, STAGES, daySaid, daysFromToday, said, stageOf, tunisToday, type Stage } from "@/lib/crm";
 import { call } from "@/lib/supabase";
 import { pretty } from "@/lib/phone";
-import { t } from "@/lib/t";
+import { daysN, hoursN, t } from "@/lib/t";
 
 export const metadata = { title: "المتابعة" };
 
@@ -52,7 +52,7 @@ const dueToday = (r: CrmRow, today: string) => {
 type Filter = { id: string; label: string; keep: (r: CrmRow, today: string) => boolean };
 const FILTERS: Filter[] = [
   { id: "all", label: "الكل", keep: () => true },
-  { id: "today", label: "نعيّطلهم اليوم", keep: dueToday },
+  { id: "today", label: "نكلّموهم اليوم", keep: dueToday },
   ...STAGES.map((s) => ({ id: s.id, label: s.label, keep: (r: CrmRow) => !r.paid && r.stage === s.id })),
   { id: "paid", label: PAID.label, keep: (r: CrmRow) => r.paid },
 ];
@@ -76,8 +76,7 @@ const order = (today: string) => (a: CrmRow, b: CrmRow) => {
 function PlanPill({ r }: { r: CrmRow }) {
   if (r.paid) return <Pill tone="mint">{PAID.label}</Pill>;
   if (r.shut) return <Pill tone="coral">{t.aTrialOver}</Pill>;
-  const d = Math.ceil(r.trial_hours / 24);
-  return <Pill>{r.trial_hours < 24 ? `تجربة · ${r.trial_hours} س` : `تجربة · ${d}ي`}</Pill>;
+  return <Pill>{r.trial_hours < 24 ? `تجربة · مازال ${hoursN(Math.max(1, r.trial_hours))}` : `تجربة · مازال ${daysN(Math.ceil(r.trial_hours / 24))}`}</Pill>;
 }
 
 /**
@@ -120,18 +119,18 @@ export default async function AdminCrm({ searchParams }: { searchParams: Promise
   };
   const kept = { ...(onTests ? { tests: "1" } : {}), ...(filter.id !== "all" ? { f: filter.id } : {}) };
   const tiles: { id: string; label: string; sub: string; tone: "ink" | "brand" | "coral" | "mint" }[] = [
-    { id: "today", label: "نعيّطلهم اليوم", sub: "جاء نهارهم، ولا مازال حد ما كلّمهم", tone: "coral" },
+    { id: "today", label: "نكلّموهم اليوم", sub: "جا نهارهم، ولا حتى حد ما كلّمهم", tone: "coral" },
     { id: "new", label: "ما كلّمناهمش", sub: "حتى تليفون", tone: "ink" },
     { id: "interested", label: "مهتمّين", sub: "يحبّو يجرّبو", tone: "brand" },
     { id: "promised", label: "باش يخلّصو", sub: "قالوها", tone: "mint" },
     { id: "paid", label: "خلّصو", sub: `من ${rows.length}`, tone: "mint" },
-    { id: "refused", label: "ما يحبّوش", sub: "خلاص", tone: "ink" },
+    { id: "refused", label: "ما يحبّوش", sub: "قالو لا", tone: "ink" },
   ];
 
   return (
     <Page
       title="المتابعة"
-      hint={onTests ? t.aTestsHint : "كل محل: كلّمناه ولا لا، شنوّة قال، ووقتاش نعاودو"}
+      hint={onTests ? t.aTestsHint : "كل محل: كلّمناه ولا لا، شنوّة قال، ووقتاش نعاودولو"}
       actions={
         <>
           <Segments
@@ -148,7 +147,7 @@ export default async function AdminCrm({ searchParams }: { searchParams: Promise
       {/* the lists at a glance, each a tile */}
       <Stats cols={6}>
         {tiles.map((x) => (
-          <Link key={x.id} href={href({ f: filter.id === x.id ? "all" : x.id, open: null })} className={`block rounded-[1rem] transition-shadow hover:ring-2 hover:ring-brand/40 ${filter.id === x.id ? "ring-2 ring-brand" : ""}`}>
+          <Link key={x.id} href={href({ f: filter.id === x.id ? "all" : x.id, open: null })} className={`block rounded-[1.25rem] transition-shadow hover:ring-2 hover:ring-brand/40 ${filter.id === x.id ? "ring-2 ring-brand" : ""}`}>
             <Stat label={x.label} value={count(x.id)} sub={x.sub} tone={x.tone} />
           </Link>
         ))}
@@ -172,13 +171,13 @@ export default async function AdminCrm({ searchParams }: { searchParams: Promise
           );
         })}
       </div>
-      <p className="mt-2 text-[0.75rem] text-faint">انزل على محل باش تسجّل تليفون ولا واتساب ولا زيارة، تبدّل وين وصل، تحط نهار نعاودو فيه، وتكتب نوت. «ما جاوبش» و«كلّمناه» يتحطّو وحدهم من اللي تسجّل.</p>
+      <p className="mt-2 text-[0.75rem] text-muted">انزل على محل: تسجّل تليفون ولا واتساب ولا زيارة، تبدّل وين وصل، وتحطّ نهار باش تعاودلو. «ما جاوبش» و«كلّمناه» يتحطّو وحدهم.</p>
 
       <Card className="mt-3" pad={false} title={filter.id === "all" ? undefined : `${filter.label} · ${shown.length}`}>
         {shown.length === 0 ? (
           <Empty>{filter.id === "today" ? "حتى حد اليوم — كل شي في وقتو" : t.aNothing}</Empty>
         ) : (
-          <Table head={["المحل", t.aOwner, "وين وصل", "آخر كلمة", "نعاودو", "تامبون", "نوت"]} words={[1, 2, 3, 4, 6]}>
+          <Table head={["المحل", "مولى المحل", "وين وصل", "آخر كلمة", "نعاودولو", "تامبونات", "نوت"]} words={[1, 2, 3, 4, 6]}>
             {shown.map((r) => {
               const due = dueToday(r, today);
               const late = !!r.next_at && daysFromToday(r.next_at) < 0;
@@ -253,10 +252,10 @@ export default async function AdminCrm({ searchParams }: { searchParams: Promise
         {left > 0 && (
           <Link
             href={`${href({})}${href({}).includes("?") ? "&" : "?"}n=${want + PAGE}`}
-            className="flex items-center justify-center gap-2 border-t border-line py-3 text-[0.875rem] font-bold text-brand hover:bg-canvas"
+            className="flex items-center justify-center gap-2 border-t border-line/80 py-3 text-[0.875rem] font-bold text-brand hover:bg-brand-soft/35"
           >
-            ورّي {Math.min(PAGE, left)} أخرى
-            <span className="font-medium text-muted">باقي {left}</span>
+            ورّي {Math.min(PAGE, left)} أخرين
+            <span className="font-medium text-muted">مازال {left}</span>
           </Link>
         )}
       </Card>

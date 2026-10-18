@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Store, Users, WalletCards, UserRound } from "lucide-react";
 import { Card, Cell, Empty, Find, Num, Page, Pill, Row, Segments, Stat, Stats, Table } from "@/components/console";
 import { call } from "@/lib/supabase";
 import { pretty } from "@/lib/phone";
@@ -11,9 +13,13 @@ type PersonRow = { id: string; name: string; phone: string | null; admin: boolea
 const TZ = "Africa/Tunis";
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", year: "2-digit", timeZone: TZ }).format(new Date(iso));
 
-/** Every account: the owners, the customers, and you. */
-export default async function AdminPeople({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string }> }) {
-  const { q = "", tests } = await searchParams;
+/**
+ * Every account: the owners, the customers, and you — the newest first, a
+ * screenful at a time (the whole list at once was a page seventeen screens
+ * long), the rest one tap away.
+ */
+export default async function AdminPeople({ searchParams }: { searchParams: Promise<{ q?: string; tests?: string; n?: string }> }) {
+  const { q = "", tests, n } = await searchParams;
   // the real accounts, or the test ones (the founder's own and the ones marked): never in one list
   const onTests = tests === "1";
   const [people, other] = await Promise.all([
@@ -22,46 +28,51 @@ export default async function AdminPeople({ searchParams }: { searchParams: Prom
   ]);
   const owners = people.filter((p) => p.shop).length;
   const withCards = people.filter((p) => p.cards > 0).length;
+  const PAGE = 40;
+  const want = Math.max(PAGE, Math.min(2000, Number(n) || PAGE));
+  const rows = people.slice(0, want);
+  const left = people.length - rows.length;
+  const more = new URLSearchParams({ ...(onTests ? { tests: "1" } : {}), ...(q ? { q } : {}), n: String(want + PAGE) });
 
   return (
     <Page
-      title={t.aPeople}
-      hint={onTests ? t.aTestsHint : "كل واحد عندو كونت في Pointili"}
+      title="الكونتات"
+      hint={onTests ? t.aTestsHint : "كل واحد عندو كونت في Pointili، الجدد لفوق"}
       actions={
         <>
           <Segments
             now={onTests ? "tests" : "real"}
             items={[
-              { id: "real", label: `${t.aReal} · ${onTests ? other.length : people.length}`, href: "/admin/people" },
-              { id: "tests", label: `${t.aTests} · ${onTests ? people.length : other.length}`, href: "/admin/people?tests=1" },
+              { id: "real", label: `الحقيقيين · ${onTests ? other.length : people.length}`, href: "/admin/people" },
+              { id: "tests", label: `التجربة · ${onTests ? people.length : other.length}`, href: "/admin/people?tests=1" },
             ]}
           />
-          <Find action="/admin/people" value={q} placeholder={t.aSearch} hidden={onTests ? { tests: "1" } : undefined} />
+          <Find action="/admin/people" value={q} placeholder="لوّج بالاسم ولا النومرو" hidden={onTests ? { tests: "1" } : undefined} />
         </>
       }
     >
       <Stats cols={4}>
-        <Stat label="كونتات" value={people.length} sub={q ? "من اللّوجان" : "في الكل"} />
-        <Stat label="موالي محلات" value={owners} />
-        <Stat label="عندهم كارط" value={withCards} sub={`من ${people.length}`} tone="brand" />
-        <Stat label="كارطات" value={people.reduce((n, p) => n + p.cards, 0)} sub="في الكل" />
+        <Stat icon={Users} label="كونتات" value={people.length} sub={q ? "لقيتهم باللوّجان" : "في الكل"} />
+        <Stat icon={Store} label="موالي محلات" value={owners} sub={`من ${people.length}`} />
+        <Stat icon={UserRound} label="عندهم كارط" value={withCards} sub={`من ${people.length}`} tone="brand" />
+        <Stat icon={WalletCards} label="كارطات" value={people.reduce((s, p) => s + p.cards, 0)} sub="في الكل" />
       </Stats>
 
-      <Card className="mt-4" pad={false}>
+      <Card className="mt-5" pad={false}>
         {people.length === 0 ? (
-          <Empty>{t.aNothing}</Empty>
+          <Empty>{q ? "ما لقينا حد بالاسم ولا النومرو هذا" : "مازال حتى كونت"}</Empty>
         ) : (
-          <Table head={["الكونت", t.phone, t.aShopOf, t.aCards, t.aStamps, t.aCreated]} words={[2]}>
-            {people.map((p) => (
+          <Table head={["الكونت", "التليفون", "المحل متاعو", "كارطات", "تامبونات", "عمل الكونت"]} words={[2]}>
+            {rows.map((p) => (
               <Row key={p.id} href={`/admin/people/${p.id}`}>
                 <Cell>
                   <span className="flex min-w-0 items-center gap-2.5">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(145deg,#ffb18a,#ff6b4a)] text-[0.875rem] font-bold text-white">{(p.name?.[0] ?? "؟").toUpperCase()}</span>
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.875rem] font-bold text-brand">{(p.name?.[0] ?? "؟").toUpperCase()}</span>
                     <span className="min-w-0">
                       <span className="flex min-w-0 items-center gap-1.5">
                         <b className="truncate font-semibold text-ink">{p.name || t.someone}</b>
-                        {p.admin && <Pill tone="ink">{t.aAdminBadge}</Pill>}
-                        {p.tester && <Pill>{t.aTestBadge}</Pill>}
+                        {p.admin && <Pill tone="ink">أدمين</Pill>}
+                        {p.tester && <Pill>تجربة</Pill>}
                       </span>
                       <Presence user={p.id} />
                     </span>
@@ -86,6 +97,12 @@ export default async function AdminPeople({ searchParams }: { searchParams: Prom
               </Row>
             ))}
           </Table>
+        )}
+        {left > 0 && (
+          <Link href={`/admin/people?${more}`} className="flex items-center justify-center gap-2 border-t border-line/80 py-3 text-[0.875rem] font-bold text-brand hover:bg-brand-soft/35">
+            ورّي {Math.min(PAGE, left)} أخرين
+            <span className="font-medium text-muted">مازال {left}</span>
+          </Link>
         )}
       </Card>
     </Page>

@@ -2,20 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
-import { BarChart3, Building2, FlaskConical, LayoutGrid, Megaphone, PhoneCall, Settings2, ShieldCheck, Users, Wallet } from "lucide-react";
+import { Fragment, useEffect, useRef } from "react";
+import { BarChart3, Banknote, Building2, FlaskConical, LayoutGrid, Megaphone, PhoneCall, Settings2, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 
-const ITEMS = [
-  { href: "/admin", label: "الكونسول", icon: LayoutGrid, exact: true },
-  { href: "/admin/shops", label: "المحلات", icon: Building2 },
-  { href: "/admin/crm", label: "المتابعة", icon: PhoneCall },
-  { href: "/admin/people", label: "الكونتات", icon: Users },
-  { href: "/admin/payments", label: "الحسابات", icon: Wallet },
-  { href: "/admin/traffic", label: "الترافيك", icon: BarChart3 },
-  { href: "/admin/news", label: "الأخبار", icon: Megaphone },
-  { href: "/admin/security", label: "الأمان", icon: ShieldCheck },
-  { href: "/admin/settings", label: "الريڤلاج", icon: Settings2 },
-  { href: "/admin/tester", label: "التجربة", icon: FlaskConical },
+type Place = { href: string; label: string; icon: LucideIcon; exact?: boolean };
+
+/**
+ * The console's places, in plain Tunisian (18 Oct 2026: the founder found the
+ * old names — «الكونسول», «الترافيك», «الريڤلاج» — hard to read), in four
+ * groups: the start; the people (shops, the follow-up, the accounts); the
+ * money and the visits; and the platform itself.
+ */
+const GROUPS: Place[][] = [
+  [{ href: "/admin", label: "الرئيسية", icon: LayoutGrid, exact: true }],
+  [
+    { href: "/admin/shops", label: "المحلات", icon: Building2 },
+    { href: "/admin/crm", label: "المتابعة", icon: PhoneCall },
+    { href: "/admin/people", label: "الكونتات", icon: Users },
+  ],
+  [
+    { href: "/admin/payments", label: "الفلوس", icon: Banknote },
+    { href: "/admin/traffic", label: "الزيارات", icon: BarChart3 },
+  ],
+  [
+    { href: "/admin/news", label: "الأخبار", icon: Megaphone },
+    { href: "/admin/security", label: "الحماية", icon: ShieldCheck },
+    { href: "/admin/settings", label: "الإعدادات", icon: Settings2 },
+    { href: "/admin/tester", label: "حساب التجربة", icon: FlaskConical },
+  ],
 ];
 
 /** The console's one way around: every place it holds, the one you are in lit up. */
@@ -38,22 +52,28 @@ export function ConsoleNav() {
 
   return (
     <nav ref={nav} className="flex gap-1 lg:flex-col">
-      {ITEMS.map((x) => {
-        const on = x.exact ? path === x.href : path.startsWith(x.href);
-        return (
-          <Link
-            key={x.href}
-            href={x.href}
-            aria-current={on ? "page" : undefined}
-            className={`flex h-10 items-center gap-2.5 whitespace-nowrap rounded-[0.75rem] px-3 text-[0.9062rem] font-semibold transition-colors ${
-              on ? "bg-brand text-white" : "text-body hover:bg-canvas hover:text-ink"
-            }`}
-          >
-            <x.icon className="size-[1.125rem] shrink-0" strokeWidth={2.2} />
-            {x.label}
-          </Link>
-        );
-      })}
+      {GROUPS.map((group, g) => (
+        <Fragment key={g}>
+          {/* a hairline between the groups, on the rail only */}
+          {g > 0 && <span className="mx-3 my-2 hidden h-px bg-line lg:block" aria-hidden />}
+          {group.map((x) => {
+            const on = x.exact ? path === x.href : path.startsWith(x.href);
+            return (
+              <Link
+                key={x.href}
+                href={x.href}
+                aria-current={on ? "page" : undefined}
+                className={`flex h-10 items-center gap-3 whitespace-nowrap rounded-[0.75rem] px-3 text-[0.9375rem] transition-colors ${
+                  on ? "bg-brand-soft font-bold text-brand" : "font-semibold text-body hover:bg-canvas hover:text-ink"
+                }`}
+              >
+                <x.icon className={`size-[1.125rem] shrink-0 ${on ? "text-brand" : "text-muted"}`} strokeWidth={2.2} />
+                {x.label}
+              </Link>
+            );
+          })}
+        </Fragment>
+      ))}
     </nav>
   );
 }

@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, Gift, MessageCircle, Phone } from "lucide-react";
+import { CalendarClock, ChevronRight, Gift, MessageCircle, Phone, Smartphone, Stamp, Users } from "lucide-react";
 import { AdminPlan } from "@/components/AdminPlan";
 import { PlanImage } from "@/components/PlanImage";
 import { AdminTrial } from "@/components/AdminTrial";
@@ -14,12 +13,12 @@ import { AdminWheelSwitch } from "@/components/AdminWheelSwitch";
 import { Ago } from "@/components/Ago";
 import { Presence } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
-import { Card, Cell, Empty, Lat, Num, Page, Pill, Row, Stat, Stats, Table, When } from "@/components/console";
-import { Trail } from "@/components/Trail";
+import { Visits, type Seen } from "@/components/Visits";
+import { box, Card, Cell, CLink, Empty, Facts, Lat, Num, Page, Pill, Row, Table, When } from "@/components/console";
 import { siteOrigin } from "@/lib/origin";
 import { call } from "@/lib/supabase";
 import { digits, pretty } from "@/lib/phone";
-import { fill, monthsSaid, stampsN, t } from "@/lib/t";
+import { counted, fill, monthsSaid, stampsN, t } from "@/lib/t";
 
 export const metadata = { title: "محل" };
 
@@ -29,10 +28,7 @@ type Shop = {
     id: string; name: string; phone: string | null; tester: boolean; admin: boolean;
     phone_check: "ask" | "sent" | null; phone_given: string | null; phone_given_at: string | null; phone_ok_at: string | null;
   } | null;
-  seen: {
-    created_at: string; first_at: string | null; last_at: string | null; n: number; ms: number;
-    visits: { id: string; at: string; end_at: string; ms: number; pages: number; device: string | null; os: string | null; browser: string | null; city: string | null; country: string | null; source: string; path: { route: string; screen: string | null; ms: number }[] }[];
-  } | null;
+  seen: Seen | null;
   stamp_gap: number; stamp_logo: boolean; items_on: boolean;
   held: { id: string; at: string; until: string; state: "waiting" | "lost" | "done" | "back"; name: string | null; item: string | null }[];
   store_on: boolean;
@@ -61,16 +57,9 @@ type Shop = {
 const TZ = "Africa/Tunis";
 const when = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: TZ }).format(new Date(iso));
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).format(new Date(iso));
-/** To the second: «6 أكتوبر 2026، 19:06:altogether» — for the moment an account was opened. */
+/** To the second: for the moment an account was opened. */
 const exact = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23", timeZone: TZ }).format(new Date(iso));
-/** 45ث · 2د 10ث · 1س 5د — how long they actually stayed. */
-function dur(ms: number): string {
-  const sec = Math.round((ms || 0) / 1000);
-  if (sec < 60) return `${sec}ث`;
-  const m = Math.floor(sec / 60);
-  if (m < 60) return sec % 60 ? `${m}د ${sec % 60}ث` : `${m}د`;
-  return `${Math.floor(m / 60)}س ${m % 60}د`;
-}
+
 /** A line made of Arabic and Latin pieces: each Latin one sealed, so they keep their order. */
 const Parts = ({ of }: { of: (string | null | undefined)[] }) => {
   const xs = (of.filter(Boolean) as string[]).filter((x) => x !== "?");
@@ -87,396 +76,135 @@ const Parts = ({ of }: { of: (string | null | undefined)[] }) => {
   );
 };
 const DEVICES: Record<string, string> = { phone: "تليفون", tablet: "تابلات", computer: "PC" };
-const SOURCES: Record<string, string> = { facebook: "فيسبوك", instagram: "إنستغرام", google: "Google", tiktok: "تيك توك", whatsapp: "واتساب", direct: "مباشر" };
 
 /** a scan by a phone without an account, by how it ended */
 const HELD: Record<string, { tone: "brand" | "coral" | "mint" | "grey"; say: string }> = {
-  waiting: { tone: "brand", say: "بلا كونت · يستنّى" },
-  lost: { tone: "coral", say: "بلا كونت · ضاع" },
+  waiting: { tone: "brand", say: "سكانا بلا كونت · يستنّى" },
+  lost: { tone: "coral", say: "سكانا بلا كونت · ضاع" },
   done: { tone: "mint", say: "عمل كونت وخذاه" },
-  back: { tone: "mint", say: "رجّعهولو بيدو" },
+  back: { tone: "mint", say: "مولى المحل رجّعهولو" },
 };
 
-/** One shop: who owns it on the side, how it is doing in the middle. */
+/**
+ * One shop, remade 18 Oct 2026 (the founder: «much cleaner», and the visits
+ * «something better to understand»).
+ *
+ * On top, the shop itself: its mark and name, where its year stands, its
+ * owner with the two ways to reach him, and its five numbers. Under it, two
+ * columns: in the wide one what the shop lives — the owner's visits (each
+ * one in words, a strip of the last 30 days, the replay), its customers, its
+ * latest tampons; on the side what the founder sets — the year, the options
+ * as switches, the owner's phones and account, the shop's card, and the
+ * founder's last-resort buttons at the very end.
+ */
 export default async function AdminShop({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const [s, forms, origin] = await Promise.all([call<Shop | null>("admin_shop", { p_id: id }), call<IdForm[]>("admin_forms", { p_shop: id }), siteOrigin()]);
   if (!s) notFound();
 
+  // where the shop's year stands, in one pill
+  const year = s.plan.paid && s.plan.paid_until
+    ? { tone: "mint" as const, say: `خلّص · حتى ${day(s.plan.paid_until)}` }
+    : s.plan.offer && s.plan.offer_until
+      ? { tone: "brand" as const, say: `العرض · يوفى ${when(s.plan.offer_until)}` }
+      : s.trial_over
+        ? { tone: "coral" as const, say: "التجربة وفات وما خلّصش" }
+        : s.trial_started === false
+          ? { tone: "grey" as const, say: "التجربة تبدا مع أوّل حريف" }
+          : { tone: "brand" as const, say: `في التجربة · توفى ${when(s.trial_until)}` };
+  const test = !!(s.owner?.tester || s.owner?.admin);
+  const kind = t.kinds[s.kind as keyof typeof t.kinds] ?? s.kind;
+
   return (
     <Page
       title={s.name}
-      hint={s.goal ? `${stampsN(s.goal)} ← ${s.gift}` : t.aNoCard}
+      hint={s.goal ? `${kind} · ${stampsN(s.goal)} = ${s.gift}` : `${kind} · ما عملش الكارط`}
       actions={
-        <Link href="/admin/shops" className="inline-flex h-9 items-center gap-1 rounded-[0.625rem] border border-line bg-surface px-3 text-[0.8438rem] font-semibold text-body hover:border-brand hover:text-brand">
-          <ChevronRight className="size-4" /> {t.aShops}
-        </Link>
+        <CLink href="/admin/shops">
+          <ChevronRight className="size-4" /> المحلات
+        </CLink>
       }
     >
-      <div className="grid gap-4 xl:grid-cols-[18rem_1fr]">
-        <div className="space-y-4">
-          <Card>
-            <div className="flex items-center gap-3">
-              <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-[0.875rem]" style={{ background: s.color }}>
-                <ShopMark shop={s} size={34} />
-              </span>
-              <div className="min-w-0">
-                <p className="flex items-center gap-1.5">
-                  <b className="truncate text-[1.0625rem] text-ink">{s.name}</b>
-                  {s.paused && <Pill tone="coral">{t.aPaused}</Pill>}
-                  {(s.owner?.tester || s.owner?.admin) && <Pill>{t.aTestBadge}</Pill>}
-                </p>
-                <p className="truncate text-[0.8125rem] text-muted">{t.kinds[s.kind as keyof typeof t.kinds] ?? s.kind}</p>
-              </div>
-            </div>
-            <dl className="mt-4 space-y-2 border-t border-line pt-3 text-[0.8438rem]">
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted">{t.aCreated}</dt>
-                <dd className="text-end font-semibold text-body">
-                  <Ago at={s.created_at} />
-                  <span className="block text-[0.75rem] font-normal text-muted">
-                    <When>{when(s.created_at)}</When>
-                  </span>
-                </dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted">الكارط</dt>
-                <dd className="min-w-0 text-end font-semibold text-body">{s.goal ? <>{s.gift} ← <Num>{s.goal}</Num></> : t.aNoCard}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted">شكل التامبون</dt>
-                <dd className="text-end font-semibold text-body">{s.stamp_logo && s.logo ? "اللوغو متاعو" : "عادي"}</dd>
-              </div>
-            </dl>
-          </Card>
-
-          <Card title={t.aOwner}>
-            <p className="truncate text-[0.9375rem] font-bold text-ink">{s.owner?.name || t.someone}</p>
-            {/* on the site right now? live, every 15 seconds */}
-            <Presence user={s.owner?.id} className="mt-0.5" />
-            {s.owner?.phone ? (
-              <>
-                <p className="mt-0.5 text-[0.875rem] text-body">
+      {/* the shop itself: who it is, where its year stands, its owner, its numbers */}
+      <section className={`${box} overflow-hidden`}>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-4 p-5">
+          <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-[1.125rem]" style={{ background: s.color }}>
+            <ShopMark shop={s} size={38} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="flex flex-wrap items-center gap-2">
+              <b className="truncate text-[1.25rem] text-ink">{s.name}</b>
+              <Pill tone={year.tone}>{year.say}</Pill>
+              {s.paused && <Pill tone="coral">موقّف</Pill>}
+              {test && <Pill>تجربة، موش حقيقي</Pill>}
+            </p>
+            <p className="mt-1 text-[0.875rem] text-muted">
+              {kind} · تحلّ <Ago at={s.created_at} />
+            </p>
+          </div>
+          {/* the owner, and the two ways to reach him */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="min-w-0 text-end">
+              <p className="truncate text-[0.9375rem] font-bold text-ink">{s.owner?.name || "مولى المحل"}</p>
+              {s.owner?.phone ? (
+                <p className="text-[0.8125rem] text-muted">
                   <Num>{pretty(s.owner.phone)}</Num>
                 </p>
-                <span className="mt-3 flex flex-wrap gap-2">
-                  <a href={`tel:+216${digits(s.owner.phone)}`} className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-brand px-3.5 text-[0.8438rem] font-bold text-white hover:bg-brand-deep">
-                    <Phone className="size-4" /> {t.aCall}
-                  </a>
-                  <a href={`https://wa.me/216${digits(s.owner.phone)}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-[0.625rem] bg-[#25D366] px-3.5 text-[0.8438rem] font-bold text-white hover:opacity-90">
-                    <MessageCircle className="size-4" /> واتساب
-                  </a>
-                </span>
-              </>
-            ) : (
-              <p className="mt-1 text-[0.8125rem] text-faint">بلا نومرو</p>
-            )}
-            {/* a number that looks made up: ask for the real one (it covers the owner's screens until given) */}
-            {s.owner && !s.owner.admin && (
-              <AdminPhoneCheck id={s.owner.id} state={s.owner.phone_check} given={s.owner.phone_given} givenAt={s.owner.phone_given_at} okAt={s.owner.phone_ok_at} />
-            )}
-                {s.seen && (
-                  <dl className="mt-4 space-y-2 border-t border-line pt-3 text-[0.8125rem]">
-                    <div className="flex justify-between gap-3">
-                      <dt className="shrink-0 text-muted">{t.aSignedUp}</dt>
-                      <dd className="text-end font-semibold text-body">
-                        <Ago at={s.seen.created_at} />
-                        <span className="block text-[0.75rem] font-normal text-muted">
-                          <When>{exact(s.seen.created_at)}</When>
-                        </span>
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <dt className="shrink-0 text-muted">{t.aLastSeen}</dt>
-                      <dd className="text-end font-semibold text-body">
-                        {s.seen.last_at ? (
-                          <>
-                            <Ago at={s.seen.last_at} />
-                            <span className="block text-[0.75rem] font-normal text-muted">
-                              <When>{when(s.seen.last_at)}</When>
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-faint">{t.never}</span>
-                        )}
-                      </dd>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <dt className="shrink-0 text-muted">{t.aVisits}</dt>
-                      <dd className="text-end font-semibold text-body">
-                        <When>{s.seen.n}</When>
-                        {s.seen.ms > 0 && <span className="text-muted"> · <When>{dur(s.seen.ms)}</When></span>}
-                      </dd>
-                    </div>
-                  </dl>
-                )}
-          </Card>
-
-          {/* every phone the owner is signed in on now: one sign-in each, a sign-out ends it */}
-          <Card title="التليفونات المحلولة" actions={<Pill tone={s.devices.length > 1 ? "brand" : "grey"}><Num>{s.devices.length}</Num></Pill>}>
-            {!s.devices.length ? (
-              <p className="text-[0.8125rem] text-faint">موش محلول على حتى تليفون توّا</p>
-            ) : (
-              <ul className="space-y-2.5 text-[0.8438rem]">
-                {s.devices.map((d) => (
-                  <li key={d.id} className="flex items-start justify-between gap-3">
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-1.5 font-semibold text-body">
-                        {d.here && <span className="size-2 shrink-0 rounded-full bg-mint" aria-label="متّصل توّا" />}
-                        {d.device || d.os || d.browser ? <Parts of={[DEVICES[d.device ?? ""] ?? d.device, d.os, d.app ? "التطبيق" : d.browser]} /> : <span className="text-muted">ما نعرفوش (تحلّ قبل)</span>}
-                      </span>
-                      <span className="block text-[0.75rem] text-muted">
-                        {d.city && <>{/^[؀-ۿ]/.test(d.city) ? d.city : <Lat>{d.city}</Lat>} · </>}
-                        محلول من <When>{when(d.since)}</When>
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-end text-[0.75rem] text-muted">{d.last_at ? <Ago at={d.last_at} /> : "—"}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <AdminShopEdit shop={{ id: s.id, name: s.name, kind: s.kind, goal: s.goal, gift: s.gift, stamp_gap: s.stamp_gap }} />
-          <AdminShopActions id={s.id} paused={s.paused} owner={s.owner ? { id: s.owner.id, tester: s.owner.tester, admin: s.owner.admin } : null} />
-        </div>
-
-        <div className="min-w-0 space-y-4">
-          {/* the shop's year: where it stands, the founder's hand on it, and its story */}
-          <Card
-            title={t.aPlan}
-            actions={
-              s.plan.paid && s.plan.paid_until ? (
-                <Pill tone="mint">{fill(t.aPlanPaidUntil, { date: day(s.plan.paid_until) })}</Pill>
-              ) : s.plan.offer && s.plan.offer_until ? (
-                <Pill tone="brand">{fill(t.aPlanOffer, { date: when(s.plan.offer_until) })}</Pill>
               ) : (
-                <Pill tone="coral">{t.aPlanNone}</Pill>
-              )
-            }
-          >
-            <AdminPlan shopId={s.id} paidUntil={s.plan.paid_until} paid={s.plan.paid} shop={s.name} owner={s.owner?.name ?? null} />
-            {/* more days of trial: not a subscription, the owner is told plainly */}
-            {!s.plan.paid && <AdminTrial shopId={s.id} until={s.trial_until} over={s.trial_over} started={s.trial_started !== false} />}
-            {(s.plan.log.length > 0 || s.plan.payments.some((y) => y.status === "pending")) && (
-              <div className="mt-4 border-t border-line pt-3">
-                <p className="mb-2 text-[0.8438rem] font-bold text-muted">{t.aPlanHistory}</p>
-                <ul className="space-y-1.5 text-[0.875rem]">
-                  {s.plan.payments
-                    .filter((y) => y.status === "pending")
-                    .map((y) => (
-                      <li key={y.id} className="flex items-center justify-between gap-3">
-                        <span className="font-semibold text-brand">
-                          {t.aPlanAsked} · {monthsSaid(y.months)}
-                        </span>
-                        <span className="text-[0.8125rem] text-muted">{when(y.at)}</span>
-                      </li>
-                    ))}
-                  {s.plan.log.map((l) => (
-                    <li key={l.id} className="flex items-center justify-between gap-3">
-                      <span className="min-w-0">
-                        <span className="font-semibold text-body">
-                          {l.kind === "trial"
-                            ? `زيادة تجربة حتى ${day(l.until ?? l.at)}`
-                            : l.kind === "end"
-                            ? t.aPlanLogEnd
-                            : l.kind === "until"
-                              ? fill(t.aPlanLogUntil, { date: day(l.until ?? l.at) })
-                              : fill(t.aPlanLogPaid, { d: monthsSaid(l.months ?? 0) })}
-                          {l.amount !== null && <span className="font-normal text-muted"> · {l.amount === 0 ? t.aPlanExtra : `${l.amount} ${t.payCurrency}`}</span>}
-                          {l.method && <span className="font-normal text-muted"> · {l.method === "cash" ? t.aPlanCash : l.method === "d17" ? "D17" : l.method.charAt(0).toUpperCase() + l.method.slice(1)}</span>}
-                        </span>
-                        {l.note && <span className="block truncate text-[0.8125rem] text-muted">«{l.note}»</span>}
-                      </span>
-                      <span className="flex shrink-0 items-center gap-2 text-[0.8125rem] text-muted">
-                        {l.shown && <Pill tone={l.seen ? "mint" : "grey"}>{l.seen ? t.aPlanSeen : t.aPlanNotSeen}</Pill>}
-                        {/* the subscription's picture, to send the owner (old ones too) */}
-                        {(l.kind === "paid" || l.kind === "until") && (
-                          <PlanImage plan={{ id: l.id, at: l.at, kind: l.kind, months: l.months, until: l.until, amount: l.amount, method: l.method, shop: s.name, owner: s.owner?.name ?? null }} />
-                        )}
-                        {when(l.at)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </Card>
-
-          {/* forms of identification: the founder's fields, a QR each; the owner sees the answers at every tampon */}
-          <Card title="فورمات التعريف" hint="طلبة، شركاء… كل فورم بالخانات متاعو والـQR متاعو" actions={<Pill tone={forms?.length ? "brand" : "grey"}><Num>{forms?.length ?? 0}</Num></Pill>}>
-            <AdminForms shop={s.id} forms={forms ?? []} origin={origin} />
-          </Card>
-
-          {/* the wheel: the founder allows it for this shop, the owner turns it on; its prizes and chances, and what fell */}
-          <Card title="الروليت" actions={<Pill tone={s.wheel_on ? "brand" : s.wheel_allowed ? "mint" : "grey"}>{s.wheel_on ? "المولى خدّمها" : s.wheel_allowed ? "مسموحة · المولى طافيها" : "موش مسموحة"}</Pill>}>
-            <AdminWheelSwitch id={s.id} on={s.wheel_allowed} hasCard={!!s.goal} store={s.store_on} />
-            {s.wheel_allowed && (
-              <div className="mt-4 grid gap-4 border-t border-line pt-3 lg:grid-cols-2">
-                <div>
-                  <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">الكادوات والحظ</p>
-                  {s.wheel.length ? (
-                    <ul className="space-y-1 text-[0.875rem]">
-                      {s.wheel.map((x) => (
-                        <li key={x.id} className="flex justify-between gap-3">
-                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
-                          <span className="shrink-0 text-muted">
-                            <Num>{x.chance}%</Num>
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[0.8125rem] text-faint">المولى مازال ما حطّ حتى كادو (الحريف ياخو الكادو متاع الكارط)</p>
-                  )}
-                </div>
-                <div>
-                  <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">شنوّة طاح</p>
-                  {s.wheel_fell.length ? (
-                    <ul className="space-y-1 text-[0.875rem]">
-                      {s.wheel_fell.map((x) => (
-                        <li key={x.name} className="flex justify-between gap-3">
-                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
-                          <span className="shrink-0 text-muted">
-                            ×<Num>{x.n}</Num>
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[0.8125rem] text-faint">حتى روليت ما تدوّرت</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* the store: the founder's switch for this shop, what is on sale, and the latest orders */}
-          <Card title="الماغازة" actions={<Pill tone={s.store_on ? "brand" : "grey"}>{s.store_on ? "مخدومة" : "الكارط العادية"}</Pill>}>
-            <AdminStoreSwitch id={s.id} on={s.store_on} hasCard={!!s.goal} />
-            {s.store_on && (
-              <div className="mt-4 grid gap-4 border-t border-line pt-3 lg:grid-cols-2">
-                <div>
-                  <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">شنوّة فيها</p>
-                  {s.store.length ? (
-                    <ul className="space-y-1 text-[0.875rem]">
-                      {s.store.map((x) => (
-                        <li key={x.id} className="flex justify-between gap-3">
-                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
-                          <span className="shrink-0 text-muted">
-                            <Num>{x.cost}</Num> تامبون
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[0.8125rem] text-faint">المولى مازال ما حطّ حتى حاجة</p>
-                  )}
-                </div>
-                <div>
-                  <p className="mb-1.5 text-[0.8125rem] font-bold text-muted">آخر الطلبيات</p>
-                  {s.orders.length ? (
-                    <ul className="space-y-1 text-[0.8125rem]">
-                      {s.orders.map((o, i) => (
-                        <li key={i} className="flex items-center justify-between gap-2">
-                          <span className="min-w-0 truncate">
-                            <Num>{o.qty}</Num>× <bdi className="font-semibold text-body">{o.name}</bdi>
-                            <span className="text-muted"> · {o.who ?? t.someone}</span>
-                          </span>
-                          <Pill tone={o.status === "given" ? "mint" : o.status === "waiting" ? "brand" : "grey"}>{o.status === "given" ? "تسلّمت" : o.status === "waiting" ? "تستنّى" : "تبطّلت"}</Pill>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[0.8125rem] text-faint">حتى طلبية</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* what the owner wrote in «شنوّة تبيع», and how many tampons each one got */}
-          <Card
-            title="شنوّة يبيع"
-            hint={s.items.length ? undefined : "ما كتب حتى حاجة"}
-            actions={s.items.length > 0 && <Pill tone={s.items_on ? "mint" : "grey"}>{s.items_on ? "يسأل على شنوّة التامبون" : "مطفي"}</Pill>}
-            pad={false}
-          >
-            {/* the founder's switch: the counter asks which thing each tampon is for */}
-            <AdminItemsSwitch id={s.id} on={s.items_on} count={s.items.filter((x) => !x.gone).length} />
-            {s.items.length > 0 && (
-              <Table head={["الحاجة", "تامبونات", "30 يوم", "آخر مرّة", "تزادت"]} words={[0]}>
-                {s.items.map((x) => (
-                  <Row key={x.id}>
-                    <Cell strong>
-                      <span className={`block truncate ${x.gone ? "text-faint line-through" : ""}`}>
-                        <bdi>{x.name}</bdi>
-                      </span>
-                    </Cell>
-                    <Cell n strong>{x.n}</Cell>
-                    <Cell n muted>{x.n30}</Cell>
-                    <Cell muted>{x.last_at ? <Ago at={x.last_at} /> : "—"}</Cell>
-                    <Cell muted><When>{day(x.at)}</When></Cell>
-                  </Row>
-                ))}
-              </Table>
-            )}
-          </Card>
-
-          <Stats cols={5}>
-            <Stat label={t.aCustomers} value={s.customers} />
-            <Stat label={t.aToday} value={s.today} tone="brand" />
-            <Stat label={t.aStamps} value={s.stamps} />
-            <Stat label={t.aGiven} value={s.given} tone="coral" />
-            <Stat label="كادو يستنّى" value={s.waiting} />
-          </Stats>
-
-          {s.seen && (
-            <Card title={t.aVisitsTitle} hint={t.aVisitsHint} pad={false}>
-              {!s.seen.visits.length ? (
-                <Empty>{t.aNoVisits}</Empty>
-              ) : (
-                <Table head={[t.aVisitWhen, t.aVisitStayed, "عدّى على", t.aVisitPhone, t.aVisitPlace, t.aVisitFrom]} words={[2, 3, 4, 5]}>
-                  {s.seen.visits.map((v) => (
-                    // the whole visit, step by step with its taps, on the traffic page
-                    <Row key={v.id} href={`/admin/traffic?tab=visits&v=${v.id}`}>
-                      <Cell strong>
-                        <Ago at={v.at} />
-                        <span className="block text-[0.75rem] font-normal text-muted">
-                          <When>{when(v.at)}</When>
-                        </span>
-                      </Cell>
-                      <Cell n strong>
-                        {v.ms > 0 ? dur(v.ms) : "—"}
-                      </Cell>
-                      <Cell muted className="min-w-[16rem]">
-                        {/* the visit drawn, not written: each screen as wide as the time on it */}
-                        <Trail path={v.path} pages={v.pages} />
-                      </Cell>
-                      <Cell muted>
-                        <Parts of={[DEVICES[v.device ?? ""] ?? v.device, v.browser]} />
-                      </Cell>
-                      <Cell muted>
-                        <Parts of={[v.city, v.country]} />
-                      </Cell>
-                      <Cell muted>
-                        <Parts of={[SOURCES[v.source] ?? v.source]} />
-                      </Cell>
-                    </Row>
-                  ))}
-                </Table>
+                <p className="text-[0.8125rem] text-faint">بلا نومرو</p>
               )}
+              {/* on the site right now? live, every 15 seconds */}
+              <Presence user={s.owner?.id} className="mt-0.5 justify-end" />
+            </div>
+            {s.owner?.phone && (
+              <span className="flex gap-2">
+                <a href={`tel:+216${digits(s.owner.phone)}`} className="inline-flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-brand px-4 text-[0.875rem] font-bold text-white hover:bg-brand-deep">
+                  <Phone className="size-4" /> كلّمو
+                </a>
+                <a href={`https://wa.me/216${digits(s.owner.phone)}`} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-[#25D366] px-4 text-[0.875rem] font-bold text-white hover:opacity-90">
+                  <MessageCircle className="size-4" /> واتساب
+                </a>
+              </span>
+            )}
+          </div>
+        </div>
+        {/* its five numbers, in one strip */}
+        <dl className="grid grid-cols-2 gap-px border-t border-line/80 bg-line/80 sm:grid-cols-3 xl:grid-cols-5">
+          {[
+            { icon: Users, label: "حرفاء", n: s.customers, tone: "text-ink" },
+            { icon: Stamp, label: "تامبونات اليوم", n: s.today, tone: "text-brand" },
+            { icon: Stamp, label: "تامبونات في الكل", n: s.stamps, tone: "text-ink" },
+            { icon: Gift, label: "كادوات تعطاو", n: s.given, tone: "text-coral" },
+            { icon: Gift, label: "كادوات يستنّاو", n: s.waiting, tone: "text-ink" },
+          ].map((x) => (
+            <div key={x.label} className="bg-surface px-5 py-3.5">
+              <dt className="flex items-center gap-1.5 text-[0.75rem] font-semibold text-muted">
+                <x.icon className="size-3.5" /> {x.label}
+              </dt>
+              <dd className={`mt-1 text-[1.5rem] font-bold leading-none ${x.tone}`}>
+                <Num>{x.n}</Num>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <div className="mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        {/* ── what the shop lives ── */}
+        <div className="min-w-0 space-y-5">
+          {s.seen && (
+            <Card title="كل مرّة دخل" hint="وقتاش دخل، قدّاش قعد، وشنوّة عمل" pad={false}>
+              <Visits seen={s.seen} />
             </Card>
           )}
 
-
-          <div className="grid gap-4 2xl:grid-cols-2">
-            <Card title={t.aTop} pad={false}>
+          <div className="grid gap-5 2xl:grid-cols-2">
+            <Card title="أحسن الحرفاء" hint="اللي عندهم أكثر تامبونات" pad={false}>
               {s.top.length === 0 ? (
-                <Empty>{t.aNothing}</Empty>
+                <Empty>مازال حتى حريف</Empty>
               ) : (
-                <Table head={["الحريف", "كادو", "تامبون"]}>
+                <Table head={["الحريف", "كادوات", "الكارط"]}>
                   {s.top.map((c, i) => (
                     <Row key={i}>
                       <Cell strong>
@@ -498,11 +226,11 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
               )}
             </Card>
 
-            <Card title={t.aRecent} hint={s.held.some((h) => h.state === "lost") ? `${s.held.filter((h) => h.state === "lost").length} سكان ضاع (ما عملش كونت)` : undefined} pad={false}>
+            <Card title="آخر الحركة" hint={s.held.some((h) => h.state === "lost") ? `${s.held.filter((h) => h.state === "lost").length} سكان ضاع (الحريف ما عملش كونت)` : "التامبونات والكادوات الأخرانين"} pad={false}>
               {s.recent.length + s.held.length === 0 ? (
-                <Empty>{t.aNothing}</Empty>
+                <Empty>مازال حتى حركة</Empty>
               ) : (
-                <Table head={["شنوّة", "شكون", "وقتاش"]} words={[1]}>
+                <Table head={["شنوّة صار", "الحريف", "وقتاش"]} words={[1]}>
                   {[
                     ...s.recent.map((r) => ({ ...r, held: null as (typeof s.held)[number] | null })),
                     // the scans without an account: whether the tampon was ever collected
@@ -510,31 +238,268 @@ export default async function AdminShop({ params }: { params: Promise<{ id: stri
                   ]
                     .sort((a, b) => b.at.localeCompare(a.at))
                     .map((r, i) => (
-                    <Row key={i}>
-                      <Cell>
-                        {r.held ? (
-                          <Pill tone={HELD[r.held.state]!.tone}>{HELD[r.held.state]!.say}</Pill>
-                        ) : (
-                          <Pill tone={r.kind === "stamp" ? "brand" : "coral"}>{r.kind === "stamp" ? <><Num>+1</Num> تامبون</> : "كادو"}</Pill>
-                        )}
-                        {r.item && <span className="ms-1.5 font-semibold text-body"><bdi>{r.item}</bdi></span>}
-                      </Cell>
-                      <Cell muted>
-                        <span className="block truncate">{r.name ?? (r.phone ? <Num>{r.phone}</Num> : t.someone)}</span>
-                      </Cell>
-                      <Cell n muted>
-                        <Ago at={r.at} className="font-semibold text-body" />
-                        <span className="block text-[0.75rem]">
-                          <When>{when(r.at)}</When>
-                        </span>
-                      </Cell>
-                    </Row>
-                  ))}
+                      <Row key={i}>
+                        <Cell>
+                          {r.held ? (
+                            <Pill tone={HELD[r.held.state]!.tone}>{HELD[r.held.state]!.say}</Pill>
+                          ) : (
+                            <Pill tone={r.kind === "stamp" ? "brand" : "coral"}>{r.kind === "stamp" ? <><Num>+1</Num> تامبون</> : r.given ? "خذا الكادو" : "ربح كادو"}</Pill>
+                          )}
+                          {r.item && <span className="ms-1.5 font-semibold text-body"><bdi>{r.item}</bdi></span>}
+                        </Cell>
+                        <Cell muted>
+                          <span className="block truncate">{r.name ?? (r.phone ? <Num>{r.phone}</Num> : t.someone)}</span>
+                        </Cell>
+                        <Cell n muted>
+                          <Ago at={r.at} className="font-semibold text-body" />
+                          <span className="block text-[0.75rem]">
+                            <When>{when(r.at)}</When>
+                          </span>
+                        </Cell>
+                      </Row>
+                    ))}
                 </Table>
               )}
             </Card>
           </div>
+
+          {/* what the owner wrote in «شنوّة تبيع», and how many tampons each one got */}
+          {s.items.length > 0 && (
+            <Card title="شنوّة يبيع" hint={s.items_on ? "قدّاش من تامبون خذات كل حاجة" : "كتبهم، أما «شنوّة يبيع» مطفي"} pad={false}>
+              <Table head={["الحاجة", "تامبونات في الكل", "آخر 30 يوم", "آخر مرّة", "تزادت نهار"]} words={[0]}>
+                {s.items.map((x) => (
+                  <Row key={x.id}>
+                    <Cell strong>
+                      <span className={`block truncate ${x.gone ? "text-faint line-through" : ""}`}>
+                        <bdi>{x.name}</bdi>
+                      </span>
+                    </Cell>
+                    <Cell n strong>{x.n}</Cell>
+                    <Cell n muted>{x.n30}</Cell>
+                    <Cell muted>{x.last_at ? <Ago at={x.last_at} /> : "—"}</Cell>
+                    <Cell muted><When>{day(x.at)}</When></Cell>
+                  </Row>
+                ))}
+              </Table>
+            </Card>
+          )}
+
+          {/* the wheel's prizes and what fell, once the founder allowed it */}
+          {s.wheel_allowed && (
+            <Card title="الروليت" hint={s.wheel_on ? "تخدم عند الحرفاء" : "مسموحة، أما مولى المحل مازال ما خدّمهاش"}>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-[0.8125rem] font-bold text-muted">الكادوات والحظ متاع كل وحدة</p>
+                  {s.wheel.length ? (
+                    <ul className="space-y-1.5 text-[0.875rem]">
+                      {s.wheel.map((x) => (
+                        <li key={x.id} className="flex justify-between gap-3">
+                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
+                          <span className="shrink-0 text-muted">
+                            <Num>{x.chance}%</Num>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[0.8125rem] text-faint">مازال ما حطّ حتى كادو</p>
+                  )}
+                </div>
+                <div>
+                  <p className="mb-2 text-[0.8125rem] font-bold text-muted">شنوّة طاح للحرفاء</p>
+                  {s.wheel_fell.length ? (
+                    <ul className="space-y-1.5 text-[0.875rem]">
+                      {s.wheel_fell.map((x) => (
+                        <li key={x.name} className="flex justify-between gap-3">
+                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
+                          <span className="shrink-0 text-muted">{counted(x.n, "مرّة", "زوز مرّات", "مرّات", "مرّة")}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[0.8125rem] text-faint">حتى حد مازال ما دوّرها</p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* the store: what is on sale, and the latest orders */}
+          {s.store_on && (
+            <Card title="الماغازة" hint="شنوّة فيها، وآخر ما شراو الحرفاء">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-[0.8125rem] font-bold text-muted">شنوّة فيها</p>
+                  {s.store.length ? (
+                    <ul className="space-y-1.5 text-[0.875rem]">
+                      {s.store.map((x) => (
+                        <li key={x.id} className="flex justify-between gap-3">
+                          <bdi className="truncate font-semibold text-body">{x.name}</bdi>
+                          <span className="shrink-0 text-muted">{stampsN(x.cost)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[0.8125rem] text-faint">مازال ما حطّ حتى حاجة</p>
+                  )}
+                </div>
+                <div>
+                  <p className="mb-2 text-[0.8125rem] font-bold text-muted">آخر الطلبيات</p>
+                  {s.orders.length ? (
+                    <ul className="space-y-1.5 text-[0.8125rem]">
+                      {s.orders.map((o, i) => (
+                        <li key={i} className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate">
+                            <Num>{o.qty}</Num>× <bdi className="font-semibold text-body">{o.name}</bdi>
+                            <span className="text-muted"> · {o.who ?? t.someone}</span>
+                          </span>
+                          <Pill tone={o.status === "given" ? "mint" : o.status === "waiting" ? "brand" : "grey"}>{o.status === "given" ? "تسلّمت" : o.status === "waiting" ? "تستنّى" : "تبطّلت"}</Pill>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[0.8125rem] text-faint">حتى طلبية مازال</p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
+
+        {/* ── what the founder sets ── */}
+        <aside className="min-w-0 space-y-5">
+          {/* the shop's year: where it stands, the founder's hand on it, and its story */}
+          <Card title="الأبونمان" actions={<Pill tone={year.tone}>{s.plan.paid ? "خلّص" : s.trial_over ? "ما خلّصش" : "في التجربة"}</Pill>}>
+            <AdminPlan shopId={s.id} paidUntil={s.plan.paid_until} paid={s.plan.paid} shop={s.name} owner={s.owner?.name ?? null} />
+            {/* more days of trial: not a subscription, the owner is told plainly */}
+            {!s.plan.paid && <AdminTrial shopId={s.id} until={s.trial_until} over={s.trial_over} started={s.trial_started !== false} />}
+            {(s.plan.log.length > 0 || s.plan.payments.some((y) => y.status === "pending")) && (
+              <div className="mt-4 border-t border-line pt-3">
+                <p className="mb-2 flex items-center gap-1.5 text-[0.8125rem] font-bold text-muted">
+                  <CalendarClock className="size-4" /> شنوّة صار في الأبونمان
+                </p>
+                <ul className="space-y-2.5 text-[0.8438rem]">
+                  {s.plan.payments
+                    .filter((y) => y.status === "pending")
+                    .map((y) => (
+                      <li key={y.id} className="flex items-center justify-between gap-3">
+                        <span className="font-semibold text-brand">
+                          طلب يخلّص · {monthsSaid(y.months)}
+                        </span>
+                        <span className="text-[0.75rem] text-muted">{when(y.at)}</span>
+                      </li>
+                    ))}
+                  {s.plan.log.map((l) => (
+                    <li key={l.id} className="flex items-start justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="font-semibold text-body">
+                          {l.kind === "trial"
+                            ? `زيادة في التجربة حتى ${day(l.until ?? l.at)}`
+                            : l.kind === "end"
+                              ? "وقّفنا الأبونمان"
+                              : l.kind === "until"
+                                ? fill(t.aPlanLogUntil, { date: day(l.until ?? l.at) })
+                                : fill(t.aPlanLogPaid, { d: monthsSaid(l.months ?? 0) })}
+                        </span>
+                        <span className="block text-[0.75rem] text-muted">
+                          {l.amount !== null && (l.amount === 0 ? t.aPlanExtra : `${l.amount} ${t.payCurrency}`)}
+                          {l.method && <> · {l.method === "cash" ? t.aPlanCash : l.method === "d17" ? "D17" : l.method.charAt(0).toUpperCase() + l.method.slice(1)}</>}
+                          {l.note && <> · «{l.note}»</>}
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 flex-col items-end gap-1 text-[0.75rem] text-muted">
+                        {when(l.at)}
+                        <span className="flex items-center gap-1.5">
+                          {l.shown && <Pill tone={l.seen ? "mint" : "grey"}>{l.seen ? "شافها" : "مازال ما شافهاش"}</Pill>}
+                          {/* the subscription's picture, to send the owner (old ones too) */}
+                          {(l.kind === "paid" || l.kind === "until") && (
+                            <PlanImage plan={{ id: l.id, at: l.at, kind: l.kind, months: l.months, until: l.until, amount: l.amount, method: l.method, shop: s.name, owner: s.owner?.name ?? null }} />
+                          )}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Card>
+
+          {/* the shop's options: one line and one switch each */}
+          <Card title="الخيارات" hint="حاجات تخدّمهم إنت للمحل هذا">
+            <div className="divide-y divide-line/70">
+              <AdminWheelSwitch id={s.id} on={s.wheel_allowed} active={s.wheel_on} hasCard={!!s.goal} store={s.store_on} />
+              <AdminStoreSwitch id={s.id} on={s.store_on} hasCard={!!s.goal} />
+              <AdminItemsSwitch id={s.id} on={s.items_on} count={s.items.filter((x) => !x.gone).length} />
+            </div>
+          </Card>
+
+          {/* the owner's account: when it was made, when last seen, the phones it is open on, his real number */}
+          <Card title="الكونت متاع مولى المحل">
+            <Facts
+              rows={[
+                s.seen && { label: "عمل الكونت", value: <Ago at={s.seen.created_at} />, sub: <When>{exact(s.seen.created_at)}</When> },
+                s.seen && { label: "آخر مرّة شفناه", value: s.seen.last_at ? <Ago at={s.seen.last_at} /> : <span className="text-faint">عمرو ما دخل</span>, sub: s.seen.last_at ? <When>{when(s.seen.last_at)}</When> : undefined },
+              ]}
+            />
+            <p className="mb-2 mt-4 flex items-center gap-1.5 border-t border-line pt-3 text-[0.8125rem] font-bold text-muted">
+              <Smartphone className="size-4" /> التليفونات اللي محلول عليهم
+              <span className="ms-auto">
+                <Pill tone={s.devices.length > 1 ? "brand" : "grey"}>
+                  <Num>{s.devices.length}</Num>
+                </Pill>
+              </span>
+            </p>
+            {!s.devices.length ? (
+              <p className="text-[0.8125rem] text-faint">موش محلول على حتى تليفون توّا</p>
+            ) : (
+              <ul className="space-y-2.5 text-[0.8438rem]">
+                {s.devices.map((d) => (
+                  <li key={d.id} className="flex items-start justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1.5 font-semibold text-body">
+                        {d.here && <span className="size-2 shrink-0 rounded-full bg-mint" aria-label="متّصل توّا" />}
+                        {d.device || d.os || d.browser ? <Parts of={[DEVICES[d.device ?? ""] ?? d.device, d.os, d.app ? "الأبليكاسيون" : d.browser]} /> : <span className="text-muted">ما نعرفوش</span>}
+                      </span>
+                      <span className="block text-[0.75rem] text-muted">
+                        {d.city && <>{/^[؀-ۿ]/.test(d.city) ? d.city : <Lat>{d.city}</Lat>} · </>}
+                        من <When>{when(d.since)}</When>
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-end text-[0.75rem] text-muted">{d.last_at ? <Ago at={d.last_at} /> : "—"}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {/* a number that looks made up: ask for the real one (it covers the owner's screens until given) */}
+            {s.owner && !s.owner.admin && (
+              <AdminPhoneCheck id={s.owner.id} state={s.owner.phone_check} given={s.owner.phone_given} givenAt={s.owner.phone_given_at} okAt={s.owner.phone_ok_at} />
+            )}
+          </Card>
+
+          {/* the shop's own card, and the founder's hand on it */}
+          <Card title="المحل والكارط">
+            <Facts
+              rows={[
+                { label: "الكارط", value: s.goal ? <>{stampsN(s.goal)} = <bdi>{s.gift}</bdi></> : <span className="text-faint">ما عملهاش</span> },
+                { label: "التامبون يبان", value: s.stamp_logo && s.logo ? "باللوغو متاعو" : "علامة عادية" },
+                { label: "تحلّ نهار", value: <When>{day(s.created_at)}</When> },
+              ]}
+            />
+            <div className="mt-4">
+              <AdminShopEdit shop={{ id: s.id, name: s.name, kind: s.kind, goal: s.goal, gift: s.gift, stamp_gap: s.stamp_gap }} />
+            </div>
+          </Card>
+
+          {/* forms of identification: the founder's fields, a QR each; the owner sees the answers at every tampon */}
+          <Card title="الفورمات" hint="خانات يعمّرهم الحريف (طلبة، شركاء…)، كل فورم بالـQR متاعو" actions={<Pill tone={forms?.length ? "brand" : "grey"}><Num>{forms?.length ?? 0}</Num></Pill>}>
+            <AdminForms shop={s.id} forms={forms ?? []} origin={origin} />
+          </Card>
+
+          {/* the founder's last-resort buttons, at the very end */}
+          <Card title="حاجات أخرى">
+            <AdminShopActions id={s.id} paused={s.paused} owner={s.owner ? { id: s.owner.id, tester: s.owner.tester, admin: s.owner.admin } : null} />
+          </Card>
+        </aside>
       </div>
     </Page>
   );

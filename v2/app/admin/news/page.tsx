@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Check, ChevronRight, Plus } from "lucide-react";
 import { AdminNewsActions } from "@/components/AdminNewsActions";
 import { AdminNewsForm } from "@/components/AdminNewsForm";
@@ -27,9 +26,9 @@ export default async function AdminNews({ searchParams }: { searchParams: Promis
   const [rows, one] = await Promise.all([!id && !making ? call<Row_[]>("admin_news_list") : null, id ? call<Detail>("admin_news", { p_id: id }) : null]);
 
   const back = (
-    <Link href="/admin/news" className="inline-flex h-9 items-center gap-1 rounded-[0.625rem] border border-line bg-surface px-3 text-[0.8438rem] font-semibold text-body hover:border-brand hover:text-brand">
-      <ChevronRight className="size-4" /> {t.aNews}
-    </Link>
+    <CLink href="/admin/news">
+      <ChevronRight className="size-4" /> الأخبار
+    </CLink>
   );
 
   if (making)
@@ -66,7 +65,7 @@ export default async function AdminNews({ searchParams }: { searchParams: Promis
             </CLink>
           </div>
         ) : (
-          <Table head={["الخبر", "الحالة", t.aNewsAudience, t.aNewsSeen, t.aNewsTaps, "تنشر"]}>
+          <Table head={["الخبر", "يخدم؟", "موالي المحلات", "شافوه", "نزلو على البوتون", "تنشر نهار"]}>
             {rows.map((n) => (
               <Row key={n.id} href={`/admin/news?id=${n.id}`}>
                 <Cell>
@@ -74,7 +73,7 @@ export default async function AdminNews({ searchParams }: { searchParams: Promis
                     <span className="grid size-10 shrink-0 place-items-center rounded-[0.625rem] bg-brand-soft">
                       <Icon3D name={n.icon} size={24} />
                     </span>
-                    <span className="min-w-0">
+                    <span className="min-w-0 max-w-[26rem]">
                       <b className="block truncate font-semibold text-ink">{n.title}</b>
                       <span className="block truncate text-[0.75rem] text-muted">{n.body}</span>
                     </span>
@@ -107,7 +106,7 @@ function Piece({ one, back }: { one: Detail; back: React.ReactNode }) {
   const clicked = owners.filter((p) => p.clicked_at);
 
   return (
-    <Page title={one.title} hint={`${t.aCreated} ${when(one.published_at)}`} actions={back}>
+    <Page title={one.title} hint={`تنشر ${when(one.published_at)}`} actions={back}>
       <div className="grid gap-4 xl:grid-cols-[22rem_1fr]">
         <div className="space-y-4">
           <Card title={t.aNewsPreview}>
@@ -131,13 +130,13 @@ function Piece({ one, back }: { one: Detail; back: React.ReactNode }) {
 
         <div className="min-w-0 space-y-4">
           <Stats cols={3}>
-            <Stat label={t.aNewsAudience} value={owners.length} sub="مولى" />
+            <Stat label="موالي المحلات" value={owners.length} sub="اللي تطلعلهم" />
             <Stat label={t.aNewsSeen} value={seen.length} sub={pct(seen.length, owners.length)} tone="brand" />
             <Stat label={t.aNewsClicked} value={one.cta_href ? clicked.length : "—"} sub={one.cta_href ? pct(clicked.length, seen.length) : "بلا بوتون"} tone="coral" />
           </Stats>
 
-          <Card title="الموالي" hint={`${one.people.length}`} pad={false}>
-            <Table head={["المحل", t.aOwner, t.phone, "شافها", ""]} words={[1]}>
+          <Card title="موالي المحلات" hint="شكون شافها وشكون مازال" pad={false}>
+            <Table head={["المحل", "مولى المحل", "التليفون", "شافها", ""]} words={[1]}>
               {one.people.map((p) => (
                 <Row key={p.id} href={`/admin/people/${p.id}`}>
                   <Cell strong>
@@ -147,7 +146,7 @@ function Piece({ one, back }: { one: Detail; back: React.ReactNode }) {
                     </span>
                   </Cell>
                   <Cell muted>
-                    <span className="block truncate">{p.name || t.aOwner}</span>
+                    <span className="block truncate">{p.name || "مولى المحل"}</span>
                   </Cell>
                   <Cell n muted>
                     {p.phone ? <Num>{pretty(p.phone)}</Num> : "—"}

@@ -12,7 +12,7 @@ export type Tone = "grey" | "brand" | "coral" | "mint" | "ink";
 /** where a shop stands, in the founder's hand — in the order of a sale */
 export const STAGES: { id: Stage; label: string; tone: Tone; hint: string }[] = [
   { id: "new", label: "جديد", tone: "grey", hint: "مازال حد ما كلّمو" },
-  { id: "tried", label: "ما جاوبش", tone: "ink", hint: "عيّطنا ولا بعثنا، ما جاوبش" },
+  { id: "tried", label: "ما جاوبش", tone: "ink", hint: "كلّمناه ولا بعثنالو، ما جاوبش" },
   { id: "talked", label: "كلّمناه", tone: "brand", hint: "تكلّمنا معاه" },
   { id: "interested", label: "مهتم", tone: "coral", hint: "يحب يجرّب ولا يشوف" },
   { id: "promised", label: "باش يخلّص", tone: "mint", hint: "قال باش يخلّص" },

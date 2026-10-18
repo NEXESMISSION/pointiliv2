@@ -148,7 +148,7 @@ export function CrmSheet({ shop, data, closeHref }: { shop: CrmShop; data: CrmOf
 
           {/* the day to come back */}
           <section>
-            <h3 className={head}>نعاودو</h3>
+            <h3 className={head}>وقتاش نعاودولو</h3>
             <div className="flex flex-wrap items-center gap-1.5">
               {[
                 { label: "غدوة", day: dayFromToday(1) },
@@ -171,7 +171,7 @@ export function CrmSheet({ shop, data, closeHref }: { shop: CrmShop; data: CrmOf
 
           {/* a word written down */}
           <section>
-            <h3 className={head}>سجّل كلمة</h3>
+            <h3 className={head}>سجّل شنوّة صار</h3>
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="شنوّة">
               {KINDS.map((k) => (
                 <button
@@ -203,7 +203,7 @@ export function CrmSheet({ shop, data, closeHref }: { shop: CrmShop; data: CrmOf
                 <input
                   value={text}
                   onChange={(e) => setText(e.target.value.slice(0, 2000))}
-                  placeholder={kind === "note" ? "اكتب النوت" : "شنوّة قال؟ (اختياري)"}
+                  placeholder={kind === "note" ? "اكتب النوت" : "شنوّة قال؟ (موش لازم)"}
                   className={field}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && canWrite) {
@@ -232,7 +232,7 @@ export function CrmSheet({ shop, data, closeHref }: { shop: CrmShop; data: CrmOf
 
           {/* every word so far */}
           <section>
-            <h3 className={head}>الحركات</h3>
+            <h3 className={head}>اللي صار معاه</h3>
             {data.log.length === 0 ? (
               <p className="rounded-[0.75rem] bg-surface px-3 py-4 text-center text-[0.8438rem] text-muted">مازال حتى كلمة</p>
             ) : (

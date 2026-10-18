@@ -53,14 +53,14 @@ export function AdminForms({ shop, forms, origin }: { shop: string; forms: IdFor
 
   return (
     <div className="space-y-3">
-      {forms.length === 0 && !edit && <p className="text-[0.8438rem] text-faint">حتى فورم. أعمل فورم (مثلا «طلبة جامعة …») واعطي الـQR متاعو للناس اللي يخصّوه.</p>}
+      {forms.length === 0 && !edit && <p className="text-[0.8438rem] text-faint">مازال حتى فورم. مثلا: «طلبة جامعة صفاقس»، تعطيهم الـQR متاعو.</p>}
 
       {forms.map((f) => (
         <div key={f.id} className={`rounded-[0.875rem] border border-line p-3 ${f.active ? "" : "opacity-60"}`}>
           <div className="flex items-center gap-2">
             <IdCard className="size-5 shrink-0 text-brand" />
             <b className="min-w-0 flex-1 truncate text-[0.9375rem] text-ink">{f.name}</b>
-            {!f.active && <span className="rounded-full bg-canvas px-2 py-0.5 text-[0.75rem] font-semibold text-muted">موقوف</span>}
+            {!f.active && <span className="rounded-full bg-canvas px-2 py-0.5 text-[0.75rem] font-semibold text-muted">مسكّر</span>}
             <span className="shrink-0 text-[0.8125rem] text-muted">{f.n} عمّرو</span>
           </div>
           <p className="mt-1 truncate text-[0.8125rem] text-muted">{f.fields.map((x) => x.label + (x.required ? "*" : "")).join(" · ")}</p>
@@ -147,7 +147,7 @@ export function AdminForms({ shop, forms, origin }: { shop: string; forms: IdFor
         <button
           type="button"
           onClick={() => setEdit({ id: null, name: "", fields: [{ key: "f1", label: "", kind: "text", required: true }], active: true })}
-          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[0.625rem] bg-brand text-[0.8438rem] font-bold text-white hover:bg-brand-deep"
+          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-[0.75rem] border border-line bg-surface text-[0.875rem] font-semibold text-body hover:border-brand/50 hover:text-brand"
         >
           <Plus className="size-4" /> فورم جديد
         </button>

@@ -87,7 +87,7 @@ export function TrafficFilters({ menus, query, from, to }: { menus: Menu[]; quer
           من
           <DateBox key={`from:${from ?? ""}`} value={from} label="من نهار" apply={(d) => go(d ? { from: d, to: to && to >= d ? to : d, d: null } : { from: null, to: null })} />
           لين
-          <DateBox key={`to:${to ?? ""}`} value={to} min={from} label="لين نهار" apply={(d) => go(d ? { to: d, from: from && from <= d ? from : d, d: null } : { to: null })} />
+          <DateBox key={`to:${to ?? ""}`} value={to} min={from} label="حتى نهار" apply={(d) => go(d ? { to: d, from: from && from <= d ? from : d, d: null } : { to: null })} />
           {from && (
             <button type="button" onClick={() => go({ from: null, to: null })} aria-label="نحّي النهارات" className="grid size-6 place-items-center rounded-full hover:bg-brand/10">
               <X className="size-3.5" />

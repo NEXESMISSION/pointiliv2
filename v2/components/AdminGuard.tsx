@@ -72,7 +72,7 @@ export function BlockForm() {
         e.preventDefault();
         if (!value.trim()) return;
         start(async () => {
-          if (await adminBlock(value, kind, reason || "بالإيد", 0)) {
+          if (await adminBlock(value, kind, reason || "بيدك", 0)) {
             setValue("");
             setReason("");
             router.refresh();
