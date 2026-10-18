@@ -12,7 +12,7 @@ import { t } from "@/lib/t";
  * phone that never gave a word, or one that is slow about it, never holds
  * the way out: two seconds, then out.
  */
-export function LogoutButton({ className = "mt-[3dvh]" }: { className?: string }) {
+export function LogoutButton({ className = "mt-[3dvh]", kind = "card" }: { className?: string; kind?: "card" | "rail" }) {
   const [busy, setBusy] = useState(false);
   const out = async () => {
     if (busy) return;
@@ -24,9 +24,17 @@ export function LogoutButton({ className = "mt-[3dvh]" }: { className?: string }
     }
     await logout();
   };
+  // «rail»: the console's foot, where the way out is a row like the two above it,
+  // and the word beside the mark only once the rail is standing (the founder,
+  // 18 Oct 2026: «add a logout button in the admin i dont find it»)
+  const look =
+    kind === "rail"
+      ? "flex h-10 w-full items-center gap-2.5 rounded-[0.75rem] px-3 text-[0.875rem] font-semibold text-coral transition-colors hover:bg-canvas disabled:opacity-70"
+      : "flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0625rem] font-semibold text-coral shadow-card disabled:opacity-70";
   return (
-    <button type="button" onClick={() => void out()} disabled={busy} className={`press ${className} flex h-[3.5rem] w-full items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1.0625rem] font-semibold text-coral shadow-card disabled:opacity-70`}>
-      <LogOut className="size-5" /> {busy ? t.checking : t.logout}
+    <button type="button" onClick={() => void out()} disabled={busy} aria-label={t.logout} className={`press ${className} ${look}`}>
+      <LogOut className={kind === "rail" ? "size-4 shrink-0" : "size-5"} />
+      <span className={kind === "rail" ? "hidden lg:block" : ""}>{busy ? t.checking : t.logout}</span>
     </button>
   );
 }

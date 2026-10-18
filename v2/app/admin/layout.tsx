@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { ConsoleNav } from "@/components/ConsoleNav";
 import { FounderMark } from "@/components/FounderMark";
+import { LogoutButton } from "@/components/LogoutButton";
 import { getMe } from "@/lib/session";
 
 export const metadata = { robots: { index: false } };
@@ -48,6 +49,8 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
               <ArrowUpRight className="size-4 shrink-0" />
               <span className="hidden lg:block">ارجع للأبليكاسيون</span>
             </Link>
+            {/* the way out: the console had none, so leaving it meant finding «اخرج» on a phone screen */}
+            <LogoutButton kind="rail" className="" />
           </div>
         </div>
       </aside>
