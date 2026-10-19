@@ -1,4 +1,5 @@
 import "server-only";
+import { metaActivated } from "@/lib/meta";
 import { service } from "@/lib/supabase";
 
 /**
@@ -137,6 +138,8 @@ export async function alertStamp(shopId: string, cardId: string): Promise<void> 
   const n = real.length;
   const hours = (Date.now() - Date.parse(f.shop.created_at)) / 3600_000;
   if (n === 1) {
+    // the shop used for real (not the owner's first-hour try): Facebook learns which sign-ups became shops (lib/meta)
+    await metaActivated(shopId, true, hours);
     await tg(
       [
         `🎉 <b>أوّل حريف</b>`,

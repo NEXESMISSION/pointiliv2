@@ -7,6 +7,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { after } from "next/server";
 import { sendPush } from "@/lib/push";
 import { alertGift, alertNewShop, alertStamp } from "@/lib/telegram";
+import { metaPurchase, metaRegistration, metaRequest } from "@/lib/meta";
 import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
 import { gate, note, TRAP, trapped } from "@/lib/guard";
@@ -126,8 +127,9 @@ export async function joinShop(_: FormState, fd: FormData): Promise<FormState> {
   if ("error" in made) return made;
   const { data: res } = await made.supabase.rpc("open_shop", { p_name: shop, p_kind: kind });
   if (!(res as { ok?: boolean } | null)?.ok) redirect("/shop/setup");
-  // a new shop: a word to the founder's Telegram
-  after(() => alertNewShop(made.id));
+  // a new shop: a word to the founder's Telegram, and the sign-up to Facebook from our side too (lib/meta)
+  const req = await metaRequest();
+  after(() => Promise.all([alertNewShop(made.id), metaRegistration(made.id, req)]));
   revalidatePath("/", "layout");
   redirect("/shop/card?new=1");
 }
@@ -386,8 +388,11 @@ export async function openShop(_: FormState, fd: FormData): Promise<FormState> {
   if (!me) return { error: t.errNetwork };
   const res = await call<{ ok: boolean; error?: string }>("open_shop", { p_name: name, p_kind: str(fd, "kind") });
   if (!res?.ok) return { error: t.errNetwork };
-  // a new shop: a word to the founder's Telegram (not when an owner only renames theirs)
-  if (!me.shop) after(() => alertNewShop(me.id));
+  // a new shop: a word to the founder's Telegram, and the sign-up to Facebook (not when an owner only renames theirs)
+  if (!me.shop) {
+    const req = await metaRequest();
+    after(() => Promise.all([alertNewShop(me.id), metaRegistration(me.id, req)]));
+  }
   // the logo: only a picture of this owner's own folder in the box; "" takes it away
   const logo = str(fd, "logo");
   const before = me.shop?.logo ?? "";
@@ -645,6 +650,8 @@ export async function adminTrial(shopId: string, days: number): Promise<{ ok: bo
   return { ok: !!res?.ok };
 }
 
+const p_amount = (a: number | null) => a !== null && Number.isInteger(a) && a > 0;
+
 export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null, amount: number | null = null): Promise<{ ok: boolean; until?: string }> {
   if (!UUID.test(shopId)) return { ok: false };
   const res = await call<{ ok: boolean; paid_until?: string }>("admin_plan", {
@@ -658,6 +665,8 @@ export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", 
     p_method: method && ["cash", "d17", "virement", "versement", "mandat"].includes(method) ? method : null,
     p_amount: amount !== null && Number.isInteger(amount) && amount >= 0 && amount <= 100_000 ? amount : null,
   });
+  // what was paid, to Facebook: the ads learn which sign-ups became paying shops (lib/meta)
+  if (res?.ok && kind !== "end" && p_amount(amount)) after(() => metaPurchase(shopId));
   revalidatePath(`/admin/shops/${shopId}`);
   revalidatePath("/admin/payments");
   return { ok: !!res?.ok, until: res?.paid_until };

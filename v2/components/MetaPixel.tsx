@@ -25,12 +25,14 @@ export function MetaPixel({ id }: { id: string | null }) {
     if (path === "/prix") pixel("ViewContent", { content_name: "prix", value: PRICE, currency: "TND" });
     else if (path === "/guide" || path === "/faq") pixel("ViewContent", { content_name: path.slice(1) });
     else if (path === "/shop/new") pixelOnce("Lead");
-    // an owner lands here right after making the account — not when they come back to change the
-    // shop (?edit=1, the home's «المحل» tile): from another browser (Chrome, after Facebook's) that
-    // counted a second sign-up for the same owner, and Meta learned from sign-ups that were not
-    else if (path === "/shop/setup" && !new URLSearchParams(window.location.search).has("edit")) pixelOnce("CompleteRegistration");
-    // since 2026-10-14 the account and the shop are one screen, which goes on to the card with ?new=1
-    else if (path === "/shop/card" && new URLSearchParams(window.location.search).has("new")) pixelOnce("CompleteRegistration");
+    // the shop just made: our server told Facebook already (lib/meta) and left its event_id in the
+    // `pl-reg` cookie, so this browser's step is the same one, counted once — and only here, right
+    // after making it (never an owner coming back to change the shop, nor from a second browser)
+    const reg = document.cookie.match(/(?:^|;\s*)pl-reg=([\w-]+)/)?.[1];
+    if (reg) {
+      document.cookie = "pl-reg=; max-age=0; path=/";
+      pixelOnce("CompleteRegistration", undefined, reg);
+    }
     // what a popup asked for while the page was still opening (the card made, the subscription on)
     drainPixel();
   }, [id, path]);

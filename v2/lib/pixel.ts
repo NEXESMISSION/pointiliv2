@@ -33,7 +33,7 @@ const STANDARD = new Set(["PageView", "ViewContent", "Lead", "CompleteRegistrati
 type Params = Record<string, string | number | boolean>;
 let ready: string | null = null;
 // steps asked for before the pixel started (a popup opens before the page's own step): sent right after it
-let waiting: [string, Params | undefined, boolean][] = [];
+let waiting: [string, Params | undefined, boolean, string | undefined][] = [];
 
 const read = (k: string) => {
   try {
@@ -95,27 +95,30 @@ export function startPixel(id: string) {
   ready = id;
 }
 
-/** One step, if the pixel runs on this page. */
-export function pixel(event: string, params?: Params) {
+/**
+ * One step, if the pixel runs on this page. `eventID` is the one our server
+ * sends the same step with (lib/meta), so Meta counts the pair once.
+ */
+export function pixel(event: string, params?: Params, eventID?: string) {
   const w = window as PixelWindow;
   if (!pixelHere(location.pathname)) return;
-  if (!ready) return void waiting.push([event, params, false]);
+  if (!ready) return void waiting.push([event, params, false, eventID]);
   if (!w.fbq) return;
-  w.fbq(STANDARD.has(event) ? "track" : "trackCustom", event, params ?? {});
+  w.fbq(STANDARD.has(event) ? "track" : "trackCustom", event, params ?? {}, ...(eventID ? [{ eventID }] : []));
 }
 
 /** A step that counts once per browser (a sign-up opened twice is one lead). */
-export function pixelOnce(event: string, params?: Params) {
+export function pixelOnce(event: string, params?: Params, eventID?: string) {
   if (!pixelHere(location.pathname)) return;
-  if (!ready) return void waiting.push([event, params, true]);
+  if (!ready) return void waiting.push([event, params, true, eventID]);
   if (read(ONCE + event)) return;
   write(ONCE + event, "1");
-  pixel(event, params);
+  pixel(event, params, eventID);
 }
 
 /** The steps that waited for the pixel to start, after the page's own. */
 export function drainPixel() {
   const q = waiting;
   waiting = [];
-  for (const [event, params, once] of q) (once ? pixelOnce : pixel)(event, params);
+  for (const [event, params, once, eventID] of q) (once ? pixelOnce : pixel)(event, params, eventID);
 }

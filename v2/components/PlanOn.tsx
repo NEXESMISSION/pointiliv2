@@ -26,7 +26,7 @@ export function PlanOn({ grant }: { grant: Grant }) {
     said.current = true;
     signal("plan_on", grant.months ? `${grant.months}` : grant.kind);
     // what came in, for the ad that brought this owner (months added with no money are not a sale, nor days of trial)
-    if (grant.amount && grant.kind !== "trial") pixel("Purchase", { value: grant.amount, currency: "TND", content_name: "abonnement" });
+    if (grant.amount && grant.kind !== "trial") pixel("Purchase", { value: grant.amount, currency: "TND", content_name: "abonnement" }, `plan-${grant.id}`);
     void planSeen(grant.id).catch(() => {});
   }, [grant]);
   if (!open) return null;
