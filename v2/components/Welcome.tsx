@@ -104,9 +104,13 @@ export function Welcome({ help, known, ad }: { help: HelpSettings; known?: boole
       {/* the other two films, said plainly: the founder asked for a button each rather than
           anything playing by itself (19 Oct 2026). Both open over the page, nothing loads
           until one is tapped. */}
-      <div className="relative mt-[1.4dvh] flex flex-wrap items-center justify-center gap-1.5">
-        {help.video2 && <VideoPill video={help.video2} className="!h-[2.1rem] !text-[0.75rem]" />}
-        <ClipButton className="press flex h-[2.1rem] items-center gap-1.5 rounded-full bg-white pe-3 ps-2.5 text-[0.75rem] font-bold text-ink shadow-card ring-1 ring-black/5">
+      {/* The two pills sit on one row, and on a 360px phone they missed it by about ten pixels —
+          so the row wrapped, the front door grew 22px and the whole page scrolled, which it must
+          never do (19 Oct 2026). They are not made smaller for everyone to fix one width: under
+          375px they give up a little padding and a quarter point of type, and nothing else moves. */}
+      <div className="relative mt-[1.4dvh] flex flex-wrap items-center justify-center gap-1.5 max-[374px]:gap-1">
+        {help.video2 && <VideoPill video={help.video2} className="!h-[2.1rem] !text-[0.75rem] max-[374px]:!text-[0.6875rem]" />}
+        <ClipButton className="press flex h-[2.1rem] items-center gap-1.5 rounded-full bg-white pe-3 ps-2.5 text-[0.75rem] font-bold text-ink shadow-card ring-1 ring-black/5 max-[374px]:gap-1 max-[374px]:pe-2.5 max-[374px]:ps-2 max-[374px]:text-[0.6875rem]">
           <Film className="size-3.5 text-[#D7141A]" />
           هكّا تخدم في المحل
         </ClipButton>
