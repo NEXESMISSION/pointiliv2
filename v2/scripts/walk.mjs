@@ -122,8 +122,9 @@ try {
   await o.getByRole("textbox", { name: "ولا اكتب العدد" }).fill("15");
   await shot(o, "04b2-card-goal-typed", 400);
   await o.getByRole("radio", { name: "5", exact: true }).click();
-  // ② its look and its rule: the colour, the logo and the tampon's shape, the wait between two tampons
-  await o.getByRole("button", { name: "كمّل", exact: true }).click();
+  // ② its look and its rule, under the button and not in the way: the colour, the logo and
+  // the tampon's shape, the wait between two tampons (the first screen finishes the card now)
+  await o.getByRole("button", { name: "اللون واللوغو متاعك", exact: true }).click();
   await o.getByRole("heading", { name: "اللون واللوغو متاعك" }).waitFor({ timeout: 20000 });
   await o.getByRole("radio", { name: "#FF6B4A" }).click();
   await shot(o, "04c-card-look", 600);

@@ -8,7 +8,7 @@
  *    refusal after scanning, never before;
  *  - and the ordinary one, which must keep saying what it always said.
  *
- *   node scripts/next-says.mjs        (from v2/, with the dev server on :3200)
+ *   node scripts/cards-says.mjs        (from v2/, with the dev server on :3200)
  */
 import { mkdirSync } from "node:fs";
 import { config } from "dotenv";
@@ -19,10 +19,10 @@ import { robot, unrobot } from "./robots.mjs";
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const OUT = ".e2e/next-says";
+const OUT = ".e2e/cards-says";
 mkdirSync(OUT, { recursive: true });
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-const PASS = "next-says-2026";
+const PASS = "cards-says-2026";
 const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "first_scan", "first_gift", "mission"];
 const made = [];
 const phones = [];
@@ -70,18 +70,27 @@ try {
 
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "ar-TN" });
   const page = await ctx.newPage();
+  // and while it is open: nothing thrown, nothing shouted into the browser's console —
+  // a screen the whole app leads to is the last place to find out by accident
+  const problems = [];
+  page.on("pageerror", (e) => problems.push(`THROW ${e.message.slice(0, 160)}`));
+  page.on("console", (m) => {
+    const said = m.text();
+    if (m.type() === "error" && !/favicon|404|Failed to load resource/i.test(said)) problems.push(`ERR ${said.slice(0, 160)}`);
+  });
   await page.goto(`${BASE}/login`, { waitUntil: "load", timeout: 90000 });
   await page.locator('input[name="phone"]').fill(customer.digits);
   await page.locator('input[name="password"]').fill(PASS);
   await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 90000 }), page.locator('button[type="submit"]').click()]);
-  await page.goto(`${BASE}/next`, { waitUntil: "load", timeout: 90000 });
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 90000 });
   await page.waitForTimeout(1500); // the clock is read after mounting
   const text = (await page.locator("body").innerText()).replace(/\s+/g, " ");
 
   check("a stopped shop says it is stopped", text.includes("المحل موقّف توّا"), text.slice(0, 120));
   check("a tampon too soon says when the next one can land", /تامبون جديد/.test(text), text.slice(0, 120));
   check("  → and says a time, not just «soon»", /تامبون جديد\s+\S+/.test(text));
-  check("the ordinary card still says what is left", /مازالولك \d+ على/.test(text));
+  check("the ordinary card still says what is left", /مازالولك \d+ باش تربح/.test(text), text.slice(0, 160));
+  check("the browser said nothing was wrong", problems.length === 0, problems.join(" | "));
   await page.screenshot({ path: `${OUT}/what-a-card-says.png` });
 } catch (e) {
   failed.push("the run itself");

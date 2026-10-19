@@ -4,6 +4,7 @@ import { Check, Gift, QrCode, ScanLine } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
 import { CardWheel } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
+import { Live } from "@/components/Live";
 import { MyCode } from "@/components/MyCode";
 import { PushAsk } from "@/components/PushAsk";
 import { Pass } from "@/components/Pass";
@@ -43,6 +44,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
     return (
       <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
         <Top back={cardsHome(me)} title={card.shop.name} />
+        <Live me={me.id} />
         <CardStore card={id} shop={card.shop} balance={store?.balance ?? card.stamps} items={store?.items ?? []} waiting={store?.waiting ?? []} code={me.code ?? null} svg={code} />
       </Screen>
     );
@@ -60,6 +62,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
     // one screen: the card, one quiet line, and one thing to do (shorter than 548px, the page scrolls)
     <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
       <Top back={cardsHome(me)} />
+      {/* the tampon lands on the card while it is open on the counter: no refresh (19 Oct 2026) */}
+      <Live me={me.id} />
       <div className="mx-auto mt-2 w-full max-w-[min(100%,52dvh)] shrink-0 animate-rise">
         <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} />
       </div>

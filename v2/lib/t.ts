@@ -186,6 +186,8 @@ export const t = {
 
   // the wallet
   hello: "نهارك طيّب",
+  hi: "أهلا",
+  hiName: "أهلا {name}",
   myCards: "الكارطات متاعي",
   noCards: "ما عندكش كارطات مازال",
   noCardsBody: "سكاني الكود في المحل وخوذ أول تامبون",
@@ -193,6 +195,9 @@ export const t = {
   giftWaiting: "عندك كادو يستنّى فيك",
   giftAt: "{gift} في {shop}",
   stamps: "{n} تامبونات",
+  // what a card says under the shop's name, when it is not a gift waiting
+  cardPaused: "المحل موقّف توّا",
+  cardSoon: "تامبون جديد {when}",
 
   // a card
   ready: "الكادو متاعك حاضر!",

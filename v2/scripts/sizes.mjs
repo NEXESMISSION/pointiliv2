@@ -241,16 +241,14 @@ const SCREENS = [
   { name: "public-prix", path: "/prix", read: true },
 
   { name: "customer-wallet", as: "customer", before: () => giftBack(), path: "/" },
-  // the customer's app built again, beside the live one (/next): the cards, and a card that opens where it is
-  { name: "next-home", as: "customer", path: "/next" },
-  { name: "next-code", as: "customer", path: "/next", act: (p) => press(p, "الكود متاعي") },
+  // a gift waiting: the one code button says so and the sheet it opens is the gift's
   {
     name: "customer-gift-code",
     as: "customer",
     before: () => giftBack(),
     path: "/",
     act: async (p) => {
-      await p.getByRole("button", { name: /عندك كادو يستنّى فيك/ }).click({ timeout: 15000 });
+      await press(p, "الكود متاعي");
       await p.getByRole("dialog").waitFor({ timeout: 15000 });
     },
   },

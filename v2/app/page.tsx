@@ -1,14 +1,13 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Wallet } from "@/components/Wallet";
+import { Wallet, WalletWait } from "@/components/Wallet";
 import { JsonLd } from "@/components/SiteFrame";
 import { Welcome } from "@/components/Welcome";
 import { getMe, homeOf } from "@/lib/session";
 import { faqJsonLd, FAQ, orgJsonLd } from "@/lib/seo";
 import { getHelp, getSettings } from "@/lib/settings";
-import { call } from "@/lib/supabase";
-import type { CardView } from "@/lib/types";
 
 /** Facebook's check that the domain is Pointili's reads its code here, on the front door (set in the console). */
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,6 +34,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     );
   }
   if (me.shop) redirect(homeOf(me));
-  const cards = (await call<CardView[]>("wallet")) ?? [];
-  return <Wallet me={me} cards={cards} />;
+  // a customer's home: the shape of it paints at once, the cards arrive into it
+  return (
+    <Suspense fallback={<WalletWait />}>
+      <Wallet me={me} />
+    </Suspense>
+  );
 }

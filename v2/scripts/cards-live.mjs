@@ -1,16 +1,16 @@
 /**
- * The new customer home keeps itself: a tampon landing at a counter shows up
+ * The customer's home keeps itself: a tampon landing at a counter shows up
  * on a phone that is already open, with nobody pulling the page down.
  *
  * It proves the whole chain, not a piece of it: a moment written to the
  * database fires public.ping_counter, which sends on «pointili:p:<person>»,
- * which components/next/Live hears, which asks the server again. The page is
+ * which components/Live hears, which asks the server again. The page is
  * never reloaded by the test — if the number changes, it changed by itself.
  *
  * Then it proves the fallback: with the radio cut (offline), coming back to
  * the tab looks again anyway.
  *
- *   node scripts/next-live.mjs        (from v2/, with the dev server on :3200)
+ *   node scripts/cards-live.mjs        (from v2/, with the dev server on :3200)
  */
 import { mkdirSync } from "node:fs";
 import { config } from "dotenv";
@@ -21,10 +21,10 @@ import { robot, unrobot } from "./robots.mjs";
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
 const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const OUT = ".e2e/next-live";
+const OUT = ".e2e/cards-live";
 mkdirSync(OUT, { recursive: true });
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-const PASS = "next-live-2026";
+const PASS = "cards-live-2026";
 const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "first_scan", "first_gift", "mission"];
 const made = [];
 const phones = [];
@@ -68,7 +68,7 @@ try {
   await page.locator('input[name="phone"]').fill(customer.digits);
   await page.locator('input[name="password"]').fill(PASS);
   await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 90000 }), page.locator('button[type="submit"]').click()]);
-  await page.goto(`${BASE}/next`, { waitUntil: "load", timeout: 90000 });
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 90000 });
   await page.waitForTimeout(2500); // the radio subscribes
   const reloads = { n: 0 };
   page.on("load", () => (reloads.n += 1));
