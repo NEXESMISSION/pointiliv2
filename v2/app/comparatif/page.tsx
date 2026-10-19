@@ -6,12 +6,12 @@ import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Comparatif des cartes de fidélité digitales en Tunisie (2026) — مقارنة",
-  description: `Pointili, Stampi, Fidèle, Poinety, Raba7ni : prix, application client, façon de donner un tampon. Ce que chaque solution de fidélité digitale en Tunisie affiche sur son site, et laquelle choisir pour votre commerce.`,
+  description: `Pointili, Stampi, Fidèle, Poinety, Raba7ni, Dawwerni, Sourdi, DimaCard, Quardy : prix, application client, façon de donner un tampon. Ce que chaque solution de fidélité digitale en Tunisie affiche sur son site, et laquelle choisir pour votre commerce.`,
   alternates: { canonical: `${SITE}/comparatif` },
 };
 
 /** The day the others' facts were read on their own sites; the table says it, and is read again then. */
-const READ_ON = "16 octobre 2026";
+const READ_ON = "16 et 19 octobre 2026";
 
 type Row = { name: string; url?: string; price: string; app: string; stamp: string; note: string };
 const ROWS: Row[] = [
@@ -54,12 +54,44 @@ const ROWS: Row[] = [
     stamp: "Le client scanne le QR présenté par le caissier",
     note: "Points, tampons et cashback, portefeuille multi-commerces",
   },
+  {
+    name: "Dawwerni",
+    url: "https://dawwerni.com/",
+    price: "À partir de 690 DT par an, essai gratuit de 7 jours",
+    app: "Non : la carte s'ouvre dans le navigateur",
+    stamp: "Le client scanne un QR posé sur la table, en vitrine ou affiché sur un écran TV, et joue pour gagner le cadeau",
+    note: "Fidélité à points ou à tampons, jeux QR, avis Google, écrans TV, mode caisse",
+  },
+  {
+    name: "Sourdi",
+    url: "https://sourdi.net/",
+    price: "Non affiché sur le site",
+    app: "Non : cartes digitales et QR",
+    stamp: "Le client scanne un QR code du commerce",
+    note: "Cartes, coupons, avis Google par QR, mini-jeux, notifications push, programme agence",
+  },
+  {
+    name: "DimaCard",
+    url: "https://dimacard.com/",
+    price: "À partir de 27 € par mois, essai de 14 jours",
+    app: "Non : la carte s'ajoute à Apple Wallet ou Google Wallet",
+    stamp: "Le commerce valide le passage ; la carte vit dans le portefeuille du téléphone",
+    note: "Notifications gratuites, relances automatiques, résiliable en ligne",
+  },
+  {
+    name: "Quardy",
+    url: "https://quardy.app/",
+    price: "Gratuit jusqu'à 50 clients, puis selon la formule",
+    app: "Non : la carte s'ajoute à Apple Wallet ou Google Wallet",
+    stamp: "Le commerce valide chaque passage d'un scan",
+    note: "Carte prête en deux minutes, le commerce fixe ses propres récompenses",
+  },
 ];
 
 const FAQ = [
   {
     q: "Quelle est la meilleure carte de fidélité digitale en Tunisie ?",
-    a: `Cela dépend du commerce. Pour un café, un barbier, une boulangerie ou une boutique qui veut un prix fixe et simple, sans application à faire installer au client et avec une interface en tunisien, Pointili est fait pour ça : ${PRICE} DT par an tout compris. Pour des points calculés sur le montant du ticket, Stampi ; pour faire partie d'une application qui regroupe plusieurs commerces, Fidèle ou Raba7ni ; pour un tampon NFC posé sur le comptoir, Poinety.`,
+    a: `Cela dépend du commerce. Pour un café, un barbier, une boulangerie ou une boutique qui veut un prix fixe et simple, sans application à faire installer au client et avec une interface en tunisien, Pointili est fait pour ça : ${PRICE} DT par an tout compris. Pour des points calculés sur le montant du ticket, Stampi ; pour faire partie d'une application qui regroupe plusieurs commerces, Fidèle ou Raba7ni ; pour un tampon NFC posé sur le comptoir, Poinety ; pour des jeux QR et des écrans en salle, Dawwerni ; pour une carte dans Apple Wallet ou Google Wallet, DimaCard ou Quardy.`,
   },
   {
     q: "شنوّة أحسن كارط فيديليتي ديجيتال في تونس؟",
@@ -67,7 +99,15 @@ const FAQ = [
   },
   {
     q: "Le client doit-il télécharger une application ?",
-    a: "Avec Pointili et Stampi, non : la carte s'ouvre dans le navigateur du téléphone. Avec Fidèle et Poinety, le client installe leur application.",
+    a: "Avec Pointili, Stampi, Dawwerni et Sourdi, non : la carte s'ouvre dans le navigateur du téléphone. Avec DimaCard et Quardy, non plus, mais la carte s'ajoute à Apple Wallet ou Google Wallet. Avec Fidèle et Poinety, le client installe leur application.",
+  },
+  {
+    q: "Quelle est la carte de fidélité digitale la moins chère en Tunisie ?",
+    a: `Sur les prix affichés publiquement le ${READ_ON} : Stampi annonce la gratuité ; Quardy et Fidèle sont gratuits jusqu'à 50 clients ; Pointili est à ${PRICE} DT par an tout compris (${PRICE_MONTH} DT par mois), sans limite de clients ; Poinety va de 290 à 390 DT par an ; Dawwerni part de 690 DT par an ; DimaCard part de 27 € par mois, soit plus de 1 000 DT par an. Raba7ni et Sourdi n'affichent pas de prix. Un prix gratuit ou par paliers suit le nombre de clients : c'est au moment où le commerce marche qu'il coûte le plus.`,
+  },
+  {
+    q: "قدّاش تسوم كارط الفيديليتي الديجيتال في تونس؟",
+    a: `على حسب السومة المعلنة في ${READ_ON}: Stampi يقول بلاش؛ Quardy و Fidèle بلاش حتى 50 حريف؛ Pointili ${PRICE} د في العام كل شيء داخل (${PRICE_MONTH} د في الشهر) وحرفاء بلا عدد؛ Poinety من 290 ل390 د في العام؛ Dawwerni يبدا من 690 د في العام؛ DimaCard يبدا من 27 أورو في الشهر، يعني أكثر من 1000 د في العام. Raba7ni و Sourdi ما يحطّوش السومة.`,
   },
 ];
 

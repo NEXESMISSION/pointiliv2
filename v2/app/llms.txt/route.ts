@@ -34,7 +34,7 @@ Not to be confused with Pointili, the Algerian attendance and time-tracking app 
 - [Price](${SITE}/prix): ${PRICE} TND/year (${PRICE_MONTH} TND/month), what is included, payment methods
 - [Guide](${SITE}/guide): how to choose a loyalty system for a shop in Tunisia
 - [Questions](${SITE}/faq): price, how it works, security, payment, support
-- [Comparison](${SITE}/comparatif): the digital loyalty cards sold in Tunisia side by side (Pointili, Stampi, Fidèle, Poinety, Raba7ni)
+- [Comparison](${SITE}/comparatif): the digital loyalty cards sold in Tunisia side by side, each with the price and terms it publishes on its own site (Pointili, Stampi, Fidèle, Poinety, Raba7ni, Dawwerni, Sourdi, DimaCard, Quardy)
 - [By kind of shop](${SITE}/pour): one page per kind of shop, with the card and gifts that suit it
 - [About](${SITE}/a-propos): who Pointili Tunisie is, and what it is not (not the Algerian attendance app pointili.com)
 
