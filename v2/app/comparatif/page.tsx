@@ -6,7 +6,7 @@ import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Comparatif des cartes de fidélité digitales en Tunisie (2026) — مقارنة",
-  description: `Pointili, Stampi, Fidèle, Poinety, Raba7ni, Dawwerni, Sourdi, DimaCard, Quardy : prix, application client, façon de donner un tampon. Ce que chaque solution de fidélité digitale en Tunisie affiche sur son site, et laquelle choisir pour votre commerce.`,
+  description: `Pointili, Stampi, Fidèle, Poinety, Raba7ni, Dawwerni, Sourdi, DimaCard, Fydalia, The Regular, Quardy : prix, application client, façon de donner un tampon. Ce que chaque solution de fidélité digitale en Tunisie affiche sur son site, et laquelle choisir pour votre commerce.`,
   alternates: { canonical: `${SITE}/comparatif` },
 };
 
@@ -79,6 +79,22 @@ const ROWS: Row[] = [
     note: "Notifications gratuites, relances automatiques, résiliable en ligne",
   },
   {
+    name: "Fydalia",
+    url: "https://fydalia.com/",
+    price: "Formule Start 19,900 DT par mois pour un établissement, clients illimités",
+    app: "Non : la carte s'ajoute à Apple Wallet ou Google Wallet",
+    stamp: "Le client ajoute la carte en un scan ; le commerce suit tout depuis un tableau de bord",
+    note: "Pensé pour les commerces tunisiens, campagnes, base clients exportable",
+  },
+  {
+    name: "The Regular",
+    url: "https://the-regular.app/",
+    price: "Non affiché sur le site",
+    app: "Oui : le client télécharge l'application The Regular",
+    stamp: "Le client scanne un QR code et reçoit un tampon",
+    note: "Cafés et restaurants, l'application regroupe les commerces participants",
+  },
+  {
     name: "Quardy",
     url: "https://quardy.app/",
     price: "Gratuit jusqu'à 50 clients, puis selon la formule",
@@ -99,15 +115,15 @@ const FAQ = [
   },
   {
     q: "Le client doit-il télécharger une application ?",
-    a: "Avec Pointili, Stampi, Dawwerni et Sourdi, non : la carte s'ouvre dans le navigateur du téléphone. Avec DimaCard et Quardy, non plus, mais la carte s'ajoute à Apple Wallet ou Google Wallet. Avec Fidèle et Poinety, le client installe leur application.",
+    a: "Avec Pointili, Stampi, Dawwerni et Sourdi, non : la carte s'ouvre dans le navigateur du téléphone. Avec DimaCard et Quardy, non plus, mais la carte s'ajoute à Apple Wallet ou Google Wallet. Avec Fidèle, Poinety et The Regular, le client installe leur application.",
   },
   {
     q: "Quelle est la carte de fidélité digitale la moins chère en Tunisie ?",
-    a: `Sur les prix affichés publiquement le ${READ_ON} : Stampi annonce la gratuité ; Quardy et Fidèle sont gratuits jusqu'à 50 clients ; Pointili est à ${PRICE} DT par an tout compris (${PRICE_MONTH} DT par mois), sans limite de clients ; Poinety va de 290 à 390 DT par an ; Dawwerni part de 690 DT par an ; DimaCard part de 27 € par mois, soit plus de 1 000 DT par an. Raba7ni et Sourdi n'affichent pas de prix. Un prix gratuit ou par paliers suit le nombre de clients : c'est au moment où le commerce marche qu'il coûte le plus.`,
+    a: `Sur les prix affichés publiquement le ${READ_ON} : Stampi annonce la gratuité ; Quardy et Fidèle sont gratuits jusqu'à 50 clients ; Pointili est à ${PRICE} DT par an tout compris (${PRICE_MONTH} DT par mois), sans limite de clients ; Fydalia est à 19,900 DT par mois pour un établissement ; Poinety va de 290 à 390 DT par an ; Dawwerni part de 690 DT par an ; DimaCard part de 27 € par mois, soit plus de 1 000 DT par an. Raba7ni et Sourdi n'affichent pas de prix. Un prix gratuit ou par paliers suit le nombre de clients : c'est au moment où le commerce marche qu'il coûte le plus.`,
   },
   {
     q: "قدّاش تسوم كارط الفيديليتي الديجيتال في تونس؟",
-    a: `على حسب السومة المعلنة في ${READ_ON}: Stampi يقول بلاش؛ Quardy و Fidèle بلاش حتى 50 حريف؛ Pointili ${PRICE} د في العام كل شيء داخل (${PRICE_MONTH} د في الشهر) وحرفاء بلا عدد؛ Poinety من 290 ل390 د في العام؛ Dawwerni يبدا من 690 د في العام؛ DimaCard يبدا من 27 أورو في الشهر، يعني أكثر من 1000 د في العام. Raba7ni و Sourdi ما يحطّوش السومة.`,
+    a: `على حسب السومة المعلنة في ${READ_ON}: Stampi يقول بلاش؛ Quardy و Fidèle بلاش حتى 50 حريف؛ Pointili ${PRICE} د في العام كل شيء داخل (${PRICE_MONTH} د في الشهر) وحرفاء بلا عدد؛ Fydalia 19,900 د في الشهر لمحل واحد؛ Poinety من 290 ل390 د في العام؛ Dawwerni يبدا من 690 د في العام؛ DimaCard يبدا من 27 أورو في الشهر، يعني أكثر من 1000 د في العام. Raba7ni و Sourdi ما يحطّوش السومة.`,
   },
 ];
 
