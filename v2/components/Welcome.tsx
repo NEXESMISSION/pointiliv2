@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { InstallApp } from "@/components/InstallApp";
-import { ChevronLeft, Store, WalletCards } from "lucide-react";
-import { VideoPill, type HelpVideo } from "@/components/Help";
+import { ChevronLeft, Film, Store, WalletCards } from "lucide-react";
+import { VideoPill, type HelpSettings } from "@/components/Help";
+import { ClipButton } from "@/components/HowClip";
 import { Pass } from "@/components/Pass";
 import { Mark } from "@/components/Tracker";
-import { WelcomeDesk, type Desk } from "@/components/WelcomeDesk";
 import { Logo } from "@/components/ui";
 import { t } from "@/lib/t";
 
@@ -49,14 +49,16 @@ function Zellige({ color, id }: { color: string; id: string }) {
  * and the rem shrinks on short screens); a column on a computer. The
  * pictures are decoration: they may be cut at the edges.
  */
-export function Welcome({ video, known, ad, desk }: { video?: HelpVideo | null; known?: boolean; ad?: boolean; desk?: Desk }) {
+export function Welcome({ help, known, ad }: { help: HelpSettings; known?: boolean; ad?: boolean }) {
+  const video = help.video1;
   return (
     // data-welcome: the front door as a stranger sees it (Facebook's pixel counts this one, not a customer's wallet)
     <main data-welcome className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-center overflow-hidden px-5 safe-t safe-b max-[448px]:max-w-none">
       <Mark screen="welcome" />
-      {/* the cream behind the whole window, and — on a computer, where this column
-          leaves room — the counter's own clips either side of it */}
-      <WelcomeDesk which={desk} />
+      {/* the cream behind the whole window, not just behind this column: on a
+          computer the room either side of it used to be the app's grey, a seam
+          straight down both sides (the founder, 18 Oct 2026) */}
+      <div className="fixed inset-0 -z-10 bg-[#FBF6EF]" aria-hidden />
       {/* a corner of Sidi Bou Said, behind everything */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/tn/sidibou.webp" alt="" aria-hidden width={220} height={520} className="pointer-events-none absolute -start-3 -top-[3dvh] h-[36dvh] w-auto [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
@@ -99,7 +101,17 @@ export function Welcome({ video, known, ad, desk }: { video?: HelpVideo | null; 
           </span>
         ))}
       </h1>
-      <div className="relative mx-auto mt-[1.6dvh] flex w-44 items-center gap-2.5" aria-hidden>
+      {/* the other two films, said plainly: the founder asked for a button each rather than
+          anything playing by itself (19 Oct 2026). Both open over the page, nothing loads
+          until one is tapped. */}
+      <div className="relative mt-[1.4dvh] flex flex-wrap items-center justify-center gap-1.5">
+        {help.video2 && <VideoPill video={help.video2} className="!h-[2.1rem] !text-[0.75rem]" />}
+        <ClipButton className="press flex h-[2.1rem] items-center gap-1.5 rounded-full bg-white pe-3 ps-2.5 text-[0.75rem] font-bold text-ink shadow-card ring-1 ring-black/5">
+          <Film className="size-3.5 text-[#D7141A]" />
+          هكّا تخدم في المحل
+        </ClipButton>
+      </div>
+      <div className="relative mx-auto mt-[1.2dvh] flex w-44 items-center gap-2.5" aria-hidden>
         <span className="h-px flex-1 bg-[linear-gradient(to_left,#D7141A66,transparent)]" />
         <Emblem />
         <span className="h-px flex-1 bg-[linear-gradient(to_right,#D7141A66,transparent)]" />
