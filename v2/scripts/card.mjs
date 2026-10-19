@@ -151,7 +151,9 @@ try {
     const ok = await home();
     const s = await state(cards);
     if (choice === "keep") check(`kept: the card they started stays theirs (${Date.now() - t0} ms)`, ok && s.shop.goal === 3 && s.cards[0].goal === 12 && s.cards[0].gift === OLD.gift && s.gifts === 0, s);
-    else check(`moved: the new card now, the tampons kept, the gift at once (${Date.now() - t0} ms)`, ok && s.cards[0].goal === 3 && s.cards[0].gift === "جلاطي بلاش" && s.cards[0].stamps === 4 && s.gifts === 1, s);
+    // 4 tampons on a card that now wants 3: it fills at once, so the gift is written down as a
+    // voucher and the card starts again on what is left over — one tampon (the vouchers, 16 Oct 2026)
+    else check(`moved: the new card now, the gift at once, the tampon over it kept (${Date.now() - t0} ms)`, ok && s.cards[0].goal === 3 && s.cards[0].gift === "جلاطي بلاش" && s.cards[0].stamps === 1 && s.gifts === 1, s);
   }
 
   if (want("many")) {

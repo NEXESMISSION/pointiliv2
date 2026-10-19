@@ -403,11 +403,31 @@ const SCREENS = [
     await p.getByText("يكمّلو كارطهم القديمة").waitFor({ timeout: 20000 });
   } },
 
-  // a new owner's three steps: the account and the shop (public-shop-new), the card on one screen, what the customer sees
+  // a new owner's three steps: the account and the shop (public-shop-new), the card's four
+  // questions — nothing of it left for later (19 Oct 2026) — and then what the customer sees
   { name: "first-card", as: "fresh", path: "/shop/card?new=1" },
-  { name: "first-card-other", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "حاجة أخرى") },
-  // the colour, the logo and the wait: no longer in the way of a first card, a quiet line under the button
-  { name: "first-card-look", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "اللون واللوغو متاعك") },
+  { name: "first-card-gift", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "كمّل") },
+  { name: "first-card-other", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+    await press(p, "كمّل");
+    await press(p, "حاجة أخرى");
+  } },
+  // the roulette, chosen on the first card: what it holds, and the sheet that explains it (it opens by itself the first time)
+  { name: "first-card-wheel", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+    await press(p, "كمّل");
+    await press(p, "الروليت");
+    await press(p, "باهي");
+  } },
+  { name: "first-card-wheel-how", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+    await press(p, "كمّل");
+    await press(p, "الروليت");
+    await p.getByRole("dialog", { name: "كيفاش تخدم الروليت؟" }).waitFor({ timeout: 15000 });
+  } },
+  { name: "first-card-wait", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+    for (let n = 0; n < 2; n++) await press(p, "كمّل");
+  } },
+  { name: "first-card-look", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+    for (let n = 0; n < 3; n++) await press(p, "كمّل");
+  } },
   { name: "start", as: "owner", path: "/shop/start", wait: 900 },
   { name: "setup", as: "noShop", path: "/shop/setup" },
 

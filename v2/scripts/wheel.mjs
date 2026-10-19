@@ -66,9 +66,12 @@ try {
     return c ? await rpc(sami, "card", { p_id: c.id }) : null;
   };
 
-  check("an owner cannot turn the wheel on before the founder allows it", (await rpc(owner, "set_wheel", { p_on: true })).error === "not_allowed");
+  // a shop still being opened — nobody holds a card in it yet — chooses its own way of giving
+  // on its first card (19 Oct 2026, public.wheel_may): what stops it here is the prizes, not permission
+  check("a shop with no customers yet may choose the wheel itself", (await rpc(owner, "set_wheel", { p_on: true })).error === "no_prizes");
+  check("  → and that choice is written down as allowed", (await rpc(owner, "me")).shop.wheel_allowed === true);
   check("nor use the founder's switch", !!(await rpc(owner, "admin_set_wheel", { p_id: shopId, p_on: true })).error);
-  check("the founder allows it", (await rpc(boss, "admin_set_wheel", { p_id: shopId, p_on: true })).ok);
+  check("the founder's switch says the same", (await rpc(boss, "admin_set_wheel", { p_id: shopId, p_on: true })).ok);
   const me1 = (await rpc(owner, "me")).shop;
   check("allowed, and still off: the owner's choice", me1.wheel_allowed === true && me1.wheel_on === false, me1);
   check("not on without prizes", (await rpc(owner, "set_wheel", { p_on: true })).error === "no_prizes");
@@ -96,7 +99,9 @@ try {
   check("the founder takes it away", (await rpc(boss, "admin_set_wheel", { p_id: shopId, p_on: false })).ok);
   const me2 = (await rpc(owner, "me")).shop;
   check("taken away: not allowed, and off", me2.wheel_allowed === false && me2.wheel_on === false, me2);
-  check("the owner cannot turn it back on", (await rpc(owner, "set_wheel", { p_on: true })).error === "not_allowed");
+  // and a shop that HAS customers cannot grant itself the wheel back: only the founder
+  check("the owner cannot turn it back on, customers being on their way", (await rpc(owner, "set_wheel", { p_on: true })).error === "not_allowed");
+  check("  → still not allowed, nothing granted behind the founder's back", (await rpc(owner, "me")).shop.wheel_allowed === false);
 } catch (e) {
   failed.push(String(e?.message ?? e));
   console.log("  ✗", e);

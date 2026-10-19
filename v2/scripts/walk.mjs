@@ -122,9 +122,21 @@ try {
   await o.getByRole("textbox", { name: "ولا اكتب العدد" }).fill("15");
   await shot(o, "04b2-card-goal-typed", 400);
   await o.getByRole("radio", { name: "5", exact: true }).click();
-  // ② its look and its rule, under the button and not in the way: the colour, the logo and
-  // the tampon's shape, the wait between two tampons (the first screen finishes the card now)
-  await o.getByRole("button", { name: "اللون واللوغو متاعك", exact: true }).click();
+  // ② what the customer wins: one gift, or the roulette and what it holds — the roulette
+  // explains itself the first time it is chosen (19 Oct 2026)
+  await o.getByRole("button", { name: "كمّل", exact: true }).click();
+  await shot(o, "04c-card-gift", 500);
+  await o.getByRole("button", { name: "الروليت", exact: true }).click();
+  await o.getByRole("dialog", { name: "كيفاش تخدم الروليت؟" }).waitFor({ timeout: 20000 });
+  await shot(o, "04c1-wheel-how", 400);
+  await o.getByRole("button", { name: "باهي", exact: true }).click();
+  await shot(o, "04c2-wheel", 500);
+  // back to one gift: this shop gives a coffee, and the wheel is left for the owner who wants it
+  await o.getByRole("button", { name: "كادو واحد", exact: true }).click();
+  // ③ how long between two tampons, ④ the colour, the logo and the tampon's shape
+  await o.getByRole("button", { name: "كمّل", exact: true }).click();
+  await shot(o, "04c3-card-wait", 500);
+  await o.getByRole("button", { name: "كمّل", exact: true }).click();
   await o.getByRole("heading", { name: "اللون واللوغو متاعك" }).waitFor({ timeout: 20000 });
   await o.getByRole("radio", { name: "#FF6B4A" }).click();
   await shot(o, "04c-card-look", 600);
