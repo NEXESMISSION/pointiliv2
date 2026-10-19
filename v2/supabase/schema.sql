@@ -3242,25 +3242,6 @@ begin
                             where m.shop_id = s.id and m.wheel and m.spun_at > now() - interval '30 days' group by m.gift) x), '[]'::jsonb));
 end $$;
 
--- May this shop have the wheel? The founder allows it shop by shop
--- (admin_set_wheel), with one exception: a shop that is still being opened —
--- no customer holds a card in it yet — whose owner picks «الروليت» for its
--- first card. There the choice IS the permission, and it is written down, so
--- the console shows the shop as allowed afterwards (the founder, 19 Oct 2026:
--- the roulette belongs in the first card, with the rest of the questions).
--- Every shop that already has customers waits for the founder's switch.
-create or replace function public.wheel_may(p_shop uuid) returns boolean
-language plpgsql security definer set search_path = '' as $$
-declare v_allowed boolean;
-begin
-  select wheel_allowed into v_allowed from public.shops where id = p_shop;
-  if v_allowed is null then return false; end if;
-  if v_allowed then return true; end if;
-  if exists (select 1 from public.cards c where c.shop_id = p_shop) then return false; end if;
-  update public.shops set wheel_allowed = true where id = p_shop;
-  return true;
-end $$;
-
 -- the owner writes the wheel: the whole list ([{id?, name, chance}]), 2 to 12 prizes, 100% in all
 create or replace function public.wheel_save(p_prizes jsonb) returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -3268,7 +3249,7 @@ declare s public.shops%rowtype; x jsonb; v_rank int := 0; v_keep bigint[] := '{}
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
-  if not public.wheel_may(s.id) then return public.err('wheel_off'); end if;
+  if not s.wheel_allowed then return public.err('wheel_off'); end if;
   if jsonb_typeof(p_prizes) <> 'array' or jsonb_array_length(p_prizes) not between 2 and 12 then return public.err('count'); end if;
   for x in select * from jsonb_array_elements(p_prizes) loop
     v_chance := case when coalesce(x ->> 'chance', '') ~ '^\d{1,3}$' then (x ->> 'chance')::int end;
@@ -3292,7 +3273,7 @@ begin
   return jsonb_build_object('ok', true, 'prizes', public.wheel_list(s.id));
 end $$;
 
--- the owner turns the wheel on for his customers, or off: only a shop that may have it (wheel_may), with a card,
+-- the owner turns the wheel on for his customers, or off: only a shop the founder allows, with a card,
 -- not on the store, and at least two prizes to turn it on. Off, a full card is the card's own gift again;
 -- the turns already won stay, to be spun
 create or replace function public.set_wheel(p_on boolean) returns jsonb
@@ -3301,8 +3282,8 @@ declare s public.shops%rowtype;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
+  if not s.wheel_allowed then return public.err('not_allowed'); end if;
   if coalesce(p_on, false) then
-    if not public.wheel_may(s.id) then return public.err('not_allowed'); end if;
     if s.store_on then return public.err('store'); end if;
     if s.goal is null then return public.err('no_card'); end if;
     if (select count(*) from public.wheel_prizes w where w.shop_id = s.id and not w.gone) < 2 then return public.err('no_prizes'); end if;

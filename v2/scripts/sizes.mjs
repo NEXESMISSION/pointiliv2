@@ -232,6 +232,11 @@ const openGift = async (page) => {
 const SCREENS = [
   { name: "public-welcome", path: "/" },
   { name: "public-welcome-ad", path: "/?utm_source=fb" },
+  // the «؟» on the front door: the founder's two films, the phone and WhatsApp (19 Oct 2026)
+  { name: "public-welcome-help", path: "/", act: async (p) => {
+    await p.getByRole("button", { name: "عندك سؤال؟" }).click({ timeout: 15000 });
+    await p.getByRole("dialog").waitFor({ timeout: 15000 });
+  } },
   { name: "public-join", path: "/join" },
   { name: "public-login", path: "/login" },
   { name: "public-forgot", path: "/forgot" },
@@ -512,7 +517,10 @@ function measure([read, tiny, bars]) {
   for (const el of document.querySelectorAll("body *")) {
     if (skip(el) || el === se) continue;
     const s = getComputedStyle(el);
-    if (!read && (s.overflowY === "auto" || s.overflowY === "scroll") && el.scrollHeight - el.clientHeight > 1) out.push({ kind: "box scrolls", px: el.scrollHeight - el.clientHeight, el: desc(el) });
+    // under 548px a screen may scroll as a whole — and a screen's own frame IS that whole
+    // (components/ui.tsx, Screen: the main carries the scroll, not the document)
+    const frame = tiny && el.tagName === "MAIN";
+    if (!read && !frame && (s.overflowY === "auto" || s.overflowY === "scroll") && el.scrollHeight - el.clientHeight > 1) out.push({ kind: "box scrolls", px: el.scrollHeight - el.clientHeight, el: desc(el) });
     if ((s.overflowX === "auto" || s.overflowX === "scroll") && el.scrollWidth - el.clientWidth > 1) out.push({ kind: "box scrolls sideways", px: el.scrollWidth - el.clientWidth, el: desc(el) });
   }
   const things = [...document.querySelectorAll("button, a, input, textarea, select, h1, h2, h3, p, label, li, img, [role='img'], canvas, video")].filter((el) => shown(el) && !skip(el));
@@ -609,6 +617,10 @@ try {
         const path = typeof s.path === "function" ? await s.path(i) : s.path;
         await page.goto(BASE + path, { waitUntil: "load", timeout: 120000 });
         await page.waitForTimeout(900);
+        // the dev server's own badge sits in a corner of the page and swallowed a tap meant for the
+        // front door's «؟» on a short screen. It is not there in production, so it is put out of the
+        // way before anything is tapped; what it says is still read below.
+        await page.evaluate(() => document.querySelectorAll("nextjs-portal").forEach((e) => (e.style.display = "none")));
         if (s.act) await s.act(page, i);
         await page.waitForTimeout(s.wait ?? 900);
         // the dev server's own overlay is not the page: hidden before the picture — but an error in it,

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { InstallApp } from "@/components/InstallApp";
-import { ChevronLeft, Film, Store, WalletCards } from "lucide-react";
-import { VideoPill, type HelpSettings } from "@/components/Help";
+import { ChevronLeft, Play, Store, WalletCards } from "lucide-react";
+import { HelpButton, type HelpSettings } from "@/components/Help";
 import { ClipButton } from "@/components/HowClip";
 import { Pass } from "@/components/Pass";
 import { Mark } from "@/components/Tracker";
@@ -50,7 +50,6 @@ function Zellige({ color, id }: { color: string; id: string }) {
  * pictures are decoration: they may be cut at the edges.
  */
 export function Welcome({ help, known, ad }: { help: HelpSettings; known?: boolean; ad?: boolean }) {
-  const video = help.video1;
   return (
     // data-welcome: the front door as a stranger sees it (Facebook's pixel counts this one, not a customer's wallet)
     <main data-welcome className="relative mx-auto flex min-h-dvh max-w-md flex-col justify-center overflow-hidden px-5 safe-t safe-b max-[448px]:max-w-none">
@@ -63,8 +62,13 @@ export function Welcome({ help, known, ad }: { help: HelpSettings; known?: boole
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/tn/sidibou.webp" alt="" aria-hidden width={220} height={520} className="pointer-events-none absolute -start-3 -top-[3dvh] h-[36dvh] w-auto [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
 
-      <div className="relative flex justify-center">
+      <div className="relative flex items-center justify-center">
         <Logo />
+        {/* the «؟» of every other screen: the founder's two films live in it now, with the phone
+            and WhatsApp — the front door shows one film only (the founder, 19 Oct 2026) */}
+        <span className="absolute start-0 top-1/2 -translate-y-1/2">
+          <HelpButton help={help} small />
+        </span>
       </div>
 
       {/* the card, the jasmine, the tea: drawn at one size in rem — the rem follows the
@@ -85,12 +89,18 @@ export function Welcome({ help, known, ad }: { help: HelpSettings; known?: boole
         <img src="/tn/tea.webp" alt="" aria-hidden width={78} height={130} className="pointer-events-none absolute -bottom-10 -start-12 h-[8.125rem] w-auto drop-shadow-[0_12px_16px_rgb(0_0_0/0.22)]" />
       </div>
 
-      {/* the video: on the card's bottom edge, outside the zoom so its words stay readable — it takes no room of its own */}
-      {video ? (
-        <div className="relative z-10 -mb-[1.2rem] -mt-[1.2rem] flex justify-center">
-          <VideoPill video={video} className="max-w-[17rem]" />
-        </div>
-      ) : null}
+      {/* one film, and it is the one that shows a shop working: on the card's bottom edge, outside
+          the zoom so its words stay readable — it takes no room of its own. Three of these competed
+          here and none of them won; the other two are behind the «؟» above (19 Oct 2026). */}
+      <div className="relative z-10 -mb-[1.2rem] -mt-[1.2rem] flex justify-center">
+        <ClipButton className="press flex h-[2.4rem] max-w-[17rem] items-center gap-2 rounded-full bg-ink/90 pe-3.5 ps-1.5 text-[0.8125rem] font-bold text-white shadow-[0_12px_26px_-10px_rgb(0_0_0/0.6)] backdrop-blur">
+          <span className="relative grid size-[1.75rem] shrink-0 place-items-center rounded-full bg-[#D7141A]">
+            <span className="absolute inset-0 animate-ping rounded-full bg-[#D7141A]/60 [animation-duration:1.8s]" aria-hidden />
+            <Play className="relative size-3.5 translate-x-[1px] fill-white" />
+          </span>
+          <span className="min-w-0 truncate">{t.clipTitle}</span>
+        </ClipButton>
+      </div>
 
       <h1 className="relative mt-[6.5dvh] text-center text-[1.4rem] font-bold leading-snug">
         {/* «كارطات الفيدليتي متاعك،» then «في تليفونك»: the line breaks where it is said */}
@@ -101,20 +111,6 @@ export function Welcome({ help, known, ad }: { help: HelpSettings; known?: boole
           </span>
         ))}
       </h1>
-      {/* the other two films, said plainly: the founder asked for a button each rather than
-          anything playing by itself (19 Oct 2026). Both open over the page, nothing loads
-          until one is tapped. */}
-      {/* The two pills sit on one row, and on a 360px phone they missed it by about ten pixels —
-          so the row wrapped, the front door grew 22px and the whole page scrolled, which it must
-          never do (19 Oct 2026). They are not made smaller for everyone to fix one width: under
-          375px they give up a little padding and a quarter point of type, and nothing else moves. */}
-      <div className="relative mt-[1.4dvh] flex flex-wrap items-center justify-center gap-1.5 max-[374px]:gap-1">
-        {help.video2 && <VideoPill video={help.video2} className="!h-[2.1rem] !text-[0.75rem] max-[374px]:!text-[0.6875rem]" />}
-        <ClipButton className="press flex h-[2.1rem] items-center gap-1.5 rounded-full bg-white pe-3 ps-2.5 text-[0.75rem] font-bold text-ink shadow-card ring-1 ring-black/5 max-[374px]:gap-1 max-[374px]:pe-2.5 max-[374px]:ps-2 max-[374px]:text-[0.6875rem]">
-          <Film className="size-3.5 text-[#D7141A]" />
-          هكّا تخدم في المحل
-        </ClipButton>
-      </div>
       <div className="relative mx-auto mt-[1.2dvh] flex w-44 items-center gap-2.5" aria-hidden>
         <span className="h-px flex-1 bg-[linear-gradient(to_left,#D7141A66,transparent)]" />
         <Emblem />

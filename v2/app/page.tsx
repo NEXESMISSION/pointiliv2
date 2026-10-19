@@ -28,7 +28,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <JsonLd data={faqJsonLd(FAQ.slice(0, 5).flatMap((f) => [{ q: f.q, a: f.a }, f.fr]))} />
         {/* somebody who has signed in on this phone before is offered the way back in first */}
         {/* from an ad (Facebook's click id, or the ad's utm): an owner, most likely — the shop's door alone */}
-        {/* four front doors to choose between (?v=1..4); without one, the door that is live */}
         <Welcome help={help} known={(await cookies()).get("pl-known")?.value === "1"} ad={fromAd(q)} />
       </>
     );

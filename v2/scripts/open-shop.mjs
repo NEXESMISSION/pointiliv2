@@ -143,7 +143,7 @@ try {
   check("  → and the way to read how it works stays under it", /كيفاش تخدم الروليت/.test(spun.onGift));
   check("it ends on the same code", spun.url.includes("/shop/qr"), spun.url);
   const { data: two } = await admin.from("shops").select("id, gift, wheel_on, wheel_allowed").eq("name", SPIN).maybeSingle();
-  check("the shop may have the wheel, having chosen it", two?.wheel_allowed === true);
+  check("the shop is allowed the wheel, as every new shop is", two?.wheel_allowed === true);
   check("  → and it is on for its customers", two?.wheel_on === true);
   check("  → a full card is a turn, not a gift of its own", two?.gift === "الروليت", two?.gift);
   const { data: prizes } = await admin.from("wheel_prizes").select("name, chance").eq("shop_id", two?.id ?? "00000000-0000-0000-0000-000000000000").eq("gone", false);

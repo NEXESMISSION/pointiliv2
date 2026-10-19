@@ -70,7 +70,9 @@ export default async function ShopSettings() {
   return (
     <Screen>
       <Top back="/shop" end={<HelpButton help={help} />} title={t.setTitle} />
-      <div className="mt-[2dvh] flex flex-col gap-[1.6dvh] pb-3">
+      {/* the rows have grown (the roulette has its own since every shop may have it, 18 Oct 2026):
+          on a short phone the gaps give way first, so the whole shop still fits on one screen */}
+      <div className="mt-[2dvh] flex flex-col gap-[1.6dvh] pb-3 [@media(max-height:700px)]:mt-[1dvh] [@media(max-height:700px)]:gap-[0.9dvh] [@media(max-height:700px)]:pb-1">
         <Group>
           <Row
             href="/shop/setup?edit=1"

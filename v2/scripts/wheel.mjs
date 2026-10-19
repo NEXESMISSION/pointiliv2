@@ -66,10 +66,10 @@ try {
     return c ? await rpc(sami, "card", { p_id: c.id }) : null;
   };
 
-  // a shop still being opened — nobody holds a card in it yet — chooses its own way of giving
-  // on its first card (19 Oct 2026, public.wheel_may): what stops it here is the prizes, not permission
-  check("a shop with no customers yet may choose the wheel itself", (await rpc(owner, "set_wheel", { p_on: true })).error === "no_prizes");
-  check("  → and that choice is written down as allowed", (await rpc(owner, "me")).shop.wheel_allowed === true);
+  // since 18 Oct 2026 a shop is allowed the wheel from the day it opens (shops.wheel_allowed's own
+  // default, schema.sql): what stops an owner here is the prizes, not permission
+  check("a shop is allowed the wheel from the day it opens", (await rpc(owner, "me")).shop.wheel_allowed === true);
+  check("  → and what stops it is the prizes, not permission", (await rpc(owner, "set_wheel", { p_on: true })).error === "no_prizes");
   check("nor use the founder's switch", !!(await rpc(owner, "admin_set_wheel", { p_id: shopId, p_on: true })).error);
   check("the founder's switch says the same", (await rpc(boss, "admin_set_wheel", { p_id: shopId, p_on: true })).ok);
   const me1 = (await rpc(owner, "me")).shop;

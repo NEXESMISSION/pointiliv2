@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { MessageCircle, Phone, Play, X } from "lucide-react";
+import { useBrowser } from "@/components/Client";
 import { ClipSheet } from "@/components/HowClip";
 import { signal, watching } from "@/lib/track";
 import { t } from "@/lib/t";
@@ -28,7 +30,8 @@ export function VideoModal({ video, onClose }: { video: HelpVideo; onClose: () =
     addEventListener("keydown", esc);
     return () => removeEventListener("keydown", esc);
   }, [onClose]);
-  return (
+  const browser = useBrowser();
+  const panel = (
     <div className="fixed inset-0 z-[60] flex animate-fade flex-col items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true" aria-label={video.label} onClick={onClose}>
       <button type="button" onClick={onClose} className="press absolute end-4 top-4 grid size-11 place-items-center rounded-full bg-white/15 text-white" aria-label={t.back}>
         <X className="size-5" />
@@ -50,6 +53,9 @@ export function VideoModal({ video, onClose }: { video: HelpVideo; onClose: () =
       </div>
     </div>
   );
+  // on the page's body: the front door's own box hides what overflows, and a sheet drawn inside it
+  // came out with its last rows cut off (19 Oct 2026)
+  return browser ? createPortal(panel, document.body) : null;
 }
 
 /** The floating «▶ كيفاش تخدم؟» on the front door: the first video, one tap. */
@@ -85,6 +91,59 @@ export function HelpButton({ help, light = false, small = false }: { help: HelpS
   const videos = [help.video1, help.video2].filter((v): v is HelpVideo => !!v);
   const [clips, setClips] = useState(false);
   const closeClips = useCallback(() => setClips(false), []);
+  const browser = useBrowser();
+  const panel = (
+    <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/40" onClick={() => setOpen(false)} role="dialog" aria-modal="true" aria-label={t.helpTitle}>
+              <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink shadow-[0_-20px_50px_-20px_rgb(0_0_0/0.5)]" style={{ animation: "help-up 360ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+                <style>{`@keyframes help-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
+                <span className="mx-auto mb-3 block h-1.5 w-10 rounded-full bg-line" aria-hidden />
+                <h2 className="text-[1.25rem] font-bold">{t.helpTitle}</h2>
+                <p className="mt-1 text-[0.9375rem] text-muted">{t.helpBody}</p>
+                <div className="mt-4 space-y-2">
+                  {help.phone && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <a href={`tel:+${help.phone}`} className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-brand text-[0.9375rem] font-bold text-white shadow-[0_12px_26px_-12px_rgb(108_71_255/0.7)]">
+                        <Phone className="size-5" /> {t.helpCall}
+                      </a>
+                      <a href={`https://wa.me/${help.phone}?text=${encodeURIComponent(t.helpWhatsappMsg)}`} target="_blank" rel="noreferrer" className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-[#25D366] text-[0.9375rem] font-bold text-white">
+                        <MessageCircle className="size-5" /> {t.helpWhatsapp}
+                      </a>
+                    </div>
+                  )}
+                  {help.phone && (
+                    <p dir="ltr" className="num text-center text-[0.8125rem] text-muted">
+                      {pretty(help.phone)}
+                    </p>
+                  )}
+                  {/* the filmed slides, first: the café, the restaurant, the shop — the owner's own work, seen */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      setClips(true);
+                    }}
+                    className="press flex h-[3.25rem] w-full items-center gap-3 rounded-[1.125rem] bg-surface px-3 text-start text-[0.9375rem] font-semibold shadow-card"
+                  >
+                    <span className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-ink text-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/clips/how-1-v2.webp" alt="" className="absolute inset-0 size-full object-cover opacity-80" />
+                      <Play className="relative size-4 fill-white" />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{t.clipTitle}</span>
+                  </button>
+                  {videos.map((v) => (
+                    <button key={v.id} type="button" onClick={() => setVideo(v)} className="press flex h-[3.25rem] w-full items-center gap-3 rounded-[1.125rem] bg-surface px-3 text-start text-[0.9375rem] font-semibold shadow-card">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#D7141A] text-white">
+                        <Play className="size-4 fill-white" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{v.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+  );
+
   return (
     <>
       <button
@@ -98,57 +157,9 @@ export function HelpButton({ help, light = false, small = false }: { help: HelpS
       >
         <span aria-hidden>؟</span>
       </button>
-      {open && (
-        <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/40" onClick={() => setOpen(false)} role="dialog" aria-modal="true" aria-label={t.helpTitle}>
-          <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink shadow-[0_-20px_50px_-20px_rgb(0_0_0/0.5)]" style={{ animation: "help-up 360ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
-            <style>{`@keyframes help-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
-            <span className="mx-auto mb-3 block h-1.5 w-10 rounded-full bg-line" aria-hidden />
-            <h2 className="text-[1.25rem] font-bold">{t.helpTitle}</h2>
-            <p className="mt-1 text-[0.9375rem] text-muted">{t.helpBody}</p>
-            <div className="mt-4 space-y-2">
-              {help.phone && (
-                <div className="grid grid-cols-2 gap-2">
-                  <a href={`tel:+${help.phone}`} className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-brand text-[0.9375rem] font-bold text-white shadow-[0_12px_26px_-12px_rgb(108_71_255/0.7)]">
-                    <Phone className="size-5" /> {t.helpCall}
-                  </a>
-                  <a href={`https://wa.me/${help.phone}?text=${encodeURIComponent(t.helpWhatsappMsg)}`} target="_blank" rel="noreferrer" className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-[#25D366] text-[0.9375rem] font-bold text-white">
-                    <MessageCircle className="size-5" /> {t.helpWhatsapp}
-                  </a>
-                </div>
-              )}
-              {help.phone && (
-                <p dir="ltr" className="num text-center text-[0.8125rem] text-muted">
-                  {pretty(help.phone)}
-                </p>
-              )}
-              {/* the filmed slides, first: the café, the restaurant, the shop — the owner's own work, seen */}
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  setClips(true);
-                }}
-                className="press flex h-[3.25rem] w-full items-center gap-3 rounded-[1.125rem] bg-surface px-3 text-start text-[0.9375rem] font-semibold shadow-card"
-              >
-                <span className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-ink text-white">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/clips/how-1-v2.webp" alt="" className="absolute inset-0 size-full object-cover opacity-80" />
-                  <Play className="relative size-4 fill-white" />
-                </span>
-                <span className="min-w-0 flex-1 truncate">{t.clipTitle}</span>
-              </button>
-              {videos.map((v) => (
-                <button key={v.id} type="button" onClick={() => setVideo(v)} className="press flex h-[3.25rem] w-full items-center gap-3 rounded-[1.125rem] bg-surface px-3 text-start text-[0.9375rem] font-semibold shadow-card">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#D7141A] text-white">
-                    <Play className="size-4 fill-white" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{v.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* the sheet on the page's body, never inside the screen that opened it: the front door hides
+          what overflows its own box, and the last rows of this came out cut (19 Oct 2026) */}
+      {open && browser && createPortal(panel, document.body)}
       {video && <VideoModal video={video} onClose={() => setVideo(null)} />}
       {clips && <ClipSheet onClose={closeClips} />}
     </>

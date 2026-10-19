@@ -8,7 +8,8 @@ import { t } from "@/lib/t";
 
 /** a sheet is drawn on the body: nothing to subscribe to, false while the server renders */
 const never = () => () => {};
-const useBrowser = () => useSyncExternalStore(never, () => true, () => false);
+/** true once the page is on a phone, false while the server draws it: a portal has nowhere to go until then */
+export const useBrowser = () => useSyncExternalStore(never, () => true, () => false);
 
 /*
  * The customer's screens, one look (the founder, 18 Oct 2026: «all the UIs of
