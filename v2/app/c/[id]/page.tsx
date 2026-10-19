@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { Check, Gift, QrCode, ScanLine } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
-import { CardWheel } from "@/components/CardWheel";
+import { CardWheel, WheelPeek } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
 import { Live } from "@/components/Live";
 import { MyCode } from "@/components/MyCode";
@@ -71,6 +71,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
 
       {/* the roulette: a popup that opens by itself, and a banner to open it again */}
       {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} turns={card.spins_n ?? 1} />}
+      {/* and before there is a turn: what the wheel holds, with its button grey and dead (19 Oct 2026) */}
+      {!turn && !ready && card.shop.wheel && <WheelPeek prizes={card.prizes ?? []} />}
 
       {/* when it last saw a tampon, and the gifts already taken here — only without the list below,
           whose first row says the same thing and says it better */}

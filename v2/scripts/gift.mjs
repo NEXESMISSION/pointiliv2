@@ -3,8 +3,10 @@
  * «الكادو متاعك حاضر!» and opens its code whole (the QR, the 6 digits, dark on
  * light) — from the card and from the wallet. The owner's home has no gift
  * row: one way to hand a gift over, «سكاني». The code read there brings the
- * question up, and «إيه، عطيه الكادو» hands it over. Pictures land in
- * v2/shots/gift.
+ * question up, and «إيه، عطيه الكادو» hands it over. Then the other way, for a gift
+ * already given across the counter: the owner says so himself from the
+ * customers' list, after a question that says what it writes down. Pictures
+ * land in v2/shots/gift.
  *
  *   node scripts/gift.mjs        (from v2/, with the dev server on :3200)
  */
@@ -20,7 +22,9 @@ const BASE = process.env.BASE || "http://localhost:3200";
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 for (const ip of ["local", "::1", "127.0.0.1"]) await admin.rpc("forget_tries", { p_key: `login-ip:${ip}` });
-const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push"];
+// every one-time note already seen, the first gift's among them: its sheet opens a second after the
+// owner's home and used to race this run (two «سكاني» on the page, or one, depending on the day)
+const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "first_scan", "first_gift", "mission"];
 const password = randomBytes(9).toString("base64url");
 const made = [], phones = [];
 mkdirSync("shots/gift", { recursive: true });
@@ -80,7 +84,8 @@ try {
       const svg = d.querySelector("div.aspect-square svg");
       const digits = d.querySelector("p.num");
       const r = svg?.getBoundingClientRect();
-      const panel = d.firstElementChild.getBoundingClientRect();
+      // the sheet IS the dialog now: it is put on the body whole (components/Client.tsx, FullSheet)
+      const panel = d.getBoundingClientRect();
       return {
         onBody: d.parentElement === document.body,
         qr: r ? { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right) } : null,
@@ -96,12 +101,12 @@ try {
     check(`[${tag}] the QR is whole and big enough to read`, !!m.qr && m.qr.w >= 170 && Math.abs(m.qr.w - m.qr.h) <= 2 && m.qr.left >= 0 && m.qr.right <= m.vw && m.qr.top >= 0 && m.qr.bottom <= m.vh, m.qr);
     check(`[${tag}] the 6 digits are there, dark on light`, m.digits?.replace(/\s/g, "") === code && /rgb\(\s*(\d+)/.test(m.digitsColor) && Number(m.digitsColor.match(/rgb\(\s*(\d+)/)[1]) < 90, [m.digits, m.digitsColor]);
     await p.keyboard.press("Escape");
-    // the wallet: the same sheet from the gift's banner
+    // the cards screen: one code button for the person, and with a gift waiting it opens the gift's own sheet
     await p.goto(BASE + "/", { waitUntil: "load" });
     await quiet(p);
     await p.waitForTimeout(700);
     await p.screenshot({ path: `shots/gift/client-wallet-${tag}.png` });
-    await p.getByRole("button", { name: /ورّي الكود/ }).click();
+    await p.getByRole("button", { name: "الكود متاعي", exact: true }).click();
     await p.getByRole("dialog").waitFor({ timeout: 10000 });
     await p.waitForTimeout(600);
     const w = await p.evaluate(() => {
@@ -129,7 +134,9 @@ try {
   await p.waitForTimeout(1200);
   await quiet(p);
   await p.screenshot({ path: "shots/gift/owner-scan.png" });
-  // no camera here: the code typed does what the camera's read does
+  // «سكاني» opens the camera itself; there is none here, so out of it by the way the screen offers,
+  // and the code typed does what the camera's read does
+  await p.getByRole("button", { name: /بالنومرو/ }).first().click();
   await p.getByRole("button", { name: /اكتب الكود/ }).first().click();
   await p.locator('input[inputmode="numeric"]').fill(code);
   const pop = p.getByRole("dialog");
@@ -144,6 +151,34 @@ try {
   await p.screenshot({ path: "shots/gift/owner-handed.png" });
   const { data: gifts } = await admin.from("moments").select("given_at").eq("card_id", card.id).eq("kind", "gift");
   check("handed over in the database", gifts.length === 1 && !!gifts[0].given_at, gifts);
+
+  // ── and the other way: the gift already handed over across the counter, said by the owner
+  // himself from the customers' list, with no code to scan (the founder, 19 Oct 2026)
+  for (let i = 0; i < 3; i++) await owner.rpc("give_stamp", { p_who: code });
+  await p.goto(BASE + "/shop/customers", { waitUntil: "load" });
+  await quiet(p);
+  await p.waitForTimeout(900);
+  await p.locator("li", { hasText: "كادو يستنّى" }).first().getByRole("button").first().click({ timeout: 20000 });
+  const sheet = p.getByRole("dialog").first();
+  await sheet.waitFor({ timeout: 15000 });
+  await p.waitForTimeout(600);
+  await p.screenshot({ path: "shots/gift/owner-customer.png" });
+  check("the customer's sheet offers to hand it over by hand", (await sheet.textContent()).includes("سلّمتهولو بيدي"));
+  await p.getByRole("button", { name: "سلّمتهولو بيدي" }).click();
+  const ask = p.getByRole("dialog", { name: /تسلّم الكادو/ });
+  await ask.waitFor({ timeout: 15000 });
+  await p.waitForTimeout(500);
+  await p.screenshot({ path: "shots/gift/owner-by-hand-ask.png" });
+  const said = (await ask.textContent()).replace(/\s+/g, " ");
+  check("it asks first, and says what it writes down and that there is no way back",
+    said.includes("Saif") && said.includes("جلاطي بلاش") && said.includes("ما فمّاش رجوع"), said.slice(0, 200));
+  const before = await admin.from("moments").select("given_at").eq("card_id", card.id).eq("kind", "gift");
+  check("  → and nothing is written while it is only asking", (before.data ?? []).filter((g) => g.given_at).length === 1);
+  await ask.getByRole("button", { name: "إيه، سلّمتهولو" }).click();
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: "shots/gift/owner-by-hand-done.png" });
+  const { data: all } = await admin.from("moments").select("given_at").eq("card_id", card.id).eq("kind", "gift");
+  check("the second gift handed over by hand, in the database", (all ?? []).length === 2 && all.every((g) => !!g.given_at), all);
   await ctx.close();
 } finally {
   await browser.close();

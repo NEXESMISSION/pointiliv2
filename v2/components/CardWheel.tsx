@@ -9,7 +9,7 @@ import { Confetti } from "@/components/StampLand";
 import { useBars } from "@/lib/bars";
 import { useScreen } from "@/components/Tracker";
 import { Icon3D } from "@/components/ui";
-import { Wheel, type Prize } from "@/components/Wheel";
+import { prizeColor, Wheel, WheelFace, type Prize } from "@/components/Wheel";
 import { fill, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 
@@ -101,5 +101,46 @@ export function CardWheel({ card, moment, prizes, turns = 1 }: { card: string; m
       )}
       {open && browser && createPortal(popup, document.body)}
     </>
+  );
+}
+
+/**
+ * The roulette, before there is a turn to spin: what the shop is giving, on
+ * the customer's card — the wheel drawn with its prizes, their names beside
+ * it, and the spin button there but grey and dead (the founder, 19 Oct 2026:
+ * «add the roulette button but its gray dont work… just so he sees the gifts
+ * the owner is offering»).
+ *
+ * Safe by build and by rule: the button is a `disabled` button with nothing
+ * behind it, and a turn can only ever be spun against a gift moment the
+ * database wrote (public.spin) — there is none here, so there is nothing to
+ * take. It only says what is waiting at the end of the card.
+ */
+export function WheelPeek({ prizes }: { prizes: Prize[] }) {
+  if (prizes.length < 2) return null;
+  return (
+    <div className="mx-auto mt-[1.4dvh] w-full max-w-[min(100%,52dvh)] shrink-0 rounded-[1.25rem] bg-surface p-3 shadow-card">
+      <div className="flex items-center gap-3">
+        <span className="w-[clamp(3rem,8dvh,4.25rem)] shrink-0 [@media(max-height:560px)]:hidden" aria-hidden>
+          <WheelFace prizes={prizes} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <b className="block text-[0.75rem] font-bold text-faint">{t.wheelPeek}</b>
+          <span className="mt-1 flex flex-wrap gap-1">
+            {prizes.map((p, i) => (
+              <span key={`${p.name}-${i}`} className="rounded-full px-2 py-0.5 text-[0.75rem] font-bold text-white" style={{ background: prizeColor(i) }}>
+                <bdi>{p.name}</bdi>
+              </span>
+            ))}
+          </span>
+        </span>
+      </div>
+      {/* the button of the day the card fills: here it does nothing, and says so */}
+      <button type="button" disabled className="mt-2.5 h-11 w-full cursor-default rounded-[1rem] bg-line text-[0.9375rem] font-bold text-faint" aria-disabled>
+        {t.wheelGo}
+      </button>
+      {/* why it is grey — the card above already says how many are left, so this says the other half */}
+      <p className="mt-1 text-center text-[0.75rem] text-muted">{t.wheelPeekWhy}</p>
+    </div>
   );
 }

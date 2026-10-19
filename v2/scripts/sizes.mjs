@@ -224,6 +224,11 @@ async function newToken() {
 // ── the screens ────────────────────────────────────────────────────────────
 // fit: must hold on one screen; read: a reading page or the console, it may scroll down (never sideways)
 const press = (page, name) => page.getByRole("button", { name, exact: true }).first().click({ timeout: 15000 });
+/** the owner's list: the row of a customer with a gift waiting, opened */
+const openGift = async (page) => {
+  await page.locator("li", { hasText: "كادو يستنّى" }).first().getByRole("button").first().click({ timeout: 15000 });
+  await page.getByRole("dialog").first().waitFor({ timeout: 15000 });
+};
 const SCREENS = [
   { name: "public-welcome", path: "/" },
   { name: "public-welcome-ad", path: "/?utm_source=fb" },
@@ -266,6 +271,25 @@ const SCREENS = [
     },
   },
   { name: "customer-card", as: "customer", path: () => `/c/${cardBarber}` },
+  // a wheel shop, no turn to spin yet: what it holds, with the spin button grey and dead (19 Oct 2026)
+  {
+    name: "customer-card-wheel",
+    as: "customer",
+    before: async () => {
+      await admin.from("shops").update({ wheel_allowed: true, wheel_on: true }).eq("id", barber.id);
+      await admin.from("wheel_prizes").delete().eq("shop_id", barber.id);
+      await admin.from("wheel_prizes").insert([
+        { shop_id: barber.id, name: "تحسينة بلاش", chance: 34, rank: 0 },
+        { shop_id: barber.id, name: "دقن بلاش", chance: 33, rank: 1 },
+        { shop_id: barber.id, name: "شامبوان", chance: 33, rank: 2 },
+      ]);
+    },
+    path: () => `/c/${cardBarber}`,
+    after: async () => {
+      await admin.from("shops").update({ wheel_allowed: false, wheel_on: false }).eq("id", barber.id);
+      await admin.from("wheel_prizes").delete().eq("shop_id", barber.id);
+    },
+  },
   // the card tapped: the sheet is drawn on the body, so it is centred and whole whatever clips the page
   // the card asks once for a word to this phone
   { name: "customer-card-push", as: "customer", before: () => notes(customer, ["card_hello", "coach", "logo_tip", "offer"]), path: () => `/c/${cardBarber}`, after: () => notes(customer, ALL_NOTES) },
@@ -373,6 +397,13 @@ const SCREENS = [
   { name: "wallet-push", as: "customer", before: () => notes(customer, ["card_hello", "coach", "logo_tip", "offer"]), path: "/", after: () => notes(customer, ALL_NOTES) },
   { name: "customers", as: "owner", path: "/shop/customers" },
   { name: "customers-near", as: "owner", path: "/shop/customers", act: (p) => press(p, "قربو للكادو") },
+  // a gift waiting: the customer's sheet, and the question before it is written down as handed over
+  { name: "customers-gift", as: "owner", before: () => giftBack(), path: "/shop/customers", act: openGift },
+  { name: "customers-by-hand", as: "owner", before: () => giftBack(), path: "/shop/customers", act: async (p) => {
+    await openGift(p);
+    await press(p, "سلّمتهولو بيدي");
+    await p.getByRole("dialog", { name: /تسلّم الكادو/ }).waitFor({ timeout: 15000 });
+  } },
   { name: "shop-settings", as: "owner", path: "/shop/settings" },
   { name: "shop-items", as: "owner", path: "/shop/items" },
   { name: "stats", as: "owner", path: "/shop/stats" },
@@ -515,10 +546,12 @@ function measure([read, tiny, bars]) {
   // a button, a link or a field with something else on top of it: a tap lands on the wrong thing
   // (the first card's «حاجة أخرى» once sat under its own «حلّ الكارط» on the smallest phone). A popup
   // over the page covers the page on purpose: then only the popup's own controls count
-  const overlay = [...document.querySelectorAll("[role='dialog'], [aria-modal='true']")].some(shown);
+  // several popups may be open at once (a question over a sheet): the last one in the page is the
+  // one in front, and only ITS controls count — the sheet under it is covered on purpose
+  const overlay = [...document.querySelectorAll("[role='dialog'], [aria-modal='true']")].filter(shown).pop() ?? null;
   for (const el of things) {
     if (!/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) continue;
-    if (overlay && !el.closest("[role='dialog'], [aria-modal='true']")) continue;
+    if (overlay && !overlay.contains(el)) continue;
     const r = el.getBoundingClientRect();
     const x = r.left + r.width / 2;
     const y = r.top + r.height / 2;

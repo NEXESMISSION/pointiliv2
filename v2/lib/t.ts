@@ -78,6 +78,9 @@ export const t = {
   wheelWaits: "عندك دورة تستنّى في الروليت",
   wheelWaitsMany: "عندك {n} دورات في الروليت",
   wheelAtCounter: "مازال ما دوّرش الروليت",
+  // what the shop is giving, seen on the card before there is a turn to spin (19 Oct 2026)
+  wheelPeek: "شنوّة تنجم تربح",
+  wheelPeekWhy: "كمّل الكارط باش تدوّر وتربح وحدة منهم",
   wheelAtCounterHint: "دوّرهالو توّا قدّامو",
   wheelOwnerTitle: "الروليت",
   wheelOwnerHint: "شنوّة يربحو الحرفاء كي يكمّلو الكارط، وقدّاش حظ كل وحدة",
@@ -1015,6 +1018,22 @@ export const t = {
   customerLast: "آخر مرّة: {when}",
   customerGifts: "خذا {gifts}",
   customerGiftWaits: "عندو كادو يستنّى: يورّيك الكود وإنت سكانيه",
+  // handing the gift over from the list itself, with no code to scan (19 Oct 2026): the owner
+  // says he gave it, and the question before it says exactly what that writes down
+  // in the owner's own list a gift is his customer's, not his: «الكادو متاعك حاضر» is the customer's line
+  customerReady: "كادو يستنّى",
+  handBy: "سلّمتهولو بيدي",
+  handTitle: "تسلّم الكادو لـ{name}؟",
+  handWhat1: "نكتبو إلي {name} خذا {gift} اليوم، والكادو ما يبقاش يستنّى",
+  handWhat2: "عدد الكادوات متاعو يزيد واحد، والكارط تكمّل بالتامبونات اللي باقيين",
+  handWhat3: "ما فمّاش رجوع: كان غلطت، ما تنجمش تحيّدها",
+  handOnly: "اعملها كان عطيتو الكادو فعلا في يدّو",
+  handYes: "إيه، سلّمتهولو",
+  handAll: "سلّمتلو {n} كادوات",
+  handNo: "موش توّا",
+  handDone: "{name} خذا الكادو",
+  handSpin: "لازم يدوّر الروليت الأوّل، باش نعرفو شنوّة ربح",
+  handErr: "ما تسجّلتش، عاود",
   customerLeft: "مازالو {n} باش يربح {gift}",
   // a tampon given by hand, taken back (ten minutes)
   collectUndo: "غلطت؟ رجّع التامبون",

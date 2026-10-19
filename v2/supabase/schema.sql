@@ -929,7 +929,14 @@ begin
                                                            from (select m.item_id, count(*) as n from public.moments m
                                                                  where m.card_id = c.id and m.kind = 'stamp' and m.item_id is not null group by m.item_id) x
                                                            join public.items i on i.id = x.item_id), '[]'::jsonb),
-                                        'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift), 'ready', public.waits(c.id))
+                                        'goal', coalesce(c.goal, s.goal), 'gift', coalesce(c.gift, s.gift), 'ready', public.waits(c.id),
+                                        -- the gifts waiting on this card, so the owner can hand one over from the list
+                                        -- itself, without the customer's code («spin»: a turn of the wheel nobody has
+                                        -- spun yet — nothing to hand over until it has a prize on it)
+                                        'waiting', coalesce((select jsonb_agg(jsonb_build_object('id', m.id, 'gift', coalesce(m.gift, c.gift, s.gift), 'spin', m.wheel and m.spun_at is null)
+                                                             order by m.created_at, m.id)
+                                                            from public.moments m
+                                                            where m.card_id = c.id and m.kind = 'gift' and m.given_at is null), '[]'::jsonb))
                      order by c.last_at desc nulls last, c.created_at desc)
     from public.cards c left join public.people p on p.id = c.user_id
     where c.shop_id = s.id), '[]'::jsonb));
