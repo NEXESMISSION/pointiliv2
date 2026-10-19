@@ -227,20 +227,6 @@ const press = (page, name) => page.getByRole("button", { name, exact: true }).fi
 const SCREENS = [
   { name: "public-welcome", path: "/" },
   { name: "public-welcome-ad", path: "/?utm_source=fb" },
-  // the four things a computer can show around the front door, to be chosen between
-  // four front doors to choose between, on a phone
-  { name: "wild-5-fills", path: "/?v=5", wait: 2200 },
-  { name: "wild-6-receipt", path: "/?v=6", wait: 1500 },
-  { name: "wild-7-thread", path: "/?v=7", wait: 1500 },
-  { name: "wild-8-zellige", path: "/?v=8", wait: 1500 },
-  { name: "door-1-card", path: "/?v=1", wait: 1800 },
-  { name: "door-2-film", path: "/?v=2", wait: 2500 },
-  { name: "door-3-two", path: "/?v=3", wait: 1500 },
-  { name: "door-4-beats", path: "/?v=4", wait: 1500 },
-  { name: "desk-1-sides", path: "/?desk=1", wait: 2500 },
-  { name: "desk-2-behind", path: "/?desk=2", wait: 2500 },
-  { name: "desk-3-quiet", path: "/?desk=3", wait: 2500 },
-  { name: "desk-4-edges", path: "/?desk=4", wait: 2500 },
   { name: "public-join", path: "/join" },
   { name: "public-login", path: "/login" },
   { name: "public-forgot", path: "/forgot" },
