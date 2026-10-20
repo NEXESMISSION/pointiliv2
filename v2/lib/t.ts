@@ -771,7 +771,10 @@ export const t = {
   payReceipt: "ابعثلنا صورة الوصل على واتساب",
   payReceiptSub: "نخدّمولك العام في نفس النهار",
   payReceiptGo: "ابعث الوصل على واتساب",
-  payReceiptMsg: "سلام، خلّصت الأبونمان متاع «{shop}» ({months} شهر) بـ {way}، هاو الوصل:",
+  // never «خلّصت»: the owner taps it before paying as often as after, and the founder read it as paid (20 Oct 2026)
+  payReceiptMsg: "سلام، نحب نخدّم الأبونمان متاع «{shop}» ({months} شهر) بـ {way}.{from}",
+  // the account the message is about, whatever WhatsApp number it comes from
+  waFrom: "\nالكونت: {who}",
   payAskCall: "عندك سؤال؟ كلّمنا",
   payCard: "كارط بنكية",
   payCardSub: "Visa · Mastercard، في صفحة مضمونة",

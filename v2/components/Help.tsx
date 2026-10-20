@@ -6,10 +6,10 @@ import { MessageCircle, Phone, Play, X } from "lucide-react";
 import { useBrowser } from "@/components/Client";
 import { ClipSheet } from "@/components/HowClip";
 import { signal, watching } from "@/lib/track";
-import { t } from "@/lib/t";
+import { fill, t } from "@/lib/t";
 
 export type HelpVideo = { id: string; label: string; vertical: boolean };
-export type HelpSettings = { phone: string | null; video1: HelpVideo | null; video2: HelpVideo | null };
+export type HelpSettings = { phone: string | null; video1: HelpVideo | null; video2: HelpVideo | null; from?: string | null };
 
 /** +21622123456 → +216 22 123 456 */
 const pretty = (d: string) => (d.length === 11 && d.startsWith("216") ? `+216 ${d.slice(3, 5)} ${d.slice(5, 8)} ${d.slice(8)}` : `+${d}`);
@@ -105,7 +105,7 @@ export function HelpButton({ help, light = false, small = false }: { help: HelpS
                       <a href={`tel:+${help.phone}`} className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-brand text-[0.9375rem] font-bold text-white shadow-[0_12px_26px_-12px_rgb(108_71_255/0.7)]">
                         <Phone className="size-5" /> {t.helpCall}
                       </a>
-                      <a href={`https://wa.me/${help.phone}?text=${encodeURIComponent(t.helpWhatsappMsg)}`} target="_blank" rel="noreferrer" className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-[#25D366] text-[0.9375rem] font-bold text-white">
+                      <a href={`https://wa.me/${help.phone}?text=${encodeURIComponent(t.helpWhatsappMsg + (help.from ? fill(t.waFrom, { who: help.from }) : ""))}`} target="_blank" rel="noreferrer" className="press flex h-[3.25rem] items-center justify-center gap-2 rounded-[1.125rem] bg-[#25D366] text-[0.9375rem] font-bold text-white">
                         <MessageCircle className="size-5" /> {t.helpWhatsapp}
                       </a>
                     </div>

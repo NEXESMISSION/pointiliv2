@@ -1,5 +1,6 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
+import { getMe } from "@/lib/session";
 import { service } from "@/lib/supabase";
 
 /** A YouTube link as the app plays it: the video's id, and whether it stands up (a Short). */
@@ -70,9 +71,17 @@ export function helpOf(s: Settings) {
   return { phone: s.supportPhone, video1: v(s.video1), video2: v(s.video2) };
 }
 
-/** The help button's settings, for an owner's page. */
+/**
+ * The help button's settings, for an owner's page — with who is asking (the
+ * shop and the account's number), written into the WhatsApp message, so the
+ * founder knows the account whatever number the message comes from.
+ */
 export async function getHelp() {
-  return helpOf(await getSettings());
+  const [s, me] = await Promise.all([getSettings(), getMe().catch(() => null)]);
+  const d = String(me?.phone ?? "").replace(/\D/g, "").replace(/^216(?=\d{8}$)/, "");
+  const number = /^\d{8}$/.test(d) ? `${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5)}` : null;
+  const from = number ? [me?.shop?.name ? `«${me.shop.name}»` : null, number].filter(Boolean).join(" · ") : null;
+  return { ...helpOf(s), from };
 }
 
 async function load(): Promise<Record<string, string>> {

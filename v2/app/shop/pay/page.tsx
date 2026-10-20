@@ -83,7 +83,7 @@ export default async function ShopPay() {
               <Check className="size-5" strokeWidth={3} /> {fill(t.payPaidUntil, { date: day(pay.paid_until) })}
             </p>
           ) : (
-            <PayMethods support={settings.supportPhone} shop={me.shop.name} months={months} details={settings.pay} />
+            <PayMethods support={settings.supportPhone} shop={me.shop.name} months={months} details={settings.pay} phone={me.phone} />
           )}
         </div>
       </div>

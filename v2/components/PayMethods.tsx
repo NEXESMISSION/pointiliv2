@@ -26,11 +26,11 @@ const WAYS = [
  * hand. A tap is only counted in the visits — it is not a payment waiting for
  * an answer (the founder, 18 Oct 2026: there is no request to manage).
  */
-export function PayMethods({ support, shop, months, details }: { support: string | null; shop: string; months: number; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] } }) {
+export function PayMethods({ support, shop, months, details, phone }: { support: string | null; shop: string; months: number; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] }; phone?: string | null }) {
   const [way, setWay] = useState<string | null>(null);
   const said = (how: string) => signal("pay", how);
   const amount = t.payPrice;
-  const receipt = support && way ? `https://wa.me/${support}?text=${encodeURIComponent(fill(t.payReceiptMsg, { shop, months, way }))}` : null;
+  const receipt = support && way ? `https://wa.me/${support}?text=${encodeURIComponent(fill(t.payReceiptMsg, { shop, months, way, from: phone ? fill(t.waFrom, { who: spaced(phone) }) : "" }))}` : null;
   const how =
     way === "D17" ? fill(t.payD17How, { amount }) : way === "Virement" ? fill(t.payRibHow, { amount }) : way === "Versement" ? fill(t.payVersementHow, { amount }) : way === "Mandat" ? fill(t.payMandatHow, { amount }) : fill(t.paySendWhat, { amount });
   return (
@@ -111,6 +111,12 @@ export function PayMethods({ support, shop, months, details }: { support: string
     </>
   );
 }
+
+/** «58 415 521», the account's number as the founder reads it back (any +216 left off). */
+export const spaced = (phone: string) => {
+  const d = phone.replace(/\D/g, "").replace(/^216(?=\d{8}$)/, "");
+  return /^\d{8}$/.test(d) ? `${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5)}` : phone;
+};
 
 /** One of the three steps: its number (a tick once done), faded until its turn. */
 function Step({ n, on, done, children }: { n: number; on: boolean; done?: boolean; children: React.ReactNode }) {
