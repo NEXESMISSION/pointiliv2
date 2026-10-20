@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useRef } from "react";
-import { BarChart3, Banknote, Building2, FlaskConical, LayoutGrid, Megaphone, PhoneCall, Settings2, ShieldCheck, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, Banknote, Building2, FlaskConical, LayoutGrid, Megaphone, Settings2, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 
 type Place = { href: string; label: string; icon: LucideIcon; exact?: boolean };
 
@@ -17,7 +17,6 @@ const GROUPS: Place[][] = [
   [{ href: "/admin", label: "الرئيسية", icon: LayoutGrid, exact: true }],
   [
     { href: "/admin/shops", label: "المحلات", icon: Building2 },
-    { href: "/admin/crm", label: "المتابعة", icon: PhoneCall },
     { href: "/admin/people", label: "الكونتات", icon: Users },
   ],
   [

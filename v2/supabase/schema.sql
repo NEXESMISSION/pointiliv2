@@ -1464,8 +1464,11 @@ begin
       'seen_at', o.seen_at, 'online', coalesce(o.online, false), 'visits', coalesce(o.visits, 0), 'days', coalesce(o.days, 0),
       'ms', coalesce(ow.ms, 0), 'pay', coalesce(ow.pay, false), 'app', coalesce(og.app, false), 'tried', coalesce(og.tried, false),
       'push', exists (select 1 from public.push_subs ps where ps.user_id = s.owner_id),
-      'real', coalesce(oc.real, 0), 'early', coalesce(oc.early, 0), 'real_stamps', coalesce(oc.stamps, 0)) order by s.created_at desc)
+      'real', coalesce(oc.real, 0), 'early', coalesce(oc.early, 0), 'real_stamps', coalesce(oc.stamps, 0),
+      -- the founder's own line about the shop, written in the list itself (crm.note; the full follow-up page is gone)
+      'note', coalesce(cn.note, '')) order by s.created_at desc)
     from public.shops s left join public.people p on p.id = s.owner_id
+    left join public.crm cn on cn.shop_id = s.id
     left join lateral (
       select greatest(max(v.last_at), max(v.here_at)) as seen_at, count(*) as visits,
              count(distinct (v.started_at at time zone 'Africa/Tunis')::date) as days,
@@ -1482,7 +1485,8 @@ begin
       from (select (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'stamp' and m.created_at > s.created_at + interval '1 hour') as late
             from public.cards c join public.people cp on cp.id = c.user_id
             where c.shop_id = s.id and c.user_id <> s.owner_id and not (cp.is_admin or cp.is_tester or public.is_robot(cp.id))) x) oc on true
-    where (p_q is null or trim(p_q) = '' or s.name ilike v_like or coalesce(p.phone, '') like v_like or coalesce(p.name, '') ilike v_like)
+    where (p_q is null or trim(p_q) = '' or s.name ilike v_like or coalesce(p.phone, '') like v_like or coalesce(p.name, '') ilike v_like
+           or coalesce(cn.note, '') ilike v_like)
       and (v_all or (not public.is_robot(s.owner_id) and coalesce(p.is_admin or p.is_tester, false) = coalesce(p_tests, false)))
   ), '[]'::jsonb);
 end $$;

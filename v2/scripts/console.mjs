@@ -178,11 +178,24 @@ try {
 
   await check("01-console", "/admin");
   await check("02-shops", "/admin/shops");
+  // the founder's note in the list: written, saved, still there after a reload. Only ever on this run's own
+  // demo shop, found by its exact link — the walk's admin sees the real shops too, never type into those
+  {
+    const row = (sel) => page.locator(`tr:has(a[href='/admin/shops/${made.shops[0]}']) ${sel}`);
+    const NOTE = "zz كلّمتو، يخلّص الاثنين";
+    await page.goto(`${BASE}/admin/shops?q=${encodeURIComponent(SHOPS[0][0])}`, { waitUntil: "domcontentloaded" });
+    await row("textarea").waitFor({ timeout: 60000 });
+    await row("textarea").fill(NOTE);
+    await row("textarea").press("Enter");
+    await row("[aria-label='تسجّلت']").waitFor({ timeout: 20000 });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await row("textarea").waitFor({ timeout: 60000 });
+    const back = await row("textarea").inputValue();
+    if (back !== NOTE) problems.push(`note not kept: «${back}»`);
+    else console.log("  ✓ 02b-note             saved, and there after a reload");
+  }
   const shopId = made.shops[0];
   await check("03-shop", `/admin/shops/${shopId}`);
-  // the follow-up: the list, and a shop's sheet open on it
-  await check("03b-crm", "/admin/crm");
-  await check("03c-crm-open", `/admin/crm?open=${shopId}`);
   await check("04-people", "/admin/people");
   const { data: someone } = await db.from("cards").select("user_id").limit(1).single();
   await check("05-person", `/admin/people/${someone.user_id}`);

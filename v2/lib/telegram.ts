@@ -63,13 +63,10 @@ export async function shopFacts(by: { shop?: string; owner?: string }): Promise<
   return { shop: shop as Shop, owner: { name: owner?.name ?? "", phone: owner?.phone ?? null } };
 }
 
-/** The buttons under every alert: the shop in the console, its follow-up sheet, and WhatsApp to its owner */
+/** The buttons under every alert: the shop in the console, and WhatsApp to its owner */
 export function shopButtons(f: ShopFacts): Button[][] {
-  // the shop's numbers, its follow-up sheet (to write the call down), and its owner on WhatsApp
-  const row: Button[] = [
-    { text: "🧾 المحل", url: `${SITE}/admin/shops/${f.shop.id}` },
-    { text: "📋 المتابعة", url: `${SITE}/admin/crm?open=${f.shop.id}` },
-  ];
+  // the shop's numbers, and its owner on WhatsApp (what the call gave is written in the shop list's note)
+  const row: Button[] = [{ text: "🧾 المحل", url: `${SITE}/admin/shops/${f.shop.id}` }];
   const d = (f.owner.phone ?? "").replace(/\D/g, "").replace(/^216/, "");
   if (/^\d{8}$/.test(d)) row.push({ text: "💬 واتساب", url: `https://wa.me/216${d}` });
   return [row];

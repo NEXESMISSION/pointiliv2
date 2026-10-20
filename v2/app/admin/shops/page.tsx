@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Ago } from "@/components/Ago";
+import { AdminShopNote } from "@/components/AdminShopNote";
 import { OnlineCount, OnlineNow, Presence, Reach } from "@/components/Presence";
 import { ShopMark } from "@/components/ShopMark";
 import { Card, Cell, Empty, Find, howLong, Num, Page, Pill, Row, Segments, Stat, Stats, Table, timesN } from "@/components/console";
@@ -40,6 +41,8 @@ type ShopRow = {
   real: number;
   early: number;
   real_stamps: number;
+  /** the founder's own line about the shop (crm.note), written in this list */
+  note: string;
 };
 type Level = "paid" | "hot" | "warm" | "cold" | "nocard";
 
@@ -242,7 +245,8 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
         {rows.length === 0 ? (
           <Empty>{t.aNothing}</Empty>
         ) : (
-          // six columns, so the list fits a laptop's screen: when it opened and when its owner was last here ride under the shop and the time
+          // six columns, so the list fits a laptop's screen: when it opened and when its owner was last here ride under the shop and the time,
+          // and the founder's note sits under the owner's number, where a call ends — one field per shop instead of a follow-up page (20 Oct 2026)
           <Table head={["المحل", "مولى المحل", "قدّاش مهتم", "قعد", "حرفاء حقيقيين", "تامبونات"]} words={[1, 2]}>
             {rows.map(({ s, i }) => (
               <Row key={s.id} href={`/admin/shops/${s.id}`}>
@@ -279,6 +283,9 @@ export default async function AdminShops({ searchParams }: { searchParams: Promi
                     </span>
                     {/* a call and a WhatsApp, over the row's own link */}
                     <Reach phone={s.owner.phone} />
+                  </span>
+                  <span className="mt-2 block">
+                    <AdminShopNote id={s.id} note={s.note ?? ""} />
                   </span>
                 </Cell>
                 <Cell>
