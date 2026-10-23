@@ -50,6 +50,9 @@ const afterSaid = (ms: number) => {
   const h = Math.round(m / 60);
   return h < 24 ? `بعد ${hoursN(h)}` : `بعد ${daysN(Math.round(h / 24))}`;
 };
+/** where a visit came from, in the founder's words */
+const SOURCES: Record<string, string> = { direct: "مباشرة", facebook: "فيسبوك", fb: "فيسبوك", ig: "إنستغرام", instagram: "إنستغرام", google: "Google", whatsapp: "واتساب", tiktok: "تيك توك" };
+const sourceSaid = (s: string) => SOURCES[s.toLowerCase()] ?? s;
 const gapSaid = (min: number) => (min === 0 ? "بلا وقت بين تامبون وتامبون" : min === 1440 ? "تامبون واحد في النهار" : min < 60 ? `كل ${counted(min, "دقيقة", "زوز دقايق", "دقايق", "دقيقة")}` : `كل ${hoursN(Math.round(min / 60))}`);
 
 /** the steps from the sign-up to paying, in their order */
@@ -139,7 +142,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
     return h >= 19 || h < 8;
   })();
   const o = st.origin;
-  const from = o ? (o.campaign ? `إشهار · ${o.campaign}${o.content ? ` · ${o.content}` : ""}` : o.source ? o.source : o.fbclid ? "فيسبوك" : "دخل مباشرة") : null;
+  const from = o ? (o.campaign ? `إشهار · ${o.campaign}${o.content ? ` · ${o.content}` : ""}` : o.source && o.source !== "direct" ? sourceSaid(o.source) : o.fbclid ? "فيسبوك" : "دخل مباشرة") : null;
   const max = Math.max(1, ...st.days.map((x) => x.stamps));
   const monthStamps = st.days.reduce((a, x) => a + x.stamps, 0);
   const came = st.days.filter((x) => x.came).length;
@@ -311,7 +314,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
                     {v.source && (
                       <>
                         {" · "}
-                        <bdi>{v.source}</bdi>
+                        <bdi>{sourceSaid(v.source)}</bdi>
                       </>
                     )}
                   </span>
@@ -344,7 +347,8 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold text-ink">
                     <bdi>{c.name ?? "بلا اسم"}</bdi>
-                    <span className="num ms-1 text-[0.75rem] font-normal text-faint" dir="ltr">
+                    {/* the number's last two digits: two «Ali» told apart (a physical margin: the span is left to right) */}
+                    <span className="num mr-1.5 text-[0.75rem] font-normal text-faint" dir="ltr">
                       ··{c.tail}
                     </span>
                     {!c.late && <span className="ms-1.5 rounded-full bg-canvas px-1.5 text-[0.6875rem] font-semibold text-muted ring-1 ring-line">تجربة</span>}
