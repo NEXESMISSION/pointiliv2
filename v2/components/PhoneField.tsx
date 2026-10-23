@@ -13,8 +13,8 @@ function shape(raw: string): string {
 }
 
 /** A Tunisian mobile number: +216 written in, the eight digits spaced as they are said. */
-export function PhoneField({ label, name = "phone", error, compact }: { label: string; name?: string; error?: string | null; compact?: boolean }) {
-  const [value, setValue] = useState("");
+export function PhoneField({ label, name = "phone", error, compact, initial = "", onValue }: { label: string; name?: string; error?: string | null; compact?: boolean; initial?: string; onValue?: (digits: string) => void }) {
+  const [value, setValue] = useState(() => shape(initial));
   return (
     <label className="block">
       <span className="mb-1.5 block px-1 text-[0.8125rem] font-semibold text-muted">{label}</span>
@@ -29,7 +29,11 @@ export function PhoneField({ label, name = "phone", error, compact }: { label: s
           placeholder="22 123 456"
           required
           value={value}
-          onChange={(e) => setValue(shape(e.target.value))}
+          onChange={(e) => {
+            const v = shape(e.target.value);
+            setValue(v);
+            onValue?.(v.replace(/\D/g, ""));
+          }}
           aria-invalid={!!error}
           className="num h-full min-w-0 flex-1 rounded-e-[1.125rem] bg-transparent px-3 text-[17px] tracking-wide text-ink outline-none placeholder:text-faint"
         />

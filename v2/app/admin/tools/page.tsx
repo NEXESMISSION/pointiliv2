@@ -59,8 +59,8 @@ function Period({ title, inn, out }: { title: string; inn: number; out: number }
  * a line in the books), the app's settings, the test account. Then the way
  * out.
  */
-export default async function AdminTools() {
-  const [settings, b, tester, robots] = await Promise.all([getSettings(true), call<Ledger>("admin_ledger"), testerState(), call<{ accounts: number }>("admin_robots")]);
+export default async function AdminTools({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const [{ q }, settings, b, tester, robots] = await Promise.all([searchParams, getSettings(true), call<Ledger>("admin_ledger"), testerState(), call<{ accounts: number }>("admin_robots")]);
   const books = b ?? { today: new Date().toISOString().slice(0, 10), month: 0, all: 0, out_month: 0, out_all: 0, lines: [], rows: [] };
   // the subscriptions paid and the lines by hand, in one order, the last ones
   const lines = [
@@ -76,7 +76,7 @@ export default async function AdminTools() {
       <h1 className="text-[1.5rem] font-bold text-ink">الأدوات</h1>
 
       <Part title="كلمة سر جديدة" hint="واحد نسى كلمة السر متاعو: لوّج عليه بالاسم ولا بالنومرو" open>
-        <AdminFind />
+        <AdminFind initial={String(q ?? "").replace(/\D/g, "").slice(0, 11)} />
       </Part>
 
       <Part title="الفلوس" hint={`هالشهر: دخل ${dt(books.month)} · خرج ${dt(books.out_month)} ${t.payCurrency}`}>

@@ -184,7 +184,11 @@ export function FormFill({ token, shop, name, fields, mine, join = false, next }
                   setAcc((a) => ({ ...a, password: e.target.value }));
                   setError(null);
                 }}
-                type="password"
+                // shown as it is typed, and left alone by the keyboard: a password chosen blind is one that «does not work»
+                type="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 autoComplete="new-password"
                 placeholder="8 حروف ولا أرقام على الأقل"
                 className={`${box} ${error?.field === "acc_password" ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-coral)]" : ""}`}

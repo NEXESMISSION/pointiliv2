@@ -6,6 +6,7 @@ import { LogIn } from "lucide-react";
 import { joinShop } from "@/app/actions";
 import { KindField } from "@/components/KindPicker";
 import { MorphCard } from "@/components/Morph";
+import { PasswordField } from "@/components/PasswordField";
 import { PhoneField } from "@/components/PhoneField";
 import { Btn, Field, LinkBtn } from "@/components/ui";
 import { Trap } from "@/components/Trap";
@@ -50,7 +51,8 @@ export function OwnerJoin() {
         <Field label={t.ownerName} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" maxLength={60} error={err("name")} className="!h-[3.25rem] [@media(max-height:520px)]:!h-[2.875rem]" />
         <Field label={t.joinShopName} name="shop" value={shop} onChange={(e) => setShop(e.target.value)} placeholder={t.shopNamePh} autoComplete="organization" maxLength={60} error={err("shop")} className="!h-[3.25rem] [@media(max-height:520px)]:!h-[2.875rem]" />
         <PhoneField label={t.phone} error={err("phone")} compact />
-        <Field label={t.password} name="password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder={t.passwordPh} autoComplete="new-password" minLength={8} error={err("password")} className="!h-[3.25rem] [@media(max-height:520px)]:!h-[2.875rem]" />
+        {/* shown as it is typed: a password chosen blind was the first reason «it does not work» */}
+        <PasswordField label={t.password} name="password" value={password} onChange={(e) => setPassword(e.target.value)} shown placeholder={t.passwordPh} autoComplete="new-password" minLength={8} error={err("password")} className="!h-[3.25rem] [@media(max-height:520px)]:!h-[2.875rem]" />
       </div>
 
       {/* what it sells: one field — a tap opens every kind, in groups, with a search */}

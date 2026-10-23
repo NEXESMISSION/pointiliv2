@@ -3766,6 +3766,13 @@ begin
                       from (select * from public.plan_log where shop_id = s.id order by created_at desc limit 4) l), '[]'::jsonb));
 end $$;
 
+-- signing in, said exactly (23 Oct 2026): has this number a login at all — «no account with this
+-- number» and «this account's password is wrong» are two answers. The service's key only (no grant)
+create or replace function public.has_login(p_phone text) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from auth.users u where u.email = '216' || p_phone || '@phone.pointidi.app')
+$$;
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 -- ═══ once: the owners from before the notes were kept here ═════════════════

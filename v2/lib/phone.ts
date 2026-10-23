@@ -16,3 +16,24 @@ export const spaced = (raw: string) => digits(raw).replace(/^(\d{2})(\d{3})(\d{3
 
 /** +216 22 123 456 — a whole number, as the founder reads it. */
 export const pretty = (raw: string) => `+216 ${spaced(raw)}`;
+
+/**
+ * A password as it is kept (since 23 Oct 2026): Arabic and Persian digits made the ones every
+ * keyboard types — a phone's Arabic keyboard writes ٣, its French one 3, and the same password
+ * must open with either — and no space around it (a keyboard's suggestion leaves one).
+ */
+export const passwordOf = (raw: string) => western(String(raw ?? "")).trim();
+
+/**
+ * The ways one typed password may have been kept, the likeliest first: as it is kept now, as it
+ * was typed, with Arabic digits (an account made on an Arabic keyboard before), and with its
+ * first letter's case turned (a keyboard that put a capital). Signing in tries them in turn.
+ */
+export function passwordTries(raw: string): string[] {
+  const typed = String(raw ?? "");
+  const kept = passwordOf(typed);
+  const arabic = kept.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+  const first = kept.charAt(0);
+  const turned = first.toLowerCase() !== first.toUpperCase() ? (first === first.toLowerCase() ? first.toUpperCase() : first.toLowerCase()) + kept.slice(1) : kept;
+  return [...new Set([kept, typed, arabic, turned])].filter((p) => p.length > 0);
+}

@@ -12,7 +12,7 @@ import sharp from "sharp";
 import { call, db, service } from "@/lib/supabase";
 import { gate, note, TRAP, trapped } from "@/lib/guard";
 import { getMe, homeOf, type Me } from "@/lib/session";
-import { digits, phoneEmail, validPhone } from "@/lib/phone";
+import { digits, passwordOf, passwordTries, phoneEmail, validPhone } from "@/lib/phone";
 import { clarityId, domainCode, pixelId, socialUrl, youtubeId } from "@/lib/settings";
 import { fill, t } from "@/lib/t";
 import type { CardView, FormState, Order, Said, ScanResult } from "@/lib/types";
@@ -43,7 +43,7 @@ async function allowed(key: string, max: number, minutes: number): Promise<boole
 export async function join(_: FormState, fd: FormData): Promise<FormState> {
   const name = str(fd, "name");
   const phone = digits(str(fd, "phone"));
-  const password = String(fd.get("password") ?? "");
+  const password = passwordOf(String(fd.get("password") ?? ""));
   const owner = fd.get("owner") === "1";
   const next = inside(str(fd, "next"));
   if (name.length < 2 || name.length > 60) return { error: t.errName, field: "name" };
@@ -116,7 +116,7 @@ export async function joinShop(_: FormState, fd: FormData): Promise<FormState> {
   const shop = str(fd, "shop");
   const kind = str(fd, "kind");
   const phone = digits(str(fd, "phone"));
-  const password = String(fd.get("password") ?? "");
+  const password = passwordOf(String(fd.get("password") ?? ""));
   if (name.length < 2 || name.length > 60) return { error: t.errName, field: "name" };
   if (shop.length < 2 || shop.length > 60) return { error: t.errShopName, field: "shop" };
   if (!validPhone(phone)) return { error: t.errPhone, field: "phone" };
@@ -149,7 +149,7 @@ export async function formJoin(
   if (!/^[A-Za-z0-9_-]{8,40}$/.test(token)) return { ok: false, error: t.errNetwork };
   const name = String(account.name ?? "").trim();
   const phone = digits(String(account.phone ?? ""));
-  const password = String(account.password ?? "");
+  const password = passwordOf(String(account.password ?? ""));
   const form = (await service().rpc("form_open", { p_token: token })).data as { ok: boolean; fields: FormField[] } | null;
   if (!form?.ok) return { ok: false, error: t.errNetwork };
 
@@ -209,12 +209,21 @@ async function markKnown() {
   (await cookies()).set("pl-known", "1", { maxAge: 31_536_000, sameSite: "lax", path: "/" });
 }
 
+/**
+ * Signing in (23 Oct 2026: «so many clients say the password does not work»). The password is
+ * tried as it is kept now, then the ways an older account may have kept it — Arabic digits, a
+ * space, a capital the keyboard put (lib/phone) — and an old way that opens is kept the one way
+ * from then on. A number an owner gave tampons to, never signed up, has no password at all: the
+ * one typed becomes it. Otherwise the answer says which is wrong: no account with this number,
+ * or this account's password.
+ */
 export async function login(_: FormState, fd: FormData): Promise<FormState> {
   const phone = digits(str(fd, "phone"));
-  const password = String(fd.get("password") ?? "");
+  const typed = String(fd.get("password") ?? "");
+  const kept = passwordOf(typed);
   const next = inside(str(fd, "next"));
   if (!validPhone(phone)) return { error: t.errPhone, field: "phone" };
-  if (!password) return { error: t.errPassword, field: "password" };
+  if (!kept) return { error: t.errPassword, field: "password" };
   if (trapped(fd.get(TRAP))) {
     await note("login", phone, "trap");
     return { error: t.errLogin };
@@ -223,16 +232,34 @@ export async function login(_: FormState, fd: FormData): Promise<FormState> {
   if (!(await allowed(`login:${phone}`, 8, 15)) || !(await gate("login", phone, 60, 15))) return { error: t.errTooMany };
 
   const supabase = await db();
-  const { error } = await supabase.auth.signInWithPassword({ email: phoneEmail(phone), password });
-  if (error) {
-    const wrong = /invalid|credentials/i.test(error.message);
-    if (wrong) await note("login", phone, "wrong");
-    // a number an owner gave tampons to, never signed up: no password exists yet — it is made by signing up
-    if (wrong) {
-      const { data: p } = await service().from("people").select("made_by_shop, password_set").eq("phone", `+216${phone}`).maybeSingle();
-      if (p?.made_by_shop && !p.password_set) return { error: t.errClaim, field: "phone" };
+  const email = phoneEmail(phone);
+  let used: string | null = null;
+  for (const password of passwordTries(typed)) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      used = password;
+      break;
     }
-    return { error: wrong ? t.errLogin : t.errNetwork };
+    if (!/invalid|credentials/i.test(error.message)) {
+      console.error("[login]", error.message);
+      return { error: t.errNetwork };
+    }
+  }
+  if (used === null) {
+    await note("login", phone, "wrong");
+    const { data: p } = await service().from("people").select("name, made_by_shop, password_set").eq("phone", `+216${phone}`).maybeSingle();
+    if (p?.made_by_shop && !p.password_set) {
+      if (kept.length < PASSWORD_MIN) return { error: t.errPassword, field: "password" };
+      if (await claim(p.name ?? "", phone, kept)) used = (await supabase.auth.signInWithPassword({ email, password: kept })).error ? null : kept;
+    }
+    if (used === null) {
+      const { data: known } = await service().rpc("has_login", { p_phone: phone });
+      return known === false ? { error: t.errNoAccount, field: "phone" } : { error: t.errWrongPassword, field: "password" };
+    }
+  }
+  if (used !== kept && kept.length >= PASSWORD_MIN) {
+    const { data: u } = await supabase.auth.getUser();
+    if (u.user) await service().auth.admin.updateUserById(u.user.id, { password: kept });
   }
   await service().rpc("forget_tries", { p_key: `login:${phone}` });
   await markKnown();
@@ -257,7 +284,7 @@ export async function setName(_: FormState, fd: FormData): Promise<FormState> {
 
 /** A new password, from the account page (after the founder gave a temporary one, say). */
 export async function changePassword(_: FormState, fd: FormData): Promise<FormState> {
-  const password = String(fd.get("password") ?? "");
+  const password = passwordOf(String(fd.get("password") ?? ""));
   if (password.length < PASSWORD_MIN) return { error: t.errPassword, field: "password" };
   const supabase = await db();
   const { data: user, error } = await supabase.auth.updateUser({ password });
@@ -333,8 +360,9 @@ export async function quickJoin(token: string, name: string, phoneRaw: string, p
   const phone = digits(String(phoneRaw ?? ""));
   if (who.length < 2 || who.length > 60) return { ok: false, error: t.errName, field: "name" };
   if (!validPhone(phone)) return { ok: false, error: t.errPhone, field: "phone" };
-  if (String(password ?? "").length < PASSWORD_MIN) return { ok: false, error: t.errPassword, field: "password" };
-  const made = await newAccount(who, phone, String(password), trap);
+  const kept = passwordOf(String(password ?? ""));
+  if (kept.length < PASSWORD_MIN) return { ok: false, error: t.errPassword, field: "password" };
+  const made = await newAccount(who, phone, kept, trap);
   if ("error" in made) return { ok: false, error: made.error, field: made.field };
   // the tampon held for this phone, now theirs
   const jar = await cookies();

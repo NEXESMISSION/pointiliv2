@@ -7,6 +7,7 @@ import { quickJoin, scan } from "@/app/actions";
 import { spin } from "@/app/actions-wheel";
 import { Sheet, SheetGo } from "@/components/Client";
 import { Wheel } from "@/components/Wheel";
+import { PasswordField } from "@/components/PasswordField";
 import { PhoneField } from "@/components/PhoneField";
 import { Pass } from "@/components/Pass";
 import { useScreen } from "@/components/Tracker";
@@ -292,7 +293,7 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
           <Trap />
           <Field label={t.name} name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePh} autoComplete="name" maxLength={60} error={err?.field === "name" ? err.error : null} className="!h-[3.25rem]" />
           <PhoneField label={t.phone} error={err?.field === "phone" ? err.error : null} compact />
-          <Field label={t.password} name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPh} autoComplete="new-password" minLength={8} error={err?.field === "password" ? err.error : null} className="!h-[3.25rem]" />
+          <PasswordField label={t.password} name="password" value={password} onChange={(e) => setPassword(e.target.value)} shown placeholder={t.passwordPh} autoComplete="new-password" minLength={8} error={err?.field === "password" ? err.error : null} className="!h-[3.25rem]" />
           {err?.field === "phone" && err.error === t.errTaken && (
             <Link href={`/login?next=${next}`} className="block px-1 text-[0.9375rem] font-semibold text-brand">
               {t.toLogin}

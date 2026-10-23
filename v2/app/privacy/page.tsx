@@ -76,7 +76,7 @@ export default async function Privacy() {
       </div>
       {supportPhone && (
         <a
-          href={`https://wa.me/${supportPhone}?text=${encodeURIComponent("سلام، نحب نمسح الكونت متاعي من Pointili")}`}
+          href={`https://wa.me/${supportPhone}?text=${encodeURIComponent("سلام، نحب نمسح الكونت متاعي من Pointili.\nالنومرو متاع الكونت: ")}`}
           target="_blank"
           rel="noreferrer"
           className="press mt-6 inline-flex h-11 items-center rounded-full bg-[#25D366] px-5 text-[0.9375rem] font-bold text-white"

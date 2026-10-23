@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Check, Copy, KeyRound, MessageCircle, Plus, Search, Store, Trash2, UserPlus, X } from "lucide-react";
 import { adminBookAdd, adminBookDelete, adminResetPassword, adminSweepRobots, adminTester } from "@/app/actions";
 import { adminFind, type Found } from "@/app/admin/actions";
@@ -16,8 +16,8 @@ const quiet = "press inline-flex h-10 items-center justify-center gap-1.5 rounde
  * one — eight digits, shown once, sent on WhatsApp in one tap (every phone
  * signed in with the old one is signed out).
  */
-export function AdminFind() {
-  const [q, setQ] = useState("");
+export function AdminFind({ initial = "" }: { initial?: string }) {
+  const [q, setQ] = useState(initial);
   const [found, setFound] = useState<Found[] | null>(null);
   const [pending, start] = useTransition();
   const [reset, setReset] = useState<{ who: Found; password: string } | null>(null);
@@ -33,6 +33,15 @@ export function AdminFind() {
       setError(res.ok ? null : NOT_DONE);
       if (res.ok && res.password) setReset({ who, password: res.password });
     });
+  // opened from a forgotten password's WhatsApp (/admin/tools?q=<number>): that account, found at once
+  const asked = useRef(false);
+  useEffect(() => {
+    if (!initial || asked.current) return;
+    asked.current = true;
+    adminFind(initial)
+      .then(setFound)
+      .catch(() => setFound([]));
+  }, [initial]);
 
   if (reset) {
     const d = digits(reset.who.phone ?? "");
