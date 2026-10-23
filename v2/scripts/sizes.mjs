@@ -481,6 +481,7 @@ const SCREENS = [
       await p.getByText("كيفاش خلّص؟").scrollIntoViewIfNeeded();
     },
   },
+  { name: "console-study", as: "boss", path: () => `/admin/shop/${shop.id}`, read: true, act: async (p) => void (await p.getByRole("switch", { name: "موقوف" }).waitFor({ timeout: 15000 })) },
   { name: "console-subs", as: "boss", path: "/admin/subs", read: true },
   { name: "console-subs-all", as: "boss", path: "/admin/subs", read: true, act: async (p) => void (await p.getByRole("tab", { name: /^الكل/ }).click()) },
   { name: "console-tools", as: "boss", path: "/admin/tools", read: true },

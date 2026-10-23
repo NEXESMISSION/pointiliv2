@@ -1,67 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Check, ChevronDown, CreditCard, MessageCircle, Phone, Search, Smartphone, X } from "lucide-react";
 import { adminShopNote } from "@/app/admin/actions";
 import { AdminShopMore } from "@/components/AdminShopMore";
 import { ShopMark } from "@/components/ShopMark";
 import { digits, spaced } from "@/lib/phone";
-import { agoSaid, counted, daysN, hoursN, kindMatches, plain, stampsN } from "@/lib/t";
+import { hit, lastMove, PILL, standing, type BoardShop } from "@/lib/board";
+import { agoSaid, counted, daysN, hoursN, stampsN } from "@/lib/t";
 
-/** one shop on the board (admin_board) */
-export type BoardShop = {
-  id: string;
-  name: string;
-  kind: string;
-  color: string;
-  logo: string | null;
-  /** the card is made */
-  card: boolean;
-  created_at: string;
-  paused: boolean;
-  owner: { name: string | null; phone: string | null };
-  paid_until: string | null;
-  paid: boolean;
-  trial_end: string;
-  /** the trial's clock started (the first customer came) */
-  started: boolean;
-  /** the trial is over and nothing is paid: the counter is stopped */
-  shut: boolean;
-  /** tampons to customers (never the owner's own, a test's or a robot's): all, today, the last 7 days (the first hour after the opening left out) */
-  stamps: number;
-  today: number;
-  week: number;
-  customers: number;
-  /** customers who got a tampon more than an hour after the opening: the shop in use, not the owner trying it */
-  real: number;
-  last_at: string | null;
-  /** customers who came back on another day; gifts handed over */
-  returning: number;
-  gifts: number;
-  /** the last 14 days, day by day, oldest first (the first hour left out); null: not one tampon in them */
-  spark: number[] | null;
-  /** the owner: last seen, on how many days, on the site right now, how long in all (ms) */
-  seen_at: string | null;
-  days: number;
-  online: boolean;
-  ms: number;
-  /** the owner opened the pay page, last; tapped a call or a WhatsApp to pay, last; put Pointili on the phone; let it notify */
-  pay_seen: string | null;
-  wa_at: string | null;
-  app: boolean;
-  push: boolean;
-  /** the founder's own line about the shop */
-  note: string;
-};
-
-const HOUR = 3_600_000;
-const DAY = 24 * HOUR;
+const DAY = 86_400_000;
 const PAGE = 24;
-const TZ = "Africa/Tunis";
-const monthYear = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { month: "short", year: "numeric", timeZone: TZ }).format(new Date(iso));
-
-/** The last time anything moved at this shop: the owner in the app, or a customer's tampon. */
-export const lastMove = (s: BoardShop) => [s.seen_at, s.last_at].filter((x): x is string => !!x).sort().pop() ?? null;
 
 type Filter = "last" | "new" | "live" | "over" | "paid" | "all";
 const FILTERS: { id: Filter; label: string; count: boolean; test: (s: BoardShop, now: number) => boolean }[] = [
@@ -79,35 +29,8 @@ const SORT: Partial<Record<Filter, (a: BoardShop, b: BoardShop) => number>> = {
   over: (a, b) => b.trial_end.localeCompare(a.trial_end),
 };
 
-export type Tone = "mint" | "brand" | "coral" | "grey";
-export const PILL: Record<Tone, string> = {
-  mint: "bg-mint-soft text-mint",
-  brand: "bg-brand-soft text-brand",
-  coral: "bg-coral-soft text-coral",
-  grey: "bg-canvas text-muted ring-1 ring-inset ring-line",
-};
-
-/** Where the shop stands, in three words: paid, its trial and what is left of it, over, or not started. */
-export function standing(s: BoardShop, now: number): { say: string; tone: Tone } {
-  if (s.paused) return { say: "موقوف", tone: "grey" };
-  if (s.paid && s.paid_until) return { say: `خالص حتى ${monthYear(s.paid_until)}`, tone: "mint" };
-  if (!s.card) return { say: "بلا كارط", tone: "grey" };
-  if (s.shut) return { say: "التجربة وفات", tone: "coral" };
-  if (!s.started) return { say: "يستنّى أوّل حريف", tone: "grey" };
-  const left = Date.parse(s.trial_end) - now;
-  return { say: `تجربة · باقي ${left >= DAY ? daysN(Math.floor(left / DAY)) : hoursN(Math.max(1, Math.ceil(left / HOUR)))}`, tone: "brand" };
-}
-
-/** Does the shop answer what was typed: its name, its owner, the number, a word of the note, its kind. */
-export function hit(s: BoardShop, q: string): boolean {
-  const words = plain(q).split(" ").filter(Boolean);
-  if (!words.length) return true;
-  const hay = plain(`${s.name} ${s.owner.name ?? ""} ${digits(s.owner.phone ?? "")} ${s.note}`);
-  return words.every((w) => hay.includes(w) || kindMatches(s.kind, w));
-}
-
 /** The shop's face: its logo, or the picture of its kind, on its own colour. */
-export function Face({ s }: { s: BoardShop }) {
+export function Face({ s }: { s: Pick<BoardShop, "color" | "kind" | "logo"> }) {
   return (
     <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-[0.875rem]" style={{ background: `${s.color}1f` }}>
       <ShopMark shop={s} size={28} />
@@ -254,12 +177,14 @@ function ShopLine({ s, now, open, onToggle }: { s: BoardShop; now: number; open:
   return (
     <article id={`shop-${s.id}`} data-shop={s.id} data-moved={lastMove(s) ?? ""} className="scroll-mt-20 rounded-[1.125rem] bg-surface p-3.5 shadow-card ring-1 ring-line/70">
       <div className="flex items-start gap-3">
-        <Face s={s} />
+        <Link href={`/admin/shop/${s.id}`} aria-label={`${s.name}: كل التفاصيل`} className="shrink-0">
+          <Face s={s} />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">
-            <b className="min-w-0 flex-1 pt-0.5 text-[1rem] leading-snug text-ink">
+            <Link href={`/admin/shop/${s.id}`} className="min-w-0 flex-1 pt-0.5 text-[1rem] font-bold leading-snug text-ink">
               <bdi className="block truncate">{s.name}</bdi>
-            </b>
+            </Link>
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${PILL[st.tone]}`}>{st.say}</span>
           </div>
           {/* the owner, and when the shop opened — that one never cut (a new client is the first thing to see); the number is on the call */}
@@ -304,7 +229,7 @@ function ShopLine({ s, now, open, onToggle }: { s: BoardShop; now: number; open:
       )}
       <Signs s={s} now={now} />
 
-      <Note id={s.id} note={s.note} />
+      <ShopNote id={s.id} note={s.note} />
 
       <div className="mt-2.5 grid grid-cols-[1fr_1fr_auto] gap-2">
         {phone ? (
@@ -409,7 +334,7 @@ export function Signs({ s, now }: { s: BoardShop; now: number }) {
  * presses Enter (Shift+Enter for a new line); a small tick says it is kept,
  * a coral border that it is not — the words stay, to try again.
  */
-function Note({ id, note }: { id: string; note: string }) {
+export function ShopNote({ id, note }: { id: string; note: string }) {
   const [text, setText] = useState(note);
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const kept = useRef(note);

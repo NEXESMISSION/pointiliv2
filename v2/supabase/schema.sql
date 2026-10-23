@@ -3766,6 +3766,113 @@ begin
                       from (select * from public.plan_log where shop_id = s.id order by created_at desc limit 4) l), '[]'::jsonb));
 end $$;
 
+-- ═══ one shop, studied (23 Oct 2026) ═══════════════════════════════════════
+-- The founder: «a detailed page with all the data to study the client in the best way
+-- possible». Everything about one shop and its owner, in one call: where the owner came
+-- from, its numbers, its last 30 days (tampons, and the days the owner came), the steps it
+-- took from the sign-up to paying (each with its hour), what the owner did in the app and
+-- where a form stopped him, his last visits screen by screen, its customers, its card, its
+-- access's story, the phones signed in, and the founder's note. Customers are never the
+-- owner himself nor a test; «late»: a tampon more than an hour after the opening.
+create or replace function public.admin_study(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype; p public.people%rowtype; v_today date := (now() at time zone 'Africa/Tunis')::date;
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_id;
+  if s.id is null then return null; end if;
+  select * into p from public.people where id = s.owner_id;
+  return (
+    with cs as (
+      select c.* from public.cards c join public.people cp on cp.id = c.user_id
+      where c.shop_id = s.id and c.user_id <> s.owner_id and not (cp.is_admin or cp.is_tester)
+    ), mm as (
+      select m.id, m.kind, m.created_at, m.given_at, m.item_id, c.user_id,
+             (m.created_at at time zone 'Africa/Tunis')::date as day, m.created_at > s.created_at + interval '1 hour' as late
+      from public.moments m join cs c on c.id = m.card_id
+    ), ov as (
+      select v.* from public.visits v where v.user_id = s.owner_id
+    ), vw as (
+      select w.* from public.views w join ov v on v.id = w.visit_id
+    ), sg as (
+      select g.* from public.signals g join ov v on v.id = g.visit_id
+    ), firsts as (
+      select user_id, min(created_at) as at from mm where kind = 'stamp' group by user_id
+    )
+    select jsonb_build_object(
+      'shop', jsonb_build_object('id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'goal', s.goal, 'gift', s.gift,
+        'stamp_gap', s.stamp_gap, 'stamp_logo', s.stamp_logo, 'paused', s.paused, 'created_at', s.created_at,
+        'items_on', s.items_on, 'store_on', s.store_on, 'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed,
+        'paid_until', s.paid_until, 'paid', s.paid_until is not null and s.paid_until > now(),
+        'trial_end', public.trial_end(s), 'started', public.trial_started(s), 'shut', public.shut(s), 'offer_at', s.offer_at),
+      'owner', jsonb_build_object('id', p.id, 'name', nullif(p.name, ''), 'phone', p.phone, 'created_at', p.created_at),
+      'origin', (select jsonb_build_object('at', v.started_at, 'source', v.source, 'medium', v.medium, 'campaign', v.campaign, 'content', v.content,
+                  'landing', v.landing, 'referrer', v.referrer, 'device', v.device, 'os', v.os, 'browser', v.browser, 'city', v.city, 'fbclid', v.fbclid)
+                 from ov v order by v.started_at limit 1),
+      'numbers', jsonb_build_object(
+        'customers', (select count(distinct user_id) from mm where kind = 'stamp'),
+        'real', (select count(distinct user_id) from mm where kind = 'stamp' and late),
+        'stamps', (select count(*) from mm where kind = 'stamp'),
+        'week', (select count(*) from mm where kind = 'stamp' and late and created_at > now() - interval '7 days'),
+        'returning', (select count(*) from (select user_id from mm where kind = 'stamp' group by user_id having count(distinct day) >= 2) x),
+        'given', (select count(*) from mm where kind = 'gift' and given_at is not null),
+        'waiting', (select count(*) from mm where kind = 'gift' and given_at is null),
+        'visits', (select count(*) from ov),
+        'days', (select count(distinct (started_at at time zone 'Africa/Tunis')::date) from ov),
+        'ms', (select coalesce(sum(active_ms), 0) from vw)),
+      'days', (select jsonb_agg(jsonb_build_object('day', d.day, 'stamps', coalesce(x.n, 0), 'came', y.day is not null) order by d.day)
+               from (select v_today - g as day from generate_series(0, 29) g) d
+               left join (select day, count(*) as n from mm where kind = 'stamp' group by day) x on x.day = d.day
+               left join (select distinct (started_at at time zone 'Africa/Tunis')::date as day from ov) y on y.day = d.day),
+      'steps', jsonb_build_object(
+        'account', p.created_at,
+        'shop', s.created_at,
+        'counter', (select min(entered_at) from vw where route = '/shop/qr'),
+        'first', (select min(at) from firsts),
+        'first_real', (select min(created_at) from mm where kind = 'stamp' and late),
+        'fifth', (select at from firsts order by at offset 4 limit 1),
+        'gift', (select min(given_at) from mm where kind = 'gift'),
+        'app', (select min(at) from sg where name in ('pwa_installed', 'pwa_accepted')),
+        'offer', (select min(at) from sg where name = 'offer'),
+        'pay', (select min(entered_at) from vw where route = '/shop/pay'),
+        'asked', (select min(at) from sg where name in ('pay', 'trial_call')),
+        'paid', (select min(created_at) from public.plan_log l where l.shop_id = s.id and l.kind in ('paid', 'until'))),
+      'did', coalesce((select jsonb_object_agg(name, jsonb_build_object('n', n, 'last', last_at)) from (select name, count(*) as n, max(at) as last_at from sg group by name) z), '{}'::jsonb),
+      'errors', coalesce((select jsonb_agg(jsonb_build_object('at', e.at, 'detail', e.detail) order by e.at desc) from (select at, detail from sg where name = 'form_error' order by at desc limit 8) e), '[]'::jsonb),
+      'visits', coalesce((select jsonb_agg(jsonb_build_object('id', v.id, 'at', v.started_at, 'end', v.last_at, 'device', v.device, 'os', v.os, 'browser', v.browser, 'city', v.city,
+                  'source', coalesce(v.campaign, v.source), 'app', v.standalone,
+                  'ms', (select coalesce(sum(w.active_ms), 0) from vw w where w.visit_id = v.id),
+                  'stamps', (select count(*) from mm where mm.kind = 'stamp' and mm.created_at between v.started_at and v.last_at + interval '1 minute'),
+                  'screens', coalesce((select jsonb_agg(jsonb_build_object('route', w.route, 'screen', w.screen, 'ms', w.active_ms) order by w.entered_at) from vw w where w.visit_id = v.id), '[]'::jsonb))
+                 order by v.started_at desc) from (select * from ov order by started_at desc limit 15) v), '[]'::jsonb),
+      'customers', coalesce((select jsonb_agg(y.x order by y.last_at desc nulls last) from (
+                  select c.last_at, jsonb_build_object('name', nullif(split_part(coalesce(cp.name, ''), ' ', 1), ''), 'tail', right(coalesce(cp.phone, ''), 2),
+                    'stamps', (select count(*) from mm where mm.user_id = c.user_id and mm.kind = 'stamp'),
+                    'on', c.stamps, 'goal', coalesce(c.goal, s.goal),
+                    'gifts', (select count(*) from mm where mm.user_id = c.user_id and mm.kind = 'gift' and mm.given_at is not null),
+                    'days', (select count(distinct mm.day) from mm where mm.user_id = c.user_id and mm.kind = 'stamp'),
+                    'first', (select min(mm.created_at) from mm where mm.user_id = c.user_id),
+                    'last', (select max(mm.created_at) from mm where mm.user_id = c.user_id),
+                    'late', exists (select 1 from mm where mm.user_id = c.user_id and mm.late)) as x
+                  from cs c join public.people cp on cp.id = c.user_id
+                  order by c.last_at desc nulls last limit 40) y), '[]'::jsonb),
+      'items', coalesce((select jsonb_agg(jsonb_build_object('name', i.name, 'gone', i.rank >= 999,
+                  'n', (select count(*) from public.moments m where m.item_id = i.id and m.kind = 'stamp')) order by i.rank, i.id)
+                 from public.items i where i.shop_id = s.id), '[]'::jsonb),
+      'plan', coalesce((select jsonb_agg(jsonb_build_object('kind', l.kind, 'months', l.months, 'until', l.until_at, 'amount', l.amount, 'method', l.method, 'at', l.created_at) order by l.created_at desc)
+                 from public.plan_log l where l.shop_id = s.id), '[]'::jsonb),
+      'devices', coalesce((select jsonb_agg(jsonb_build_object('since', x.created_at,
+                  'last_at', greatest(coalesce(x.refreshed_at, x.updated_at, x.created_at), v.last_at, v.here_at),
+                  'device', v.device, 'os', v.os, 'browser', v.browser, 'city', v.city, 'app', v.standalone,
+                  'here', v.here_at > now() - interval '2 minutes' and v.here_state in ('here', 'idle'))
+                  order by greatest(coalesce(x.refreshed_at, x.updated_at, x.created_at), v.last_at, v.here_at) desc nulls last)
+                 from auth.sessions x
+                 left join lateral (select * from public.visits w where w.session_id = x.id order by w.started_at desc limit 1) v on true
+                 where x.user_id = s.owner_id and (x.not_after is null or x.not_after > now())), '[]'::jsonb),
+      'note', coalesce((select cn.note from public.crm cn where cn.shop_id = s.id), ''))
+  );
+end $$;
+
 -- signing in, said exactly (23 Oct 2026): has this number a login at all — «no account with this
 -- number» and «this account's password is wrong» are two answers. The service's key only (no grant)
 create or replace function public.has_login(p_phone text) returns boolean
@@ -3797,7 +3904,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.form_open(text), public.form_fill(text, jsonb), public.my_wheel(), public.wheel_save(jsonb), public.spin(bigint), public.spin_at_counter(bigint), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
   public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
-  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(), public.admin_board_shop(uuid),
+  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(), public.admin_board_shop(uuid), public.admin_study(uuid),
   public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),

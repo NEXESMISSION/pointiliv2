@@ -1,4 +1,4 @@
-import type { BoardShop } from "@/components/AdminBoard";
+import type { BoardShop } from "@/lib/board";
 import { AdminSubs } from "@/components/AdminSubs";
 import { call } from "@/lib/supabase";
 

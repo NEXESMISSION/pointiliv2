@@ -1,4 +1,5 @@
-import { AdminBoard, type BoardShop } from "@/components/AdminBoard";
+import { AdminBoard } from "@/components/AdminBoard";
+import type { BoardShop } from "@/lib/board";
 import { call } from "@/lib/supabase";
 
 export const metadata = { title: "المحلات" };

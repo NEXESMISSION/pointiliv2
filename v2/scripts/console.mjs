@@ -275,6 +275,19 @@ try {
     // the owner's old password is gone: the new one is what signs in (set it back for the next size)
     await db.auth.admin.updateUserById(owners[0].id, { password: `${TAG}-123456` });
 
+    // the shop's whole page, from its name on the board: every part there, nothing spilling
+    await page.goto(`${BASE}/admin`, { waitUntil: "domcontentloaded" });
+    await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
+    await line().getByRole("link", { name: SHOPS[0][0], exact: true }).click();
+    await page.waitForURL(`**/admin/shop/${mine}`, { timeout: 30000 });
+    // the page arrives after the console's skeleton: its first part first, then the others
+    await page.getByRole("heading", { name: "آخر 30 يوم" }).waitFor({ timeout: 30000 });
+    for (const part of ["آخر 30 يوم", "الطريق متاعو", "شنوّة عمل في الأبليكاسيون", "كل مرّة دخل", "الحرفاء", "الكارط", "الأبونمان والخيارات", "التليفونات اللي داخل منهم"])
+      if (!(await page.getByRole("heading", { name: part }).count())) bad(`the shop's page has no «${part}»`);
+    await page.getByRole("switch", { name: "موقوف" }).waitFor({ timeout: 20000 });
+    await look(page, `${at}-02b-study`);
+    ok("the shop's whole page: opened from its name, every part there");
+
     // the subscriptions: this run's shop found, a year turned on from its own line (a robot's shop: never told
     // to Facebook, never in the founder's books), its picture opens; then stopped, asked first
     const subs = await timed(page, "/admin/subs", page.getByRole("heading", { name: "الأبونمان" }));

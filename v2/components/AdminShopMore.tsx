@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { Copy, FlaskConical, Gift, KeyRound, MessageCircle, Stamp } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, Copy, FlaskConical, Gift, KeyRound, MessageCircle, Stamp } from "lucide-react";
 import { adminPause, adminResetPassword, adminSetTester } from "@/app/actions";
 import { adminSetItems, adminSetStore } from "@/app/actions-store";
 import { adminSetWheel } from "@/app/actions-wheel";
 import { adminBoardShop, type BoardMore } from "@/app/admin/actions";
 import { AdminAccess } from "@/components/AdminAccess";
-import type { BoardShop } from "@/components/AdminBoard";
+import type { AccessShop } from "@/lib/board";
 import { Switch } from "@/components/Owner";
 import { digits } from "@/lib/phone";
 import { agoSaid, fill, stampsN, t } from "@/lib/t";
@@ -22,7 +23,7 @@ const quiet = "press flex h-10 items-center justify-center gap-1.5 rounded-[0.75
  * are on the line itself.) Read from the database only now, for this one
  * shop; read again after each change, so what shows is what is.
  */
-export function AdminShopMore({ shop, now }: { shop: BoardShop; now: number }) {
+export function AdminShopMore({ shop, now, bare = false }: { shop: AccessShop; now: number; bare?: boolean }) {
   // undefined: being read; null: it could not be
   const [more, setMore] = useState<BoardMore | null | undefined>(undefined);
   useEffect(() => {
@@ -44,8 +45,14 @@ export function AdminShopMore({ shop, now }: { shop: BoardShop; now: number }) {
   if (more === null) return <p className="mt-3 rounded-[0.875rem] bg-coral-soft px-3 py-2.5 text-[0.875rem] font-medium text-coral">{NOT_DONE}</p>;
 
   return (
-    <div className="mt-3 space-y-3 border-t border-line/80 pt-3">
-      <Story more={more} now={now} />
+    <div className={bare ? "space-y-3" : "mt-3 space-y-3 border-t border-line/80 pt-3"}>
+      {!bare && (
+        <Link href={`/admin/shop/${shop.id}`} className="press flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-brand-soft text-[0.875rem] font-bold text-brand">
+          <BarChart3 className="size-4" /> كل التفاصيل على المحل هذا
+        </Link>
+      )}
+      {/* on the study page the card and the story have their own places: only what is done to the shop here */}
+      {!bare && <Story more={more} now={now} />}
       <AdminAccess shop={shop} plan={more.plan} reload={load} />
       <Switches shop={shop} more={more} reload={load} />
       <Account shop={shop} more={more} />
@@ -114,7 +121,7 @@ function SwitchLine({ title, line, on, ask, flip }: { title: string; line: strin
 }
 
 /** The shop's four switches: stopped, the wheel, «شنوّة يبيع», the store. */
-function Switches({ shop, more, reload }: { shop: BoardShop; more: BoardMore; reload: () => Promise<void> }) {
+function Switches({ shop, more, reload }: { shop: AccessShop; more: BoardMore; reload: () => Promise<void> }) {
   const after = async (res: { ok: boolean; error?: string } | boolean, why?: Record<string, string>) => {
     const ok = typeof res === "boolean" ? res : res.ok;
     if (!ok) return (typeof res !== "boolean" && res.error && why?.[res.error]) || NOT_DONE;
@@ -156,7 +163,7 @@ function Switches({ shop, more, reload }: { shop: BoardShop; more: BoardMore; re
 }
 
 /** The owner's account: a new password (shown once, sent on WhatsApp in one tap), or marked as a test — then it leaves the board. */
-function Account({ shop, more }: { shop: BoardShop; more: BoardMore }) {
+function Account({ shop, more }: { shop: AccessShop; more: BoardMore }) {
   const [pending, start] = useTransition();
   const [password, setPassword] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

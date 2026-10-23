@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MessageCircle, Phone, Search, X } from "lucide-react";
 import { AdminAccess } from "@/components/AdminAccess";
-import { Face, Signs, hit, type BoardShop } from "@/components/AdminBoard";
+import { Face, Signs } from "@/components/AdminBoard";
+import { hit, type BoardShop } from "@/lib/board";
 import { digits, spaced } from "@/lib/phone";
 import { agoSaid, customersN, t } from "@/lib/t";
 
@@ -133,9 +135,9 @@ function SubLine({ s, now }: { s: BoardShop; now: number }) {
       <div className="flex items-start gap-3">
         <Face s={s} />
         <div className="min-w-0 flex-1">
-          <b className="block pt-0.5 text-[1rem] leading-snug text-ink">
+          <Link href={`/admin/shop/${s.id}`} className="block pt-0.5 text-[1rem] font-bold leading-snug text-ink">
             <bdi className="block truncate">{s.name}</bdi>
-          </b>
+          </Link>
           <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">
             <bdi>{s.owner.name || "بلا اسم"}</bdi> · {s.real ? customersN(s.real) : "حتى حريف"} · {use}
           </p>

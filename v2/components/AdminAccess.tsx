@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Power } from "lucide-react";
 import { adminPlan, adminTrial } from "@/app/actions";
 import type { BoardMore } from "@/app/admin/actions";
-import type { BoardShop } from "@/components/AdminBoard";
+import type { AccessShop } from "@/lib/board";
 import { PlanImage, type PlanShot } from "@/components/PlanImage";
 import { daysN, fill, monthsSaid, t } from "@/lib/t";
 
@@ -29,7 +29,7 @@ const MONTHS = [1, 3, 6, 12, 15, 24];
  * came in and how), add days of trial, or stop it. The subscription turned
  * on, its picture opens by itself, to send the owner on WhatsApp.
  */
-export function AdminAccess({ shop, plan = null, reload }: { shop: BoardShop; plan?: BoardMore["plan"] | null; reload?: () => Promise<void> }) {
+export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; plan?: BoardMore["plan"] | null; reload?: () => Promise<void> }) {
   const [mode, setMode] = useState<null | "plan" | "trial" | "end">(null);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
