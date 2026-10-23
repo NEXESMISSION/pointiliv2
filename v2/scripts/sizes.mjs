@@ -469,18 +469,20 @@ const SCREENS = [
 
   { name: "console", as: "boss", path: "/admin", read: true },
   // this run's shop opened on the board, by the link a Telegram alert carries (never the first line: the admin sees the real shops too)
-  { name: "console-shop", as: "boss", path: () => `/admin?shop=${shop.id}`, read: true, act: async (p) => void (await p.locator(`article[data-shop='${shop.id}'] dl`).waitFor({ timeout: 15000 })) },
+  { name: "console-shop", as: "boss", path: () => `/admin?shop=${shop.id}`, read: true, act: async (p) => void (await p.locator(`article[data-shop='${shop.id}'] [role=switch]`).first().waitFor({ timeout: 15000 })) },
   {
     name: "console-shop-plan",
     as: "boss",
     path: () => `/admin?shop=${shop.id}`,
     read: true,
     act: async (p) => {
-      await p.locator(`article[data-shop='${shop.id}'] dl`).waitFor({ timeout: 15000 });
+      await p.locator(`article[data-shop='${shop.id}'] [role=switch]`).first().waitFor({ timeout: 15000 });
       await press(p, "خدّم الأبونمان");
       await p.getByText("كيفاش خلّص؟").scrollIntoViewIfNeeded();
     },
   },
+  { name: "console-subs", as: "boss", path: "/admin/subs", read: true },
+  { name: "console-subs-all", as: "boss", path: "/admin/subs", read: true, act: async (p) => void (await p.getByRole("tab", { name: /^الكل/ }).click()) },
   { name: "console-tools", as: "boss", path: "/admin/tools", read: true },
   {
     name: "console-tools-open",

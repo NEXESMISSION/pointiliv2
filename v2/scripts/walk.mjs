@@ -438,10 +438,14 @@ try {
   await a.getByRole("searchbox", { name: "لوّج" }).fill(ownerPhone);
   await walkLine.waitFor({ timeout: 60000 });
   await shot(a, "20-admin");
-  // its line opened: the card, its customers, what happened lately, the access
+  // its line opened: the card, what happened lately, the access, the switches
   await walkLine.locator("button[aria-expanded]").click();
-  await walkLine.locator("dl").waitFor({ timeout: 20000 });
+  await walkLine.getByRole("switch", { name: "موقوف" }).waitFor({ timeout: 20000 });
   await shot(a, "21-admin-shop");
+  // the subscriptions: every shop by its access, the moves on each line
+  await a.goto(`${BASE}/admin/subs`, { waitUntil: "load" });
+  await a.getByRole("heading", { name: "الأبونمان" }).waitFor({ timeout: 60000 });
+  await shot(a, "21b-admin-subs");
   // the tools: a new password for this walk's customer, found by the number (only that one account)
   await a.goto(`${BASE}/admin/tools`, { waitUntil: "load" });
   await shot(a, "22-admin-tools");

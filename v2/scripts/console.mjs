@@ -196,7 +196,13 @@ try {
     console.log(`  · the board drawn in ${speed.ms} ms (${speed.kb} kB)`);
     await look(page, `${at}-01-board`);
 
-    // the five filters: each one shows its own count of lines (the whole list grows as it scrolls, 24 at a time)
+    // the board opens on «آخر من دخل»: whoever moved last on top
+    if ((await page.getByRole("tab", { name: "آخر من دخل" }).getAttribute("aria-selected")) !== "true") bad("the board does not open on «آخر من دخل»");
+    const moved = await page.locator("article[data-shop]").evaluateAll((els) => els.slice(0, 12).map((e) => e.getAttribute("data-moved") ?? ""));
+    if (moved.some((m, i) => i > 0 && m > moved[i - 1])) bad(`«آخر من دخل» is not in order: ${moved.join(" ")}`);
+    else ok("«آخر من دخل» first, whoever moved last on top");
+
+    // the filters: each one shows its own count of lines (the whole list grows as it scrolls, 24 at a time)
     for (const name of ["جداد", "يخدمو", "التجربة وفات", "خالصين", "الكل"]) {
       const tab = page.getByRole("tab", { name: new RegExp(`^${name}`) });
       await tab.click();
@@ -205,7 +211,7 @@ try {
       const shown = await page.locator("article[data-shop]").count();
       if (shown !== Math.min(said, 24) && !(said === 0 && shown === 0)) bad(`filter «${name}»: says ${said}, shows ${shown}`);
     }
-    ok("the five filters: each shows what it counts");
+    ok("the filters: each shows what it counts");
 
     // the search: this run's shop by its name, and nothing else of the demo world
     await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
@@ -230,9 +236,14 @@ try {
     if (!(await line().count())) bad("search by a word of the note: not found");
     await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
 
-    // the shop opened: what the founder needs before a call
+    // its numbers, its last 14 days and the owner's signs are on the line itself, nothing to open
+    for (const label of ["حرفاء", "تامبونات", "رجعو", "كادوات"]) if (!(await line().getByText(label, { exact: true }).count())) bad(`the line has no «${label}»`);
+    if (!(await line("[role=img]").count())) bad("the line has no 14 days");
+    else ok("the line itself: four numbers and its 14 days");
+
+    // the shop opened: its card, what happened, and what is done to it
     await line("button[aria-expanded]").click();
-    await line("dl").waitFor({ timeout: 20000 });
+    await line().getByRole("switch", { name: "موقوف" }).waitFor({ timeout: 20000 });
     await look(page, `${at}-02-shop-open`);
 
     // days of trial: the line says so in the shop's story
@@ -240,22 +251,6 @@ try {
     await line().getByRole("button", { name: "+3 أيّام" }).click();
     await line().getByText("زدنا في التجربة حتى").first().waitFor({ timeout: 20000 });
     ok("days of trial added: in the shop's story");
-
-    // the year turned on (a robot's shop: never told to Facebook, never in the founder's books), its picture opens
-    await line().getByRole("button", { name: "خدّم الأبونمان" }).click();
-    await line().getByRole("button", { name: "خدّم عام" }).click();
-    const pic = page.getByRole("dialog", { name: "تصويرة الأبونمان" });
-    await pic.waitFor({ timeout: 20000 });
-    await page.waitForTimeout(600);
-    await page.screenshot({ path: `${OUT}/${at}-03-plan-picture.png` });
-    await pic.getByRole("button", { name: "X" }).click();
-    await line().getByText(/^خالص حتى/).first().waitFor({ timeout: 20000 });
-    ok("a year turned on: its picture opened, the line says «خالص»");
-    // …and stopped again, asked first
-    await line().getByRole("button", { name: "وقّف الأبونمان" }).first().click();
-    await line().getByRole("button", { name: "وقّف الأبونمان" }).last().click();
-    await line().getByText("وقّفناه").first().waitFor({ timeout: 20000 });
-    ok("the year stopped, after the question");
 
     // a switch that asks first: stopped, then back
     const stop = line().getByRole("switch", { name: "موقوف" });
@@ -279,6 +274,31 @@ try {
     await look(page, `${at}-04-shop-done`);
     // the owner's old password is gone: the new one is what signs in (set it back for the next size)
     await db.auth.admin.updateUserById(owners[0].id, { password: `${TAG}-123456` });
+
+    // the subscriptions: this run's shop found, a year turned on from its own line (a robot's shop: never told
+    // to Facebook, never in the founder's books), its picture opens; then stopped, asked first
+    const subs = await timed(page, "/admin/subs", page.getByRole("heading", { name: "الأبونمان" }));
+    console.log(`  · the subscriptions drawn in ${subs.ms} ms (${subs.kb} kB)`);
+    await look(page, `${at}-03-subs`);
+    const sub = (sel = "") => page.locator(`article[data-sub='${mine}'] ${sel}`.trim());
+    await page.getByRole("tab", { name: /^الكل/ }).click();
+    await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
+    await sub().waitFor({ timeout: 20000 });
+    await sub().getByRole("button", { name: "خدّم الأبونمان" }).click();
+    await sub().getByRole("button", { name: "خدّم عام" }).click();
+    const pic = page.getByRole("dialog", { name: "تصويرة الأبونمان" });
+    await pic.waitFor({ timeout: 20000 });
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: `${OUT}/${at}-03b-plan-picture.png` });
+    await pic.getByRole("button", { name: "X" }).click();
+    await sub().getByText(/^خالص حتى/).first().waitFor({ timeout: 20000 });
+    ok("a year turned on from the subscriptions: its picture opened, the line says «خالص»");
+    await page.getByRole("tab", { name: /^خالصين/ }).click();
+    await sub().waitFor({ timeout: 10000 });
+    await sub().getByRole("button", { name: "وقّف الأبونمان" }).first().click();
+    await sub().getByRole("button", { name: "وقّف الأبونمان" }).last().click();
+    await sub().waitFor({ state: "detached", timeout: 20000 });
+    ok("…and stopped, after the question: out of «خالصين»");
 
     // the tools: closed parts, one open
     const tools = await timed(page, "/admin/tools", page.getByRole("heading", { name: "الأدوات" }));
@@ -324,7 +344,7 @@ try {
 
     // a Telegram alert's link: the shop opened on the board, scrolled to
     await page.goto(`${BASE}/admin?shop=${made.shops[3]}`, { waitUntil: "domcontentloaded" });
-    await page.locator(`article[data-shop='${made.shops[3]}'] dl`).waitFor({ timeout: 30000 });
+    await page.locator(`article[data-shop='${made.shops[3]}'] [role=switch]`).first().waitFor({ timeout: 30000 });
     ok("?shop=<id>: that shop open on the board");
     await ctx.close();
   }

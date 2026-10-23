@@ -4,7 +4,7 @@ import { call } from "@/lib/supabase";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
-/** One shop of the board, opened: its switches, what happened lately, the money and the signs of interest. */
+/** One shop of the board, opened: its card, its switches, what happened lately, and its access's story. */
 export type BoardMore = {
   id: string;
   goal: number | null;
@@ -15,14 +15,7 @@ export type BoardMore = {
   store_on: boolean;
   items_on: boolean;
   owner_id: string;
-  /** customers who came back on another day */
-  returning: number;
-  /** gifts handed over */
-  gifts: number;
   recent: { kind: "stamp" | "gift"; at: string; given: boolean; who: string | null }[];
-  /** the owner opened the pay page, last; tapped a WhatsApp to pay (or the trial's), last */
-  pay_seen: string | null;
-  wa_at: string | null;
   plan: { kind: "paid" | "until" | "end" | "trial"; months: number | null; until: string | null; amount: number | null; at: string }[];
 };
 

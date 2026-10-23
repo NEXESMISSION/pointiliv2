@@ -3644,13 +3644,16 @@ end $$;
 
 -- ═══ the founder's board (23 Oct 2026): every shop on one page, light and fast ═══
 -- The founder: «so much data, browsing so slow… one page: the new clients, their
--- activity, and a CRM for me, super simple». One row per real shop, newest first —
--- who, how far, how alive, and the founder's own line about it (crm.note) — in one
--- pass over the tables (grouped, never a query per shop). The rest of a shop opens
--- on demand (admin_board_shop).
+-- activity, and a CRM for me, super simple» — and the same evening: «more detailed
+-- analytics, easy to see from the box directly». One row per real shop, newest
+-- first: who, how far, how alive (its customers, the ones who came back, the gifts,
+-- its last 14 days, the owner's visits and time, the pay page, a WhatsApp to pay,
+-- the app on the phone, the notifications) and the founder's own line about it
+-- (crm.note) — in one pass over the tables, grouped, never a query per shop. The
+-- rest of a shop opens on demand (admin_board_shop).
 create or replace function public.admin_board() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
-declare v_all boolean;
+declare v_all boolean; v_today date := (now() at time zone 'Africa/Tunis')::date;
 begin
   perform public.require_admin();
   v_all := public.sees_robots();
@@ -3661,26 +3664,58 @@ begin
     ), rs as (
       select s.id, s.owner_id, s.created_at from public.shops s join public.people p on p.id = s.owner_id
       where v_all or (s.owner_id not in (select id from robot) and not (p.is_admin or p.is_tester))
-    ), st as (
-      select m.shop_id, count(*) as stamps,
-             count(*) filter (where m.created_at >= public.tunis_today()) as today,
-             -- the last 7 days, the first hour after the opening left out (the owner trying it)
-             count(*) filter (where m.created_at > now() - interval '7 days' and m.created_at > rs.created_at + interval '1 hour') as week,
-             count(distinct c.user_id) as customers, max(m.created_at) as last_at,
-             -- a customer who got a tampon more than an hour after the shop opened: the shop in use, not the owner's try
-             count(distinct c.user_id) filter (where m.created_at > rs.created_at + interval '1 hour') as real
+    ), mm as (
+      -- every tampon to a customer (not the owner, not a test, not a robot), its day in Tunis, and whether it
+      -- came more than an hour after the opening (before that: the owner trying it, not the shop in use)
+      select m.shop_id, c.user_id, m.created_at, (m.created_at at time zone 'Africa/Tunis')::date as day,
+             m.created_at > rs.created_at + interval '1 hour' as late
       from public.moments m
       join rs on rs.id = m.shop_id
       join public.cards c on c.id = m.card_id
       join public.people cp on cp.id = c.user_id
       where m.kind = 'stamp' and c.user_id <> rs.owner_id and not (cp.is_admin or cp.is_tester)
         and (v_all or c.user_id not in (select id from robot))
+    ), st as (
+      select shop_id, count(*) as stamps,
+             count(*) filter (where created_at >= public.tunis_today()) as today,
+             count(*) filter (where late and created_at > now() - interval '7 days') as week,
+             count(distinct user_id) as customers,
+             count(distinct user_id) filter (where late) as real,
+             max(created_at) as last_at
+      from mm group by shop_id
+    ), back as (
+      -- customers who came back: tampons on two days or more
+      select shop_id, count(*) as returning from (select shop_id from mm group by shop_id, user_id having count(distinct day) >= 2) x group by shop_id
+    ), sp as (
+      -- the last 14 days, day by day, oldest first (the first hour after the opening left out)
+      select a.shop_id, jsonb_agg(coalesce(d.n, 0) order by g.i) as spark
+      from (select distinct shop_id from mm where day > v_today - 14) a
+      cross join generate_series(0, 13) g(i)
+      left join (select shop_id, day, count(*) filter (where late) as n from mm where day > v_today - 14 group by shop_id, day) d
+        on d.shop_id = a.shop_id and d.day = v_today - 13 + g.i
+      group by a.shop_id
+    ), gf as (
+      select m.shop_id, count(*) as gifts
+      from public.moments m join rs on rs.id = m.shop_id join public.cards c on c.id = m.card_id join public.people cp on cp.id = c.user_id
+      where m.kind = 'gift' and m.given_at is not null and c.user_id <> rs.owner_id and not (cp.is_admin or cp.is_tester)
       group by m.shop_id
     ), ov as (
+      -- the owner: last seen, on how many days, on the site right now
       select v.user_id, greatest(max(v.last_at), max(v.here_at)) as seen_at,
              count(distinct (v.started_at at time zone 'Africa/Tunis')::date) as days,
              bool_or(v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds') as online
       from public.visits v where v.user_id in (select owner_id from rs) group by v.user_id
+    ), ow as (
+      -- the owner's time in the app, and the pay page opened last
+      select v.user_id, sum(w.active_ms) as ms, max(w.entered_at) filter (where w.route = '/shop/pay') as pay_seen
+      from public.visits v join public.views w on w.visit_id = v.id
+      where v.user_id in (select owner_id from rs) group by v.user_id
+    ), og as (
+      -- what the owner tapped: a call or a WhatsApp to pay (the trial's too), Pointili put on the phone
+      select v.user_id, max(g.at) filter (where g.name in ('pay', 'trial_call')) as wa_at,
+             bool_or(g.name in ('pwa_installed', 'pwa_accepted', 'pwa_open')) as app
+      from public.visits v join public.signals g on g.visit_id = v.id
+      where v.user_id in (select owner_id from rs) group by v.user_id
     )
     select jsonb_agg(jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'card', s.goal is not null,
@@ -3690,19 +3725,27 @@ begin
       'trial_end', public.trial_end(s), 'started', public.trial_started(s), 'shut', public.shut(s),
       'stamps', coalesce(st.stamps, 0), 'today', coalesce(st.today, 0), 'week', coalesce(st.week, 0),
       'customers', coalesce(st.customers, 0), 'real', coalesce(st.real, 0), 'last_at', st.last_at,
+      'returning', coalesce(bk.returning, 0), 'gifts', coalesce(gf.gifts, 0), 'spark', sp.spark,
       'seen_at', ov.seen_at, 'days', coalesce(ov.days, 0), 'online', coalesce(ov.online, false),
+      'ms', coalesce(ow.ms, 0), 'pay_seen', ow.pay_seen, 'wa_at', og.wa_at, 'app', coalesce(og.app, false),
+      'push', exists (select 1 from public.push_subs ps where ps.user_id = s.owner_id),
       'note', coalesce(cn.note, '')) order by s.created_at desc)
     from public.shops s
     join rs on rs.id = s.id
     join public.people p on p.id = s.owner_id
     left join st on st.shop_id = s.id
+    left join back bk on bk.shop_id = s.id
+    left join sp on sp.shop_id = s.id
+    left join gf on gf.shop_id = s.id
     left join ov on ov.user_id = s.owner_id
+    left join ow on ow.user_id = s.owner_id
+    left join og on og.user_id = s.owner_id
     left join public.crm cn on cn.shop_id = s.id
   ), '[]'::jsonb);
 end $$;
 
--- one shop of the board, opened: its switches, what happened lately, the money, and
--- the signs of interest (the pay page opened, a WhatsApp tapped)
+-- one shop of the board, opened: its card, its switches, what happened lately, and
+-- what the founder did to its access
 create or replace function public.admin_board_shop(p_id uuid) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare s public.shops%rowtype;
@@ -3714,20 +3757,11 @@ begin
     'id', s.id, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused,
     'wheel_allowed', s.wheel_allowed, 'wheel_on', s.wheel_on, 'store_on', s.store_on, 'items_on', s.items_on,
     'owner_id', s.owner_id,
-    'returning', (select count(*) from (
-        select c.user_id from public.moments m join public.cards c on c.id = m.card_id
-        where m.shop_id = s.id and m.kind = 'stamp' and c.user_id <> s.owner_id
-        group by c.user_id having count(distinct (m.created_at at time zone 'Africa/Tunis')::date) >= 2) z),
-    'gifts', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'gift' and m.given_at is not null),
     'recent', coalesce((select jsonb_agg(jsonb_build_object('kind', x.kind, 'at', x.at, 'given', x.given, 'who', x.who) order by x.at desc) from (
         select m.kind, coalesce(m.given_at, m.created_at) as at, m.given_at is not null as given,
                nullif(split_part(coalesce(cp.name, ''), ' ', 1), '') as who
         from public.moments m join public.cards c on c.id = m.card_id left join public.people cp on cp.id = c.user_id
         where m.shop_id = s.id order by m.created_at desc limit 6) x), '[]'::jsonb),
-    'pay_seen', (select max(w.entered_at) from public.views w join public.visits v on v.id = w.visit_id
-                 where v.user_id = s.owner_id and w.route = '/shop/pay'),
-    'wa_at', (select max(g.at) from public.signals g join public.visits v on v.id = g.visit_id
-              where v.user_id = s.owner_id and g.name in ('pay', 'trial_call')),
     'plan', coalesce((select jsonb_agg(jsonb_build_object('kind', l.kind, 'months', l.months, 'until', l.until_at, 'amount', l.amount, 'at', l.created_at) order by l.created_at desc)
                       from (select * from public.plan_log where shop_id = s.id order by created_at desc limit 4) l), '[]'::jsonb));
 end $$;
