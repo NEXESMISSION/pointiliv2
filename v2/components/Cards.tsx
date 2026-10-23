@@ -8,7 +8,6 @@ import { Go } from "@/components/Go";
 import { InstallApp, InstallPopup } from "@/components/InstallApp";
 import { Live } from "@/components/Live";
 import { MyCode } from "@/components/MyCode";
-import { PushAsk } from "@/components/PushAsk";
 import { ShopMark } from "@/components/ShopMark";
 import { Mark } from "@/components/Tracker";
 import { Icon3D, Screen } from "@/components/ui";
@@ -41,8 +40,8 @@ import type { CardView } from "@/lib/types";
  * here needs a refresh: `Live` hears the tampon land.
  *
  * An owner collects stamps elsewhere too and opens this from their account
- * (`back` then leads home, and the asks that belong to a customer's own home
- * — the install, a word to this phone — stay out of their way).
+ * (`back` then leads home, and the ask that belongs to a customer's own home
+ * — the install — stays out of their way).
  */
 export function Cards({
   me,
@@ -146,9 +145,7 @@ export function Cards({
         </div>
       )}
 
-      {/* a word when the gift is near, asked here because here is where customers are — and
-          never while something waits at a counter: one thing is asked at a time (18 Oct 2026) */}
-      {!back && !cards.some(waits) && cards.some((c) => c.stamps > 0) && !seen.includes("push") && <PushAsk shop={cards.find((c) => c.stamps > 0)!.shop.name} compact />}
+      {/* (the question about a word to this phone, «نفكّروك كي يقرب الكادو؟», is gone — the founder, 23 Oct 2026) */}
 
       {/* the two things a customer ever does, side by side and never moving */}
       <div className="grid shrink-0 grid-cols-2 gap-2 pb-[2dvh] pt-[1.5dvh]">

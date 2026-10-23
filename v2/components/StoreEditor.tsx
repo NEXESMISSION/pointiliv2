@@ -56,8 +56,8 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
       setRows(res.items.map((x) => ({ key: `i${x.id}`, id: x.id, name: x.name, cost: x.cost })));
       setDirty(false);
       setSaved(true);
-      // the shop's first set-up: that was the only thing to choose — home, with its welcome
-      if (first && res.items.length > 0) router.push("/shop?welcome=1");
+      // the shop's first set-up: that was the only thing to choose — the clips, then the code (as after any first card)
+      if (first && res.items.length > 0) router.push("/shop/start");
       else router.refresh();
     });
   const give = (card: string) =>

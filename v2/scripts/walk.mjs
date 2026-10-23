@@ -234,37 +234,19 @@ try {
     await bravo.getByRole("button", { name: "باهي" }).click();
     await bravo.waitFor({ state: "detached", timeout: 10000 });
     console.log("  · the first customer, celebrated on the counter ✓");
+    // right after it, once: the price, so the owner knows Pointili is paid (the founder, 23 Oct 2026)
+    const offer = o.getByRole("dialog", { name: "عام كامل + 3 شهور بلاش" });
+    await offer.waitFor({ timeout: 20000 });
+    await shot(o, "09c-first-offer", 1300);
+    await offer.getByRole("button", { name: "من بعد" }).click();
+    await offer.waitFor({ state: "detached", timeout: 10000 });
+    console.log("  · the price, once, right after the first customer ✓");
   }
-  // the card asks once for a word to this phone: the phone's own question says yes (granted here), the browser's
-  // subscription is stood in for (no push service in a headless browser), and the phone is written down
-  await c.context().grantPermissions(["notifications"], { origin: BASE });
-  await c.context().addInitScript(() => {
-    const fake = { endpoint: "https://push.example/walk/" + Math.random().toString(36).slice(2) + "x".repeat(30), toJSON() { return { endpoint: this.endpoint, keys: { p256dh: "p".repeat(40), auth: "a".repeat(16) } }; } };
-    if (window.PushManager) {
-      PushManager.prototype.subscribe = async () => fake;
-      PushManager.prototype.getSubscription = async () => null;
-    }
-  });
-  // a fresh page load, so the stand-in is in place (a link's own navigation keeps the page)
+  // the card, right after the first tampon: no question about reminders over it any more (the founder, 23 Oct 2026)
   const cardHref = await c.getByRole("link", { name: "شوف الكارط" }).getAttribute("href");
   await c.goto(BASE + cardHref, { waitUntil: "load" });
-  await c.getByRole("button", { name: "إيه، فكّروني" }).waitFor({ timeout: 20000 });
-  await shot(c, "08b-card-ask", 600);
-  await c.getByRole("button", { name: "إيه، فكّروني" }).click();
-  await c.getByRole("button", { name: "إيه، فكّروني" }).waitFor({ state: "detached", timeout: 20000 });
-  {
-    // the answer is written down right after the screen moves on: a few tries
-    let me, phones;
-    for (let i = 0; i < 10; i++) {
-      me = (await admin.from("people").select("id, seen").eq("phone", `+216${customerPhone}`).single()).data;
-      phones = (await admin.from("push_subs").select("endpoint").eq("user_id", me.id)).data;
-      if (phones?.length === 1 && me.seen.includes("push")) break;
-      await c.waitForTimeout(500);
-    }
-    console.log(phones?.length === 1 && me.seen.includes("push") ? "  · the phone written down for the reminders, asked once ✓" : `  ! the phone: ${JSON.stringify(phones)} · seen ${JSON.stringify(me.seen)}`);
-  }
-  await c.reload({ waitUntil: "load" });
-  await never(c, "the phone's question (reload)", c.getByRole("button", { name: "إيه، فكّروني" }));
+  await shot(c, "08b-card", 600);
+  await never(c, "the reminder question", c.getByRole("button", { name: "إيه، فكّروني" }));
 
   // ── the card fills up ──
   const { data: who } = await admin.from("people").select("id").eq("phone", `+216${customerPhone}`).single();
@@ -354,13 +336,10 @@ try {
   }
   await o.goto(BASE + "/shop", { waitUntil: "load" });
   await never(o, "the logo tip (reload)", o.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
-  // one note a visit: after the logo tip, the offer (its 48 hours start with the first customer), then the news
+  // one note a visit: after the logo tip, the news. The offer already showed on the counter, right after the first
+  // customer: once per person, so never again here
   const offer = o.getByRole("dialog", { name: "عام كامل + 3 شهور بلاش" });
-  await offer.waitFor({ timeout: 20000 });
-  await shot(o, "17f-offer", 1300);
-  await o.getByRole("button", { name: "من بعد" }).click();
-  await o.reload({ waitUntil: "load" });
-  await never(o, "the offer (reload)", offer, 1800);
+  await never(o, "the offer again (home)", offer, 1800);
   const news = o.getByRole("dialog", { name: NEWS_TITLE });
   await news.waitFor({ timeout: 20000 });
   await shot(o, "17e-news", 700);

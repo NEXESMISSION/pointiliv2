@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, Clock, Hourglass, Phone, Sparkles, X } from "lucide-react";
+import { Check, ChevronLeft, Clock, Hourglass, MessageCircle, Phone, Sparkles, X } from "lucide-react";
 import { Confetti } from "@/components/StampLand";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
@@ -27,6 +27,11 @@ export type Pay = {
   /** the founder's own shop or a test account: no trial, never stopped */
   exempt?: boolean;
 };
+
+/** The trial is over: the WhatsApp message to the founder, already written, with the account it is about (`from`: «shop» · number). */
+export function trialOverWa(phone: string, from?: string | null): string {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(t.trialOverMsg + (from ? fill(t.waFrom, { who: from }) : ""))}`;
+}
 
 /** Hours, minutes and seconds left until `until`, ticking every second (zeros once it is over). */
 export function useLeft(until: string) {
@@ -95,24 +100,37 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
  * The trial on the owner's home, until the year is turned on: «التجربة: مازال
  * 2 يوم · 05:12:33», ticking, the way to the year — and a call to the founder,
  * who turns it on. Once it is over (or the clock reaches zero on screen) the
- * same line turns red: the counter gives nothing until then.
+ * same line turns red: the counter gives nothing until then, and the call
+ * becomes a WhatsApp message, already written, with the account under it —
+ * the founder turns the year on from a message (23 Oct 2026).
  */
-export function TrialBanner({ pay, phone }: { pay: Pay; phone: string | null }) {
+export function TrialBanner({ pay, phone, from = null }: { pay: Pay; phone: string | null; from?: string | null }) {
   const left = useLeft(pay.trial_until ?? new Date().toISOString());
   // a clock that waits for the first customer: no countdown yet, just that
   const waits = pay.trial_started === false && !pay.shut;
   const over = !waits && (!!pay.shut || left.over);
   const days = Math.floor(left.h / 24);
-  const call = phone ? (
+  const call = !phone ? null : over ? (
+    <a
+      href={trialOverWa(phone, from)}
+      target="_blank"
+      rel="noreferrer"
+      onClick={() => signal("trial_call", "over · whatsapp")}
+      className="press flex shrink-0 items-center gap-1.5 rounded-full bg-[#25D366] px-3.5 text-[0.8125rem] font-bold text-white"
+      aria-label={t.trialOverWa}
+    >
+      <MessageCircle className="size-4" /> {t.helpWhatsapp}
+    </a>
+  ) : (
     <a
       href={`tel:+${phone}`}
-      onClick={() => signal("trial_call", over ? "over" : "running")}
-      className={`press flex shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[0.8125rem] font-bold text-white ${over ? "bg-coral" : "bg-brand"}`}
+      onClick={() => signal("trial_call", "running")}
+      className="press flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-[0.8125rem] font-bold text-white"
       aria-label={t.helpCall}
     >
       <Phone className="size-4" /> {t.helpCall}
     </a>
-  ) : null;
+  );
   return (
     <div className="mt-3 flex shrink-0 items-stretch gap-2">
       <Link href="/shop/pay" className={`press flex min-w-0 flex-1 items-center gap-2 rounded-full py-2 pe-3 ps-3.5 ${over ? "bg-coral-soft text-coral" : "bg-surface shadow-card"}`}>

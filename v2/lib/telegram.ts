@@ -162,9 +162,12 @@ export async function alertGift(moment: number): Promise<void> {
   await tg([`🎁 <b>أوّل كادو تعطى</b>`, shopLine(f), m.gift ? esc(m.gift) : "", "الدورة كاملة خدمت عندو: وقت مزيان باش تعيّطلو."].filter(Boolean).join("\n"), shopButtons(f));
 }
 
-/** The owner tapped «كلّمنا» (on the trial's line): he wants a word now. */
-export async function alertCall(owner: string): Promise<void> {
+/** The owner tapped «كلّمنا» on the trial's line (a call), or — the trial over — its WhatsApp button (a message on its way). */
+export async function alertCall(owner: string, whatsapp = false): Promise<void> {
   const f = await shopFacts({ owner });
   if (!f) return;
-  await tg([`📞 <b>نزل على «كلّمنا»</b>`, shopLine(f), "يستنّى في تليفونك توّا."].join("\n"), shopButtons(f));
+  const lines = whatsapp
+    ? ["💬 <b>التجربة وفات: فتح واتساب باش يبعثلك</b>", shopLine(f), "الميساج يوصلك على واتساب بالكونت متاعو، وتخدّملو الأبونمان كي يخلّص."]
+    : ["📞 <b>نزل على «كلّمنا»</b>", shopLine(f), "يستنّى في تليفونك توّا."];
+  await tg(lines.join("\n"), shopButtons(f));
 }

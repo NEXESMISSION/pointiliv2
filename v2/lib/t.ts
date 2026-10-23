@@ -734,7 +734,10 @@ export const t = {
   trialLeft: "التجربة: مازال",
   trialDays: "{n} يوم",
   trialOverTitle: "التجربة وفات",
-  trialOverBody: "باش تكمّل تعطي التامبونات، كلّمنا ونفعّلولك الأبونمان",
+  trialOverBody: "باش تكمّل تعطي التامبونات، ابعثلنا على واتساب ونفعّلولك الأبونمان",
+  // the trial over: a WhatsApp message, not a call (the founder, 23 Oct 2026); the account's line rides under it (waFrom)
+  trialOverWa: "ابعثلنا على واتساب",
+  trialOverMsg: "سلام، التجربة وفات ونحب نخدّم الأبونمان.",
   payPrice: "120",
   payCurrency: "د",
   payPer: "في العام",

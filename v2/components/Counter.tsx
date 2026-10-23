@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, Phone, RefreshCw, ScanLine, ShieldCheck, WifiOff } from "lucide-react";
+import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, MessageCircle, RefreshCw, ScanLine, ShieldCheck, WifiOff } from "lucide-react";
+import { firstScanOffer } from "@/app/shop/qr/actions";
 import { OpenOutside } from "@/components/InstallApp";
+import { OfferPopup, trialOverWa } from "@/components/Pay";
 import { Confetti } from "@/components/StampLand";
 import { ClipButton } from "@/components/HowClip";
 import { PickItem, type Item } from "@/components/PickItem";
@@ -72,7 +74,7 @@ function tuneIn(): SupabaseClient | null {
  * title's place, above the code — never on it: try it with another phone.
  * Everything fits one screen.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = [], firstWaits = false }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null; items?: Item[]; firstWaits?: boolean }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = null, items = [], firstWaits = false }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null; from?: string | null; items?: Item[]; firstWaits?: boolean }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -113,6 +115,17 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
   // is celebrated over the code, once in the shop's life: «شفت؟ هكّا!»
   const firstRef = useRef(firstWaits);
   const [first, setFirst] = useState<{ name: string | null } | null>(null);
+  // right after it, once: the price — owners did not understand Pointili is paid until the trial stopped
+  // (the founder, 23 Oct 2026). The offer's 48 hours start with that first customer
+  const [offerUntil, setOfferUntil] = useState<string | null>(null);
+  const firstDone = () => {
+    setFirst(null);
+    void firstScanOffer()
+      .then((until) => {
+        if (until && !seenBefore("offer", shop.id)) setOfferUntil(until);
+      })
+      .catch(() => {});
+  };
   // the last tampon given here since the screen opened: it stays under the code once its «+1» is gone
   const [lastScan, setLastScan] = useState<{ name: string | null; at: string } | null>(null);
   const celebrate = useCallback(
@@ -465,14 +478,14 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
             ))}
             <div className="absolute inset-0 rounded-[2.125rem] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
               {paused && shut ? (
-                // the trial is over: the founder turns the year on, a call away
+                // the trial is over: the founder turns the year on, a WhatsApp message away (already written)
                 <div className="grid size-full place-items-center p-[8%] text-center text-ink">
                   <div>
                     <p className="text-[clamp(1.0625rem,5cqw,1.375rem)] font-bold">{t.trialOverTitle}</p>
                     <p className="mt-1.5 text-balance text-[clamp(0.8125rem,3.6cqw,0.9375rem)] leading-snug text-body">{t.trialOverBody}</p>
                     {phone && (
-                      <a href={`tel:+${phone}`} onClick={() => signal("trial_call", "counter")} className="press mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-[0.9375rem] font-bold text-white">
-                        <Phone className="size-4" /> {t.helpCall}
+                      <a href={trialOverWa(phone, from)} target="_blank" rel="noreferrer" onClick={() => signal("trial_call", "counter · whatsapp")} className="press mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-[0.9375rem] font-bold text-white">
+                        <MessageCircle className="size-4" /> {t.trialOverWa}
                       </a>
                     )}
                   </div>
@@ -603,11 +616,12 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, items = 
           <p className="mt-2 max-w-[18rem] animate-rise text-balance text-[1.0625rem] leading-relaxed text-body" style={{ animationDelay: "250ms" }}>
             {fill(t.firstScanBody, { name: first.name ?? t.someone })}
           </p>
-          <button type="button" onClick={() => setFirst(null)} className="press mt-[4dvh] h-[3.25rem] w-full max-w-xs rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
+          <button type="button" onClick={firstDone} className="press mt-[4dvh] h-[3.25rem] w-full max-w-xs rounded-[1.25rem] bg-brand text-[1.0625rem] font-bold text-white">
             {t.firstScanOk}
           </button>
         </div>
       )}
+      {offerUntil && <OfferPopup shopId={shop.id} offerUntil={offerUntil} />}
 
       {/* right after a new card: the bravo, over everything, fading by itself onto the code */}
       {(coach === "bravo" || coach === "leaving") && (

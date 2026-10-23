@@ -6,7 +6,6 @@ import { CardWheel, WheelPeek } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
 import { Live } from "@/components/Live";
 import { MyCode } from "@/components/MyCode";
-import { PushAsk } from "@/components/PushAsk";
 import { Pass } from "@/components/Pass";
 import { Top } from "@/components/Top";
 import { Icon3D, LinkBtn, Screen } from "@/components/ui";
@@ -115,9 +114,6 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           </p>
         )
       )}
-
-      {/* once, on a card with a tampon on it: a word to this phone when the gift is near, or waiting */}
-      {(card.stamps > 0 || ready) && !(me.seen ?? []).includes("push") && <PushAsk shop={card.shop.name} />}
 
       {/* the one thing to do: the gift waiting — show the code at the counter; else, the next tampon */}
       <div className="mt-auto shrink-0 pb-[2dvh] pt-[1.5dvh]">

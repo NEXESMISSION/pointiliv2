@@ -84,8 +84,8 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
       setRows(res.prizes.map((p) => ({ key: `p${p.id}`, id: p.id, name: p.name, chance: p.chance })));
       setDirty(false);
       setSaved(true);
-      // the shop's first set-up: that was the last thing to choose — home, with its welcome
-      if (first) router.push("/shop?welcome=1");
+      // the shop's first set-up: that was the last thing to choose — the clips, then the code (as after any first card)
+      if (first) router.push("/shop/start");
       else router.refresh();
     });
 

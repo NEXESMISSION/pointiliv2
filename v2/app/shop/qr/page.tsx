@@ -22,8 +22,10 @@ export default async function ShopQr({ searchParams }: { searchParams: Promise<{
       items={items}
       welcome={welcome && !(me.seen ?? []).includes("coach") ? ((me.name ?? "").split(" ")[0] ?? "") : null}
       tip={tip === "1"}
-      // past the trial the code's place says so (the code itself is refused), with a call to this number
+      // past the trial the code's place says so (the code itself is refused), with a WhatsApp message to this
+      // number, the account under it (help.from: «shop» · number)
       phone={help.phone}
+      from={help.from}
       firstWaits={firstWaits}
     />
   );

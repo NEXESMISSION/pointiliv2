@@ -128,10 +128,13 @@ export async function POST(request: NextRequest) {
     console.error("[track]", error.message);
     return new NextResponse(null, { status: 400 });
   }
-  // an owner tapped «كلّمنا» on the trial's line: the founder's Telegram rings (not a robot's, not on the local server)
-  if (me?.shop && !visit.is_bot && (body.signals ?? []).some((g) => (g as { name?: unknown })?.name === "trial_call")) {
+  // an owner tapped «كلّمنا» on the trial's line, or its WhatsApp once the trial is over: the founder's Telegram rings
+  // (not a robot's, not on the local server)
+  const tap = (body.signals ?? []).find((g) => (g as { name?: unknown })?.name === "trial_call") as { detail?: unknown } | undefined;
+  if (me?.shop && !visit.is_bot && tap) {
     const owner = me.id;
-    after(() => alertCall(owner));
+    const whatsapp = String(tap.detail ?? "").includes("whatsapp");
+    after(() => alertCall(owner, whatsapp));
   }
   return new NextResponse(null, { status: 204 });
 }

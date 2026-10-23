@@ -12,7 +12,6 @@ import { ShopMark } from "@/components/ShopMark";
 import { PlanOn } from "@/components/PlanOn";
 import { RecentList } from "@/components/RecentList";
 import { ClipButton } from "@/components/HowClip";
-import { ShopWelcome } from "@/components/ShopWelcome";
 import { Icon3D } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import type { News } from "@/lib/news";
@@ -59,7 +58,7 @@ function EmptyWords() {
   );
 }
 
-export default async function ShopHome({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+export default async function ShopHome() {
   const me = await getMe();
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
@@ -71,26 +70,25 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
   // an owner is somebody's customer too: their own cards, asked for beside the rest
   // so it costs nothing. Never a card at their own shop — the counter refuses one —
   // so every card here is at another business (the founder, 18 Oct 2026)
-  const [home, help, news, pay, mine, { welcome }] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), call<CardView[]>("wallet"), searchParams]);
+  const [home, help, news, pay, mine] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), call<CardView[]>("wallet")]);
   const myCards = mine ?? [];
   const seen = me.seen ?? [];
   const paid = !!pay?.paid;
   const offer = !!pay?.offer;
-  // one note a visit, and the brand-new owner's welcome comes before them all:
-  // on their first visit the logo tip and the offer are both unseen too, and
-  // two overlays on one screen is one too many
-  const coachNow = welcome === "1" && !seen.includes("coach");
+  // one note a visit. (The bravo that once greeted a brand-new card here is gone — the founder, 23 Oct 2026:
+  // the card's own steps end on the clips and the code, and that is enough.)
   // before the first customer the home has one job (the code): the logo and the install wait for a customer
   const served = (home?.served ?? 0) > 0;
   // the shop's first gift won and waiting: how to hand it over comes before any other note
-  const firstGift = !coachNow && !seen.includes("first_gift") ? (home?.waiting?.[0] ?? null) : null;
-  const logoTip = !coachNow && !firstGift && served && !seen.includes("logo_tip");
+  const firstGift = !seen.includes("first_gift") ? (home?.waiting?.[0] ?? null) : null;
+  const logoTip = !firstGift && served && !seen.includes("logo_tip");
   // what the founder just gave (a gift, a payment taken by hand, a new end date): said once
-  const grant = !coachNow && !firstGift && !logoTip ? (pay?.grant ?? null) : null;
-  // the offer's popup: once the shop has a customer (it means something then), or on its last day whatever happens
+  const grant = !firstGift && !logoTip ? (pay?.grant ?? null) : null;
+  // the offer's popup: once the shop has a customer (it means something then), or on its last day whatever happens.
+  // Its first chance is on the counter, right after that first customer (the counter shows it, once)
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const offerLastDay = !!pay?.offer_until && Date.parse(pay.offer_until) - Date.now() < 24 * 3600_000;
-  const offerNote = !coachNow && !firstGift && !logoTip && !grant && offer && (served || offerLastDay) && !seen.includes("offer");
+  const offerNote = !firstGift && !logoTip && !grant && offer && (served || offerLastDay) && !seen.includes("offer");
   const first = (me.name ?? "").split(" ")[0];
   // the trial's line only when it matters: its last two days, or once it is over
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
@@ -132,7 +130,7 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
 
       {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-semibold text-coral">{t.pausedBanner}</p>}
       {/* the trial's clock and a call, until the year is turned on (the founder's own and the tests: just the price) */}
-      {!paid && pay && (pay.exempt || !pay.trial_until ? <PayBanner pay={pay} offer={offer} /> : trialLine ? <TrialBanner pay={pay} phone={help.phone} /> : null)}
+      {!paid && pay && (pay.exempt || !pay.trial_until ? <PayBanner pay={pay} offer={offer} /> : trialLine ? <TrialBanner pay={pay} phone={help.phone} from={help.from} /> : null)}
       {/* in Facebook's own browser: the way out to the phone's browser, where Pointili stays */}
       <OpenOutside where="home" look="line" className="mt-1" />
 
@@ -262,12 +260,11 @@ export default async function ShopHome({ searchParams }: { searchParams: Promise
 
       <LogoTip shopId={shop.id} logo={shop.logo ?? null} show={logoTip} />
       {offerNote && pay?.offer_until && <OfferPopup shopId={shop.id} offerUntil={pay.offer_until} />}
-      <ShopWelcome name={first} shopId={shop.id} show={coachNow} />
       {firstGift && <FirstGift shopId={shop.id} name={firstGift.name} gift={firstGift.gift} />}
       {grant && <PlanOn grant={grant} />}
-      <NewsPopup news={coachNow || firstGift || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
+      <NewsPopup news={firstGift || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
       {/* Pointili on the home screen, asked once where Android's Chrome offers it — never over another note */}
-      <InstallPopup where="home" who={shop.id} show={served && !coachNow && !firstGift && !logoTip && !offerNote && !grant && !news && !seen.includes("install")} />
+      <InstallPopup where="home" who={shop.id} show={served && !firstGift && !logoTip && !offerNote && !grant && !news && !seen.includes("install")} />
     </main>
   );
 }
