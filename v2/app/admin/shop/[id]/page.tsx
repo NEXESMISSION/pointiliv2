@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, ChevronDown, Gift, MessageCircle, Moon, Phone, Smartphone, Stamp } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Gift, MessageCircle, Moon, Phone, Smartphone, Stamp, X } from "lucide-react";
 import { Face, ShopNote } from "@/components/AdminBoard";
-import { PILL, standing, type AccessShop } from "@/lib/board";
 import { AdminShopMore } from "@/components/AdminShopMore";
+import { PILL, standing, type AccessShop } from "@/lib/board";
 import { digits, spaced } from "@/lib/phone";
-import { screenName } from "@/lib/screens";
+import { FAILS, screenName } from "@/lib/screens";
 import { call } from "@/lib/supabase";
 import { agoSaid, counted, daysN, hoursN, monthsSaid, stampsN, t } from "@/lib/t";
 
@@ -21,7 +21,14 @@ type Study = {
   owner: { id: string; name: string | null; phone: string | null; created_at: string };
   origin: { at: string; source: string | null; medium: string | null; campaign: string | null; content: string | null; landing: string | null; referrer: string | null; device: string | null; os: string | null; browser: string | null; city: string | null; fbclid: boolean } | null;
   numbers: { customers: number; real: number; stamps: number; week: number; returning: number; given: number; waiting: number; visits: number; days: number; ms: number };
-  days: { day: string; stamps: number; came: boolean }[];
+  days: { day: string; stamps: number; visits: number; ms: number }[];
+  hours: number[];
+  screens: { route: string; screen: string | null; ms: number; n: number }[];
+  counter: { used: number; held: number; back: number; refused: number; why: Record<string, number> };
+  seen_at: string | null;
+  last_at: string | null;
+  /** among all the real shops: how many it does better than, by customers and by tampons */
+  rank: { shops: number; customers: number; stamps: number } | null;
   steps: Record<string, string | null>;
   did: Record<string, { n: number; last: string }>;
   errors: { at: string; detail: string | null }[];
@@ -36,6 +43,7 @@ type Study = {
 const TZ = "Africa/Tunis";
 const when = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: TZ }).format(new Date(iso));
 const dayOf = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(`${iso}T12:00:00`));
+const dateOf = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).format(new Date(iso));
 const hourOf = (iso: string) => Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hourCycle: "h23", timeZone: TZ }).format(new Date(iso)));
 /** «5 دقايق», «زوز سوايع» — a length of time in the app */
 const howLong = (ms: number) => {
@@ -50,10 +58,12 @@ const afterSaid = (ms: number) => {
   const h = Math.round(m / 60);
   return h < 24 ? `بعد ${hoursN(h)}` : `بعد ${daysN(Math.round(h / 24))}`;
 };
+const gapSaid = (min: number) => (min === 0 ? "بلا وقت بين تامبون وتامبون" : min === 1440 ? "تامبون واحد في النهار" : min < 60 ? `كل ${counted(min, "دقيقة", "زوز دقايق", "دقايق", "دقيقة")}` : `كل ${hoursN(Math.round(min / 60))}`);
+const timesN = (n: number) => counted(n, "مرّة", "مرّتين", "مرّات", "مرّة");
+const customersN = (n: number) => counted(n, "حريف واحد", "زوز حرفاء", "حرفاء", "حريف");
 /** where a visit came from, in the founder's words */
 const SOURCES: Record<string, string> = { direct: "مباشرة", facebook: "فيسبوك", fb: "فيسبوك", ig: "إنستغرام", instagram: "إنستغرام", google: "Google", whatsapp: "واتساب", tiktok: "تيك توك" };
 const sourceSaid = (s: string) => SOURCES[s.toLowerCase()] ?? s;
-const gapSaid = (min: number) => (min === 0 ? "بلا وقت بين تامبون وتامبون" : min === 1440 ? "تامبون واحد في النهار" : min < 60 ? `كل ${counted(min, "دقيقة", "زوز دقايق", "دقايق", "دقيقة")}` : `كل ${hoursN(Math.round(min / 60))}`);
 
 /** the steps from the sign-up to paying, in their order */
 const STEPS: [string, string][] = [
@@ -72,13 +82,13 @@ const STEPS: [string, string][] = [
 ];
 /** what the owner did in the app, by the signal that says it */
 const DID: [string, string][] = [
-  ["pwa_installed", "حطّ الأبليكاسيون"],
-  ["pwa_open", "حلّ الأبليكاسيون من التليفون"],
   ["collect", "زاد تامبون بكود الحريف"],
   ["customer_open", "حلّ حريف"],
   ["recent_open", "حلّ آخر الحركات"],
   ["gift_code", "سكاني كود كادو"],
   ["my_code", "حلّ الكود متاعو"],
+  ["pwa_installed", "حطّ الأبليكاسيون"],
+  ["pwa_open", "حلّ الأبليكاسيون من التليفون"],
   ["logo", "حطّ اللوغو"],
   ["tryit", "جرّب الديمو"],
   ["clip", "تفرّج في الفيديوات القصار"],
@@ -92,37 +102,54 @@ const DID: [string, string][] = [
   ["form_error", "غلطات في الفورمات"],
 ];
 
-/** A part of the page: its title, a few words, and what is in it. */
-function Part({ title, hint, children }: { title: string; hint?: ReactNode; children: ReactNode }) {
+/** A part of the page: its title, a few words, what is in it. */
+function Part({ title, hint, className = "", children }: { title: string; hint?: ReactNode; className?: string; children: ReactNode }) {
   return (
-    <section className="rounded-[1.125rem] bg-surface p-4 shadow-card ring-1 ring-line/70">
-      <h2 className="text-[1rem] font-bold text-ink">{title}</h2>
-      {hint && <p className="mt-0.5 text-[0.75rem] text-muted">{hint}</p>}
+    <section className={`rounded-[1.125rem] bg-surface p-4 shadow-card ring-1 ring-line/70 lg:p-5 ${className}`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+        <h2 className="text-[1rem] font-bold text-ink">{title}</h2>
+        {hint && <p className="text-[0.75rem] text-muted">{hint}</p>}
+      </div>
       <div className="mt-3">{children}</div>
     </section>
   );
 }
 
 /** One number with its name, and a word under it. */
-function Tile({ n, label, sub }: { n: ReactNode; label: string; sub?: string | null }) {
+function Kpi({ n, label, sub, tone = "ink" }: { n: ReactNode; label: string; sub?: ReactNode; tone?: "ink" | "mint" | "coral" | "brand" | "faint" }) {
+  const color = { ink: "text-ink", mint: "text-mint", coral: "text-coral", brand: "text-brand", faint: "text-faint" }[tone];
   return (
-    <div className="flex flex-col items-center justify-center rounded-[0.875rem] bg-canvas/70 px-1.5 py-2.5 text-center">
-      <b className="num text-[1.375rem] leading-tight text-ink">{n}</b>
-      <span className="mt-0.5 text-[0.75rem] font-semibold leading-tight text-muted">{label}</span>
-      {sub && <span className="mt-0.5 text-[0.6875rem] font-semibold leading-tight text-brand">{sub}</span>}
+    <div className="rounded-[1rem] bg-surface px-4 py-3 shadow-card ring-1 ring-line/70">
+      <span className="block text-[0.75rem] font-semibold text-muted">{label}</span>
+      <b className={`${typeof n === "number" ? "num " : ""}mt-1 block text-[1.625rem] leading-tight ${color}`}>{n}</b>
+      {sub && <span className="mt-0.5 block truncate text-[0.75rem] text-muted">{sub}</span>}
     </div>
+  );
+}
+
+/** One fact for judging the shop: good (a tick), bad (a cross), or a word of warning. */
+function Fact({ good, warn, label, value }: { good?: boolean; warn?: boolean; label: string; value?: ReactNode }) {
+  const tone = warn ? "bg-[#FFF4D6] text-[#8A6508]" : good ? "bg-mint-soft text-mint" : "bg-coral-soft text-coral";
+  return (
+    <li className="flex items-start gap-2.5 py-2">
+      <span className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full ${tone}`}>{warn ? <AlertTriangle className="size-3" strokeWidth={3} /> : good ? <Check className="size-3" strokeWidth={3} /> : <X className="size-3" strokeWidth={3} />}</span>
+      <span className="min-w-0 flex-1 text-[0.875rem] leading-snug text-ink">{label}</span>
+      {value && <span className="shrink-0 text-[0.8125rem] font-semibold text-muted">{value}</span>}
+    </li>
   );
 }
 
 /**
  * One shop, studied (the founder, 23 Oct 2026: «a detailed page with all the
- * data to study the client in the best way possible, clean and detailed»).
- * Top to bottom: who and where from; the numbers; its last 30 days; the
- * steps from the sign-up to paying, each with its hour; what the owner did in
- * the app and where a form stopped him; his visits, screen by screen; its
- * customers; its card; then what is done to it — the access, the switches,
- * the account — the phones signed in, and the founder's note. One call to the
- * database (admin_study).
+ * data to study the client», then «more useful to understand how to judge,
+ * more visual, more organised — it is used on the PC: see the maximum»).
+ * On a computer, a board of parts side by side: who and where from, what to
+ * judge him by, the numbers, the last 30 days (his customers' tampons above,
+ * his own time in the app below), the steps from the sign-up to paying, the
+ * hours his counter works, the counter's codes, his customers, the screens he
+ * spends his time on, his visits screen by screen, what he did, his card,
+ * what is done to the shop, and the phones signed in. On a phone the same
+ * parts, one under the other. One call to the database (admin_study).
  */
 export default async function StudyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -143,296 +170,467 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
   })();
   const o = st.origin;
   const from = o ? (o.campaign ? `إشهار · ${o.campaign}${o.content ? ` · ${o.content}` : ""}` : o.source && o.source !== "direct" ? sourceSaid(o.source) : o.fbclid ? "فيسبوك" : "دخل مباشرة") : null;
-  const max = Math.max(1, ...st.days.map((x) => x.stamps));
-  const monthStamps = st.days.reduce((a, x) => a + x.stamps, 0);
-  const came = st.days.filter((x) => x.came).length;
   const born = Date.parse(owner.created_at);
   const did = DID.filter(([k]) => st.did[k]);
+  const lastMove = [st.seen_at, st.last_at].filter((x): x is string => !!x).sort().pop() ?? null;
+  const backPct = n.customers ? Math.round((n.returning / n.customers) * 100) : 0;
+  const errors = st.did.form_error?.n ?? 0;
+  // better than how many of the real shops, in hundreds
+  const better = (k: "customers" | "stamps") => (st.rank && st.rank.shops > 1 ? Math.round((st.rank[k] / st.rank.shops) * 100) : null);
+  const betterCustomers = better("customers");
+  const betterStamps = better("stamps");
+
+  // the 30 days: his customers' tampons above the line, his own minutes in the app under it
+  const maxStamps = Math.max(1, ...st.days.map((x) => x.stamps));
+  const maxMs = Math.max(1, ...st.days.map((x) => x.ms));
+  const monthStamps = st.days.reduce((a, x) => a + x.stamps, 0);
+  const monthDays = st.days.filter((x) => x.visits > 0).length;
+  const hourMax = Math.max(1, ...st.hours);
+  const allHours = st.hours.reduce((a, b) => a + b, 0);
+  const dayShare = allHours ? Math.round((st.hours.slice(8, 22).reduce((a, b) => a + b, 0) / allHours) * 100) : 0;
+  const screenMax = Math.max(1, ...st.screens.map((x) => x.ms));
 
   return (
-    <div className="space-y-3">
-      <Link href="/admin" className="inline-flex items-center gap-1 text-[0.875rem] font-semibold text-muted">
+    <div className="space-y-4">
+      <Link href="/admin" className="inline-flex items-center gap-1 text-[0.875rem] font-semibold text-muted hover:text-ink">
         <ArrowRight className="size-4" /> المحلات
       </Link>
 
-      {/* who, where it stands, where the owner came from */}
-      <section className="rounded-[1.125rem] bg-surface p-4 shadow-card ring-1 ring-line/70">
-        <div className="flex items-start gap-3">
-          <Face s={shop} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-2">
-              <h1 className="min-w-0 flex-1 text-[1.25rem] font-bold leading-snug text-ink">
-                <bdi className="block truncate">{shop.name}</bdi>
-              </h1>
-              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${PILL[pill.tone]}`}>{pill.say}</span>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* ── who, where it stands, where the owner came from ── */}
+        <section className="rounded-[1.125rem] bg-surface p-4 shadow-card ring-1 ring-line/70 lg:col-span-8 lg:p-5">
+          <div className="flex items-start gap-3">
+            <Face s={shop} />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h1 className="min-w-0 text-[1.375rem] font-bold leading-snug text-ink">
+                  <bdi>{shop.name}</bdi>
+                </h1>
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[0.8125rem] font-semibold ${PILL[pill.tone]}`}>{pill.say}</span>
+              </div>
+              <p className="mt-0.5 text-[0.9375rem] text-body">
+                <bdi>{owner.name || "بلا اسم"}</bdi> · {t.kinds[shop.kind] ?? shop.kind}
+              </p>
             </div>
-            <p className="mt-0.5 text-[0.875rem] text-body">
-              <bdi>{owner.name || "بلا اسم"}</bdi> · {t.kinds[shop.kind] ?? shop.kind}
-            </p>
+            {phone && (
+              <div className="hidden shrink-0 gap-2 sm:flex">
+                <a href={`tel:+216${phone}`} aria-label={`عيّط ${spaced(phone)}`} className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-brand-soft px-3.5 text-[0.9375rem] font-bold text-brand">
+                  <Phone className="size-4" />
+                  <bdi dir="ltr" className="num">
+                    {spaced(phone)}
+                  </bdi>
+                </a>
+                <a href={`https://wa.me/216${phone}`} target="_blank" rel="noreferrer" className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-[#25D366]/15 px-3.5 text-[0.9375rem] font-bold text-[#128C4B]">
+                  <MessageCircle className="size-4" /> واتساب
+                </a>
+              </div>
+            )}
           </div>
-        </div>
-        <dl className="mt-3 space-y-1.5 text-[0.8438rem]">
-          <div className="flex gap-2">
-            <dt className="w-20 shrink-0 font-semibold text-muted">تحلّ</dt>
-            <dd className="text-ink">
-              {when(shop.created_at)} · {ago(shop.created_at)}
-              {night && (
-                <span className="ms-1.5 inline-flex items-center gap-0.5 text-muted">
-                  <Moon className="size-3.5" /> في الليل
-                </span>
-              )}
-            </dd>
-          </div>
-          {from && (
+          <dl className="mt-4 grid gap-x-6 gap-y-2 text-[0.8438rem] sm:grid-cols-2">
             <div className="flex gap-2">
-              <dt className="w-20 shrink-0 font-semibold text-muted">جا من</dt>
+              <dt className="w-16 shrink-0 font-semibold text-muted">تحلّ</dt>
               <dd className="min-w-0 text-ink">
-                <bdi>{from}</bdi>
+                {when(shop.created_at)} · {ago(shop.created_at)}
+                {night && (
+                  <span className="ms-1.5 inline-flex items-center gap-0.5 text-muted">
+                    <Moon className="size-3.5" /> في الليل
+                  </span>
+                )}
               </dd>
             </div>
-          )}
-          {o && (o.os || o.browser) && (
             <div className="flex gap-2">
-              <dt className="w-20 shrink-0 font-semibold text-muted">تليفونو</dt>
-              <dd className="min-w-0 text-ink">
-                <bdi>{[o.os, o.browser, o.city].filter(Boolean).join(" · ")}</bdi>
-              </dd>
+              <dt className="w-16 shrink-0 font-semibold text-muted">آخر حركة</dt>
+              <dd className="text-ink">{lastMove ? ago(lastMove) : "—"}</dd>
+            </div>
+            {from && (
+              <div className="flex gap-2">
+                <dt className="w-16 shrink-0 font-semibold text-muted">جا من</dt>
+                <dd className="min-w-0 text-ink">
+                  <bdi>{from}</bdi>
+                </dd>
+              </div>
+            )}
+            {o && (o.os || o.browser) && (
+              <div className="flex gap-2">
+                <dt className="w-16 shrink-0 font-semibold text-muted">تليفونو</dt>
+                <dd className="min-w-0 text-ink">
+                  <bdi>{[o.os, o.browser, o.city].filter(Boolean).join(" · ")}</bdi>
+                </dd>
+              </div>
+            )}
+          </dl>
+          {phone && (
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
+              <a href={`tel:+216${phone}`} aria-label={`عيّط ${spaced(phone)}`} className="press flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-brand-soft text-[0.9375rem] font-bold text-brand">
+                <Phone className="size-4" />
+                <bdi dir="ltr" className="num">
+                  {spaced(phone)}
+                </bdi>
+              </a>
+              <a href={`https://wa.me/216${phone}`} target="_blank" rel="noreferrer" className="press flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366]/15 text-[0.9375rem] font-bold text-[#128C4B]">
+                <MessageCircle className="size-4" /> واتساب
+              </a>
             </div>
           )}
-        </dl>
-        {phone && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <a href={`tel:+216${phone}`} aria-label={`عيّط ${spaced(phone)}`} className="press flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-brand-soft text-[0.9375rem] font-bold text-brand">
-              <Phone className="size-4" />
-              <bdi dir="ltr" className="num">
-                {spaced(phone)}
-              </bdi>
-            </a>
-            <a href={`https://wa.me/216${phone}`} target="_blank" rel="noreferrer" className="press flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366]/15 text-[0.9375rem] font-bold text-[#128C4B]">
-              <MessageCircle className="size-4" /> واتساب
-            </a>
-          </div>
-        )}
-        <ShopNote id={shop.id} note={st.note} />
-      </section>
+          <ShopNote id={shop.id} note={st.note} />
+        </section>
 
-      {/* the numbers */}
-      <div className="grid grid-cols-3 gap-2">
-        <Tile n={n.real} label="حرفاء حقيقيين" sub={n.customers > n.real ? `+${n.customers - n.real} تجربة` : null} />
-        <Tile n={n.stamps} label="تامبونات" sub={n.week ? `${n.week} هالجمعة` : null} />
-        <Tile n={n.returning} label="رجعو نهار آخر" />
-        <Tile n={n.given} label="كادوات تعطاو" sub={n.waiting ? `${n.waiting} يستنّاو` : null} />
-        <Tile n={n.days} label="نهارات جا" sub={n.visits ? `${counted(n.visits, "مرّة", "مرّتين", "مرّات", "مرّة")}` : null} />
-        <Tile n={n.ms ? howLong(n.ms) : "—"} label="في الأبليكاسيون" />
-      </div>
-
-      {/* the last 30 days: tampons, and the days the owner came */}
-      <Part title="آخر 30 يوم" hint={`${stampsN(monthStamps)} · جا في ${daysN(came)}`}>
-        <div dir="ltr" role="img" aria-label={`${stampsN(monthStamps)} في 30 يوم`} className="flex h-20 items-end gap-[2px]">
-          {st.days.map((x, i) => (
-            <span key={x.day} title={`${dayOf(x.day)} · ${x.stamps}`} className={`flex-1 rounded-t-[2px] ${x.stamps ? (i === st.days.length - 1 ? "bg-brand" : "bg-brand/45") : "bg-line"}`} style={{ height: x.stamps ? `${Math.max(8, (x.stamps / max) * 100)}%` : "2px" }} />
-          ))}
-        </div>
-        <div dir="ltr" className="mt-1 flex gap-[2px]" aria-hidden>
-          {st.days.map((x) => (
-            <span key={x.day} className="flex flex-1 justify-center">
-              <span className={`size-1.5 rounded-full ${x.came ? "bg-mint" : "bg-transparent"}`} />
-            </span>
-          ))}
-        </div>
-        <p className="mt-1.5 flex items-center justify-between text-[0.6875rem] text-faint">
-          <span>اليوم</span>
-          <span className="inline-flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-mint" /> نهار جا فيه للأبليكاسيون
-          </span>
-          <span>قبل 30 يوم</span>
-        </p>
-      </Part>
-
-      {/* the steps, from the account to paying */}
-      <Part title="الطريق متاعو" hint="كل خطوة وقتاش صارت، بعد قدّاش من التسجيل">
-        <ol className="space-y-0">
-          {STEPS.map(([k, label], i) => {
-            const at = st.steps[k];
-            return (
-              <li key={k} className="relative flex gap-3 pb-3 last:pb-0">
-                {i < STEPS.length - 1 && <span className="absolute start-[0.4375rem] top-4 h-full w-px bg-line" aria-hidden />}
-                <span className={`relative mt-1 size-[0.875rem] shrink-0 rounded-full ${at ? "bg-brand" : "border-2 border-line bg-surface"}`} aria-hidden />
-                <span className="min-w-0 flex-1">
-                  <span className={`block text-[0.875rem] font-semibold ${at ? "text-ink" : "text-faint"}`}>{label}</span>
-                  <span className="block text-[0.75rem] text-muted">{at ? `${when(at)}${k !== "account" ? ` · ${afterSaid(Date.parse(at) - born)}` : ""}` : "مازال"}</span>
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </Part>
-
-      {/* what he did in the app, and where a form stopped him */}
-      <Part title="شنوّة عمل في الأبليكاسيون" hint={did.length ? null : "حتى حاجة مسجّلة"}>
-        {did.length > 0 && (
+        {/* ── what to judge him by: facts, each good or not ── */}
+        <Part title="باش تحكم عليه" hint="الحاجات اللي تقول يخدم بيها بالحق ولا لا" className="lg:col-span-4 lg:row-span-2">
           <ul className="divide-y divide-line/70">
-            {did.map(([k, label]) => (
-              <li key={k} className="flex items-center gap-2 py-2 text-[0.8438rem]">
-                <span className={`min-w-0 flex-1 ${k === "form_error" ? "text-coral" : "text-ink"}`}>{label}</span>
-                <b className="num shrink-0 text-ink">{st.did[k].n}</b>
-                <span className="w-24 shrink-0 text-end text-[0.75rem] text-muted">{ago(st.did[k].last)}</span>
+            {betterCustomers !== null && n.customers > 0 && <Fact good={betterCustomers >= 50} label="بالحرفاء، مقارنة بالمحلات الكل" value={`أحسن من ${betterCustomers}%`} />}
+            {n.real ? (
+              <Fact good label="يخدم بيها مع حرفاء حقيقيين" value={customersN(n.real)} />
+            ) : n.customers ? (
+              <Fact label="كان تجارب في الساعة الأولى، حتى حريف حقيقي" value={customersN(n.customers)} />
+            ) : (
+              <Fact label="حتى حريف مازال" />
+            )}
+            {n.customers > 0 && <Fact good={n.returning > 0} label={n.returning ? "الحرفاء يرجعولو نهار آخر" : "حتى حريف ما رجعلو"} value={n.returning ? `${n.returning} · ${backPct}%` : null} />}
+            <Fact good={n.week > 0} label={n.week ? "خدم بيها هالجمعة" : "حتى تامبون هالجمعة"} value={n.week ? stampsN(n.week) : null} />
+            <Fact good={n.days >= 2} label={n.days >= 2 ? "يرجع للأبليكاسيون" : "ما رجعش للأبليكاسيون من نهار حلّ"} value={n.days >= 2 ? `في ${daysN(n.days)}` : null} />
+            <Fact good={!!st.steps.app} label={st.steps.app ? "حطّ Pointili في التليفون" : "ما حطّش الأبليكاسيون"} />
+            {allHours > 0 && <Fact good={dayShare >= 70} label="التامبونات في وقت الخدمة (8 الصباح – 10 الليل)" value={`${dayShare}%`} />}
+            <Fact good={!!shop.logo} label={shop.logo ? "حطّ اللوغو متاعو" : "بلا لوغو"} />
+            <Fact good={!!st.steps.pay} label={st.steps.pay ? "حلّ صفحة الخلاص" : "ما حلّش صفحة الخلاص"} value={st.steps.pay ? ago(st.steps.pay) : null} />
+            <Fact good={!!st.steps.asked} label={st.steps.asked ? "حاول يكلّمنا باش يخلّص" : "ما حاولش يكلّمنا"} value={st.steps.asked ? ago(st.steps.asked) : null} />
+            {errors > 0 && <Fact warn label="تعثّر في الفورمات" value={timesN(errors)} />}
+            <Fact good={shop.paid} warn={!shop.paid && !shop.shut} label={shop.paid && shop.paid_until ? `خالص حتى ${dateOf(shop.paid_until)}` : shop.shut ? `التجربة وفات ${dateOf(shop.trial_end)}` : shop.started ? `التجربة توفى ${dateOf(shop.trial_end)}` : "التجربة تبدا مع أوّل حريف"} />
+          </ul>
+        </Part>
+
+        {/* ── the numbers ── */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:col-span-8">
+          <Kpi n={n.real} label="حرفاء حقيقيين" sub={[n.customers > n.real ? `+${n.customers - n.real} تجربة` : null, betterCustomers !== null && n.customers ? `أحسن من ${betterCustomers}% من المحلات` : null].filter(Boolean).join(" · ") || "مازال"} tone={n.real ? "ink" : "faint"} />
+          <Kpi n={n.stamps} label="تامبونات" sub={[`${n.week} هالجمعة`, betterStamps !== null && n.stamps ? `أحسن من ${betterStamps}%` : null].filter(Boolean).join(" · ")} tone={n.stamps ? "ink" : "faint"} />
+          <Kpi n={n.returning} label="رجعو نهار آخر" sub={n.customers ? `${backPct}% من الحرفاء` : "—"} tone={n.returning ? "mint" : "faint"} />
+          <Kpi n={n.given} label="كادوات تعطاو" sub={n.waiting ? `${n.waiting} يستنّاو` : "حتى كادو يستنّى"} tone={n.given ? "ink" : "faint"} />
+          <Kpi n={n.days} label="نهارات جا" sub={timesN(n.visits)} tone={n.days >= 2 ? "ink" : "faint"} />
+          <Kpi n={n.ms ? howLong(n.ms) : "—"} label="في الأبليكاسيون" sub={n.visits ? `${howLong(n.ms / n.visits)} المرّة` : "—"} />
+          <Kpi n={st.last_at ? ago(st.last_at) : "—"} label="آخر تامبون" tone={st.last_at ? "ink" : "faint"} />
+          <Kpi n={st.seen_at ? ago(st.seen_at) : "—"} label="آخر مرّة دخل" tone={st.seen_at ? "ink" : "faint"} />
+        </div>
+
+        {/* ── the last 30 days ── */}
+        <Part title="آخر 30 يوم" hint={`${stampsN(monthStamps)} · جا في ${daysN(monthDays)}`} className="lg:col-span-8">
+          <div dir="ltr" className="relative">
+            <div role="img" aria-label={`${stampsN(monthStamps)} في 30 يوم`} className="flex h-32 items-end gap-[3px] border-b border-line">
+              {st.days.map((x, i) => (
+                <span key={x.day} title={`${dayOf(x.day)}: ${stampsN(x.stamps)}`} className={`flex-1 rounded-t-[3px] ${x.stamps ? (i === st.days.length - 1 ? "bg-brand" : "bg-brand/50") : ""}`} style={{ height: x.stamps ? `${Math.max(6, (x.stamps / maxStamps) * 100)}%` : 0 }} />
+              ))}
+            </div>
+            <div aria-hidden className="flex h-14 items-start gap-[3px]">
+              {st.days.map((x) => (
+                <span key={x.day} title={`${dayOf(x.day)}: ${x.ms ? howLong(x.ms) : "ما دخلش"}`} className={`flex-1 rounded-b-[3px] ${x.ms ? "bg-mint/60" : ""}`} style={{ height: x.ms ? `${Math.max(8, (x.ms / maxMs) * 100)}%` : 0 }} />
+              ))}
+            </div>
+            <div aria-hidden className="relative mt-1 h-4 text-[0.625rem] text-faint">
+              {st.days.map((x, i) =>
+                i % 5 === 4 ? (
+                  <span key={x.day} dir="rtl" className="absolute top-0 whitespace-nowrap" style={i === st.days.length - 1 ? { right: 0 } : { left: `${((i + 0.5) / st.days.length) * 100}%`, transform: "translateX(-50%)" }}>
+                    {i === st.days.length - 1 ? "اليوم" : dayOf(x.day)}
+                  </span>
+                ) : null,
+              )}
+            </div>
+          </div>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.75rem] text-muted">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-brand/50" /> فوق: تامبونات الحرفاء
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="size-2.5 rounded-sm bg-mint/60" /> لوطا: الوقت متاعو في الأبليكاسيون
+            </span>
+          </p>
+        </Part>
+
+        {/* ── the steps, from the account to paying ── */}
+        <Part title="الطريق متاعو" hint="كل خطوة، بعد قدّاش من التسجيل" className="lg:col-span-4 lg:row-span-2">
+          <ol>
+            {STEPS.map(([k, label], i) => {
+              const at = st.steps[k];
+              return (
+                <li key={k} className="relative flex gap-3 pb-2.5 last:pb-0">
+                  {i < STEPS.length - 1 && <span className={`absolute start-[0.4375rem] top-4 h-full w-px ${at && st.steps[STEPS[i + 1][0]] ? "bg-brand/40" : "bg-line"}`} aria-hidden />}
+                  <span className={`relative mt-1 size-[0.875rem] shrink-0 rounded-full ${at ? "bg-brand" : "border-2 border-line bg-surface"}`} aria-hidden />
+                  <span className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-2">
+                    <span className={`text-[0.875rem] font-semibold ${at ? "text-ink" : "text-faint"}`}>{label}</span>
+                    <span className="text-[0.75rem] text-muted" title={at ? when(at) : undefined}>
+                      {at ? (k === "account" ? when(at) : afterSaid(Date.parse(at) - born)) : "مازال"}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </Part>
+
+        {/* ── the hours his counter works, and the counter's codes ── */}
+        <div className="grid gap-4 md:grid-cols-2 lg:col-span-8">
+          <Part title="وقتاش يعطي التامبونات" hint={allHours ? "حسب الساعة، الكل" : "حتى تامبون"}>
+            <div dir="ltr" role="img" aria-label="التامبونات حسب الساعة" className="flex h-20 items-end gap-[2px] border-b border-line">
+              {st.hours.map((c, h) => (
+                <span key={h} title={`${h}:00 · ${stampsN(c)}`} className={`flex-1 rounded-t-[2px] ${c ? (h >= 8 && h < 22 ? "bg-brand/55" : "bg-coral/60") : ""}`} style={{ height: c ? `${Math.max(8, (c / hourMax) * 100)}%` : 0 }} />
+              ))}
+            </div>
+            <div dir="ltr" aria-hidden className="num mt-1 flex justify-between text-[0.625rem] text-faint">
+              <span>0h</span>
+              <span>6h</span>
+              <span>12h</span>
+              <span>18h</span>
+              <span>23h</span>
+            </div>
+            <p className="mt-2 text-[0.75rem] text-muted">
+              <span className="me-1 inline-block size-2.5 rounded-sm bg-coral/60 align-middle" /> في الليل (قبل 8 الصباح ولا بعد 10 الليل)
+            </p>
+          </Part>
+          <Part title="الكونتور" hint="الكودات اللي سكانيوهم الحرفاء">
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { n: st.counter.used, label: "تسكانا", tone: "text-ink" },
+                { n: st.counter.held, label: "سكانا بلا كونت", tone: "text-ink" },
+                { n: st.counter.back, label: "عطاه بيدو", tone: "text-ink" },
+                { n: st.counter.refused, label: "ترفض", tone: st.counter.refused ? "text-coral" : "text-ink" },
+              ].map((x) => (
+                <div key={x.label} className="rounded-[0.75rem] bg-canvas/70 px-3 py-2">
+                  <b className={`num block text-[1.25rem] leading-tight ${x.tone}`}>{x.n}</b>
+                  <span className="text-[0.75rem] font-semibold text-muted">{x.label}</span>
+                </div>
+              ))}
+            </div>
+            {Object.keys(st.counter.why).length > 0 && (
+              <p className="mt-2 flex flex-wrap gap-1.5">
+                {Object.entries(st.counter.why).map(([w, c]) => (
+                  <span key={w} className="rounded-full bg-coral-soft px-2 py-0.5 text-[0.75rem] font-semibold text-coral">
+                    {FAILS[w] ?? w} · <span className="num">{c}</span>
+                  </span>
+                ))}
+              </p>
+            )}
+          </Part>
+        </div>
+
+        {/* ── his customers ── */}
+        <Part title="الحرفاء" hint={st.customers.length ? `${customersN(st.customers.length)} · آخر من جا الفوق` : "مازال حتى حريف"} className="lg:col-span-7">
+          {st.customers.length > 0 && (
+            <div data-list className="-mx-1 overflow-x-auto">
+              <table className="w-full min-w-[30rem] text-[0.8125rem]">
+                <thead>
+                  <tr className="border-b border-line text-[0.75rem] text-muted">
+                    <th className="px-1 py-1.5 text-start font-semibold">الحريف</th>
+                    <th className="px-1 py-1.5 text-start font-semibold">التامبونات</th>
+                    <th className="px-1 py-1.5 text-start font-semibold">الكارط</th>
+                    <th className="px-1 py-1.5 text-start font-semibold">جا</th>
+                    <th className="px-1 py-1.5 text-start font-semibold">آخر مرّة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {st.customers.map((c, i) => (
+                    <tr key={i} className="border-b border-line/60 last:border-b-0">
+                      <td className="px-1 py-1.5">
+                        <span className="font-semibold text-ink">
+                          <bdi>{c.name ?? "بلا اسم"}</bdi>
+                        </span>{" "}
+                        <span className="num text-[0.75rem] text-faint" dir="ltr">
+                          ··{c.tail}
+                        </span>
+                        {!c.late && <span className="ms-1.5 rounded-full bg-canvas px-1.5 text-[0.6875rem] font-semibold text-muted ring-1 ring-line">تجربة</span>}
+                      </td>
+                      <td className="num px-1 py-1.5 text-ink">
+                        {c.stamps}
+                        {c.gifts > 0 && (
+                          <span className="ms-1.5 inline-flex items-center gap-0.5 text-coral">
+                            <Gift className="size-3" /> {c.gifts}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-1 py-1.5">
+                        {c.goal ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-14 overflow-hidden rounded-full bg-line">
+                              <span className="block h-full rounded-full bg-brand" style={{ width: `${Math.min(100, (c.on / c.goal) * 100)}%` }} />
+                            </span>
+                            <span className="num text-[0.75rem] text-muted" dir="ltr">
+                              {c.on}/{c.goal}
+                            </span>
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-1 py-1.5 text-body">{daysN(c.days)}</td>
+                      <td className="px-1 py-1.5 text-muted">{c.last ? ago(c.last) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Part>
+
+        {/* ── the screens he spends his time on ── */}
+        <Part title="وين يقعد في الأبليكاسيون" hint={st.screens.length ? "الصفحات حسب الوقت" : "حتى صفحة"} className="lg:col-span-5">
+          <ul className="space-y-1.5">
+            {st.screens.map((x, i) => (
+              <li key={i} className="text-[0.8125rem]">
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="min-w-0 truncate text-ink">
+                    <bdi>{screenName(x.route, x.screen)}</bdi>
+                  </span>
+                  <span className="shrink-0 text-[0.75rem] text-muted">
+                    {howLong(x.ms)} · {timesN(x.n)}
+                  </span>
+                </span>
+                <span className="mt-0.5 block h-1.5 overflow-hidden rounded-full bg-canvas">
+                  <span className="block h-full rounded-full bg-brand/55" style={{ width: `${Math.max(2, (x.ms / screenMax) * 100)}%` }} />
+                </span>
               </li>
             ))}
           </ul>
-        )}
-        {st.errors.length > 0 && (
-          <div className="mt-3 rounded-[0.875rem] bg-coral-soft/60 p-3">
-            <p className="text-[0.8125rem] font-bold text-coral">وين تعثّر</p>
-            <ul className="mt-1.5 space-y-1">
-              {st.errors.map((e, i) => (
-                <li key={i} className="text-[0.75rem] text-body">
-                  <span className="text-muted">{when(e.at)}</span> · <bdi>{e.detail ?? "—"}</bdi>
+        </Part>
+
+        {/* ── his visits, screen by screen ── */}
+        <Part title="كل مرّة دخل" hint={st.visits.length ? `آخر ${st.visits.length} · الصفحات بالترتيب` : "ما دخلش"} className="lg:col-span-12">
+          <div data-list className="-mx-1 overflow-x-auto">
+            <table className="w-full min-w-[44rem] text-[0.8125rem]">
+              <thead>
+                <tr className="border-b border-line text-[0.75rem] text-muted">
+                  <th className="px-1 py-1.5 text-start font-semibold">وقتاش</th>
+                  <th className="px-1 py-1.5 text-start font-semibold">قدّاش</th>
+                  <th className="px-1 py-1.5 text-start font-semibold">منين</th>
+                  <th className="px-1 py-1.5 text-start font-semibold">تامبونات</th>
+                  <th className="px-1 py-1.5 text-start font-semibold">شنوّة حلّ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {st.visits.map((v) => {
+                  // the screens in their order, the same one twice in a row said once
+                  const path = v.screens.filter((x, i, a) => i === 0 || screenName(x.route, x.screen) !== screenName(a[i - 1].route, a[i - 1].screen));
+                  return (
+                    <tr key={v.id} className="border-b border-line/60 align-top last:border-b-0">
+                      <td className="whitespace-nowrap px-1 py-2 font-semibold text-ink">{when(v.at)}</td>
+                      <td className="whitespace-nowrap px-1 py-2 text-body">{howLong(v.ms)}</td>
+                      <td className="whitespace-nowrap px-1 py-2 text-muted">
+                        {v.app ? (
+                          <span className="inline-flex items-center gap-1 text-brand">
+                            <Smartphone className="size-3.5" /> الأبليكاسيون
+                          </span>
+                        ) : v.source ? (
+                          <bdi>{sourceSaid(v.source)}</bdi>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-1 py-2">{v.stamps > 0 ? <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[0.75rem] font-bold text-brand">+{v.stamps}</span> : <span className="text-faint">—</span>}</td>
+                      <td className="px-1 py-2">
+                        <span className="flex flex-wrap gap-1">
+                          {path.slice(0, 9).map((x, i) => (
+                            <span key={i} className="rounded-full bg-canvas px-2 py-0.5 text-[0.75rem] text-body ring-1 ring-line/70" title={x.ms >= 1000 ? howLong(x.ms) : undefined}>
+                              <bdi>{screenName(x.route, x.screen)}</bdi>
+                            </span>
+                          ))}
+                          {path.length > 9 && <span className="px-1 text-[0.75rem] text-faint">+{path.length - 9}</span>}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Part>
+
+        {/* ── what he did in the app, and where a form stopped him ── */}
+        <Part title="شنوّة عمل في الأبليكاسيون" hint={did.length ? null : "حتى حاجة مسجّلة"} className="lg:col-span-4">
+          {did.length > 0 && (
+            <ul className="divide-y divide-line/70">
+              {did.map(([k, label]) => (
+                <li key={k} className="flex items-center gap-2 py-1.5 text-[0.8125rem]">
+                  <span className={`min-w-0 flex-1 ${k === "form_error" ? "text-coral" : "text-ink"}`}>{label}</span>
+                  <b className="num shrink-0 text-ink">{st.did[k].n}</b>
+                  <span className="w-20 shrink-0 text-end text-[0.75rem] text-muted">{ago(st.did[k].last)}</span>
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-      </Part>
-
-      {/* his visits, screen by screen */}
-      <Part title="كل مرّة دخل" hint={st.visits.length ? `آخر ${st.visits.length}` : "ما دخلش"}>
-        <div className="space-y-1.5">
-          {st.visits.map((v) => (
-            <details key={v.id} className="group rounded-[0.75rem] bg-canvas/70">
-              <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-[0.8125rem] [&::-webkit-details-marker]:hidden">
-                <span className="min-w-0 flex-1">
-                  <span className="block font-semibold text-ink">{when(v.at)}</span>
-                  <span className="block text-[0.75rem] text-muted">
-                    {howLong(v.ms)} · {counted(v.screens.length, "صفحة", "زوز صفحات", "صفحات", "صفحة")}
-                    {v.app && (
-                      <>
-                        {" · "}
-                        <Smartphone className="inline size-3.5" /> الأبليكاسيون
-                      </>
-                    )}
-                    {v.source && (
-                      <>
-                        {" · "}
-                        <bdi>{sourceSaid(v.source)}</bdi>
-                      </>
-                    )}
-                  </span>
-                </span>
-                {v.stamps > 0 && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[0.75rem] font-bold text-brand">+{v.stamps} تامبون</span>}
-                <ChevronDown className="size-4 shrink-0 text-muted transition-transform group-open:rotate-180" />
-              </summary>
-              <ol className="space-y-1 px-3 pb-2.5">
-                {v.screens.map((x, i) => (
-                  <li key={i} className="flex gap-2 text-[0.75rem]">
-                    <span className="num w-5 shrink-0 text-faint">{i + 1}</span>
-                    <span className="min-w-0 flex-1 text-body">
-                      <bdi>{screenName(x.route, x.screen)}</bdi>
-                    </span>
-                    <span className="shrink-0 text-muted">{x.ms >= 1000 ? howLong(x.ms) : "—"}</span>
+          )}
+          {st.errors.length > 0 && (
+            <div className="mt-3 rounded-[0.875rem] bg-coral-soft/60 p-3">
+              <p className="text-[0.8125rem] font-bold text-coral">وين تعثّر</p>
+              <ul className="mt-1.5 space-y-1">
+                {st.errors.map((e, i) => (
+                  <li key={i} className="text-[0.75rem] text-body">
+                    <span className="text-muted">{when(e.at)}</span> · <bdi>{e.detail ?? "—"}</bdi>
                   </li>
                 ))}
-              </ol>
-            </details>
-          ))}
-        </div>
-      </Part>
+              </ul>
+            </div>
+          )}
+        </Part>
 
-      {/* its customers */}
-      <Part title="الحرفاء" hint={st.customers.length ? `${counted(st.customers.length, "حريف", "زوز حرفاء", "حرفاء", "حريف")} · آخر من جا الفوق` : "مازال حتى حريف"}>
-        {st.customers.length > 0 && (
-          <ul className="divide-y divide-line/70">
-            {st.customers.map((c, i) => (
-              <li key={i} className="flex items-center gap-2 py-2 text-[0.8125rem]">
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold text-ink">
-                    <bdi>{c.name ?? "بلا اسم"}</bdi>
-                    {/* the number's last two digits: two «Ali» told apart (a physical margin: the span is left to right) */}
-                    <span className="num mr-1.5 text-[0.75rem] font-normal text-faint" dir="ltr">
-                      ··{c.tail}
+        {/* ── his card ── */}
+        <Part title="الكارط" className="lg:col-span-4">
+          {shop.goal ? (
+            <ul className="space-y-1.5 text-[0.8438rem] text-ink">
+              <li className="flex items-center gap-2">
+                <Stamp className="size-4 shrink-0 text-brand" /> {stampsN(shop.goal)} ←
+                <Gift className="size-4 shrink-0 text-coral" /> <bdi>{shop.gift ?? "—"}</bdi>
+              </li>
+              <li className="text-muted">{gapSaid(shop.stamp_gap)}</li>
+              {shop.stamp_logo && <li className="text-muted">اللوغو متاعو على التامبونات</li>}
+              {shop.wheel_on && <li className="text-muted">الروليت خدّامة: الحريف كي يكمّل يدوّر</li>}
+              {shop.store_on && <li className="text-muted">الماغازة خدّامة</li>}
+              {shop.items_on && <li className="text-muted">«شنوّة يبيع» خدّام</li>}
+            </ul>
+          ) : (
+            <p className="text-[0.875rem] text-muted">مازال ما عملش الكارط</p>
+          )}
+          {st.items.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-1.5">
+              {st.items.map((x, i) => (
+                <li key={i} className={`rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold ring-1 ring-line ${x.gone ? "text-faint line-through" : "text-body"}`}>
+                  <bdi>{x.name}</bdi> · <span className="num">{x.n}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Part>
+
+        {/* ── what the founder does to it: the access (and its whole story), the switches, the account ── */}
+        <Part title="الأبونمان والخيارات" hint={st.plan.length ? `${st.plan.length} حركات في الأبونمان` : null} className="lg:col-span-4 lg:row-span-2">
+          <AdminShopMore shop={access} now={now} bare />
+          {st.plan.length > 4 && (
+            <ul className="mt-3 space-y-1 text-[0.75rem] text-muted">
+              {st.plan.slice(4).map((l, i) => (
+                <li key={i}>
+                  {when(l.at)} · {l.kind === "paid" && l.months ? `خدّمنا ${monthsSaid(l.months)}` : l.kind === "trial" ? "زدنا في التجربة" : l.kind === "end" ? "وقّفناه" : "خدّمنا"}
+                  {l.amount ? ` · ${l.amount} ${t.payCurrency}` : ""}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Part>
+
+        {/* ── the phones signed in to the owner's account right now ── */}
+        <Part title="التليفونات اللي داخل منهم" hint={st.devices.length ? null : "حتى واحد توّا"} className="lg:col-span-8">
+          {st.devices.length > 0 && (
+            <ul className="grid gap-x-6 sm:grid-cols-2">
+              {st.devices.map((x, i) => (
+                <li key={i} className="flex items-center gap-2 border-b border-line/60 py-2 text-[0.8125rem]">
+                  <Smartphone className={`size-4 shrink-0 ${x.here ? "text-mint" : "text-muted"}`} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-ink">
+                      <bdi>{[x.os, x.browser, x.city].filter(Boolean).join(" · ") || "—"}</bdi>
+                      {x.app && <span className="ms-1.5 text-[0.75rem] text-brand">الأبليكاسيون</span>}
                     </span>
-                    {!c.late && <span className="ms-1.5 rounded-full bg-canvas px-1.5 text-[0.6875rem] font-semibold text-muted ring-1 ring-line">تجربة</span>}
+                    <span className="block text-[0.75rem] text-muted">داخل {ago(x.since)}</span>
                   </span>
-                  <span className="block text-[0.75rem] text-muted">
-                    {stampsN(c.stamps)} · جا في {daysN(c.days)}
-                    {c.gifts ? ` · ${counted(c.gifts, "كادو", "زوز كادوات", "كادوات", "كادو")}` : ""}
-                  </span>
-                </span>
-                {c.goal && (
-                  <span className="num shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[0.75rem] font-bold text-brand" dir="ltr">
-                    {c.on}/{c.goal}
-                  </span>
-                )}
-                <span className="w-20 shrink-0 text-end text-[0.75rem] text-muted">{c.last ? ago(c.last) : "—"}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Part>
-
-      {/* its card */}
-      <Part title="الكارط">
-        {shop.goal ? (
-          <ul className="space-y-1.5 text-[0.8438rem] text-ink">
-            <li className="flex items-center gap-2">
-              <Stamp className="size-4 shrink-0 text-brand" /> {stampsN(shop.goal)} ←
-              <Gift className="size-4 shrink-0 text-coral" /> <bdi>{shop.gift ?? "—"}</bdi>
-            </li>
-            <li className="text-muted">{gapSaid(shop.stamp_gap)}</li>
-            {shop.stamp_logo && <li className="text-muted">اللوغو متاعو على التامبونات</li>}
-            {shop.wheel_on && <li className="text-muted">الروليت خدّامة: الحريف كي يكمّل يدوّر</li>}
-            {shop.store_on && <li className="text-muted">الماغازة خدّامة</li>}
-            {shop.items_on && <li className="text-muted">«شنوّة يبيع» خدّام</li>}
-          </ul>
-        ) : (
-          <p className="text-[0.875rem] text-muted">مازال ما عملش الكارط</p>
-        )}
-        {st.items.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-1.5">
-            {st.items.map((x, i) => (
-              <li key={i} className={`rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold ring-1 ring-line ${x.gone ? "text-faint line-through" : "text-body"}`}>
-                <bdi>{x.name}</bdi> · <span className="num">{x.n}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Part>
-
-      {/* what the founder does to it: the access (and its whole story), the switches, the account */}
-      <Part title="الأبونمان والخيارات" hint={st.plan.length ? `${st.plan.length} حركات في الأبونمان` : null}>
-        <AdminShopMore shop={access} now={now} bare />
-        {st.plan.length > 4 && (
-          <ul className="mt-3 space-y-1 text-[0.75rem] text-muted">
-            {st.plan.slice(4).map((l, i) => (
-              <li key={i}>
-                {when(l.at)} · {l.kind === "paid" && l.months ? `خدّمنا ${monthsSaid(l.months)}` : l.kind === "trial" ? "زدنا في التجربة" : l.kind === "end" ? "وقّفناه" : "خدّمنا"}
-                {l.amount ? ` · ${l.amount} ${t.payCurrency}` : ""}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Part>
-
-      {/* the phones signed in to the owner's account right now */}
-      <Part title="التليفونات اللي داخل منهم" hint={st.devices.length ? null : "حتى واحد توّا"}>
-        {st.devices.length > 0 && (
-          <ul className="divide-y divide-line/70">
-            {st.devices.map((x, i) => (
-              <li key={i} className="flex items-center gap-2 py-2 text-[0.8125rem]">
-                <Smartphone className={`size-4 shrink-0 ${x.here ? "text-mint" : "text-muted"}`} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-ink">
-                    <bdi>{[x.os, x.browser, x.city].filter(Boolean).join(" · ") || "—"}</bdi>
-                    {x.app && <span className="ms-1.5 text-[0.75rem] text-brand">الأبليكاسيون</span>}
-                  </span>
-                  <span className="block text-[0.75rem] text-muted">داخل {ago(x.since)}</span>
-                </span>
-                <span className={`shrink-0 text-[0.75rem] ${x.here ? "font-semibold text-mint" : "text-muted"}`}>{x.here ? "توّا" : x.last_at ? ago(x.last_at) : "—"}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Part>
+                  <span className={`shrink-0 text-[0.75rem] ${x.here ? "font-semibold text-mint" : "text-muted"}`}>{x.here ? "توّا" : x.last_at ? ago(x.last_at) : "—"}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Part>
+      </div>
     </div>
   );
 }

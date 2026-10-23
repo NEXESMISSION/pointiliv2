@@ -3820,10 +3820,46 @@ begin
         'visits', (select count(*) from ov),
         'days', (select count(distinct (started_at at time zone 'Africa/Tunis')::date) from ov),
         'ms', (select coalesce(sum(active_ms), 0) from vw)),
-      'days', (select jsonb_agg(jsonb_build_object('day', d.day, 'stamps', coalesce(x.n, 0), 'came', y.day is not null) order by d.day)
+      'days', (select jsonb_agg(jsonb_build_object('day', d.day, 'stamps', coalesce(x.n, 0), 'visits', coalesce(y.n, 0), 'ms', coalesce(z.ms, 0)) order by d.day)
                from (select v_today - g as day from generate_series(0, 29) g) d
                left join (select day, count(*) as n from mm where kind = 'stamp' group by day) x on x.day = d.day
-               left join (select distinct (started_at at time zone 'Africa/Tunis')::date as day from ov) y on y.day = d.day),
+               left join (select (started_at at time zone 'Africa/Tunis')::date as day, count(*) as n from ov group by 1) y on y.day = d.day
+               left join (select (entered_at at time zone 'Africa/Tunis')::date as day, sum(active_ms) as ms from vw group by 1) z on z.day = d.day),
+      -- the hours of the day its customers get their tampons (Tunis): a counter at work, or a try at night
+      'hours', (select jsonb_agg(coalesce(x.n, 0) order by h.h) from generate_series(0, 23) h(h)
+                left join (select extract(hour from created_at at time zone 'Africa/Tunis')::int as hh, count(*) as n from mm where kind = 'stamp' group by 1) x on x.hh = h.h),
+      -- the screens the owner spends his time on, the most first
+      'screens', coalesce((select jsonb_agg(jsonb_build_object('route', q.route, 'screen', q.screen, 'ms', q.ms, 'n', q.n) order by q.ms desc)
+                from (select route, screen, sum(active_ms) as ms, count(*) as n from vw group by route, screen order by sum(active_ms) desc limit 10) q), '[]'::jsonb),
+      -- the counter's codes: scanned, held for a phone with no account (and given back by hand), refused and why
+      'counter', (select jsonb_build_object('used', count(*) filter (where k.used_at is not null), 'held', count(*) filter (where k.held_hash is not null),
+                  'back', count(*) filter (where k.back_at is not null), 'refused', count(*) filter (where k.tried_at is not null),
+                  'why', coalesce((select jsonb_object_agg(coalesce(r.tried_why, '?'), r.n) from (select tried_why, count(*) as n from public.codes
+                                   where shop_id = s.id and tried_at is not null group by tried_why) r), '{}'::jsonb))
+                  from public.codes k where k.shop_id = s.id),
+      'seen_at', (select greatest(max(last_at), max(here_at)) from ov),
+      -- the shop among all the real ones: how many it does better than, by customers and by tampons
+      'rank', (with robot as (
+                 select distinct u.id from auth.users u
+                 join public.robots r on r.phone in (u.raw_app_meta_data ->> 'phone', '+' || split_part(u.email, '@', 1))
+               ), per as (
+                 select m.shop_id, count(*) as stamps, count(distinct c.user_id) as customers
+                 from public.moments m join public.cards c on c.id = m.card_id join public.shops s2 on s2.id = m.shop_id
+                 join public.people cp on cp.id = c.user_id
+                 where m.kind = 'stamp' and c.user_id <> s2.owner_id and not (cp.is_admin or cp.is_tester)
+                 group by m.shop_id
+               ), everyone as (
+                 select s2.id, coalesce(per.customers, 0) as customers, coalesce(per.stamps, 0) as stamps
+                 from public.shops s2 join public.people p2 on p2.id = s2.owner_id left join per on per.shop_id = s2.id
+                 where not (p2.is_admin or p2.is_tester) and s2.owner_id not in (select id from robot)
+               ), me as (
+                 select coalesce((select customers from everyone where id = s.id), 0) as customers, coalesce((select stamps from everyone where id = s.id), 0) as stamps
+               )
+               select jsonb_build_object('shops', count(*),
+                 'customers', count(*) filter (where e.customers < me.customers),
+                 'stamps', count(*) filter (where e.stamps < me.stamps))
+               from everyone e, me group by me.customers, me.stamps),
+      'last_at', (select max(created_at) from mm where kind = 'stamp'),
       'steps', jsonb_build_object(
         'account', p.created_at,
         'shop', s.created_at,
