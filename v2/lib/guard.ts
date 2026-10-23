@@ -6,9 +6,9 @@ import { esc, tg } from "@/lib/telegram";
 
 /**
  * The guard at the doors that make or open an account (public.guard): every
- * knock written down with its address and number — «الأمان» in the console
- * reads them — and stopped when the address or the number is blocked, or
- * knocks too often. When the count cannot be kept (the network), the door
+ * knock written down with its address and number (guard_log), and stopped
+ * when the address or the number is blocked, or knocks too often. When the
+ * count cannot be kept (the network), the door
  * stays open: a customer at the counter never waits on the guard. The
  * machine's own addresses (the test scripts, dozens of accounts a run) pass
  * unwritten.
@@ -33,9 +33,7 @@ export async function gate(door: string, phone: string | null, max: number, minu
   // the first stop of an address in an hour: a word to the founder, once
   if (data.endsWith("!")) {
     after(() =>
-      tg(`🛡 <b>تسكّر الباب</b> · ${esc(DOORS[door] ?? door)}\nبرشا محاولات من نفس الأدرسة: <code>${esc(ip)}</code>${phone ? `\nآخر نومرو: ${esc(`+216${phone}`)}` : ""}`, [
-        [{ text: "الأمان", url: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://www.pointili.online").replace(/\/$/, "")}/admin/security` }],
-      ]),
+      tg(`🛡 <b>تسكّر الباب</b> · ${esc(DOORS[door] ?? door)}\nبرشا محاولات من نفس الأدرسة: <code>${esc(ip)}</code>${phone ? `\nآخر نومرو: ${esc(`+216${phone}`)}` : ""}`),
     );
   }
   return data === "ok";

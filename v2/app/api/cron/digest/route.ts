@@ -97,6 +97,6 @@ export async function GET(request: NextRequest) {
 
   // ?preview=1: the text only, nothing sent (to read what the morning will say)
   if (request.nextUrl.searchParams.get("preview") === "1") return NextResponse.json({ ok: true, text });
-  const sent = await tg(text, [[{ text: "🧾 المحلات", url: `${SITE}/admin/shops` }]]);
+  const sent = await tg(text, [[{ text: "🧾 المحلات", url: `${SITE}/admin` }]]);
   return NextResponse.json({ ok: true, sent, born: born.length, stamps: realYesterday.length, calls: endsToday.length + activeWeek.length + nightSilent.length });
 }

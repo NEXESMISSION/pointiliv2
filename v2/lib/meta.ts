@@ -16,7 +16,7 @@ import { shopFacts } from "@/lib/telegram";
  *   his address, his browser, Facebook's _fbp/_fbc cookies). The same event_id
  *   goes to the browser in the `pl-reg` cookie, so Meta counts the pair once.
  * - ShopActivated (custom): the shop's first real customer, an hour or more after
- *   it opened (the first hour is the owner trying it, see /admin/shops).
+ *   it opened (the first hour is the owner trying it, as the console's board counts it).
  * - Purchase: the founder turned the subscription on, with what was paid; the
  *   owner's popup sends the same event_id from the browser (PlanOn).
  *

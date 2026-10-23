@@ -13,7 +13,6 @@ import { call, db, service } from "@/lib/supabase";
 import { gate, note, TRAP, trapped } from "@/lib/guard";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, phoneEmail, validPhone } from "@/lib/phone";
-import { NEWS_ICONS, newsHref } from "@/lib/news";
 import { clarityId, domainCode, pixelId, socialUrl, youtubeId } from "@/lib/settings";
 import { fill, t } from "@/lib/t";
 import type { CardView, FormState, Order, Said, ScanResult } from "@/lib/types";
@@ -614,7 +613,7 @@ export async function adminBookAdd(side: "in" | "out", what: string, amount: num
     p_on: on && /^\d{4}-\d{2}-\d{2}$/.test(on) ? on : null,
     p_kind: kinds.includes(kind) ? kind : "other",
   });
-  revalidatePath("/admin/payments");
+  revalidatePath("/admin/tools");
   return { ok: !!res?.ok };
 }
 
@@ -622,24 +621,15 @@ export async function adminBookAdd(side: "in" | "out", what: string, amount: num
 export async function adminBookDelete(id: number): Promise<boolean> {
   if (!Number.isInteger(id) || id <= 0) return false;
   const res = await call<{ ok: boolean }>("admin_book_delete", { p_id: id });
-  revalidatePath("/admin/payments");
+  revalidatePath("/admin/tools");
   return !!res?.ok;
 }
 
-/** The owner paid by hand: the founder turns the access on (so many months, or until a date), or stops it — with what came in, for the books. */
 /** The owner gives their real number (the founder asked for it): checked, then a call. */
 export async function phoneGive(phone: string): Promise<{ ok: boolean; error?: string }> {
   const res = await call<{ ok: boolean; error?: string }>("phone_give", { p_phone: String(phone ?? "").replace(/\D/g, "").slice(0, 11) });
   // no refresh here: the question stays up to say «وصلنا» until they tap «باهي»; the next page has it gone
   return res ?? { ok: false, error: "network" };
-}
-
-/** The founder asks an owner for their real number, or says the one given is right. */
-export async function adminPhoneAsk(personId: string, on: boolean): Promise<{ ok: boolean }> {
-  if (!UUID.test(personId)) return { ok: false };
-  const res = await call<{ ok: boolean }>("admin_phone_ask", { p_person: personId, p_on: on });
-  revalidatePath("/admin", "layout");
-  return { ok: !!res?.ok };
 }
 
 /** More days of trial for a shop (not a subscription): the owner is told once, plainly. */
@@ -652,6 +642,7 @@ export async function adminTrial(shopId: string, days: number): Promise<{ ok: bo
 
 const p_amount = (a: number | null) => a !== null && Number.isInteger(a) && a > 0;
 
+/** The owner paid by hand: the founder turns the access on (so many months, or until a date), or stops it — with what came in, for the books. */
 export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", months: number | null, until: string | null, note: string | null, show: boolean, method: string | null, amount: number | null = null): Promise<{ ok: boolean; until?: string }> {
   if (!UUID.test(shopId)) return { ok: false };
   const res = await call<{ ok: boolean; paid_until?: string }>("admin_plan", {
@@ -667,26 +658,8 @@ export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", 
   });
   // what was paid, to Facebook: the ads learn which sign-ups became paying shops (lib/meta)
   if (res?.ok && kind !== "end" && p_amount(amount)) after(() => metaPurchase(shopId));
-  revalidatePath(`/admin/shops/${shopId}`);
-  revalidatePath("/admin/payments");
+  revalidatePath("/admin", "layout");
   return { ok: !!res?.ok, until: res?.paid_until };
-}
-
-/** The founder's hand on a shop's card: the same rules as the owner's. */
-export async function adminSaveCard(shopId: string, goal: number, gift: string, gap: number, move: boolean): Promise<boolean> {
-  if (!UUID.test(shopId)) return false;
-  const res = await call<{ ok: boolean }>("admin_save_card", { p_shop: shopId, p_goal: Math.round(goal), p_gift: gift.slice(0, 60), p_gap: Math.round(gap), p_move: move });
-  revalidatePath(`/admin/shops/${shopId}`);
-  return !!res?.ok;
-}
-
-/** The founder renames a shop, or changes its kind. */
-export async function adminShopEdit(shopId: string, name: string, kind: string): Promise<boolean> {
-  if (!UUID.test(shopId)) return false;
-  const res = await call<{ ok: boolean }>("admin_shop_edit", { p_shop: shopId, p_name: name.slice(0, 60), p_kind: kind });
-  revalidatePath(`/admin/shops/${shopId}`);
-  revalidatePath("/admin/shops");
-  return !!res?.ok;
 }
 
 /** The owner saw what the founder gave: said once. */
@@ -699,7 +672,7 @@ export async function adminTester(mode: "fresh" | "new" | "owner"): Promise<"ok"
   if (!(await getMe())?.admin) return "error";
   const { resetTester } = await import("@/lib/tester");
   const res = await resetTester(mode);
-  revalidatePath("/admin/tester");
+  revalidatePath("/admin/tools");
   return res;
 }
 
@@ -729,21 +702,6 @@ export async function giveAll(moment: number): Promise<boolean> {
 }
 
 // ── the founder ────────────────────────────────────────────────────────────
-/** «الأمان»: an address or a number shut out (for some days, or for good: 0), or let in again. */
-export async function adminBlock(value: string, kind: "ip" | "phone", reason: string, days: number): Promise<boolean> {
-  const v = kind === "phone" ? (digits(value).length === 8 ? `+216${digits(value)}` : value.trim()) : value.trim();
-  if (!v || v.length > 64) return false;
-  const res = await call<boolean>("admin_block", { p_value: v, p_kind: kind, p_reason: reason.slice(0, 120), p_days: Math.max(0, Math.min(3650, Math.round(days))) });
-  revalidatePath("/admin/security");
-  return !!res;
-}
-
-export async function adminUnblock(value: string): Promise<boolean> {
-  const res = await call<boolean>("admin_unblock", { p_value: String(value).slice(0, 64) });
-  revalidatePath("/admin/security");
-  return !!res;
-}
-
 export async function adminPause(id: string, paused: boolean): Promise<boolean> {
   const res = await call<{ ok: boolean }>("admin_set_paused", { p_id: id, p_paused: paused });
   revalidatePath("/admin", "layout");
@@ -763,69 +721,6 @@ export async function adminSweepRobots(): Promise<number | null> {
   const res = await call<{ ok: boolean; removed?: number }>("admin_sweep_robots");
   revalidatePath("/admin", "layout");
   return res?.ok ? (res.removed ?? 0) : null;
-}
-
-export async function adminDelete(id: string) {
-  const { data: shop } = UUID.test(id) ? await service().from("shops").select("owner_id").eq("id", id).maybeSingle() : { data: null };
-  const res = await call<{ ok: boolean }>("admin_delete_shop", { p_id: id });
-  revalidatePath("/admin", "layout");
-  if (res?.ok) {
-    if (shop) await dropLogos(shop.owner_id as string);
-    redirect("/admin");
-  }
-}
-
-/** An owner's logos go with the shop (or the account): the whole folder in the box. */
-async function dropLogos(owner: string) {
-  const box = service().storage.from("logos");
-  const { data } = await box.list(owner, { limit: 100 });
-  if (data?.length) await box.remove(data.map((f) => `${owner}/${f.name}`));
-}
-
-/**
- * A piece of news for the owners, published at once: a title, a few words, a
- * picture, and maybe a button that leads to one of the owner's places (or to
- * a web address). It goes to every shop opened before now, once each.
- */
-export async function adminNewsSave(_: FormState, fd: FormData): Promise<FormState> {
-  if (!(await getMe())?.admin) return { error: t.errNetwork };
-  const title = str(fd, "title");
-  const body = str(fd, "body").replace(/\r\n/g, "\n");
-  const icon = (NEWS_ICONS as readonly string[]).includes(str(fd, "icon")) ? str(fd, "icon") : "sparkles";
-  const target = str(fd, "cta_target");
-  const href = newsHref(target === "link" ? str(fd, "cta_link") : target);
-  const label = str(fd, "cta_label");
-  if (title.length < 2 || title.length > 80) return { error: t.aNewsErrTitle, field: "title" };
-  if (body.length > 400) return { error: t.aNewsErrBody, field: "body" };
-  if (href === null) return { error: t.aNewsErrLink, field: "cta_link" };
-  if (href && (label.length < 2 || label.length > 30)) return { error: t.aNewsErrLabel, field: "cta_label" };
-  const res = await call<{ ok: boolean; id?: string }>("admin_news_save", {
-    p_title: title,
-    p_body: body,
-    p_icon: icon,
-    p_cta_label: href ? label : null,
-    p_cta_href: href || null,
-    p_only: null,
-  });
-  if (!res?.ok || !res.id) return { error: t.errNetwork };
-  revalidatePath("/admin/news");
-  redirect(`/admin/news?id=${res.id}`);
-}
-
-/** Stop a piece of news (nobody new sees it), or let it go on. */
-export async function adminNewsActive(id: string, active: boolean): Promise<boolean> {
-  if (!UUID.test(id)) return false;
-  const res = await call<{ ok: boolean }>("admin_news_set_active", { p_id: id, p_active: active });
-  revalidatePath("/admin/news");
-  return !!res?.ok;
-}
-
-/** Delete a piece of news, and who saw it with it. */
-export async function adminNewsDelete(id: string) {
-  if (!UUID.test(id)) return;
-  const res = await call<{ ok: boolean }>("admin_news_delete", { p_id: id });
-  revalidatePath("/admin/news");
-  if (res?.ok) redirect("/admin/news");
 }
 
 /** The founder's settings: the number owners call, the two videos (YouTube links checked here). */
@@ -879,19 +774,6 @@ export async function adminResetPassword(id: string): Promise<{ ok: boolean; pas
   }
   await sv.rpc("end_sessions", { p_user: id });
   return { ok: true, password };
-}
-
-/** An account goes, with its cards — and its shop, if it has one. */
-export async function adminDeletePerson(id: string) {
-  if (!(await changeable(id))) return;
-  const { error } = await service().auth.admin.deleteUser(id);
-  if (error) {
-    console.error("[delete person]", error.message);
-    return;
-  }
-  await dropLogos(id);
-  revalidatePath("/admin", "layout");
-  redirect("/admin?tab=people");
 }
 
 /** (the owner) one customer's card: every tampon and gift on it, newest first, with what each tampon was for. */

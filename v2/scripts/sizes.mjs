@@ -468,24 +468,29 @@ const SCREENS = [
   { name: "setup", as: "noShop", path: "/shop/setup" },
 
   { name: "console", as: "boss", path: "/admin", read: true },
-  { name: "console-shops", as: "boss", path: "/admin/shops", read: true },
-  { name: "console-shop", as: "boss", path: () => `/admin/shops/${shop.id}`, read: true },
+  // this run's shop opened on the board, by the link a Telegram alert carries (never the first line: the admin sees the real shops too)
+  { name: "console-shop", as: "boss", path: () => `/admin?shop=${shop.id}`, read: true, act: async (p) => void (await p.locator(`article[data-shop='${shop.id}'] dl`).waitFor({ timeout: 15000 })) },
   {
     name: "console-shop-plan",
     as: "boss",
-    path: () => `/admin/shops/${shop.id}`,
+    path: () => `/admin?shop=${shop.id}`,
     read: true,
     act: async (p) => {
-      await press(p, "فعّل الأبونمان");
+      await p.locator(`article[data-shop='${shop.id}'] dl`).waitFor({ timeout: 15000 });
+      await press(p, "خدّم الأبونمان");
       await p.getByText("كيفاش خلّص؟").scrollIntoViewIfNeeded();
     },
   },
-  { name: "console-people", as: "boss", path: "/admin/people", read: true },
-  { name: "console-traffic", as: "boss", path: "/admin/traffic", read: true },
-  { name: "console-news", as: "boss", path: "/admin/news", read: true },
-  { name: "console-payments", as: "boss", path: "/admin/payments", read: true },
-  { name: "console-settings", as: "boss", path: "/admin/settings", read: true },
-  { name: "console-security", as: "boss", path: "/admin/security", read: true },
+  { name: "console-tools", as: "boss", path: "/admin/tools", read: true },
+  {
+    name: "console-tools-open",
+    as: "boss",
+    path: "/admin/tools",
+    read: true,
+    act: async (p) => {
+      for (const part of ["الفلوس", "الإعدادات"]) await p.getByText(part, { exact: true }).click();
+    },
+  },
 ].filter((s) => !ONLY || ONLY.some((w) => s.name.startsWith(w)));
 function SCREENS_AS() {
   return SCREENS.map((s) => s.as).filter(Boolean);
@@ -507,6 +512,8 @@ function measure([read, tiny, bars]) {
   const shown = (el) => {
     const s = getComputedStyle(el);
     if (s.visibility === "hidden" || s.display === "none") return false;
+    // inside a closed <details> (the console's tools): laid out somewhere, never drawn
+    if (el.checkVisibility && !el.checkVisibility()) return false;
     const r = el.getBoundingClientRect();
     return r.width > 1 && r.height > 1;
   };
@@ -566,6 +573,9 @@ function measure([read, tiny, bars]) {
     if (x < 0 || y < 0 || x > W || y > H) continue;
     const top = document.elementFromPoint(x, y);
     if (!top || el.contains(top) || top.contains(el) || el.closest("label")?.contains(top) || top.closest("nextjs-portal, [data-deco]")) continue;
+    // a reading page scrolled down: what went under its sticky top bar is scrolled by, not covered
+    const bar = top.closest("header");
+    if (read && bar && getComputedStyle(bar).position === "sticky") continue;
     out.push({ kind: "covered", el: desc(el), box: desc(top) });
   }
   // one line per kind and element

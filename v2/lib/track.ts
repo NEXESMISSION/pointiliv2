@@ -93,13 +93,9 @@ function ping(beacon: boolean) {
   }
 }
 
-/** /s/AbC…, /c/<uuid> and the founder's pages → one name per kind of page. */
+/** /s/AbC… and /c/<uuid> → one name per kind of page. */
 export function routeOf(path: string): string {
-  return path
-    .replace(/^\/s\/[^/]+$/, "/s/[token]")
-    .replace(/^\/c\/[0-9a-f-]{36}$/i, "/c/[id]")
-    .replace(/^\/admin\/shops\/[0-9a-f-]{36}$/i, "/admin/shops/[id]")
-    .replace(/^\/admin\/people\/[0-9a-f-]{36}$/i, "/admin/people/[id]");
+  return path.replace(/^\/s\/[^/]+$/, "/s/[token]").replace(/^\/c\/[0-9a-f-]{36}$/i, "/c/[id]");
 }
 const quiet = (path: string) => path.startsWith("/admin");
 

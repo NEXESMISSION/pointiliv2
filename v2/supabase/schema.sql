@@ -61,7 +61,7 @@ alter table public.people add column if not exists password_set boolean not null
 -- writes its number here BEFORE it makes the account, so the console never
 -- shows one among the real shops — not even while a run is going. The script
 -- takes the line away with the account; a line still here with its account is
--- a leftover (a run cut off), swept from the console's «التجربة» page.
+-- a leftover (a run cut off), swept from the console's tools page («حساب التجربة»).
 create table if not exists public.robots (
   phone    text primary key check (phone ~ '^\+216[0-9]{8}$'),
   made_at  timestamptz not null default now()
@@ -1379,7 +1379,7 @@ end $$;
 -- three kinds of account, for the founder's eyes:
 --   · real: an owner or a customer out there;
 --   · test: the founder's own (an admin) and the ones marked as a test
---     (is_tester) — shown apart, under «التجربة», out of every number;
+--     (is_tester) — kept off the console's board, out of every number;
 --   · robot: made by a script (its number is on the robots list) — never
 --     shown to a real founder at all.
 -- (known by the login itself — its number is in the login's address — because a
@@ -3642,6 +3642,96 @@ begin
   return found;
 end $$;
 
+-- ═══ the founder's board (23 Oct 2026): every shop on one page, light and fast ═══
+-- The founder: «so much data, browsing so slow… one page: the new clients, their
+-- activity, and a CRM for me, super simple». One row per real shop, newest first —
+-- who, how far, how alive, and the founder's own line about it (crm.note) — in one
+-- pass over the tables (grouped, never a query per shop). The rest of a shop opens
+-- on demand (admin_board_shop).
+create or replace function public.admin_board() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v_all boolean;
+begin
+  perform public.require_admin();
+  v_all := public.sees_robots();
+  return coalesce((
+    with robot as (
+      select distinct u.id from auth.users u
+      join public.robots r on r.phone in (u.raw_app_meta_data ->> 'phone', '+' || split_part(u.email, '@', 1))
+    ), rs as (
+      select s.id, s.owner_id, s.created_at from public.shops s join public.people p on p.id = s.owner_id
+      where v_all or (s.owner_id not in (select id from robot) and not (p.is_admin or p.is_tester))
+    ), st as (
+      select m.shop_id, count(*) as stamps,
+             count(*) filter (where m.created_at >= public.tunis_today()) as today,
+             -- the last 7 days, the first hour after the opening left out (the owner trying it)
+             count(*) filter (where m.created_at > now() - interval '7 days' and m.created_at > rs.created_at + interval '1 hour') as week,
+             count(distinct c.user_id) as customers, max(m.created_at) as last_at,
+             -- a customer who got a tampon more than an hour after the shop opened: the shop in use, not the owner's try
+             count(distinct c.user_id) filter (where m.created_at > rs.created_at + interval '1 hour') as real
+      from public.moments m
+      join rs on rs.id = m.shop_id
+      join public.cards c on c.id = m.card_id
+      join public.people cp on cp.id = c.user_id
+      where m.kind = 'stamp' and c.user_id <> rs.owner_id and not (cp.is_admin or cp.is_tester)
+        and (v_all or c.user_id not in (select id from robot))
+      group by m.shop_id
+    ), ov as (
+      select v.user_id, greatest(max(v.last_at), max(v.here_at)) as seen_at,
+             count(distinct (v.started_at at time zone 'Africa/Tunis')::date) as days,
+             bool_or(v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds') as online
+      from public.visits v where v.user_id in (select owner_id from rs) group by v.user_id
+    )
+    select jsonb_agg(jsonb_build_object(
+      'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'card', s.goal is not null,
+      'created_at', s.created_at, 'paused', s.paused,
+      'owner', jsonb_build_object('name', nullif(p.name, ''), 'phone', p.phone),
+      'paid_until', s.paid_until, 'paid', s.paid_until is not null and s.paid_until > now(),
+      'trial_end', public.trial_end(s), 'started', public.trial_started(s), 'shut', public.shut(s),
+      'stamps', coalesce(st.stamps, 0), 'today', coalesce(st.today, 0), 'week', coalesce(st.week, 0),
+      'customers', coalesce(st.customers, 0), 'real', coalesce(st.real, 0), 'last_at', st.last_at,
+      'seen_at', ov.seen_at, 'days', coalesce(ov.days, 0), 'online', coalesce(ov.online, false),
+      'note', coalesce(cn.note, '')) order by s.created_at desc)
+    from public.shops s
+    join rs on rs.id = s.id
+    join public.people p on p.id = s.owner_id
+    left join st on st.shop_id = s.id
+    left join ov on ov.user_id = s.owner_id
+    left join public.crm cn on cn.shop_id = s.id
+  ), '[]'::jsonb);
+end $$;
+
+-- one shop of the board, opened: its switches, what happened lately, the money, and
+-- the signs of interest (the pay page opened, a WhatsApp tapped)
+create or replace function public.admin_board_shop(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_id;
+  if s.id is null then return null; end if;
+  return jsonb_build_object(
+    'id', s.id, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused,
+    'wheel_allowed', s.wheel_allowed, 'wheel_on', s.wheel_on, 'store_on', s.store_on, 'items_on', s.items_on,
+    'owner_id', s.owner_id,
+    'returning', (select count(*) from (
+        select c.user_id from public.moments m join public.cards c on c.id = m.card_id
+        where m.shop_id = s.id and m.kind = 'stamp' and c.user_id <> s.owner_id
+        group by c.user_id having count(distinct (m.created_at at time zone 'Africa/Tunis')::date) >= 2) z),
+    'gifts', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'gift' and m.given_at is not null),
+    'recent', coalesce((select jsonb_agg(jsonb_build_object('kind', x.kind, 'at', x.at, 'given', x.given, 'who', x.who) order by x.at desc) from (
+        select m.kind, coalesce(m.given_at, m.created_at) as at, m.given_at is not null as given,
+               nullif(split_part(coalesce(cp.name, ''), ' ', 1), '') as who
+        from public.moments m join public.cards c on c.id = m.card_id left join public.people cp on cp.id = c.user_id
+        where m.shop_id = s.id order by m.created_at desc limit 6) x), '[]'::jsonb),
+    'pay_seen', (select max(w.entered_at) from public.views w join public.visits v on v.id = w.visit_id
+                 where v.user_id = s.owner_id and w.route = '/shop/pay'),
+    'wa_at', (select max(g.at) from public.signals g join public.visits v on v.id = g.visit_id
+              where v.user_id = s.owner_id and g.name in ('pay', 'trial_call')),
+    'plan', coalesce((select jsonb_agg(jsonb_build_object('kind', l.kind, 'months', l.months, 'until', l.until_at, 'amount', l.amount, 'at', l.created_at) order by l.created_at desc)
+                      from (select * from public.plan_log where shop_id = s.id order by created_at desc limit 4) l), '[]'::jsonb));
+end $$;
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 -- ═══ once: the owners from before the notes were kept here ═════════════════
@@ -3666,7 +3756,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.form_open(text), public.form_fill(text, jsonb), public.my_wheel(), public.wheel_save(jsonb), public.spin(bigint), public.spin_at_counter(bigint), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
   public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
-  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid),
+  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(), public.admin_board_shop(uuid),
   public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),

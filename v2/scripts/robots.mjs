@@ -5,8 +5,8 @@
  * founder's console never shows it among the real shops and accounts — not
  * even while the run is going (see `is_robot` in supabase/schema.sql). When
  * the script deletes its accounts, `unrobot` takes the lines away. A line left
- * with its account (a run cut off) is a leftover: the console's «التجربة» page
- * counts them and sweeps them.
+ * with its account (a run cut off) is a leftover: the console's tools page
+ * («حساب التجربة») counts them and sweeps them.
  *
  *   const digits = await robot(admin, phoneNo());   // then make the account
  *   …

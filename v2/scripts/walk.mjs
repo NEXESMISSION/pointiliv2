@@ -431,75 +431,44 @@ try {
   await a.locator('input[name="phone"]').fill(bossPhone);
   await a.locator('input[name="password"]').fill("boss-walk-123");
   await Promise.all([a.waitForURL("**/admin**", { timeout: 60000 }), a.locator('button[type="submit"]').click()]);
+  // the board: this walk's shop, found by its id (never the first line: the walk's admin sees the real shops too)
+  const { data: walkOwner } = await admin.from("people").select("id").eq("phone", `+216${ownerPhone}`).single();
+  const { data: walkShop } = await admin.from("shops").select("id").eq("owner_id", walkOwner.id).single();
+  const walkLine = a.locator(`article[data-shop='${walkShop.id}']`);
+  await a.getByRole("searchbox", { name: "لوّج" }).fill(ownerPhone);
+  await walkLine.waitFor({ timeout: 60000 });
   await shot(a, "20-admin");
-  // the traffic (the walks are robots: shown with «مع زياراتي»), and the settings
-  for (const [tab, name] of [["overview", "25-traffic"], ["pages", "25b-traffic-pages"], ["sources", "25c-traffic-sources"], ["visits", "25d-traffic-visits"]]) {
-    await a.goto(`${BASE}/admin/traffic?all=1&tab=${tab}`, { waitUntil: "load" });
-    await shot(a, name, 400);
-  }
-  const firstVisit = a.locator('a[href*="tab=visits"][href*="v="]').first();
-  if (await firstVisit.count()) {
-    await firstVisit.click();
-    await a.waitForURL("**v=**");
-    await shot(a, "25e-traffic-visit", 400);
-  }
-  await a.goto(`${BASE}/admin/traffic?all=1&tab=heat&h=${encodeURIComponent("/:welcome")}`, { waitUntil: "load" });
-  await shot(a, "25f-traffic-heat", 800);
-  await a.goto(`${BASE}/admin/settings`, { waitUntil: "load" });
-  await shot(a, "26-settings", 300);
-  await a.goto(`${BASE}/admin/news`, { waitUntil: "load" });
-  await shot(a, "27-news", 300);
-  if (newsId) {
-    await a.goto(`${BASE}/admin/news?id=${newsId}`, { waitUntil: "load" });
-    await shot(a, "27b-news-piece", 400);
-  }
-  await a.goto(`${BASE}/admin/news?new=1`, { waitUntil: "load" });
-  await a.locator('input[name="title"]').fill("توّا تنجم تحط اللوغو متاعك");
-  await a.locator('textarea[name="body"]').fill("يبان على كارط كل حريف، وتبدّلو وقتلّي تحب.");
-  await a.getByRole("button", { name: "المحل (الإسم واللوغو)" }).click();
-  await a.locator('input[name="cta_label"]').fill("جرّبها توّا");
-  await shot(a, "27c-news-new", 400);
-  // the books: an expense and a line of income written by hand, each in its list, then taken back (a script's lines: never in the founder's own books)
-  await a.goto(`${BASE}/admin/payments`, { waitUntil: "load" });
-  await a.getByPlaceholder("مثلا: سبونسور فيسبوك").fill("سبونسور تجربة الوولك");
-  await a.getByRole("textbox", { name: "قدّاش؟ (د)" }).fill("47,35");
-  await a.getByRole("radio", { name: "إشهار" }).click();
+  // its line opened: the card, its customers, what happened lately, the access
+  await walkLine.locator("button[aria-expanded]").click();
+  await walkLine.locator("dl").waitFor({ timeout: 20000 });
+  await shot(a, "21-admin-shop");
+  // the tools: a new password for this walk's customer, found by the number (only that one account)
+  await a.goto(`${BASE}/admin/tools`, { waitUntil: "load" });
+  await shot(a, "22-admin-tools");
+  await a.getByRole("textbox", { name: "اسم ولا نومرو" }).fill(customerPhone);
+  await a.getByRole("button", { name: "لوّج" }).click();
+  const give = a.getByRole("button", { name: "كلمة سر", exact: true });
+  await give.first().waitFor({ timeout: 20000 });
+  if ((await give.count()) !== 1) throw new Error("the customer's number found more than one account");
+  await give.click();
+  await a.getByText("كلمة السر الجديدة").waitFor({ timeout: 20000 });
+  await shot(a, "24-admin-new-password", 600);
+  await a.getByRole("button", { name: "سكّر" }).click();
+  // the books: a line written by hand, in the list, then taken back (a script's line: never in the founder's own books)
+  await a.getByText("الفلوس", { exact: true }).click();
+  await a.getByRole("button", { name: "اكتب خط في الحسابات" }).click();
+  await a.getByRole("textbox", { name: "على شنوّة" }).fill(BOOK_LINES[0]);
+  await a.getByRole("textbox", { name: "قدّاش" }).fill("47,35");
   await a.getByRole("button", { name: "سجّل", exact: true }).click();
-  const spentLine = a.getByRole("row", { name: /سبونسور تجربة الوولك/ }).first();
+  const spentLine = a.locator("li", { hasText: BOOK_LINES[0] });
   await spentLine.waitFor({ timeout: 20000 });
   const spentSays = (await spentLine.textContent()).replace(/\s+/g, " ");
   console.log(spentSays.includes("47,35") && spentSays.includes("إشهار") ? "  · an expense written: its line is in the books ✓" : `  ! the expense's line says: ${spentSays}`);
-  await a.getByRole("radio", { name: "دخل", exact: true }).click();
-  await a.getByPlaceholder("مثلا: خدمة لمحل").fill("خدمة طباعة لمحل");
-  await a.getByRole("textbox", { name: "قدّاش؟ (د)" }).fill("50");
-  await a.getByRole("radio", { name: "خدمة" }).click();
-  await a.getByRole("button", { name: "سجّل", exact: true }).click();
-  const earnedLine = a.getByRole("row", { name: /خدمة طباعة لمحل/ }).first();
-  await earnedLine.waitFor({ timeout: 20000 });
   await shot(a, "28-books", 400);
-  const earnedSays = (await earnedLine.textContent()).replace(/\s+/g, " ");
-  console.log(earnedSays.includes("50") && earnedSays.includes("خدمة") ? "  · a line of income written: in the book with the subscriptions ✓" : `  ! the income's line says: ${earnedSays}`);
-  for (const row of [spentLine, earnedLine]) {
-    await row.getByRole("button", { name: "افسخ السطر هذا" }).click();
-    await row.getByRole("button", { name: "افسخ", exact: true }).click();
-    await row.waitFor({ state: "detached", timeout: 20000 });
-  }
-  console.log("  · …and both taken back ✓");
-  await a.goto(`${BASE}/admin/shops`, { waitUntil: "load" });
-  await shot(a, "21-admin-shops");
-  await a.locator('a[href^="/admin/shops/"]').first().click();
-  await a.waitForURL("**/admin/shops/**");
-  await shot(a, "21b-admin-shop");
-  await a.goto(BASE + "/admin/people", { waitUntil: "load" });
-  await shot(a, "22-admin-people");
-  // a customer, not an admin: only they have the password and delete tools
-  await a.goto(BASE + "/admin/people?q=" + encodeURIComponent("سامي"), { waitUntil: "load" });
-  await a.locator('a[href^="/admin/people/"]').first().click();
-  await a.waitForURL("**/admin/people/**");
-  await shot(a, "23-admin-person");
-  await a.getByRole("button", { name: /كلمة سر جديدة/ }).click();
-  await a.getByText("كلمة السر الجديدة").waitFor({ timeout: 20000 });
-  await shot(a, "24-admin-new-password", 600);
+  await spentLine.getByRole("button", { name: "امسح الخط" }).click();
+  await spentLine.getByRole("button", { name: "امسح", exact: true }).click();
+  await spentLine.waitFor({ state: "detached", timeout: 20000 });
+  console.log("  · …and taken back ✓");
   await admin.auth.admin.deleteUser(bossUser.user.id);
   const l = await (await browser.newContext(phone)).newPage();
   await l.goto(BASE + "/login", { waitUntil: "load" });
