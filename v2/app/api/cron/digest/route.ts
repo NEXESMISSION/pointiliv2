@@ -27,6 +27,11 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const today = tunisDay(now);
   const yesterday = tunisDay(new Date(now.getTime() - DAY));
+  // the house kept: the local test server's tracking older than two days goes (purge_test_tracking)
+  await db.rpc("purge_test_tracking").then(
+    ({ error }) => error && console.error("[purge]", error.message),
+    () => {},
+  );
 
   // who never counts: robots (by phone), testers, the founder
   const [{ data: robots }, { data: staff }] = await Promise.all([

@@ -3939,6 +3939,21 @@ language sql stable security definer set search_path = '' as $$
   select exists (select 1 from auth.users u where u.email = '216' || p_phone || '@phone.pointidi.app')
 $$;
 
+-- the local test server's tracking — the beacon marks it a robot, and no country comes with it there —
+-- of nobody signed in or of a script's throwaway account: kept two days for the scripts that read it
+-- back, then gone with all it holds. It was two thirds of the tracking on 24 Oct 2026 and none of it
+-- was ever shown. The morning cron calls it (app/api/cron/digest); the service's key only (no grant)
+create or replace function public.purge_test_tracking() returns int
+language plpgsql security definer set search_path = '' as $$
+declare v_n int;
+begin
+  delete from public.visits v
+  where v.is_bot and v.country is null and v.started_at < now() - interval '2 days'
+    and (v.user_id is null or public.is_robot(v.user_id));
+  get diagnostics v_n = row_count;
+  return v_n;
+end $$;
+
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
 -- ═══ once: the owners from before the notes were kept here ═════════════════
