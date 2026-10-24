@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ArrowRight, Check, Gift, MessageCircle, Moon, Phone, Smartphone, Stamp, X } from "lucide-react";
-import { Face, ShopNote } from "@/components/AdminBoard";
+import { AlertTriangle, ArrowRight, Check, Gift, History, MessageCircle, Moon, Phone, Smartphone, Stamp, X } from "lucide-react";
+import { Face, ShopNote, ShopStage } from "@/components/AdminBoard";
 import { AdminShopMore } from "@/components/AdminShopMore";
-import { PILL, standing, type AccessShop } from "@/lib/board";
+import { PILL, STAGE_LOOK, stageOf, standing, type AccessShop } from "@/lib/board";
 import { digits, spaced } from "@/lib/phone";
 import { FAILS, screenName } from "@/lib/screens";
 import { call } from "@/lib/supabase";
@@ -37,7 +37,11 @@ type Study = {
   items: { name: string; gone: boolean; n: number }[];
   plan: { kind: string; months: number | null; until: string | null; amount: number | null; method: string | null; at: string }[];
   devices: { since: string; last_at: string | null; device: string | null; os: string | null; browser: string | null; city: string | null; app: boolean | null; here: boolean | null }[];
+  /** the founder's own: his line, where he is with the shop and since when, the stages it went through (newest first) */
   note: string;
+  stage: string;
+  stage_at: string | null;
+  follow: { stage: string; at: string }[];
 };
 
 const TZ = "Africa/Tunis";
@@ -272,7 +276,29 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
               </a>
             </div>
           )}
-          <ShopNote id={shop.id} note={st.note} />
+          {/* the founder's own: where he is with the shop, his line about it, and the stages it went through, oldest first */}
+          <div className="mt-3 flex flex-wrap items-start gap-2">
+            <ShopStage id={shop.id} stage={st.stage} at={st.stage_at} now={now} refresh />
+            <ShopNote id={shop.id} note={st.note} className="min-w-[8.5rem] flex-1" />
+          </div>
+          {st.follow.length > 0 && (
+            <div className="mt-2 flex items-start gap-1.5 text-[0.75rem] text-muted">
+              <History className="mt-px size-3.5 shrink-0 text-faint" aria-hidden />
+              <ol aria-label="المراحل اللي فات بيها" className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                {[...st.follow].reverse().map((f, i) => {
+                  const x = stageOf(f.stage);
+                  return (
+                    <li key={`${f.at}-${i}`} title={when(f.at)} className="inline-flex items-center gap-1">
+                      {i > 0 && <span className="text-faint">←</span>}
+                      <span className={`size-1.5 rounded-full ${STAGE_LOOK[x.tone].dot}`} />
+                      <span className="font-semibold text-body">{x.label}</span>
+                      <span>· {ago(f.at)}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          )}
         </section>
 
         {/* ── what to judge him by: facts, each good or not ── */}

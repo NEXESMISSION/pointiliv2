@@ -772,9 +772,9 @@ try {
   check("a shop nobody called stands «new», no word yet", (await crmRow())?.stage === "new" && (await crmRow())?.last === null);
   check("an owner cannot read the follow-up", !!(await rpc(owner, "admin_crm", { p_q: null })).error);
   const crmTried = await rpc(boss, "admin_crm_log", { p_shop: crmShop, p_kind: "call", p_outcome: "no_answer", p_text: "" });
-  check("a call nobody answered: written, and the shop «tried» on its own", crmTried.ok && crmTried.stage === "tried" && (await crmRow())?.stage === "tried" && (await crmRow())?.tries === 1);
+  check("a call nobody answered: written, and the shop «no answer» on its own", crmTried.ok && crmTried.stage === "no_answer" && (await crmRow())?.stage === "no_answer" && (await crmRow())?.tries === 1);
   const crmTalked = await rpc(boss, "admin_crm_log", { p_shop: crmShop, p_kind: "call", p_outcome: "answered", p_text: "يحب يشوف الكارط" });
-  check("a call answered: «talked», its words the last word", crmTalked.stage === "talked" && (await crmRow())?.last?.text === "يحب يشوف الكارط" && (await crmRow())?.talks === 1);
+  check("a call answered: «called», its words the last word", crmTalked.stage === "called" && (await crmRow())?.last?.text === "يحب يشوف الكارط" && (await crmRow())?.talks === 1);
   const crmSet = await rpc(boss, "admin_crm_set", { p_shop: crmShop, p_stage: "interested", p_next: "2030-01-15", p_note: "المولى هو اللي يقرّر" });
   check("a stage chosen by hand, a day to come back, a note", crmSet.ok && (await crmRow())?.stage === "interested" && (await crmRow())?.next_at === "2030-01-15" && (await crmRow())?.note === "المولى هو اللي يقرّر");
   const crmAgain = await rpc(boss, "admin_crm_log", { p_shop: crmShop, p_kind: "whatsapp", p_outcome: "sent", p_text: "" });

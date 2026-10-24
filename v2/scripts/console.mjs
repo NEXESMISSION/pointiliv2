@@ -3,7 +3,8 @@
  *
  * Fills the database with a believable handful of shops, owners, customers
  * and moments; signs a throwaway admin in; and walks the board: the filters,
- * the search, a note written and kept, a shop opened, days of trial and a
+ * the search, a note written and kept, a stage picked and the board narrowed
+ * to it, a shop opened, days of trial and a
  * year turned on, a switch, a new password — and the tools page, with a line
  * written in the books and taken back. Every page is checked for anything
  * that spills sideways or a Latin run flipped inside the Arabic, and timed.
@@ -236,6 +237,38 @@ try {
     if (!(await line().count())) bad("search by a word of the note: not found");
     await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
 
+    // where the founder is with it, next to the note: picked, said since when, there after a reload
+    await line().getByRole("combobox", { name: "وين وصلت معاه" }).selectOption("waiting_pay");
+    await line("[data-stage='waiting_pay']").getByText("توّا").waitFor({ timeout: 20000 });
+    await page.waitForTimeout(1500);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
+    await line("textarea").waitFor({ timeout: 60000 });
+    if ((await line().getByRole("combobox", { name: "وين وصلت معاه" }).inputValue()) !== "waiting_pay") bad("the stage was not kept");
+    else ok("the stage: picked next to the note, kept, since when");
+    await look(page, `${at}-01b-stage`);
+    // the board narrowed to that stage: this run's shop in it, and every line at that stage
+    await page.getByRole("searchbox", { name: "لوّج" }).fill("");
+    const narrow = page.getByRole("combobox", { name: "المرحلة" });
+    await narrow.selectOption("waiting_pay");
+    await line().waitFor({ timeout: 10000 });
+    const stages = await page.locator("article[data-shop] [data-stage]").evaluateAll((els) => els.map((e) => e.getAttribute("data-stage")));
+    if (stages.some((x) => x !== "waiting_pay")) bad(`the stage filter shows other stages: ${stages.join(" ")}`);
+    // a line picked away while the list is narrowed stays (a note may follow), and goes when a list is chosen again
+    await line().getByRole("combobox", { name: "وين وصلت معاه" }).selectOption("called");
+    await line("[data-stage='called']").waitFor({ timeout: 20000 });
+    await page.waitForTimeout(600);
+    if (!(await line().count())) bad("a line picked away vanished at once");
+    await page.getByRole("tab", { name: /^الكل/ }).click();
+    await page.waitForTimeout(300);
+    if (await line().count()) bad("a line picked away is still under its old stage");
+    await narrow.selectOption("called");
+    await line().waitFor({ timeout: 10000 });
+    ok(`the board narrowed to a stage (${stages.length} at it), a line picked away kept until a list is chosen again`);
+    await narrow.selectOption("all");
+    await page.getByRole("tab", { name: "آخر من دخل" }).click();
+    await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
+
     // its numbers, its last 14 days and the owner's signs are on the line itself, nothing to open
     for (const label of ["حرفاء", "تامبونات", "رجعو", "كادوات"]) if (!(await line().getByText(label, { exact: true }).count())) bad(`the line has no «${label}»`);
     if (!(await line("[role=img]").count())) bad("the line has no 14 days");
@@ -284,6 +317,14 @@ try {
     await page.getByRole("heading", { name: "آخر 30 يوم" }).waitFor({ timeout: 30000 });
     for (const part of ["آخر 30 يوم", "الطريق متاعو", "شنوّة عمل في الأبليكاسيون", "كل مرّة دخل", "الحرفاء", "الكارط", "الأبونمان والخيارات", "التليفونات اللي داخل منهم"])
       if (!(await page.getByRole("heading", { name: part }).count())) bad(`the shop's page has no «${part}»`);
+    // its stage there too, and the stages it went through (picked on the board: waiting for payment, then called)
+    if ((await page.getByRole("combobox", { name: "وين وصلت معاه" }).inputValue()) !== "called") bad("the shop's page does not have its stage");
+    const went = page.getByRole("list", { name: "المراحل اللي فات بيها" });
+    if (!(await went.getByText("نستنّى في الخلاص").count()) || !(await went.getByText("كلّمتو", { exact: true }).count())) bad("the shop's page does not have the stages it went through");
+    // picked here: the page read again, the newest stage last in the line
+    await page.getByRole("combobox", { name: "وين وصلت معاه" }).selectOption("promised");
+    await page.waitForFunction(() => document.querySelector("[aria-label='المراحل اللي فات بيها'] li:last-child")?.textContent?.includes("وعد يخلّص"), null, { timeout: 30000 });
+    ok("the shop's page: its stage, picked there too, and the stages it went through");
     await page.getByRole("switch", { name: "موقوف" }).waitFor({ timeout: 20000 });
     await look(page, `${at}-02b-study`);
     ok("the shop's whole page: opened from its name, every part there");

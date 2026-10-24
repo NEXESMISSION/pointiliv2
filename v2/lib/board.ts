@@ -50,9 +50,50 @@ export type BoardShop = {
   wa_at: string | null;
   app: boolean;
   push: boolean;
-  /** the founder's own line about the shop */
+  /** the founder's own line about the shop, his follow-up of it (STAGES) and since when */
   note: string;
+  stage: string;
+  stage_at: string | null;
 };
+
+/**
+ * The founder's follow-up of a shop, picked next to his note (24 Oct 2026:
+ * «not called, messaged, called, did not answer, waiting for payment… whatever
+ * helps organise it»): in the order a sale goes, in five groups, each with
+ * its colour. The keys are crm.stage's (schema.sql keeps the same list).
+ */
+export type StageTone = "grey" | "blue" | "orange" | "purple" | "amber" | "green" | "red";
+export const STAGES: { key: string; label: string; group: string; tone: StageTone }[] = [
+  { key: "new", label: "ما كلّمتوش", group: "مازال", tone: "grey" },
+  { key: "messaged", label: "بعثتلو ميساج", group: "التواصل", tone: "blue" },
+  { key: "called", label: "كلّمتو", group: "التواصل", tone: "blue" },
+  { key: "no_answer", label: "ما جاوبش", group: "التواصل", tone: "orange" },
+  { key: "callback", label: "نعاود نكلّمو", group: "التواصل", tone: "orange" },
+  { key: "wrong_number", label: "نومرو غالط", group: "التواصل", tone: "red" },
+  { key: "interested", label: "مهتم", group: "يخمّم", tone: "purple" },
+  { key: "trying", label: "قاعد يجرّب", group: "يخمّم", tone: "purple" },
+  { key: "help", label: "يحب معاونة", group: "يخمّم", tone: "purple" },
+  { key: "visit", label: "نمشيلو للمحل", group: "يخمّم", tone: "purple" },
+  { key: "waiting_pay", label: "نستنّى في الخلاص", group: "الخلاص", tone: "amber" },
+  { key: "promised", label: "وعد يخلّص", group: "الخلاص", tone: "amber" },
+  { key: "paid", label: "خلّص", group: "الخلاص", tone: "green" },
+  { key: "refused", label: "موش مهتم", group: "وفات", tone: "red" },
+  { key: "lost", label: "بطّل / سكّر", group: "وفات", tone: "red" },
+];
+export const STAGE_KEYS = STAGES.map((x) => x.key);
+export const stageOf = (key: string | null | undefined) => STAGES.find((x) => x.key === key) ?? STAGES[0];
+/** each colour: the pill's ground and words, its ring, and a dot */
+export const STAGE_LOOK: Record<StageTone, { box: string; ring: string; dot: string }> = {
+  grey: { box: "bg-canvas text-muted", ring: "ring-line", dot: "bg-faint" },
+  blue: { box: "bg-[#E8F1FF] text-[#1D5FD1]", ring: "ring-[#C9DDFB]", dot: "bg-[#2F7BF5]" },
+  orange: { box: "bg-[#FFF1E6] text-[#B8480E]", ring: "ring-[#FBD6BC]", dot: "bg-[#F07A2B]" },
+  purple: { box: "bg-brand-soft text-brand", ring: "ring-[#DCD3FF]", dot: "bg-brand" },
+  amber: { box: "bg-[#FFF7D6] text-[#86620A]", ring: "ring-[#F3E2A0]", dot: "bg-[#E2A50B]" },
+  green: { box: "bg-mint-soft text-mint", ring: "ring-[#BFEBD9]", dot: "bg-mint" },
+  red: { box: "bg-coral-soft text-coral", ring: "ring-[#FFD1C4]", dot: "bg-coral" },
+};
+/** the stages in their groups, in their order: for the lists */
+export const STAGE_GROUPS = [...new Set(STAGES.map((x) => x.group))].map((g) => ({ group: g, stages: STAGES.filter((x) => x.group === g) }));
 
 /** what the access controls need of a shop (the board's line, or the study page) */
 export type AccessShop = Pick<BoardShop, "id" | "name" | "owner" | "paid" | "paid_until" | "shut" | "started" | "trial_end">;
@@ -84,10 +125,10 @@ export function standing(s: Pick<BoardShop, "paused" | "paid" | "paid_until" | "
   return { say: `تجربة · باقي ${left >= DAY ? daysN(Math.floor(left / DAY)) : hoursN(Math.max(1, Math.ceil(left / HOUR)))}`, tone: "brand" };
 }
 
-/** Does the shop answer what was typed: its name, its owner, the number, a word of the note, its kind. */
+/** Does the shop answer what was typed: its name, its owner, the number, a word of the note, its follow-up, its kind. */
 export function hit(s: BoardShop, q: string): boolean {
   const words = plain(q).split(" ").filter(Boolean);
   if (!words.length) return true;
-  const hay = plain(`${s.name} ${s.owner.name ?? ""} ${digits(s.owner.phone ?? "")} ${s.note}`);
+  const hay = plain(`${s.name} ${s.owner.name ?? ""} ${digits(s.owner.phone ?? "")} ${s.note} ${stageOf(s.stage).label}`);
   return words.every((w) => hay.includes(w) || kindMatches(s.kind, w));
 }

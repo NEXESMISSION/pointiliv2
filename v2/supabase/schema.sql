@@ -184,7 +184,8 @@ create index if not exists push_subs_user_idx on public.push_subs (user_id);
 -- by the founder alone (require_admin); a robot's shop takes its lines with it.
 create table if not exists public.crm (
   shop_id     uuid primary key references public.shops (id) on delete cascade,
-  stage       text not null default 'new' check (stage in ('new', 'tried', 'talked', 'interested', 'promised', 'later', 'refused')),
+  stage       text not null default 'new' check (stage in ('new', 'messaged', 'called', 'no_answer', 'callback', 'wrong_number', 'interested', 'trying', 'help', 'visit', 'waiting_pay', 'promised', 'paid', 'refused', 'lost')),
+  stage_at    timestamptz,
   next_at     date,
   note        text not null default '' check (char_length(note) <= 2000),
   updated_at  timestamptz not null default now()
@@ -198,6 +199,20 @@ create table if not exists public.crm_log (
   at          timestamptz not null default now()
 );
 create index if not exists crm_log_shop_idx on public.crm_log (shop_id, at desc);
+-- the founder's follow-up of each shop, picked in a list next to his note on the board (24 Oct 2026:
+-- «not called, messaged, called, did not answer, waiting for payment… whatever helps organise it»), and
+-- when it was picked. The first stages (2026-10-08) are read the new way: tried → no answer, talked →
+-- called, later → call back (re-runnable: once read, no row has them).
+alter table public.crm add column if not exists stage_at timestamptz;
+alter table public.crm drop constraint if exists crm_stage_check;
+update public.crm set stage = case stage when 'tried' then 'no_answer' when 'talked' then 'called' when 'later' then 'callback' else stage end
+where stage in ('tried', 'talked', 'later');
+update public.crm_log set text = case text when 'tried' then 'no_answer' when 'talked' then 'called' when 'later' then 'callback' else text end
+where kind = 'stage' and text in ('tried', 'talked', 'later');
+-- a stage chosen before its time was kept: since its last line in the log, or the row's last change
+update public.crm c set stage_at = coalesce((select max(g.at) from public.crm_log g where g.shop_id = c.shop_id), c.updated_at)
+where c.stage_at is null and c.stage <> 'new';
+alter table public.crm add constraint crm_stage_check check (stage in ('new', 'messaged', 'called', 'no_answer', 'callback', 'wrong_number', 'interested', 'trying', 'help', 'visit', 'waiting_pay', 'promised', 'paid', 'refused', 'lost'));
 alter table public.crm enable row level security;
 alter table public.crm force row level security;
 alter table public.crm_log enable row level security;
@@ -1950,14 +1965,15 @@ language plpgsql security definer set search_path = '' as $$
 declare v_old text;
 begin
   perform public.require_admin();
-  if p_stage is not null and p_stage not in ('new', 'tried', 'talked', 'interested', 'promised', 'later', 'refused') then return public.err('bad_stage'); end if;
+  if p_stage is not null and p_stage not in ('new', 'messaged', 'called', 'no_answer', 'callback', 'wrong_number', 'interested', 'trying', 'help', 'visit', 'waiting_pay', 'promised', 'paid', 'refused', 'lost') then return public.err('bad_stage'); end if;
   if p_note is not null and char_length(p_note) > 2000 then return public.err('too_long'); end if;
   if not exists (select 1 from public.shops where id = p_shop) then return public.err('no_shop'); end if;
   select stage into v_old from public.crm where shop_id = p_shop;
-  insert into public.crm (shop_id, stage, next_at, note)
-  values (p_shop, coalesce(p_stage, 'new'), case when p_clear_next then null else p_next end, coalesce(p_note, ''))
+  insert into public.crm (shop_id, stage, next_at, note, stage_at)
+  values (p_shop, coalesce(p_stage, 'new'), case when p_clear_next then null else p_next end, coalesce(p_note, ''), case when p_stage is not null then now() end)
   on conflict (shop_id) do update set
     stage = coalesce(p_stage, public.crm.stage),
+    stage_at = case when p_stage is not null and p_stage is distinct from public.crm.stage then now() else public.crm.stage_at end,
     next_at = case when p_clear_next then null else coalesce(p_next, public.crm.next_at) end,
     note = coalesce(p_note, public.crm.note),
     updated_at = now();
@@ -1969,7 +1985,7 @@ end $$;
 
 -- a word with the owner written down: a call (answered, no answer, busy, a wrong number), a WhatsApp (sent,
 -- replied), a visit, or a note. The first words move the stage on their own — a try that got nobody makes a
--- «new» shop «tried», a talk makes a «new» or «tried» one «talked» — and a stage the founder chose stays.
+-- «new» shop «no answer», a talk makes a «new» or «no answer» one «called» — and a stage the founder chose stays.
 create or replace function public.admin_crm_log(p_shop uuid, p_kind text, p_outcome text default null, p_text text default '') returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare v_id bigint; v_now text; v_stage text;
@@ -1982,11 +1998,14 @@ begin
   insert into public.crm_log (shop_id, kind, outcome, text) values (p_shop, p_kind, p_outcome, coalesce(trim(p_text), '')) returning id into v_id;
   select stage into v_now from public.crm where shop_id = p_shop;
   v_stage := case
-    when p_kind in ('call', 'whatsapp') and p_outcome in ('no_answer', 'busy', 'wrong', 'sent') and coalesce(v_now, 'new') = 'new' then 'tried'
-    when (p_kind = 'visit' or p_outcome in ('answered', 'replied')) and coalesce(v_now, 'new') in ('new', 'tried') then 'talked'
+    when p_kind in ('call', 'whatsapp') and p_outcome in ('no_answer', 'busy', 'wrong', 'sent') and coalesce(v_now, 'new') = 'new' then 'no_answer'
+    when (p_kind = 'visit' or p_outcome in ('answered', 'replied')) and coalesce(v_now, 'new') in ('new', 'no_answer') then 'called'
     else null end;
-  insert into public.crm (shop_id, stage) values (p_shop, coalesce(v_stage, 'new'))
-  on conflict (shop_id) do update set stage = coalesce(v_stage, public.crm.stage), updated_at = now();
+  insert into public.crm (shop_id, stage, stage_at) values (p_shop, coalesce(v_stage, 'new'), case when v_stage is not null then now() end)
+  on conflict (shop_id) do update set
+    stage = coalesce(v_stage, public.crm.stage),
+    stage_at = case when v_stage is not null and v_stage is distinct from public.crm.stage then now() else public.crm.stage_at end,
+    updated_at = now();
   return jsonb_build_object('ok', true, 'id', v_id, 'stage', coalesce(v_stage, v_now, 'new'));
 end $$;
 
@@ -3729,7 +3748,7 @@ begin
       'seen_at', ov.seen_at, 'days', coalesce(ov.days, 0), 'online', coalesce(ov.online, false),
       'ms', coalesce(ow.ms, 0), 'pay_seen', ow.pay_seen, 'wa_at', og.wa_at, 'app', coalesce(og.app, false),
       'push', exists (select 1 from public.push_subs ps where ps.user_id = s.owner_id),
-      'note', coalesce(cn.note, '')) order by s.created_at desc)
+      'note', coalesce(cn.note, ''), 'stage', coalesce(cn.stage, 'new'), 'stage_at', cn.stage_at) order by s.created_at desc)
     from public.shops s
     join rs on rs.id = s.id
     join public.people p on p.id = s.owner_id
@@ -3905,7 +3924,11 @@ begin
                  from auth.sessions x
                  left join lateral (select * from public.visits w where w.session_id = x.id order by w.started_at desc limit 1) v on true
                  where x.user_id = s.owner_id and (x.not_after is null or x.not_after > now())), '[]'::jsonb),
-      'note', coalesce((select cn.note from public.crm cn where cn.shop_id = s.id), ''))
+      'note', coalesce((select cn.note from public.crm cn where cn.shop_id = s.id), ''),
+      'stage', coalesce((select cn.stage from public.crm cn where cn.shop_id = s.id), 'new'),
+      'stage_at', (select cn.stage_at from public.crm cn where cn.shop_id = s.id),
+      'follow', coalesce((select jsonb_agg(jsonb_build_object('stage', l.text, 'at', l.at) order by l.at desc)
+                 from (select text, at from public.crm_log where shop_id = s.id and kind = 'stage' order by at desc limit 12) l), '[]'::jsonb))
   );
 end $$;
 

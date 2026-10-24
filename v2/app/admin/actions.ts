@@ -1,5 +1,6 @@
 "use server";
 
+import { STAGE_KEYS } from "@/lib/board";
 import { call } from "@/lib/supabase";
 
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -33,6 +34,13 @@ export async function adminShopNote(shopId: string, note: string): Promise<boole
   if (!UUID.test(shopId)) return false;
   const text = String(note ?? "").trim().slice(0, 300);
   const res = await call<{ ok: boolean }>("admin_crm_set", { p_shop: shopId, p_note: text });
+  return !!res?.ok;
+}
+
+/** The founder's follow-up of a shop, picked next to his note (lib/board STAGES): kept with when it was picked. */
+export async function adminShopStage(shopId: string, stage: string): Promise<boolean> {
+  if (!UUID.test(shopId) || !STAGE_KEYS.includes(stage)) return false;
+  const res = await call<{ ok: boolean }>("admin_crm_set", { p_shop: shopId, p_stage: stage });
   return !!res?.ok;
 }
 
