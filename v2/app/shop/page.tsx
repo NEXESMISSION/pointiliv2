@@ -5,7 +5,7 @@ import { HelpButton } from "@/components/Help";
 import { FirstGift } from "@/components/FirstGift";
 import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
-import { InstallPopup, OpenOutside } from "@/components/InstallApp";
+import { InstallFab, InstallPopup, OpenOutside } from "@/components/InstallApp";
 import { Mark } from "@/components/Owner";
 import { OfferPopup, PayBanner, TrialBanner, type Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
@@ -265,6 +265,8 @@ export default async function ShopHome() {
       <NewsPopup news={firstGift || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
       {/* Pointili on the home screen, asked once where Android's Chrome offers it — never over another note */}
       <InstallPopup where="home" who={shop.id} show={served && !firstGift && !logoTip && !offerNote && !grant && !news && !seen.includes("install")} />
+      {/* and offered all along, floating over «آخر حركة» clear of «شوف الكل», once a customer came */}
+      {served && <InstallFab where="home" lift="4rem" />}
     </main>
   );
 }

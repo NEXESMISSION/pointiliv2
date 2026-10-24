@@ -12,6 +12,7 @@ import { signal } from "@/lib/track";
 type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
 
 let deferred: InstallPrompt | null = null;
+let installed = false;
 let started = false;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
@@ -37,6 +38,7 @@ export function startPwa() {
   });
   window.addEventListener("appinstalled", () => {
     deferred = null;
+    installed = true;
     notify();
     signal("pwa_installed");
   });
@@ -63,9 +65,21 @@ export function useCanInstall(): boolean {
   );
 }
 
-/** The tap: Chrome's own dialog, and its answer counted. */
-export async function installApp(where: string) {
-  if (!deferred) return;
+/** Pointili was just installed from this page (Chrome said so): whatever asked for it can go. */
+export function useInstalled(): boolean {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+    () => installed,
+    () => false,
+  );
+}
+
+/** The tap: Chrome's own dialog, and its answer counted. True when the person said yes. */
+export async function installApp(where: string): Promise<boolean> {
+  if (!deferred) return false;
   const prompt = deferred;
   signal("pwa_click", where);
   await prompt.prompt();
@@ -73,6 +87,7 @@ export async function installApp(where: string) {
   signal(outcome === "accepted" ? "pwa_accepted" : "pwa_dismissed", where);
   deferred = null;
   notify();
+  return outcome === "accepted";
 }
 
 /**
@@ -94,16 +109,25 @@ export function outsideHref(path: string): string {
   return `intent://${host}${path}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(`https://${host}${path}`)};end`;
 }
 
+export const isAndroid = (): boolean => typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
+
 /**
- * An iPhone's own browser (Safari, or Chrome on an iPhone), not yet on the
- * home screen: there is no install prompt there, only «Sur l'écran d'accueil»
- * by hand — so a guide shows how. Never in Facebook's browser.
+ * How this phone puts Pointili on its home screen, when a guide can show it:
+ * an iPhone's Safari (the filmed guide), Chrome on an iPhone (its share
+ * button is up in the address bar: the drawn one), or Android's browser.
+ * Null on a computer, in Facebook's browser, or once installed.
  */
-export function useIosBrowser(): boolean {
+export type InstallWay = "ios" | "ios-chrome" | "android" | null;
+const wayNow = (): InstallWay => {
+  if (inAppBrowser() || standalone()) return null;
+  if (isIphone()) return /CriOS/i.test(navigator.userAgent) ? "ios-chrome" : "ios";
+  return isAndroid() ? "android" : null;
+};
+export function useInstallWay(): InstallWay {
   return useSyncExternalStore(
     () => () => {},
-    () => isIphone() && !inAppBrowser() && !standalone(),
-    () => false,
+    wayNow,
+    () => null,
   );
 }
 

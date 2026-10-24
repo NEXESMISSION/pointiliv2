@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { ChevronLeft, Lock, QrCode, ScanLine } from "lucide-react";
 import { Back } from "@/components/Back";
 import { Go } from "@/components/Go";
-import { InstallApp, InstallPopup } from "@/components/InstallApp";
+import { InstallFab, InstallPopup } from "@/components/InstallApp";
 import { Live } from "@/components/Live";
 import { MyCode } from "@/components/MyCode";
 import { ShopMark } from "@/components/ShopMark";
@@ -90,8 +90,9 @@ export function Cards({
         <h1 className="min-w-0 truncate text-[0.9375rem] font-bold text-muted">{back ? t.myCards : first ? fill(t.hiName, { name: first }) : t.hi}</h1>
       </header>
 
-      {/* Pointili on the home screen: Android's own dialog, or on an iPhone the guide to the three taps */}
-      {!back && <InstallApp where="wallet" className="mt-1.5 h-9 shrink-0 text-[0.8125rem]" />}
+      {/* Pointili on the home screen, floating over the cards clear of the two buttons: Android's own
+          dialog, or this phone's filmed guide (it was a pill under the header until 24 Oct 2026) */}
+      {!back && <InstallFab where="wallet" lift="calc(2dvh + 4.125rem)" />}
       {/* an account made at the counter has no password the person knows: one line asks for one, until it is set */}
       {!passwordSet && (
         <Link href="/me" className="press mt-1.5 flex shrink-0 items-center gap-2 rounded-full bg-brand-soft px-3.5 py-2 text-[0.8125rem] font-bold text-brand">

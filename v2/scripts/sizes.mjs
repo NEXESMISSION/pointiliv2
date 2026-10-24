@@ -494,7 +494,27 @@ const SCREENS = [
       for (const part of ["الفلوس", "الإعدادات"]) await p.getByText(part, { exact: true }).click();
     },
   },
+  // the floating «حطّ Pointili في تليفونك» and the filmed guide it opens: only a phone's browser shows them,
+  // so only under a phone's UA (UA="… Android …" or "… iPhone …"); the guide measured a few seconds in
+  ...(/Android|iPhone/.test(process.env.UA ?? "")
+    ? [
+        { name: "install-fab-wallet", as: "customer", path: "/", act: (p) => fab(p) },
+        { name: "install-guide-wallet", as: "customer", path: "/", act: (p) => guide(p), wait: 4200 },
+        { name: "install-fab-home", as: "owner", path: "/shop", act: (p) => fab(p) },
+        { name: "install-guide-home", as: "owner", path: "/shop", act: (p) => guide(p), wait: 4200 },
+      ]
+    : []),
 ].filter((s) => !ONLY || ONLY.some((w) => s.name.startsWith(w)));
+/** the floating button, risen (a moment after the page, then its own rise) */
+async function fab(page) {
+  await page.getByRole("button", { name: "حطّ Pointili في تليفونك" }).waitFor({ timeout: 15000 });
+  await page.waitForTimeout(800);
+}
+async function guide(page) {
+  await fab(page);
+  await page.getByRole("button", { name: "حطّ Pointili في تليفونك" }).click();
+  await page.getByRole("dialog").waitFor({ timeout: 15000 });
+}
 function SCREENS_AS() {
   return SCREENS.map((s) => s.as).filter(Boolean);
 }

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, ExternalLink, Send } from "lucide-react";
+import { Download, ExternalLink, Send, X } from "lucide-react";
 import { handoffPath } from "@/app/actions";
 import { Sheet, SheetGo } from "@/components/Client";
+import { InstallGuide, Mixed, preloadGuide, useAppStartsSignedIn } from "@/components/InstallGuide";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
-import { installApp, isIphone, outsideHref, startPwa, useCanInstall, useInApp, useIosBrowser } from "@/lib/pwa";
+import { installApp, isIphone, outsideHref, startPwa, useCanInstall, useInApp, useInstalled, useInstallWay, type InstallWay } from "@/lib/pwa";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 
@@ -16,32 +17,38 @@ export function Pwa() {
   return null;
 }
 
+/** This phone's guide: the filmed one (an iPhone's Safari, Android), or the drawn one for Chrome on an iPhone. */
+function GuideFor({ way, where, onClose, onDone }: { way: Exclude<InstallWay, null>; where: string; onClose: () => void; onDone?: () => void }) {
+  if (way === "ios-chrome") return <IosGuide where={where} onClose={onClose} />;
+  return <InstallGuide way={way} where={where} onClose={onClose} onDone={onDone} />;
+}
+
 /**
  * «حطّ Pointili في تليفونك»: where Android's Chrome offers to install, its
- * own dialog; in an iPhone's own browser (no such dialog there), the guide
- * that shows the three taps. Never in Facebook's browser, never once
- * installed. `look`: a small pill (the wallet, a header), a full row (the
- * account page) or a word in the front door's footer. Its showing is counted
- * once, with where it was.
+ * own dialog; elsewhere on a phone (an iPhone, or Android before Chrome
+ * offers), the guide that shows the taps. Never in Facebook's browser, never
+ * once installed. `look`: a small pill (a header), a full row (the account
+ * page) or a word in the front door's footer. Its showing is counted once,
+ * with where it was.
  */
 export function InstallApp({ where, look = "pill", className = "" }: { where: string; look?: "pill" | "row" | "link"; className?: string }) {
   const can = useCanInstall();
-  const ios = useIosBrowser();
+  const way = useInstallWay();
   const [guide, setGuide] = useState(false);
   const counted = useRef(false);
   useEffect(() => {
-    if (!(can || ios) || counted.current) return;
+    if (!(can || way) || counted.current) return;
     counted.current = true;
     signal(can ? "pwa_shown" : "pwa_ios_shown", where);
-  }, [can, ios, where]);
-  if (!can && !ios) return null;
+  }, [can, way, where]);
+  if (!can && !way) return null;
 
   const go = () => {
     if (can) return void installApp(where);
     signal("pwa_ios_open", where);
     setGuide(true);
   };
-  const sheet = guide && <IosGuide where={where} onClose={() => setGuide(false)} />;
+  const sheet = guide && way && <GuideFor way={way} where={where} onClose={() => setGuide(false)} />;
 
   if (look === "link") {
     // a third word in a footer row: a dot before it, the same quiet type
@@ -174,7 +181,8 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
  */
 export function InstallPopup({ where, who, show, force = false }: { where: string; who: string; show: boolean; force?: boolean }) {
   const can = useCanInstall();
-  const ios = useIosBrowser();
+  const way = useInstallWay();
+  const ios = way === "ios" || way === "ios-chrome";
   const [open, setOpen] = useState(false);
   const done = useRef(false);
   useEffect(() => {
@@ -191,7 +199,7 @@ export function InstallPopup({ where, who, show, force = false }: { where: strin
 
   if (!open) return null;
   // an iPhone: no dialog to open, so the sheet is the guide itself
-  if (!can) return <IosGuide where={`popup · ${where}`} onClose={() => setOpen(false)} />;
+  if (!can) return way ? <GuideFor way={way} where={`popup · ${where}`} onClose={() => setOpen(false)} /> : null;
 
   const later = () => {
     signal("pwa_later", where);
@@ -218,6 +226,107 @@ export function InstallPopup({ where, who, show, force = false }: { where: strin
   );
 }
 
+const FAB_OFF = "pl-fab-off";
+const DAY = 86_400_000;
+
+/**
+ * The floating button (the founder, 24 Oct 2026: «a floating button on the
+ * owner's or the customer's main page, with a nice animation, telling them
+ * if they want to install»). «حطّ Pointili في تليفونك» rises a moment after
+ * the page. Its little phone takes the app in, over and over, and a shine
+ * crosses it now and then. A tap opens Android's own dialog where Chrome
+ * offers one, else this phone's guide (fetched while the button rises, so it
+ * opens at once). «×» puts it away for three days, «فهمت» at the guide's
+ * end for one. It never shows on a computer, in Facebook's browser, or once
+ * installed. `lift`: how far above the screen's own bottom margin it floats,
+ * clear of the page's buttons. Shown, tapped and put away are counted.
+ */
+export function InstallFab({ where, lift }: { where: string; lift: string }) {
+  const way = useInstallWay();
+  const can = useCanInstall();
+  const installed = useInstalled();
+  const [up, setUp] = useState(false);
+  const [going, setGoing] = useState(false);
+  const [guide, setGuide] = useState(false);
+  useEffect(() => {
+    if (!way) return;
+    try {
+      if (Number(localStorage.getItem(FAB_OFF) ?? 0) > Date.now()) return;
+    } catch {
+      /* no storage: it shows */
+    }
+    const id = setTimeout(() => {
+      if (way !== "ios-chrome") void preloadGuide(way).catch(() => {});
+      signal("pwa_fab_shown", where);
+      setUp(true);
+    }, 1400);
+    return () => clearTimeout(id);
+  }, [way, where]);
+
+  const away = (days: number) => {
+    try {
+      localStorage.setItem(FAB_OFF, String(Date.now() + days * DAY));
+    } catch {
+      /* gone for this visit only */
+    }
+    setGoing(true);
+  };
+  const go = async () => {
+    signal("pwa_fab_tap", where);
+    if (can) {
+      if (await installApp(`fab · ${where}`)) away(30);
+      return;
+    }
+    setGuide(true);
+  };
+
+  return (
+    <>
+      {up && way && !installed && (
+        <div className="pointer-events-none fixed inset-x-0 z-40 flex justify-center px-4" style={{ bottom: `calc(max(1.25rem, env(safe-area-inset-bottom)) + ${lift})` }}>
+          <div
+            onAnimationEnd={(e) => going && e.target === e.currentTarget && setUp(false)}
+            className={`pointer-events-auto relative flex max-w-full items-center overflow-hidden rounded-full bg-[linear-gradient(150deg,#8f75ff,#6c47ff_50%,#4a2ad6)] text-white shadow-[0_12px_28px_-12px_rgb(74_42_214/0.8)] ${going ? "animate-[fab-out_220ms_ease-in_forwards]" : "animate-[fab-in_640ms_cubic-bezier(0.34,1.56,0.64,1)_both]"}`}
+          >
+            {/* a shine across it, now and then */}
+            <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-[linear-gradient(90deg,transparent,rgb(255_255_255/0.32),transparent)] opacity-0 motion-safe:animate-[fab-shine_5.5s_ease-in-out_1.6s_infinite]" />
+            <button type="button" onClick={() => void go()} className="press relative flex h-12 min-w-0 items-center gap-2.5 pe-1.5 ps-1.5">
+              <span className="relative grid size-9 shrink-0 place-items-center rounded-full bg-white text-brand">
+                <span aria-hidden className="absolute inset-0 rounded-full bg-white/60 motion-safe:animate-[fab-ring_2.6s_ease-out_infinite]" />
+                <FabMark />
+              </span>
+              <span className="truncate text-[0.9375rem] font-bold">{t.installApp}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                signal("pwa_fab_off", where);
+                away(3);
+              }}
+              aria-label={t.fabHide}
+              className="press relative me-1 grid size-9 shrink-0 place-items-center rounded-full text-white/75 active:bg-white/15"
+            >
+              <X className="size-4" strokeWidth={2.5} />
+            </button>
+          </div>
+        </div>
+      )}
+      {guide && way && <GuideFor way={way} where={`fab · ${where}`} onClose={() => setGuide(false)} onDone={() => away(1)} />}
+    </>
+  );
+}
+
+/** The button's own mark: a phone, an arrow dropping into it, and the app's square landing at its foot. */
+function FabMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="relative size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="5.5" y="2" width="13" height="20" rx="3" />
+      <path d="M12 5.5v6.5m-3-3 3 3 3-3" className="motion-safe:animate-[fab-drop_2.6s_ease-in-out_infinite] [transform-box:fill-box]" />
+      <rect x="10" y="15.5" width="4" height="3.5" rx="1" fill="currentColor" stroke="none" className="origin-center motion-safe:animate-[fab-tile_2.6s_ease-in-out_infinite] [transform-box:fill-box]" />
+    </svg>
+  );
+}
+
 /**
  * The iPhone's way, shown rather than told: three steps, each drawn as the
  * phone shows it — the share button in Safari's bar (at the top in Chrome),
@@ -228,19 +337,7 @@ export function InstallPopup({ where, who, show, force = false }: { where: strin
 export function IosGuide({ where, onClose }: { where: string; onClose: () => void }) {
   const [step, setStep] = useState(0);
   const [chrome] = useState(() => typeof navigator !== "undefined" && /CriOS/i.test(navigator.userAgent));
-  // the app added from here opens signed in: its own cookies start empty on an iPhone (app/api/manifest)
-  useEffect(() => {
-    let gone = false;
-    handoffPath("/")
-      .then((to) => {
-        const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-        if (!gone && link && to.startsWith("/auth/handoff?")) link.href = `/api/manifest?start=${encodeURIComponent(to)}`;
-      })
-      .catch(() => {});
-    return () => {
-      gone = true;
-    };
-  }, []);
+  useAppStartsSignedIn(true);
   const steps = [
     { pic: <PicShare chrome={chrome} />, title: t.iosStep1, hint: chrome ? t.iosStep1HintChrome : t.iosStep1Hint },
     { pic: <PicSheet />, title: t.iosStep2, hint: t.iosStep2Hint },
@@ -278,16 +375,6 @@ export function IosGuide({ where, onClose }: { where: string; onClose: () => voi
       </div>
     </Sheet>
   );
-}
-
-/**
- * «Latin words» inside an Arabic line — the phone's own labels — sealed left
- * to right with their own quotes: on the Arabic side the closing » would
- * otherwise turn into a second «.
- */
-function Mixed({ text }: { text: string }) {
-  const parts = text.split(/(«[^»]*[A-Za-z][^»]*»)/);
-  return <>{parts.map((p, i) => (i % 2 ? <bdi key={i} dir="ltr">{p}</bdi> : p))}</>;
 }
 
 const BLUE = "#0A84FF";
