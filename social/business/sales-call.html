@@ -1,0 +1,332 @@
+<title>Pointili Sales Call</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* Layout: a call companion — a sticky rail of the call's stages beside the script; the goal pinned on top.
+     Phone: the rail becomes a scrolling strip under the goal. */
+  :root {
+    --bg: #F6F5FB;
+    --paper: #FFFFFF;
+    --ink: #1A1726;
+    --muted: #6A6580;
+    --line: #E4E1F0;
+    --brand: #6C47FF;
+    --brand-soft: #EEE9FF;
+    --say: #0E7A55;
+    --say-soft: #E3F5EC;
+    --warn: #B4530F;
+    --warn-soft: #FDEEDF;
+    --hot: #D93B3B;
+    --cold: #3A6FD8;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #13111C; --paper: #1C1929; --ink: #EDEAF7; --muted: #A49FBA; --line: #2E2A40;
+      --brand: #9A80FF; --brand-soft: #2A2245; --say: #4FD39C; --say-soft: #12302A; --warn: #F2A15F; --warn-soft: #3A2616;
+      --hot: #FF7A7A; --cold: #7FA6FF; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #13111C; --paper: #1C1929; --ink: #EDEAF7; --muted: #A49FBA; --line: #2E2A40;
+    --brand: #9A80FF; --brand-soft: #2A2245; --say: #4FD39C; --say-soft: #12302A; --warn: #F2A15F; --warn-soft: #3A2616;
+    --hot: #FF7A7A; --cold: #7FA6FF; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--body); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+  a { color: var(--brand); }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+
+  /* the goal, always on top */
+  .goal { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--ink); color: var(--bg);
+          padding-block: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .goal-in { max-width: 1120px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+  .goal b { font: 800 15px var(--display); letter-spacing: 0.02em; }
+  .goal .pill { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; background: color-mix(in srgb, var(--bg) 14%, transparent); font-weight: 700; font-size: 14px; }
+  .goal .pill i { font-style: normal; font: 500 12px var(--mono); opacity: 0.7; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+          display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 40px; }
+  header.top { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+  h1 { font: 800 clamp(30px, 5vw, 46px)/1.02 var(--display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+  h1 small { display: block; font: 500 13px var(--mono); color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .length { font: 500 13px var(--mono); color: var(--muted); }
+
+  /* the rail of stages */
+  nav.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); align-self: start; display: flex; flex-direction: column; gap: 2px; }
+  nav.rail a { display: grid; grid-template-columns: 34px 1fr; align-items: center; padding: 8px 10px; border-radius: 10px; color: var(--muted); text-decoration: none; font-weight: 700; font-size: 15px; }
+  nav.rail a span { font: 500 12px var(--mono); }
+  nav.rail a:hover { background: var(--paper); color: var(--ink); }
+  nav.rail a.on { background: var(--brand-soft); color: var(--brand); }
+
+  main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+  section { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px 24px; scroll-margin-top: 80px; }
+  .stage { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .stage .n { font: 500 12px var(--mono); color: var(--brand); letter-spacing: 0.06em; }
+  .stage .t { font: 500 12px var(--mono); color: var(--muted); margin-left: auto; }
+  h2 { font: 800 24px/1.15 var(--display); margin: 0 0 6px; letter-spacing: -0.01em; text-wrap: balance; }
+  h3 { font: 700 16px var(--body); margin: 18px 0 8px; }
+  p { margin: 6px 0; max-width: 68ch; }
+  .why { color: var(--muted); font-size: 15px; }
+
+  /* a line to say out loud */
+  .say { position: relative; margin: 12px 0; padding: 14px 52px 14px 16px; border-radius: 12px; background: var(--say-soft); color: var(--ink); font-size: 18px; line-height: 1.5; }
+  .say::before { content: "9oul"; display: block; font: 500 11px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--say); margin-bottom: 4px; }
+  .say .copy { position: absolute; top: 10px; right: 10px; border: 0; background: var(--paper); color: var(--say); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font: 700 13px var(--body); }
+  .say .copy.done { background: var(--say); color: var(--paper); }
+  .hush { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; padding: 6px 12px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); font-weight: 700; font-size: 14px; }
+
+  ol.q { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; counter-reset: q; }
+  ol.q li { counter-increment: q; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; }
+  ol.q li::before { content: counter(q); width: 30px; height: 30px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font: 700 14px var(--mono); }
+  ol.q b { display: block; font-size: 17px; }
+  ol.q span { color: var(--muted); font-size: 15px; }
+
+  /* hot / warm / cold */
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+  .tabs button { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 8px 16px; font: 700 15px var(--body); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .tabs button i { width: 10px; height: 10px; border-radius: 50%; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .panel { padding-top: 6px; }
+
+  /* objections */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .chips button { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 10px; padding: 9px 14px; font: 700 15px var(--body); cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+
+  .rules { list-style: none; padding: 0; margin: 8px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .rules li { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }
+  .rules b { display: block; }
+  .rules span { color: var(--muted); font-size: 15px; }
+
+  .check { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+  .check label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 16px; }
+  .check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--brand); flex: none; }
+  .reset { margin-top: 12px; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 10px; padding: 8px 14px; font: 700 14px var(--body); cursor: pointer; }
+
+  .temp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+  .temp div { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .temp b { display: flex; align-items: center; gap: 8px; }
+  .temp b i { width: 10px; height: 10px; border-radius: 50%; }
+  .temp span { color: var(--muted); font-size: 15px; }
+
+  @media (max-width: 860px) {
+    .wrap { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    nav.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 52px); z-index: 4; flex-direction: row; overflow-x: auto; background: var(--bg); padding-block: 6px; scrollbar-width: none; }
+    nav.rail a { grid-template-columns: auto auto; gap: 6px; white-space: nowrap; }
+    .rules, .temp { grid-template-columns: minmax(0, 1fr); }
+    section { padding: 18px 16px; }
+    .say { font-size: 17px; }
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="goal">
+  <div class="goal-in">
+    <b>KOL APPEL YOUFA B:</b>
+    <span class="pill"><i>A</i> ykhalles (D17 wala virement)</span>
+    <span class="pill"><i>B</i> nhar + sé3a mdhbouta</span>
+    <span class="pill" style="opacity:.8"><i>✕</i> «nchouf w nkalmek» mouch résultat</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <h1><small>Pointili · script mta3 el appel</small>Kifech tsakker 7rif fil appel</h1>
+    <span class="length">5–7 d9aye9 · enti 30% · howa 70%</span>
+  </header>
+
+  <nav class="rail" aria-label="Marahel el appel">
+    <a href="#before"><span>00</span>9bal el appel</a>
+    <a href="#open"><span>01</span>El bidaya</a>
+    <a href="#ask"><span>02</span>Es2ella</a>
+    <a href="#state"><span>03</span>Ra7 3la 7altou</a>
+    <a href="#pitch"><span>04</span>El présentation</a>
+    <a href="#close"><span>05</span>El close</a>
+    <a href="#later"><span>06</span>«Mouch tawa»</a>
+    <a href="#objections"><span>!</span>Objections</a>
+    <a href="#rules"><span>★</span>El 9wa3ed</a>
+    <a href="#after"><span>✓</span>Ba3d el appel</a>
+  </nav>
+
+  <main>
+    <section id="before">
+      <div class="stage"><span class="n">00</span><span class="t">30 sec</span></div>
+      <h2>9bal el appel: chouf el shop fi /admin/shops</h2>
+      <p class="why">3 7ajet t3arafhom 9bal ma t3ayet: el 7ala mte3ou, 9addech b9at fil trial, w chnoua el kadou elli 7attou.</p>
+      <div class="temp">
+        <div><b><i style="background:var(--hot)"></i>Hot</b><span>A3ta tampons ba3d sé3a men el ouverture → ye5dem bel 7a9. Mchi lel close.</span></div>
+        <div><b><i style="background:var(--warn)"></i>Warm</b><span>3amel el carte, w 7atta tampon → el mochkla fil bidaya.</span></div>
+        <div><b><i style="background:var(--cold)"></i>Cold</b><span>Ma kammalch el compte → 3awnou ykammel fil appel.</span></div>
+      </div>
+    </section>
+
+    <section id="open">
+      <div class="stage"><span class="n">01</span><span class="t">15 sec</span></div>
+      <h2>El bidaya</h2>
+      <div class="say">«Aslema si [esm], m3ak Saif men Pointili. 3malt compte l [esm el 7anout] lbéreh, nkalmek bech nchouf ken kol chay mrigel. 3andek zouz d9aye9?»</div>
+      <p class="why">Esm el 7anout + sbab wadh7 + permission. Ma tebdech tchar7 el app.</p>
+    </section>
+
+    <section id="ask">
+      <div class="stage"><span class="n">02</span><span class="t">2–3 d9aye9</span></div>
+      <h2>Es2ella: sou2el wa7ed fi mara, w esma3 lel e5er</h2>
+      <ol class="q">
+        <li><div><b>«Chnoua 5allek ta3mel compte?»</b><span>Yjib el sbab bel kelma mte3ou. Ekteb el kelma hedhi.</span></div></li>
+        <li><div><b>«Tawa kifech ta3mel bech el 7rif yarja3lek?»</b><span>Carte karton? Walou? «Nkhalli lel 7rif 9ahwa bléch mara mara»?</span></div></li>
+        <li><div><b>«9addech men 7rif yjik fil nhar? 9addech menhom ta3rafhom b woujouhhom?»</b><span>Y7ess wa7dou elli barcha 7arifa yjiw mara w ma yarja3ouch.</span></div></li>
+        <li><div><b>«Ken 7rif yji mara fil jem3a w walla yji marten, chnoua yetbadel 3andek fil chhar?»</b><span>5allih ye7sebha howa. Ra9m sghir yfahmou wa7dou.</span></div></li>
+        <li><div><b>«Chnoua 7aja sghira ynajjem ya3tiha kadou bla ma ykhsser?»</b><span>Hedha el kadou elli bech tesst3mlou fil présentation.</span></div></li>
+      </ol>
+    </section>
+
+    <section id="state">
+      <div class="stage"><span class="n">03</span><span class="t">1 d9i9a</span></div>
+      <h2>Ra7 3la 7altou</h2>
+      <div class="tabs" role="tablist" aria-label="7alet el shop">
+        <button role="tab" id="t-hot" aria-selected="true" aria-controls="p-hot"><i style="background:var(--hot)"></i>Hot</button>
+        <button role="tab" id="t-warm" aria-selected="false" aria-controls="p-warm"><i style="background:var(--warn)"></i>Warm</button>
+        <button role="tab" id="t-cold" aria-selected="false" aria-controls="p-cold"><i style="background:var(--cold)"></i>Cold</button>
+      </div>
+      <div class="panel" role="tabpanel" id="p-hot" aria-labelledby="t-hot">
+        <div class="say">«Chét 3andek [X] 7rif deja. Kifech chéf el 7arifa? 3ajbethom?»</div>
+        <p class="why">Ba3d el jaweb, direct lel close (05).</p>
+      </div>
+      <div class="panel" role="tabpanel" id="p-warm" aria-labelledby="t-warm" hidden>
+        <div class="say">«Chnoua 7absek bech ta3ti awel tampon?»</div>
+        <div class="say">«7ott el code 3al counter lyoum, w awel 7rif ydkhol, 9oullou "sakani bech te5ou tampon". Ghodwa nkalmek nchouf kifech mchet.»</div>
+        <p class="why">7ell el mochkla fil appel, ma t5allihech l ba3d.</p>
+      </div>
+      <div class="panel" role="tabpanel" id="p-cold" aria-labelledby="t-cold" hidden>
+        <div class="say">«Ta7el el app tawa, nkammlou m3a ba3dhna f d9i9tin.»</div>
+        <p class="why">Rafa9ou étape b étape: el 3adad, el kadou, el code.</p>
+      </div>
+    </section>
+
+    <section id="pitch">
+      <div class="stage"><span class="n">04</span><span class="t">30 sec</span></div>
+      <h2>El présentation: 3 jomal, b kelmétou howa</h2>
+      <div class="say">«9oltli [el mochkla mte3ou]. Pointili t5alli el 7rif ychouf fi téléphonou "mazélek 2 w te5ou [el kadou mte3ou]". Ma ysobb 7atta application, w enti tchouf chkoun yji w 9addech mara.»</div>
+      <p class="why">Ma t7kich 3la features ma sa2elkch 3lihom.</p>
+    </section>
+
+    <section id="close">
+      <div class="stage"><span class="n">05</span><span class="t">el lahdha el mohemma</span></div>
+      <h2>El close: el soum, w sou2el b zouz ekhtiyarat</h2>
+      <div class="say">«El abonnement 120 dinar fil 3am, ya3ni 10 dinar fil chhar. A9al men 9ahwa fil jem3a. W ken tkhalles 9bal ma youfa el trial, tzidek 3 chhour. Tkhalles b D17 wala b virement?»</div>
+      <span class="hush">⏸ Oskot. Ma tzid 7atta kelma 7atta yjawbek.</span>
+      <h3>Ken 9al D17 / virement</h3>
+      <div class="say">«Behi, nab3athlek tawa el numéro 3al WhatsApp, w awel ma yousel el wasl n'activi lek el 3am fi nafs el nhar.»</div>
+    </section>
+
+    <section id="later">
+      <div class="stage"><span class="n">06</span><span class="t">ken 9al «mouch tawa»</span></div>
+      <h2>Nhar w sé3a, dima zouz ekhtiyarat</h2>
+      <div class="say">«Mafhoum. Nfouti 3lik ghodwa 10h wala 3chiya 5h, bech nwarrik kifech t7ott el code 3al counter?»</div>
+      <p class="why">3omrek «wa9tech yji 3lik?». El campagne loula 3tat 0 rendez-vous 5ater 7atta 7ad ma tsa2al 3la nhar w sé3a.</p>
+    </section>
+
+    <section id="objections">
+      <div class="stage"><span class="n">!</span><span class="t">enzel 3la elli 9alhoulek</span></div>
+      <h2>Objections: jaweb 9sir + sou2el</h2>
+      <div class="chips" id="chips"></div>
+      <div id="answer"></div>
+    </section>
+
+    <section id="rules">
+      <div class="stage"><span class="n">★</span></div>
+      <h2>El 9wa3ed</h2>
+      <ul class="rules">
+        <li><b>Sou2el wa7ed fi mara</b><span>W esma3 el jaweb lel e5er.</span></li>
+        <li><b>Kelmétou howa</b><span>El 7rif, el kadou, el 7anout. Mouch kelmét technique.</span></li>
+        <li><b>Ba3d el soum, oskot</b><span>Elli ye7ki loul ye5sser.</span></li>
+        <li><b>Ma t9oulech «hdiya» wala «bléch»</b><span>3al abonnement: «3 chhour zeyda» barka.</span></li>
+        <li><b>Flous wala nhar + sé3a</b><span>Kol appel youfa b wa7da menhom.</span></li>
+        <li><b>Ma tchar7ch el app kemla</b><span>Ken elli y7ell mochkltou howa.</span></li>
+      </ul>
+    </section>
+
+    <section id="after">
+      <div class="stage"><span class="n">✓</span><span class="t">ba3d kol appel</span></div>
+      <h2>Ba3d el appel</h2>
+      <ul class="check" id="check">
+        <li><label><input type="checkbox" id="c1">Ktebt fil note mta3 el shop (/admin/shops) chnoua 9al w el nhar elli jay.</label></li>
+        <li><label><input type="checkbox" id="c2">Ba3athtlou numéro D17 / el RIB 3al WhatsApp kif wa3adtou.</label></li>
+        <li><label><input type="checkbox" id="c3">7attit rappel 3al nhar w sé3a elli tfe9na 3lihom.</label></li>
+        <li><label><input type="checkbox" id="c4">Ken khallas: activit el 3am fil admin fi nafs el nhar.</label></li>
+      </ul>
+      <button class="reset" id="reset" type="button">Appel jdid (fassa5 el checks)</button>
+    </section>
+  </main>
+</div>
+
+<script>
+  // say-lines: a copy button on each
+  document.querySelectorAll(".say").forEach((el) => {
+    const b = document.createElement("button");
+    b.className = "copy"; b.type = "button"; b.textContent = "⧉"; b.setAttribute("aria-label", "Copy");
+    b.addEventListener("click", () => {
+      const text = el.firstChild.textContent.trim();
+      const done = () => { b.classList.add("done"); b.textContent = "✓"; setTimeout(() => { b.classList.remove("done"); b.textContent = "⧉"; }, 1400); };
+      if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(() => select(el));
+      else select(el);
+    });
+    el.appendChild(b);
+  });
+  function select(el) { const r = document.createRange(); r.selectNodeContents(el.firstChild); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+  // hot / warm / cold tabs
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  tabs.forEach((t) => t.addEventListener("click", () => {
+    tabs.forEach((x) => { const on = x === t; x.setAttribute("aria-selected", on); document.getElementById(x.getAttribute("aria-controls")).hidden = !on; });
+  }));
+
+  // objections
+  const OBJ = [
+    ["«Ghalia»", "«Mafhoum. 10 dinar fil chhar, ya3ni ken 7rif wa7ed zeyed yarja3 marten fil chhar, khlast. Chouf el trial: ken ma jebtlekch 7rif zeyed, ma tkhallesch.»"],
+    ["«Nkhammem w nkalmek»", "«Behi. Chnoua bidhabt t7eb tkhammem fih: el soum wala kifech te5dem?»", "El sbab el 7a9i9i yetla3, w jawbou 3lih."],
+    ["«El 7rif ma y7ebbch ysobb application»", "«Ma ysobb chay. Ysakani el code b camera mta3 téléphonou, w yetla3lou el carte direct.»"],
+    ["«Ma 3andich wa9t»", "«Ma t7tajch wa9t: el 7rif ysakani wa7dou. Enti t7ott el code 3al counter mara wa7da.»"],
+    ["«Lazem nchouf m3a cherik»", "«Behi. Nkalmkom ezouz m3a ba3dhkom? Ghodwa 10h wala 3chiya?»"],
+    ["«Ab3athli 3al WhatsApp»", "«Nab3athlek tawa. W nkalmek ghodwa 10h bech nchouf ken 3andek sou2el, behi?»"],
+    ["«3andi carte karton»", "«Hiya te5dem? 9addech men 7rif yensa el carte wala tdhi3lou?»", "5allih y9oulha howa."],
+  ];
+  const chips = document.getElementById("chips"), answer = document.getElementById("answer");
+  OBJ.forEach(([q, a, note], i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = q; b.setAttribute("aria-pressed", i === 0);
+    b.addEventListener("click", () => show(i));
+    chips.appendChild(b);
+  });
+  function show(i) {
+    [...chips.children].forEach((c, k) => c.setAttribute("aria-pressed", k === i));
+    const [, a, note] = OBJ[i];
+    answer.innerHTML = "";
+    const s = document.createElement("div"); s.className = "say"; s.textContent = a; answer.appendChild(s);
+    const b = document.createElement("button"); b.className = "copy"; b.type = "button"; b.textContent = "⧉"; b.setAttribute("aria-label", "Copy");
+    b.addEventListener("click", () => navigator.clipboard?.writeText(a).then(() => { b.textContent = "✓"; setTimeout(() => (b.textContent = "⧉"), 1400); }).catch(() => {}));
+    s.appendChild(b);
+    if (note) { const p = document.createElement("p"); p.className = "why"; p.textContent = note; answer.appendChild(p); }
+  }
+  show(0);
+
+  // the rail follows the section in view
+  const links = [...document.querySelectorAll("nav.rail a")];
+  const io = new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting) links.forEach((l) => l.classList.toggle("on", l.getAttribute("href") === "#" + e.target.id));
+  }), { rootMargin: "-30% 0px -60% 0px" });
+  document.querySelectorAll("main section").forEach((s) => io.observe(s));
+
+  // after-call checklist: kept in this browser only
+  const KEY = "pointili-call-check";
+  const boxes = [...document.querySelectorAll("#check input")];
+  try { const saved = JSON.parse(localStorage.getItem(KEY) || "{}"); boxes.forEach((b) => (b.checked = !!saved[b.id])); } catch {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(boxes.map((b) => [b.id, b.checked])))); } catch {} };
+  boxes.forEach((b) => b.addEventListener("change", save));
+  document.getElementById("reset").addEventListener("click", () => { boxes.forEach((b) => (b.checked = false)); save(); });
+</script>
