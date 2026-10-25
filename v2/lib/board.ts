@@ -1,5 +1,5 @@
 import { digits } from "@/lib/phone";
-import { agoSaid, customersN, daysN, hoursN, kindMatches, plain, stampsN } from "@/lib/t";
+import { agoSaid, counted, customersN, daysN, hoursN, kindMatches, plain, stampsN, t } from "@/lib/t";
 
 /*
  * The console's shops, as the board reads them (admin_board), and what reads
@@ -55,6 +55,50 @@ export type BoardShop = {
   note: string;
   stage: string;
   stage_at: string | null;
+  /** what the analysis reads besides the line's numbers (profileShop) */
+  x: BoardX;
+};
+
+/** admin_board's «x»: the customers' side, the owner's own, the counter's */
+export type BoardX = {
+  /** the hours (0–23, Tunis) the customers' real tampons fall in, and the hours the owner opens the app */
+  hours: number[] | null;
+  ohours: number[] | null;
+  /** the days with a real tampon, all told */
+  stamp_days: number;
+  /** real customers first seen this week, the week before, and the very first one */
+  new7: number;
+  prev7: number;
+  first_real: string | null;
+  /** customers two tampons or less from their gift, gifts waiting, customers who let the shop notify them */
+  near: number;
+  waiting: number;
+  notified: number;
+  /** the owner's visits to the pay page, the counter's code, the camera or the number, his customers, his numbers */
+  v_pay: number;
+  v_qr: number;
+  v_collect: number;
+  v_customers: number;
+  v_stats: number;
+  /** help opened, videos watched, form errors, taps in anger, taps on nothing */
+  help: number;
+  videos: number;
+  errors: number;
+  rage: number;
+  dead: number;
+  /** his first visit: where from, on what */
+  src: string | null;
+  camp: string | null;
+  os: string | null;
+  browser: string | null;
+  city: string | null;
+  /** the counter's codes: scanned, scanned with no account, refused in the last two weeks */
+  scans: number;
+  held: number;
+  refused: number;
+  /** how long the counter's code stayed on the screen, today and this week (ms) */
+  qr_today: number;
+  qr_week: number;
 };
 
 /**
@@ -269,6 +313,189 @@ export function readShop(s: ReadInput, now: number): Reading {
     default:
       return r;
   }
+}
+
+/*
+ * The shop, analysed (25 Oct 2026, the founder: «the analytics on each box can be a thousand times better:
+ * track more, and understand the client to the maximum»). Beside the reading's verdict, its shape:
+ *   - five meters, 0–100, each with what it rests on: how far he got (البداية), how much he uses it
+ *     (الخدمة), whether his customers come back (الحرفاء), how much he himself is in it (مولاه), and how
+ *     close he is to paying (الخلاص);
+ *   - the road from the sign-up to paying, eight steps, and where he stopped;
+ *   - when to call him: the hours he opens the app, away from the hours his customers come;
+ *   - what stands out, ranked: customers near their gift, the new ones week on week, the pace to the
+ *     trial's end, his place among the shops that work, the code left up on the counter, scans refused,
+ *     where he stumbled or looked for help, where he came from.
+ * admin_board's «x» feeds it; the board ranks the shops against each other (benchOf).
+ */
+export type MeterKey = "start" | "use" | "back" | "owner" | "pay";
+export type Meter = { key: MeterKey; label: string; score: number; say: string };
+export type InsightMark = "gift" | "users" | "up" | "down" | "clock" | "qr" | "alert" | "help" | "trophy" | "megaphone" | "phone" | "bell" | "list" | "chart";
+export type Insight = { mark: InsightMark; tone: "good" | "warn" | "info"; text: string; weight: number };
+export type Profile = { meters: Meter[]; steps: { label: string; done: boolean }[]; at: number; call: string | null; insights: Insight[] };
+/** a working shop's place by real customers: among all the shops that work, and among its own kind */
+export type Bench = { rank: number; of: number; kindRank: number; kindOf: number };
+
+export function benchOf(shops: Pick<BoardShop, "id" | "kind" | "real">[]): Map<string, Bench> {
+  const working = shops.filter((s) => s.real > 0);
+  const out = new Map<string, Bench>();
+  for (const s of working) {
+    const kin = working.filter((o) => o.kind === s.kind);
+    out.set(s.id, {
+      rank: 1 + working.filter((o) => o.real > s.real).length,
+      of: working.length,
+      kindRank: 1 + kin.filter((o) => o.real > s.real).length,
+      kindOf: kin.length,
+    });
+  }
+  return out;
+}
+
+const timesN = (n: number) => counted(n, "مرّة", "مرّتين", "مرّات", "مرّة");
+const lengthSaid = (ms: number) => {
+  const m = Math.round(ms / 60_000);
+  return m < 60 ? counted(Math.max(1, m), "دقيقة", "زوز دقايق", "دقايق", "دقيقة") : hoursN(Math.round(m / 60));
+};
+const SOURCES: Record<string, string> = { facebook: "فيسبوك", fb: "فيسبوك", instagram: "إنستغرام", ig: "إنستغرام", google: "Google", whatsapp: "واتساب", tiktok: "تيك توك" };
+/** the busiest window of `width` hours in a day's 24 (its start hour and how much was in it), between two hours */
+function busiest(hours: number[], width: number, from = 0, to = 24, skip: (h: number) => boolean = () => false): { h: number; n: number } | null {
+  let best: { h: number; n: number } | null = null;
+  for (let h = from; h + width <= to; h++) {
+    if (skip(h)) continue;
+    const n = hours.slice(h, h + width).reduce((a, b) => a + b, 0);
+    if (n > 0 && (!best || n > best.n)) best = { h, n };
+  }
+  return best;
+}
+const clock = (h: number) => `${String(h).padStart(2, "0")}:00`;
+
+export function profileShop(s: BoardShop, bench: Bench | null | undefined, now: number): Profile {
+  const x = s.x;
+  const since = (iso: string | null) => (iso ? (now - Date.parse(iso)) / DAY : Infinity);
+  const ago = (iso: string) => agoSaid(now - Date.parse(iso));
+  const age = since(s.created_at);
+  const active = (s.spark ?? []).filter((n) => n > 0).length;
+  const sinceSeen = since(s.seen_at);
+  const back = s.real ? Math.round((100 * s.returning) / s.real) : 0;
+  const cap = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+
+  // the road, from the sign-up to paying
+  const steps = [
+    { label: "حلّ", done: true },
+    { label: "الكارط", done: s.card },
+    { label: "الكود", done: x.v_qr > 0 || x.scans > 0 || s.stamps > 0 },
+    { label: "أوّل حريف", done: s.customers > 0 },
+    { label: "حريف حقيقي", done: s.real > 0 },
+    { label: "5 حرفاء", done: s.real >= 5 },
+    { label: "رجعولو", done: s.returning > 0 },
+    { label: "خلّص", done: s.paid },
+  ];
+  const WEIGHT = [0, 15, 10, 15, 20, 15, 10, 15];
+  const at = steps.findIndex((x) => !x.done);
+
+  // what he says about paying, and what his trial is doing
+  const intent: string[] = [];
+  let pay = 0;
+  if (s.paid) pay = 100;
+  else {
+    if (x.v_pay) {
+      pay += 25 + Math.min(x.v_pay, 5) * 5;
+      intent.push(`حلّ صفحة الخلاص ${timesN(x.v_pay)}`);
+    }
+    if (s.wa_at) {
+      pay += 30;
+      intent.push("حاول يكلّمنا");
+    }
+    if (s.stage === "promised" || s.stage === "waiting_pay") {
+      pay += 20;
+      intent.push(stageOf(s.stage).label);
+    }
+    if (s.real >= 3) pay += 10;
+    // a full meter means paid
+    pay = Math.min(pay, 90);
+  }
+  const meters: Meter[] = [
+    { key: "start", label: "البداية", score: cap(steps.reduce((a, st, i) => a + (st.done ? WEIGHT[i] : 0), 0)), say: at < 0 ? "كمّل الطريق الكل" : `وقف في: ${steps[at].label}` },
+    {
+      key: "use",
+      label: "الخدمة",
+      score: cap((active / 10) * 60 + (Math.min(s.week, 20) / 20) * 40),
+      say: active ? `خدم ${daysN(active)} من 14 · ${stampsN(s.week)} هالجمعة` : "حتى تامبون في 14 يوم",
+    },
+    {
+      key: "back",
+      label: "الحرفاء",
+      score: s.real ? cap((Math.min(s.real, 20) / 20) * 40 + (Math.min(back, 50) / 50) * 35 + (Math.min(x.near + s.gifts, 5) / 5) * 25) : 0,
+      say: s.real ? `${customersN(s.real)} · ${back}% رجعو${x.near ? ` · ${x.near} قراب للكادو` : ""}` : "حتى حريف حقيقي",
+    },
+    {
+      key: "owner",
+      label: "مولاه",
+      score: cap((Math.min(s.days, 7) / 7) * 35 + (sinceSeen <= 1 ? 25 : sinceSeen <= 3 ? 15 : sinceSeen <= 7 ? 8 : 0) + (s.app ? 15 : 0) + (s.push ? 10 : 0) + (x.v_customers + x.v_stats > 0 ? 15 : 0)),
+      say: `جا في ${daysN(Math.max(1, s.days))}${s.seen_at ? ` · آخر دخلة ${ago(s.seen_at)}` : ""}${s.app ? " · حطّ الأبليكاسيون" : ""}`,
+    },
+    { key: "pay", label: "الخلاص", score: cap(pay), say: s.paid ? "خالص" : intent.join(" · ") || "حتى إشارة باش يخلّص" },
+  ];
+
+  // when to call: the hours he opens the app (9:00–22:00), away from the hours his customers come
+  const busy = x.hours && x.hours.reduce((a, b) => a + b, 0) >= 4 ? busiest(x.hours, 3) : null;
+  const rush = (h: number) => !!x.hours && !!busy && x.hours.slice(h, h + 2).reduce((a, b) => a + b, 0) >= busy.n * 0.4;
+  const opens = x.ohours && x.ohours.reduce((a, b) => a + b, 0) >= 3 ? busiest(x.ohours, 2, 9, 22, rush) : null;
+  const call = opens ? `${clock(opens.h)}–${clock(opens.h + 2)}` : null;
+
+  const out: Insight[] = [];
+  const add = (weight: number, tone: Insight["tone"], mark: InsightMark, text: string | null | false | undefined) => {
+    if (text) out.push({ weight, tone, mark, text });
+  };
+  // the code left up on the counter: the shop using it as it should (counted since 25 Oct 2026)
+  add(76, "good", "qr", x.qr_today >= 15 * 60_000 && `الكود محلول على الكونتوار ${lengthSaid(x.qr_today)} اليوم`);
+  add(54, "good", "qr", x.qr_today < 15 * 60_000 && x.qr_week >= 30 * 60_000 && `الكود محلول على الكونتوار ${lengthSaid(x.qr_week)} هالجمعة`);
+  if (s.real) {
+    const fresh = x.new7 === 1 ? "حريف جديد" : x.new7 === 2 ? "زوز حرفاء جدد" : `+${x.new7} حرفاء جدد`;
+    add(64, x.new7 >= x.prev7 ? "good" : "warn", x.new7 >= x.prev7 ? "up" : "down", x.new7 > 0 && `${fresh} هالجمعة${x.prev7 ? ` (قبلها ${x.prev7})` : ""}`);
+    add(56, "warn", "down", x.new7 === 0 && age > 7 && "حتى حريف جديد هالجمعة");
+    add(58, "good", "gift", x.near > 0 && `${customersN(x.near)} قراب للكادو`);
+    // his place among the shops that work: said when it is worth saying (the top quarter, or first of his kind)
+    if (bench) {
+      add(50, "good", "trophy", bench.rank <= Math.max(3, Math.ceil(bench.of / 4)) && `رقم ${bench.rank} من ${bench.of} محل يخدم`);
+      add(46, "good", "trophy", bench.kindRank === 1 && bench.kindOf >= 3 && `الأوّل في «${t.kinds[s.kind] ?? s.kind}» (من ${bench.kindOf})`);
+    }
+    // the pace since the first real customer, carried to the trial's end
+    if (!s.paid && s.started && !s.shut && x.first_real) {
+      const left = (Date.parse(s.trial_end) - now) / DAY;
+      const rate = s.real / Math.max(1, since(x.first_real));
+      if (left >= 1) add(45, "info", "chart", `بهالرتم: ~${customersN(Math.round(s.real + rate * left))} قبل ما توفى التجربة`);
+    }
+    if (x.first_real) {
+      const h = (Date.parse(x.first_real) - Date.parse(s.created_at)) / 3_600_000;
+      add(22, "info", "clock", `أوّل حريف حقيقي ${h < 24 ? `بعد ${hoursN(Math.max(1, Math.round(h)))}` : `بعد ${daysN(Math.round(h / 24))}`} من الحلّان`);
+    }
+  }
+  add(48, "warn", "gift", x.waiting > 0 && `${x.waiting === 1 ? "كادو يستنّى" : `${x.waiting} كادوات يستنّاو`} ما تعطاش`);
+  add(57, "warn", "alert", x.refused >= 3 && `${x.refused} سكان ترفضو في جمعتين (الحريف يرجع قبل الوقت؟)`);
+  add(28, "info", "users", x.held >= 2 && `${customersN(x.held)} سكانيو بلا كونت`);
+  add(34, "info", "phone", s.stamps >= 5 && x.scans / s.stamps < 0.3 && "يعطي التامبون بالنومرو أكثر من الكود");
+  add(33, "good", "bell", x.notified >= 2 && `${customersN(x.notified)} خلّاو الإشعارات`);
+  add(40, "info", "clock", !!busy && `الحرفاء يجيو بين ${busy.h} و${busy.h + 3}`);
+  // the owner himself: where he stumbled, where he looked for help, what he follows
+  // (quick taps are a busy counter's way, not anger: they count only before the shop is under way)
+  const rage = s.real < 5 ? x.rage : 0;
+  const stumbled = [
+    x.errors ? `${counted(x.errors, "غلطة وحدة", "زوز غلطات", "غلطات", "غلطة")} في الفورمات` : null,
+    rage ? counted(rage, "ضغطة بالقلق", "زوز ضغطات بالقلق", "ضغطات بالقلق", "ضغطة بالقلق") : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  add(s.real < 3 ? 66 : 44, "warn", "alert", x.errors + rage >= 3 && `تعثّر: ${stumbled}`);
+  add(50, "info", "help", s.real < 3 && x.help + x.videos >= 3 && `يحاول يفهم: ${[x.help ? `حلّ المساعدة ${timesN(x.help)}` : null, x.videos ? `تفرّج ${timesN(x.videos)}` : null].filter(Boolean).join(" · ")}`);
+  add(38, "good", "list", x.v_customers >= 5 && `يتبّع حرفاءو (حلّ الليستة ${timesN(x.v_customers)})`);
+  add(30, "good", "chart", x.v_stats >= 3 && `يتفرّج في الأرقام (${timesN(x.v_stats)})`);
+  // where he came from, and on what
+  add(42, "warn", "phone", (x.browser === "Facebook" || x.browser === "Instagram") && !s.app && `حلّ من ${x.browser} وما حطّش الأبليكاسيون`);
+  add(24, "info", "megaphone", x.camp ? `جا من إشهار «${x.camp}»` : x.src && x.src !== "direct" && `جا من ${SOURCES[x.src.toLowerCase()] ?? x.src}`);
+  add(12, "info", "phone", !!x.os && [x.os, x.city].filter(Boolean).join(" · "));
+  out.sort((a, b) => b.weight - a.weight);
+  return { meters, steps, at, call, insights: out };
 }
 
 /** Does the shop answer what was typed: its name, its owner, the number, a word of the note, its follow-up, its kind. */

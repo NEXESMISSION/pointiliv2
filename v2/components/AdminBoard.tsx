@@ -3,12 +3,59 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, BadgeCheck, Bell, Check, ChevronDown, CreditCard, Flame, ListFilter, MessageCircle, Moon, Pause, Phone, Search, Smartphone, TrendingDown, TrendingUp, Wallet, X, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  BadgeCheck,
+  Bell,
+  ChartLine,
+  Check,
+  ChevronDown,
+  CircleQuestionMark,
+  Clock,
+  CreditCard,
+  Flame,
+  Gift,
+  List,
+  ListFilter,
+  Megaphone,
+  MessageCircle,
+  Moon,
+  Pause,
+  Phone,
+  QrCode,
+  Search,
+  Smartphone,
+  TrendingDown,
+  TrendingUp,
+  Trophy,
+  Users,
+  Wallet,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { adminShopNote, adminShopStage } from "@/app/admin/actions";
 import { AdminShopMore } from "@/components/AdminShopMore";
 import { ShopMark } from "@/components/ShopMark";
 import { digits, spaced } from "@/lib/phone";
-import { hit, lastMove, PILL, readShop, STAGE_GROUPS, STAGE_LOOK, stageOf, standing, type BoardShop, type Reading, type ReadMark, type ReadTone } from "@/lib/board";
+import {
+  benchOf,
+  hit,
+  lastMove,
+  PILL,
+  profileShop,
+  readShop,
+  STAGE_GROUPS,
+  STAGE_LOOK,
+  stageOf,
+  standing,
+  type Bench,
+  type BoardShop,
+  type InsightMark,
+  type Profile,
+  type Reading,
+  type ReadMark,
+  type ReadTone,
+} from "@/lib/board";
 import { agoSaid, counted, daysN, hoursN, stampsN } from "@/lib/t";
 
 const DAY = 86_400_000;
@@ -81,6 +128,8 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
   const [picked, setPicked] = useState<Record<string, { stage: string; at: string | null }>>({});
   const [held, setHeld] = useState<string[]>([]);
   const all = useMemo(() => shops.map((s) => (picked[s.id] ? { ...s, stage: picked[s.id].stage, stage_at: picked[s.id].at } : s)), [shops, picked]);
+  // each working shop's place among the others, for the analysis on its line
+  const bench = useMemo(() => benchOf(shops), [shops]);
   const [limit, setLimit] = useState(() => {
     // a shop opened from a Telegram alert: drawn even when it is far down the list
     const sorted = [...shops].sort(byMove);
@@ -203,7 +252,7 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
       <div className="mt-3 space-y-3">
         {list.length === 0 && <p className="rounded-[1.125rem] bg-surface px-4 py-10 text-center text-[0.9375rem] text-muted ring-1 ring-line/70">ما لقينا حتى محل</p>}
         {list.slice(0, limit).map((s) => (
-          <ShopLine key={s.id} s={s} now={now} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} onPicked={(key, at) => pickedOne(s.id, key, at)} />
+          <ShopLine key={s.id} s={s} now={now} bench={bench.get(s.id)} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} onPicked={(key, at) => pickedOne(s.id, key, at)} />
         ))}
         {list.length > limit && <div ref={end} className="h-10" aria-hidden />}
       </div>
@@ -212,7 +261,8 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
 }
 
 /** One shop: who and where it stands, its numbers and its last 14 days, the owner's signs, the founder's stage and line, and the call. */
-function ShopLine({ s, now, open, onToggle, onPicked }: { s: BoardShop; now: number; open: boolean; onToggle: () => void; onPicked: (stage: string, at: string | null) => void }) {
+function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; now: number; bench?: Bench; open: boolean; onToggle: () => void; onPicked: (stage: string, at: string | null) => void }) {
+  const p = profileShop(s, bench, now);
   const st = standing(s, now);
   const d = digits(s.owner.phone ?? "");
   const phone = /^\d{8}$/.test(d) ? d : null;
@@ -240,6 +290,8 @@ function ShopLine({ s, now, open, onToggle, onPicked }: { s: BoardShop; now: num
 
       {/* what the numbers say about him, and what to do now: the first thing read on the line */}
       <ShopReading r={readShop(s, now)} className="mt-2.5" />
+      {/* and its shape: five meters, the road to paying, what stands out */}
+      <ShopProfile p={p} />
 
       {/* the owner himself: in the app now or when last, on how many days, for how long */}
       <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[0.8125rem] text-body">
@@ -281,6 +333,15 @@ function ShopLine({ s, now, open, onToggle, onPicked }: { s: BoardShop; now: num
         <ShopNote id={s.id} note={s.note} className="min-w-[8.5rem] flex-1" />
       </div>
 
+      {/* when he opens the app, away from his customers' hours: the time to call */}
+      {p.call && !s.paid && (
+        <p className="mt-2.5 flex items-center gap-1.5 text-[0.75rem] text-muted">
+          <Clock className="size-3.5 shrink-0" /> أحسن وقت تكلّمو:{" "}
+          <bdi dir="ltr" className="num font-bold text-ink">
+            {p.call}
+          </bdi>
+        </p>
+      )}
       <div className="mt-2.5 grid grid-cols-[1fr_1fr_auto] gap-2">
         {phone ? (
           <a href={`tel:+216${phone}`} aria-label={`عيّط ${spaced(phone)}`} className="press flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-brand-soft text-[0.875rem] font-bold text-brand">
@@ -311,6 +372,94 @@ function ShopLine({ s, now, open, onToggle, onPicked }: { s: BoardShop; now: num
 
       {open && <AdminShopMore shop={s} now={now} />}
     </article>
+  );
+}
+
+const MARK: Record<InsightMark, LucideIcon> = {
+  gift: Gift,
+  users: Users,
+  up: TrendingUp,
+  down: TrendingDown,
+  clock: Clock,
+  qr: QrCode,
+  alert: AlertTriangle,
+  help: CircleQuestionMark,
+  trophy: Trophy,
+  megaphone: Megaphone,
+  phone: Smartphone,
+  bell: Bell,
+  list: List,
+  chart: ChartLine,
+};
+const INSIGHT_TONE = { good: "text-mint", warn: "text-[#B8480E]", info: "text-faint" } as const;
+const meterTone = (n: number) => (n >= 67 ? "bg-mint" : n >= 34 ? "bg-[#E2A50B]" : n > 0 ? "bg-coral" : "bg-line");
+
+/**
+ * The shop's shape (lib/board profileShop): five meters with what each rests
+ * on, the road from the sign-up to paying with where it stopped, and what
+ * stands out, most telling first — three on the board's line (`top`), all of
+ * them with each meter's reason on the shop's own page.
+ */
+export function ShopProfile({ p, top = 3, className = "mt-2.5" }: { p: Profile; top?: number; className?: string }) {
+  const full = top > 3;
+  return (
+    <div data-profile className={className}>
+      <div className="grid grid-cols-5 gap-1.5">
+        {p.meters.map((m) => (
+          <div key={m.key} title={m.say} data-meter={m.key} className="min-w-0 rounded-[0.625rem] bg-canvas/70 px-1.5 py-1.5">
+            {/* the name on its own line (a phone's fifth of a line holds it whole), the score beside its bar */}
+            <span className="block truncate text-[0.6875rem] font-semibold leading-tight text-muted">{m.label}</span>
+            <div className="mt-1 flex items-center gap-1">
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
+                <div className={`h-full rounded-full ${meterTone(m.score)}`} style={{ width: `${m.score}%` }} />
+              </div>
+              <b className="num shrink-0 text-[0.75rem] leading-none text-ink">{m.score}</b>
+            </div>
+            {full && <p className="mt-1.5 text-[0.75rem] leading-snug text-body">{m.say}</p>}
+          </div>
+        ))}
+      </div>
+      {/* the road: eight steps from the sign-up to paying, filled from the start */}
+      <div className="mt-2 flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 gap-0.5" role="img" aria-label={p.at < 0 ? "كمّل الطريق الكل" : `وقف في: ${p.steps[p.at].label}`}>
+          {p.steps.map((st, i) => (
+            <span key={st.label} title={st.label} className={`h-1.5 flex-1 rounded-full ${st.done ? "bg-brand" : i === p.at ? "bg-brand/30" : "bg-line"}`} />
+          ))}
+        </div>
+        <span className="shrink-0 text-[0.75rem] text-muted">
+          {p.at < 0 ? (
+            "كمّل الطريق الكل"
+          ) : (
+            <>
+              وقف في: <b className="text-ink">{p.steps[p.at].label}</b>
+            </>
+          )}
+        </span>
+      </div>
+      {full && (
+        <ol className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[0.75rem]">
+          {p.steps.map((st) => (
+            <li key={st.label} className={`inline-flex items-center gap-1 ${st.done ? "text-ink" : "text-faint"}`}>
+              {st.done ? <Check className="size-3 text-brand" strokeWidth={3} /> : <span className="size-1.5 rounded-full bg-line" />}
+              {st.label}
+            </li>
+          ))}
+        </ol>
+      )}
+      {p.insights.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {p.insights.slice(0, top).map((i) => {
+            const Mark = MARK[i.mark];
+            return (
+              <li key={i.text} className="flex items-start gap-1.5 text-[0.8125rem] leading-snug text-body">
+                <Mark className={`mt-0.5 size-3.5 shrink-0 ${INSIGHT_TONE[i.tone]}`} aria-hidden />
+                <span className="min-w-0">{i.text}</span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 

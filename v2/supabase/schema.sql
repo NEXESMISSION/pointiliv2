@@ -378,6 +378,9 @@ create index if not exists visits_here_idx on public.visits (here_at desc) where
 -- browser and its city — what the console shows for each phone an owner is signed
 -- in on — come from the visits made under that session
 alter table public.visits add column if not exists session_id uuid;
+-- how long the counter's code stayed on the screen (/shop/qr, looked at or left alone on the till), counted
+-- from the presence words (here()): a shop that keeps its code up is a shop using it (since 25 Oct 2026)
+alter table public.visits add column if not exists qr_ms int not null default 0;
 create index if not exists visits_session_idx on public.visits (session_id, started_at desc) where session_id is not null;
 
 create table if not exists public.views (
@@ -2867,6 +2870,9 @@ end $$;
 create or replace function public.here(p_visit uuid, p_state text, p_path text, p_user uuid) returns void
 language sql security definer set search_path = '' as $$
   update public.visits set
+    -- the code on the counter's screen since the last word (one every ~25 s; a longer silence counts a minute at most)
+    qr_ms = qr_ms + case when here_state in ('here', 'idle') and here_path like '/shop/qr%' and here_at > now() - interval '75 seconds'
+                         then least((extract(epoch from now() - here_at) * 1000)::int, 60000) else 0 end,
     here_since = case when p_state <> 'away' and (here_state is null or here_state = 'away' or here_at < now() - interval '75 seconds') then now() else here_since end,
     here_at = now(),
     here_state = p_state,
@@ -3682,7 +3688,9 @@ end $$;
 -- the app on the phone, the notifications) and the founder's own line about it
 -- (crm.note) — in one pass over the tables, grouped, never a query per shop. The
 -- rest of a shop opens on demand (admin_board_shop).
-create or replace function public.admin_board() returns jsonb
+-- p_shop: that shop alone, the same way (its own page reads it like its line on the board)
+drop function if exists public.admin_board();
+create or replace function public.admin_board(p_shop uuid default null) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare v_all boolean; v_today date := (now() at time zone 'Africa/Tunis')::date;
 begin
@@ -3694,7 +3702,7 @@ begin
       join public.robots r on r.phone in (u.raw_app_meta_data ->> 'phone', '+' || split_part(u.email, '@', 1))
     ), rs as (
       select s.id, s.owner_id, s.created_at from public.shops s join public.people p on p.id = s.owner_id
-      where v_all or (s.owner_id not in (select id from robot) and not (p.is_admin or p.is_tester))
+      where (p_shop is null or s.id = p_shop) and (v_all or (s.owner_id not in (select id from robot) and not (p.is_admin or p.is_tester)))
     ), mm as (
       -- every tampon to a customer (not the owner, not a test, not a robot), its day in Tunis, and whether it
       -- came more than an hour after the opening (before that: the owner trying it, not the shop in use)
@@ -3712,7 +3720,8 @@ begin
              count(*) filter (where late and created_at > now() - interval '7 days') as week,
              count(distinct user_id) as customers,
              count(distinct user_id) filter (where late) as real,
-             max(created_at) as last_at
+             max(created_at) as last_at,
+             count(distinct day) filter (where late) as stamp_days
       from mm group by shop_id
     ), back as (
       -- customers who came back: tampons on two days or more
@@ -3730,23 +3739,81 @@ begin
       from public.moments m join rs on rs.id = m.shop_id join public.cards c on c.id = m.card_id join public.people cp on cp.id = c.user_id
       where m.kind = 'gift' and m.given_at is not null and c.user_id <> rs.owner_id and not (cp.is_admin or cp.is_tester)
       group by m.shop_id
+    ), hr as (
+      -- the hours the customers come (real tampons, Tunis time): when the shop is busy
+      select a.shop_id, jsonb_agg(coalesce(hh.n, 0) order by g.i) as hours
+      from (select distinct shop_id from mm where late) a
+      cross join generate_series(0, 23) g(i)
+      left join (select shop_id, extract(hour from created_at at time zone 'Africa/Tunis')::int as hour, count(*) as n
+                 from mm where late group by 1, 2) hh on hh.shop_id = a.shop_id and hh.hour = g.i
+      group by a.shop_id
+    ), nw as (
+      -- each real customer's first real tampon: the new ones this week and the week before, and the very first
+      select shop_id,
+             count(*) filter (where first > now() - interval '7 days') as new7,
+             count(*) filter (where first <= now() - interval '7 days' and first > now() - interval '14 days') as prev7,
+             min(first) as first_real
+      from (select shop_id, user_id, min(created_at) as first from mm where late group by shop_id, user_id) x
+      group by shop_id
+    ), cd as (
+      -- the cards: customers two tampons or less from their gift, gifts waiting, customers the shop can notify
+      select c.shop_id,
+             count(*) filter (where coalesce(c.goal, s2.goal) - c.stamps between 1 and 2 and not public.waits(c.id)) as near,
+             count(*) filter (where public.waits(c.id)) as waiting,
+             count(*) filter (where exists (select 1 from public.push_subs ps where ps.user_id = c.user_id)) as notified
+      from public.cards c join rs on rs.id = c.shop_id join public.shops s2 on s2.id = c.shop_id
+      where c.user_id <> rs.owner_id and not s2.store_on
+      group by c.shop_id
     ), ov as (
       -- the owner: last seen, on how many days, on the site right now
       select v.user_id, greatest(max(v.last_at), max(v.here_at)) as seen_at,
              count(distinct (v.started_at at time zone 'Africa/Tunis')::date) as days,
-             bool_or(v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds') as online
+             bool_or(v.here_state in ('here', 'idle') and v.here_at > now() - interval '75 seconds') as online,
+             sum(v.qr_ms) filter (where v.started_at >= public.tunis_today()) as qr_today,
+             sum(v.qr_ms) filter (where v.started_at > now() - interval '7 days') as qr_week
       from public.visits v where v.user_id in (select owner_id from rs) group by v.user_id
     ), ow as (
       -- the owner's time in the app, and the pay page opened last
-      select v.user_id, sum(w.active_ms) as ms, max(w.entered_at) filter (where w.route = '/shop/pay') as pay_seen
+      select v.user_id, sum(w.active_ms) as ms, max(w.entered_at) filter (where w.route = '/shop/pay') as pay_seen,
+             -- the screens he went to, how many times
+             count(*) filter (where w.route = '/shop/pay') as v_pay,
+             count(*) filter (where w.route = '/shop/qr') as v_qr,
+             count(*) filter (where w.route like '/shop/collect%') as v_collect,
+             count(*) filter (where w.route like '/shop/customers%') as v_customers,
+             count(*) filter (where w.route like '/shop/stats%') as v_stats
       from public.visits v join public.views w on w.visit_id = v.id
       where v.user_id in (select owner_id from rs) group by v.user_id
     ), og as (
       -- what the owner tapped: a call or a WhatsApp to pay (the trial's too), Pointili put on the phone
       select v.user_id, max(g.at) filter (where g.name in ('pay', 'trial_call')) as wa_at,
-             bool_or(g.name in ('pwa_installed', 'pwa_accepted', 'pwa_open')) as app
+             bool_or(g.name in ('pwa_installed', 'pwa_accepted', 'pwa_open')) as app,
+             count(*) filter (where g.name = 'help_open') as help,
+             count(*) filter (where g.name in ('video', 'clip', 'tryit')) as videos,
+             count(*) filter (where g.name = 'form_error') as errors
       from public.visits v join public.signals g on g.visit_id = v.id
       where v.user_id in (select owner_id from rs) group by v.user_id
+    ), tp as (
+      -- taps that did nothing (dead) and taps in anger (rage): where the app lost him
+      select v.user_id, count(*) filter (where t.rage) as rage, count(*) filter (where t.dead) as dead
+      from public.visits v join public.taps t on t.visit_id = v.id
+      where v.user_id in (select owner_id from rs) group by v.user_id
+    ), oh as (
+      -- the hours he opens the app (Tunis time): when he looks at his phone
+      select a.user_id, jsonb_agg(coalesce(x.n, 0) order by g.i) as ohours
+      from (select distinct user_id from public.visits where user_id in (select owner_id from rs)) a
+      cross join generate_series(0, 23) g(i)
+      left join (select user_id, extract(hour from started_at at time zone 'Africa/Tunis')::int as hour, count(*) as n
+                 from public.visits where user_id in (select owner_id from rs) group by 1, 2) x on x.user_id = a.user_id and x.hour = g.i
+      group by a.user_id
+    ), fv as (
+      -- his first visit: where he came from, on what phone
+      select distinct on (v.user_id) v.user_id, v.source, v.campaign, v.os, v.browser, v.city
+      from public.visits v where v.user_id in (select owner_id from rs) order by v.user_id, v.started_at
+    ), cc as (
+      -- the counter's codes: scanned, scanned with no account, refused (the last two weeks)
+      select k.shop_id, count(*) filter (where k.used_at is not null) as scans, count(*) filter (where k.held_hash is not null) as held,
+             count(*) filter (where k.tried_at > now() - interval '14 days') as refused
+      from public.codes k join rs on rs.id = k.shop_id group by k.shop_id
     )
     select jsonb_agg(jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'card', s.goal is not null, 'goal', s.goal,
@@ -3760,7 +3827,19 @@ begin
       'seen_at', ov.seen_at, 'days', coalesce(ov.days, 0), 'online', coalesce(ov.online, false),
       'ms', coalesce(ow.ms, 0), 'pay_seen', ow.pay_seen, 'wa_at', og.wa_at, 'app', coalesce(og.app, false),
       'push', exists (select 1 from public.push_subs ps where ps.user_id = s.owner_id),
-      'note', coalesce(cn.note, ''), 'stage', coalesce(cn.stage, 'new'), 'stage_at', cn.stage_at) order by s.created_at desc)
+      'note', coalesce(cn.note, ''), 'stage', coalesce(cn.stage, 'new'), 'stage_at', cn.stage_at,
+      -- what the board's analysis reads (lib/board profileShop): the customers' side, the owner's, the counter's
+      'x', jsonb_build_object(
+        'hours', hr.hours, 'ohours', oh.ohours, 'stamp_days', coalesce(st.stamp_days, 0),
+        'new7', coalesce(nw.new7, 0), 'prev7', coalesce(nw.prev7, 0), 'first_real', nw.first_real,
+        'near', coalesce(cd.near, 0), 'waiting', coalesce(cd.waiting, 0), 'notified', coalesce(cd.notified, 0),
+        'v_pay', coalesce(ow.v_pay, 0), 'v_qr', coalesce(ow.v_qr, 0), 'v_collect', coalesce(ow.v_collect, 0),
+        'v_customers', coalesce(ow.v_customers, 0), 'v_stats', coalesce(ow.v_stats, 0),
+        'help', coalesce(og.help, 0), 'videos', coalesce(og.videos, 0), 'errors', coalesce(og.errors, 0),
+        'rage', coalesce(tp.rage, 0), 'dead', coalesce(tp.dead, 0),
+        'src', fv.source, 'camp', fv.campaign, 'os', fv.os, 'browser', fv.browser, 'city', fv.city,
+        'scans', coalesce(cc.scans, 0), 'held', coalesce(cc.held, 0), 'refused', coalesce(cc.refused, 0),
+        'qr_today', coalesce(ov.qr_today, 0), 'qr_week', coalesce(ov.qr_week, 0))) order by s.created_at desc)
     from public.shops s
     join rs on rs.id = s.id
     join public.people p on p.id = s.owner_id
@@ -3771,6 +3850,13 @@ begin
     left join ov on ov.user_id = s.owner_id
     left join ow on ow.user_id = s.owner_id
     left join og on og.user_id = s.owner_id
+    left join hr on hr.shop_id = s.id
+    left join nw on nw.shop_id = s.id
+    left join cd on cd.shop_id = s.id
+    left join tp on tp.user_id = s.owner_id
+    left join oh on oh.user_id = s.owner_id
+    left join fv on fv.user_id = s.owner_id
+    left join cc on cc.shop_id = s.id
     left join public.crm cn on cn.shop_id = s.id
   ), '[]'::jsonb);
 end $$;
@@ -3994,7 +4080,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.form_open(text), public.form_fill(text, jsonb), public.my_wheel(), public.wheel_save(jsonb), public.spin(bigint), public.spin_at_counter(bigint), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
   public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
-  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(), public.admin_board_shop(uuid), public.admin_study(uuid),
+  public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(uuid), public.admin_board_shop(uuid), public.admin_study(uuid),
   public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),

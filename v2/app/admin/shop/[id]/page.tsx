@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowRight, Check, Gift, History, MessageCircle, Moon, Phone, Smartphone, Stamp, X } from "lucide-react";
-import { Face, ShopNote, ShopReading, ShopStage } from "@/components/AdminBoard";
+import { Face, ShopNote, ShopProfile, ShopReading, ShopStage } from "@/components/AdminBoard";
 import { AdminShopMore } from "@/components/AdminShopMore";
-import { PILL, readShop, STAGE_LOOK, stageOf, standing, type AccessShop } from "@/lib/board";
+import { PILL, profileShop, readShop, STAGE_LOOK, stageOf, standing, type AccessShop, type BoardShop } from "@/lib/board";
 import { digits, spaced } from "@/lib/phone";
 import { FAILS, screenName } from "@/lib/screens";
 import { call } from "@/lib/supabase";
@@ -161,7 +161,9 @@ function Fact({ good, warn, label, value }: { good?: boolean; warn?: boolean; la
 export default async function StudyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const st = await call<Study | null>("admin_study", { p_id: id });
+  // the page's own numbers, and the shop as the board reads it (its line: the same reading, the same analysis)
+  const [st, board] = await Promise.all([call<Study | null>("admin_study", { p_id: id }), call<BoardShop[]>("admin_board", { p_shop: id })]);
+  const line = board?.[0] ?? null;
   if (!st) notFound();
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const now = Date.now();
@@ -170,8 +172,10 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
   const d = digits(owner.phone ?? "");
   const phone = /^\d{8}$/.test(d) ? d : null;
   const pill = standing({ ...shop, card: shop.goal !== null }, now);
-  // the same reading as the board's line, from this page's numbers (its last 14 days for the board's spark)
-  const reading = readShop(
+  // the board's own line read the same way; a shop the board does not show (a test's) from this page's numbers
+  const reading = line
+    ? readShop(line, now)
+    : readShop(
     {
       ...shop,
       card: shop.goal !== null,
@@ -191,6 +195,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
     },
     now,
   );
+  const profile = line ? profileShop(line, null, now) : null;
   const access: AccessShop = { id: shop.id, name: shop.name, owner: { name: owner.name, phone: owner.phone }, paid: shop.paid, paid_until: shop.paid_until, shut: shop.shut, started: shop.started, trial_end: shop.trial_end };
   const night = (() => {
     const h = hourOf(shop.created_at);
@@ -326,6 +331,28 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
         </section>
+
+        {/* ── the analysis: his shape in five meters, the road to paying, everything that stands out ── */}
+        {profile && (
+          <Part
+            title="التحليل"
+            hint={
+              profile.call ? (
+                <>
+                  أحسن وقت تكلّمو:{" "}
+                  <bdi dir="ltr" className="num font-bold text-ink">
+                    {profile.call}
+                  </bdi>
+                </>
+              ) : (
+                "شكلو، الطريق متاعو، وشنوّة يبان"
+              )
+            }
+            className="lg:col-span-8"
+          >
+            <ShopProfile p={profile} top={20} className="" />
+          </Part>
+        )}
 
         {/* ── what to judge him by: facts, each good or not ── */}
         <Part title="باش تحكم عليه" hint="الحاجات اللي تقول يخدم بيها بالحق ولا لا" className="lg:col-span-4 lg:row-span-2">

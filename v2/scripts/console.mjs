@@ -289,6 +289,11 @@ try {
     const read = (await line("[data-reading]").textContent().catch(() => "")) ?? "";
     if (!read.includes("←")) bad(`the line has no reading: «${read}»`);
     else ok(`the line's reading: «${read.replace(/\s+/g, " ").slice(0, 90)}»`);
+    // and its shape: five meters, the road, what stands out
+    const meters = await line("[data-profile] [data-meter]").count();
+    const said = ((await line("[data-profile] ul").textContent().catch(() => "")) ?? "").replace(/\s+/g, " ");
+    if (meters !== 5) bad(`the line's analysis has ${meters} meters`);
+    else ok(`the line's analysis: 5 meters, the road, «${said.slice(0, 80)}»`);
 
     // the shop opened: its card, what happened, and what is done to it
     await line("button[aria-expanded]").click();
@@ -334,6 +339,7 @@ try {
     for (const part of ["آخر 30 يوم", "الطريق متاعو", "شنوّة عمل في الأبليكاسيون", "كل مرّة دخل", "الحرفاء", "الكارط", "الأبونمان والخيارات", "التليفونات اللي داخل منهم"])
       if (!(await page.getByRole("heading", { name: part }).count())) bad(`the shop's page has no «${part}»`);
     if (!(await page.locator("[data-reading]").count())) bad("the shop's page has no reading");
+    if (!(await page.getByRole("heading", { name: "التحليل" }).count()) || (await page.locator("[data-profile] [data-meter]").count()) !== 5) bad("the shop's page has no analysis");
     // its stage there too, and the stages it went through (picked on the board: waiting for payment, then called)
     if ((await page.getByRole("combobox", { name: "وين وصلت معاه" }).inputValue()) !== "called") bad("the shop's page does not have its stage");
     const went = page.getByRole("list", { name: "المراحل اللي فات بيها" });
