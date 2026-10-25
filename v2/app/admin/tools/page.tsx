@@ -92,9 +92,8 @@ export default async function AdminTools({ searchParams }: { searchParams: Promi
                 <bdi dir="ltr" className={`num w-[4.75rem] shrink-0 text-start font-bold ${l.side === "in" ? "text-mint" : "text-coral"}`}>
                   {`${l.side === "in" ? "+" : "−"}${dt(l.amount)}`}
                 </bdi>
-                <span className="min-w-0 flex-1 truncate text-ink">
-                  <bdi>{l.what}</bdi>
-                </span>
+                {/* the line itself cut short: a long name ends in «…» inside its own box, never past the screen */}
+                <bdi className="min-w-0 flex-1 truncate text-ink">{l.what}</bdi>
                 <span className="shrink-0 text-[0.75rem] text-muted">{day(l.at)}</span>
                 {l.hand !== null && <AdminBookDelete id={l.hand} />}
               </li>

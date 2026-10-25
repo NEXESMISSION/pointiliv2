@@ -14,8 +14,10 @@ import { agoSaid, counted, daysN, hoursN, stampsN } from "@/lib/t";
 const DAY = 86_400_000;
 const PAGE = 24;
 
-type Filter = "last" | "new" | "live" | "over" | "paid" | "all";
+type Filter = "unpaid" | "last" | "new" | "live" | "over" | "paid" | "all";
 const FILTERS: { id: Filter; label: string; count: boolean; test: (s: BoardShop, now: number) => boolean }[] = [
+  // the board opens here (the founder, 25 Oct 2026: «the same آخر من دخل, but without the paid»)
+  { id: "unpaid", label: "آخر من دخل · ما خلّصوش", count: true, test: (s) => !s.paid },
   { id: "last", label: "آخر من دخل", count: false, test: () => true },
   { id: "new", label: "جداد", count: true, test: (s, now) => now - Date.parse(s.created_at) < 3 * DAY },
   { id: "live", label: "يخدمو", count: true, test: (s) => s.week > 0 },
@@ -23,9 +25,11 @@ const FILTERS: { id: Filter; label: string; count: boolean; test: (s: BoardShop,
   { id: "paid", label: "خالصين", count: true, test: (s) => s.paid },
   { id: "all", label: "الكل", count: true, test: () => true },
 ];
-/** the first one: whoever moved last on top; the working ones by their last tampon, the trials over by the latest to end; the rest newest first */
+/** the first two: whoever moved last on top; the working ones by their last tampon, the trials over by the latest to end; the rest newest first */
+const byMove = (a: BoardShop, b: BoardShop) => (lastMove(b) ?? "").localeCompare(lastMove(a) ?? "");
 const SORT: Partial<Record<Filter, (a: BoardShop, b: BoardShop) => number>> = {
-  last: (a, b) => (lastMove(b) ?? "").localeCompare(lastMove(a) ?? ""),
+  unpaid: byMove,
+  last: byMove,
   live: (a, b) => (b.last_at ?? "").localeCompare(a.last_at ?? ""),
   over: (a, b) => b.trial_end.localeCompare(a.trial_end),
 };
@@ -66,7 +70,8 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
     const id = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
-  const [filter, setFilter] = useState<Filter>("last");
+  // a paid shop opened from an alert (?shop=) is not in the first list: then the board opens on all of them
+  const [filter, setFilter] = useState<Filter>(() => (openFirst && shops.find((s) => s.id === openFirst)?.paid ? "last" : "unpaid"));
   const [stage, setStage] = useState("all");
   const [q, setQ] = useState("");
   // the stages picked on this board since it was drawn, and the lines picked while the list was narrowed to
@@ -76,7 +81,7 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
   const all = useMemo(() => shops.map((s) => (picked[s.id] ? { ...s, stage: picked[s.id].stage, stage_at: picked[s.id].at } : s)), [shops, picked]);
   const [limit, setLimit] = useState(() => {
     // a shop opened from a Telegram alert: drawn even when it is far down the list
-    const sorted = [...shops].sort(SORT.last);
+    const sorted = [...shops].sort(byMove);
     const at = openFirst ? sorted.findIndex((s) => s.id === openFirst) : -1;
     return Math.max(PAGE, at + 10);
   });

@@ -197,14 +197,22 @@ try {
     console.log(`  · the board drawn in ${speed.ms} ms (${speed.kb} kB)`);
     await look(page, `${at}-01-board`);
 
-    // the board opens on «آخر من دخل»: whoever moved last on top
-    if ((await page.getByRole("tab", { name: "آخر من دخل" }).getAttribute("aria-selected")) !== "true") bad("the board does not open on «آخر من دخل»");
+    // the board opens on «آخر من دخل · ما خلّصوش»: whoever moved last on top, and not one paid shop
+    const unpaid = page.getByRole("tab", { name: /^آخر من دخل · ما خلّصوش/ });
+    if ((await unpaid.getAttribute("aria-selected")) !== "true") bad("the board does not open on «آخر من دخل · ما خلّصوش»");
     const moved = await page.locator("article[data-shop]").evaluateAll((els) => els.slice(0, 12).map((e) => e.getAttribute("data-moved") ?? ""));
-    if (moved.some((m, i) => i > 0 && m > moved[i - 1])) bad(`«آخر من دخل» is not in order: ${moved.join(" ")}`);
-    else ok("«آخر من دخل» first, whoever moved last on top");
+    if (moved.some((m, i) => i > 0 && m > moved[i - 1])) bad(`«آخر من دخل · ما خلّصوش» is not in order: ${moved.join(" ")}`);
+    else if (await page.locator("article[data-shop]", { hasText: "خالص حتى" }).count()) bad("a paid shop under «ما خلّصوش»");
+    else ok("«آخر من دخل · ما خلّصوش» first: whoever moved last on top, no paid shop");
+    // «آخر من دخل» itself: the same order, the paid ones too
+    await page.getByRole("tab", { name: "آخر من دخل", exact: true }).click();
+    await page.waitForTimeout(150);
+    const movedAll = await page.locator("article[data-shop]").evaluateAll((els) => els.slice(0, 12).map((e) => e.getAttribute("data-moved") ?? ""));
+    if (movedAll.some((m, i) => i > 0 && m > movedAll[i - 1])) bad(`«آخر من دخل» is not in order: ${movedAll.join(" ")}`);
+    else ok("«آخر من دخل»: the same order, every shop");
 
     // the filters: each one shows its own count of lines (the whole list grows as it scrolls, 24 at a time)
-    for (const name of ["جداد", "يخدمو", "التجربة وفات", "خالصين", "الكل"]) {
+    for (const name of ["آخر من دخل · ما خلّصوش", "جداد", "يخدمو", "التجربة وفات", "خالصين", "الكل"]) {
       const tab = page.getByRole("tab", { name: new RegExp(`^${name}`) });
       await tab.click();
       await page.waitForTimeout(150);
@@ -266,7 +274,7 @@ try {
     await line().waitFor({ timeout: 10000 });
     ok(`the board narrowed to a stage (${stages.length} at it), a line picked away kept until a list is chosen again`);
     await narrow.selectOption("all");
-    await page.getByRole("tab", { name: "آخر من دخل" }).click();
+    await unpaid.click();
     await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
 
     // its numbers, its last 14 days and the owner's signs are on the line itself, nothing to open
