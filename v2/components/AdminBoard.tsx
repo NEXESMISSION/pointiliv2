@@ -16,7 +16,6 @@ import {
   Flame,
   Gift,
   List,
-  ListFilter,
   Megaphone,
   MessageCircle,
   Moon,
@@ -46,6 +45,7 @@ import {
   readShop,
   STAGE_GROUPS,
   STAGE_LOOK,
+  STAGES,
   stageOf,
   standing,
   type Bench,
@@ -196,9 +196,9 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
         </p>
       </div>
 
-      {/* the search (a name, an owner, a number, a word of a note, a kind), and the board narrowed to one stage */}
-      <div className="mt-3 flex gap-2">
-        <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[0.875rem] bg-surface px-3 shadow-card ring-1 ring-line/80 focus-within:ring-2 focus-within:ring-brand">
+      {/* the search: a name, an owner, a number, a word of a note, a kind */}
+      <div className="mt-3">
+        <label className="flex h-11 min-w-0 items-center gap-2 rounded-[0.875rem] bg-surface px-3 shadow-card ring-1 ring-line/80 focus-within:ring-2 focus-within:ring-brand">
           <Search className="size-[1.125rem] shrink-0 text-faint" />
           <input
             value={q}
@@ -217,19 +217,21 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
             </button>
           )}
         </label>
-        <StageFilter
-          value={stage}
-          counts={stageCounts}
-          onChange={(v) => {
-            setStage(v);
-            setHeld([]);
-            setLimit(PAGE);
-          }}
-        />
       </div>
 
+      {/* the board narrowed to one stage, over the lists (the founder, 25 Oct 2026): every stage that has a shop in the list chosen */}
+      <StageChips
+        value={stage}
+        counts={stageCounts}
+        onChange={(v) => {
+          setStage(v);
+          setHeld([]);
+          setLimit(PAGE);
+        }}
+      />
+
       {/* the ways to look at the list: whoever moved last first, then each with how many are in it */}
-      <div data-list className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="tablist">
+      <div data-list className="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="tablist" aria-label="الليستة">
         {FILTERS.map((f) => (
           <button
             key={f.id}
@@ -616,34 +618,45 @@ export function ShopStage({ id, stage, at, now, onPicked, refresh = false }: { i
   );
 }
 
-/** The board narrowed to one stage: each with how many shops are at it in the list chosen (the empty ones left out). */
-function StageFilter({ value, counts, onChange }: { value: string; counts: Record<string, number>; onChange: (v: string) => void }) {
-  const on = value !== "all";
-  const s = stageOf(value);
-  const look = STAGE_LOOK[s.tone];
+/**
+ * The board narrowed to one stage, as a row of its own over the lists: «كل
+ * المراحل», then each stage that has a shop in the list chosen, in the order
+ * a sale goes, its colour's dot and how many (the one picked stays, even at
+ * none). Smaller than the lists' row: it narrows them, it does not replace them.
+ */
+function StageChips({ value, counts, onChange }: { value: string; counts: Record<string, number>; onChange: (v: string) => void }) {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const shown = STAGES.filter((x) => counts[x.key] || x.key === value);
   return (
-    <label
-      className={`relative flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-[0.875rem] px-3 text-[0.875rem] font-semibold focus-within:ring-2 focus-within:ring-brand ${on ? `ring-1 ring-inset ${look.box} ${look.ring}` : "bg-surface text-body shadow-card ring-1 ring-line/80"}`}
-    >
-      {on ? <span className={`size-2 shrink-0 rounded-full ${look.dot}`} /> : <ListFilter className="size-4 shrink-0 text-faint" />}
-      <span className="max-w-[8.5rem] truncate">{on ? s.label : "المراحل"}</span>
-      {on && <span className="num text-[0.8125rem] opacity-70">{counts[value] ?? 0}</span>}
-      <ChevronDown className="size-3.5 shrink-0 opacity-60" />
-      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label="المرحلة" className="absolute inset-0 size-full cursor-pointer text-[16px] opacity-0">
-        <option value="all">{`كل المراحل · ${total}`}</option>
-        {STAGE_GROUPS.map((g) => {
-          const shown = g.stages.filter((x) => counts[x.key] || x.key === value);
-          return shown.length ? (
-            <optgroup key={g.group} label={g.group}>
-              {shown.map((x) => (
-                <option key={x.key} value={x.key}>{`${x.label} · ${counts[x.key] ?? 0}`}</option>
-              ))}
-            </optgroup>
-          ) : null;
-        })}
-      </select>
-    </label>
+    <div data-list className="-mx-4 mt-2.5 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="tablist" aria-label="المراحل">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={value === "all"}
+        onClick={() => onChange("all")}
+        className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[0.8125rem] font-semibold transition-colors ${value === "all" ? "bg-body text-white" : "bg-surface text-body ring-1 ring-line"}`}
+      >
+        كل المراحل <span className={`num text-[0.75rem] ${value === "all" ? "text-white/70" : "text-faint"}`}>{total}</span>
+      </button>
+      {shown.map((x) => {
+        const look = STAGE_LOOK[x.tone];
+        const on = value === x.key;
+        return (
+          <button
+            key={x.key}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            onClick={() => onChange(on ? "all" : x.key)}
+            className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[0.8125rem] font-semibold transition-colors ${on ? `${look.box} ring-2 ring-inset ${look.ring}` : "bg-surface text-body ring-1 ring-line"}`}
+          >
+            <span className={`size-2 shrink-0 rounded-full ${look.dot}`} />
+            {x.label}
+            <span className={`num text-[0.75rem] ${on ? "opacity-70" : "text-faint"}`}>{counts[x.key] ?? 0}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

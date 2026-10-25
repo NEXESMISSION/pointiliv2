@@ -261,8 +261,9 @@ try {
     await look(page, `${at}-01b-stage`);
     // the board narrowed to that stage: this run's shop in it, and every line at that stage
     await page.getByRole("searchbox", { name: "لوّج" }).fill("");
-    const narrow = page.getByRole("combobox", { name: "المرحلة" });
-    await narrow.selectOption("waiting_pay");
+    // the stages' own row over the lists: a stage's chip by the start of its name
+    const narrowTo = (label) => page.getByRole("tablist", { name: "المراحل" }).getByRole("tab", { name: new RegExp(`^${label}`) }).click();
+    await narrowTo("نستنّى في الخلاص");
     await line().waitFor({ timeout: 10000 });
     const stages = await page.locator("article[data-shop] [data-stage]").evaluateAll((els) => els.map((e) => e.getAttribute("data-stage")));
     if (stages.some((x) => x !== "waiting_pay")) bad(`the stage filter shows other stages: ${stages.join(" ")}`);
@@ -274,10 +275,10 @@ try {
     await page.getByRole("tab", { name: /^الكل/ }).click();
     await page.waitForTimeout(300);
     if (await line().count()) bad("a line picked away is still under its old stage");
-    await narrow.selectOption("called");
+    await narrowTo("كلّمتو");
     await line().waitFor({ timeout: 10000 });
     ok(`the board narrowed to a stage (${stages.length} at it), a line picked away kept until a list is chosen again`);
-    await narrow.selectOption("all");
+    await narrowTo("كل المراحل");
     await unpaid.click();
     await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
 
