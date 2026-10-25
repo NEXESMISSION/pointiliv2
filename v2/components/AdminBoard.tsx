@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Check, ChevronDown, CreditCard, ListFilter, MessageCircle, Phone, Search, Smartphone, X } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Bell, Check, ChevronDown, CreditCard, Flame, ListFilter, MessageCircle, Moon, Pause, Phone, Search, Smartphone, TrendingDown, TrendingUp, Wallet, X, type LucideIcon } from "lucide-react";
 import { adminShopNote, adminShopStage } from "@/app/admin/actions";
 import { AdminShopMore } from "@/components/AdminShopMore";
 import { ShopMark } from "@/components/ShopMark";
 import { digits, spaced } from "@/lib/phone";
-import { hit, lastMove, PILL, STAGE_GROUPS, STAGE_LOOK, stageOf, standing, type BoardShop } from "@/lib/board";
+import { hit, lastMove, PILL, readShop, STAGE_GROUPS, STAGE_LOOK, stageOf, standing, type BoardShop, type Reading, type ReadMark, type ReadTone } from "@/lib/board";
 import { agoSaid, counted, daysN, hoursN, stampsN } from "@/lib/t";
 
 const DAY = 86_400_000;
@@ -59,7 +59,9 @@ const howLong = (ms: number) => {
  * owner's signs of interest; «أكثر» only opens what is done to a shop.
  * Next to his note, where he is with the shop (24 Oct: «not called,
  * messaged, called, did not answer, waiting for payment…»), and the board
- * narrowed to one of those stages beside the search.
+ * narrowed to one of those stages beside the search. At the top of each
+ * line, what the numbers say about the client and what to do now (25 Oct:
+ * «something super smart and useful, so that I have an idea of him»).
  * Searching and the filters work on the list already here, with no wait; the
  * list grows as it is scrolled, so a phone never draws it all.
  */
@@ -76,7 +78,7 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
   const [q, setQ] = useState("");
   // the stages picked on this board since it was drawn, and the lines picked while the list was narrowed to
   // a stage: those stay where they are (a note may follow) until the list is chosen again
-  const [picked, setPicked] = useState<Record<string, { stage: string; at: string }>>({});
+  const [picked, setPicked] = useState<Record<string, { stage: string; at: string | null }>>({});
   const [held, setHeld] = useState<string[]>([]);
   const all = useMemo(() => shops.map((s) => (picked[s.id] ? { ...s, stage: picked[s.id].stage, stage_at: picked[s.id].at } : s)), [shops, picked]);
   const [limit, setLimit] = useState(() => {
@@ -104,7 +106,7 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
     const sort = SORT[filter];
     return sort ? [...hits].sort(sort) : hits;
   }, [all, filter, stage, held, q, now]);
-  const pickedOne = (id: string, key: string, at: string) => {
+  const pickedOne = (id: string, key: string, at: string | null) => {
     setPicked((p) => ({ ...p, [id]: { stage: key, at } }));
     if (stage !== "all") setHeld((h) => (h.includes(id) ? h : [...h, id]));
   };
@@ -210,7 +212,7 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
 }
 
 /** One shop: who and where it stands, its numbers and its last 14 days, the owner's signs, the founder's stage and line, and the call. */
-function ShopLine({ s, now, open, onToggle, onPicked }: { s: BoardShop; now: number; open: boolean; onToggle: () => void; onPicked: (stage: string, at: string) => void }) {
+function ShopLine({ s, now, open, onToggle, onPicked }: { s: BoardShop; now: number; open: boolean; onToggle: () => void; onPicked: (stage: string, at: string | null) => void }) {
   const st = standing(s, now);
   const d = digits(s.owner.phone ?? "");
   const phone = /^\d{8}$/.test(d) ? d : null;
@@ -235,6 +237,9 @@ function ShopLine({ s, now, open, onToggle, onPicked }: { s: BoardShop; now: num
           </p>
         </div>
       </div>
+
+      {/* what the numbers say about him, and what to do now: the first thing read on the line */}
+      <ShopReading r={readShop(s, now)} className="mt-2.5" />
 
       {/* the owner himself: in the app now or when last, on how many days, for how long */}
       <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[0.8125rem] text-body">
@@ -309,6 +314,35 @@ function ShopLine({ s, now, open, onToggle, onPicked }: { s: BoardShop; now: num
   );
 }
 
+const READ_LOOK: Record<ReadTone, { box: string; head: string }> = {
+  hot: { box: "bg-[#FFF1EC] ring-[#FFD5C6]", head: "text-[#C2410C]" },
+  good: { box: "bg-mint-soft ring-[#C4ECDA]", head: "text-[#0B7A4B]" },
+  warn: { box: "bg-[#FFF8E1] ring-[#F3E2A0]", head: "text-[#86620A]" },
+  risk: { box: "bg-[#FFEDEE] ring-[#FFCACE]", head: "text-[#C2272D]" },
+  cold: { box: "bg-canvas ring-line", head: "text-muted" },
+};
+const READ_MARK: Record<ReadMark, LucideIcon> = { flame: Flame, wallet: Wallet, up: TrendingUp, check: BadgeCheck, alert: AlertTriangle, down: TrendingDown, sleep: Moon, pause: Pause };
+
+/**
+ * The shop, read (lib/board readShop): what is going on in its colour, the
+ * facts that say so, and what to do now. On the board's line and at the top
+ * of the shop's own page.
+ */
+export function ShopReading({ r, className = "" }: { r: Reading; className?: string }) {
+  const look = READ_LOOK[r.tone];
+  const Mark = READ_MARK[r.mark];
+  return (
+    <div data-reading={r.tone} className={`rounded-[0.875rem] px-3 py-2.5 ring-1 ring-inset ${look.box} ${className}`}>
+      <p className={`flex items-start gap-1.5 text-[0.9375rem] font-bold leading-snug ${look.head}`}>
+        <Mark className="mt-0.5 size-4 shrink-0" strokeWidth={2.4} aria-hidden />
+        <span className="min-w-0">{r.head}</span>
+      </p>
+      {r.why.length > 0 && <p className="mt-1 text-[0.8125rem] leading-snug text-body">{r.why.join(" · ")}</p>}
+      <p className="mt-1 text-[0.8125rem] font-bold leading-snug text-ink">← {r.next}</p>
+    </div>
+  );
+}
+
 /** Four numbers side by side: real customers (and the first hour's tries), tampons (and today's), who came back, gifts handed over. */
 function Numbers({ s }: { s: BoardShop }) {
   const cells: { n: number; label: string; hint: string | null }[] = [
@@ -380,9 +414,9 @@ export function Signs({ s, now }: { s: BoardShop; now: number }) {
  * coral ring. On the shop's own page, the page is read again after it (the
  * stages it went through).
  */
-export function ShopStage({ id, stage, at, now, onPicked, refresh = false }: { id: string; stage: string; at: string | null; now: number; onPicked?: (stage: string, at: string) => void; refresh?: boolean }) {
+export function ShopStage({ id, stage, at, now, onPicked, refresh = false }: { id: string; stage: string; at: string | null; now: number; onPicked?: (stage: string, at: string | null) => void; refresh?: boolean }) {
   const router = useRouter();
-  const [pick, setPick] = useState({ stage, at });
+  const [pick, setPick] = useState<{ stage: string; at: string | null }>({ stage, at });
   const [state, setState] = useState<"idle" | "saving" | "error">("idle");
   const s = stageOf(pick.stage);
   const look = STAGE_LOOK[s.tone];
@@ -391,15 +425,18 @@ export function ShopStage({ id, stage, at, now, onPicked, refresh = false }: { i
     const before = pick;
     const next = { stage: key, at: new Date().toISOString() };
     setPick(next);
+    // the board knows at once (its lists and counts): a list chosen while the save is on its way must not find
+    // the line held again when it lands
+    onPicked?.(next.stage, next.at);
     setState("saving");
     const ok = await adminShopStage(id, key).catch(() => false);
     if (!ok) {
       setPick(before);
+      onPicked?.(before.stage, before.at);
       setState("error");
       return;
     }
     setState("idle");
-    onPicked?.(key, next.at);
     if (refresh) router.refresh();
   };
   return (

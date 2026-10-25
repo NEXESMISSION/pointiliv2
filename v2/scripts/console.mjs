@@ -185,8 +185,12 @@ try {
     const at = `${W}x${H}`;
     console.log(`\n${at}`);
 
-    await page.goto(`${BASE}/login?next=/admin`, { waitUntil: "domcontentloaded" });
-    await page.locator('input[name="phone"]').fill(boss.phone);
+    await page.goto(`${BASE}/login?next=/admin`, { waitUntil: "load" });
+    // typed before the page woke (a dev server under load), the number was wiped by React: typed again until it holds
+    for (let i = 0; i < 5 && (await page.locator('input[name="phone"]').inputValue()) !== boss.phone; i++) {
+      await page.locator('input[name="phone"]').fill(boss.phone);
+      await page.waitForTimeout(600);
+    }
     await page.locator('input[name="password"]').fill(`${TAG}-123456`);
     await page.locator('button[type="submit"]').click();
     await page.locator("article[data-shop]").first().waitFor({ timeout: 60000 });
@@ -281,6 +285,10 @@ try {
     for (const label of ["حرفاء", "تامبونات", "رجعو", "كادوات"]) if (!(await line().getByText(label, { exact: true }).count())) bad(`the line has no «${label}»`);
     if (!(await line("[role=img]").count())) bad("the line has no 14 days");
     else ok("the line itself: four numbers and its 14 days");
+    // and what they say about the shop: what is going on, why, and what to do now
+    const read = (await line("[data-reading]").textContent().catch(() => "")) ?? "";
+    if (!read.includes("←")) bad(`the line has no reading: «${read}»`);
+    else ok(`the line's reading: «${read.replace(/\s+/g, " ").slice(0, 90)}»`);
 
     // the shop opened: its card, what happened, and what is done to it
     await line("button[aria-expanded]").click();
@@ -325,6 +333,7 @@ try {
     await page.getByRole("heading", { name: "آخر 30 يوم" }).waitFor({ timeout: 30000 });
     for (const part of ["آخر 30 يوم", "الطريق متاعو", "شنوّة عمل في الأبليكاسيون", "كل مرّة دخل", "الحرفاء", "الكارط", "الأبونمان والخيارات", "التليفونات اللي داخل منهم"])
       if (!(await page.getByRole("heading", { name: part }).count())) bad(`the shop's page has no «${part}»`);
+    if (!(await page.locator("[data-reading]").count())) bad("the shop's page has no reading");
     // its stage there too, and the stages it went through (picked on the board: waiting for payment, then called)
     if ((await page.getByRole("combobox", { name: "وين وصلت معاه" }).inputValue()) !== "called") bad("the shop's page does not have its stage");
     const went = page.getByRole("list", { name: "المراحل اللي فات بيها" });

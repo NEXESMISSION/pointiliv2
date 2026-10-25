@@ -3737,7 +3737,7 @@ begin
       where v.user_id in (select owner_id from rs) group by v.user_id
     )
     select jsonb_agg(jsonb_build_object(
-      'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'card', s.goal is not null,
+      'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo, 'card', s.goal is not null, 'goal', s.goal,
       'created_at', s.created_at, 'paused', s.paused,
       'owner', jsonb_build_object('name', nullif(p.name, ''), 'phone', p.phone),
       'paid_until', s.paid_until, 'paid', s.paid_until is not null and s.paid_until > now(),
@@ -3928,7 +3928,11 @@ begin
       'stage', coalesce((select cn.stage from public.crm cn where cn.shop_id = s.id), 'new'),
       'stage_at', (select cn.stage_at from public.crm cn where cn.shop_id = s.id),
       'follow', coalesce((select jsonb_agg(jsonb_build_object('stage', l.text, 'at', l.at) order by l.at desc)
-                 from (select text, at from public.crm_log where shop_id = s.id and kind = 'stage' order by at desc limit 12) l), '[]'::jsonb))
+                 from (select text, at from public.crm_log where shop_id = s.id and kind = 'stage' order by at desc limit 12) l), '[]'::jsonb),
+      -- the board's own two signs, counted the same way (lib/board readShop reads the shop on both pages):
+      -- the pay page opened last, and a call or a WhatsApp to pay tapped last
+      'pay_seen', (select max(w.entered_at) from public.visits v join public.views w on w.visit_id = v.id where v.user_id = s.owner_id and w.route = '/shop/pay'),
+      'wa_at', (select max(g.at) from public.visits v join public.signals g on g.visit_id = v.id where v.user_id = s.owner_id and g.name in ('pay', 'trial_call')))
   );
 end $$;
 

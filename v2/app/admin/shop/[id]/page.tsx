@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowRight, Check, Gift, History, MessageCircle, Moon, Phone, Smartphone, Stamp, X } from "lucide-react";
-import { Face, ShopNote, ShopStage } from "@/components/AdminBoard";
+import { Face, ShopNote, ShopReading, ShopStage } from "@/components/AdminBoard";
 import { AdminShopMore } from "@/components/AdminShopMore";
-import { PILL, STAGE_LOOK, stageOf, standing, type AccessShop } from "@/lib/board";
+import { PILL, readShop, STAGE_LOOK, stageOf, standing, type AccessShop } from "@/lib/board";
 import { digits, spaced } from "@/lib/phone";
 import { FAILS, screenName } from "@/lib/screens";
 import { call } from "@/lib/supabase";
@@ -42,6 +42,9 @@ type Study = {
   stage: string;
   stage_at: string | null;
   follow: { stage: string; at: string }[];
+  /** the board's two signs: the pay page opened last, a call or a WhatsApp to pay tapped last */
+  pay_seen: string | null;
+  wa_at: string | null;
 };
 
 const TZ = "Africa/Tunis";
@@ -167,6 +170,27 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
   const d = digits(owner.phone ?? "");
   const phone = /^\d{8}$/.test(d) ? d : null;
   const pill = standing({ ...shop, card: shop.goal !== null }, now);
+  // the same reading as the board's line, from this page's numbers (its last 14 days for the board's spark)
+  const reading = readShop(
+    {
+      ...shop,
+      card: shop.goal !== null,
+      stamps: n.stamps,
+      today: st.days.at(-1)?.stamps ?? 0,
+      week: n.week,
+      customers: n.customers,
+      real: n.real,
+      returning: n.returning,
+      last_at: st.last_at,
+      spark: st.days.slice(-14).map((x) => x.stamps),
+      seen_at: st.seen_at,
+      pay_seen: st.pay_seen,
+      wa_at: st.wa_at,
+      stage: st.stage,
+      stage_at: st.stage_at,
+    },
+    now,
+  );
   const access: AccessShop = { id: shop.id, name: shop.name, owner: { name: owner.name, phone: owner.phone }, paid: shop.paid, paid_until: shop.paid_until, shut: shop.shut, started: shop.started, trial_end: shop.trial_end };
   const night = (() => {
     const h = hourOf(shop.created_at);
@@ -215,6 +239,8 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
               <p className="mt-0.5 text-[0.9375rem] text-body">
                 <bdi>{owner.name || "بلا اسم"}</bdi> · {t.kinds[shop.kind] ?? shop.kind}
               </p>
+              {/* what the numbers say about him, and what to do now (the board's line says the same) */}
+              <ShopReading r={reading} className="mt-3" />
             </div>
             {phone && (
               <div className="hidden shrink-0 gap-2 sm:flex">
