@@ -620,6 +620,12 @@ language sql stable security definer set search_path = '' as $$
                                'gap', s.stamp_gap, 'paused', s.paused),
     -- the gift waiting, by its own name (a wheel's prize once spun; the card's gift otherwise)
     'won', (select m.gift from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null order by m.created_at, m.id limit 1),
+    -- all the gifts waiting, by name and how many of each, oldest first: two turns of the wheel rarely fall on the
+    -- same prize, and a card changed between two full cards leaves two gifts (a wheel's turn not spun yet is not one)
+    'won_list', (select coalesce(jsonb_agg(jsonb_build_object('gift', g.gift, 'n', g.n) order by g.first, g.first_id), '[]'::jsonb)
+                 from (select coalesce(m.gift, c.gift, s.gift) as gift, count(*) as n, min(m.created_at) as first, min(m.id) as first_id
+                       from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null and not (m.wheel and m.spun_at is null)
+                       group by 1) g),
     -- a wheel shop: the turn waiting to be spun (its gift is the prize once spun), and how many turns wait («دورات»)
     'spin', (select m.id from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.wheel and m.spun_at is null and m.given_at is null
              order by m.created_at, m.id limit 1),
@@ -1730,7 +1736,13 @@ language sql stable security definer set search_path = '' as $$
   select jsonb_build_object('id', m.id, 'gift', coalesce(m.gift, c.gift), 'spin', m.wheel and m.spun_at is null,
                             -- the ones ready to hand over (a turn of the wheel not spun yet is not one)
                             'n', (select count(*) from public.moments x where x.card_id = p_card and x.kind = 'gift' and x.given_at is null
-                                    and not (x.wheel and x.spun_at is null)))
+                                    and not (x.wheel and x.spun_at is null)),
+                            -- and what they are, by name and how many of each: «give all three» must say which three
+                            'list', (select coalesce(jsonb_agg(jsonb_build_object('gift', g.gift, 'n', g.n) order by g.first, g.first_id), '[]'::jsonb)
+                                     from (select coalesce(x.gift, c.gift) as gift, count(*) as n, min(x.created_at) as first, min(x.id) as first_id
+                                           from public.moments x where x.card_id = p_card and x.kind = 'gift' and x.given_at is null
+                                             and not (x.wheel and x.spun_at is null)
+                                           group by 1) g))
   from public.moments m join public.cards c on c.id = m.card_id
   where m.card_id = p_card and m.kind = 'gift' and m.given_at is null
   order by m.created_at limit 1

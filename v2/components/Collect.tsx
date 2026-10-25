@@ -14,7 +14,7 @@ import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
 import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
-import { fill, t } from "@/lib/t";
+import { fill, giftsSaid, t } from "@/lib/t";
 import { nextTampon } from "@/lib/when";
 import type { CardView, DemoShop, Order, Said } from "@/lib/types";
 
@@ -48,8 +48,12 @@ function GiftRow({ w, onOpen }: { w: WaitingGift; onOpen: () => void }) {
       <span className="min-w-0 flex-1">
         <span className="block text-[0.8125rem] font-semibold text-muted">{t.collectGiftWaits}</span>
         <span className="block truncate text-[0.9375rem] font-bold">
-          {w.gift}
-          {(w.n ?? 1) > 1 && <span className="num text-coral"> ×{w.n}</span>}
+          {giftsSaid(w.list) ?? (
+            <>
+              {w.gift}
+              {(w.n ?? 1) > 1 && <span className="num text-coral"> ×{w.n}</span>}
+            </>
+          )}
         </span>
       </span>
       <button type="button" onClick={onOpen} className="press h-11 shrink-0 rounded-[1rem] bg-coral-soft px-4 text-[0.9375rem] font-bold text-coral">
@@ -94,7 +98,8 @@ function GiftPop({ who, w, won, busy, onGive, onLater, prizes = [], onSpun }: { 
         <style>{`@keyframes pop-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
         <Icon3D name="gift" size={76} className="mx-auto animate-pop" />
         <h2 className="mt-2 text-balance text-[1.5rem] font-bold leading-tight">{title}</h2>
-        {(!won || n > 1) && <p className="mt-1 text-balance text-[1.25rem] font-bold text-coral">{w.gift}</p>}
+        {/* «give all three» says which three when they differ: «قهوة ×2 · كيك» */}
+        {(!won || n > 1) && <p className="mt-1 text-balance text-[1.25rem] font-bold text-coral">{(n > 1 && giftsSaid(w.list)) || w.gift}</p>}
         <p className="mt-1.5 text-[0.9375rem] text-muted">{t.popGiftAsk}</p>
         <div className="mt-[2.5dvh] space-y-1.5">
           <Btn type="button" kind="coral" onClick={() => onGive(n > 1)} disabled={busy}>

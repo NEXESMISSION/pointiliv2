@@ -11,7 +11,7 @@ import { MyCode } from "@/components/MyCode";
 import { ShopMark } from "@/components/ShopMark";
 import { Mark } from "@/components/Tracker";
 import { Icon3D, Screen } from "@/components/ui";
-import { fill, t } from "@/lib/t";
+import { fill, giftsSaid, t } from "@/lib/t";
 import { nextTampon } from "@/lib/when";
 import type { CardView } from "@/lib/types";
 
@@ -154,7 +154,7 @@ export function Cards({
           <MyCode
             code={code}
             svg={svg}
-            gift={gift ? (gift.won ?? gift.shop.gift) : undefined}
+            gift={gift ? (giftsSaid(gift.won_list) ?? gift.won ?? gift.shop.gift) : undefined}
             className="press flex h-[3.5rem] items-center justify-center gap-2 rounded-[1.25rem] bg-surface text-[1rem] font-bold text-ink shadow-card"
           >
             <QrCode className="size-5 text-brand" /> {t.myCode}

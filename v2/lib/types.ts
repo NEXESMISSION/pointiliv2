@@ -18,6 +18,8 @@ export type CardView = {
   spins_n?: number;
   /** the gift waiting, by its own name (a wheel's prize once spun) */
   won?: string | null;
+  /** every gift waiting, by name and how many of each, oldest first (lib/t giftsSaid says them) */
+  won_list?: { gift: string; n: number }[];
   /** a shop with a store: the orders this customer made and has not taken yet */
   orders_n?: number;
   /** the shop's card of today when it differs: this customer's next card, after this gift */

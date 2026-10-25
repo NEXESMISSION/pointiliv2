@@ -10,7 +10,7 @@ export type PassShop = { name: string; kind: string; color: string; goal: number
  * is. `small` is the wallet's card behind the front one: the top line only.
  * `fresh` makes the newest stamp land (after a scan).
  */
-export function Pass({ shop, stamps, waiting, small, fresh, className = "" }: { shop: PassShop; stamps: number; waiting?: number; small?: boolean; fresh?: boolean; className?: string }) {
+export function Pass({ shop, stamps, waiting, won: wonSaid, small, fresh, className = "" }: { shop: PassShop; stamps: number; waiting?: number; /** gifts waiting that are not all the same, said by name (lib/t giftsSaid) */ won?: string | null; small?: boolean; fresh?: boolean; className?: string }) {
   const goal = shop.goal ?? 10;
   const done = Math.min(stamps, goal);
   // `waiting`: the vouchers this card has earned (since 15 Oct 2026 a full card becomes a voucher and starts
@@ -28,7 +28,10 @@ export function Pass({ shop, stamps, waiting, small, fresh, className = "" }: { 
 
   // the dots keep a size a thumb understands: never giant on a short card, never tiny on a long one
   const dot = goal <= 6 ? "max-w-[3rem]" : "max-w-[2.5rem]";
-  const line = shop.wheel
+  // several gifts that differ (two prizes of the wheel, a card changed between two full cards): each by name
+  const line = ready && wonSaid
+    ? fill(t.won, { gift: wonSaid })
+    : shop.wheel
     ? ready
       ? shop.gift && shop.gift !== "الروليت"
         ? fill(t.won, { gift: shop.gift })

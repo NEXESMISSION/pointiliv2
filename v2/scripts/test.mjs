@@ -151,6 +151,16 @@ try {
   await admin.from("cards").update({ stamps: 9, last_at: ago(61) }).eq("id", s1.card.id);
   const twice = await rpc(sami, "stamp", { p_token: (await rpc(owner, "new_code")).token });
   check("two full cards: two vouchers wait side by side, the card at zero", twice.ok && twice.card.waiting_n === 2 && twice.card.stamps === 0, twice.card);
+  // the lists said as «gift×n|…» (the database orders a JSON object's keys its own way)
+  const said = (list) => (list ?? []).map((x) => `${x.gift}×${x.n}`).join("|");
+  check("…said as one gift, twice", said(twice.card.won_list) === "قهوة بلاش×2", twice.card.won_list);
+  // two that differ (two prizes of the wheel, or a card changed between two full cards): the counter and the card say which two
+  const [, secondGift] = (await admin.from("moments").select("id").eq("card_id", s1.card.id).eq("kind", "gift").is("given_at", null).order("created_at").order("id")).data ?? [];
+  await admin.from("moments").update({ gift: "كرواسون بلاش" }).eq("id", secondGift.id);
+  const twoKinds = "قهوة بلاش×1|كرواسون بلاش×1";
+  const atCounter = await rpc(owner, "customer_at", { p_who: (await rpc(sami, "me")).code });
+  const onCard = await rpc(sami, "card", { p_id: s1.card.id });
+  check("two different gifts: the counter and the card say which two, oldest first", atCounter.waiting?.n === 2 && said(atCounter.waiting?.list) === twoKinds && said(onCard.won_list) === twoKinds, [atCounter.waiting, onCard.won_list]);
   const both = await rpc(owner, "give_all", { p_moment: (await rpc(owner, "counter", { p_code: c1.id, p_since: null })).gifts[0].id });
   const afterBoth = await rpc(sami, "card", { p_id: s1.card.id });
   check("…handed over together, the card still at zero", both.ok && both.n === 2 && afterBoth.stamps === 0 && !afterBoth.waiting && afterBoth.gifts === 3, [both, afterBoth.stamps, afterBoth.gifts]);

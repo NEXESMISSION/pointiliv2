@@ -559,7 +559,7 @@ export async function setMomentItem(moment: number, item: number): Promise<boole
 }
 
 /** A gift the customer's card holds for the shop to hand over. */
-export type WaitingGift = { id: number; gift: string | null; n?: number; spin?: boolean };
+export type WaitingGift = { id: number; gift: string | null; n?: number; spin?: boolean; list?: { gift: string; n: number }[] };
 
 /** The customer behind a code or a number, for the shop about to give them a tampon (their first name, their card here, a gift waiting). */
 export async function customerAt(who: string): Promise<{ ok: boolean; error?: string; name?: string | null; card?: CardView | null; waiting?: WaitingGift | null; orders?: Order[]; said?: Said }> {

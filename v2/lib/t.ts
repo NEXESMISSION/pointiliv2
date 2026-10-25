@@ -1395,6 +1395,13 @@ export const customersN = (n: number) => counted(n, "حريف واحد", "زوز
 const squash = (x: string | null | undefined) => (x ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 export const sameGift = (a: string | null | undefined, b: string | null | undefined) => squash(a) === squash(b);
 export const giftsN = (n: number) => counted(n, "كادو واحد", "زوز كادوات", "كادوات", "كادو");
+/**
+ * Gifts waiting that are not all the same — two turns of the wheel, or a card
+ * changed between two full cards — said each by name: «قهوة ×2 · كيك». Null
+ * when there is one kind only, and the gift's own name says it.
+ */
+export const giftsSaid = (list: { gift: string; n: number }[] | null | undefined): string | null =>
+  list && list.length > 1 ? list.map((x) => (x.n > 1 ? `${x.gift} ×${x.n}` : x.gift)).join(" · ") : null;
 /** شهر, شهرين, 3 شهور, عام, عام ونص, عامين, 3 سنين — a length the Tunisian way */
 export function monthsSaid(n: number): string {
   if (n === 12) return "عام";

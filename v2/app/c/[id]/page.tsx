@@ -12,7 +12,7 @@ import { Icon3D, LinkBtn, Screen } from "@/components/ui";
 import { siteOrigin } from "@/lib/origin";
 import { cardsHome, getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
-import { fill, stampsN, t } from "@/lib/t";
+import { fill, giftsSaid, stampsN, t } from "@/lib/t";
 import type { CardStore as Store, CardView } from "@/lib/types";
 
 type Card = CardView & { prizes?: Prize[] | null; history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
@@ -64,7 +64,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       {/* the tampon lands on the card while it is open on the counter: no refresh (19 Oct 2026) */}
       <Live me={me.id} />
       <div className="mx-auto mt-2 w-full max-w-[min(100%,52dvh)] shrink-0 animate-rise">
-        <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} />
+        <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} won={giftsSaid(card.won_list)} />
       </div>
       {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.8125rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
 
@@ -123,12 +123,13 @@ export default async function CardPage({ params, searchParams }: { params: Promi
               <Icon3D name="gift" size={30} className="animate-float" />
               {(card.waiting_n ?? 1) > 1 ? fill(t.readyMany, { n: card.waiting_n ?? 2 }) : t.ready}
             </p>
-            <p className="mt-0.5 truncate text-[1.375rem] font-bold leading-tight">{card.won ?? card.shop.gift}</p>
+            {/* every gift by name when they are not all the same (two prizes of the wheel): «قهوة ×2 · كيك» */}
+            <p className="mt-0.5 truncate text-[1.375rem] font-bold leading-tight">{giftsSaid(card.won_list) ?? card.won ?? card.shop.gift}</p>
             {me.code && svg ? (
               <MyCode
                 code={me.code}
                 svg={svg}
-                gift={card.won ?? card.shop.gift}
+                gift={giftsSaid(card.won_list) ?? card.won ?? card.shop.gift}
                 startOpen={show === "1"}
                 className="press mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-[1.25rem] bg-coral text-[1.0625rem] font-bold text-white"
               >
