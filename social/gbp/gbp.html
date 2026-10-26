@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8" />
+<title>Pointili Google profile pictures</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Inter:wght@600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  /* The pictures of Pointili Tunisie's Google Business Profile: the logo, the cover and the product photos,
+     made from the app's real screens (social/carousels/screens) and the founder's own footage.
+     ?k=logo | cover | s1..s6 ; gbp.mjs renders each. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Cairo, sans-serif; color: #17141F; overflow: hidden; }
+  .k { position: relative; overflow: hidden; display: none; }
+  .k.on { display: block; }
+  .mark { display: block; }
+  .bg { position: absolute; inset: 0; background: radial-gradient(120% 90% at 85% 10%, #8A66FF 0%, #6C47FF 38%, #3F1FB0 100%); }
+  .glow { position: absolute; width: 700px; height: 700px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.22), transparent 60%); }
+  .phone { position: absolute; border-radius: 54px; background: #0d0a1c; padding: 12px; box-shadow: 0 50px 90px -30px rgba(10,4,40,0.65), 0 0 0 2px #2c2650 inset; }
+  .phone div { width: 100%; height: 100%; border-radius: 44px; background-size: cover; background-position: top center; }
+  .txt { position: absolute; color: #fff; }
+  .ar { direction: rtl; font-weight: 900; line-height: 1.15; }
+  .fr { font-family: Inter, sans-serif; font-weight: 700; letter-spacing: -0.01em; opacity: 0.92; }
+  .tag { display: inline-flex; align-items: center; gap: 12px; padding: 10px 22px; border-radius: 999px; background: #fff; color: #4A24B5; font: 800 26px Inter, sans-serif; }
+  .tag svg { width: 40px; }
+  .light { background: #F6F3FF; }
+  .light .txt { color: #17141F; }
+  .light .ar span { color: #6C47FF; }
+</style>
+</head>
+<body>
+<script>
+  const MARK = `<svg class="mark" viewBox="0 0 96 70"><defs><linearGradient id="b" x1="0" y1="0" x2="0.2" y2="1"><stop offset="0" stop-color="#7244EC"/><stop offset="1" stop-color="#4F28C6"/></linearGradient><linearGradient id="f" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="#7143E6"/><stop offset="1" stop-color="#5029C5"/></linearGradient><mask id="m"><rect width="96" height="70" fill="#fff"/><rect x="-2" y="14" width="86" height="58" rx="10" fill="#000"/></mask></defs><rect x="16" y="5" width="72" height="50" rx="7" transform="rotate(8 52 30)" fill="url(#b)" mask="url(#m)"/><rect x="1" y="17" width="80" height="52" rx="8" fill="url(#f)"/><path d="M41 29C42.2 38.6 44.4 41.2 56 43 44.4 44.8 42.2 47.4 41 57 39.8 47.4 37.6 44.8 26 43 37.6 41.2 39.8 38.6 41 29Z" fill="#fff"/></svg>`;
+  const scr = (f) => `../carousels/screens/${f}`;
+  const phone = (f, x, y, w, rot = 0) => `<div class="phone" style="left:${x}px;top:${y}px;width:${w}px;height:${w * 2.164}px;transform:rotate(${rot}deg)"><div style="background-image:url(${scr(f)})"></div></div>`;
+  // one product photo: a screen in a phone, its line in Tunisian and in French (1200×900)
+  const shot = (screen, ar, fr, light = false, x = 760) => ({ w: 1200, h: 900, html: `
+    ${light ? "" : '<div class="bg"></div><div class="glow" style="left:-200px;top:-260px"></div>'}
+    ${phone(screen, x, 70, 360, -3)}
+    <div class="txt" style="left:80px;top:250px;width:620px">
+      <div class="ar" style="font-size:66px">${ar}</div>
+      <div class="fr" style="font-size:32px;margin-top:22px">${fr}</div>
+      <div style="margin-top:40px"><span class="tag">${MARK}pointili.online</span></div>
+    </div>`, light });
+
+  const K = {
+    logo: { w: 720, h: 720, html: `<div style="position:absolute;inset:0;background:#fff;display:grid;place-items:center"><div style="width:470px">${MARK}</div></div>` },
+    cover: { w: 1600, h: 900, html: `
+      <div class="bg"></div><div class="glow" style="left:-160px;top:-300px"></div>
+      ${phone("v2-cafe-card-6.png", 1040, 90, 330, -6)}
+      ${phone("v2-food-stamped.png", 1290, 170, 270, 5)}
+      <div class="txt" style="left:110px;top:200px;width:820px">
+        <div style="display:flex;align-items:center;gap:22px"><div style="width:120px;background:#fff;border-radius:30px;padding:20px 18px">${MARK}</div><div style="font:900 84px Inter,sans-serif;letter-spacing:-0.03em">Pointili</div></div>
+        <div class="ar" style="font-size:76px;margin-top:40px">كارط فيدليتي ديجيتال<br>للمحلات في تونس</div>
+        <div class="fr" style="font-size:36px;margin-top:22px">Carte de fidélité digitale · sans application</div>
+      </div>` },
+    s1: shot("v2-cafe-card-6.png", "الحريف يشوف قدّاش مازالو<br>ويرجعلك", "Vos clients voient leur carte dans leur téléphone"),
+    s2: shot("v2-food-counter.png", "الكود على الكونتوار،<br>الحريف يسكاني", "Un QR code au comptoir, le client scanne"),
+    s3: shot("v2-food-stamped.png", "تامبون جديد<br>في ثانية", "Un tampon en une seconde, sans application", true),
+    s4: shot("v2-store-home.png", "الكادو يستنّى فيه،<br>ما يضيع شي", "La récompense attend le client, rien ne se perd"),
+    s5: shot("v2-store-owner-give.png", "تسكاني الكود<br>وتعطيه الكادو", "Vous validez la récompense en un geste", true),
+    s6: shot("v2-cafe-home.png", "كل الكارطات متاعو<br>في تليفونو", "Toutes ses cartes au même endroit"),
+  };
+  const k = new URLSearchParams(location.search).get("k") || "cover";
+  const d = K[k];
+  document.body.style.width = d.w + "px"; document.body.style.height = d.h + "px";
+  document.body.insertAdjacentHTML("beforeend", `<div class="k on${d.light ? " light" : ""}" style="width:${d.w}px;height:${d.h}px">${d.html}</div>`);
+  window.KEYS = Object.keys(K); window.SIZE = { w: d.w, h: d.h };
+  window.ready = document.fonts.ready.then(() => Promise.all(["900 40px Cairo", "800 40px Inter"].map((f) => document.fonts.load(f, "abc كارط")))).then(() => new Promise((r) => setTimeout(r, 400)));
+</script>
+</body>
+</html>
