@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Readex_Pro } from "next/font/google";
-import { Pwa } from "@/components/InstallApp";
+import { Pwa } from "@/components/Pwa";
 import { Clarity } from "@/components/Clarity";
 import { MetaPixel } from "@/components/MetaPixel";
 import { Tracker } from "@/components/Tracker";
@@ -47,9 +47,9 @@ export const metadata: Metadata = {
     url: SITE,
     locale: "ar_TN",
     alternateLocale: ["fr_TN"],
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Pointili — carte de fidélité digitale en Tunisie" }],
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "Pointili — carte de fidélité digitale en Tunisie" }],
   },
-  twitter: { card: "summary_large_image", title: "Pointili — carte de fidélité digitale en Tunisie", description, images: ["/og.png"] },
+  twitter: { card: "summary_large_image", title: "Pointili — carte de fidélité digitale en Tunisie", description, images: ["/og.jpg"] },
   category: "business",
   appleWebApp: { capable: true, title: "Pointili", statusBarStyle: "default" },
   formatDetection: { telephone: false },

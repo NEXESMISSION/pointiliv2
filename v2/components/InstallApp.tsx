@@ -7,15 +7,9 @@ import { Sheet, SheetGo } from "@/components/Client";
 import { InstallGuide, Mixed, preloadGuide, useAppStartsSignedIn } from "@/components/InstallGuide";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
-import { installApp, isIphone, outsideHref, startPwa, useCanInstall, useInApp, useInstalled, useInstallWay, type InstallWay } from "@/lib/pwa";
+import { installApp, isIphone, outsideHref, useCanInstall, useInApp, useInstalled, useInstallWay, type InstallWay } from "@/lib/pwa";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
-
-/** In the layout: the worker, Android's install prompt kept, the installed app's visits counted. */
-export function Pwa() {
-  useEffect(() => startPwa(), []);
-  return null;
-}
 
 /** This phone's guide: the filmed one (an iPhone's Safari, Android), or the drawn one for Chrome on an iPhone. */
 function GuideFor({ way, where, onClose, onDone }: { way: Exclude<InstallWay, null>; where: string; onClose: () => void; onDone?: () => void }) {

@@ -9,7 +9,7 @@ import { kindIcon } from "@/lib/t";
 export function ShopMark({ shop, size }: { shop: { kind: string; logo?: string | null }; size: number }) {
   if (shop.logo) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={shop.logo} alt="" decoding="async" className="size-full rounded-[inherit] bg-white object-contain p-[9%]" />;
+    return <img src={shop.logo} alt="" decoding="async" loading="lazy" className="size-full rounded-[inherit] bg-white object-contain p-[9%]" />;
   }
   return <Icon3D name={kindIcon(shop.kind)} size={size} />;
 }

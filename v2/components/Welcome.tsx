@@ -58,9 +58,9 @@ export function Welcome({ help, known, ad }: { help: HelpSettings; known?: boole
           computer the room either side of it used to be the app's grey, a seam
           straight down both sides (the founder, 18 Oct 2026) */}
       <div className="fixed inset-0 -z-10 bg-[#FBF6EF]" aria-hidden />
-      {/* a corner of Sidi Bou Said, behind everything */}
+      {/* a corner of Sidi Bou Said, behind everything — the page's largest paint on a phone (26 Oct 2026): asked for first */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/tn/sidibou.webp" alt="" aria-hidden width={220} height={520} className="pointer-events-none absolute -start-3 -top-[3dvh] h-[36dvh] w-auto [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
+      <img src="/tn/sidibou.webp" alt="" aria-hidden width={220} height={520} fetchPriority="high" className="pointer-events-none absolute -start-3 -top-[3dvh] h-[36dvh] w-auto [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
 
       <div className="relative flex items-center justify-center">
         <Logo />
@@ -84,9 +84,9 @@ export function Welcome({ help, known, ad }: { help: HelpSettings; known?: boole
           <Pass shop={{ name: "Café El Medina", kind: "cafe", color: RED, goal: 8, gift: "قهوة بلاش" }} stamps={6} />
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tn/jasmine.webp" alt="" aria-hidden width={140} height={118} className="pointer-events-none absolute -bottom-12 -end-16 h-[7.375rem] w-auto drop-shadow-[0_10px_14px_rgb(0_0_0/0.18)]" />
+        <img src="/tn/jasmine.webp" alt="" aria-hidden width={140} height={118} fetchPriority="low" decoding="async" className="pointer-events-none absolute -bottom-12 -end-16 h-[7.375rem] w-auto drop-shadow-[0_10px_14px_rgb(0_0_0/0.18)]" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tn/tea.webp" alt="" aria-hidden width={78} height={130} className="pointer-events-none absolute -bottom-10 -start-12 h-[8.125rem] w-auto drop-shadow-[0_12px_16px_rgb(0_0_0/0.22)]" />
+        <img src="/tn/tea.webp" alt="" aria-hidden width={78} height={130} fetchPriority="low" decoding="async" className="pointer-events-none absolute -bottom-10 -start-12 h-[8.125rem] w-auto drop-shadow-[0_12px_16px_rgb(0_0_0/0.22)]" />
       </div>
 
       {/* one film, and it is the one that shows a shop working: on the card's bottom edge, outside

@@ -31,16 +31,23 @@ export function Live({ me }: { me: string }) {
       router.refresh();
     };
 
-    const sb = tuneIn();
-    const channel = sb?.channel(`pointili:p:${me}`).on("broadcast", { event: "ping" }, look).subscribe();
+    // the radio's library comes after the page (lib/radio): the channel opens when it is here
+    let gone = false;
+    let stop: (() => void) | null = null;
+    void tuneIn().then((sb) => {
+      if (gone || !sb) return;
+      const channel = sb.channel(`pointili:p:${me}`).on("broadcast", { event: "ping" }, look).subscribe();
+      stop = () => void sb.removeChannel(channel);
+    });
 
     const awake = () => document.visibilityState === "visible" && look();
     document.addEventListener("visibilitychange", awake);
     window.addEventListener("focus", awake);
     return () => {
+      gone = true;
       document.removeEventListener("visibilitychange", awake);
       window.removeEventListener("focus", awake);
-      if (channel) void sb?.removeChannel(channel);
+      stop?.();
     };
   }, [me, router]);
 

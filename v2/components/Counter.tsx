@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, MessageCircle, RefreshCw, ScanLine, ShieldCheck, WifiOff } from "lucide-react";
 import { firstScanOffer } from "@/app/shop/qr/actions";
 import { OpenOutside } from "@/components/InstallApp";
@@ -14,6 +13,7 @@ import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
+import { tuneIn } from "@/lib/radio";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 import { pretty } from "@/lib/phone";
@@ -43,16 +43,6 @@ const ASK_DEAF_MS = 1_500;
 const ASK_PAUSED_MS = 20_000;
 /** the bravo after a new card: how long before the code shows by itself */
 const BRAVO_MS = 3600;
-
-/** One radio for the page: Realtime only, no sign-in of its own. */
-let radio: SupabaseClient | null = null;
-function tuneIn(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  radio ??= createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: "pointili-counter-radio" } });
-  return radio;
-}
 
 /**
  * The owner's one screen. A code that works once, in the shop's colour: open
@@ -302,31 +292,37 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = n
     tickRef.current = tick;
   }, [tick]);
 
-  // the radio: the database pings "pointili:<signal>" on every scan
+  // the radio: the database pings "pointili:<signal>" on every scan (its library comes after the page, lib/radio:
+  // until it is here the counter asks on its own, as it does whenever the radio is off)
   useEffect(() => {
     if (!shop.signal || paused) return;
-    const sb = tuneIn();
-    if (!sb) return;
-    const channel = sb
-      .channel(`pointili:${shop.signal}`)
-      .on("broadcast", { event: "ping" }, (msg) => {
-        // the code on screen was just taken (held or used): the next one, now
-        const taken = (msg?.payload as { code?: string } | undefined)?.code;
-        if (taken && taken === codeRef.current?.id) {
-          // whoever comes next is a new question, never the last answer
-          if (items.length > 0) {
-            itemRef.current = null;
-            codeRef.current = null;
-            setItem(null);
-            setCode(null);
-          } else swapRef.current();
-        }
-        void tickRef.current();
-      })
-      .subscribe((status) => setLive(status === "SUBSCRIBED"));
+    let gone = false;
+    let stop: (() => void) | null = null;
+    void tuneIn().then((sb) => {
+      if (gone || !sb) return;
+      const channel = sb
+        .channel(`pointili:${shop.signal}`)
+        .on("broadcast", { event: "ping" }, (msg) => {
+          // the code on screen was just taken (held or used): the next one, now
+          const taken = (msg?.payload as { code?: string } | undefined)?.code;
+          if (taken && taken === codeRef.current?.id) {
+            // whoever comes next is a new question, never the last answer
+            if (items.length > 0) {
+              itemRef.current = null;
+              codeRef.current = null;
+              setItem(null);
+              setCode(null);
+            } else swapRef.current();
+          }
+          void tickRef.current();
+        })
+        .subscribe((status) => setLive(status === "SUBSCRIBED"));
+      stop = () => void sb.removeChannel(channel);
+    });
     return () => {
+      gone = true;
       setLive(false);
-      void sb.removeChannel(channel);
+      stop?.();
     };
   }, [shop.signal, paused, items.length]);
 

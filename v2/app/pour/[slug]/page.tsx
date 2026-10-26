@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `Carte de fidélité pour ${n.fr} en Tunisie — كارط فيديليتي ${n.tn}`,
     description: `Carte de fidélité digitale pour ${n.fr} en Tunisie : vos clients cumulent des tampons sur leur téléphone, sans application, et reçoivent ${f.giftsFr[0]} après ${f.goal} visites. ${PRICE} DT par an. — كارط فيديليتي ${n.tn} في تونس.`,
     alternates: { canonical: `${SITE}/pour/${n.slug}` },
-    openGraph: { title: `Carte de fidélité pour ${n.fr} — Pointili Tunisie`, url: `${SITE}/pour/${n.slug}`, images: [{ url: "/og.png", width: 1200, height: 630 }] },
+    openGraph: { title: `Carte de fidélité pour ${n.fr} — Pointili Tunisie`, url: `${SITE}/pour/${n.slug}`, images: [{ url: "/og.jpg", width: 1200, height: 630 }] },
   };
 }
 
