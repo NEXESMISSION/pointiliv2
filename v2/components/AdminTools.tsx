@@ -33,7 +33,7 @@ export function AdminFind({ initial = "" }: { initial?: string }) {
       setError(res.ok ? null : NOT_DONE);
       if (res.ok && res.password) setReset({ who, password: res.password });
     });
-  // opened from a forgotten password's WhatsApp (/admin/tools?q=<number>): that account, found at once
+  // opened with a number (/admin/tools?q=<number>): that account, found at once
   const asked = useRef(false);
   useEffect(() => {
     if (!initial || asked.current) return;
