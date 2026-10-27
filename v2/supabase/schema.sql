@@ -1613,7 +1613,7 @@ begin
     -- (a second object: one jsonb_build_object takes 100 arguments at most)
     || jsonb_build_object('held', public.held_list(s.id, 14), 'store_on', s.store_on,
          'trial_until', public.trial_end(s), 'trial_started', public.trial_started(s),
-         'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed, 'wheel', public.wheel_list(s.id),
+         'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed, 'wheel', public.wheel_all(s.id),
          'wheel_fell', coalesce((select jsonb_agg(jsonb_build_object('name', x.gift, 'n', x.n) order by x.n desc)
                                  from (select m.gift, count(*) as n from public.moments m where m.shop_id = s.id and m.wheel and m.spun_at is not null group by m.gift) x), '[]'::jsonb), 'trial_over', now() >= public.trial_end(s), 'store', public.store_list(s.id),
          'orders', coalesce((select jsonb_agg(jsonb_build_object('at', o.created_at, 'name', o.name, 'qty', o.qty, 'cost', o.cost, 'status', o.status,
@@ -3249,11 +3249,22 @@ create index if not exists wheel_prizes_shop_idx on public.wheel_prizes (shop_id
 alter table public.wheel_prizes enable row level security;
 alter table public.wheel_prizes force row level security;
 revoke all on public.wheel_prizes from anon, authenticated, public;
+-- how many of a prize the owner still has to give (null: no limit — 27 Oct 2026, the founder: «the roulette's
+-- options, give a number as the owner»). Each one that falls takes one; at 0 it leaves the wheel by itself
+alter table public.wheel_prizes add column if not exists stock int check (stock is null or stock between 0 and 9999);
 
--- the prizes on the wheel, in the owner's order
+-- the prizes on the wheel, in the owner's order: only those that can still fall (a prize run out is off the
+-- wheel), each with how many are left (null: no limit). What the customers see, and what a turn draws from
 create or replace function public.wheel_list(p_shop uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
-  select coalesce(jsonb_agg(jsonb_build_object('id', w.id, 'name', w.name, 'chance', w.chance) order by w.rank, w.id), '[]'::jsonb)
+  select coalesce(jsonb_agg(jsonb_build_object('id', w.id, 'name', w.name, 'chance', w.chance, 'stock', w.stock) order by w.rank, w.id), '[]'::jsonb)
+  from public.wheel_prizes w where w.shop_id = p_shop and not w.gone and (w.stock is null or w.stock > 0)
+$$;
+
+-- the owner's whole wheel: the prizes run out too, so he sees them and fills them again
+create or replace function public.wheel_all(p_shop uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', w.id, 'name', w.name, 'chance', w.chance, 'stock', w.stock) order by w.rank, w.id), '[]'::jsonb)
   from public.wheel_prizes w where w.shop_id = p_shop and not w.gone
 $$;
 
@@ -3277,16 +3288,19 @@ declare s public.shops%rowtype;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
-  return jsonb_build_object('ok', true, 'on', s.wheel_on, 'allowed', s.wheel_allowed, 'prizes', public.wheel_list(s.id),
+  return jsonb_build_object('ok', true, 'on', s.wheel_on, 'allowed', s.wheel_allowed, 'prizes', public.wheel_all(s.id),
     'fell', coalesce((select jsonb_agg(jsonb_build_object('name', x.gift, 'n', x.n) order by x.n desc)
                       from (select m.gift, count(*) as n from public.moments m
                             where m.shop_id = s.id and m.wheel and m.spun_at > now() - interval '30 days' group by m.gift) x), '[]'::jsonb));
 end $$;
 
--- the owner writes the wheel: the whole list ([{id?, name, chance}]), 2 to 12 prizes, 100% in all
+-- the owner writes the wheel: the whole list ([{id?, name, chance, stock?}]), 2 to 12 prizes, 100% in all.
+-- stock: how many are left to give (null: no limit; a prize sent without it keeps its own) — and one prize at
+-- least with no limit, so the wheel never runs dry
 create or replace function public.wheel_save(p_prizes jsonb) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; x jsonb; v_rank int := 0; v_keep bigint[] := '{}'; v_id bigint; v_name text; v_chance int; v_sum int := 0;
+        v_stock int; v_open int := 0;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
@@ -3295,23 +3309,33 @@ begin
   for x in select * from jsonb_array_elements(p_prizes) loop
     v_chance := case when coalesce(x ->> 'chance', '') ~ '^\d{1,3}$' then (x ->> 'chance')::int end;
     if char_length(btrim(coalesce(x ->> 'name', ''))) not between 1 and 40 or v_chance is null or v_chance not between 1 and 100 then return public.err('invalid'); end if;
+    if x ? 'stock' and jsonb_typeof(x -> 'stock') <> 'null' and coalesce(x ->> 'stock', '') !~ '^\d{1,4}$' then return public.err('invalid'); end if;
     v_sum := v_sum + v_chance;
+    -- no limit: sent as null, or left out on a new prize or on one that had none
+    v_id := case when coalesce(x ->> 'id', '') ~ '^\d{1,18}$' then (x ->> 'id')::bigint end;
+    if (x ? 'stock' and jsonb_typeof(x -> 'stock') = 'null')
+       or (not x ? 'stock' and not exists (select 1 from public.wheel_prizes where id = v_id and shop_id = s.id and stock is not null)) then
+      v_open := v_open + 1;
+    end if;
   end loop;
   if v_sum <> 100 then return public.err('sum'); end if;
+  if v_open = 0 then return public.err('need_open'); end if;
   for x in select * from jsonb_array_elements(p_prizes) loop
     v_name := btrim(x ->> 'name');
     v_chance := (x ->> 'chance')::int;
+    v_stock := case when coalesce(x ->> 'stock', '') ~ '^\d{1,4}$' then (x ->> 'stock')::int end;
     v_id := case when coalesce(x ->> 'id', '') ~ '^\d{1,18}$' then (x ->> 'id')::bigint end;
     if v_id is not null and exists (select 1 from public.wheel_prizes where id = v_id and shop_id = s.id) then
-      update public.wheel_prizes set name = v_name, chance = v_chance, rank = v_rank, gone = false where id = v_id;
+      update public.wheel_prizes set name = v_name, chance = v_chance, rank = v_rank, gone = false,
+                                     stock = case when x ? 'stock' then v_stock else stock end where id = v_id;
     else
-      insert into public.wheel_prizes (shop_id, name, chance, rank) values (s.id, v_name, v_chance, v_rank) returning id into v_id;
+      insert into public.wheel_prizes (shop_id, name, chance, rank, stock) values (s.id, v_name, v_chance, v_rank, v_stock) returning id into v_id;
     end if;
     v_keep := v_keep || v_id;
     v_rank := v_rank + 1;
   end loop;
   update public.wheel_prizes set gone = true where shop_id = s.id and not gone and not (id = any (v_keep));
-  return jsonb_build_object('ok', true, 'prizes', public.wheel_list(s.id));
+  return jsonb_build_object('ok', true, 'prizes', public.wheel_all(s.id));
 end $$;
 
 -- the owner turns the wheel on for his customers, or off: only a shop the founder allows, with a card,
@@ -3327,7 +3351,7 @@ begin
   if coalesce(p_on, false) then
     if s.store_on then return public.err('store'); end if;
     if s.goal is null then return public.err('no_card'); end if;
-    if (select count(*) from public.wheel_prizes w where w.shop_id = s.id and not w.gone) < 2 then return public.err('no_prizes'); end if;
+    if (select count(*) from public.wheel_prizes w where w.shop_id = s.id and not w.gone and (w.stock is null or w.stock > 0)) < 2 then return public.err('no_prizes'); end if;
   end if;
   update public.shops set wheel_on = coalesce(p_on, false) where id = s.id;
   return jsonb_build_object('ok', true, 'on', coalesce(p_on, false));
@@ -3336,7 +3360,7 @@ end $$;
 -- the turn itself (server only): a prize by its chance, written on the gift; its place on the wheel for the spin
 create or replace function public.wheel_pick(p_moment bigint) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare m public.moments%rowtype; c public.cards%rowtype; s public.shops%rowtype; v_list jsonb; v_r float8 := random(); v_name text; v_index int;
+declare m public.moments%rowtype; c public.cards%rowtype; s public.shops%rowtype; v_list jsonb; v_r float8 := random(); v_name text; v_index int; v_id bigint;
 begin
   select * into m from public.moments where id = p_moment for update;
   if m.id is null or m.kind <> 'gift' or not m.wheel then return public.err('not_found'); end if;
@@ -3347,11 +3371,16 @@ begin
                               'index', (select (o - 1)::int from jsonb_array_elements(v_list) with ordinality e(x, o) where x ->> 'name' = m.gift limit 1));
   end if;
   if m.given_at is not null then return public.err('given'); end if;
-  select x.name, x.i into v_name, v_index from (
-    select w.name, (row_number() over (order by w.rank, w.id) - 1)::int as i,
+  -- the shop's prizes held while this turn draws: two turns at once never both take the last one
+  perform 1 from public.wheel_prizes w where w.shop_id = s.id and not w.gone for update;
+  v_list := public.wheel_list(s.id);
+  select x.id, x.name, x.i into v_id, v_name, v_index from (
+    select w.id, w.name, (row_number() over (order by w.rank, w.id) - 1)::int as i,
            sum(w.chance) over (order by w.rank, w.id) as upto, sum(w.chance) over () as total
-    from public.wheel_prizes w where w.shop_id = s.id and not w.gone) x
+    from public.wheel_prizes w where w.shop_id = s.id and not w.gone and (w.stock is null or w.stock > 0)) x
   where x.upto > v_r * x.total order by x.upto limit 1;
+  -- one fewer of it to give (the list sent with the turn still shows it, so the wheel lands on it)
+  if v_id is not null then update public.wheel_prizes set stock = stock - 1 where id = v_id and stock is not null; end if;
   if v_name is null then
     -- a wheel with nothing on it: the card's own gift, as it would have been
     select * into c from public.cards where id = m.card_id;

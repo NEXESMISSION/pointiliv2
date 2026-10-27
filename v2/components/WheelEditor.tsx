@@ -12,7 +12,9 @@ import { Btn } from "@/components/ui";
 import { Wheel, WheelHow, type Prize } from "@/components/Wheel";
 import { stampsN, t } from "@/lib/t";
 
-type Row = { key: string; id?: number; name: string; chance: number };
+/** a prize being edited: `stock` how many are left to give (null: no limit) */
+type Row = { key: string; id?: number; name: string; chance: number; stock: number | null };
+const rowOf = (p: Prize): Row => ({ key: `p${p.id}`, id: p.id, name: p.name, chance: p.chance, stock: p.stock ?? null });
 
 /** the chances shared out evenly, the rest on the first ones, 100 in all */
 const even = (rows: Row[]): Row[] => {
@@ -26,6 +28,9 @@ const even = (rows: Row[]): Row[] => {
  * it on for his customers — a full card is then a turn («دورة»), not the
  * card's gift — the prizes it can give, each with its chance in percent —
  * 100 in all, shown as it goes, with one tap to share them out evenly — and
+ * how many of it the owner has to give (27 Oct 2026: empty is no limit, one
+ * prize at least stays so; each that falls takes one off, and at 0 it leaves
+ * the wheel until he writes a new number) — and
  * the wheel itself as the customers will see it. The card's goal stays on
  * «الكارط». On only with two prizes saved; off, a card made on the wheel
  * goes to «الكارط» for a gift of its own.
@@ -33,7 +38,7 @@ const even = (rows: Row[]): Row[] => {
 export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst = false, gift = null }: { prizes: Prize[]; fell: { name: string; n: number }[]; goal: number | null; first?: boolean; on?: boolean; gift?: string | null }) {
   useScreen("wheel");
   const router = useRouter();
-  const [rows, setRows] = useState<Row[]>(() => prizes.map((p) => ({ key: `p${p.id}`, id: p.id, name: p.name, chance: p.chance })));
+  const [rows, setRows] = useState<Row[]>(() => prizes.map(rowOf));
   const [fresh, setFresh] = useState("");
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -62,6 +67,8 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
     });
 
   const sum = rows.reduce((n, r) => n + r.chance, 0);
+  // the wheel as the customers see it: a prize run out is not on it
+  const live = rows.filter((r) => r.stock !== 0);
   const touch = (next: Row[]) => {
     setRows(next);
     setDirty(true);
@@ -71,17 +78,22 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
   const add = () => {
     const name = fresh.trim().slice(0, 40);
     if (!name || rows.length >= 12) return;
-    touch(even([...rows, { key: `n${rows.length}-${name}`, name, chance: 0 }]));
+    touch(even([...rows, { key: `n${rows.length}-${name}`, name, chance: 0, stock: null }]));
     setFresh("");
   };
   const save = () =>
     start(async () => {
-      const res = await wheelSave(rows.map((r) => ({ id: r.id, name: r.name, chance: r.chance })));
-      if (!res.ok || !res.prizes) {
-        setError(res.error === "sum" ? t.wheelSumBad : res.error === "count" ? t.wheelCount : t.storeErr);
+      // every prize with a number: the wheel would empty itself one day — said before asking the server
+      if (rows.every((r) => r.stock !== null)) {
+        setError(t.wheelNeedOpen);
         return;
       }
-      setRows(res.prizes.map((p) => ({ key: `p${p.id}`, id: p.id, name: p.name, chance: p.chance })));
+      const res = await wheelSave(rows.map((r) => ({ id: r.id, name: r.name, chance: r.chance, stock: r.stock })));
+      if (!res.ok || !res.prizes) {
+        setError(res.error === "sum" ? t.wheelSumBad : res.error === "count" ? t.wheelCount : res.error === "need_open" ? t.wheelNeedOpen : t.storeErr);
+        return;
+      }
+      setRows(res.prizes.map(rowOf));
       setDirty(false);
       setSaved(true);
       // the shop's first set-up: that was the last thing to choose — the clips, then the code (as after any first card)
@@ -102,12 +114,12 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
           </button>
         }
       />
-      {how && <WheelHow goal={goal ?? 0} prizes={rows.map((r) => ({ name: r.name, chance: r.chance }))} onClose={() => setHow(false)} />}
+      {how && <WheelHow goal={goal ?? 0} prizes={live.map((r) => ({ name: r.name, chance: r.chance }))} onClose={() => setHow(false)} />}
       {first && (
         <>
           <p className="mt-1 shrink-0 text-[0.9375rem] font-semibold text-brand">الخطوة 2 من 2</p>
           <h1 className="shrink-0 text-balance text-[1.25rem] font-bold leading-tight">شنوّة يربح الحريف في الروليت؟</h1>
-          <p className="shrink-0 text-[0.8125rem] text-muted">اكتب الكادوات، وقدّاش حظ كل وحدة (المجموع 100%)</p>
+          <p className="shrink-0 text-[0.8125rem] text-muted">اكتب الكادوات، قدّاش حظ كل وحدة (المجموع 100%)، وكان تحب قدّاش عندك منها</p>
         </>
       )}
 
@@ -123,9 +135,9 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
       )}
 
       {/* the wheel as the customers will see it (it does not turn here) */}
-      {rows.length >= 2 && (
+      {live.length >= 2 && (
         <div className="pointer-events-none mx-auto mt-[1.5dvh] shrink-0 opacity-95 [@media(max-height:640px)]:hidden" aria-hidden>
-          <Wheel prizes={rows} size="min(46vw, 22dvh, 12rem)" spin={async () => null} onDone={() => {}} label="" />
+          <Wheel prizes={live} size="min(46vw, 22dvh, 12rem)" spin={async () => null} onDone={() => {}} label="" />
         </div>
       )}
 
@@ -134,25 +146,44 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
           {rows.length === 0 && <p className="px-4 pb-1 pt-4 text-center text-[0.9375rem] text-muted">حتى كادو مازال: اكتب أوّل واحد لتحت</p>}
           <ul className="divide-y divide-line">
             {rows.map((x) => (
-              <li key={x.key} className="flex items-center gap-2 px-3 py-2">
-                <input
-                  value={x.name}
-                  onChange={(e) => touch(rows.map((r) => (r.key === x.key ? { ...r, name: e.target.value.slice(0, 40) } : r)))}
-                  aria-label={t.wheelPrize}
-                  className="h-10 min-w-0 flex-1 rounded-[0.75rem] bg-canvas px-3 text-[0.9375rem] font-semibold outline-none focus:ring-2 focus:ring-brand/40"
-                />
-                <span className="flex shrink-0 items-center gap-1" dir="ltr">
-                  <button type="button" onClick={() => touch(rows.map((r) => (r.key === x.key ? { ...r, chance: Math.max(1, r.chance - 5) } : r)))} className="press grid size-9 place-items-center rounded-full bg-canvas" aria-label="-5%">
-                    <Minus className="size-4" />
+              <li key={x.key} className="px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    value={x.name}
+                    onChange={(e) => touch(rows.map((r) => (r.key === x.key ? { ...r, name: e.target.value.slice(0, 40) } : r)))}
+                    aria-label={t.wheelPrize}
+                    className={`h-10 min-w-0 flex-1 rounded-[0.75rem] bg-canvas px-3 text-[0.9375rem] font-semibold outline-none focus:ring-2 focus:ring-brand/40 ${x.stock === 0 ? "text-muted line-through decoration-coral/60" : ""}`}
+                  />
+                  <button type="button" onClick={() => touch(rows.filter((r) => r.key !== x.key))} className="press grid size-9 shrink-0 place-items-center rounded-full text-muted hover:text-coral" aria-label="X">
+                    <X className="size-4" />
                   </button>
-                  <span className="num w-12 rounded-[0.625rem] bg-brand-soft py-1.5 text-center text-[0.9375rem] font-bold text-brand">{x.chance}%</span>
-                  <button type="button" onClick={() => touch(rows.map((r) => (r.key === x.key ? { ...r, chance: Math.min(100, r.chance + 5) } : r)))} className="press grid size-9 place-items-center rounded-full bg-canvas" aria-label="+5%">
-                    <Plus className="size-4" />
-                  </button>
-                </span>
-                <button type="button" onClick={() => touch(rows.filter((r) => r.key !== x.key))} className="press grid size-9 shrink-0 place-items-center rounded-full text-muted hover:text-coral" aria-label="X">
-                  <X className="size-4" />
-                </button>
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="flex shrink-0 items-center gap-1" dir="ltr">
+                    <button type="button" onClick={() => touch(rows.map((r) => (r.key === x.key ? { ...r, chance: Math.max(1, r.chance - 5) } : r)))} className="press grid size-9 place-items-center rounded-full bg-canvas" aria-label="-5%">
+                      <Minus className="size-4" />
+                    </button>
+                    <span className="num w-12 rounded-[0.625rem] bg-brand-soft py-1.5 text-center text-[0.9375rem] font-bold text-brand">{x.chance}%</span>
+                    <button type="button" onClick={() => touch(rows.map((r) => (r.key === x.key ? { ...r, chance: Math.min(100, r.chance + 5) } : r)))} className="press grid size-9 place-items-center rounded-full bg-canvas" aria-label="+5%">
+                      <Plus className="size-4" />
+                    </button>
+                  </span>
+                  {/* how many of it to give: empty is no limit; at 0 it is off the wheel until a new number */}
+                  <label className="ms-auto flex min-w-0 items-center gap-1.5">
+                    {x.stock === 0 ? <span className="shrink-0 rounded-full bg-coral-soft px-2 py-0.5 text-[0.75rem] font-bold text-coral">{t.wheelOut}</span> : <span className="shrink-0 text-[0.8125rem] font-semibold text-muted">{t.wheelStock}</span>}
+                    <input
+                      value={x.stock ?? ""}
+                      onChange={(e) => {
+                        const d = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        touch(rows.map((r) => (r.key === x.key ? { ...r, stock: d === "" ? null : Number(d) } : r)));
+                      }}
+                      inputMode="numeric"
+                      placeholder={t.wheelNoLimit}
+                      aria-label={`${t.wheelStock}: ${x.name}`}
+                      className="h-9 w-[4.75rem] shrink-0 rounded-[0.625rem] bg-canvas text-center text-[0.9375rem] font-bold outline-none placeholder:text-[0.8125rem] placeholder:font-semibold placeholder:text-faint focus:ring-2 focus:ring-brand/40"
+                    />
+                  </label>
+                </div>
               </li>
             ))}
             {rows.length < 12 && (

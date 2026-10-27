@@ -3,7 +3,8 @@
 import { useRef, useState } from "react";
 import { fill, stampsN, t } from "@/lib/t";
 
-export type Prize = { id?: number; name: string; chance: number };
+/** a prize: its chance, and how many of it are left to give (null or missing: no limit) */
+export type Prize = { id?: number; name: string; chance: number; stock?: number | null };
 export type SpinResult = { prize: string; index: number | null } | null;
 
 /** the wheel's colours, one per slice in turn — bright, and white text reads on each */
@@ -43,7 +44,8 @@ export function WheelFace({ prizes, turn = 0, spinning = false, onStopped, class
       <circle cx="100" cy="100" r="99" fill="#fff" />
       {prizes.map((p, i) => (
         <g key={`${p.name}-${i}`}>
-          <path d={slice(i * seg, (i + 1) * seg, 94)} fill={prizeColor(i)} stroke="#fff" strokeWidth="1.5" />
+          {/* one prize left (the others ran out): the whole disc is its slice — an arc of 360° draws nothing */}
+          {n === 1 ? <circle cx="100" cy="100" r="94" fill={prizeColor(i)} /> : <path d={slice(i * seg, (i + 1) * seg, 94)} fill={prizeColor(i)} stroke="#fff" strokeWidth="1.5" />}
           <text
             x="100"
             y="100"

@@ -96,6 +96,46 @@ try {
   c = await view();
   check("one turn left to spin, beside the gift", c?.spins_n === 1, c?.spins_n);
 
+  // since 27 Oct 2026: how many of each prize the owner has to give
+  console.log("\nA number per prize: how many of it the owner has to give");
+  const mine = async () => (await rpc(owner, "my_wheel"))?.prizes ?? [];
+  const [pz, ko] = await mine();
+  check("a prize with no number has no limit", pz?.stock === null && ko?.stock === null, [pz, ko]);
+  check("one prize at least keeps no limit, or the wheel would run dry", (await rpc(owner, "wheel_save", { p_prizes: [{ id: pz.id, name: "بيتزا", chance: 99, stock: 2 }, { id: ko.id, name: "كوكا", chance: 1, stock: 5 }] })).error === "need_open");
+  const saved = await rpc(owner, "wheel_save", { p_prizes: [{ id: pz.id, name: "بيتزا", chance: 99, stock: 2 }, { id: ko.id, name: "كوكا", chance: 1, stock: null }] });
+  check("two pizzas to give, the cola with no limit", saved?.ok && saved.prizes?.[0]?.stock === 2 && saved.prizes?.[1]?.stock === null, saved);
+  const kept = await rpc(owner, "wheel_save", { p_prizes: [{ id: pz.id, name: "بيتزا", chance: 99 }, { id: ko.id, name: "كوكا", chance: 1 }] });
+  check("saved again without numbers (the card's own question), the numbers stay", kept?.prizes?.[0]?.stock === 2, kept);
+  check("on again", (await rpc(owner, "set_wheel", { p_on: true })).ok);
+  // four turns: the one still waiting and three more
+  await give(9);
+  const fell = [];
+  for (let i = 0; i < 4; i++) {
+    c = await view();
+    if (!c?.spin) break;
+    fell.push((await rpc(sami, "spin", { p_moment: c.spin }))?.prize);
+  }
+  let left = (await mine())[0]?.stock;
+  const pizzas = fell.filter((x) => x === "بيتزا").length;
+  check("four turns spun", fell.length === 4, fell);
+  check("each pizza that fell took one off, never below zero", pizzas + left === 2 && left >= 0, { fell, left });
+  check("  → both pizzas went (99% each), then only cola", pizzas === 2 && left === 0, { fell, left });
+  c = await view();
+  check("a prize run out is off the customer's wheel", (c?.prizes ?? []).map((p) => p.name).join() === "كوكا", c?.prizes);
+  check("…and still on the owner's, at 0, to fill again", (await mine())[0]?.stock === 0);
+  // the last pizza, wanted by two turns at the very same moment: one of them at most gets it
+  check("filled again: one pizza", (await rpc(owner, "wheel_save", { p_prizes: [{ id: pz.id, name: "بيتزا", chance: 99, stock: 1 }, { id: ko.id, name: "كوكا", chance: 1 }] }))?.ok);
+  c = await view();
+  check("  → back on the customer's wheel", (c?.prizes ?? []).length === 2, c?.prizes);
+  await give(6);
+  const { data: waiting } = await admin.from("moments").select("id").eq("shop_id", shopId).eq("wheel", true).is("spun_at", null).order("id");
+  const both = await Promise.all((waiting ?? []).slice(0, 2).map((m) => rpc(sami, "spin", { p_moment: m.id })));
+  left = (await mine())[0]?.stock;
+  const got = both.filter((r) => r?.prize === "بيتزا").length;
+  check("two turns at once for the last pizza: it goes once, never twice", both.length === 2 && both.every((r) => r?.ok) && got + left === 1 && got <= 1, { both: both.map((r) => r?.prize ?? r), left });
+  // (the pizza gone, one prize is left that can fall: a wheel of one is no wheel)
+  if (left === 0) check("the owner cannot turn it on with one prize left to fall", (await rpc(owner, "set_wheel", { p_on: false })).ok && (await rpc(owner, "set_wheel", { p_on: true })).error === "no_prizes");
+
   check("the founder takes it away", (await rpc(boss, "admin_set_wheel", { p_id: shopId, p_on: false })).ok);
   const me2 = (await rpc(owner, "me")).shop;
   check("taken away: not allowed, and off", me2.wheel_allowed === false && me2.wheel_on === false, me2);

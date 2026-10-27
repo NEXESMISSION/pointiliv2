@@ -286,13 +286,33 @@ const SCREENS = [
       await admin.from("wheel_prizes").insert([
         { shop_id: barber.id, name: "تحسينة بلاش", chance: 34, rank: 0 },
         { shop_id: barber.id, name: "دقن بلاش", chance: 33, rank: 1 },
-        { shop_id: barber.id, name: "شامبوان", chance: 33, rank: 2 },
+        // a prize the owner has only so many of (27 Oct 2026): «باقي 3» beside it
+        { shop_id: barber.id, name: "شامبوان", chance: 33, rank: 2, stock: 3 },
       ]);
     },
     path: () => `/c/${cardBarber}`,
     after: async () => {
       await admin.from("shops").update({ wheel_allowed: false, wheel_on: false }).eq("id", barber.id);
       await admin.from("wheel_prizes").delete().eq("shop_id", barber.id);
+    },
+  },
+  // the owner's wheel: a prize with no limit, one with a number, one run out (27 Oct 2026)
+  {
+    name: "owner-wheel",
+    as: "owner",
+    before: async () => {
+      await admin.from("shops").update({ wheel_allowed: true, wheel_on: true }).eq("id", shop.id);
+      await admin.from("wheel_prizes").delete().eq("shop_id", shop.id);
+      await admin.from("wheel_prizes").insert([
+        { shop_id: shop.id, name: "قهوة بلاش", chance: 60, rank: 0 },
+        { shop_id: shop.id, name: "كرواسون", chance: 30, rank: 1, stock: 12 },
+        { shop_id: shop.id, name: "كاس عصير", chance: 10, rank: 2, stock: 0 },
+      ]);
+    },
+    path: "/shop/wheel",
+    after: async () => {
+      await admin.from("shops").update({ wheel_allowed: false, wheel_on: false }).eq("id", shop.id);
+      await admin.from("wheel_prizes").delete().eq("shop_id", shop.id);
     },
   },
   // the card tapped: the sheet is drawn on the body, so it is centred and whole whatever clips the page

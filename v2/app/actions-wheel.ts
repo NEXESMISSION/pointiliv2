@@ -34,10 +34,15 @@ export async function setWheel(on: boolean): Promise<{ ok: boolean; error?: stri
   return res ?? { ok: false, error: "network" };
 }
 
-/** The owner writes the wheel: 2 to 12 prizes, 100% in all. */
+/** The owner writes the wheel: 2 to 12 prizes, 100% in all, each with how many are left (null: no limit). */
 export async function wheelSave(prizes: Prize[]): Promise<{ ok: boolean; error?: string; prizes?: Prize[] }> {
   const clean = prizes
-    .map((p) => ({ id: Number.isSafeInteger(p.id) ? p.id : null, name: String(p.name ?? "").trim().slice(0, 40), chance: Math.round(Number(p.chance)) }))
+    .map((p) => ({
+      id: Number.isSafeInteger(p.id) ? p.id : null,
+      name: String(p.name ?? "").trim().slice(0, 40),
+      chance: Math.round(Number(p.chance)),
+      stock: typeof p.stock === "number" && Number.isInteger(p.stock) && p.stock >= 0 ? Math.min(p.stock, 9999) : null,
+    }))
     .filter((p) => p.name)
     .slice(0, 12);
   const res = await call<{ ok: boolean; error?: string; prizes?: Prize[] }>("wheel_save", { p_prizes: clean });

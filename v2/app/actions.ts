@@ -504,7 +504,8 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
 /**
  * The wheel, from the card's gift question: the prizes chosen there (names
  * only), written only when they changed — each the same chance, a prize kept
- * keeps its id (and what fell on it) — then the wheel on. An error, said.
+ * keeps its id (and what fell on it) and its number of what is left — then
+ * the wheel on. An error, said.
  */
 async function wheelFromCard(raw: string): Promise<string | null> {
   let names: string[] = [];
@@ -519,7 +520,8 @@ async function wheelFromCard(raw: string): Promise<string | null> {
     const base = Math.floor(100 / names.length);
     const rest = 100 - base * names.length;
     const res = await call<{ ok: boolean; error?: string }>("wheel_save", { p_prizes: names.map((name, i) => ({ id: had.find((p) => p.name === name)?.id ?? null, name, chance: base + (i < rest ? 1 : 0) })) });
-    if (!res?.ok) return res?.error === "count" ? t.wheelCount : t.errNetwork;
+    // a prize kept keeps its number (none sent): the one left with no limit may be the one just taken off
+    if (!res?.ok) return res?.error === "count" ? t.wheelCount : res?.error === "need_open" ? t.wheelNeedOpen : t.errNetwork;
   }
   const on = await call<{ ok: boolean }>("set_wheel", { p_on: true });
   return on?.ok ? null : t.errNetwork;

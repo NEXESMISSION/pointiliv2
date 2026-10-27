@@ -130,6 +130,8 @@ export function WheelPeek({ prizes }: { prizes: Prize[] }) {
             {prizes.map((p, i) => (
               <span key={`${p.name}-${i}`} className="rounded-full px-2 py-0.5 text-[0.75rem] font-bold text-white" style={{ background: prizeColor(i) }}>
                 <bdi>{p.name}</bdi>
+                {/* a prize the owner has only so many of: how many are left */}
+                {typeof p.stock === "number" && <span className="font-semibold text-white/80"> · {fill(t.wheelLeft, { n: p.stock })}</span>}
               </span>
             ))}
           </span>
