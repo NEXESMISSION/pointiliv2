@@ -7,15 +7,16 @@ import { ArrowUpRight, Settings } from "lucide-react";
 const TABS = [
   { href: "/admin", label: "المحلات" },
   { href: "/admin/subs", label: "الأبونمان" },
+  { href: "/admin/stats", label: "الأرقام" },
 ];
 
 /** How wide a console page is: a shop's whole page is read on a computer and takes the screen; the rest is a phone's column. */
 export const wideAt = (path: string) => path.startsWith("/admin/shop/");
 
 /**
- * The console's top bar: the mark, its two places (the shops, and their
- * subscriptions — the one open is dark), the tools (⚙) and the way back to
- * the app. As wide as the page under it.
+ * The console's top bar: the mark, its three places (the shops, their
+ * subscriptions, the numbers — the one open is dark), the tools (⚙) and the
+ * way back to the app. As wide as the page under it.
  */
 export function AdminNav() {
   const path = usePathname();

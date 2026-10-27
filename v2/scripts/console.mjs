@@ -420,6 +420,21 @@ try {
     await look(page, `${at}-07-tools-open`);
     if (!(await page.getByRole("button", { name: "اخرج" }).count())) bad("no way out on the tools page");
 
+    // the numbers: three periods, the road with its biggest fall, a day read by a tap
+    const stats = await timed(page, "/admin/stats", page.getByRole("heading", { name: "الأرقام" }));
+    console.log(`  · the numbers drawn in ${stats.ms} ms (${stats.kb} kB)`);
+    await look(page, `${at}-08-stats`);
+    await page.getByRole("tab", { name: "من الأول" }).click();
+    await page.getByRole("tab", { name: "من الأول", selected: true }).waitFor({ timeout: 10000 });
+    const signed = Number((await page.locator("main .grid b.num").first().textContent()).replace(/\D/g, ""));
+    if (signed < made.shops.length) bad(`the numbers count ${signed} shops from the start, this run alone opened ${made.shops.length}`);
+    const day = page.locator("button[aria-pressed]").first();
+    await day.click();
+    if ((await day.getAttribute("aria-pressed")) !== "true") bad("a tap on a day did not read it");
+    await page.getByText("من التسجيل للخلاص").waitFor({ timeout: 10000 });
+    await look(page, `${at}-09-stats-all`);
+    ok(`the numbers: ${signed} shops from the start, a day read by a tap`);
+
     // a Telegram alert's link: the shop opened on the board, scrolled to
     await page.goto(`${BASE}/admin?shop=${made.shops[3]}`, { waitUntil: "domcontentloaded" });
     await page.locator(`article[data-shop='${made.shops[3]}'] [role=switch]`).first().waitFor({ timeout: 30000 });
