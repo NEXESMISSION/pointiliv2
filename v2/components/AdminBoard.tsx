@@ -33,6 +33,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { adminShopNote, adminShopStage } from "@/app/admin/actions";
+import { ShopVoice } from "@/components/AdminVoice";
 import { AdminShopMore } from "@/components/AdminShopMore";
 import { ShopMark } from "@/components/ShopMark";
 import { digits, spaced } from "@/lib/phone";
@@ -334,6 +335,7 @@ function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; n
         <ShopStage id={s.id} stage={s.stage} at={s.stage_at} now={now} onPicked={onPicked} />
         <ShopNote id={s.id} note={s.note} className="min-w-[8.5rem] flex-1" />
       </div>
+      <ShopVoice id={s.id} count={s.voices ?? 0} now={now} />
 
       {/* when he opens the app, away from his customers' hours: the time to call */}
       {p.call && !s.paid && (

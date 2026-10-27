@@ -116,7 +116,8 @@ for (const ip of ["local", "::1", "127.0.0.1"])
 }
 
 /* ── 2 · walk it ────────────────────────────────────────────────────── */
-const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
+// a pretend microphone (a tone), allowed without asking: the voice notes are recorded for real
+const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true, args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] });
 const problems = [];
 const ok = (what) => console.log(`  ✓ ${what}`);
 const bad = (what) => {
@@ -154,7 +155,9 @@ async function look(page, name) {
     }
     return { scroll: doc.scrollWidth - doc.clientWidth, wide: [...new Set(wide)].slice(0, 5), loose: [...new Set(loose)].slice(0, 5), flipped: [...new Set(flipped)].slice(0, 5) };
   });
-  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
+  // caret: "initial" — hiding the caret, Playwright writes a style on every field, and a page still waking
+  // up then reads it as a hydration mismatch that no phone ever has
+  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false, caret: "initial" });
   const wrong = r.scroll > 1 || r.wide.length || r.loose.length || r.flipped.length;
   if (wrong) bad(`${name}: ${r.scroll > 1 ? `spills ${r.scroll}px ` : ""}${r.wide.length ? `wide: ${r.wide.join(", ")} ` : ""}${r.loose.length ? `loose latin: ${r.loose.join(" | ")} ` : ""}${r.flipped.length ? `flipped: ${r.flipped.join(" | ")}` : ""}`);
   else ok(name);
@@ -174,13 +177,14 @@ let current = null;
 try {
   for (const [W, H] of SIZES) {
     const phoneSize = W < 768;
-    const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: phoneSize ? 2 : 1, isMobile: phoneSize, hasTouch: phoneSize, locale: "ar-TN" });
+    const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: phoneSize ? 2 : 1, isMobile: phoneSize, hasTouch: phoneSize, locale: "ar-TN", permissions: ["microphone"] });
     const page = await ctx.newPage();
     current = page;
     page.on("pageerror", (e) => problems.push(`THROW ${e.message}`));
     page.on("console", (m) => {
       const s = m.text();
-      if (m.type() === "error" && !/favicon|404|Failed to load resource/i.test(s)) problems.push(`ERR ${s.slice(0, 160)}`);
+      // a hydration mismatch says which attribute only far down its text: kept whole, with the page it was on
+      if (m.type() === "error" && !/favicon|404|Failed to load resource/i.test(s)) problems.push(`ERR ${/hydrated/.test(s) ? `${new URL(page.url()).pathname} ${s.slice(0, 120)} … ${s.slice(-1800)}` : s.slice(0, 160)}`);
     });
     const at = `${W}x${H}`;
     console.log(`\n${at}`);
@@ -286,6 +290,25 @@ try {
     for (const label of ["حرفاء", "تامبونات", "رجعو", "كادوات"]) if (!(await line().getByText(label, { exact: true }).count())) bad(`the line has no «${label}»`);
     if (!(await line("[role=img]").count())) bad("the line has no 14 days");
     else ok("the line itself: four numbers and its 14 days");
+    // a voice note on the line: recorded (three seconds of the pretend mic), kept, played back, taken back
+    await line().getByRole("button", { name: "فوكال", exact: true }).click();
+    await line().getByRole("button", { name: "سجّل" }).waitFor({ timeout: 10000 });
+    await page.waitForTimeout(3200);
+    await line().getByRole("button", { name: "سجّل" }).click();
+    const voices = line().getByRole("button", { name: /^1 فوكال$/ });
+    await voices.waitFor({ timeout: 20000 });
+    if ((await voices.getAttribute("aria-expanded")) !== "true") await voices.click();
+    const voiceHeard = page.waitForResponse((r) => /\/api\/admin\/voice\/[0-9a-f-]{36}$/.test(r.url()) && r.request().method() === "GET", { timeout: 20000 });
+    await line().getByRole("button", { name: "اسمع" }).click();
+    const voiceBack = await voiceHeard;
+    const type = voiceBack.headers()["content-type"] ?? "";
+    if (voiceBack.status() !== 200 || !type.startsWith("audio/")) bad(`the voice note did not come back as a sound: ${voiceBack.status()} ${type}`);
+    await line().getByText(/0:0[2-4]/).first().waitFor({ timeout: 5000 }).catch(() => bad("the voice note's length is not about three seconds"));
+    await look(page, `${at}-01c-voice`);
+    await line().getByRole("button", { name: "امسح الفوكال" }).click();
+    await line().getByRole("button", { name: "امسح الفوكال" }).click();
+    await voices.waitFor({ state: "detached", timeout: 20000 });
+    ok(`a voice note: recorded, kept, played back (${type.split(";")[0]}), taken back`);
     // and what they say about the shop: what is going on, why, and what to do now
     const read = (await line("[data-reading]").textContent().catch(() => "")) ?? "";
     if (!read.includes("←")) bad(`the line has no reading: «${read}»`);
@@ -367,7 +390,7 @@ try {
     const pic = page.getByRole("dialog", { name: "تصويرة الأبونمان" });
     await pic.waitFor({ timeout: 20000 });
     await page.waitForTimeout(600);
-    await page.screenshot({ path: `${OUT}/${at}-03b-plan-picture.png` });
+    await page.screenshot({ path: `${OUT}/${at}-03b-plan-picture.png`, caret: "initial" });
     await pic.getByRole("button", { name: "X" }).click();
     await sub().getByText(/^خالص حتى/).first().waitFor({ timeout: 20000 });
     ok("a year turned on from the subscriptions: its picture opened, the line says «خالص»");
@@ -444,7 +467,7 @@ try {
 } catch (e) {
   problems.push(`STOPPED ${e.message.split("\n")[0]}`);
   // where it stopped, to see why
-  await current?.screenshot({ path: `${OUT}/stopped.png` }).catch(() => {});
+  await current?.screenshot({ path: `${OUT}/stopped.png`, caret: "initial" }).catch(() => {});
 } finally {
   await browser.close();
   console.log("\n· cleaning up");

@@ -55,6 +55,8 @@ export type BoardShop = {
   note: string;
   stage: string;
   stage_at: string | null;
+  /** how many voice notes he left on it (components/AdminVoice: the notes themselves are read when opened) */
+  voices: number;
   /** what the analysis reads besides the line's numbers (profileShop) */
   x: BoardX;
 };

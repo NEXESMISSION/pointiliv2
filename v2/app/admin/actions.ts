@@ -37,6 +37,15 @@ export async function adminShopNote(shopId: string, note: string): Promise<boole
   return !!res?.ok;
 }
 
+/** a voice note on a shop: how long, and when (the sound itself only ever comes through /api/admin/voice/[id]) */
+export type Voice = { id: string; secs: number; at: string };
+
+/** A shop's voice notes, the newest first: read when the founder opens them on its line (the database checks he is an admin). */
+export async function adminVoices(shopId: string): Promise<Voice[]> {
+  if (!UUID.test(shopId)) return [];
+  return (await call<Voice[]>("admin_voices", { p_shop: shopId })) ?? [];
+}
+
 /** The founder's follow-up of a shop, picked next to his note (lib/board STAGES): kept with when it was picked. */
 export async function adminShopStage(shopId: string, stage: string): Promise<boolean> {
   if (!UUID.test(shopId) || !STAGE_KEYS.includes(stage)) return false;

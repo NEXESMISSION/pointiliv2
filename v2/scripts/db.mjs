@@ -47,6 +47,27 @@ async function logosBucket() {
 }
 
 /**
+ * The founder's voice notes: a PRIVATE bucket (no address opens a file in it,
+ * and no policy lets an account in — only the server's service key reaches
+ * it), holding sealed bytes only (lib/voice.ts: AES-256-GCM, the key in the
+ * server's environment). Made private again on every run, should anybody
+ * ever flip it in the dashboard.
+ */
+async function voicesBucket() {
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/bucket`;
+  const headers = { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json" };
+  const shape = { public: false, file_size_limit: 3_200_000, allowed_mime_types: ["application/octet-stream"] };
+  const have = await fetch(`${url}/voices`, { headers });
+  const res = have.ok
+    ? await fetch(`${url}/voices`, { method: "PUT", headers, body: JSON.stringify(shape) })
+    : await fetch(url, { method: "POST", headers, body: JSON.stringify({ id: "voices", name: "voices", ...shape }) });
+  if (!res.ok) throw new Error(`voices bucket: HTTP ${res.status} — ${(await res.text()).slice(0, 300)}`);
+  const now = await (await fetch(`${url}/voices`, { headers })).json();
+  if (now.public !== false) throw new Error("voices bucket: still public");
+  console.log(`✓ voices bucket, private (${have.ok ? "kept" : "made"})`);
+}
+
+/**
  * What the founder and the owners set by hand, shop by shop: the switches and
  * the subscription. Applying the schema must never change any of it — on
  * 15 Oct 2026 a forgotten line in it turned every «شنوّة يبيع» off, and a
@@ -81,6 +102,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   await sql("select pg_notify('pgrst', 'reload schema')");
   console.log(`✓ schema.sql (${Date.now() - t0} ms)`);
   await logosBucket();
+  await voicesBucket();
 
   const phones = String(process.env.ADMIN_PHONES ?? "")
     .split(",")

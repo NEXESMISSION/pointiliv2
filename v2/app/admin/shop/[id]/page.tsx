@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowRight, Check, Gift, History, MessageCircle, Moon, Phone, Smartphone, Stamp, X } from "lucide-react";
 import { Face, ShopNote, ShopProfile, ShopReading, ShopStage } from "@/components/AdminBoard";
+import { ShopVoice } from "@/components/AdminVoice";
+import type { Voice } from "@/app/admin/actions";
 import { AdminShopMore } from "@/components/AdminShopMore";
 import { PILL, profileShop, readShop, STAGE_LOOK, stageOf, standing, type AccessShop, type BoardShop } from "@/lib/board";
 import { digits, spaced } from "@/lib/phone";
@@ -162,7 +164,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   // the page's own numbers, and the shop as the board reads it (its line: the same reading, the same analysis)
-  const [st, board] = await Promise.all([call<Study | null>("admin_study", { p_id: id }), call<BoardShop[]>("admin_board", { p_shop: id })]);
+  const [st, board, voices] = await Promise.all([call<Study | null>("admin_study", { p_id: id }), call<BoardShop[]>("admin_board", { p_shop: id }), call<Voice[]>("admin_voices", { p_shop: id })]);
   const line = board?.[0] ?? null;
   if (!st) notFound();
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
@@ -312,6 +314,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
             <ShopStage id={shop.id} stage={st.stage} at={st.stage_at} now={now} refresh />
             <ShopNote id={shop.id} note={st.note} className="min-w-[8.5rem] flex-1" />
           </div>
+          <ShopVoice id={shop.id} count={voices?.length ?? 0} now={now} list={voices ?? []} />
           {st.follow.length > 0 && (
             <div className="mt-2 flex items-start gap-1.5 text-[0.75rem] text-muted">
               <History className="mt-px size-3.5 shrink-0 text-faint" aria-hidden />

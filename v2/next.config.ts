@@ -35,6 +35,12 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
         ],
       },
+      // the console alone may use the microphone: the founder's voice notes (components/AdminVoice).
+      // The last rule to set a header wins, so this one comes after the site's own
+      ...["/admin", "/admin/:path*"].map((source) => ({
+        source,
+        headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=()" }],
+      })),
     ];
   },
 };

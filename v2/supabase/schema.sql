@@ -218,6 +218,24 @@ alter table public.crm force row level security;
 alter table public.crm_log enable row level security;
 alter table public.crm_log force row level security;
 revoke all on public.crm, public.crm_log from anon, authenticated, public;
+-- the founder's voice notes on a shop (27 Oct 2026: «notes as a vocal, but super secure — I don't want
+-- them out if we are hacked one day»). The sound is never here: it is in the private «voices» bucket,
+-- sealed by the server (AES-256-GCM, the row's id bound in, a key only the server holds — not in the
+-- repository, not in the database). A row says which shop, how long and when; nobody but an admin, through
+-- the functions below, reads even that.
+create table if not exists public.crm_voice (
+  id          uuid primary key,
+  shop_id     uuid not null references public.shops (id) on delete cascade,
+  by_id       uuid references auth.users (id) on delete set null,
+  secs        int not null check (secs between 1 and 180),
+  bytes       int not null check (bytes between 1 and 3000000),
+  mime        text not null check (mime ~ '^audio/(webm|ogg|mp4|aac|mpeg)$'),
+  created_at  timestamptz not null default now()
+);
+create index if not exists crm_voice_shop_idx on public.crm_voice (shop_id, created_at desc);
+alter table public.crm_voice enable row level security;
+alter table public.crm_voice force row level security;
+revoke all on public.crm_voice from anon, authenticated, public;
 -- a shop's owner nudged the morning after: once (the card's own reminder date is with the cards)
 alter table public.shops add column if not exists nudged_at timestamptz;
 
@@ -1996,6 +2014,46 @@ begin
     insert into public.crm_log (shop_id, kind, text) values (p_shop, 'stage', p_stage);
   end if;
   return (select jsonb_build_object('ok', true, 'stage', c.stage, 'next_at', c.next_at, 'note', c.note) from public.crm c where c.shop_id = p_shop);
+end $$;
+
+-- a voice note written (the server sealed and stored its sound under this id first): an admin only, a
+-- hand on the button and not a machine — thirty an hour at the most
+create or replace function public.admin_voice_add(p_id uuid, p_shop uuid, p_secs int, p_bytes int, p_mime text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  if not exists (select 1 from public.shops where id = p_shop) then return public.err('no_shop'); end if;
+  if (select count(*) from public.crm_voice where by_id = auth.uid() and created_at > now() - interval '1 hour') >= 30 then return public.err('too_many'); end if;
+  insert into public.crm_voice (id, shop_id, by_id, secs, bytes, mime) values (p_id, p_shop, auth.uid(), p_secs, p_bytes, p_mime);
+  return jsonb_build_object('ok', true);
+exception when check_violation or unique_violation or not_null_violation then
+  return public.err('invalid');
+end $$;
+
+-- a shop's voice notes, the newest first
+create or replace function public.admin_voices(p_shop uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return coalesce((select jsonb_agg(jsonb_build_object('id', v.id, 'secs', v.secs, 'at', v.created_at) order by v.created_at desc)
+                   from public.crm_voice v where v.shop_id = p_shop), '[]'::jsonb);
+end $$;
+
+-- one voice note, to be played: what kind of sound it is
+create or replace function public.admin_voice(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return coalesce((select jsonb_build_object('ok', true, 'mime', v.mime, 'bytes', v.bytes) from public.crm_voice v where v.id = p_id), public.err('not_found'));
+end $$;
+
+-- a voice note taken back (the server removes its sound from the bucket)
+create or replace function public.admin_voice_drop(p_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  delete from public.crm_voice where id = p_id;
+  return jsonb_build_object('ok', found);
 end $$;
 
 -- a word with the owner written down: a call (answered, no answer, busy, a wrong number), a WhatsApp (sent,
@@ -3857,6 +3915,7 @@ begin
       'ms', coalesce(ow.ms, 0), 'pay_seen', ow.pay_seen, 'wa_at', og.wa_at, 'app', coalesce(og.app, false),
       'push', exists (select 1 from public.push_subs ps where ps.user_id = s.owner_id),
       'note', coalesce(cn.note, ''), 'stage', coalesce(cn.stage, 'new'), 'stage_at', cn.stage_at,
+      'voices', (select count(*) from public.crm_voice v where v.shop_id = s.id),
       -- what the board's analysis reads (lib/board profileShop): the customers' side, the owner's, the counter's
       'x', jsonb_build_object(
         'hours', hr.hours, 'ohours', oh.ohours, 'stamp_days', coalesce(st.stamp_days, 0),
@@ -4111,6 +4170,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(uuid), public.admin_board_shop(uuid), public.admin_study(uuid),
   public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),
+  public.admin_voice_add(uuid, uuid, int, int, text), public.admin_voices(uuid), public.admin_voice(uuid), public.admin_voice_drop(uuid),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),
   public.admin_set_setting(text, text), public.admin_traffic(int, boolean, jsonb, int), public.admin_visit(uuid), public.admin_heat(text, text, int, boolean, jsonb), public.admin_online(),

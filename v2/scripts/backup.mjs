@@ -8,6 +8,8 @@
  *     every table of the app and its rows, the accounts with their
  *     passwords (auth), and the list of stored files (storage);
  *   - logos/ — the shops' logos, the files themselves;
+ *   - voices/ — the founder's voice notes, still sealed (lib/voice.ts): the
+ *     zip alone never plays them, only with VOICE_KEY;
  *   - summary.txt — what is in it: each table and its rows, the sizes.
  * The dump is read back before the zip is kept. The last 60 days are kept
  * whole; before that, the first copy of each month. A line per copy in
@@ -77,16 +79,16 @@ async function poolerHost() {
   return "aws-1-eu-west-1.pooler.supabase.com";
 }
 
-/** The logos bucket, file by file (a folder in it is listed in its turn). */
-async function logos(dir) {
+/** A bucket, file by file (a folder in it is listed in its turn): the logos, the sealed voice notes. */
+async function bucket(name, dir) {
   const base = `${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1`;
   const headers = { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json" };
   let files = 0;
   let bytes = 0;
   const walk = async (prefix) => {
     for (let offset = 0; ; offset += 1000) {
-      const res = await fetch(`${base}/object/list/logos`, { method: "POST", headers, body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: "name", order: "asc" } }), signal: AbortSignal.timeout(30000) });
-      if (!res.ok) throw new Error(`logos list: HTTP ${res.status}`);
+      const res = await fetch(`${base}/object/list/${name}`, { method: "POST", headers, body: JSON.stringify({ prefix, limit: 1000, offset, sortBy: { column: "name", order: "asc" } }), signal: AbortSignal.timeout(30000) });
+      if (!res.ok) throw new Error(`${name} list: HTTP ${res.status}`);
       const items = await res.json();
       for (const it of items) {
         const path = prefix ? `${prefix}/${it.name}` : it.name;
@@ -94,8 +96,8 @@ async function logos(dir) {
           await walk(path);
           continue;
         }
-        const file = await fetch(`${base}/object/logos/${path.split("/").map(encodeURIComponent).join("/")}`, { headers, signal: AbortSignal.timeout(30000) });
-        if (!file.ok) throw new Error(`logo ${path}: HTTP ${file.status}`);
+        const file = await fetch(`${base}/object/${name}/${path.split("/").map(encodeURIComponent).join("/")}`, { headers, signal: AbortSignal.timeout(30000) });
+        if (!file.ok) throw new Error(`${name} ${path}: HTTP ${file.status}`);
         const buf = Buffer.from(await file.arrayBuffer());
         mkdirSync(dirname(join(dir, path)), { recursive: true });
         writeFileSync(join(dir, path), buf);
@@ -138,6 +140,9 @@ IN EACH ZIP
                   (schema public), the accounts and their passwords (auth),
                   the list of stored files (storage)
   logos/          the shops' logos (the «logos» bucket)
+  voices/         the founder's voice notes, SEALED (the private «voices» bucket):
+                  they open only with VOICE_KEY, which is NOT in the zip — keep
+                  a copy of it somewhere safe, apart from these zips
   summary.txt     each table with its number of rows, the sizes
 
 SEE WHAT IS INSIDE (PostgreSQL's tools: scoop install postgresql)
@@ -151,7 +156,9 @@ PUT IT BACK, in a NEW, EMPTY Supabase project (never over the live one)
      pooler URL, port 5432, from Settings > Database):
        pg_restore --data-only --no-owner -n auth   -d "DB_URL" pointili.dump
        pg_restore --data-only --no-owner --disable-triggers -n public -d "DB_URL" pointili.dump
-  3. The logos: upload the logos/ folder into the new «logos» bucket.
+  3. The logos: upload the logos/ folder into the new «logos» bucket; the
+     voices/ folder into the new PRIVATE «voices» bucket (npm run db makes it),
+     with the same VOICE_KEY in Vercel's environment.
   4. Point Vercel's environment at the new project.
 `;
 
@@ -210,7 +217,8 @@ async function main() {
       .map((l) => l.split("\t"));
     const rows = Object.fromEntries(counts);
 
-    const pics = await logos(join(work, "logos"));
+    const pics = await bucket("logos", join(work, "logos"));
+    const voices = await bucket("voices", join(work, "voices"));
     const dumpSize = statSync(dump).size;
     const width = Math.max(...counts.map(([k]) => k.length));
     writeFileSync(
@@ -221,6 +229,7 @@ async function main() {
         "",
         `pointili.dump  ${mb(dumpSize)}  (${tables} tables with their rows)`,
         `logos/         ${pics.files} files, ${mb(pics.bytes)}`,
+        `voices/        ${voices.files} files, ${mb(voices.bytes)} (sealed: they open only with VOICE_KEY)`,
         `database size  ${rows["database size"] ?? "?"}`,
         "",
         "TABLE".padEnd(width) + "  ROWS",
@@ -233,7 +242,7 @@ async function main() {
     // the zip: written under another name, then renamed — a half-written zip never looks like a copy
     const part = join(OUT, `${name}.zip.partial`);
     rmSync(part, { force: true });
-    run(join(env.SystemRoot || "C:\\Windows", "System32", "tar.exe"), ["--format", "zip", "-c", "-f", part, "-C", work, "pointili.dump", "summary.txt", ...(pics.files ? ["logos"] : [])], {});
+    run(join(env.SystemRoot || "C:\\Windows", "System32", "tar.exe"), ["--format", "zip", "-c", "-f", part, "-C", work, "pointili.dump", "summary.txt", ...(pics.files ? ["logos"] : []), ...(voices.files ? ["voices"] : [])], {});
     renameSync(part, join(OUT, `${name}.zip`));
     const zipSize = statSync(join(OUT, `${name}.zip`)).size;
 
