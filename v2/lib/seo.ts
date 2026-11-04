@@ -108,8 +108,13 @@ export const FAQ: { q: string; a: string; fr: { q: string; a: string } }[] = [
   },
   {
     q: "كيفاش نعطي التامبون للحريف؟",
-    a: "بثلاثة طرق: الحريف يسكاني الكود متاعك، ولا إنت تسكاني الكود متاعو، ولا تكتب الكود متاعو (ولا النومرو متاعو). التامبون يتسجّل في ثانية.",
-    fr: { q: "Comment donner un tampon au client ?", a: "De trois façons : le client scanne votre QR code, vous scannez le sien, ou vous tapez son code (ou son numéro de téléphone). Le tampon s'enregistre en une seconde." },
+    a: "بأربعة طرق: الحريف يسكاني الكود متاعك، ولا إنت تسكاني الكود متاعو، ولا تكتب الكود متاعو (ولا النومرو متاعو)، ولا تبعثلو رابط تامبون في واتساب كان يشري منك أونلاين. التامبون يتسجّل في ثانية.",
+    fr: { q: "Comment donner un tampon au client ?", a: "De quatre façons : le client scanne votre QR code, vous scannez le sien, vous tapez son code (ou son numéro de téléphone), ou vous lui envoyez un lien de tampon sur WhatsApp s'il achète en ligne. Le tampon s'enregistre en une seconde." },
+  },
+  {
+    q: "نبيع أونلاين، نجم نعطي تامبونات؟",
+    a: "إيه. من «ابعث تامبون برابط» تعمل رابط جديد لكل حريف وتبعثو في واتساب، ميسنجر ولا إنستغرام. كي يحلّو، التامبون يدخل للكارط متاعو. كل رابط يخدم مرّة وحدة برك وما يوفاش بالوقت، وإنت تشوف شكون خذاه وتنجم تبطّل رابط ما تخذاش.",
+    fr: { q: "Je vends en ligne : puis-je donner des tampons ?", a: "Oui. Avec « Tampon par lien », vous créez un nouveau lien pour chaque client et vous l'envoyez sur WhatsApp, Messenger ou Instagram. En l'ouvrant, le client reçoit son tampon sur sa carte. Chaque lien ne sert qu'une seule fois et n'expire pas ; vous voyez qui l'a utilisé et pouvez annuler un lien pas encore utilisé." },
   },
   {
     q: "الحريف ينجم يغشّ ولا ياخو تامبونات زايدة؟",

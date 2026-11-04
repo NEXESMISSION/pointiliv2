@@ -43,7 +43,7 @@ export default async function Prix() {
           <Icon3D name="crown" size={64} />
         </div>
         <ul className="relative mt-5 space-y-2">
-          {[...t.payPerks, "اللوغو متاعك واللون متاعك على كارط كل حريف", "تبدا في دقيقتين، من التليفون متاعك"].map((p) => (
+          {[...t.payPerks, "اللوغو متاعك واللون متاعك على كارط كل حريف", "تبيع أونلاين؟ تامبونات بالرابط في واتساب", "تبدا في دقيقتين، من التليفون متاعك"].map((p) => (
             <li key={p} className="flex items-start gap-2.5 text-[1rem]">
               <Check className="mt-1 size-4 shrink-0" strokeWidth={3} /> {p}
             </li>
