@@ -36,9 +36,15 @@ type Known = { id: number; name: string | null; phone: string | null; said: Said
 const RENEW_BEFORE_MS = 10_000;
 /** a code still good for a while: shown now, it lives long enough to be scanned */
 const fresh = (c: Code | null): c is Code => !!c && c.expiresLocal - Date.now() > RENEW_BEFORE_MS;
-/** how often the counter asks, with the radio on (a safety net) and without it */
-const ASK_LIVE_MS = 6_000;
-const ASK_DEAF_MS = 1_500;
+/**
+ * How often the counter asks on its own. With the radio on, every scan is heard
+ * the moment it happens, so the question is only a safety net; without it, the
+ * questions are what hears a scan. Each one is a server function on Vercel,
+ * and a counter stays open all day: at 6 s and 1.5 s they ran the Hobby plan
+ * out of CPU (Nov 2026). The code itself is renewed by its own clock, below.
+ */
+const ASK_LIVE_MS = 30_000;
+const ASK_DEAF_MS = 4_000;
 /** a paused shop: how often it checks whether the founder switched it back on */
 const ASK_PAUSED_MS = 20_000;
 /** the bravo after a new card: how long before the code shows by itself */
@@ -56,8 +62,9 @@ const BRAVO_MS = 3600;
  *
  * It hears every scan at once over Supabase Realtime (the shop's own topic,
  * pinged by the database) and only then asks what happened; a slow question
- * every few seconds stays as a safety net, and a fast one when the radio is
- * off. A hidden screen asks nothing.
+ * every half-minute stays as a safety net, and a faster one when the radio is
+ * off. A code is renewed on time by its own timer, and the next one comes in
+ * the same request. A hidden screen asks nothing.
  *
  * Right after a new card (`welcome` = the owner's first name), a bravo covers
  * the screen and fades by itself onto the code; then one note takes the
@@ -129,12 +136,13 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = n
   const busy = useRef(false);
   const again = useRef(false);
 
-  const fetchCode = useCallback(async (): Promise<Code | "paused"> => {
+  // `withSpare`: the next code comes in the same answer (one request for the two a counter always needs)
+  const fetchCode = useCallback(async (withSpare = false): Promise<{ code: Code; spare: Code | null } | "paused"> => {
     const res = await fetch("/api/code", {
       method: "POST",
       cache: "no-store",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ item: itemRef.current?.id ?? null }),
+      body: JSON.stringify({ item: itemRef.current?.id ?? null, spare: withSpare }),
     });
     const j = await res.json();
     if (j.error === "paused" || j.error === "shut") {
@@ -150,7 +158,8 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = n
     }
     if (!j.ok) throw new Error(j.error ?? "network");
     const offset = Date.parse(j.server_now) - Date.now();
-    return { id: j.id, svg: j.svg, expiresLocal: Date.parse(j.expires_at) - offset };
+    const local = (x: { id: string; svg: string; expires_at: string }): Code => ({ id: x.id, svg: x.svg, expiresLocal: Date.parse(x.expires_at) - offset });
+    return { code: local(j), spare: j.spare ? local(j.spare) : null };
   }, []);
 
   // the next code, kept ready (made again when it gets old)
@@ -159,7 +168,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = n
     sparing.current = true;
     try {
       const c = await fetchCode();
-      if (c !== "paused") spareRef.current = c;
+      if (c !== "paused") spareRef.current = c.code;
     } catch {
       /* the next tick tries again */
     } finally {
@@ -179,14 +188,16 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = n
       setPaused(false);
       show(spare);
     } else {
-      const c = await fetchCode();
+      const c = await fetchCode(true);
       if (c === "paused") {
         setPaused(true);
         return;
       }
       setPaused(false);
-      show(c);
+      show(c.code);
+      if (c.spare) spareRef.current = c.spare;
     }
+    // (asks only when the spare is missing or getting old)
     void prepare();
   }, [fetchCode, prepare, show]);
 
@@ -291,6 +302,14 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = n
   useEffect(() => {
     tickRef.current = tick;
   }, [tick]);
+
+  // the code on screen is renewed on time by itself, not at the next question (half a minute
+  // away with the radio on): the tick runs just after it enters its last RENEW_BEFORE_MS
+  useEffect(() => {
+    if (!code || paused || asking) return;
+    const id = setTimeout(() => void tickRef.current(), Math.max(0, code.expiresLocal - RENEW_BEFORE_MS - Date.now() + 100));
+    return () => clearTimeout(id);
+  }, [code, paused, asking]);
 
   // the radio: the database pings "pointili:<signal>" on every scan (its library comes after the page, lib/radio:
   // until it is here the counter asks on its own, as it does whenever the radio is off)

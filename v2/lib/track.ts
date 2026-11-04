@@ -21,7 +21,7 @@
  *
  * Where the person is right now (the console's «متّصل توّا») rides along: every
  * batch says it, and between batches a ping to /api/here every ~24 seconds
- * while a page is on the screen — «here» when touched in the last 90 seconds,
+ * (~a minute when idle) while a page is on the screen — «here» when touched in the last 90 seconds,
  * «idle» when open and left alone (the counter on the till) — and «away» the
  * moment the page is hidden or closed. The pings never touch the visit's own
  * times: a page left open does not make a visit longer.
@@ -39,6 +39,12 @@ const QUIET_MS = 30 * 60_000;
 const IDLE_MS = 90_000;
 const FLUSH_MS = 8_000;
 const PING_MS = 24_000;
+/**
+ * A page left alone (the counter on the till, all day) says it less often: a
+ * minute is still inside the console's 75 seconds of «online» (the check runs
+ * every FLUSH_MS, so the gap is 64 s at most), and each ping is a server function.
+ */
+const PING_IDLE_MS = 56_000;
 
 let started = false;
 let landed = false;
@@ -362,7 +368,9 @@ export function startTracking() {
       mark(view);
     }
     flush(false);
-    // between batches, on the screen: still here (or now left alone) — said every ~24 seconds, or at once when it changed
-    if (visible() && view && (Date.now() - pinged >= PING_MS || hereNow() !== told)) ping(false);
+    // between batches, on the screen: still here (or now left alone) — said every ~24 seconds (~a minute when
+    // left alone), or at once when it changed
+    const state = hereNow();
+    if (visible() && view && (Date.now() - pinged >= (state === "idle" ? PING_IDLE_MS : PING_MS) || state !== told)) ping(false);
   }, FLUSH_MS);
 }
