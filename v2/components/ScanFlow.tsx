@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { quickJoin, scan } from "@/app/actions";
 import { spin } from "@/app/actions-wheel";
 import { Sheet, SheetGo } from "@/components/Client";

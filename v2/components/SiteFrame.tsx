@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { MessageCircle } from "lucide-react";
 import { Back } from "@/components/Back";
 import { Logo } from "@/components/ui";

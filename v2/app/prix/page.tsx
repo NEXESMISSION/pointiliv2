@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { Check, Sparkles } from "lucide-react";
 import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";

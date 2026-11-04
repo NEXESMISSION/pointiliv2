@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { Check } from "lucide-react";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
 import { faqJsonLd, orgJsonLd, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useState, useTransition } from "react";
 import { BadgeCheck, ChevronLeft } from "lucide-react";
 import { formFill, type FormField } from "@/app/actions-forms";

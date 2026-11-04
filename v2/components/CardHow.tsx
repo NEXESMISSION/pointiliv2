@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useState, type ReactNode } from "react";
 import { ScanLine } from "lucide-react";
 import { Pass, type PassShop } from "@/components/Pass";

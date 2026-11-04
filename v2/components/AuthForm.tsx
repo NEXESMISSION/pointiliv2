@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState, useEffect, useState } from "react";
 import { KeyRound, UserPlus } from "lucide-react";
 import { join, login } from "@/app/actions";

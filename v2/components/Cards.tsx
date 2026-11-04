@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useSyncExternalStore } from "react";
 import { ChevronLeft, Lock, QrCode, ScanLine } from "lucide-react";
 import { Back } from "@/components/Back";

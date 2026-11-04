@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { Back } from "@/components/Back";
 import { Collect } from "@/components/Collect";
 import { Icon3D, Logo, Middle, Screen } from "@/components/ui";

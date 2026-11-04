@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import { ChevronLeft, QrCode, ScanLine, Smartphone, Store, Ticket, Users } from "lucide-react";
 import { HelpButton } from "@/components/Help";

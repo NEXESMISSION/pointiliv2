@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/Link";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
 import { groupOf, NICHES, orgJsonLd, PRICE, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";

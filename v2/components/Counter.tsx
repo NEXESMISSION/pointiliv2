@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, BadgeCheck, Check, ChevronRight, Eye, Hourglass, MessageCircle, RefreshCw, ScanLine, ShieldCheck, WifiOff } from "lucide-react";
 import { firstScanOffer } from "@/app/shop/qr/actions";
@@ -40,8 +40,9 @@ const fresh = (c: Code | null): c is Code => !!c && c.expiresLocal - Date.now() 
  * How often the counter asks on its own. With the radio on, every scan is heard
  * the moment it happens, so the question is only a safety net; without it, the
  * questions are what hears a scan. Each one is a server function on Vercel,
- * and a counter stays open all day: at 6 s and 1.5 s they ran the Hobby plan
- * out of CPU (Nov 2026). The code itself is renewed by its own clock, below.
+ * and a counter stays open for hours: at 6 s and 1.5 s the counters were some
+ * 15–20% of the site's calls when it ran past the Hobby plan (Nov 2026). The
+ * code itself is renewed by its own clock, below.
  */
 const ASK_LIVE_MS = 30_000;
 const ASK_DEAF_MS = 4_000;

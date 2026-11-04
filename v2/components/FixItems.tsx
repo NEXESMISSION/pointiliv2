@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { markSeen, setMomentItem } from "@/app/actions";

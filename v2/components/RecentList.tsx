@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft, Hourglass, QrCode, TriangleAlert, Undo2, X } from "lucide-react";
 import { CardHow } from "@/components/CardHow";

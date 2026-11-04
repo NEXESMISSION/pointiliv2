@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft, Clock, Hourglass, MessageCircle, Phone, Sparkles, X } from "lucide-react";
 import { Confetti } from "@/components/StampLand";

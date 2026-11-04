@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useActionState, useEffect, useState } from "react";
 import { LogIn } from "lucide-react";
 import { joinShop } from "@/app/actions";

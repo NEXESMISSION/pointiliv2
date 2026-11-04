@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import type { ComponentProps, ReactNode } from "react";
 
 /** The kinds of button the app has: the one big thing to do, the quiet second one, the other door (line). */

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { InstallApp } from "@/components/InstallApp";
 import { ChevronLeft, Play, Store, WalletCards } from "lucide-react";
 import { HelpButton, type HelpSettings } from "@/components/Help";

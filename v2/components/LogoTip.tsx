@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useEffect, useState } from "react";
 import { Icon3D } from "@/components/ui";
 import { seenHere, shown } from "@/lib/once";

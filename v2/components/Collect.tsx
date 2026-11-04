@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/Link";
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Smartphone, Undo2, X } from "lucide-react";
 import { customerAt, give as handOver, giveAll, giveStamp, giveStampNew, unstamp, type WaitingGift } from "@/app/actions";

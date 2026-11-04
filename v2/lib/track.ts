@@ -15,13 +15,13 @@
  * led out of the site (WhatsApp, a call, YouTube). The first view of a visit
  * carries where it came from: the referrer and the ad's utm_* and fbclid.
  *
- * Everything goes out in batches to /api/beacon — every few seconds, and the
+ * Everything goes out in batches to /api/beacon — every half-minute, and the
  * moment the page is hidden or closed — and the founder's own pages (/admin)
  * are not followed at all.
  *
  * Where the person is right now (the console's «متّصل توّا») rides along: every
- * batch says it, and between batches a ping to /api/here every ~24 seconds
- * (~a minute when idle) while a page is on the screen — «here» when touched in the last 90 seconds,
+ * batch says it, and between batches a ping to /api/here about once a minute
+ * while a page is on the screen — «here» when touched in the last 90 seconds,
  * «idle» when open and left alone (the counter on the till) — and «away» the
  * moment the page is hidden or closed. The pings never touch the visit's own
  * times: a page left open does not make a visit longer.
@@ -37,14 +37,22 @@ const VISITOR = "pt_v";
 const VISIT = "pt_s";
 const QUIET_MS = 30 * 60_000;
 const IDLE_MS = 90_000;
-const FLUSH_MS = 8_000;
-const PING_MS = 24_000;
+/** the clock that checks what is due */
+const TICK_MS = 10_000;
 /**
- * A page left alone (the counter on the till, all day) says it less often: a
- * minute is still inside the console's 75 seconds of «online» (the check runs
- * every FLUSH_MS, so the gap is 64 s at most), and each ping is a server function.
+ * The time on screen goes out at most every 30 seconds while someone looks, and
+ * at once when the page is hidden or closed (or a tap leaves the site). Every
+ * batch and every ping is a server function on Vercel: at 8 s and 24 s, the
+ * tracker was among the site's largest costs (Nov 2026).
  */
-const PING_IDLE_MS = 56_000;
+const BATCH_MS = 30_000;
+/**
+ * «Still here» between batches, every 50 s: the check runs every TICK_MS (and
+ * counts half a tick early), so the gap is 50 s — inside the console's 75 seconds of
+ * «online», and no more than the minute public.here() counts per gap toward a
+ * counter's screen time (qr_ms). A change (here → idle) is said at the next tick.
+ */
+const PING_MS = 50_000;
 
 let started = false;
 let landed = false;
@@ -362,15 +370,24 @@ export function startTracking() {
     flush(true, true);
   });
   // a heartbeat while someone is looking: the time on screen gets there even if the phone kills the page
+  // the first batch at the first tick: it makes the visit's row, which a ping alone cannot (a new visitor
+  // shows in the console within seconds); then every BATCH_MS
+  let batched = Date.now() - BATCH_MS;
+  // due half a tick early rather than a whole tick late: the clock drifts by a few ms, and 29.998 s
+  // must count as 30 (or the batch waits for 40 s, the ping for 60 s and past qr_ms' minute)
+  const due = (since: number, every: number) => Date.now() - since >= every - TICK_MS / 2;
   setInterval(() => {
-    if (view && view.since != null) {
-      settle(view);
-      mark(view);
+    if (due(batched, BATCH_MS)) {
+      batched = Date.now();
+      if (view && view.since != null) {
+        settle(view);
+        mark(view);
+      }
+      flush(false);
     }
-    flush(false);
-    // between batches, on the screen: still here (or now left alone) — said every ~24 seconds (~a minute when
-    // left alone), or at once when it changed
+    // between batches, on the screen: still here (or now left alone) — said about once a minute, or at the
+    // next tick when it changed
     const state = hereNow();
-    if (visible() && view && (Date.now() - pinged >= (state === "idle" ? PING_IDLE_MS : PING_MS) || state !== told)) ping(false);
-  }, FLUSH_MS);
+    if (visible() && view && (due(pinged, PING_MS) || state !== told)) ping(false);
+  }, TICK_MS);
 }

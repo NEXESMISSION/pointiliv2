@@ -91,8 +91,14 @@ async function load(): Promise<Record<string, string>> {
   for (const row of data ?? []) raw[row.key as string] = row.value as string;
   return raw;
 }
-/** Read once and kept (every owner page shows the help button); saving in the console clears it. */
-const cached = unstable_cache(load, ["settings"], { tags: ["settings"], revalidate: 600 });
+/**
+ * Read once and kept (every owner page shows the help button); saving in the console clears it
+ * (updateTag "settings"), so the clock is only a fallback for a row changed by hand in Supabase.
+ * A day, not 10 minutes: every page that reads the settings inherits this clock, and at 10 minutes the
+ * ~60 static pages (/prix, /pour/*, …) were rebuilt every 10 minutes they were visited — bots included —
+ * each rebuild a server render and an ISR write on Vercel (188K of the Hobby plan's 200K, Nov 2026).
+ */
+const cached = unstable_cache(load, ["settings"], { tags: ["settings"], revalidate: 86_400 });
 
 /**
  * The founder's settings, as the founder left them in the console: the number

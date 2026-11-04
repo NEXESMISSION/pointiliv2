@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { ChartColumn, ChevronLeft, Crown, PieChart, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";

@@ -45,6 +45,11 @@ function needsRefresh(request: NextRequest): boolean {
 }
 
 export const config = {
-  // the counter polls, the traffic beacon reports: neither ever refreshes a session
-  matcher: ["/((?!_next/static|_next/image|api/counter|api/beacon|3d/|tn/|heat/|.*\.(?:png|svg|ico|webmanifest)$).*)"],
+  // the counter polls, the traffic beacon and presence report, and the public files (pictures, clips, the
+  // worker): none ever refreshes a session. Every request let through here is one more server function on
+  // Vercel, so only pages, server actions and the API routes that act for a person pass. (/api/code stays:
+  // a counter open for hours keeps its session alive through it.)
+  matcher: [
+    "/((?!_next/static|_next/image|api/counter|api/beacon|api/here|3d/|tn/|heat/|news/|clips/|pwa/|sw\\.js|.*\\.(?:png|jpe?g|webp|gif|avif|svg|ico|webmanifest|mp4|webm|txt|xml)$).*)",
+  ],
 };
