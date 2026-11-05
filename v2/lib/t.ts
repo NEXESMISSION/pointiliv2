@@ -302,6 +302,9 @@ export const t = {
   setItemsOff: "شنوّة تبيع",
   setStatsSub: "اليوم، الجمعة، أكثر الحرفاء",
   setMine: "الكارطات اللي عندك في محلات أخرى",
+  // «تحميل البيانات»: the customers as an Excel file, for a shop the founder allowed it
+  setExport: "تحميل البيانات",
+  setExportSub: "ليستة الحرفاء متاعك في فيشي Excel",
   setPaid: "خالص حتى {date}",
   setTrial: "التجربة · مازال {n}",
   // the home: today's tampons, one line

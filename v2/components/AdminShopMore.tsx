@@ -6,6 +6,7 @@ import { BarChart3, Copy, FlaskConical, Gift, KeyRound, MessageCircle, Stamp } f
 import { adminPause, adminResetPassword, adminSetTester } from "@/app/actions";
 import { adminSetItems, adminSetStore } from "@/app/actions-store";
 import { adminSetWheel } from "@/app/actions-wheel";
+import { adminExportAllowed, adminSetExport } from "@/app/actions-export";
 import { adminBoardShop, type BoardMore } from "@/app/admin/actions";
 import { AdminAccess } from "@/components/AdminAccess";
 import type { AccessShop } from "@/lib/board";
@@ -158,7 +159,41 @@ function Switches({ shop, more, reload }: { shop: AccessShop; more: BoardMore; r
         ask={more.store_on ? "ترجّعو للكارط العادية؟ التامبونات اللي عند الحرفاء يقعدو." : "تخدّم الماغازة للمحل هذا؟ يتبدّل اللي يشوفوه الحرفاء متاعو."}
         flip={async () => after(await adminSetStore(shop.id, !more.store_on), noCard)}
       />
+      <ExportLine shopId={shop.id} />
     </section>
+  );
+}
+
+/**
+ * «تحميل البيانات»: the owner may download their customers as a file, from «المحل». Off for every
+ * shop until the founder turns it on here, by hand. Read on its own when the shop is opened (it is
+ * not part of admin_board_shop).
+ */
+function ExportLine({ shopId }: { shopId: string }) {
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => {
+    let live = true;
+    void adminExportAllowed(shopId).then((v) => {
+      if (live) setOn(v);
+    });
+    return () => {
+      live = false;
+    };
+  }, [shopId]);
+  if (on === null) return null;
+  return (
+    <SwitchLine
+      title="تحميل البيانات"
+      line={on ? "مولى المحل ينجم يحمّل ليستة الحرفاء متاعو (فيشي Excel) من «المحل»." : "مطفية: مولى المحل ما يشوفش الزرّ."}
+      on={on}
+      ask={on ? null : "تخلّي مولى المحل يحمّل ليستة الحرفاء متاعو؟ النومروات مخبّية كيما في الليستة."}
+      flip={async () => {
+        const res = await adminSetExport(shopId, !on);
+        if (!res.ok) return NOT_DONE;
+        setOn(!on);
+        return null;
+      }}
+    />
   );
 }
 

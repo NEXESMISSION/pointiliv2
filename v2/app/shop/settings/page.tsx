@@ -1,7 +1,7 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChartColumn, ChevronLeft, Crown, PieChart, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, FileDown, PieChart, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -48,7 +48,8 @@ export default async function ShopSettings() {
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
-  const [pay, help] = await Promise.all([call<Pay | null>("my_payment"), getHelp()]);
+  // «تحميل البيانات»: only for a shop the founder allowed it, from the console (off for every shop)
+  const [pay, help, exportOn] = await Promise.all([call<Pay | null>("my_payment"), getHelp(), call<boolean>("my_export_allowed")]);
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const daysLeft = pay?.trial_until ? Math.max(0, Math.ceil((Date.parse(pay.trial_until) - Date.now()) / 86_400_000)) : 0;
   const plan = pay?.paid && pay.paid_until
@@ -95,6 +96,19 @@ export default async function ShopSettings() {
         </Group>
         <Group>
           <Row href="/shop/stats" mark={<Mark icon={ChartColumn} />} title={t.statsTitle} sub={t.setStatsSub} />
+          {/* a file, not a page: a plain link the phone downloads (app/api/export) */}
+          {exportOn === true && (
+            <a href="/api/export" download className="press flex items-center gap-3 px-3.5 py-[clamp(0.5rem,1.4dvh,0.8rem)] active:bg-canvas">
+              <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[0.75rem]">
+                <Mark icon={FileDown} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[0.9375rem] font-bold">{t.setExport}</span>
+                <span className="block truncate text-[0.8125rem] text-muted [@media(max-height:520px)]:hidden">{t.setExportSub}</span>
+              </span>
+              <ChevronLeft className="size-4 shrink-0 text-faint" />
+            </a>
+          )}
           {plan && <Row href="/shop/pay" mark={<Mark icon={Crown} />} title={t.payTitle} sub={plan} />}
         </Group>
         <Group>
