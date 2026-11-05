@@ -4249,32 +4249,32 @@ end $$;
 alter table public.shops add column if not exists export_allowed boolean not null default false;
 
 create or replace function public.admin_set_export(p_id uuid, p_on boolean) returns jsonb
-language plpgsql security definer set search_path = '' as $
+language plpgsql security definer set search_path = '' as $$
 begin
   perform public.require_admin();
   update public.shops set export_allowed = coalesce(p_on, false) where id = p_id;
   if not found then return public.err('not_found'); end if;
   return jsonb_build_object('ok', true);
-end $;
+end $$;
 
 create or replace function public.admin_export_allowed(p_id uuid) returns boolean
-language plpgsql stable security definer set search_path = '' as $
+language plpgsql stable security definer set search_path = '' as $$
 begin
   perform public.require_admin();
   return coalesce((select export_allowed from public.shops where id = p_id), false);
-end $;
+end $$;
 
 -- the owner's side: may this shop download its customers? (its line in «المحل» shows only then)
 create or replace function public.my_export_allowed() returns boolean
-language plpgsql stable security definer set search_path = '' as $
+language plpgsql stable security definer set search_path = '' as $$
 declare s public.shops%rowtype;
 begin
   s := public.my_shop();
   return coalesce(s.export_allowed, false);
-end $;
+end $$;
 
 create or replace function public.my_export() returns jsonb
-language plpgsql stable security definer set search_path = '' as $
+language plpgsql stable security definer set search_path = '' as $$
 declare s public.shops%rowtype;
 begin
   s := public.my_shop();
@@ -4290,7 +4290,7 @@ begin
            order by c.last_at desc nulls last, c.created_at desc)
     from public.cards c left join public.people p on p.id = c.user_id
     where c.shop_id = s.id), '[]'::jsonb));
-end $;
+end $$;
 
 -- ═══ who may call what ═════════════════════════════════════════════════════
 revoke execute on all functions in schema public from public, anon, authenticated;
