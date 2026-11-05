@@ -68,7 +68,11 @@ type Shop = { id: string; name: string; kind: string; goal: number | null; gift:
  * a gift chosen again turns the wheel off. The card keeps its own gift under
  * the wheel, for the day it is turned off.
  */
-export function CardWizard({ shop, next, editing, help, wheel = null, at }: { shop: Shop; next: string; editing: boolean; help?: HelpSettings; wheel?: { on: boolean; prizes: Prize[] } | null; at?: "reset" }) {
+export function CardWizard({ shop, next, editing, help, wheel = null, at, clock = false }: { shop: Shop; next: string; editing: boolean; help?: HelpSettings; wheel?: { on: boolean; prizes: Prize[] } | null; at?: "reset"; clock?: boolean }) {
+  // the questions in order: the card's clock among them only while the founder's switch is on
+  const order = clock ? [GOAL, GIFT, WAIT, RESET, COLOR, READY] : [GOAL, GIFT, WAIT, COLOR, READY];
+  const after = (s: number) => order[order.indexOf(s) + 1] ?? READY;
+  const before = (s: number) => order[order.indexOf(s) - 1] ?? GOAL;
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const router = useRouter();
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
@@ -102,7 +106,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null, at }: { sh
   // the card's clock: one of the four, or days typed (3 to 365) — as the shop has it now
   const [reset, setReset] = useState(shop.reset_days ?? 0);
   const [resetTyped, setResetTyped] = useState(() => (shop.reset_days && !RESETS.includes(shop.reset_days) ? String(shop.reset_days) : ""));
-  const resetBad = resetTyped !== "" && !(Number(resetTyped) >= 3 && Number(resetTyped) <= 365);
+  const resetBad = resetTyped !== "" && !(Number(resetTyped) >= 7 && Number(resetTyped) <= 365);
   // the sheet before saving: a first card, how it works; a change, the one question (when there is one)
   const [confirm, setConfirm] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -240,15 +244,15 @@ export function CardWizard({ shop, next, editing, help, wheel = null, at }: { sh
       {/* the way back, and where we are: a dot per question */}
       <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-2">
         {step > GOAL || editing ? (
-          <button type="button" onClick={() => (step > GOAL ? go(step - 1) : router.push(next))} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
+          <button type="button" onClick={() => (step > GOAL ? go(before(step)) : router.push(next))} className="press grid size-11 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
             <ChevronRight className="size-5" />
           </button>
         ) : (
           <span className="size-11" />
         )}
         {step < READY ? (
-          <span className="flex items-center gap-2" aria-label={fill(t.wizStep, { n: step })}>
-            {[GOAL, GIFT, WAIT, RESET, COLOR].map((n) => (
+          <span className="flex items-center gap-2" aria-label={fill(t.wizStep, { n: order.indexOf(step) + 1 })}>
+            {order.filter((n) => n !== READY).map((n) => (
               <span key={n} className={`h-2 rounded-full transition-all duration-300 ${n === step ? "w-6 bg-brand" : n < step ? "w-2 bg-brand/50" : "w-2 bg-line"}`} />
             ))}
           </span>
@@ -442,7 +446,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null, at }: { sh
                 onKeyDown={(e) => {
                   if (e.key !== "Enter") return;
                   e.preventDefault();
-                  if (!hoursBad) go(RESET);
+                  if (!hoursBad) go(after(WAIT));
                 }}
                 placeholder="3"
                 aria-label={t.wizWaitOther}
@@ -484,7 +488,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null, at }: { sh
                 onChange={(e) => {
                   const v = e.target.value.replace(/\D/g, "").slice(0, 3);
                   setResetTyped(v);
-                  if (Number(v) >= 3 && Number(v) <= 365) setReset(Number(v));
+                  if (Number(v) >= 7 && Number(v) <= 365) setReset(Number(v));
                   else if (v === "") setReset(shop.reset_days && RESETS.includes(shop.reset_days) ? shop.reset_days : 0);
                 }}
                 onKeyDown={(e) => {
@@ -562,7 +566,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null, at }: { sh
       <div className="mt-[3.5dvh] shrink-0">
         {/* two different buttons (keys): one patched from "button" to "submit" inside its own click would send the form */}
         {step < READY ? (
-          <Btn key="next" type="button" disabled={!canGo} onClick={() => go(step + 1)}>
+          <Btn key="next" type="button" disabled={!canGo} onClick={() => go(after(step))}>
             {t.next}
           </Btn>
         ) : lost ? (
@@ -588,7 +592,9 @@ export function CardWizard({ shop, next, editing, help, wheel = null, at }: { sh
       {wheel && spin && <input type="hidden" name="prizes" value={JSON.stringify(prizes)} />}
       <input type="hidden" name="color" value={color} />
       <input type="hidden" name="gap" value={gap} />
-      <input type="hidden" name="reset" value={reset} />
+      {/* asked only with the founder's switch on: without it nothing is sent, and the clock is left as it is */}
+      {/* not «reset»: a field by that name hides the form's own reset(), and React calls it after a save that fails */}
+      {clock && <input type="hidden" name="clock_days" value={reset} />}
       <input type="hidden" name="next" value={next} />
       {confirm && !lost && step === READY && <CardConfirm editing={editing} after={{ goal, gift: spin ? SPIN_GIFT : gift, gap }} impact={editing ? impact : null} pending={pending} onBack={() => setConfirm(false)} />}
       {how && <WheelHow goal={goal} prizes={prizes.map((name) => ({ name, chance: 0 }))} onClose={() => setHow(false)} />}

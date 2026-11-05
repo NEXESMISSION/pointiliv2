@@ -97,10 +97,56 @@ const go = async (page, path) => {
   await page.waitForTimeout(1500);
 };
 const text = (page) => page.evaluate(() => document.body.innerText);
-const shopRow = async (id) => (await admin.from("shops").select("reset_days, reset_since").eq("id", id).single()).data;
-const cardRow = async (id) => (await admin.from("cards").select("stamps, reset_at").eq("id", id).maybeSingle()).data;
+const shopRow = async (id) => (await admin.from("shops").select("reset_days, reset_since, reset_paused_at").eq("id", id).single()).data;
+const cardRow = async (id) => (await admin.from("cards").select("stamps, reset_at, reset_from, clock_from").eq("id", id).maybeSingle()).data;
+const TIP = "الكارط ترجع للصفر كان الحريف غاب";
+const ASK = "الحريف كان غاب، الكارط ترجع للصفر؟";
+
+// the founder's switch for the clock, every shop at once: found as it is, off for the first checks, on for
+// the rest, and put back as it was found at the end (the live shops have no clock: on, it changes nothing for them)
+const SWITCH = (await admin.from("settings").select("value").eq("key", "clock_on").maybeSingle()).data?.value ?? null;
+const setSwitch = async (v) => {
+  const { error } = v === null ? await admin.from("settings").delete().eq("key", "clock_on") : await admin.from("settings").upsert({ key: "clock_on", value: v });
+  if (error) throw error;
+};
 
 try {
+  // ── the switch off (as every shop has it until the founder turns it on): no clock anywhere ──
+  await setSwitch("");
+  const owner = await person("سنية");
+  const shop = await shopOf(owner, { goal: 8, gift: "قهوة بلاش" });
+  const { data: liveNews } = await admin.from("news").select("id").eq("active", true);
+  if (liveNews?.length) await admin.from("news_views").insert(liveNews.map((x) => ({ news_id: x.id, person_id: owner.id })));
+  const rania = await person("رانية");
+  const sami = await person("سامي");
+  const omar = await person("عمر");
+  const lina = await person("لينا");
+  const cR = await cardOf(shop, rania, 5, [20, 12, 6, 2]); // came 2 days ago
+  const cS = await cardOf(shop, sami, 3, [30, 20, 10]); // 10 days quiet
+  const cO = await cardOf(shop, omar, 6, [25, 18, 11, 5]); // 5 days quiet
+  const cL = await cardOf(shop, lina, 2, [45, 40]); // long gone
+
+  console.log("\nThe switch off: no clock anywhere");
+  const o = await signIn(owner);
+  check("no «جديد» note on the home", !(await o.page.getByRole("dialog", { name: TIP }).waitFor({ timeout: 6000 }).then(() => true, () => false)));
+  check("…and it is not written down as seen", !((await admin.from("people").select("seen").eq("id", owner.id).single()).data?.seen ?? []).includes("reset_tip"));
+  await go(o.page, "/shop/settings");
+  check("«المحل» has no clock", !(await text(o.page)).includes("الكارط ترجع للصفر"));
+  await go(o.page, "/shop/clock");
+  check("the clock's page leads back to «المحل»", new URL(o.page.url()).pathname === "/shop/settings", o.page.url());
+  await go(o.page, "/shop/card?at=reset");
+  check("the card's questions never ask about it", !(await text(o.page)).includes(ASK));
+  // a clock already in the database (set 8 days ago) does nothing while the switch is off
+  await admin.from("shops").update({ reset_days: 7, reset_since: ago(8 * DAY) }).eq("id", shop.id);
+  await go(o.page, "/shop/customers");
+  const off = await text(o.page);
+  check("a clock in the database does nothing: Sami (10 days quiet) still reads 3/8", /سامي[\s\S]{0,120}3\/8/.test(off), off.slice(0, 300));
+  check("…no hourglass on anyone", (await o.page.locator('svg[aria-label^="الكارط متاعو ترجع للصفر"]').count()) === 0);
+  const sweptOff = await admin.rpc("reset_sweep");
+  check("…and the daily sweep takes nothing", !sweptOff.error && (await cardRow(cS.id)).stamps === 3 && (await cardRow(cL.id)).stamps === 2, sweptOff.data ?? sweptOff.error?.message);
+  await admin.from("shops").update({ reset_days: null, reset_since: null }).eq("id", shop.id);
+  await setSwitch("1");
+
   // ── a new owner: the first card asks about the clock, «لا» until chosen ──
   console.log("\nThe first card: the clock's question");
   const fresh = await person("نادية");
@@ -130,24 +176,10 @@ try {
   check("the first card is saved with its clock: 15 days, counted from today", fr?.goal && fr.reset_days === 15 && Date.now() - Date.parse(fr.reset_since) < 5 * 60_000, { db: fr, url: n.page.url(), screen: (await text(n.page)).slice(0, 240) });
   await n.ctx.close();
 
-  // ── a shop with customers, no clock yet ──
-  const owner = await person("سنية");
-  const shop = await shopOf(owner, { goal: 8, gift: "قهوة بلاش" });
-  const { data: liveNews } = await admin.from("news").select("id").eq("active", true);
-  if (liveNews?.length) await admin.from("news_views").insert(liveNews.map((x) => ({ news_id: x.id, person_id: owner.id })));
-  const rania = await person("رانية");
-  const sami = await person("سامي");
-  const omar = await person("عمر");
-  const lina = await person("لينا");
-  const cR = await cardOf(shop, rania, 5, [20, 12, 6, 2]); // came 2 days ago
-  const cS = await cardOf(shop, sami, 3, [30, 20, 10]); // 10 days quiet
-  const cO = await cardOf(shop, omar, 6, [25, 18, 11, 5]); // 5 days quiet
-  await cardOf(shop, lina, 2, [45, 40]); // long gone
-
-  console.log("\nThe owner: the note, then the clock set");
-  const o = await signIn(owner);
-  // the sign-in lands on the home: the note rises there, once (shown twice it would be a bug)
-  const tip = o.page.getByRole("dialog", { name: "الكارط ترجع للصفر كان الحريف غاب" });
+  console.log("\nThe switch on — the owner: the note, then the clock set");
+  await go(o.page, "/shop");
+  // the home: the note rises there, once (shown twice it would be a bug)
+  const tip = o.page.getByRole("dialog", { name: TIP });
   check("the «جديد» note shows on the home", await tip.waitFor({ timeout: 30000 }).then(() => true, () => false));
   check("…and is written down as seen at once", ((await admin.from("people").select("seen").eq("id", owner.id).single()).data?.seen ?? []).includes("reset_tip"));
   await shot(o.page, "2-home-note");
@@ -172,7 +204,7 @@ try {
   console.log("\n«المحل»");
   await go(o.page, "/shop/settings");
   const st = await text(o.page);
-  check("«المحل» says the clock", st.includes("الكارط ترجع للصفر") && st.includes("كان الحريف غاب 7 أيّام"));
+  check("«المحل» says the clock (switch on)", st.includes("الكارط ترجع للصفر") && st.includes("كان الحريف غاب 7 أيّام"));
   check("«المحل» leads to «شكون رجع؟»", st.includes("شكون رجع؟"));
   await shot(o.page, "4-settings");
 
@@ -218,7 +250,104 @@ try {
   const sAfter = await cardRow(cS.id);
   check("a tampon on Sami's card past its clock: zero first, then 1", g.data?.ok === true && sAfter.stamps === 1 && !!sAfter.reset_at, { give: g.data ?? g.error?.message, card: sAfter });
   const swept = await admin.rpc("reset_sweep");
-  check("the daily sweep takes Lina's card back to zero", !swept.error && swept.data >= 1 && (await cardRow((await admin.from("cards").select("id").eq("user_id", lina.id).single()).data.id)).stamps === 0, swept.data ?? swept.error?.message);
+  check("the daily sweep takes Lina's card back to zero", !swept.error && swept.data >= 1 && (await cardRow(cL.id)).stamps === 0, swept.data ?? swept.error?.message);
+
+  console.log("\nThe owner's clock page");
+  await go(o.page, "/shop/clock");
+  const ck = await text(o.page);
+  check("the clock page: 7 days, running", ck.includes("كان الحريف غاب 7 أيّام") && ck.includes("يخدم"), ck.slice(0, 300));
+  check("…what protects every customer", ck.includes("باش حتى حد ما يخسر بالغلط") && ck.includes("في 14 يوم"));
+  check("…and what it took lately (Sami and Lina), to give back", ck.includes("رجعت للصفر في آخر 14 يوم") && ck.includes("رجّعلهم التامبونات"), ck.slice(0, 400));
+  await shot(o.page, "11-clock-page");
+
+  console.log("\nGiven back: one from the customer's sheet, the rest from the clock page");
+  await go(o.page, "/shop/customers");
+  await o.page.getByRole("button", { name: /لينا/ }).first().click();
+  await o.page.waitForTimeout(900);
+  check("Lina's sheet says her card went back to zero", (await text(o.page)).includes("الكارط متاعو رجعت للصفر"));
+  await shot(o.page, "12-sheet-restore");
+  await o.page.getByRole("button", { name: /^رجّعلو/ }).click();
+  let l2 = null;
+  for (let i = 0; i < 20 && !(l2?.stamps === 2); i++) {
+    await o.page.waitForTimeout(500);
+    l2 = await cardRow(cL.id);
+  }
+  check("Lina gets her 2 tampons back, her clock from today", l2?.stamps === 2 && l2.reset_from === null && Date.now() - Date.parse(l2.clock_from) < 5 * 60_000, l2);
+  // the list drawn again arrives a moment later: looked for up to 15 s
+  let ls = "";
+  for (let i = 0; i < 30 && !/لينا[\s\S]{0,400}2\/8/.test(ls); i++) {
+    await o.page.waitForTimeout(500);
+    ls = await text(o.page);
+  }
+  check("…the sheet stays open and says so, with her 2/8 back", ls.includes("رجعولو تامبوناتو") && /لينا[\s\S]{0,400}2\/8/.test(ls), ls.slice(0, 400));
+  await shot(o.page, "12b-sheet-restored");
+  await go(o.page, "/shop/clock");
+  await o.page.getByRole("button", { name: "رجّعلهم التامبونات" }).click();
+  await o.page.waitForTimeout(600);
+  check("giving back to all asks first", (await text(o.page)).includes("ترجّع التامبونات اللي خسروهم؟"));
+  await o.page.getByRole("button", { name: "إيه، رجّعهم" }).click();
+  let s2 = null;
+  for (let i = 0; i < 20 && !(s2?.stamps === 4); i++) {
+    await o.page.waitForTimeout(500);
+    s2 = await cardRow(cS.id);
+  }
+  check("Sami gets his 3 back on top of the new one: 4", s2?.stamps === 4 && s2.reset_from === null, s2);
+  await o.page.waitForTimeout(800);
+  check("…the page says it", (await text(o.page)).includes("رجعولهم:"));
+
+  console.log("\nThe pause");
+  // Rania past the clock: her last tampon 10 days ago (the clock set 8 days ago, 7 days long)
+  await admin.from("cards").update({ last_at: ago(10 * DAY) }).eq("id", cR.id);
+  await go(o.page, "/shop/clock");
+  await o.page.getByRole("switch", { name: "وقّف العدّاد" }).click();
+  let p1 = null;
+  for (let i = 0; i < 20 && !p1?.reset_paused_at; i++) {
+    await o.page.waitForTimeout(500);
+    p1 = await shopRow(shop.id);
+  }
+  check("«وقّف العدّاد» pauses it", !!p1?.reset_paused_at, p1);
+  await o.page.waitForTimeout(1200);
+  check("…the page says «موقوف»", (await text(o.page)).includes("موقوف"));
+  await shot(o.page, "13-paused");
+  const sweptPaused = await admin.rpc("reset_sweep");
+  check("paused: the sweep leaves Rania's 5 (past the clock)", !sweptPaused.error && (await cardRow(cR.id)).stamps === 5, sweptPaused.error?.message);
+  await go(r.page, `/c/${cR.id}`);
+  const rp = await text(r.page);
+  check("paused: Rania's card shows her 5 and no countdown", !rp.includes("ترجع للصفر") && !rp.includes("رجعت للصفر"), rp.slice(0, 300));
+  await o.page.getByRole("switch", { name: "وقّف العدّاد" }).click();
+  let p2 = null;
+  for (let i = 0; i < 20 && (p2 === null || p2.reset_paused_at); i++) {
+    await o.page.waitForTimeout(500);
+    p2 = await shopRow(shop.id);
+  }
+  check("back on: it counts from today for everyone", p2 && !p2.reset_paused_at && Date.now() - Date.parse(p2.reset_since) < 5 * 60_000, p2);
+  const sweptBack = await admin.rpc("reset_sweep");
+  check("…so Rania keeps her 5 (7 days from today)", !sweptBack.error && (await cardRow(cR.id)).stamps === 5);
+
+  console.log("\nThe customer told the day before");
+  // the clock set 6½ days ago: Rania's card goes back to zero in half a day
+  await admin.from("shops").update({ reset_since: ago(6.5 * DAY) }).eq("id", shop.id);
+  const w1 = await admin.rpc("reset_warnings");
+  const mine = (w1.data ?? []).filter((w) => w.card === cR.id);
+  check("the daily job finds Rania's card, with her 5", !w1.error && mine.length === 1 && mine[0].stamps === 5 && mine[0].shop === "Café Clock", w1.data ?? w1.error?.message);
+  const w2 = await admin.rpc("reset_warnings");
+  check("…once: the next day's run does not tell her again", !w2.error && !(w2.data ?? []).some((w) => w.card === cR.id));
+
+  console.log("\nThe clock taken off");
+  await go(o.page, "/shop/clock");
+  await o.page.getByRole("button", { name: "نحّي العدّاد" }).click();
+  await o.page.waitForTimeout(600);
+  check("taking it off asks first", (await text(o.page)).includes("تنحّي العدّاد؟"));
+  await o.page.getByRole("button", { name: "إيه، نحّيه" }).click();
+  let off2 = null;
+  for (let i = 0; i < 20 && off2?.reset_days !== null; i++) {
+    await o.page.waitForTimeout(500);
+    off2 = await shopRow(shop.id);
+  }
+  check("the clock is off", off2?.reset_days === null, off2);
+  await o.page.waitForTimeout(1200);
+  check("…and the page says «العدّاد مطفي»", (await text(o.page)).includes("العدّاد مطفي"));
+  await shot(o.page, "14-clock-off");
 
   console.log("\n«شكون رجع؟»");
   await go(o.page, "/shop/insights");
@@ -233,6 +362,8 @@ try {
   failed.push(`crashed: ${e.message}`);
   console.log(`  ✗ crashed: ${e.message}`);
 } finally {
+  await setSwitch(SWITCH).catch((e) => console.log(`  ✗ the switch could not be put back: ${e.message}`));
+  console.log(`  (the founder's switch put back as found: ${JSON.stringify(SWITCH)})`);
   await browser.close();
   for (const id of made) await admin.auth.admin.deleteUser(id);
   await unrobot(admin, phones);

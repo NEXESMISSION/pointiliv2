@@ -71,7 +71,9 @@ const numBox = (bad: boolean, lit: boolean) =>
  * drops its new dots, colours flow into it, and «حلّ الكارط» makes it shine
  * before the next screen.
  */
-export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: HelpSettings; wheel?: boolean }) {
+export function CardFirst({ shop, help, wheel = false, clock = false }: { shop: Shop; help?: HelpSettings; wheel?: boolean; clock?: boolean }) {
+  // the questions in order: the card's clock among them only while the founder's switch is on
+  const order = clock ? [GOAL, GIFT, WAIT, RESET, LOOK] : [GOAL, GIFT, WAIT, LOOK];
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
   const start = cardDefaults(shop.kind);
@@ -99,7 +101,7 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
   // the card's clock: one of the four, or days typed (3 to 365)
   const [reset, setReset] = useState(0);
   const [resetTyped, setResetTyped] = useState("");
-  const resetBad = resetTyped !== "" && !(Number(resetTyped) >= 3 && Number(resetTyped) <= 365);
+  const resetBad = resetTyped !== "" && !(Number(resetTyped) >= 7 && Number(resetTyped) <= 365);
   const [saveErr, setSaveErr] = useState(false);
   const [tap, setTap] = useState<{ goal: number; n: number } | null>(null);
   // «حلّ الكارط» tapped: the card shines while it is saved, then «الكارط تحلّت»
@@ -193,14 +195,14 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
       <MorphGround />
       <header className="flex shrink-0 items-center gap-3 pt-2">
         {step > GOAL && !making ? (
-          <button type="button" onClick={() => setStep(step - 1)} className="press grid size-10 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
+          <button type="button" onClick={() => setStep(order[order.indexOf(step) - 1] ?? GOAL)} className="press grid size-10 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
             <ChevronRight className="size-5" />
           </button>
         ) : null}
         {/* where the owner is, twice over: the second of the three steps of opening a shop,
             and how far through the card's own four questions (components/Steps.tsx) */}
         <div className="min-w-0 flex-1">
-          <Steps at={2} sub={making ? 1 : step / LOOK} />
+          <Steps at={2} sub={making ? 1 : (order.indexOf(step) + 1) / order.length} />
         </div>
         {help ? <HelpButton help={help} compact /> : null}
       </header>
@@ -374,7 +376,7 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
                 onChange={(e) => {
                   const v = e.target.value.replace(/\D/g, "").slice(0, 3);
                   setResetTyped(v);
-                  if (Number(v) >= 3 && Number(v) <= 365) setReset(Number(v));
+                  if (Number(v) >= 7 && Number(v) <= 365) setReset(Number(v));
                   else if (v === "") setReset(0);
                 }}
                 placeholder="10"
@@ -432,7 +434,7 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
             {t.cardLostAgain}
           </Btn>
         ) : (
-          <Btn key="go" type="button" disabled={making || pending || logoBusy || !canGo} onClick={() => (last ? void send() : setStep(step + 1))}>
+          <Btn key="go" type="button" disabled={making || pending || logoBusy || !canGo} onClick={() => (last ? void send() : setStep(order[order.indexOf(step) + 1] ?? LOOK))}>
             {making || pending ? t.checking : logoBusy ? t.logoWait : last ? t.firstCardGo : t.next}
           </Btn>
         )}
@@ -443,7 +445,9 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
       <input type="hidden" name="gift" value={spin ? SPIN_GIFT : gift.trim()} />
       <input type="hidden" name="color" value={color} />
       <input type="hidden" name="gap" value={gap} />
-      <input type="hidden" name="reset" value={reset} />
+      {/* asked only with the founder's switch on: without it nothing is sent, and the clock is left as it is */}
+      {/* not «reset»: a field by that name hides the form's own reset(), and React calls it after a save that fails */}
+      {clock && <input type="hidden" name="clock_days" value={reset} />}
       {wheel && <input type="hidden" name="wheel" value={spin ? "1" : "0"} />}
       {wheel && spin && <input type="hidden" name="prizes" value={JSON.stringify(prizes)} />}
       <input type="hidden" name="next" value="/shop/start" />

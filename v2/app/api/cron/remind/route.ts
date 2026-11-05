@@ -1,12 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sendPush } from "@/lib/push";
 import { service } from "@/lib/supabase";
+import { resetWhen } from "@/lib/reset";
 import { fill, stampsN, t } from "@/lib/t";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 type Due = { user_id: string; card: string; shop: string; left: number; gift: string; kind: "near" | "gift" | "owner" };
+/** a card about to go back to zero by its shop's clock (reset_warnings) */
+type Warn = { card: string; user_id: string; shop: string; stamps: number; at: string };
 
 /**
  * Every morning (vercel.json): the customers to remind, each on their own
@@ -21,6 +24,19 @@ export async function GET(request: NextRequest) {
   // daily job that already runs, so the clock costs no call of its own. A failure is said, never fatal.
   const swept = await service().rpc("reset_sweep");
   if (swept.error) console.error("[reset_sweep]", swept.error.message);
+  // a safeguard for the customers: a card going back to zero within a day and a half is said on their
+  // phone first (once for each stretch: reset_warnings writes it down as it reads it)
+  const warn = await service().rpc("reset_warnings");
+  if (warn.error) console.error("[reset_warnings]", warn.error.message);
+  let warned = 0;
+  for (const w of (warn.data ?? []) as Warn[]) {
+    warned += await sendPush(w.user_id, {
+      title: fill(t.pushResetTitle, { shop: w.shop, when: resetWhen(w.at, Date.now()) }),
+      body: fill(t.pushResetBody, { n: stampsN(w.stamps) }),
+      url: `/c/${w.card}`,
+      tag: `reset-${w.card}`,
+    });
+  }
   const { data, error } = await service().rpc("push_reminders");
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   const due = (data ?? []) as Due[];
@@ -39,5 +55,5 @@ export async function GET(request: NextRequest) {
           : { title: fill(t.pushNearTitle, { shop: d.shop }), body: fill(t.pushNearBody, { n: stampsN(d.left), gift: d.gift }), url: `/c/${d.card}`, tag: `near-${d.card}` };
     sent += await sendPush(d.user_id, note);
   }
-  return NextResponse.json({ ok: true, due: due.length, sent });
+  return NextResponse.json({ ok: true, due: due.length, sent, swept: swept.data ?? 0, warned });
 }

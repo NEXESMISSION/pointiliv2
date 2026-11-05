@@ -3,9 +3,10 @@
 import Link from "@/components/Link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Check, Gift, Hourglass, ScanLine, Search, Trash2, X } from "lucide-react";
+import { Check, Gift, Hourglass, ScanLine, Search, Trash2, Undo2, X } from "lucide-react";
 import { give, giveAll, type WaitingGift } from "@/app/actions";
 import { removeCustomer } from "@/app/actions-customers";
+import { restoreReset } from "@/app/actions-clock";
 import { CardMoments } from "@/components/CardMoments";
 import { CardHow } from "@/components/CardHow";
 import { Sheet, SheetGo } from "@/components/Client";
@@ -16,7 +17,7 @@ import { fill, giftsN, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { useClock } from "@/lib/use-clock";
 
-export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; items?: { name: string; n: number }[]; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null; waiting?: WaitingGift[]; /** the card's clock: when it goes back to zero (null: never) */ reset_due?: string | null };
+export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; items?: { name: string; n: number }[]; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null; waiting?: WaitingGift[]; /** the card's clock: when it goes back to zero (null: never) */ reset_due?: string | null; /** what the clock took from it lately: the owner may give it back */ restorable?: number | null };
 
 /** the gifts waiting on this customer's card that can be handed over now (a turn nobody has spun has no prize yet) */
 const giveable = (c: CustomerRow) => (c.waiting ?? []).filter((w) => !w.spin);
@@ -31,7 +32,9 @@ const when = (iso: string | null) =>
  * and, when a gift waits, the one way to hand it over («سكاني»).
  */
 export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop: PassShop; goal: number }) {
-  const [open, setOpen] = useState<CustomerRow | null>(null);
+  const [picked, setOpen] = useState<CustomerRow | null>(null);
+  // the row as the list has it now: the list drawn again after a change (tampons given back), the open sheet follows it
+  const open = picked ? (items.find((c) => c.id === picked.id) ?? picked) : null;
   // the gift handed over by hand: who it is for, and whether the question is still being answered
   const [hand, setHand] = useState<CustomerRow | null>(null);
   const [busy, setBusy] = useState(false);
@@ -40,6 +43,9 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
   const [removing, setRemoving] = useState<CustomerRow | null>(null);
   const [removeBusy, setRemoveBusy] = useState(false);
   const [removeErr, setRemoveErr] = useState(false);
+  // what the clock took, being given back — and the card it was given back to (said on its sheet)
+  const [restoring, setRestoring] = useState(false);
+  const [restored, setRestored] = useState<string | null>(null);
   // the card's clock, said in days: the phone's own clock, a minute at a time
   const now = useClock();
   const router = useRouter();
@@ -52,12 +58,12 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
     .filter((c) => !q.trim() || (c.name ?? "").toLowerCase().includes(q.trim().toLowerCase()) || (digits.length >= 2 && (c.phone ?? "").replace(/\D/g, "").includes(digits)))
     .sort((a, b) => (near ? Number(b.ready) - Number(a.ready) || b.stamps / (b.goal ?? goal) - a.stamps / (a.goal ?? goal) : 0));
   useEffect(() => {
-    if (!open) return;
+    if (!picked) return;
     signal("customer_open");
     const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(null);
     addEventListener("keydown", esc);
     return () => removeEventListener("keydown", esc);
-  }, [open]);
+  }, [picked]);
 
   return (
     <>
@@ -155,6 +161,36 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
               <p className={`mt-2.5 flex items-center gap-1.5 rounded-[0.875rem] px-3 py-2 text-[0.8125rem] font-semibold ${resetSoon(open, now) ? "bg-coral-soft text-coral" : "bg-surface text-body shadow-card"}`}>
                 <Hourglass className="size-4 shrink-0" strokeWidth={2.4} /> {fill(t.resetOwner, { when: resetWhen(open.reset_due, now) })}
               </p>
+            )}
+            {/* the clock took this card's tampons lately: given back in one tap (within 14 days) */}
+            {restored === open.id && (
+              <p className="mt-2.5 flex items-center gap-1.5 rounded-[0.875rem] bg-mint-soft px-3 py-2 text-[0.8125rem] font-semibold text-mint">
+                <Undo2 className="size-4 shrink-0" /> {t.customerRestored}
+              </p>
+            )}
+            {!!open.restorable && restored !== open.id && (
+              <div className="mt-2.5 flex items-center gap-2 rounded-[0.875rem] bg-surface px-3 py-2 shadow-card">
+                <span className="min-w-0 flex-1 text-[0.8125rem] font-semibold text-body">{t.customerWasReset}</span>
+                <button
+                  type="button"
+                  disabled={restoring}
+                  onClick={() =>
+                    void (async () => {
+                      setRestoring(true);
+                      const res = await restoreReset(open.id).catch(() => ({ ok: false }));
+                      setRestoring(false);
+                      if (!res.ok) return;
+                      signal("customer_restored");
+                      // the sheet stays open and says it; the list drawn again shows the tampons back on the card
+                      setRestored(open.id);
+                      router.refresh();
+                    })()
+                  }
+                  className="press flex h-9 shrink-0 items-center gap-1.5 rounded-[0.75rem] bg-brand-soft px-3 text-[0.8125rem] font-bold text-brand disabled:opacity-60"
+                >
+                  <Undo2 className="size-4" /> {restoring ? t.checking : fill(t.customerRestore, { n: stampsN(open.restorable) })}
+                </button>
+              </div>
             )}
             {/* everything this customer took here, by thing, the most first — one row that slides */}
             {!!open.items?.length && (

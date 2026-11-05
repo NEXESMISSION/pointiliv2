@@ -95,7 +95,8 @@ export default async function ShopHome() {
   // the new way to give a tampon (a link, for the customers who buy online): said once, when nothing else is
   const linksTip = !firstGift && !logoTip && !grant && !offerNote && !news && !seen.includes("links_tip");
   // the card's clock (6 Nov 2026): said once, after the links' note, to a shop with no clock set yet
-  const resetTip = !firstGift && !logoTip && !grant && !offerNote && !news && !linksTip && !shop.reset_days && !shop.store_on && !seen.includes("reset_tip");
+  // only once the founder has turned the clock on for every shop (off, no owner hears of it)
+  const resetTip = !!shop.clock_on && !firstGift && !logoTip && !grant && !offerNote && !news && !linksTip && !shop.reset_days && !shop.store_on && !seen.includes("reset_tip");
   const first = (me.name ?? "").split(" ")[0];
   // the trial's line only when it matters: its last two days, or once it is over
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request

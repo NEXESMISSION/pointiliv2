@@ -87,9 +87,15 @@ export default async function ShopSettings() {
             sub={`${t.setShop} · ${t.kinds[shop.kind] ?? ""}`}
           />
           <Row href={card.href} mark={<Mark icon={card.icon} />} title={card.title} sub={card.sub} />
-          {/* the card's clock: so many days with no tampon and a card starts over — straight to that question */}
-          {!shop.store_on && (
-            <Row href="/shop/card?at=reset" mark={<Mark icon={Hourglass} />} title={t.setReset} sub={shop.reset_days ? fill(t.setResetOn, { days: daysN(shop.reset_days) }) : t.setResetOff} />
+          {/* the card's clock: so many days with no tampon and a card starts over — its own page (the pause,
+              what it took, given back). Only while the founder's switch is on: off, owners never see it */}
+          {shop.clock_on && !shop.store_on && (
+            <Row
+              href="/shop/clock"
+              mark={<Mark icon={Hourglass} />}
+              title={t.setReset}
+              sub={shop.reset_days ? (shop.reset_paused ? `${t.clockPausedChip} · ${fill(t.setResetOn, { days: daysN(shop.reset_days) })}` : fill(t.setResetOn, { days: daysN(shop.reset_days) })) : t.setResetOff}
+            />
           )}
           {/* the wheel's own page — its prizes, each one's chance, and what fell — for a shop the
               founder allowed it. It had no way in since the wheel moved into the card's question. */}

@@ -277,10 +277,23 @@ alter table public.cards add column if not exists reminded_at timestamptz;
 -- days count from the card's last tampon, or from the day the owner set the clock when that is later
 -- (reset_since): a clock set today never wipes a card for the weeks before it. Only the tampons on
 -- their way go: a gift already earned stays. Kept by scripts/db.mjs: no re-run ever changes them.
-alter table public.shops add column if not exists reset_days int check (reset_days is null or reset_days between 3 and 365);
+alter table public.shops add column if not exists reset_days int check (reset_days is null or reset_days between 7 and 365);
 alter table public.shops add column if not exists reset_since timestamptz;
+-- 7 days at the least (it was 3): a short clock is one slip from wiping a week of customers (7 Nov 2026,
+-- the founder: «safeguards for the owner and his customers, so he does not mess it up»)
+alter table public.shops drop constraint if exists shops_reset_days_check;
+alter table public.shops add constraint shops_reset_days_check check (reset_days is null or reset_days between 7 and 365);
+-- the owner's pause («وقّف العدّاد»: a holiday, Ramadan, the shop closed): while it is set no card goes
+-- back to zero, and when it is lifted the clock starts again from that day for everyone (reset_since)
+alter table public.shops add column if not exists reset_paused_at timestamptz;
 -- when a card last went back to zero by the clock (its customer is told once)
 alter table public.cards add column if not exists reset_at timestamptz;
+-- what the clock took from it: the owner can give it back within 14 days (restore_reset); null once given back
+alter table public.cards add column if not exists reset_from int;
+-- a card given back its tampons starts its own clock again from that day
+alter table public.cards add column if not exists clock_from timestamptz;
+-- its customer told the day before (a push, from the daily job): once for each stretch of the clock
+alter table public.cards add column if not exists reset_warned_at timestamptz;
 
 -- the moment a card goes back to zero: null when it never will (no clock on the shop, nothing on the card)
 create or replace function public.reset_due(p_last timestamptz, p_stamps int, p_days int, p_since timestamptz) returns timestamptz
@@ -288,6 +301,27 @@ language sql immutable set search_path = '' as $$
   select case when p_days is not null and p_stamps > 0 and p_last is not null
               then greatest(p_last, coalesce(p_since, p_last)) + make_interval(days => p_days) end
 $$;
+
+-- The clock as it runs today for a shop — its days, or null when it stands still: no clock set; the
+-- founder's switch off for every shop (settings.clock_on: off until the founder turns it on); the
+-- owner's pause; or a shop that cannot give a tampon (stopped by the founder, or past its subscription —
+-- a customer never loses a card while the shop could not have stamped it).
+create or replace function public.shop_clock(s public.shops) returns int
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if s.reset_days is null or s.reset_paused_at is not null or s.paused then return null; end if;
+  if coalesce((select value from public.settings where key = 'clock_on'), '') <> '1' then return null; end if;
+  if public.shut(s) then return null; end if;
+  return s.reset_days;
+end $$;
+
+-- a card's moment back to zero, everything above counted (null: never): from its last tampon, the day the
+-- clock was set or started again, or the day its tampons were given back — whichever is latest
+create or replace function public.card_due(c public.cards, s public.shops) returns timestamptz
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  return public.reset_due(c.last_at, c.stamps, public.shop_clock(s), greatest(s.reset_since, c.clock_from));
+end $$;
 
 create table if not exists public.codes (
   id          uuid primary key default gen_random_uuid(),
@@ -372,7 +406,9 @@ alter table public.settings add constraint settings_key_check check (key in (
   -- the ads: Facebook's pixel, and the code that tells Facebook the domain is ours
   'meta_pixel', 'fb_domain_verify',
   -- the visits as videos: Microsoft Clarity's project id
-  'clarity_id'));
+  'clarity_id',
+  -- the card's clock for every shop: '1' on, anything else off (off until the founder turns it on)
+  'clock_on'));
 
 -- ═══ traffic: who came, from where, what they did, how long, where they left
 -- a visit is one sitting (30 minutes of quiet ends it); a view is one screen
@@ -670,7 +706,7 @@ language sql stable security definer set search_path = '' as $$
                                'store', s.store_on, 'wheel', s.wheel_on,
                                -- two things a customer could not know and met only as a refusal (18 Oct 2026):
                                -- how long between two tampons here, and whether this shop is stopped at all
-                               'gap', s.stamp_gap, 'paused', s.paused, 'reset_days', s.reset_days),
+                               'gap', s.stamp_gap, 'paused', s.paused, 'reset_days', public.shop_clock(s)),
     -- the gift waiting, by its own name (a wheel's prize once spun; the card's gift otherwise)
     'won', (select m.gift from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null order by m.created_at, m.id limit 1),
     -- all the gifts waiting, by name and how many of each, oldest first: two turns of the wheel rarely fall on the
@@ -690,7 +726,7 @@ language sql stable security definer set search_path = '' as $$
                  then jsonb_build_object('goal', s.goal, 'gift', s.gift) end)
   from public.cards c join public.shops s on s.id = c.shop_id
   cross join lateral (select public.waits(c.id) as waiting) w
-  cross join lateral (select public.reset_due(c.last_at, c.stamps, s.reset_days, s.reset_since) as due) r
+  cross join lateral (select public.card_due(c, s) as due) r
   where c.id = p_card
 $$;
 
@@ -717,7 +753,9 @@ begin
     'shop', case when s.id is null then null else jsonb_build_object(
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
       'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on, 'stamp_gap', s.stamp_gap, 'store_on', s.store_on, 'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed,
-      'reset_days', s.reset_days) end);
+      'reset_days', s.reset_days, 'reset_paused', s.reset_paused_at is not null,
+      -- the founder's switch for the card's clock: off, the owner never sees it at all
+      'clock_on', coalesce((select x.value from public.settings x where x.key = 'clock_on'), '') = '1') end);
 end $$;
 
 -- the owner's choice for the stamps on the card: the tick, or the shop's logo
@@ -998,9 +1036,11 @@ begin
   return jsonb_build_object('ok', true, 'goal', s.goal, 'items', coalesce((
     select jsonb_agg(jsonb_build_object('id', c.id, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone),
                                         -- past the card's clock it is at zero already (the sweep writes it within a day)
-                                        'stamps', case when public.reset_due(c.last_at, c.stamps, s.reset_days, s.reset_since) <= now() then 0 else c.stamps end,
+                                        'stamps', case when public.card_due(c, s) <= now() then 0 else c.stamps end,
                                         'gifts', c.gifts, 'last_at', c.last_at,
-                                        'reset_due', public.reset_due(c.last_at, c.stamps, s.reset_days, s.reset_since),
+                                        'reset_due', public.card_due(c, s),
+                                        -- what the clock took from this card lately: the owner may give it back (restore_reset)
+                                        'restorable', case when c.reset_from > 0 and c.reset_at > now() - interval '14 days' then c.reset_from end,
                                         -- what this customer took last (a shop that says what it sells)
                                         'last_item', (select i.name from public.moments m join public.items i on i.id = m.item_id
                                                       where m.card_id = c.id and m.kind = 'stamp' order by m.created_at desc limit 1),
@@ -4332,10 +4372,10 @@ create or replace function public.reset_if_due(p_card uuid) returns boolean
 language plpgsql security definer set search_path = '' as $$
 declare v_n int;
 begin
-  update public.cards c set stamps = 0, reset_at = now()
+  update public.cards c set reset_from = c.stamps, stamps = 0, reset_at = now()
   from public.shops s
   where c.id = p_card and s.id = c.shop_id and c.stamps > 0
-    and public.reset_due(c.last_at, c.stamps, s.reset_days, s.reset_since) <= now();
+    and public.card_due(c, s) <= now();
   get diagnostics v_n = row_count;
   return v_n > 0;
 end $$;
@@ -4345,10 +4385,10 @@ create or replace function public.reset_sweep() returns int
 language plpgsql security definer set search_path = '' as $$
 declare v_n int;
 begin
-  update public.cards c set stamps = 0, reset_at = now()
+  update public.cards c set reset_from = c.stamps, stamps = 0, reset_at = now()
   from public.shops s
   where s.id = c.shop_id and s.reset_days is not null and c.stamps > 0
-    and public.reset_due(c.last_at, c.stamps, s.reset_days, s.reset_since) <= now();
+    and public.card_due(c, s) <= now();
   get diagnostics v_n = row_count;
   return v_n;
 end $$;
@@ -4361,11 +4401,94 @@ declare s public.shops%rowtype;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
-  if p_days is not null and (p_days < 3 or p_days > 365) then return public.err('bad_days'); end if;
+  if p_days is not null and (p_days < 7 or p_days > 365) then return public.err('bad_days'); end if;
   if p_days is distinct from s.reset_days then
     update public.shops set reset_days = p_days, reset_since = case when p_days is null then null else now() end where id = s.id;
   end if;
   return jsonb_build_object('ok', true, 'days', p_days);
+end $$;
+
+-- The owner's pause («وقّف العدّاد»): on, no card goes back to zero; off, the clock starts again from
+-- that day for everyone — the days it stood still are never held against anybody.
+create or replace function public.set_reset_paused(p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if s.reset_days is null then return public.err('no_clock'); end if;
+  if coalesce(p_on, false) then
+    update public.shops set reset_paused_at = coalesce(reset_paused_at, now()) where id = s.id;
+  elsif s.reset_paused_at is not null then
+    update public.shops set reset_paused_at = null, reset_since = now() where id = s.id;
+  end if;
+  return jsonb_build_object('ok', true, 'paused', coalesce(p_on, false));
+end $$;
+
+-- The owner gives back what the clock took, within 14 days: one card (p_card), or every card it took.
+-- The tampons go back on top of any new ones, a full card becomes its gift (bank), and the card's own
+-- clock starts again from today, so it is not taken again tomorrow.
+create or replace function public.restore_reset(p_card uuid default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_id uuid; v_n int := 0;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  for v_id in
+    update public.cards set stamps = stamps + reset_from, reset_from = null, reset_at = null, clock_from = now()
+    where shop_id = s.id and reset_from > 0 and reset_at > now() - interval '14 days' and (p_card is null or id = p_card)
+    returning id
+  loop
+    perform public.bank(v_id);
+    v_n := v_n + 1;
+  end loop;
+  if p_card is not null and v_n = 0 then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true, 'n', v_n);
+end $$;
+
+-- the owner's clock page (/shop/clock): how it stands, and what it does these days
+create or replace function public.my_clock() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return jsonb_build_object('ok', true, 'days', s.reset_days, 'paused', s.reset_paused_at is not null,
+    'running', public.shop_clock(s) is not null,
+    'soon', (select count(*) from public.cards c where c.shop_id = s.id and public.card_due(c, s) > now() and public.card_due(c, s) <= now() + interval '3 days'),
+    'taken', (select count(*) from public.cards c where c.shop_id = s.id and c.reset_from > 0 and c.reset_at > now() - interval '14 days'),
+    'taken_stamps', (select coalesce(sum(c.reset_from), 0) from public.cards c where c.shop_id = s.id and c.reset_from > 0 and c.reset_at > now() - interval '14 days'));
+end $$;
+
+-- The customers to tell before their card goes back to zero (the daily job sends a push): a card whose
+-- clock runs out within the next 36 hours, not told yet for this stretch — written down as told as it
+-- is read, so two runs never tell anyone twice.
+create or replace function public.reset_warnings() returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v jsonb;
+begin
+  with soon as (
+    select c.id, c.user_id, c.stamps, s.name as shop, public.card_due(c, s) as at
+    from public.cards c join public.shops s on s.id = c.shop_id
+    where s.reset_days is not null and c.stamps > 0
+      and (c.reset_warned_at is null or c.reset_warned_at < greatest(c.last_at, s.reset_since, c.clock_from))
+      and public.card_due(c, s) > now() and public.card_due(c, s) <= now() + interval '36 hours'),
+  told as (update public.cards c set reset_warned_at = now() from soon where c.id = soon.id returning c.id)
+  select coalesce(jsonb_agg(jsonb_build_object('card', soon.id, 'user_id', soon.user_id, 'shop', soon.shop, 'stamps', soon.stamps, 'at', soon.at)), '[]'::jsonb)
+  into v from soon;
+  return v;
+end $$;
+
+-- The founder's switch for the card's clock, for every shop (settings.clock_on): off, no owner sees it
+-- and no card ever goes back to zero. Turned on (again), every clock counts from that day.
+create or replace function public.admin_set_clock(p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  insert into public.settings (key, value, updated_at) values ('clock_on', case when coalesce(p_on, false) then '1' else '' end, now())
+  on conflict (key) do update set value = excluded.value, updated_at = now();
+  if coalesce(p_on, false) then update public.shops set reset_since = now() where reset_days is not null; end if;
+  return jsonb_build_object('ok', true, 'on', coalesce(p_on, false));
 end $$;
 
 -- the owner takes a customer off the shop's list: their card here and everything on it, for good
@@ -4406,8 +4529,8 @@ begin
     from g where gap is not null),
   x as (
     select p.*, coalesce(c.goal, s.goal) as goal, nullif(split_part(pp.name, ' ', 1), '') as name,
-           case when public.reset_due(c.last_at, c.stamps, s.reset_days, s.reset_since) <= now() then 0 else c.stamps end as stamps,
-           public.reset_due(c.last_at, c.stamps, s.reset_days, s.reset_since) as due,
+           case when public.card_due(c, s) <= now() then 0 else c.stamps end as stamps,
+           public.card_due(c, s) as due,
            extract(epoch from now() - p.last_at) / 86400 as since
     from per p join public.cards c on c.id = p.card_id left join public.people pp on pp.id = c.user_id)
   select jsonb_build_object('ok', true,
@@ -4428,7 +4551,7 @@ begin
     'new_prev', (select count(*) from public.cards where shop_id = s.id and created_at >= now() - interval '60 days' and created_at < now() - interval '30 days'),
     'near', (select count(*) from x where stamps > 0 and goal - stamps between 1 and 2),
     'given', (select count(*) from public.moments where shop_id = s.id and kind = 'gift' and given_at is not null),
-    'reset_days', s.reset_days,
+    'reset_days', public.shop_clock(s),
     'resetting', (select count(*) from x where due > now() and due <= now() + interval '3 days'),
     -- the week and the day, these 90 days: tampons by weekday (0 = Sunday) and by hour, Tunis time
     'weekdays', (select coalesce(jsonb_agg(w.n order by w.dow), '[]'::jsonb) from (
@@ -4493,6 +4616,9 @@ grant execute on all functions in schema public to service_role;
 grant execute on function public.admin_set_export(uuid, boolean), public.admin_export_allowed(uuid), public.my_export_allowed(), public.my_export() to authenticated;
 -- the card's clock, the customer removed, the insights (the sweep is the daily job's: service_role only)
 grant execute on function public.set_reset_days(int), public.remove_customer(uuid), public.shop_insights() to authenticated;
+-- its safeguards: the owner's pause, what the clock took given back, the clock's page, the founder's switch
+-- (the warnings are the daily job's: service_role only)
+grant execute on function public.set_reset_paused(boolean), public.restore_reset(uuid), public.my_clock(), public.admin_set_clock(boolean) to authenticated;
 
 -- nothing a visitor without an account can call
 do $$

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { AdminClock } from "@/components/AdminClock";
 import { AdminSettingsForm } from "@/components/AdminSettingsForm";
 import { AdminBookAdd, AdminBookDelete, AdminFind, AdminRobots, AdminTester } from "@/components/AdminTools";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -102,6 +103,10 @@ export default async function AdminTools({ searchParams }: { searchParams: Promi
         )}
       </Part>
 
+      {/* the card's clock, for every shop at once: off until the founder turns it on (components/AdminClock) */}
+      <Part title="الكارط ترجع للصفر" hint={settings.raw.clock_on === "1" ? "يخدم للمحلات الكل" : "مطفي للكل"}>
+        <AdminClock on={settings.raw.clock_on === "1"} />
+      </Part>
       <Part title={t.aSettings} hint={t.aSettingsHint}>
         <AdminSettingsForm raw={settings.raw} />
       </Part>
