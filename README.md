@@ -87,6 +87,8 @@ npx vercel deploy --prod --yes --archive=tgz
 
 Then check it: `SHOTS_BASE=https://pointidi.vercel.app node scripts/shots.mjs` and `SHOTS_BASE=https://pointidi.vercel.app node scripts/reward-flow.mjs`. (Do not use `vercel deploy --temporary`: anonymous deployments are capped at 20 functions.)
 
+**Backup host — Google Cloud Run:** if Vercel pauses the project (the Hobby plan is non-commercial and was over its CPU allowance in Nov 2026), the same site runs on Cloud Run's free tier. Setup, the domain switch and the way back: [v2/CLOUDRUN.md](v2/CLOUDRUN.md).
+
 ## Needs an external account before launch
 
 - **SMS for password reset.** Set `SMS_PROVIDER=twilio` + `TWILIO_*`. Without it, codes are shown on screen in development only; in production an admin can issue a temporary password from `/admin/customers`.

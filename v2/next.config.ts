@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Off Vercel — the Google Cloud Run backup (CLOUDRUN.md, Dockerfile) — the site is built as one
+  // self-contained Node server. Only when asked: Vercel's own build stays exactly as it was.
+  ...(process.env.NEXT_STANDALONE === "1" ? { output: "standalone" as const } : {}),
   // v2 lives inside the first version's folder: its root is here, not there
   // (for the bundler and for the files a function ships with alike)
   turbopack: { root: __dirname },

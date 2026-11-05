@@ -1,0 +1,9 @@
+# What the Cloud Run image is built without (Dockerfile). .env.production is kept: it holds only the
+# public NEXT_PUBLIC_* values the build bakes in. Every secret stays out.
+node_modules
+.next
+.git
+.env.local
+.env*.local
+.env.cloudrun*
+npm-debug.log*

@@ -1,0 +1,10 @@
+# What `gcloud run deploy --source .` uploads to Cloud Build (scripts/cloudrun.sh). Without this file
+# gcloud would follow .gitignore and leave out .env.production — the build would lose the Supabase
+# address the browser needs. Every secret stays out: they go to the running service, not the build.
+.gcloudignore
+.git
+node_modules/
+.next/
+.env.local
+.env*.local
+.env.cloudrun*
