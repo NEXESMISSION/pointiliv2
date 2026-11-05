@@ -98,7 +98,7 @@ export default async function ShopInsights() {
             aria-hidden
           >
             <span className="grid size-[5.1rem] place-items-center rounded-full bg-[#5b38ee]">
-              <span className="num text-[1.75rem] font-bold leading-none">{rate}%</span>
+              <span className={`num font-bold leading-none ${rate >= 100 ? "text-[1.375rem]" : "text-[1.75rem]"}`}>{rate}%</span>
             </span>
           </span>
           <span className="min-w-0">
@@ -127,7 +127,8 @@ export default async function ShopInsights() {
         {s.new_30 > 0 && (
           <span className="flex items-center gap-1.5 rounded-full bg-mint-soft px-3 py-1.5 text-[0.8125rem] font-bold text-mint">
             {fill(t.insNew, { n: customersN(s.new_30) })}
-            {growth !== null && growth !== 0 && <span className="num opacity-80">· {fill(growth > 0 ? t.insNewUp : t.insNewDown, { pct: growth })}</span>}
+            {/* only a rise is said here: a green chip is good news */}
+            {growth !== null && growth > 0 && <span className="num opacity-80">· {fill(t.insNewUp, { pct: growth })}</span>}
           </span>
         )}
         {s.near > 0 && (
@@ -208,7 +209,7 @@ export default async function ShopInsights() {
                 {week.map((n, i) => (
                   <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
                     <span className={`w-full rounded-t-[0.25rem] ${i === bestDay ? "bg-brand" : "bg-brand/25"}`} style={{ height: `${Math.max(6, (n / weekMax) * 100)}%` }} />
-                    <span className="text-[0.625rem] text-faint">{(t.insWeekdays[i] ?? "").slice(0, 3)}</span>
+                    <span className={`text-[0.75rem] ${i === bestDay ? "font-bold text-brand" : "text-faint"}`}>{t.insWeekdaysShort[i]}</span>
                   </div>
                 ))}
               </div>

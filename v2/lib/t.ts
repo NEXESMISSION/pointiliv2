@@ -356,13 +356,14 @@ export const t = {
   insBestDay: "أكثر نهار",
   insBestHour: "أكثر وقت",
   insNear: "{n} قراب من الكادو: تامبون ولا زوز",
-  insNew: "{n} جدد في آخر 30 يوم",
+  insNew: "جدد في آخر 30 يوم: {n}",
   insNewUp: "+{pct}% على الشهر اللي قبلو",
-  insNewDown: "{pct}% على الشهر اللي قبلو",
   insResetting: "{n} ترجع للصفر في 3 أيام الجايين",
   insEmpty: "مازال بكري. الأرقام هذي تبان كي يبداو الحرفاء يرجعولك.",
   insLinkSub: "اللي رجعو، اللي بعدو، وقدّاش يطوّلو",
   insWeekdays: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
+  // one letter each, as the calendar writes them (three letters made «الأ» of Sunday and Wednesday alike)
+  insWeekdaysShort: ["ح", "ن", "ث", "ر", "خ", "ج", "س"],
   setPaid: "خالص حتى {date}",
   setTrial: "التجربة · مازال {n}",
   // the home: today's tampons, one line
