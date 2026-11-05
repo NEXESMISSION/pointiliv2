@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { ChartColumn, ChevronLeft, Crown, PieChart, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
 import { HelpButton } from "@/components/Help";
+import { InstallButton } from "@/components/InstallButton";
 import { LogoutButton } from "@/components/LogoutButton";
 import type { Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
@@ -97,6 +98,8 @@ export default async function ShopSettings() {
           {plan && <Row href="/shop/pay" mark={<Mark icon={Crown} />} title={t.payTitle} sub={plan} />}
         </Group>
         <Group>
+          {/* the app on this phone: Chrome's own dialog, or the guide (nothing once installed) */}
+          <InstallButton where="settings" look="setting" />
           <Row href="/me" mark={<Mark icon={UserRound} />} title={t.account} sub={me.name ?? null} />
           <Row href="/wallet" mark={<Mark icon={WalletCards} />} title={t.myCards} sub={t.setMine} />
         </Group>

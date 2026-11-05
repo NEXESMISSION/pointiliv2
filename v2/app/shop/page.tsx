@@ -2,6 +2,7 @@ import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import { ChevronLeft, QrCode, ScanLine, Smartphone, Store, Ticket, Users } from "lucide-react";
 import { HelpButton } from "@/components/Help";
+import { InstallButton } from "@/components/InstallButton";
 import { FirstGift } from "@/components/FirstGift";
 import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
@@ -125,6 +126,8 @@ export default async function ShopHome() {
             {myCards.some((c) => c.ready) && <span className="absolute -end-0.5 -top-0.5 size-3 rounded-full bg-coral ring-2 ring-canvas" aria-hidden />}
           </Link>
         )}
+        {/* the app on the phone, in plain sight beside the help (nothing once installed) */}
+        <InstallButton where="home · top" look="icon" />
         <HelpButton help={help} />
       </header>
 

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { MessageCircle, Phone, Play, X } from "lucide-react";
 import { useBrowser } from "@/components/Client";
 import { ClipSheet } from "@/components/HowClip";
+import { InstallButton } from "@/components/InstallButton";
 import { signal, watching } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 
@@ -115,6 +116,8 @@ export function HelpButton({ help, light = false, small = false }: { help: HelpS
                       {pretty(help.phone)}
                     </p>
                   )}
+                  {/* the app on the phone, where it can be installed (nothing once it is) */}
+                  <InstallButton where="help" look="sheet" />
                   {/* the filmed slides, first: the café, the restaurant, the shop — the owner's own work, seen */}
                   <button
                     type="button"
