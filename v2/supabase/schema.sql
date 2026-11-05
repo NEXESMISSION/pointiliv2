@@ -289,6 +289,15 @@ alter table public.codes add column if not exists back_at timestamptz;
 alter table public.codes add column if not exists tried_at timestamptz;
 alter table public.codes add column if not exists tried_by uuid references auth.users (id) on delete set null;
 alter table public.codes add column if not exists tried_why text;
+-- a tampon sent as a link, for an owner who sells online (the founder, 4 Nov 2026): a new link for each
+-- customer, one use, no clock — expires_at is infinity. Only its SHA-256 is kept, like the counter's
+-- codes. The owner may cancel it while it waits; a phone without an account that opens it holds it 20
+-- minutes, then it is free again, so a link is never lost to somebody who did not finish. `label`: who
+-- the owner sent it to, in his own words (shown to him only)
+alter table public.codes add column if not exists online boolean not null default false;
+alter table public.codes add column if not exists label text check (label is null or char_length(label) <= 40);
+alter table public.codes add column if not exists cancelled_at timestamptz;
+create index if not exists codes_links_idx on public.codes (shop_id, created_at desc) where online;
 -- the counter's private radio: Realtime topic "pointili:<signal>", told of every scan
 alter table public.shops add column if not exists signal text not null default encode(extensions.gen_random_bytes(16), 'hex');
 -- «شنوّة يبيع»: the counter asks which thing before it makes a code. Withdrawn
@@ -704,7 +713,7 @@ create or replace function public.see(p_key text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 begin
   if auth.uid() is null then return public.err('not_signed_in'); end if;
-  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push', 'install', 'fix_tip', 'first_scan', 'first_gift', 'mission') then return public.err('invalid'); end if;
+  if p_key is null or p_key not in ('coach', 'logo_tip', 'card_hello', 'offer', 'push', 'install', 'fix_tip', 'first_scan', 'first_gift', 'mission', 'links_tip') then return public.err('invalid'); end if;
   update public.people set seen = array_append(seen, p_key) where id = auth.uid() and not (p_key = any (seen));
   return jsonb_build_object('ok', true);
 end $$;
@@ -857,7 +866,8 @@ language sql stable security definer set search_path = '' as $$
            'state', case when k.used_at is not null then 'done' when k.back_at is not null then 'back' when k.held_until > now() then 'waiting' else 'lost' end,
            'name', (select nullif(split_part(p.name, ' ', 1), '') from public.people p where p.id = k.used_by),
            'item', (select i.name from public.items i where i.id = k.item_id)) order by k.held_until desc), '[]'::jsonb)
-  from (select * from public.codes where shop_id = p_shop and held_hash is not null
+  -- a link is not a scan at the counter: its page says where it stands (my_links)
+  from (select * from public.codes where shop_id = p_shop and held_hash is not null and not online
           and held_until > now() - make_interval(days => greatest(p_days, 1))
         order by held_until desc limit 12) k
 $$;
@@ -1222,11 +1232,11 @@ begin
       from public.codes x
       left join public.people p on p.id = x.tried_by
       left join public.cards cc on cc.shop_id = s.id and cc.user_id = x.tried_by
-      where x.shop_id = s.id and x.tried_at > coalesce(p_since, now())), '[]'::jsonb),
+      where x.shop_id = s.id and not x.online and x.tried_at > coalesce(p_since, now())), '[]'::jsonb),
     -- the customers who are not the owner: the counter celebrates the very first one
     'served', (select count(*) from public.cards where shop_id = s.id and user_id <> s.owner_id),
     -- scanned by a phone without an account (held, not yet a tampon): the counter says so
-    'held', coalesce((select jsonb_agg(x.id) from public.codes x where x.shop_id = s.id and x.held_hash is not null and x.used_at is null
+    'held', coalesce((select jsonb_agg(x.id) from public.codes x where x.shop_id = s.id and not x.online and x.held_hash is not null and x.used_at is null
                         and x.held_until > coalesce(p_since, now()) + interval '20 minutes'), '[]'::jsonb),
     'expired', k.id is null or k.expires_at <= now(),
     -- a customer who filled one of the shop's forms: who they are, for the owner to check (kept on screen until «next»)
@@ -1310,17 +1320,21 @@ begin
   select * into k from public.codes where hash = public.sha(p_token) for update;
   if k.id is null then return public.err('invalid'); end if;
   select * into s from public.shops where id = k.shop_id;
+  -- a link the owner cancelled: dead, whoever holds it
+  if k.cancelled_at is not null then return public.err('cancelled', jsonb_build_object('link', true, 'shop', s.name)); end if;
   if k.held_hash = public.sha(p_hold) and k.held_until > now() then
-    return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo);
+    return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo, 'link', k.online);
   end if;
-  if k.used_at is not null or k.held_hash is not null then return public.err('used'); end if;
+  if k.used_at is not null then return public.err('used', jsonb_build_object('link', k.online)); end if;
+  -- held by another phone: taken — except a link whose 20 minutes ran out, which is free again
+  if k.held_hash is not null and not (k.online and k.held_until <= now()) then return public.err('used', jsonb_build_object('link', k.online)); end if;
   -- a code is judged by when it was on the screen: a slow phone's page can take a while to open, so two
-  -- minutes of grace past its minute (it stays one-use: a code taken is taken)
-  if k.expires_at + interval '2 minutes' <= now() then return public.err('expired'); end if;
+  -- minutes of grace past its minute (it stays one-use: a code taken is taken). A link has no clock.
+  if not k.online and k.expires_at + interval '2 minutes' <= now() then return public.err('expired'); end if;
   -- past its trial, to the customer the shop is simply stopped
-  if s.paused or public.shut(s) then return public.err('paused'); end if;
+  if s.paused or public.shut(s) then return public.err('paused', jsonb_build_object('link', k.online)); end if;
   update public.codes set held_hash = public.sha(p_hold), held_until = now() + interval '20 minutes' where id = k.id;
-  return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo);
+  return jsonb_build_object('ok', true, 'shop', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo, 'link', k.online);
 end $$;
 
 create or replace function public.stamp(p_token text, p_hold text default null) returns jsonb
@@ -1342,23 +1356,26 @@ begin
   if k.used_at is not null then
     if k.used_by = v_uid then
       select * into c from public.cards where shop_id = s.id and user_id = v_uid;
-      return public.err('done', jsonb_build_object('card', public.card_view(c.id)));
+      return public.err('done', jsonb_build_object('card', public.card_view(c.id), 'link', k.online));
     end if;
-    return public.err('used', jsonb_build_object('shop', s.name));
+    return public.err('used', jsonb_build_object('shop', s.name, 'link', k.online));
   end if;
-  if k.held_hash is not null then
-    -- held by a phone without an account: only that phone, back signed in, takes it
-    if p_hold is null or public.sha(p_hold) <> k.held_hash then return public.err('used', jsonb_build_object('shop', s.name)); end if;
+  -- a link the owner cancelled (a code never is)
+  if k.cancelled_at is not null then return public.err('cancelled', jsonb_build_object('shop', s.name, 'link', true)); end if;
+  if k.held_hash is not null and not (k.online and k.held_until <= now()) then
+    -- held by a phone without an account: only that phone, back signed in, takes it (a link's
+    -- hold that ran out holds nothing: the link is anybody's again, below)
+    if p_hold is null or public.sha(p_hold) <> k.held_hash then return public.err('used', jsonb_build_object('shop', s.name, 'link', k.online)); end if;
     if k.held_until <= now() then return public.err('expired', jsonb_build_object('shop', s.name)); end if;
-  elsif k.expires_at + interval '2 minutes' <= now() then
+  elsif not k.online and k.expires_at + interval '2 minutes' <= now() then
     return public.err('expired', jsonb_build_object('shop', s.name));
   end if;
   if s.owner_id = v_uid then
     update public.codes set tried_at = now(), tried_by = v_uid, tried_why = 'own_shop' where id = k.id;
-    return public.err('own_shop');
+    return public.err('own_shop', jsonb_build_object('link', k.online));
   end if;
   if s.goal is null then return public.err('no_card'); end if;
-  if s.paused or public.shut(s) then return public.err('paused', jsonb_build_object('shop', s.name)); end if;
+  if s.paused or public.shut(s) then return public.err('paused', jsonb_build_object('shop', s.name, 'link', k.online)); end if;
 
   insert into public.people (id) values (v_uid) on conflict (id) do nothing;
   insert into public.cards (shop_id, user_id, goal, gift) values (s.id, v_uid, s.goal, s.gift) on conflict (shop_id, user_id) do nothing;
@@ -1367,7 +1384,8 @@ begin
   if public.next_stamp_at(c.last_at, s.stamp_gap) > now() then
     -- the counter hears it too, and says why (the code stays good for the next customer)
     update public.codes set tried_at = now(), tried_by = v_uid, tried_why = 'too_soon' where id = k.id;
-    return public.err('too_soon', jsonb_build_object('next_at', public.next_stamp_at(c.last_at, s.stamp_gap), 'card', public.card_view(c.id)));
+    -- a link stays good: opened again once the time has come, it gives its tampon
+    return public.err('too_soon', jsonb_build_object('next_at', public.next_stamp_at(c.last_at, s.stamp_gap), 'card', public.card_view(c.id), 'link', k.online));
   end if;
 
   v_waiting := public.waits(c.id);
@@ -1389,6 +1407,85 @@ begin
                             -- answer, so the turn is spun on the scan screen itself and the customer
                             -- sees what he won where he won it (18 Oct 2026), not a page away
                             'prizes', case when v_gift and s.wheel_on then public.wheel_list(s.id) end);
+end $$;
+
+-- ═══ links: a tampon sent as a link, for an owner who sells online ═════════
+-- (the founder, 4 Nov 2026: «a link that does not expire, instead of the scan,
+-- for people who work online — secure, a new link every time»). Each link is
+-- a code of its own (public.codes, online): 24 random bytes, only the SHA-256
+-- kept, one use, no clock. It goes through the very same door as a scan
+-- (stamp, hold): the account, the time between two tampons, the gift, the
+-- wheel. A link that leaks gives one tampon, once, to one person; the owner
+-- can cancel one that waits. The token is shown once, when it is made: a
+-- link lost is cancelled and another made, never shown again.
+create or replace function public.link_new(p_label text default null, p_item bigint default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_token text; v_id uuid; v_label text;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if s.goal is null then return public.err('no_card'); end if;
+  if s.paused then return public.err('paused'); end if;
+  if public.shut(s) then return public.err('shut'); end if;
+  -- a hand sending links, not a machine: 60 in ten minutes, 500 waiting at once
+  if (select count(*) from public.codes where shop_id = s.id and online and created_at > now() - interval '10 minutes') >= 60 then
+    return public.err('slow_down');
+  end if;
+  if (select count(*) from public.codes where shop_id = s.id and online and used_at is null and cancelled_at is null) >= 500 then
+    return public.err('too_many');
+  end if;
+  -- a shop that says what it sells: the link says which thing, as the counter's code does
+  if s.items_on then
+    if p_item is null or not exists (select 1 from public.items where id = p_item and shop_id = s.id and rank < 999) then
+      return public.err('pick_item');
+    end if;
+  else
+    p_item := null;
+  end if;
+  v_label := nullif(left(btrim(regexp_replace(coalesce(p_label, ''), '[[:cntrl:]]+', ' ', 'g')), 40), '');
+  v_token := translate(encode(extensions.gen_random_bytes(24), 'base64'), '+/=', '-_');
+  insert into public.codes (shop_id, hash, expires_at, item_id, online, label)
+  values (s.id, public.sha(v_token), 'infinity', p_item, true, v_label) returning id into v_id;
+  return jsonb_build_object('ok', true, 'id', v_id, 'token', v_token);
+end $$;
+
+-- the owner's links, the latest first: waiting, opened (a phone without an account holds it), used and by whom, cancelled
+create or replace function public.my_links() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return jsonb_build_object('ok', true,
+    'waiting', (select count(*) from public.codes where shop_id = s.id and online and used_at is null and cancelled_at is null),
+    'used', (select count(*) from public.codes where shop_id = s.id and online and used_at is not null),
+    'links', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'id', k.id, 'at', k.created_at, 'label', k.label,
+               'state', case when k.used_at is not null then 'used'
+                             when k.cancelled_at is not null then 'cancelled'
+                             when k.held_hash is not null and k.held_until > now() then 'opened'
+                             when k.tried_why = 'too_soon' then 'soon'
+                             else 'waiting' end,
+               'used_at', k.used_at,
+               'name', (select nullif(btrim(p.name), '') from public.people p where p.id = k.used_by),
+               'item', (select i.name from public.items i where i.id = k.item_id))
+             order by k.created_at desc)
+      from (select * from public.codes where shop_id = s.id and online order by created_at desc limit 60) k), '[]'::jsonb));
+end $$;
+
+-- a link that waits, cancelled: from now on it gives nothing (one already used stays used)
+create or replace function public.link_cancel(p_id uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_n int;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  update public.codes set cancelled_at = now()
+  where id = p_id and shop_id = s.id and online and used_at is null and cancelled_at is null;
+  get diagnostics v_n = row_count;
+  if v_n = 0 then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true);
 end $$;
 
 create or replace function public.wallet() returns jsonb
@@ -4219,6 +4316,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.form_open(text), public.form_fill(text, jsonb), public.my_wheel(), public.wheel_save(jsonb), public.spin(bigint), public.spin_at_counter(bigint), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
   public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
   public.stamp(text, text), public.wallet(), public.card(uuid),
+  public.link_new(text, bigint), public.my_links(), public.link_cancel(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(uuid), public.admin_board_shop(uuid), public.admin_study(uuid),
   public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),
   public.admin_voice_add(uuid, uuid, int, int, text), public.admin_voices(uuid), public.admin_voice(uuid), public.admin_voice_drop(uuid),

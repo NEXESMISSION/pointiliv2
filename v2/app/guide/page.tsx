@@ -34,6 +34,11 @@ const POINTS: { q: string; a: string; fr: { q: string; a: string } }[] = [
     fr: { q: "Peut-on tricher ?", a: "Non. Le QR code change dès qu'il est scanné et ne sert qu'une fois, et vous choisissez le délai entre deux tampons : une heure, une journée, ou ce que vous voulez." },
   },
   {
+    q: "تبيع أونلاين؟",
+    a: "تبعث للحريف رابط تامبون في واتساب ولا ميسنجر، وكي يحلّو ياخو التامبون متاعو. لكل حريف رابط جديد: يخدم مرّة وحدة برك، وما يوفاش بالوقت.",
+    fr: { q: "Vous vendez en ligne ?", a: "Vous envoyez au client un lien de tampon sur WhatsApp ou Messenger ; en l'ouvrant, il reçoit son tampon. Un nouveau lien pour chaque client : il ne sert qu'une fois et n'expire pas." },
+  },
+  {
     q: "الكادو كيفاش يتعطى؟",
     a: "كي يكمّل الكارط، الحريف يورّيك الكود متاع الكادو في تليفونو، إنت تسكانيه وتعطيه. ما تغلطش في حريف.",
     fr: { q: "Comment se remet le cadeau ?", a: "Quand la carte est complète, le client montre le code de son cadeau sur son téléphone, vous le scannez et vous le lui remettez. Aucune erreur possible." },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { signal } from "@/lib/track";
 
 /**
@@ -73,6 +73,56 @@ export function useInstalled(): boolean {
       return () => listeners.delete(l);
     },
     () => installed,
+    () => false,
+  );
+}
+
+/*
+ * The floating install buttons (InstallFab on the owner's home and the
+ * wallet, AndroidInstall on the other pages): «×» on either puts both away
+ * for the same days.
+ */
+const FAB_OFF = "pl-fab-off";
+const DAY = 86_400_000;
+export function fabAway(): boolean {
+  try {
+    return Number(localStorage.getItem(FAB_OFF) ?? 0) > Date.now();
+  } catch {
+    return false; // no storage: it shows
+  }
+}
+export function putFabAway(days: number) {
+  try {
+    localStorage.setItem(FAB_OFF, String(Date.now() + days * DAY));
+  } catch {
+    /* gone for this visit only */
+  }
+}
+
+/*
+ * A page showing its own install button (the owner's home and the wallet
+ * float one, the account page has a row): the site's floating one keeps out
+ * of its way, so there are never two.
+ */
+let own = 0;
+export function useOwnInstall(on = true) {
+  useEffect(() => {
+    if (!on) return;
+    own++;
+    notify();
+    return () => {
+      own--;
+      notify();
+    };
+  }, [on]);
+}
+export function useHasOwnInstall(): boolean {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+    () => own > 0,
     () => false,
   );
 }

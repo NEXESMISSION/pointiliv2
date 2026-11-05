@@ -29,8 +29,9 @@ export type CardView = {
 export type ScanResult =
   /** `prizes`: a wheel shop whose card this scan filled — the turn is spun here, on the scan's own screen */
   | { kind: "stamped"; card: CardView; gift: boolean; item?: string | null; prizes?: { id?: number; name: string; chance: number }[] | null }
-  | { kind: "held"; shop: string; color: string; shopKind: string }
-  | { kind: "error"; code: string; card?: CardView; next_at?: string; shop?: string };
+  /** `link`: a tampon the shop sent as a link (no clock), not a code at its counter — the words differ */
+  | { kind: "held"; shop: string; color: string; shopKind: string; link?: boolean }
+  | { kind: "error"; code: string; card?: CardView; next_at?: string; shop?: string; link?: boolean };
 
 /** a customer's answers to the shop's forms of identification: each form, its fields as label and value */
 /** a shop as its card shows it: the name, the kind, the colour, the logo, the goal and the gift */

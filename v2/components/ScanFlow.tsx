@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Clock, QrCode, ScanLine, WifiOff, X } from "lucide-react";
+import { ArrowLeft, Clock, Link2, QrCode, ScanLine, WifiOff, X } from "lucide-react";
 import Link from "@/components/Link";
 import { quickJoin, scan } from "@/app/actions";
 import { spin } from "@/app/actions-wheel";
@@ -279,7 +279,8 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
       <p className={`mt-1.5 flex animate-rise items-center justify-center gap-1.5 text-[0.8125rem] ${gone ? "font-semibold text-coral" : "text-muted"}`} style={after(200)}>
         <Clock className="size-4 shrink-0" />
         {gone ? (
-          t.heldGone
+          // a link is no counter: its 20 minutes over, the link itself is good again
+          res.link ? t.heldGoneLink : t.heldGone
         ) : (
           <>
             {form ? t.heldQuickMust : t.heldMust} · <bdi className="num tabular-nums">{fill(t.heldKeep, { clock })}</bdi>
@@ -335,17 +336,21 @@ function Held({ token, res, known, onDone }: { token: string; res: Extract<ScanR
 }
 
 function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
-  const { code, card } = res;
+  const { code, card, link } = res;
+  const soon = res.next_at ? fill(t.errSoonBody, { when: nextTampon(res.next_at) }) : undefined;
   const view: Record<string, { icon: typeof X; title: string; body?: string }> = {
-    used: { icon: QrCode, title: t.errUsed, body: t.errUsedBody },
+    // a link the shop sent (no clock, one use): its own words, never «scan the code on the screen»
+    used: link ? { icon: Link2, title: t.errLinkUsed, body: t.errLinkUsedBody } : { icon: QrCode, title: t.errUsed, body: t.errUsedBody },
+    cancelled: { icon: Link2, title: t.errLinkCancelled, body: t.errLinkCancelledBody },
     expired: { icon: Clock, title: t.errExpired, body: t.errExpiredBody },
     too_soon: {
       icon: Clock,
       title: t.errSoon,
-      body: res.next_at ? fill(t.errSoonBody, { when: nextTampon(res.next_at) }) : undefined,
+      // a link waits for its time: opened again then, it gives its tampon
+      body: link ? [soon, t.errLinkSoon].filter(Boolean).join(" ") : soon,
     },
     done: { icon: QrCode, title: t.errDone },
-    own_shop: { icon: X, title: t.errOwn, body: t.errOwnBody },
+    own_shop: { icon: X, title: t.errOwn, body: link ? t.errLinkOwn : t.errOwnBody },
     paused: { icon: X, title: t.errPaused },
     network: { icon: WifiOff, title: t.errNetwork },
   };
@@ -366,7 +371,8 @@ function Failed({ res }: { res: Extract<ScanResult, { kind: "error" }> }) {
       <div className="mt-8 w-full space-y-2.5">
         {card ? (
           <LinkBtn href={`/c/${card.id}`}>{t.seeCard}</LinkBtn>
-        ) : (
+        ) : link ? null : (
+          // a link has nothing to scan again: the way home is enough
           <LinkBtn href="/scan">
             <ScanLine className="size-5" /> {t.scanAgain}
           </LinkBtn>

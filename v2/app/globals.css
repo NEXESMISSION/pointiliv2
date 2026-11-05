@@ -238,6 +238,14 @@
   74%, 90% { transform: none; opacity: 1; }
   100% { transform: none; opacity: 0; }
 }
+/* the note over it, the first time it shows on a phone (components/FabHint): it pops up from the button and drops away */
+@keyframes fab-hint-in {
+  from { transform: translateY(10px) scale(0.92); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes fab-hint-out {
+  to { transform: translateY(8px) scale(0.96); opacity: 0; }
+}
 @keyframes fab-shine {
   0%, 62% { transform: translateX(-110%) skewX(-18deg); opacity: 0; }
   64%, 96% { opacity: 1; }

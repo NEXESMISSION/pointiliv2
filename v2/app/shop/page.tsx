@@ -1,9 +1,10 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, QrCode, ScanLine, Smartphone, Store, Ticket, Users } from "lucide-react";
+import { ChevronLeft, Link2, QrCode, ScanLine, Smartphone, Store, Ticket, Users } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
 import { FirstGift } from "@/components/FirstGift";
+import { LinksTip } from "@/components/LinksTip";
 import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
 import { InstallFab, InstallPopup, OpenOutside } from "@/components/InstallApp";
@@ -90,6 +91,8 @@ export default async function ShopHome() {
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const offerLastDay = !!pay?.offer_until && Date.parse(pay.offer_until) - Date.now() < 24 * 3600_000;
   const offerNote = !firstGift && !logoTip && !grant && offer && (served || offerLastDay) && !seen.includes("offer");
+  // the new way to give a tampon (a link, for the customers who buy online): said once, when nothing else is
+  const linksTip = !firstGift && !logoTip && !grant && !offerNote && !news && !seen.includes("links_tip");
   const first = (me.name ?? "").split(" ")[0];
   // the trial's line only when it matters: its last two days, or once it is over
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
@@ -163,6 +166,18 @@ export default async function ShopHome() {
           </span>
         </Link>
       </div>
+      {/* the third way, for the customers who buy online: a tampon sent as a link (4 Nov 2026) —
+          one slim row, so the two ways above stay the home's first thing. «relative»: over the tiles' shadow */}
+      <Link href="/shop/links" id="links-row" className="press relative mt-2 flex shrink-0 items-center gap-3 rounded-[1.125rem] bg-surface px-3 py-[clamp(0.5rem,1.3dvh,0.75rem)] shadow-card">
+        <span className="grid size-9 shrink-0 place-items-center rounded-[0.75rem] bg-brand-soft text-brand">
+          <Link2 className="size-5" strokeWidth={2.4} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <b className="block truncate text-[0.9375rem] font-bold">{t.linkRow}</b>
+          <span className="block truncate text-[0.75rem] text-muted">{t.linkRowSub}</span>
+        </span>
+        <ChevronLeft className="size-5 shrink-0 text-faint" />
+      </Link>
       {/* the three places, as they always were: the camera for a customer's own code, the customers, and
           «المحل» — the account and the shop. «relative»: drawn over the shadow of the code's tile above */}
       <nav className="relative mt-2 grid shrink-0 grid-cols-3 gap-2">
@@ -267,7 +282,8 @@ export default async function ShopHome() {
       {grant && <PlanOn grant={grant} />}
       <NewsPopup news={firstGift || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
       {/* Pointili on the home screen, asked once where Android's Chrome offers it — never over another note */}
-      <InstallPopup where="home" who={shop.id} show={served && !firstGift && !logoTip && !offerNote && !grant && !news && !seen.includes("install")} />
+      <LinksTip who={me.id} show={linksTip} />
+      <InstallPopup where="home" who={shop.id} show={served && !firstGift && !logoTip && !offerNote && !grant && !news && !linksTip && !seen.includes("install")} />
       {/* and offered all along, floating over «آخر حركة» clear of «شوف الكل», once a customer came */}
       {served && <InstallFab where="home" lift="4rem" />}
     </main>

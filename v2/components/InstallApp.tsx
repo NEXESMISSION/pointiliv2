@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Download, ExternalLink, Send, X } from "lucide-react";
 import { handoffPath } from "@/app/actions";
 import { Sheet, SheetGo } from "@/components/Client";
+import { FabHint } from "@/components/FabHint";
 import { InstallGuide, Mixed, preloadGuide, useAppStartsSignedIn } from "@/components/InstallGuide";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
-import { installApp, isIphone, outsideHref, useCanInstall, useInApp, useInstalled, useInstallWay, type InstallWay } from "@/lib/pwa";
+import { fabAway, installApp, isIphone, outsideHref, putFabAway, useCanInstall, useInApp, useInstalled, useInstallWay, useOwnInstall, type InstallWay } from "@/lib/pwa";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 
@@ -30,6 +31,8 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
   const way = useInstallWay();
   const [guide, setGuide] = useState(false);
   const counted = useRef(false);
+  // a row or a pill is a button in plain sight: the site's floating one stays away (a footer's word is not)
+  useOwnInstall(look !== "link" && (can || !!way));
   useEffect(() => {
     if (!(can || way) || counted.current) return;
     counted.current = true;
@@ -220,9 +223,6 @@ export function InstallPopup({ where, who, show, force = false }: { where: strin
   );
 }
 
-const FAB_OFF = "pl-fab-off";
-const DAY = 86_400_000;
-
 /**
  * The floating button (the founder, 24 Oct 2026: «a floating button on the
  * owner's or the customer's main page, with a nice animation, telling them
@@ -242,13 +242,9 @@ export function InstallFab({ where, lift }: { where: string; lift: string }) {
   const [up, setUp] = useState(false);
   const [going, setGoing] = useState(false);
   const [guide, setGuide] = useState(false);
+  useOwnInstall();
   useEffect(() => {
-    if (!way) return;
-    try {
-      if (Number(localStorage.getItem(FAB_OFF) ?? 0) > Date.now()) return;
-    } catch {
-      /* no storage: it shows */
-    }
+    if (!way || fabAway()) return;
     const id = setTimeout(() => {
       if (way !== "ios-chrome") void preloadGuide(way).catch(() => {});
       signal("pwa_fab_shown", where);
@@ -258,11 +254,7 @@ export function InstallFab({ where, lift }: { where: string; lift: string }) {
   }, [way, where]);
 
   const away = (days: number) => {
-    try {
-      localStorage.setItem(FAB_OFF, String(Date.now() + days * DAY));
-    } catch {
-      /* gone for this visit only */
-    }
+    putFabAway(days);
     setGoing(true);
   };
   const go = async () => {
@@ -278,6 +270,8 @@ export function InstallFab({ where, lift }: { where: string; lift: string }) {
     <>
       {up && way && !installed && (
         <div className="pointer-events-none fixed inset-x-0 z-40 flex justify-center px-4" style={{ bottom: `calc(max(1.25rem, env(safe-area-inset-bottom)) + ${lift})` }}>
+          {/* the first time on this phone: a small note over it, «جديد!» */}
+          {!going && <FabHint where={where} />}
           <div
             onAnimationEnd={(e) => going && e.target === e.currentTarget && setUp(false)}
             className={`pointer-events-auto relative flex max-w-full items-center overflow-hidden rounded-full bg-[linear-gradient(150deg,#8f75ff,#6c47ff_50%,#4a2ad6)] text-white shadow-[0_12px_28px_-12px_rgb(74_42_214/0.8)] ${going ? "animate-[fab-out_220ms_ease-in_forwards]" : "animate-[fab-in_640ms_cubic-bezier(0.34,1.56,0.64,1)_both]"}`}

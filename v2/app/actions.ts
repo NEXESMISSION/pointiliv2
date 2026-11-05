@@ -327,7 +327,7 @@ export async function scan(token: string): Promise<ScanResult> {
     const { data, error } = await supabase.rpc("stamp", { p_token: token, p_hold: hold });
     if (error || !data) return { kind: "error", code: "network" };
     if (hold) keepHeld(held.filter(([k]) => k !== token));
-    const res = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null; prizes?: { id?: number; name: string; chance: number }[] | null };
+    const res = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null; prizes?: { id?: number; name: string; chance: number }[] | null; link?: boolean };
     if (res.ok && res.card) {
       const c = res.card;
       // the founder's Telegram: a shop's first real customer, then 5, 10, 25… (lib/telegram)
@@ -335,16 +335,16 @@ export async function scan(token: string): Promise<ScanResult> {
       // the wheel's prizes come back only when this scan filled the card in a wheel shop: the turn is spun there and then
       return { kind: "stamped", card: c, gift: !!res.gift, item: res.item ?? null, prizes: res.prizes ?? null };
     }
-    return { kind: "error", code: res.error ?? "invalid", card: res.card, next_at: res.next_at, shop: res.shop };
+    return { kind: "error", code: res.error ?? "invalid", card: res.card, next_at: res.next_at, shop: res.shop, link: !!res.link };
   }
 
   const fresh = hold ?? randomBytes(32).toString("base64url");
   const { data, error } = await service().rpc("hold", { p_token: token, p_hold: fresh });
   if (error || !data) return { kind: "error", code: "network" };
-  const res = data as { ok: boolean; error?: string; shop?: string; color?: string; kind?: string };
-  if (!res.ok) return { kind: "error", code: res.error ?? "invalid" };
+  const res = data as { ok: boolean; error?: string; shop?: string; color?: string; kind?: string; link?: boolean };
+  if (!res.ok) return { kind: "error", code: res.error ?? "invalid", link: !!res.link };
   keepHeld([...held.filter(([k]) => k !== token), [token, fresh] as const]);
-  return { kind: "held", shop: res.shop ?? "", color: res.color ?? "#6C47FF", shopKind: res.kind ?? "other" };
+  return { kind: "held", shop: res.shop ?? "", color: res.color ?? "#6C47FF", shopKind: res.kind ?? "other", link: !!res.link };
 }
 
 /**
@@ -373,14 +373,14 @@ export async function quickJoin(token: string, name: string, phoneRaw: string, p
   else jar.delete(HOLD);
   const { data, error } = await made.supabase.rpc("stamp", { p_token: token, p_hold: hold });
   if (error || !data) return { ok: true, res: { kind: "error", code: "network" } };
-  const r = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null; prizes?: { id?: number; name: string; chance: number }[] | null };
+  const r = data as { ok: boolean; error?: string; gift?: boolean; card?: CardView; next_at?: string; shop?: string; item?: string | null; prizes?: { id?: number; name: string; chance: number }[] | null; link?: boolean };
   if (r.ok && r.card) {
     const c = r.card;
     after(() => alertStamp(c.shop.id, c.id));
     // an account made at the counter can fill a card at once: its turn is spun on this screen too
     return { ok: true, res: { kind: "stamped", card: c, gift: !!r.gift, item: r.item ?? null, prizes: r.prizes ?? null } };
   }
-  return { ok: true, res: { kind: "error", code: r.error ?? "invalid", card: r.card, next_at: r.next_at, shop: r.shop } };
+  return { ok: true, res: { kind: "error", code: r.error ?? "invalid", card: r.card, next_at: r.next_at, shop: r.shop, link: !!r.link } };
 }
 
 /**
