@@ -42,6 +42,20 @@ export function startPwa() {
     notify();
     signal("pwa_installed");
   });
+  // already on this phone's home screen (installed another day): Chrome will never offer it again, so
+  // every install button steps aside. Chrome on Android answers from the manifest's related_applications
+  const nav = navigator as Navigator & { getInstalledRelatedApps?: () => Promise<{ platform: string }[]> };
+  if (!standalone() && nav.getInstalledRelatedApps) {
+    void nav
+      .getInstalledRelatedApps()
+      .then((apps) => {
+        if (!apps.some((a) => a.platform === "webapp") || installed) return;
+        installed = true;
+        notify();
+        signal("pwa_already");
+      })
+      .catch(() => {});
+  }
   // a visit opened from the installed app (counted once per sitting)
   try {
     if (standalone() && !sessionStorage.getItem("pl-app")) {
@@ -132,12 +146,103 @@ export async function installApp(where: string): Promise<boolean> {
   if (!deferred) return false;
   const prompt = deferred;
   signal("pwa_click", where);
-  await prompt.prompt();
+  try {
+    await prompt.prompt();
+  } catch {
+    // Chrome opens its dialog only on a fresh tap: this one came too late. The offer is kept, and the
+    // button asks for one more tap
+    late = true;
+    notify();
+    signal("pwa_refused", where);
+    return false;
+  }
+  late = false;
   const { outcome } = await prompt.userChoice;
   signal(outcome === "accepted" ? "pwa_accepted" : "pwa_dismissed", where);
   deferred = null;
   notify();
   return outcome === "accepted";
+}
+
+/*
+ * Chrome says it can install a few seconds after the page opens (seven on the live site, 5 Nov 2026),
+ * and a tap before that opened the filmed guide instead of the install (the founder: «it opens the
+ * popup of the steps, not what we want — a direct install»). On Android a tap now waits for Chrome's
+ * word: «لحظة…» on the button, and Chrome's own dialog the moment the offer comes. A tap lets a page
+ * open a dialog for about five seconds only, so an offer later than that turns the button «جاهز»: one
+ * more tap installs. No offer at all in fifteen seconds (Chrome not ready, or not willing): a short
+ * note says where Chrome's own menu has it. iPhones keep their guide, the only way there.
+ */
+let waiting = false;
+let late = false;
+let none = false;
+const TAP_MS = 4500;
+const WAIT_MS = 15000;
+export type InstallStage = "idle" | "waiting" | "ready" | "none";
+const stage = (): InstallStage => (waiting ? "waiting" : late && deferred ? "ready" : none ? "none" : "idle");
+
+/** Where a tap on an install button stands: waiting for Chrome, ready for one more tap, or nothing came. */
+export function useInstallStage(): InstallStage {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+    stage,
+    () => "idle",
+  );
+}
+
+/** The note «Chrome is not ready», put away by a tap. */
+export function dismissInstallNote() {
+  none = false;
+  notify();
+}
+
+/** Android's tap on any install button: Chrome's dialog now, or as soon as Chrome offers it. */
+export async function tapInstall(where: string): Promise<void> {
+  if (deferred) {
+    await installApp(where).catch(() => false);
+    return;
+  }
+  if (waiting) return;
+  signal("pwa_wait", where);
+  waiting = true;
+  late = false;
+  none = false;
+  notify();
+  const t0 = Date.now();
+  const came = await new Promise<boolean>((resolve) => {
+    const check = () => {
+      if (deferred) finish(true);
+    };
+    const id = window.setTimeout(() => finish(false), WAIT_MS);
+    function finish(ok: boolean) {
+      window.clearTimeout(id);
+      listeners.delete(check);
+      resolve(ok);
+    }
+    listeners.add(check);
+  });
+  waiting = false;
+  if (came && Date.now() - t0 < TAP_MS) {
+    notify();
+    await installApp(where).catch(() => false);
+    return;
+  }
+  if (came) {
+    late = true;
+    signal("pwa_late", where);
+    notify();
+    return;
+  }
+  none = true;
+  signal("pwa_none", where);
+  notify();
+  window.setTimeout(() => {
+    none = false;
+    notify();
+  }, 9000);
 }
 
 /**

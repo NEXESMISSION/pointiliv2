@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, ExternalLink, Send, X } from "lucide-react";
+import { Download, ExternalLink, LoaderCircle, Send, X } from "lucide-react";
 import { handoffPath } from "@/app/actions";
 import { Sheet, SheetGo } from "@/components/Client";
 import { FabHint } from "@/components/FabHint";
 import { InstallGuide, Mixed, preloadGuide, useAppStartsSignedIn } from "@/components/InstallGuide";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
-import { fabAway, installApp, isIphone, outsideHref, putFabAway, useCanInstall, useInApp, useInstalled, useInstallWay, useOwnInstall, type InstallWay } from "@/lib/pwa";
+import { fabAway, installApp, isIphone, outsideHref, putFabAway, tapInstall, useCanInstall, useInApp, useInstalled, useInstallStage, useInstallWay, useOwnInstall, type InstallWay } from "@/lib/pwa";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 
@@ -19,41 +19,53 @@ function GuideFor({ way, where, onClose, onDone }: { way: Exclude<InstallWay, nu
 }
 
 /**
- * «حطّ Pointili في تليفونك»: where Android's Chrome offers to install, its
- * own dialog; elsewhere on a phone (an iPhone, or Android before Chrome
- * offers), the guide that shows the taps. Never in Facebook's browser, never
- * once installed. `look`: a small pill (a header), a full row (the account
- * page) or a word in the front door's footer. Its showing is counted once,
- * with where it was.
+ * «حطّ Pointili في تليفونك»: on Android, Chrome's own install dialog — at
+ * once when Chrome has offered it, else the moment it does (lib/pwa:
+ * tapInstall, «لحظة…» on the button meanwhile), never the filmed guide; on an
+ * iPhone, the guide that shows the taps. Never in Facebook's browser, never
+ * once installed (or found already on the phone). `look`: a small pill (a
+ * header), a full row (the account page) or a word in the front door's
+ * footer. Its showing is counted once, with where it was.
  */
 export function InstallApp({ where, look = "pill", className = "" }: { where: string; look?: "pill" | "row" | "link"; className?: string }) {
   const can = useCanInstall();
   const way = useInstallWay();
+  const installed = useInstalled();
+  const stage = useInstallStage();
   const [guide, setGuide] = useState(false);
   const counted = useRef(false);
+  const live = !installed && (can || !!way);
+  const ios = way === "ios" || way === "ios-chrome";
   // a row or a pill is a button in plain sight: the site's floating one stays away (a footer's word is not)
-  useOwnInstall(look !== "link" && (can || !!way));
+  useOwnInstall(look !== "link" && live);
   useEffect(() => {
-    if (!(can || way) || counted.current) return;
+    if (!live || counted.current) return;
     counted.current = true;
     signal(can ? "pwa_shown" : "pwa_ios_shown", where);
-  }, [can, way, where]);
-  if (!can && !way) return null;
+  }, [live, can, where]);
+  if (!live) return null;
 
   const go = () => {
-    if (can) return void installApp(where);
+    if (can && !ios) return void installApp(where);
+    if (way === "android") return void tapInstall(where);
     signal("pwa_ios_open", where);
     setGuide(true);
   };
-  const sheet = guide && way && <GuideFor way={way} where={where} onClose={() => setGuide(false)} />;
+  const sheet = guide && ios && way && <GuideFor way={way} where={where} onClose={() => setGuide(false)} />;
+  // on Android: waiting for Chrome (a turning circle), or ready for one more tap
+  const waiting = !ios && stage === "waiting";
+  const ready = !ios && stage === "ready";
+  const label = waiting ? t.installWaiting : ready ? t.installReady : t.installApp;
+  const Mark = waiting ? LoaderCircle : Download;
+  const spin = waiting ? "animate-spin" : "";
 
   if (look === "link") {
     // a third word in a footer row: a dot before it, the same quiet type
     return (
       <>
         <span className="size-1 rounded-full bg-[#CFC5B6]" aria-hidden />
-        <button type="button" onClick={() => void go()} className={`inline-flex items-center gap-1 font-bold text-[#B00D17] ${className}`}>
-          <Download className="size-3.5" /> {t.installApp}
+        <button type="button" onClick={() => void go()} aria-busy={waiting} className={`inline-flex items-center gap-1 font-bold text-[#B00D17] ${className}`}>
+          <Mark className={`size-3.5 ${spin}`} /> {label}
         </button>
         {sheet}
       </>
@@ -62,12 +74,12 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
   if (look === "row") {
     return (
       <>
-        <button type="button" onClick={() => void go()} className={`press flex w-full items-center gap-3 rounded-[1.375rem] bg-surface p-4 text-start shadow-card ${className}`}>
-          <span className="grid size-10 shrink-0 place-items-center rounded-[0.875rem] bg-brand text-white">
-            <Download className="size-5" />
+        <button type="button" onClick={() => void go()} aria-busy={waiting} className={`press flex w-full items-center gap-3 rounded-[1.375rem] bg-surface p-4 text-start shadow-card ${className}`}>
+          <span className={`grid size-10 shrink-0 place-items-center rounded-[0.875rem] bg-brand text-white ${ready ? "animate-breathe" : ""}`}>
+            <Mark className={`size-5 ${spin}`} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[1.0625rem] font-bold">{t.installApp}</span>
+            <span className={`block truncate text-[1.0625rem] font-bold ${ready ? "text-brand" : ""}`}>{label}</span>
             <span className="block truncate text-[0.8125rem] text-muted">{t.installAppHint}</span>
           </span>
         </button>
@@ -77,8 +89,8 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
   }
   return (
     <>
-      <button type="button" onClick={() => void go()} className={`press inline-flex h-10 items-center gap-2 rounded-full bg-brand px-4 text-[0.9375rem] font-bold text-white ${className}`}>
-        <Download className="size-[1.125rem]" /> {t.installApp}
+      <button type="button" onClick={() => void go()} aria-busy={waiting} className={`press inline-flex h-10 items-center gap-2 rounded-full bg-brand px-4 text-[0.9375rem] font-bold text-white ${ready ? "animate-breathe" : ""} ${className}`}>
+        <Mark className={`size-[1.125rem] ${spin}`} /> {label}
       </button>
       {sheet}
     </>
@@ -239,14 +251,17 @@ export function InstallFab({ where, lift }: { where: string; lift: string }) {
   const way = useInstallWay();
   const can = useCanInstall();
   const installed = useInstalled();
+  const stage = useInstallStage();
   const [up, setUp] = useState(false);
   const [going, setGoing] = useState(false);
   const [guide, setGuide] = useState(false);
+  const ios = way === "ios" || way === "ios-chrome";
   useOwnInstall();
   useEffect(() => {
     if (!way || fabAway()) return;
     const id = setTimeout(() => {
-      if (way !== "ios-chrome") void preloadGuide(way).catch(() => {});
+      // only an iPhone's Safari has a film to show; Android goes straight to Chrome's dialog
+      if (way === "ios") void preloadGuide("ios").catch(() => {});
       signal("pwa_fab_shown", where);
       setUp(true);
     }, 1400);
@@ -259,12 +274,16 @@ export function InstallFab({ where, lift }: { where: string; lift: string }) {
   };
   const go = async () => {
     signal("pwa_fab_tap", where);
-    if (can) {
+    if (can && !ios) {
       if (await installApp(`fab · ${where}`)) away(30);
       return;
     }
+    // Android before Chrome has offered: «لحظة…», then its dialog (installed, the button goes by itself)
+    if (way === "android") return void tapInstall(`fab · ${where}`);
     setGuide(true);
   };
+  const waiting = !ios && stage === "waiting";
+  const ready = !ios && stage === "ready";
 
   return (
     <>
@@ -278,12 +297,12 @@ export function InstallFab({ where, lift }: { where: string; lift: string }) {
           >
             {/* a shine across it, now and then */}
             <span aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-[linear-gradient(90deg,transparent,rgb(255_255_255/0.32),transparent)] opacity-0 motion-safe:animate-[fab-shine_5.5s_ease-in-out_1.6s_infinite]" />
-            <button type="button" onClick={() => void go()} className="press relative flex h-12 min-w-0 items-center gap-2.5 pe-1.5 ps-1.5">
+            <button type="button" onClick={() => void go()} aria-busy={waiting} className="press relative flex h-12 min-w-0 items-center gap-2.5 pe-1.5 ps-1.5">
               <span className="relative grid size-9 shrink-0 place-items-center rounded-full bg-white text-brand">
                 <span aria-hidden className="absolute inset-0 rounded-full bg-white/60 motion-safe:animate-[fab-ring_2.6s_ease-out_infinite]" />
-                <FabMark />
+                {waiting ? <LoaderCircle className="relative size-5 animate-spin" strokeWidth={2.4} /> : <FabMark />}
               </span>
-              <span className="truncate text-[0.9375rem] font-bold">{t.installApp}</span>
+              <span className="truncate text-[0.9375rem] font-bold">{waiting ? t.installWaiting : ready ? t.installReady : t.installApp}</span>
             </button>
             <button
               type="button"
@@ -299,7 +318,7 @@ export function InstallFab({ where, lift }: { where: string; lift: string }) {
           </div>
         </div>
       )}
-      {guide && way && <GuideFor way={way} where={`fab · ${where}`} onClose={() => setGuide(false)} onDone={() => away(1)} />}
+      {guide && ios && way && <GuideFor way={way} where={`fab · ${where}`} onClose={() => setGuide(false)} onDone={() => away(1)} />}
     </>
   );
 }
