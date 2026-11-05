@@ -17,6 +17,10 @@ type Due = { user_id: string; card: string; shop: string; left: number; gift: st
 export async function GET(request: NextRequest) {
   const word = process.env.CRON_SECRET;
   if (!word || request.headers.get("authorization") !== `Bearer ${word}`) return new Response("no", { status: 401 });
+  // the cards past their shop's clock go back to zero first (reset_sweep; the next tampon would too): on the
+  // daily job that already runs, so the clock costs no call of its own. A failure is said, never fatal.
+  const swept = await service().rpc("reset_sweep");
+  if (swept.error) console.error("[reset_sweep]", swept.error.message);
   const { data, error } = await service().rpc("push_reminders");
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   const due = (data ?? []) as Due[];

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import Link from "@/components/Link";
 import { Top } from "@/components/Top";
-import { Repeat, Stamp, Users } from "lucide-react";
+import { ChevronLeft, Repeat, Stamp, Users } from "lucide-react";
 import { Mark } from "@/components/Owner";
 import { Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
@@ -74,6 +75,18 @@ export default async function ShopStats() {
           })}
         </div>
       </section>
+
+      {/* who comes back, who stopped, how long between two visits: its own page (/shop/insights) */}
+      <Link href="/shop/insights" className="press mt-[1.6dvh] flex shrink-0 items-center gap-3 rounded-[1.25rem] bg-[linear-gradient(135deg,#8f75ff,#6c47ff_55%,#4a2ad6)] px-4 py-3 text-white shadow-[0_14px_30px_-16px_rgb(108_71_255/0.9)]">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/18">
+          <Repeat className="size-5" strokeWidth={2.4} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[1rem] font-bold">{t.insTitle}</span>
+          <span className="block truncate text-[0.8125rem] text-white/85">{t.insLinkSub}</span>
+        </span>
+        <ChevronLeft className="size-5 shrink-0" />
+      </Link>
 
 
       {/* «شنوّة يمشي أكثر»: one row of chips, the best first — slides sideways, never takes the screen */}

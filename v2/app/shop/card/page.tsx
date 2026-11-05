@@ -9,7 +9,9 @@ import { call } from "@/lib/supabase";
 export const metadata = { title: "الكارط" };
 
 /** Step 2 of 3: the first card, on one screen — and, later, changing it from the shop's home, one question at a time. */
-export default async function ShopCard() {
+export default async function ShopCard({ searchParams }: { searchParams: Promise<{ at?: string }> }) {
+  // `?at=reset`: straight to the card's clock (the note on the home, «المحل»)
+  const { at } = await searchParams;
   const me = await getMe();
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
@@ -23,5 +25,5 @@ export default async function ShopCard() {
   if (!editing) return <CardFirst shop={me.shop} help={help} wheel={!!me.shop.wheel_allowed} />;
   // a shop the founder allowed the wheel: «الروليت» is one of the answers to the gift, with what it holds
   const wheel = me.shop.wheel_allowed || me.shop.wheel_on ? await call<{ on: boolean; prizes: Prize[] }>("my_wheel") : null;
-  return <CardWizard shop={me.shop} next="/shop" editing help={help} wheel={wheel ? { on: !!me.shop.wheel_on, prizes: wheel.prizes ?? [] } : null} />;
+  return <CardWizard shop={me.shop} next="/shop" editing help={help} wheel={wheel ? { on: !!me.shop.wheel_on, prizes: wheel.prizes ?? [] } : null} at={at === "reset" ? "reset" : undefined} />;
 }

@@ -3,16 +3,20 @@
 import Link from "@/components/Link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Check, Gift, ScanLine, Search, X } from "lucide-react";
+import { Check, Gift, Hourglass, ScanLine, Search, Trash2, X } from "lucide-react";
 import { give, giveAll, type WaitingGift } from "@/app/actions";
+import { removeCustomer } from "@/app/actions-customers";
 import { CardMoments } from "@/components/CardMoments";
 import { CardHow } from "@/components/CardHow";
+import { Sheet, SheetGo } from "@/components/Client";
 import { type PassShop } from "@/components/Pass";
 import { Btn, Icon3D } from "@/components/ui";
+import { resetRuns, resetSoon, resetWhen } from "@/lib/reset";
 import { fill, giftsN, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
+import { useClock } from "@/lib/use-clock";
 
-export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; items?: { name: string; n: number }[]; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null; waiting?: WaitingGift[] };
+export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; items?: { name: string; n: number }[]; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null; waiting?: WaitingGift[]; /** the card's clock: when it goes back to zero (null: never) */ reset_due?: string | null };
 
 /** the gifts waiting on this customer's card that can be handed over now (a turn nobody has spun has no prize yet) */
 const giveable = (c: CustomerRow) => (c.waiting ?? []).filter((w) => !w.spin);
@@ -32,6 +36,12 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
   const [hand, setHand] = useState<CustomerRow | null>(null);
   const [busy, setBusy] = useState(false);
   const [handErr, setHandErr] = useState(false);
+  // a customer being taken off the list: asked first, it cannot be undone
+  const [removing, setRemoving] = useState<CustomerRow | null>(null);
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [removeErr, setRemoveErr] = useState(false);
+  // the card's clock, said in days: the phone's own clock, a minute at a time
+  const now = useClock();
   const router = useRouter();
   // a long list: a search (a name, or a phone's digits) and a second order — the ones nearest their gift first
   const [q, setQ] = useState("");
@@ -107,7 +117,9 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                     <Gift className="size-3.5" /> {t.customerReady}
                   </span>
                 ) : (
-                  <span className="num shrink-0 text-[0.8125rem] font-bold text-body">
+                  <span className="num flex shrink-0 items-center gap-1 text-[0.8125rem] font-bold text-body">
+                    {/* the card's clock in its last three days: the card goes back to zero soon */}
+                    {now && resetSoon(c, now) && <Hourglass className="size-3.5 text-coral" strokeWidth={2.6} aria-label={fill(t.resetOwner, { when: resetWhen(c.reset_due!, now) })} />}
                     {Math.min(c.stamps, of)}/{of}
                   </span>
                 )}
@@ -138,6 +150,12 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                 </span>
               </span>
             </div>
+            {/* the card's clock: when this card goes back to zero with no tampon (coral in its last three days) */}
+            {now && resetRuns(open, now) && (
+              <p className={`mt-2.5 flex items-center gap-1.5 rounded-[0.875rem] px-3 py-2 text-[0.8125rem] font-semibold ${resetSoon(open, now) ? "bg-coral-soft text-coral" : "bg-surface text-body shadow-card"}`}>
+                <Hourglass className="size-4 shrink-0" strokeWidth={2.4} /> {fill(t.resetOwner, { when: resetWhen(open.reset_due, now) })}
+              </p>
+            )}
             {/* everything this customer took here, by thing, the most first — one row that slides */}
             {!!open.items?.length && (
               <div className="-mx-[clamp(1rem,5vw,1.5rem)] mt-2.5 flex gap-1.5 overflow-x-auto px-[clamp(1rem,5vw,1.5rem)] [scrollbar-width:none]">
@@ -186,8 +204,63 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
             />
             {/* every tampon on the card, and what each one was for (the things' totals are above) */}
             <CardMoments card={open.id} color={shop.color} tally={!(open.items && open.items.length)} />
+            {/* off the list, for good: asked first — the sheet below says exactly what goes */}
+            <button
+              type="button"
+              onClick={() => {
+                setRemoveErr(false);
+                setRemoving(open);
+              }}
+              className="press mt-3 flex h-11 w-full items-center justify-center gap-1.5 rounded-[0.875rem] text-[0.875rem] font-semibold text-coral active:bg-coral-soft"
+            >
+              <Trash2 className="size-4" /> {t.customerRemove}
+            </button>
           </div>
         </div>
+      )}
+      {removing && (
+        <Sheet
+          tone="coral"
+          label={t.customerRemove}
+          icon={
+            <span className="mx-auto grid size-14 place-items-center rounded-full bg-coral-soft text-coral">
+              <Trash2 className="size-6" />
+            </span>
+          }
+          title={fill(t.customerRemoveAsk, { name: removing.name ?? t.someone })}
+          under={t.customerRemoveBody}
+          hold={removeBusy}
+          onClose={() => {
+            if (removeBusy) return;
+            setRemoving(null);
+            setRemoveErr(false);
+          }}
+          dismiss={t.customerRemoveNo}
+          action={
+            <>
+              <SheetGo
+                tone="coral"
+                onClick={() =>
+                  void (async () => {
+                    if (removeBusy) return;
+                    setRemoveBusy(true);
+                    setRemoveErr(false);
+                    const ok = await removeCustomer(removing.id).catch(() => false);
+                    setRemoveBusy(false);
+                    if (!ok) return setRemoveErr(true);
+                    signal("customer_removed");
+                    setRemoving(null);
+                    setOpen(null);
+                    router.refresh();
+                  })()
+                }
+              >
+                {removeBusy ? t.checking : t.customerRemoveYes}
+              </SheetGo>
+              {removeErr && <p className="mt-2 text-[0.8125rem] font-semibold text-coral">{t.errNetwork}</p>}
+            </>
+          }
+        />
       )}
       {hand && <HandOver who={hand} busy={busy} failed={handErr} onClose={() => (setHand(null), setHandErr(false))} onGive={async (all) => {
         const list = giveable(hand);

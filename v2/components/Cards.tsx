@@ -11,7 +11,8 @@ import { MyCode } from "@/components/MyCode";
 import { ShopMark } from "@/components/ShopMark";
 import { Mark } from "@/components/Tracker";
 import { Icon3D, Screen } from "@/components/ui";
-import { fill, giftsSaid, t } from "@/lib/t";
+import { daysN, fill, giftsSaid, t } from "@/lib/t";
+import { resetLately, resetSoon, resetWhen } from "@/lib/reset";
 import { nextTampon } from "@/lib/when";
 import type { CardView } from "@/lib/types";
 
@@ -190,6 +191,9 @@ function says(c: CardView, now: number | null): string {
   if (c.ready) return (c.waiting_n ?? 1) > 1 ? fill(t.readyMany, { n: c.waiting_n ?? 2 }) : t.ready;
   if ((c.orders_n ?? 0) > 0) return t.storeOrderWaits;
   if (c.shop.store) return `${c.stamps} ${t.storeBalance}`;
+  // the card's clock: taken back to zero lately, or its last days running out — said before the rest
+  if (now && c.shop.reset_days && resetLately(c, now)) return fill(t.resetWas, { days: daysN(c.shop.reset_days) });
+  if (now && resetSoon(c, now)) return fill(t.resetCardShort, { when: resetWhen(c.reset_due!, now) });
   const gap = c.shop.gap ?? 0;
   if (now && gap > 0 && c.last_at) {
     const next = new Date(c.last_at).getTime() + gap * 60_000;

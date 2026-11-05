@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
-import { Check, Gift, QrCode, ScanLine } from "lucide-react";
+import { Check, Gift, Hourglass, QrCode, ScanLine } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
 import { CardWheel, WheelPeek } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
@@ -12,7 +12,8 @@ import { Icon3D, LinkBtn, Screen } from "@/components/ui";
 import { siteOrigin } from "@/lib/origin";
 import { cardsHome, getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
-import { fill, giftsSaid, stampsN, t } from "@/lib/t";
+import { daysN, fill, giftsSaid, stampsN, t } from "@/lib/t";
+import { resetLately, resetRuns, resetWhen } from "@/lib/reset";
 import type { CardStore as Store, CardView } from "@/lib/types";
 
 type Card = CardView & { prizes?: Prize[] | null; history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
@@ -67,6 +68,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
         <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} won={giftsSaid(card.won_list)} />
       </div>
       {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.8125rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
+      {/* the card's clock: how long before it goes back to zero (a bar that empties), or that it just did */}
+      <ResetLine card={card} />
+
 
       {/* the roulette: a popup that opens by itself, and a banner to open it again */}
       {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} turns={card.spins_n ?? 1} />}
@@ -146,5 +150,34 @@ export default async function CardPage({ params, searchParams }: { params: Promi
         )}
       </div>
     </Screen>
+  );
+}
+
+/**
+ * The card's clock, under the card (the founder, 6 Nov 2026: «add a countdown to the customer's card,
+ * so he knows»): how long before it goes back to zero with no tampon, and a bar that empties as the
+ * days pass — coral in its last three. Or, the clock having just taken it back, that it did, and why.
+ * Nothing on a card waiting at the counter (its gift is the news), nor in a shop with no clock.
+ */
+function ResetLine({ card }: { card: CardView }) {
+  // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
+  const now = Date.now();
+  const days = card.shop.reset_days;
+  if (!days || card.ready) return null;
+  const box = "mx-auto mt-2.5 w-full max-w-[min(100%,52dvh)] shrink-0 rounded-[1rem] px-3.5 py-2.5";
+  if (resetLately(card, now)) return <p className={`${box} bg-coral-soft text-center text-[0.8125rem] font-semibold text-coral`}>{fill(t.resetWas, { days: daysN(days) })}</p>;
+  if (!resetRuns(card, now)) return null;
+  const ms = Date.parse(card.reset_due) - now;
+  const left = Math.max(0.04, Math.min(1, ms / (days * 86_400_000)));
+  const soon = ms <= 3 * 86_400_000;
+  return (
+    <div className={`${box} bg-surface shadow-card`}>
+      <p className={`flex items-center justify-center gap-1.5 text-center text-[0.8125rem] font-semibold ${soon ? "text-coral" : "text-body"}`}>
+        <Hourglass className="size-4 shrink-0" strokeWidth={2.4} /> {fill(t.resetCard, { when: resetWhen(card.reset_due, now) })}
+      </p>
+      <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
+        <span className={`block h-full rounded-full ${soon ? "bg-coral" : "bg-brand"}`} style={{ width: `${Math.round(left * 100)}%` }} />
+      </span>
+    </div>
   );
 }

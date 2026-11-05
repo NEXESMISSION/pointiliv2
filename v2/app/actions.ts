@@ -488,6 +488,13 @@ export async function saveCard(_: FormState, fd: FormData): Promise<FormState> {
   // no shop under this account (signed out, or the account changed in another tab): the way in, not the same error nine times
   if (res?.error === "no_shop" || res?.error === "not_signed_in") redirect((await getMe())?.id ? "/shop/setup" : "/shop/new");
   if (!res?.ok) return { error: t.errNetwork };
+  // the card's clock (0: never), beside the card: a form without it (an older page still open) leaves it as it is
+  const resetRaw = str(fd, "reset");
+  if (resetRaw !== "") {
+    const days = Math.round(Number(resetRaw));
+    const clock = await call<{ ok: boolean }>("set_reset_days", { p_days: days >= 3 && days <= 365 ? days : null });
+    if (!clock?.ok) return { error: t.errNetwork };
+  }
   // the wheel, chosen among the gifts (a shop the founder allowed it): what it holds, then on — or off
   const wheel = str(fd, "wheel");
   if (wheel === "1") {

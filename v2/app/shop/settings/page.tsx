@@ -1,7 +1,7 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChartColumn, ChevronLeft, Crown, FileDown, PieChart, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, FileDown, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -87,6 +87,10 @@ export default async function ShopSettings() {
             sub={`${t.setShop} · ${t.kinds[shop.kind] ?? ""}`}
           />
           <Row href={card.href} mark={<Mark icon={card.icon} />} title={card.title} sub={card.sub} />
+          {/* the card's clock: so many days with no tampon and a card starts over — straight to that question */}
+          {!shop.store_on && (
+            <Row href="/shop/card?at=reset" mark={<Mark icon={Hourglass} />} title={t.setReset} sub={shop.reset_days ? fill(t.setResetOn, { days: daysN(shop.reset_days) }) : t.setResetOff} />
+          )}
           {/* the wheel's own page — its prizes, each one's chance, and what fell — for a shop the
               founder allowed it. It had no way in since the wheel moved into the card's question. */}
           {(shop.wheel_allowed || shop.wheel_on) && (
@@ -96,6 +100,7 @@ export default async function ShopSettings() {
         </Group>
         <Group>
           <Row href="/shop/stats" mark={<Mark icon={ChartColumn} />} title={t.statsTitle} sub={t.setStatsSub} />
+          <Row href="/shop/insights" mark={<Mark icon={Repeat} />} title={t.insTitle} sub={t.insLinkSub} />
           {/* a file, not a page: a plain link the phone downloads (app/api/export) */}
           {exportOn === true && (
             <a href="/api/export" download className="press flex items-center gap-3 px-3.5 py-[clamp(0.5rem,1.4dvh,0.8rem)] active:bg-canvas">

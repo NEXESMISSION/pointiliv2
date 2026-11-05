@@ -15,7 +15,7 @@ import { WheelHow } from "@/components/Wheel";
 import { GiftWay, WheelBuild } from "@/components/WheelBuild";
 import { Btn, boxLook } from "@/components/ui";
 import { cardDefaults } from "@/lib/card-defaults";
-import { fill, t } from "@/lib/t";
+import { daysN, fill, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { waitSays } from "@/lib/when";
 import type { FormState } from "@/lib/types";
@@ -25,11 +25,14 @@ const GOALS = [5, 6, 8, 10, 12];
 const WAITS = [60, 1440, 0];
 const COLORS = ["#D7141A", "#FF6B4A", "#B45309", "#12B76A", "#0891B2", "#1D5FA8", "#6C47FF", "#E0457B", "#1F1B2E"];
 const TAP_LABEL = "جرّب: زيد تامبون على الكارط";
-/** the four questions, in the order the wizard asks them later */
+/** the card's clock: no tampon for so many days and it starts over (0: never — the answer until one is chosen) */
+const RESETS = [0, 7, 15, 30];
+/** the five questions, in the order the wizard asks them later */
 const GOAL = 1;
 const GIFT = 2;
 const WAIT = 3;
-const LOOK = 4;
+const RESET = 4;
+const LOOK = 5;
 /** the card's gift while the wheel is on (the card holds a turn, not a gift of its own) */
 const SPIN_GIFT = "الروليت";
 /**
@@ -93,13 +96,17 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
   const [gap, setGap] = useState(60);
   const [hours, setHours] = useState("");
   const hoursBad = hours !== "" && !(Number(hours) >= 1 && Number(hours) <= 72);
+  // the card's clock: one of the four, or days typed (3 to 365)
+  const [reset, setReset] = useState(0);
+  const [resetTyped, setResetTyped] = useState("");
+  const resetBad = resetTyped !== "" && !(Number(resetTyped) >= 3 && Number(resetTyped) <= 365);
   const [saveErr, setSaveErr] = useState(false);
   const [tap, setTap] = useState<{ goal: number; n: number } | null>(null);
   // «حلّ الكارط» tapped: the card shines while it is saved, then «الكارط تحلّت»
   const [made, setMade] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const form = useRef<HTMLFormElement>(null);
-  useScreen(step === GOAL ? "first-card" : step === GIFT ? "first-card-gift" : step === WAIT ? "first-card-wait" : "first-card-look");
+  useScreen(step === GOAL ? "first-card" : step === GIFT ? "first-card-gift" : step === WAIT ? "first-card-wait" : step === RESET ? "first-card-reset" : "first-card-look");
   useEffect(() => {
     if (state?.error) signal("form_error", `first-card · ${state.error}`);
   }, [state]);
@@ -163,7 +170,7 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
   const preview = { name: shop.name, kind: shop.kind, logo: logo || null, goal, gift: cardGift, color, stamp_logo: stampLogo && !!logo, wheel: spin };
   /** the two groups of the last question, each named: the head above asks only «اللون واللوغو متاعك» */
   const label = "mb-1.5 mt-[1.6dvh] px-1 text-[0.8125rem] font-semibold text-muted";
-  const canGo = step === GOAL ? !otherBad : step === GIFT ? (spin ? prizes.length >= 2 : gift.trim().length >= 2) : step === WAIT ? !hoursBad : !logoBusy;
+  const canGo = step === GOAL ? !otherBad : step === GIFT ? (spin ? prizes.length >= 2 : gift.trim().length >= 2) : step === WAIT ? !hoursBad : step === RESET ? !resetBad : !logoBusy;
   const last = step === LOOK;
   // the card shines and says it is made while it is saved — and stops at once on any word of trouble
   const making = made && !state?.error && !saveErr && !lost;
@@ -177,7 +184,9 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
         ? { title: t.firstCardGift, sub: spin ? t.wizSpinEx : fill(t.wizGiftEx, { a: ideas[0] ?? "", b: ideas[1] ?? "" }) }
         : step === WAIT
           ? { title: t.firstCardWait, sub: waitSays(gap) }
-          : { title: t.morphLookTitle, sub: t.firstCardLater };
+          : step === RESET
+            ? { title: t.wizResetQ, sub: reset ? fill(t.wizResetEx, { days: daysN(reset) }) : t.wizResetOff }
+            : { title: t.morphLookTitle, sub: t.firstCardLater };
 
   return (
     <form ref={form} action={action} className="safe-t safe-b mx-auto flex h-dvh w-full max-w-md flex-col overflow-x-clip overflow-y-auto px-[clamp(1rem,5vw,1.5rem)] [@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
@@ -340,6 +349,42 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
               <span className={`text-[0.75rem] ${hoursBad ? "font-semibold text-coral" : "text-faint"}`}>{t.wizWaitRange}</span>
             </label>
           </>
+        ) : step === RESET ? (
+          <>
+            {/* the card's clock: no tampon for so many days and it starts over — never, until chosen */}
+            <SlideChoice
+              className="mt-[2dvh]"
+              options={RESETS}
+              value={resetTyped ? null : reset}
+              label={t.wizResetQ}
+              render={(r) => <span className="text-[0.8125rem] leading-tight">{r === 0 ? t.resetNo : daysN(r)}</span>}
+              onPick={(r) => {
+                setReset(r);
+                setResetTyped("");
+              }}
+            />
+            <label className="mt-1.5 flex items-center justify-center gap-2">
+              <span className="text-[0.8125rem] font-semibold text-muted">{t.wizResetOther}</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={3}
+                value={resetTyped}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 3);
+                  setResetTyped(v);
+                  if (Number(v) >= 3 && Number(v) <= 365) setReset(Number(v));
+                  else if (v === "") setReset(0);
+                }}
+                placeholder="10"
+                aria-label={t.wizResetOther}
+                aria-invalid={resetBad}
+                className={numBox(resetBad, !!resetTyped && !resetBad)}
+              />
+              <span className={`text-[0.75rem] ${resetBad ? "font-semibold text-coral" : "text-faint"}`}>{t.wizResetRange}</span>
+            </label>
+          </>
         ) : (
           <>
             {/* the colour: the chosen one ringed and a little bigger, the card fills with it */}
@@ -398,6 +443,7 @@ export function CardFirst({ shop, help, wheel = false }: { shop: Shop; help?: He
       <input type="hidden" name="gift" value={spin ? SPIN_GIFT : gift.trim()} />
       <input type="hidden" name="color" value={color} />
       <input type="hidden" name="gap" value={gap} />
+      <input type="hidden" name="reset" value={reset} />
       {wheel && <input type="hidden" name="wheel" value={spin ? "1" : "0"} />}
       {wheel && spin && <input type="hidden" name="prizes" value={JSON.stringify(prizes)} />}
       <input type="hidden" name="next" value="/shop/start" />

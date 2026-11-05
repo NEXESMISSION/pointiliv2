@@ -305,6 +305,64 @@ export const t = {
   // «تحميل البيانات»: the customers as an Excel file, for a shop the founder allowed it
   setExport: "تحميل البيانات",
   setExportSub: "ليستة الحرفاء متاعك في فيشي Excel",
+  // the card's clock (6 Nov 2026): so many days with no tampon and the card starts over
+  wizResetQ: "الحريف كان غاب، الكارط ترجع للصفر؟",
+  wizResetOff: "لا: التامبونات يقعدو ديما في الكارط متاعو.",
+  wizResetEx: "كان ما خذاش تامبون {days}، الكارط ترجع للصفر. الكادوات اللي ربحهم يقعدولو.",
+  resetNo: "لا",
+  wizResetOther: "ولا اكتب الأيام",
+  wizResetRange: "من 3 لـ 365",
+  resetToday: "اليوم",
+  resetTomorrow: "غدوة",
+  resetIn: "بعد {days}",
+  resetCard: "الكارط ترجع للصفر {when} كان ما خذيتش تامبون",
+  resetCardShort: "ترجع للصفر {when}",
+  resetWas: "الكارط رجعت للصفر: غبت أكثر من {days}",
+  resetOwner: "الكارط متاعو ترجع للصفر {when} كان ما جاش",
+  resetOwnerWas: "الكارط متاعو رجعت للصفر: غاب أكثر من {days}",
+  setReset: "الكارط ترجع للصفر",
+  setResetOn: "كان الحريف غاب {days}",
+  setResetOff: "لا: التامبونات يقعدو ديما",
+  resetTipTitle: "الكارط ترجع للصفر كان الحريف غاب",
+  resetTipBody: "حدّد عدد الأيام: كان الحريف ما خذاش تامبون في الوقت هذا، الكارط ترجع للصفر. يشوف العدّاد في الكارط متاعو، ويرجعلك أسرع.",
+  resetTipGo: "نحدّدها توّا",
+  resetTipLater: "من بعد",
+  // the owner takes a customer off the list
+  customerRemove: "نحّي الحريف",
+  customerRemoveAsk: "تنحّي {name} من الحرفاء متاعك؟",
+  customerRemoveBody: "الكارط متاعو هنا، وكل التامبونات والكادوات اللي عليها، يتنحّاو نهائيًا. الحساب متاعو يقعد، وكان يسكاني مرّة أخرى يبدا كارط جديدة.",
+  customerRemoveYes: "إيه، نحّيه",
+  customerRemoveNo: "لا، خلّيه",
+  // the owner's insights: who comes back, who stopped
+  insTitle: "شكون رجع؟",
+  insSub: "الحرفاء اللي رجعولك، اللي بعدو، وقدّاش يطوّلو",
+  insRate: "من الحرفاء رجعولك",
+  insRateSub: "{a} من {b} جاو أكثر من مرّة",
+  insGap: "يرجعلك الحريف كل",
+  insBack: "زيارة رجعت بفضل الكارط",
+  insActive: "نشطين توّا",
+  insEarly: "رجعو في أوّل شهر",
+  insWhere: "وين وصلو الحرفاء",
+  insSegActive: "نشطين",
+  insSegCooling: "يبعدو",
+  insSegLost: "ضاعو",
+  insSegActiveHint: "جاو في آخر {days}",
+  insSegCoolingHint: "ما جاوش من {a} لـ {b} يوم",
+  insSegLostHint: "ما جاوش من أكثر من {days}",
+  insCooling: "يبعدو: كلمة منك ترجّعهم",
+  insCoolingRow: "ما جاش من {days}",
+  insChampions: "أوفى الحرفاء",
+  insWhen: "وقتاش يجيوك",
+  insBestDay: "أكثر نهار",
+  insBestHour: "أكثر وقت",
+  insNear: "{n} قراب من الكادو: تامبون ولا زوز",
+  insNew: "{n} جدد في آخر 30 يوم",
+  insNewUp: "+{pct}% على الشهر اللي قبلو",
+  insNewDown: "{pct}% على الشهر اللي قبلو",
+  insResetting: "{n} ترجع للصفر في 3 أيام الجايين",
+  insEmpty: "مازال بكري. الأرقام هذي تبان كي يبداو الحرفاء يرجعولك.",
+  insLinkSub: "اللي رجعو، اللي بعدو، وقدّاش يطوّلو",
+  insWeekdays: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
   setPaid: "خالص حتى {date}",
   setTrial: "التجربة · مازال {n}",
   // the home: today's tampons, one line
@@ -1458,6 +1516,7 @@ export function counted(n: number, one: string, two: string, few: string, many: 
 export const daysN = (n: number) => counted(n, "نهار واحد", "يومين", "أيّام", "يوم");
 export const stampsN = (n: number) => counted(n, "تامبون واحد", "زوز تامبونات", "تامبونات", "تامبون");
 export const customersN = (n: number) => counted(n, "حريف واحد", "زوز حرفاء", "حرفاء", "حريف");
+export const visitsN = (n: number) => counted(n, "زيارة وحدة", "زوز زيارات", "زيارات", "زيارة");
 /** The same gift, written twice: «قهوة بلاش» = «  قهوة  بلاش » (as the database's same_gift sees it). */
 const squash = (x: string | null | undefined) => (x ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 export const sameGift = (a: string | null | undefined, b: string | null | undefined) => squash(a) === squash(b);

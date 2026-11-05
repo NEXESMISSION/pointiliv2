@@ -14,7 +14,7 @@ import { CardConfirm, type CardImpact } from "@/components/CardConfirm";
 import { Btn, boxLook } from "@/components/ui";
 import { WheelHow, type Prize } from "@/components/Wheel";
 import { GiftWay, WheelBuild } from "@/components/WheelBuild";
-import { fill, sameGift, t } from "@/lib/t";
+import { daysN, fill, sameGift, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { waitSays } from "@/lib/when";
 import type { FormState } from "@/lib/types";
@@ -23,12 +23,15 @@ const GOALS = [5, 6, 8, 10, 12];
 const TAP_LABEL = "جرّب: زيد تامبون على الكارط";
 /** the wait between two tampons, in minutes: an hour, once a day (the next day in Tunis), none — or hours typed */
 const WAITS = [60, 1440, 0];
-/** the steps: the four questions, then the card as it will be */
+/** the card's clock: no tampon for so many days and it starts over (0: never) */
+const RESETS = [0, 7, 15, 30];
+/** the steps: the five questions, then the card as it will be */
 const GOAL = 1;
 const GIFT = 2;
 const WAIT = 3;
-const COLOR = 4;
-const READY = 5;
+const RESET = 4;
+const COLOR = 5;
+const READY = 6;
 const COLORS = ["#D7141A", "#FF6B4A", "#B45309", "#12B76A", "#0891B2", "#1D5FA8", "#6C47FF", "#E0457B", "#1F1B2E"];
 /**
  * The card above the question: its height follows its width (a dot per
@@ -43,7 +46,7 @@ const SHRINK = "mx-auto w-full max-w-[min(100%,max(19rem,calc(2.5*(85.5dvh_-_31r
 /** the card's gift while the wheel is on (a card made on the wheel, with no gift of its own) */
 const SPIN_GIFT = "الروليت";
 
-type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; stamp_gap?: number };
+type Shop = { id: string; name: string; kind: string; goal: number | null; gift: string | null; color: string; logo?: string | null; stamp_logo?: boolean; stamp_gap?: number; reset_days?: number | null };
 
 /**
  * The card, one question at a time. A new owner first gets a hello — «توّا
@@ -65,11 +68,12 @@ type Shop = { id: string; name: string; kind: string; goal: number | null; gift:
  * a gift chosen again turns the wheel off. The card keeps its own gift under
  * the wheel, for the day it is turned off.
  */
-export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: Shop; next: string; editing: boolean; help?: HelpSettings; wheel?: { on: boolean; prizes: Prize[] } | null }) {
+export function CardWizard({ shop, next, editing, help, wheel = null, at }: { shop: Shop; next: string; editing: boolean; help?: HelpSettings; wheel?: { on: boolean; prizes: Prize[] } | null; at?: "reset" }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveCard, null);
   const router = useRouter();
   const ideas = t.ideas[shop.kind] ?? t.ideas.other!;
-  const [step, setStep] = useState(GOAL);
+  // `at`: opened on one question (the home's note on the card's clock), the rest as they are
+  const [step, setStep] = useState(at === "reset" ? RESET : GOAL);
   const [back, setBack] = useState(false);
   const [goal, setGoal] = useState(shop.goal ?? 8);
   const [tap, setTap] = useState<{ goal: number; n: number } | null>(null);
@@ -95,10 +99,14 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
   const [gap, setGap] = useState(shop.stamp_gap ?? 60);
   const [hours, setHours] = useState(() => (shop.stamp_gap && !WAITS.includes(shop.stamp_gap) ? String(Math.round(shop.stamp_gap / 60)) : ""));
   const hoursBad = hours !== "" && !(Number(hours) >= 1 && Number(hours) <= 72);
+  // the card's clock: one of the four, or days typed (3 to 365) — as the shop has it now
+  const [reset, setReset] = useState(shop.reset_days ?? 0);
+  const [resetTyped, setResetTyped] = useState(() => (shop.reset_days && !RESETS.includes(shop.reset_days) ? String(shop.reset_days) : ""));
+  const resetBad = resetTyped !== "" && !(Number(resetTyped) >= 3 && Number(resetTyped) <= 365);
   // the sheet before saving: a first card, how it works; a change, the one question (when there is one)
   const [confirm, setConfirm] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const anyChange = goal !== shop.goal || gift.trim() !== (shop.gift ?? "").trim() || gap !== (shop.stamp_gap ?? 60) || color !== (shop.color || "").toUpperCase();
+  const anyChange = goal !== shop.goal || gift.trim() !== (shop.gift ?? "").trim() || gap !== (shop.stamp_gap ?? 60) || reset !== (shop.reset_days ?? 0) || color !== (shop.color || "").toUpperCase();
   // the rule itself changed (how many tampons, which gift): the only change a customer's card can feel
   // (the wheel turned on or off is not one of them: the turns follow the switch, as on /shop/wheel)
   const ruleChanged = editing && (goal !== shop.goal || !sameGift(cardGift, shop.gift));
@@ -122,7 +130,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
   // a save whose answer never came back, and the card is still the old one
   const [lost, setLost] = useState(false);
 
-  useScreen(`${editing ? "edit-" : ""}${["", "goal", "gift", "wait", "color", "ready"][step] ?? "ready"}`);
+  useScreen(`${editing ? "edit-" : ""}${["", "goal", "gift", "wait", "reset", "color", "ready"][step] ?? "ready"}`);
   useEffect(() => {
     if (state?.error) signal("form_error", `card · ${state.error}`);
   }, [state]);
@@ -200,7 +208,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
   // the preview's tampons: a step's own number, or the ones tapped onto it for this goal
   const onCard = tap && tap.goal === goal ? tap.n : step === READY ? 1 : Math.max(1, Math.round(goal * 0.6));
 
-  const question = step === GOAL ? t.wizGoalQ : step === GIFT ? t.wizGiftQ : step === WAIT ? t.wizWaitQ : step === COLOR ? t.wizColorQ : editing ? t.wizReview : t.wizReady;
+  const question = step === GOAL ? t.wizGoalQ : step === GIFT ? t.wizGiftQ : step === WAIT ? t.wizWaitQ : step === RESET ? t.wizResetQ : step === COLOR ? t.wizColorQ : editing ? t.wizReview : t.wizReady;
   const example =
     step === GOAL
       ? t.wizGoalEx
@@ -210,12 +218,16 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
           : fill(t.wizGiftEx, { a: ideas[0] ?? "", b: ideas[1] ?? "" })
         : step === WAIT
           ? waitSays(gap)
+          : step === RESET
+            ? reset
+              ? fill(t.wizResetEx, { days: daysN(reset) })
+              : t.wizResetOff
           : step === COLOR
             ? t.wizColorEx
             : editing
               ? null
               : t.wizReadyBody;
-  const canGo = step === GOAL ? !otherBad : step === GIFT ? (spin ? prizes.length >= 2 : gift.trim().length >= 2) : step === WAIT ? !hoursBad : true;
+  const canGo = step === GOAL ? !otherBad : step === GIFT ? (spin ? prizes.length >= 2 : gift.trim().length >= 2) : step === WAIT ? !hoursBad : step === RESET ? !resetBad : true;
 
   return (
     <form ref={formRef} action={action} className="safe-t safe-b relative mx-auto flex min-h-dvh max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
@@ -236,7 +248,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
         )}
         {step < READY ? (
           <span className="flex items-center gap-2" aria-label={fill(t.wizStep, { n: step })}>
-            {[GOAL, GIFT, WAIT, COLOR].map((n) => (
+            {[GOAL, GIFT, WAIT, RESET, COLOR].map((n) => (
               <span key={n} className={`h-2 rounded-full transition-all duration-300 ${n === step ? "w-6 bg-brand" : n < step ? "w-2 bg-brand/50" : "w-2 bg-line"}`} />
             ))}
           </span>
@@ -430,7 +442,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
                 onKeyDown={(e) => {
                   if (e.key !== "Enter") return;
                   e.preventDefault();
-                  if (!hoursBad) go(COLOR);
+                  if (!hoursBad) go(RESET);
                 }}
                 placeholder="3"
                 aria-label={t.wizWaitOther}
@@ -438,6 +450,54 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
                 className={`num h-11 w-[4.75rem] text-center text-[16px] font-bold outline-none placeholder:font-normal placeholder:text-faint ${boxLook} ${hoursBad ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-coral)]" : hours ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]" : "focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]"}`}
               />
               <span className={`text-[0.8125rem] ${hoursBad ? "font-semibold text-coral" : "text-faint"}`}>{t.wizWaitRange}</span>
+            </label>
+          </>
+        )}
+
+        {step === RESET && (
+          <>
+            {/* the card's clock: no tampon for so many days and it starts over — or never */}
+            <div className="mt-[2.4dvh] grid grid-cols-4 gap-2">
+              {RESETS.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => {
+                    setReset(r);
+                    setResetTyped("");
+                  }}
+                  aria-pressed={reset === r && !resetTyped}
+                  className={`press min-h-[3.6rem] rounded-[1.125rem] px-1 py-2 text-[0.9375rem] font-bold leading-tight ${reset === r && !resetTyped ? "bg-brand text-white shadow-[0_10px_22px_-10px_rgb(108_71_255/0.8)]" : "bg-surface text-ink shadow-card"}`}
+                >
+                  {r === 0 ? t.resetNo : daysN(r)}
+                </button>
+              ))}
+            </div>
+            <label className="mt-[1.6dvh] flex items-center justify-center gap-2.5">
+              <span className="text-[0.9375rem] font-semibold text-muted">{t.wizResetOther}</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={3}
+                value={resetTyped}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 3);
+                  setResetTyped(v);
+                  if (Number(v) >= 3 && Number(v) <= 365) setReset(Number(v));
+                  else if (v === "") setReset(shop.reset_days && RESETS.includes(shop.reset_days) ? shop.reset_days : 0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  if (!resetBad) go(COLOR);
+                }}
+                placeholder="10"
+                aria-label={t.wizResetOther}
+                aria-invalid={resetBad}
+                className={`num h-11 w-[4.75rem] text-center text-[16px] font-bold outline-none placeholder:font-normal placeholder:text-faint ${boxLook} ${resetBad ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-coral)]" : resetTyped ? "shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]" : "focus:shadow-[var(--shadow-card),inset_0_0_0_2px_var(--color-brand)]"}`}
+              />
+              <span className={`text-[0.8125rem] ${resetBad ? "font-semibold text-coral" : "text-faint"}`}>{t.wizResetRange}</span>
             </label>
           </>
         )}
@@ -528,6 +588,7 @@ export function CardWizard({ shop, next, editing, help, wheel = null }: { shop: 
       {wheel && spin && <input type="hidden" name="prizes" value={JSON.stringify(prizes)} />}
       <input type="hidden" name="color" value={color} />
       <input type="hidden" name="gap" value={gap} />
+      <input type="hidden" name="reset" value={reset} />
       <input type="hidden" name="next" value={next} />
       {confirm && !lost && step === READY && <CardConfirm editing={editing} after={{ goal, gift: spin ? SPIN_GIFT : gift, gap }} impact={editing ? impact : null} pending={pending} onBack={() => setConfirm(false)} />}
       {how && <WheelHow goal={goal} prizes={prizes.map((name) => ({ name, chance: 0 }))} onClose={() => setHow(false)} />}
