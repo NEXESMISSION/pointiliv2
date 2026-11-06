@@ -1157,9 +1157,15 @@ export const t = {
   installWaiting: "لحظة… قاعد يتحضّر",
   installReady: "جاهز! انقر باش تحطّو",
   installNoneTitle: "التثبيت مازال ما تحضّرش",
-  installNoneBody: "عاود بعد شوية، ولا من قائمة المتصفّح (فوق على اليمين) اختار",
+  installNoneBody: "ولا من قائمة المتصفّح (فوق على اليمين) اختار",
   installNoneWord: "«Installer l’application»",
-  // …and Pointili already on this phone (the browser opened as the app before, or the account did on this phone)
+  // the browser never offered: the Android app itself (public/pointili.apk), and what Android asks on the way
+  installApkTitle: "حمّل Pointili كأبليكاسيون",
+  installApkBody: "المتصفّح هذا ما عرضش التثبيت. التطبيق ينزل مباشرة في تليفونك:",
+  installApkGo: "حمّل التطبيق",
+  installApkAfter: "بعد التحميل افتحو، وكان سألك اختار",
+  installApkWord: "«Autoriser» → «Installer»",
+  // …and Pointili already on this phone (this very browser opened as the installed app before)
   installHereTitle: "Pointili راهو في تليفونك ✓",
   installHereBody: "حلّو من الأيقونة متاعو في الشاشة، ولا لوّج عليه في قائمة الأبليكاسيونات.",
   installHereGone: "كان فسختو: من قائمة المتصفّح (فوق على اليمين) اختار",

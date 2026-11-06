@@ -148,12 +148,17 @@ try {
   await open(page, "/shop");
   await icon.click();
   await page.waitForTimeout(15800);
-  const note = page.getByText("التثبيت مازال ما تحضّرش");
-  check("Chrome never offers: a short note on its own menu, never the guide", (await note.isVisible()) && (await counts(page)).guide === 0);
+  const note = page.getByText("حمّل Pointili كأبليكاسيون");
+  check("Chrome never offers: the Android app offered instead, never the guide", (await note.isVisible()) && (await counts(page)).guide === 0);
+  const apk = page.getByRole("link", { name: /حمّل التطبيق/ });
+  check("…its button is the app itself, a download", (await apk.getAttribute("href")) === "/pointili.apk" && (await apk.getAttribute("download")) === "Pointili.apk");
+  const got = await page.request.get(`${BASE}/pointili.apk`);
+  const body = await got.body();
+  check("…and the site hands over a real Android app (a zip with its manifest)", got.ok() && body.length > 100_000 && body.subarray(0, 2).toString() === "PK" && body.includes(Buffer.from("AndroidManifest.xml")), { status: got.status(), bytes: body.length });
   await shot(page, "3-home-none");
-  await note.click();
+  await page.getByRole("button", { name: "فهمت" }).click();
   await page.waitForTimeout(300);
-  check("…a tap puts the note away", (await note.count()) === 0);
+  check("…«×» puts the note away", (await note.count()) === 0);
 
   console.log("\n«المحل», its line");
   await open(page, "/shop/settings");
@@ -186,6 +191,13 @@ try {
   await shot(home.page, "4-home-installed");
   await open(home.page, "/shop/settings");
   check("«المحل» has no install line", (await home.page.getByRole("button", { name: /حطّ Pointili في تليفونك/ }).count()) === 0);
+
+  console.log("\nThe Android app: its short address and its link to the site");
+  const al = await page.request.get(`${BASE}/.well-known/assetlinks.json`);
+  const alj = al.ok() ? await al.json() : null;
+  check("assetlinks.json names the app and its key, so it opens full screen", alj?.[0]?.target?.package_name === "online.pointili.app" && /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(alj?.[0]?.target?.sha256_cert_fingerprints?.[0] ?? ""), alj);
+  const short = await page.request.get(`${BASE}/android`, { maxRedirects: 0 });
+  check("/android leads to the app", [307, 308].includes(short.status()) && (short.headers().location ?? "").endsWith("/pointili.apk"), short.status());
 
   console.log("\nAlready on the phone, and Chrome cannot tell (Brave, another browser, an old install)");
   const HERE = "Pointili راهو في تليفونك ✓";

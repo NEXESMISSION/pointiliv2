@@ -19,8 +19,22 @@ const nextConfig: NextConfig = {
     // the database and the page stays on «لحظة…». The real site never had it.
     reactDebugChannel: false,
   },
+  // the Android app's short address, easy to type or say on the phone: the app itself (public/pointili.apk)
+  async redirects() {
+    return [{ source: "/android", destination: "/pointili.apk", permanent: false }];
+  },
   async headers() {
     return [
+      // the Android app (android/: the site as an app, signed by Pointili): an Android download with its
+      // name, always asked again — a new version keeps the same address
+      {
+        source: "/pointili.apk",
+        headers: [
+          { key: "Content-Type", value: "application/vnd.android.package-archive" },
+          { key: "Content-Disposition", value: 'attachment; filename="Pointili.apk"' },
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
       // the clips (public/clips): named with their version, so a phone keeps them a year
       { source: "/clips/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       // the 3D icons, the front door's pictures, the news' pictures, the mark and the app's icons: a month in the

@@ -50,6 +50,6 @@ export const config = {
   // Vercel, so only pages, server actions and the API routes that act for a person pass. (/api/code stays:
   // a counter open for hours keeps its session alive through it.)
   matcher: [
-    "/((?!_next/static|_next/image|api/counter|api/beacon|api/here|3d/|tn/|heat/|news/|clips/|pwa/|sw\\.js|.*\\.(?:png|jpe?g|webp|gif|avif|svg|ico|webmanifest|mp4|webm|txt|xml)$).*)",
+    "/((?!_next/static|_next/image|api/counter|api/beacon|api/here|3d/|tn/|heat/|news/|clips/|pwa/|\\.well-known/|sw\\.js|.*\\.(?:png|jpe?g|webp|gif|avif|svg|ico|webmanifest|mp4|webm|txt|xml|apk)$).*)",
   ],
 };

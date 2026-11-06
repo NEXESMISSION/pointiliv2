@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.pointili.app",
+      "sha256_cert_fingerprints": ["42:82:73:CD:F2:C2:28:86:BF:90:19:8E:4B:57:37:A2:EE:33:18:4F:29:AB:CE:1B:5A:23:F3:18:94:48:6F:EF"]
+    }
+  }
+]

@@ -236,7 +236,8 @@ function showNote(kind: "none" | "already") {
   already = kind === "already";
   notify();
   window.clearTimeout(noteTimer);
-  noteTimer = window.setTimeout(dismissInstallNote, kind === "already" ? 14000 : 9000);
+  // the note with the app's download stays until it is used or put away a while: it has a button now
+  noteTimer = window.setTimeout(dismissInstallNote, kind === "already" ? 14000 : 30000);
 }
 
 /** This browser's visitor id, as the traffic keeps it (lib/track: pt_v); none yet: null. */
