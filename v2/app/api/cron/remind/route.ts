@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
   // daily job that already runs, so the clock costs no call of its own. A failure is said, never fatal.
   const swept = await service().rpc("reset_sweep");
   if (swept.error) console.error("[reset_sweep]", swept.error.message);
-  // a safeguard for the customers: a card going back to zero within a day and a half is said on their
-  // phone first (once for each stretch: reset_warnings writes it down as it reads it)
+  // a safeguard for the customers: a card going back to zero within two days (the day before: a card goes
+  // back at the end of its day) is said on their phone first (once for each stretch: reset_warnings writes it down)
   const warn = await service().rpc("reset_warnings");
   if (warn.error) console.error("[reset_warnings]", warn.error.message);
   let warned = 0;

@@ -295,21 +295,25 @@ alter table public.cards add column if not exists clock_from timestamptz;
 -- its customer told the day before (a push, from the daily job): once for each stretch of the clock
 alter table public.cards add column if not exists reset_warned_at timestamptz;
 
--- the moment a card goes back to zero: null when it never will (no clock on the shop, nothing on the card)
+-- the moment a card goes back to zero: null when it never will (no clock on the shop, nothing on the card).
+-- The end of that day in Tunis, never the hour the clock happened to start (8 Nov 2026): «غدوة» on the
+-- customer's phone means the whole of tomorrow, not a midnight surprise.
 create or replace function public.reset_due(p_last timestamptz, p_stamps int, p_days int, p_since timestamptz) returns timestamptz
-language sql immutable set search_path = '' as $$
+language sql stable set search_path = '' as $$
   select case when p_days is not null and p_stamps > 0 and p_last is not null
-              then greatest(p_last, coalesce(p_since, p_last)) + make_interval(days => p_days) end
+              then (date_trunc('day', (greatest(p_last, coalesce(p_since, p_last)) + make_interval(days => p_days)) at time zone 'Africa/Tunis')
+                    + interval '1 day' - interval '1 second') at time zone 'Africa/Tunis' end
 $$;
 
 -- The clock as it runs today for a shop — its days, or null when it stands still: no clock set; the
 -- founder's switch off for every shop (settings.clock_on: off until the founder turns it on); the
 -- owner's pause; or a shop that cannot give a tampon (stopped by the founder, or past its subscription —
--- a customer never loses a card while the shop could not have stamped it).
+-- a customer never loses a card while the shop could not have stamped it). Never on a store: its card is
+-- money spent there, not a card on its way (8 Nov 2026).
 create or replace function public.shop_clock(s public.shops) returns int
 language plpgsql stable security definer set search_path = '' as $$
 begin
-  if s.reset_days is null or s.reset_paused_at is not null or s.paused then return null; end if;
+  if s.reset_days is null or s.reset_paused_at is not null or s.paused or s.store_on then return null; end if;
   if coalesce((select value from public.settings where key = 'clock_on'), '') <> '1' then return null; end if;
   if public.shut(s) then return null; end if;
   return s.reset_days;
@@ -322,6 +326,23 @@ language plpgsql stable security definer set search_path = '' as $$
 begin
   return public.reset_due(c.last_at, c.stamps, public.shop_clock(s), greatest(s.reset_since, c.clock_from));
 end $$;
+
+-- A shop that could not stamp (stopped by the founder, past its trial or subscription, a store) and can
+-- again: its clock starts again from that day for everyone, as after the owner's pause — the days it stood
+-- still are never held against a customer (8 Nov 2026: without it, a shop renewing ten days late saw every
+-- quiet card go back to zero at once, unwarned).
+create or replace function public.shops_clock_restart() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  -- a shop with no clock (every shop until its owner sets one): nothing to look at, nothing else touched
+  if new.reset_days is null then return new; end if;
+  if (old.paused or old.store_on or public.shut(old)) and not (new.paused or new.store_on or public.shut(new)) then
+    new.reset_since := now();
+  end if;
+  return new;
+end $$;
+drop trigger if exists shops_clock_restart on public.shops;
+create trigger shops_clock_restart before update on public.shops for each row execute function public.shops_clock_restart();
 
 create table if not exists public.codes (
   id          uuid primary key default gen_random_uuid(),
@@ -694,6 +715,9 @@ language sql stable security definer set search_path = '' as $$
     'id', c.id, 'stamps', case when r.due <= now() then 0 else c.stamps end, 'gifts', c.gifts, 'last_at', c.last_at,
     -- the card's clock: when it goes back to zero (null: never), and when it last did
     'reset_due', r.due, 'reset_at', c.reset_at,
+    -- what the clock took and the owner can still give back (restore_reset): past the clock and not yet
+    -- swept, or taken within 14 days — said at the counter, beside the card (8 Nov 2026)
+    'reset_lost', case when r.due <= now() then c.stamps when c.reset_from > 0 and c.reset_at > now() - interval '14 days' then c.reset_from end,
     'ready', w.waiting, 'waiting', w.waiting,
     -- how many gifts wait on it (full cards not yet taken)
     'waiting_n', (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null),
@@ -1040,7 +1064,9 @@ begin
                                         'gifts', c.gifts, 'last_at', c.last_at,
                                         'reset_due', public.card_due(c, s),
                                         -- what the clock took from this card lately: the owner may give it back (restore_reset)
-                                        'restorable', case when c.reset_from > 0 and c.reset_at > now() - interval '14 days' then c.reset_from end,
+                                        -- — past its clock and not yet swept counts too (the sweep is once a day)
+                                        'restorable', case when public.card_due(c, s) <= now() then c.stamps
+                                                           when c.reset_from > 0 and c.reset_at > now() - interval '14 days' then c.reset_from end,
                                         -- what this customer took last (a shop that says what it sells)
                                         'last_item', (select i.name from public.moments m join public.items i on i.id = m.item_id
                                                       where m.card_id = c.id and m.kind = 'stamp' order by m.created_at desc limit 1),
@@ -1078,11 +1104,14 @@ end $$;
 -- a shop past its trial, its year not turned on: no code at the counter, no
 -- tampon by the customer's code, until the founder turns the year on. The
 -- founder's own shop and the test accounts never stop.
--- when the trial's clock started: the opening, or (trial_first) the first customer's tampon — not yet: now
+-- when the trial's clock started: the opening, or (trial_first) the first customer's tampon — not yet: now.
+-- trial_from holds it once a customer who had stamps there is removed (remove_customer, 8 Nov 2026): a
+-- removed card takes its history with it, and the trial must not start again later with it.
+alter table public.shops add column if not exists trial_from timestamptz;
 create or replace function public.trial_start(s public.shops) returns timestamptz
 language sql stable security definer set search_path = '' as $$
   select case when not s.trial_first then s.created_at
-    else coalesce((select min(m.created_at) from public.moments m join public.cards c on c.id = m.card_id
+    else coalesce(s.trial_from, (select min(m.created_at) from public.moments m join public.cards c on c.id = m.card_id
                    where m.shop_id = s.id and m.kind = 'stamp' and c.user_id <> s.owner_id), now()) end
 $$;
 
@@ -1351,8 +1380,10 @@ begin
   if m.wheel and m.spun_at is null then return public.err('spin_first'); end if;
   perform 1 from public.cards where id = m.card_id for update;
   update public.moments set given_at = now() where id = m.id;
-  -- a voucher took its stamps when it was written; a gift from before takes them now
-  update public.cards set stamps = case when m.banked then stamps else greatest(stamps - coalesce(goal, s.goal), 0) end, gifts = gifts + 1
+  -- a voucher took its stamps when it was written; a gift from before takes them now. A customer who came
+  -- for the gift came: the card's clock starts again from today (8 Nov 2026)
+  update public.cards set stamps = case when m.banked then stamps else greatest(stamps - coalesce(goal, s.goal), 0) end, gifts = gifts + 1,
+    clock_from = now()
   where id = m.card_id returning * into c;
   -- the last gift taken: the card follows the shop's card of today (the stamps left over carry on to it)
   if not public.waits(c.id) then
@@ -4403,7 +4434,10 @@ begin
   if s.id is null then return public.err('no_shop'); end if;
   if p_days is not null and (p_days < 7 or p_days > 365) then return public.err('bad_days'); end if;
   if p_days is distinct from s.reset_days then
-    update public.shops set reset_days = p_days, reset_since = case when p_days is null then null else now() end where id = s.id;
+    -- the clock taken off takes its pause with it: set again later, it runs as the card's question says
+    update public.shops set reset_days = p_days, reset_since = case when p_days is null then null else now() end,
+      reset_paused_at = case when p_days is null then null else reset_paused_at end
+    where id = s.id;
   end if;
   return jsonb_build_object('ok', true, 'days', p_days);
 end $$;
@@ -4434,6 +4468,9 @@ declare s public.shops%rowtype; v_id uuid; v_n int := 0;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
+  -- a card past its clock but not yet swept (the sweep is once a day): written as taken first, then given back
+  update public.cards c set reset_from = c.stamps, stamps = 0, reset_at = now()
+  where c.shop_id = s.id and (p_card is null or c.id = p_card) and c.stamps > 0 and public.card_due(c, s) <= now();
   for v_id in
     update public.cards set stamps = stamps + reset_from, reset_from = null, reset_at = null, clock_from = now()
     where shop_id = s.id and reset_from > 0 and reset_at > now() - interval '14 days' and (p_card is null or id = p_card)
@@ -4456,8 +4493,12 @@ begin
   return jsonb_build_object('ok', true, 'days', s.reset_days, 'paused', s.reset_paused_at is not null,
     'running', public.shop_clock(s) is not null,
     'soon', (select count(*) from public.cards c where c.shop_id = s.id and public.card_due(c, s) > now() and public.card_due(c, s) <= now() + interval '3 days'),
-    'taken', (select count(*) from public.cards c where c.shop_id = s.id and c.reset_from > 0 and c.reset_at > now() - interval '14 days'),
-    'taken_stamps', (select coalesce(sum(c.reset_from), 0) from public.cards c where c.shop_id = s.id and c.reset_from > 0 and c.reset_at > now() - interval '14 days'));
+    -- taken: within 14 days, or past the clock and not yet swept (restore_reset gives both back)
+    'taken', (select count(*) from public.cards c where c.shop_id = s.id
+               and ((c.reset_from > 0 and c.reset_at > now() - interval '14 days') or (c.stamps > 0 and public.card_due(c, s) <= now()))),
+    'taken_stamps', (select coalesce(sum(case when c.stamps > 0 and public.card_due(c, s) <= now() then c.stamps else c.reset_from end), 0)
+                     from public.cards c where c.shop_id = s.id
+                       and ((c.reset_from > 0 and c.reset_at > now() - interval '14 days') or (c.stamps > 0 and public.card_due(c, s) <= now()))));
 end $$;
 
 -- The customers to tell before their card goes back to zero (the daily job sends a push): a card whose
@@ -4472,7 +4513,8 @@ begin
     from public.cards c join public.shops s on s.id = c.shop_id
     where s.reset_days is not null and c.stamps > 0
       and (c.reset_warned_at is null or c.reset_warned_at < greatest(c.last_at, s.reset_since, c.clock_from))
-      and public.card_due(c, s) > now() and public.card_due(c, s) <= now() + interval '36 hours'),
+      -- two days ahead: the morning job reaches the day before (a card goes back at the end of its day)
+      and public.card_due(c, s) > now() and public.card_due(c, s) <= now() + interval '48 hours'),
   told as (update public.cards c set reset_warned_at = now() from soon where c.id = soon.id returning c.id)
   select coalesce(jsonb_agg(jsonb_build_object('card', soon.id, 'user_id', soon.user_id, 'shop', soon.shop, 'stamps', soon.stamps, 'at', soon.at)), '[]'::jsonb)
   into v from soon;
@@ -4499,6 +4541,12 @@ declare s public.shops%rowtype; v_n int;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
+  -- the card's history goes with it: a trial counted from the first customer keeps the day it started
+  if s.trial_first and s.trial_from is null and exists (select 1 from public.cards where id = p_card and shop_id = s.id) then
+    update public.shops set trial_from = (select min(m.created_at) from public.moments m join public.cards c on c.id = m.card_id
+                                          where m.shop_id = s.id and m.kind = 'stamp' and c.user_id <> s.owner_id)
+    where id = s.id;
+  end if;
   delete from public.cards where id = p_card and shop_id = s.id;
   get diagnostics v_n = row_count;
   if v_n = 0 then return public.err('not_found'); end if;

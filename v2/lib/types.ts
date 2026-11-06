@@ -16,6 +16,8 @@ export type CardView = {
   reset_due?: string | null;
   /** when the clock last took it back to zero */
   reset_at?: string | null;
+  /** what the clock took and the owner can still give back: past the clock (not yet swept), or taken within 14 days */
+  reset_lost?: number | null;
   /** a wheel shop: the turn waiting to be spun (a gift moment's id) */
   spin?: number | null;
   /** a wheel shop: how many turns («دورات») wait to be spun */

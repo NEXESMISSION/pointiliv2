@@ -4,6 +4,7 @@ import Link from "@/components/Link";
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Smartphone, Undo2, X } from "lucide-react";
 import { customerAt, give as handOver, giveAll, giveStamp, giveStampNew, unstamp, type WaitingGift } from "@/app/actions";
+import { restoreReset } from "@/app/actions-clock";
 import { storeGive } from "@/app/actions-store";
 import { spinAtCounter } from "@/app/actions-wheel";
 import { Wheel, type Prize } from "@/components/Wheel";
@@ -14,7 +15,7 @@ import { Scanner } from "@/components/Scanner";
 import { Confetti } from "@/components/StampLand";
 import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
-import { fill, giftsSaid, t } from "@/lib/t";
+import { fill, giftsSaid, stampsN, t } from "@/lib/t";
 import { nextTampon } from "@/lib/when";
 import type { CardView, DemoShop, Order, Said } from "@/lib/types";
 
@@ -39,6 +40,50 @@ const complete = (d: string, mode?: Mode) =>
 type Mode = "phone" | "code" | "scan";
 /** A customer's own QR (…/u/123456), or the bare 6 digits. */
 export const codeOf = (text: string): string | null => text.match(/\/u\/(\d{6})(?:[/?#]|$)/)?.[1] ?? (/^\s*\d{6}\s*$/.test(text) ? text.trim() : null);
+
+/**
+ * The card's clock took this customer's tampons — past it, or taken with the tampon just given (8 Nov 2026:
+ * the customer says «I had 6!» and the owner saw 0, then 1, with nothing to say why). Said at the counter,
+ * and given back in a tap; then the card as it is now.
+ */
+function ResetRow({ card, done, onBack }: { card: CardView; done: boolean; onBack: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(false);
+  if (done) {
+    return (
+      <p className="mt-2 flex animate-pop items-center justify-center gap-2 rounded-[1.125rem] bg-mint-soft px-4 py-2.5 text-[0.9375rem] font-bold text-mint">
+        <Undo2 className="size-5" /> {t.customerRestored}
+      </p>
+    );
+  }
+  if (!card.reset_lost) return null;
+  return (
+    <div className="mt-2 flex items-center gap-2 rounded-[1.125rem] bg-coral-soft px-3.5 py-2.5 text-start">
+      <span className="min-w-0 flex-1 text-[0.8125rem] font-semibold leading-snug text-coral">{err ? t.errNetwork : t.customerWasReset}</span>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() =>
+          void (async () => {
+            setBusy(true);
+            setErr(false);
+            const res = await restoreReset(card.id).catch(() => ({ ok: false }));
+            if (!res.ok) {
+              setBusy(false);
+              setErr(true);
+              return;
+            }
+            signal("counter_restored");
+            await onBack();
+          })()
+        }
+        className="press flex h-9 shrink-0 items-center gap-1.5 rounded-[0.75rem] bg-surface px-3 text-[0.8125rem] font-bold text-brand shadow-card disabled:opacity-60"
+      >
+        <Undo2 className="size-4" /> {busy ? t.checking : fill(t.customerRestore, { n: stampsN(card.reset_lost) })}
+      </button>
+    </div>
+  );
+}
 
 /** A gift on the customer's card, still waiting (the owner said «موش توّا»): what it is, and the way back to the question. */
 function GiftRow({ w, onOpen }: { w: WaitingGift; onOpen: () => void }) {
@@ -270,6 +315,17 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
     });
   };
 
+  // what the card's clock took, given back at the counter: the card it was given back to (said there), and
+  // the card drawn again as it is now (its tampons back, a gift it completes)
+  const [restored, setRestored] = useState<string | null>(null);
+  const backAgain = async (id: string) => {
+    setRestored(id);
+    const now = await customerAt(digits).catch(() => null);
+    if (!now?.ok || !now.card) return;
+    const card = now.card;
+    setStep((st) => (st.kind === "found" || st.kind === "giving" || st.kind === "done" ? { ...st, card, waiting: now.waiting ?? null } : st));
+  };
+
   // the tampon just given, taken back: a slip of the finger (the wrong customer, twice). Asked once; ten minutes
   const [undo, setUndo] = useState<"no" | "ask" | "busy">("no");
   const [undoSaid, setUndoSaid] = useState<string | null>(null);
@@ -296,6 +352,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
     setSaid([]);
     setUndo("no");
     setUndoSaid(null);
+    setRestored(null);
     setDigits("");
     setStep({ kind: "idle" });
     setRound((r) => r + 1);
@@ -386,6 +443,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             <div className="mt-[2.5dvh] w-full text-start [@media(max-height:600px)]:[zoom:0.8] [@media(min-height:600.02px)_and_(max-height:700px)]:[zoom:0.85]">
               <Pass shop={step.card.shop} stamps={step.card.stamps} waiting={step.card.waiting_n} fresh />
             </div>
+            <ResetRow card={step.card} done={restored === step.card.id} onBack={() => backAgain(step.card.id)} />
             {step.waiting && <GiftRow w={step.waiting} onOpen={() => setPop({ w: step.waiting!, won: false })} />}
             <div className="mt-[3dvh] w-full space-y-2 [@media(max-height:560px)]:mt-[2dvh] [@media(max-height:560px)]:space-y-1">
               <Btn type="button" onClick={again}>
@@ -564,6 +622,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
                       )}
                     </span>
                   </div>
+                  {step.card && <ResetRow card={step.card} done={restored === step.card.id} onBack={() => backAgain(step.card!.id)} />}
                   {/* known by a form: their answers, to check before the tampon */}
                   {said.map((f, i) => (
                     <div key={i} className="mt-2 rounded-[1.125rem] bg-mint-soft px-3.5 py-2.5">

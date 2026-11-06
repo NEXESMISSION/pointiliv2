@@ -132,6 +132,7 @@ try {
   check("…and it is not written down as seen", !((await admin.from("people").select("seen").eq("id", owner.id).single()).data?.seen ?? []).includes("reset_tip"));
   await go(o.page, "/shop/settings");
   check("«المحل» has no clock", !(await text(o.page)).includes("الكارط ترجع للصفر"));
+  await shot(o.page, "0-off-settings");
   await go(o.page, "/shop/clock");
   check("the clock's page leads back to «المحل»", new URL(o.page.url()).pathname === "/shop/settings", o.page.url());
   await go(o.page, "/shop/card?at=reset");
@@ -167,11 +168,19 @@ try {
   await n.page.getByRole("button", { name: "كمّل", exact: true }).click();
   await n.page.waitForTimeout(700);
   await n.page.getByRole("button", { name: "حلّ الكارط" }).click();
-  // the save lands in the database a moment after the tap: looked for there, up to 45 s
+  // the save lands in the database a moment after the tap: looked for there, up to 45 s. A save that failed
+  // says «صار مشكل. عاود جرّب» (this PC opens a fresh connection after the questions' quiet seconds, and
+  // it sometimes times out): the owner taps again, and so does this, twice at most
   let fr = null;
+  let retried = 0;
   for (let i = 0; i < 45 && !(fr?.goal && fr?.reset_days); i++) {
     await n.page.waitForTimeout(1000);
     fr = (await admin.from("shops").select("goal, reset_days, reset_since").eq("id", freshShop.id).single()).data;
+    if (!fr?.goal && retried < 2 && (await text(n.page)).includes("صار مشكل")) {
+      retried++;
+      console.log(`  (the save failed on this PC's network: tapped again, ${retried})`);
+      await n.page.getByRole("button", { name: "حلّ الكارط" }).click();
+    }
   }
   check("the first card is saved with its clock: 15 days, counted from today", fr?.goal && fr.reset_days === 15 && Date.now() - Date.parse(fr.reset_since) < 5 * 60_000, { db: fr, url: n.page.url(), screen: (await text(n.page)).slice(0, 240) });
   await n.ctx.close();
@@ -227,7 +236,13 @@ try {
   await o.page.waitForTimeout(2500);
   check("Omar's card is gone", (await cardRow(cO.id)) === null);
   check("…his account stays", !!(await admin.from("people").select("id").eq("id", omar.id).maybeSingle()).data);
-  check("…and he is off the list", !(await text(o.page)).includes("عمر"));
+  // the list drawn again a moment later: looked for up to 15 s
+  let gone = false;
+  for (let i = 0; i < 30 && !gone; i++) {
+    gone = !(await text(o.page)).includes("عمر");
+    if (!gone) await o.page.waitForTimeout(500);
+  }
+  check("…and he is off the list", gone);
 
   console.log("\nThe customers' own cards");
   const r = await signIn(rania);
@@ -243,12 +258,40 @@ try {
   await go(s.page, "/wallet");
   check("Sami's wallet says it too", (await text(s.page)).includes("الكارط رجعت للصفر"));
 
+  console.log("\nAt the counter: Sami, past his clock");
+  await go(o.page, "/shop/collect");
+  await o.page.locator('input[inputmode="tel"]').fill(sami.digits);
+  await o.page.getByRole("button", { name: /^رجّعلو/ }).waitFor({ timeout: 30000 }).catch(() => {});
+  const at = await text(o.page);
+  check("the counter says why Sami reads 0, and offers his 3 back", at.includes("الكارط متاعو رجعت للصفر") && /0\/8/.test(at), at.slice(0, 300));
+  await shot(o.page, "6b-counter-reset");
+  await o.page.getByRole("button", { name: /^رجّعلو/ }).click();
+  let sc0 = null;
+  for (let i = 0; i < 20 && !(sc0?.stamps === 3 && !sc0.reset_from); i++) {
+    await o.page.waitForTimeout(500);
+    sc0 = await cardRow(cS.id);
+  }
+  check("given back at the counter: Sami has his 3, his clock from today", sc0?.stamps === 3 && sc0.reset_from === null && Date.now() - Date.parse(sc0.clock_from) < 5 * 60_000, sc0);
+  let at2 = "";
+  for (let i = 0; i < 20 && !(at2.includes("رجعولو تامبوناتو") && /3\/8/.test(at2)); i++) {
+    await o.page.waitForTimeout(500);
+    at2 = await text(o.page);
+  }
+  check("…the counter says so, and shows 3/8", at2.includes("رجعولو تامبوناتو") && /3\/8/.test(at2), at2.slice(0, 300));
+  await shot(o.page, "6c-counter-restored");
+  // Sami past his clock again (his last tampon 10 days ago), for the tampon below
+  await admin.from("cards").update({ last_at: ago(10 * DAY), clock_from: null }).eq("id", cS.id);
+
   console.log("\nA tampon after the clock, and the daily sweep");
   const ownerApi = createClient(URL_, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
   await ownerApi.auth.signInWithPassword({ email: `216${owner.digits}@phone.pointidi.app`, password: PASS });
   const g = await ownerApi.rpc("give_stamp", { p_who: sami.digits });
   const sAfter = await cardRow(cS.id);
   check("a tampon on Sami's card past its clock: zero first, then 1", g.data?.ok === true && sAfter.stamps === 1 && !!sAfter.reset_at, { give: g.data ?? g.error?.message, card: sAfter });
+  check("…and the tampon's answer says what was lost (3), for the counter to offer back", g.data?.card?.reset_lost === 3, g.data?.card);
+  await go(s.page, `/c/${cS.id}`);
+  const sc1 = await text(s.page);
+  check("Sami's card, 1 tampon after the clock: it says why it started again", sc1.includes("الكارط رجعت للصفر: غبت أكثر من 7 أيّام"), sc1.slice(0, 300));
   const swept = await admin.rpc("reset_sweep");
   check("the daily sweep takes Lina's card back to zero", !swept.error && swept.data >= 1 && (await cardRow(cL.id)).stamps === 0, swept.data ?? swept.error?.message);
 
@@ -285,6 +328,7 @@ try {
   await o.page.getByRole("button", { name: "رجّعلهم التامبونات" }).click();
   await o.page.waitForTimeout(600);
   check("giving back to all asks first", (await text(o.page)).includes("ترجّع التامبونات اللي خسروهم؟"));
+  await shot(o.page, "11b-restore-ask");
   await o.page.getByRole("button", { name: "إيه، رجّعهم" }).click();
   let s2 = null;
   for (let i = 0; i < 20 && !(s2?.stamps === 4); i++) {
@@ -314,6 +358,7 @@ try {
   await go(r.page, `/c/${cR.id}`);
   const rp = await text(r.page);
   check("paused: Rania's card shows her 5 and no countdown", !rp.includes("ترجع للصفر") && !rp.includes("رجعت للصفر"), rp.slice(0, 300));
+  await shot(r.page, "13b-card-paused");
   await o.page.getByRole("switch", { name: "وقّف العدّاد" }).click();
   let p2 = null;
   for (let i = 0; i < 20 && (p2 === null || p2.reset_paused_at); i++) {
@@ -338,6 +383,7 @@ try {
   await o.page.getByRole("button", { name: "نحّي العدّاد" }).click();
   await o.page.waitForTimeout(600);
   check("taking it off asks first", (await text(o.page)).includes("تنحّي العدّاد؟"));
+  await shot(o.page, "14a-remove-ask");
   await o.page.getByRole("button", { name: "إيه، نحّيه" }).click();
   let off2 = null;
   for (let i = 0; i < 20 && off2?.reset_days !== null; i++) {

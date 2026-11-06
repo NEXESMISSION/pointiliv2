@@ -157,13 +157,14 @@ export default async function CardPage({ params, searchParams }: { params: Promi
  * The card's clock, under the card (the founder, 6 Nov 2026: «add a countdown to the customer's card,
  * so he knows»): how long before it goes back to zero with no tampon, and a bar that empties as the
  * days pass — coral in its last three. Or, the clock having just taken it back, that it did, and why.
- * Nothing on a card waiting at the counter (its gift is the news), nor in a shop with no clock.
+ * Nothing in a shop with no clock. A card with a gift waiting says it too: the tampons after the gift
+ * still go back to zero (8 Nov 2026).
  */
 function ResetLine({ card }: { card: CardView }) {
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const now = Date.now();
   const days = card.shop.reset_days;
-  if (!days || card.ready) return null;
+  if (!days) return null;
   const box = "mx-auto mt-2.5 w-full max-w-[min(100%,52dvh)] shrink-0 rounded-[1rem] px-3.5 py-2.5";
   if (resetLately(card, now)) return <p className={`${box} bg-coral-soft text-center text-[0.8125rem] font-semibold text-coral`}>{fill(t.resetWas, { days: daysN(days) })}</p>;
   if (!resetRuns(card, now)) return null;

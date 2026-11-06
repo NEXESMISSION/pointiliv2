@@ -14,8 +14,10 @@ import { useScreen } from "@/components/Tracker";
 import { Confetti, IMPACT_MS, StampLand } from "@/components/StampLand";
 import { Btn, Field, Icon3D, LinkBtn } from "@/components/ui";
 import { Trap } from "@/components/Trap";
-import { fill, kindIcon, t } from "@/lib/t";
+import { daysN, fill, kindIcon, t } from "@/lib/t";
+import { resetLately } from "@/lib/reset";
 import { signal } from "@/lib/track";
+import { useClock } from "@/lib/use-clock";
 import { nextTampon } from "@/lib/when";
 import type { ScanResult } from "@/lib/types";
 
@@ -121,6 +123,8 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
   const [prize, setPrize] = useState<string | null>(card.won ?? null);
   const [sheet, setSheet] = useState(!!turn);
   const [spinning, setSpinning] = useState(false);
+  // the card's clock, said in days: the phone's own clock
+  const now = useClock();
   const title = gift ? (card.shop.wheel ? (prize ? fill(t.wheelWon, { prize }) : t.wheelTitle) : fill(t.won, { gift: card.shop.gift ?? "" })) : t.newStamp;
   // a gift with a long name (up to 60 letters) takes two lines: smaller on a short screen, and the card gives way
   const long = title.length > 24;
@@ -149,6 +153,12 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
         {/* the scan that won the gift shows the card full; any other, the card as it is, its vouchers said */}
         <Pass shop={card.shop} stamps={gift ? (card.shop.goal ?? card.stamps) : card.stamps} waiting={gift ? 0 : card.waiting_n} fresh />
       </div>
+      {/* this tampon found the card past its shop's clock: it went back to zero first — said, so «1» is no surprise */}
+      {!gift && !!now && !!card.shop.reset_days && resetLately(card, now) && (
+        <p className="mt-2 animate-rise rounded-[1rem] bg-coral-soft px-3.5 py-2 text-[0.8125rem] font-semibold text-coral" style={after(300)}>
+          {fill(t.resetWas, { days: daysN(card.shop.reset_days) })}
+        </p>
+      )}
 
       {/* the gift: one line to show at the counter, not a second card. On the wheel it is the turn
           itself — it opens the wheel back up here, and once spun it is the prize and its code */}

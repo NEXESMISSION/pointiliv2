@@ -22,6 +22,11 @@ export const resetRuns = (c: { reset_due?: string | null }, now: number): c is {
 /** Within the last few days of the clock: the card says it before anything else. */
 export const resetSoon = (c: { reset_due?: string | null }, now: number) => resetRuns(c, now) && Date.parse(c.reset_due!) - now <= 3 * DAY;
 
-/** The clock took this card back to zero lately (two weeks): its customer — and the owner — are told once more. */
-export const resetLately = (c: { stamps: number; reset_due?: string | null; reset_at?: string | null }, now: number) =>
-  (!!c.reset_due && Date.parse(c.reset_due) <= now) || (c.stamps === 0 && !!c.reset_at && now - Date.parse(c.reset_at) < 14 * DAY);
+/**
+ * The clock took this card back to zero lately (two weeks) and no tampon came after — or one came with it,
+ * the tampon that found it past its clock: its customer is told, once more. A card filled again since (a gift
+ * won, its stamps back to 0) says nothing of it (8 Nov 2026: it used to say «غبت» right after a win).
+ */
+export const resetLately = (c: { reset_due?: string | null; reset_at?: string | null; last_at?: string | null }, now: number) =>
+  (!!c.reset_due && Date.parse(c.reset_due) <= now) ||
+  (!!c.reset_at && now - Date.parse(c.reset_at) < 14 * DAY && (!c.last_at || Date.parse(c.reset_at) >= Date.parse(c.last_at) - 1000));

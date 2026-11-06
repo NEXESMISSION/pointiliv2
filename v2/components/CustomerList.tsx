@@ -46,6 +46,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
   // what the clock took, being given back — and the card it was given back to (said on its sheet)
   const [restoring, setRestoring] = useState(false);
   const [restored, setRestored] = useState<string | null>(null);
+  const [restoreErr, setRestoreErr] = useState(false);
   // the card's clock, said in days: the phone's own clock, a minute at a time
   const now = useClock();
   const router = useRouter();
@@ -170,16 +171,18 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
             )}
             {!!open.restorable && restored !== open.id && (
               <div className="mt-2.5 flex items-center gap-2 rounded-[0.875rem] bg-surface px-3 py-2 shadow-card">
-                <span className="min-w-0 flex-1 text-[0.8125rem] font-semibold text-body">{t.customerWasReset}</span>
+                <span className={`min-w-0 flex-1 text-[0.8125rem] font-semibold ${restoreErr ? "text-coral" : "text-body"}`}>{restoreErr ? t.errNetwork : t.customerWasReset}</span>
                 <button
                   type="button"
                   disabled={restoring}
                   onClick={() =>
                     void (async () => {
                       setRestoring(true);
+                      setRestoreErr(false);
                       const res = await restoreReset(open.id).catch(() => ({ ok: false }));
                       setRestoring(false);
-                      if (!res.ok) return;
+                      // said, never silent: the owner taps again
+                      if (!res.ok) return setRestoreErr(true);
                       signal("customer_restored");
                       // the sheet stays open and says it; the list drawn again shows the tampons back on the card
                       setRestored(open.id);
