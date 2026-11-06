@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "@/components/Link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ChevronLeft, Hourglass, PencilLine, PowerOff, Undo2 } from "lucide-react";
 import { clockOff, restoreReset, setClockPaused } from "@/app/actions-clock";
 import { Sheet, SheetGo } from "@/components/Client";
+import { ClockDays } from "@/components/ClockDays";
 import { Switch } from "@/components/Owner";
 import { customersN, fill, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
@@ -25,6 +25,8 @@ export function ClockControls({ clock }: { clock: Clock }) {
   const [error, setError] = useState(false);
   const [ask, setAsk] = useState<"restore" | "off" | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  // the days changed here, on this page (not the card's questions)
+  const [changing, setChanging] = useState(false);
 
   const pause = (on: boolean) =>
     start(async () => {
@@ -57,11 +59,16 @@ export function ClockControls({ clock }: { clock: Clock }) {
           </span>
           <Switch on={paused} label={t.clockPause} disabled={pending} onClick={() => pause(!paused)} />
         </div>
-        <Link href="/shop/card?at=reset" className={`press ${row} active:bg-canvas`}>
+        <button type="button" onClick={() => setChanging(!changing)} aria-expanded={changing} className={`press w-full text-start ${row} active:bg-canvas`}>
           <PencilLine className="size-5 shrink-0 text-brand" />
           <span className="min-w-0 flex-1 text-[0.9375rem] font-semibold">{t.clockChange}</span>
-          <ChevronLeft className="size-4 shrink-0 text-faint" />
-        </Link>
+          <ChevronLeft className={`size-4 shrink-0 text-faint transition-transform ${changing ? "-rotate-90" : ""}`} />
+        </button>
+        {changing && (
+          <div className="px-3.5 py-3">
+            <ClockDays current={clock.days} onDone={() => setChanging(false)} />
+          </div>
+        )}
         <button type="button" onClick={() => setAsk("off")} className={`press w-full text-start ${row} active:bg-canvas`}>
           <PowerOff className="size-5 shrink-0 text-coral" />
           <span className="min-w-0 flex-1 text-[0.9375rem] font-semibold text-coral">{t.clockRemove}</span>

@@ -9,9 +9,9 @@ import { t } from "@/lib/t";
 
 /**
  * Once in an owner's life, on their home: the card's clock is here (6 Nov 2026) — so many days with no
- * tampon and a card goes back to zero, the customer seeing the days left on their card. «نحدّدها توّا»
- * opens the card straight on that question (/shop/card?at=reset). The same look as LinksTip, centred:
- * there is no row to light, the clock lives in the card's questions and in «المحل».
+ * tampon and a card goes back to zero, the customer seeing the days left on their card. Said plainly that it
+ * is OFF for them until they turn it on themselves (the founder, 7 Nov 2026). «نشوف ونشعلو» opens its page
+ * (/shop/clock): the days, and «شعّل العدّاد». The same look as LinksTip, centred.
  *
  * `show` comes from the person's list of notes seen (and a shop with a clock already set never gets
  * it); it is written there the moment it shows, so it never comes back, here or on another phone.
@@ -49,7 +49,7 @@ export function ResetTip({ who, show }: { who: string; show: boolean }) {
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-body">{t.resetTipBody}</p>
         <div className="mt-3.5 flex gap-2">
           <Link
-            href="/shop/card?at=reset"
+            href="/shop/clock"
             onClick={() => {
               signal("reset_tip_try");
               close();

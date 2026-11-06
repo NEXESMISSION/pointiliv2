@@ -33,6 +33,18 @@ export async function restoreReset(card?: string): Promise<Res> {
   return res ?? { ok: false, error: "network" };
 }
 
+/**
+ * The owner turns the clock on, or changes its days, from its own page (the founder, 7 Nov 2026: «off on the
+ * owner's side by default — they need to turn it on so it works for them»). 7 to 365 days; it counts from today
+ * for everyone (set_reset_days writes reset_since).
+ */
+export async function setClockDays(days: number): Promise<Res> {
+  if (!Number.isInteger(days) || days < 7 || days > 365) return { ok: false, error: "bad_days" };
+  const res = await call<Res>("set_reset_days", { p_days: days });
+  revalidatePath("/shop", "layout");
+  return res ?? { ok: false, error: "network" };
+}
+
 /** The clock taken off altogether (the owner's own «نحّي العدّاد»): no card goes back to zero any more. */
 export async function clockOff(): Promise<Res> {
   const res = await call<Res>("set_reset_days", { p_days: null });

@@ -102,23 +102,25 @@ const cardRow = async (id) => (await admin.from("cards").select("stamps, reset_a
 const TIP = "الكارط ترجع للصفر كان الحريف غاب";
 const ASK = "الحريف كان غاب، الكارط ترجع للصفر؟";
 
-// the founder's switch for the clock, every shop at once: found as it is, off for the first checks, on for
-// the rest, and put back as it was found at the end. The clock is live since 6 Nov 2026: flipping the switch
-// on the real database turns the clock off, or on, for every real owner and customer for the minutes this
-// runs. So it never does without being told to (CLOCK_TEST_LIVE=1) — a database of its own needs no flag.
+// the founder's switch for the clock, every shop at once. The clock is live since 6 Nov 2026: flipping the
+// switch on the real database turns the clock off, or on, for every real owner and customer for the minutes
+// this runs. So there it is never flipped: ON (the founder's choice), this runs as it is and skips the «switch
+// off» checks; off, it does not run unless told to (CLOCK_TEST_LIVE=1). A database of its own: off, then on,
+// then put back as it was found.
+const LIVE = !!process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("srhqhulyijtzwmqhcsse");
 const SWITCH = (await admin.from("settings").select("value").eq("key", "clock_on").maybeSingle()).data?.value ?? null;
-if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("srhqhulyijtzwmqhcsse") && process.env.CLOCK_TEST_LIVE !== "1") {
-  console.log(`The real database (the founder's switch is ${SWITCH === "1" ? "ON for every shop" : "off"}): this test flips it for every real owner while it runs. Not run — CLOCK_TEST_LIVE=1 to run it anyway.`);
+const FLIP = !(LIVE && SWITCH === "1");
+if (LIVE && SWITCH !== "1" && process.env.CLOCK_TEST_LIVE !== "1") {
+  console.log("The real database, the founder's switch off: this test would turn it on for every real owner while it runs. Not run — CLOCK_TEST_LIVE=1 to run it anyway.");
   process.exit(2);
 }
 const setSwitch = async (v) => {
+  if (!FLIP) return;
   const { error } = v === null ? await admin.from("settings").delete().eq("key", "clock_on") : await admin.from("settings").upsert({ key: "clock_on", value: v });
   if (error) throw error;
 };
 
 try {
-  // ── the switch off (as every shop has it until the founder turns it on): no clock anywhere ──
-  await setSwitch("");
   const owner = await person("سنية");
   const shop = await shopOf(owner, { goal: 8, gift: "قهوة بلاش" });
   const { data: liveNews } = await admin.from("news").select("id").eq("active", true);
@@ -132,27 +134,32 @@ try {
   const cO = await cardOf(shop, omar, 6, [25, 18, 11, 5]); // 5 days quiet
   const cL = await cardOf(shop, lina, 2, [45, 40]); // long gone
 
-  console.log("\nThe switch off: no clock anywhere");
-  const o = await signIn(owner);
-  check("no «جديد» note on the home", !(await o.page.getByRole("dialog", { name: TIP }).waitFor({ timeout: 6000 }).then(() => true, () => false)));
-  check("…and it is not written down as seen", !((await admin.from("people").select("seen").eq("id", owner.id).single()).data?.seen ?? []).includes("reset_tip"));
-  await go(o.page, "/shop/settings");
-  check("«المحل» has no clock", !(await text(o.page)).includes("الكارط ترجع للصفر"));
-  await shot(o.page, "0-off-settings");
-  await go(o.page, "/shop/clock");
-  check("the clock's page leads back to «المحل»", new URL(o.page.url()).pathname === "/shop/settings", o.page.url());
-  await go(o.page, "/shop/card?at=reset");
-  check("the card's questions never ask about it", !(await text(o.page)).includes(ASK));
-  // a clock already in the database (set 8 days ago) does nothing while the switch is off
-  await admin.from("shops").update({ reset_days: 7, reset_since: ago(8 * DAY) }).eq("id", shop.id);
-  await go(o.page, "/shop/customers");
-  const off = await text(o.page);
-  check("a clock in the database does nothing: Sami (10 days quiet) still reads 3/8", /سامي[\s\S]{0,120}3\/8/.test(off), off.slice(0, 300));
-  check("…no hourglass on anyone", (await o.page.locator('svg[aria-label^="الكارط متاعو ترجع للصفر"]').count()) === 0);
-  const sweptOff = await admin.rpc("reset_sweep");
-  check("…and the daily sweep takes nothing", !sweptOff.error && (await cardRow(cS.id)).stamps === 3 && (await cardRow(cL.id)).stamps === 2, sweptOff.data ?? sweptOff.error?.message);
-  await admin.from("shops").update({ reset_days: null, reset_since: null }).eq("id", shop.id);
-  await setSwitch("1");
+  // ── the switch off (as every shop had it until the founder turned it on): no clock anywhere ──
+  let o = null;
+  if (FLIP) {
+    await setSwitch("");
+    console.log("\nThe switch off: no clock anywhere");
+    o = await signIn(owner);
+    check("no «جديد» note on the home", !(await o.page.getByRole("dialog", { name: TIP }).waitFor({ timeout: 6000 }).then(() => true, () => false)));
+    check("…and it is not written down as seen", !((await admin.from("people").select("seen").eq("id", owner.id).single()).data?.seen ?? []).includes("reset_tip"));
+    await go(o.page, "/shop/settings");
+    check("«المحل» has no clock", !(await text(o.page)).includes("الكارط ترجع للصفر"));
+    await shot(o.page, "0-off-settings");
+    await go(o.page, "/shop/clock");
+    check("the clock's page leads back to «المحل»", new URL(o.page.url()).pathname === "/shop/settings", o.page.url());
+    await go(o.page, "/shop/card?at=reset");
+    check("the card's questions never ask about it", !(await text(o.page)).includes(ASK));
+    // a clock already in the database (set 8 days ago) does nothing while the switch is off
+    await admin.from("shops").update({ reset_days: 7, reset_since: ago(8 * DAY) }).eq("id", shop.id);
+    await go(o.page, "/shop/customers");
+    const off = await text(o.page);
+    check("a clock in the database does nothing: Sami (10 days quiet) still reads 3/8", /سامي[\s\S]{0,120}3\/8/.test(off), off.slice(0, 300));
+    check("…no hourglass on anyone", (await o.page.locator('svg[aria-label^="الكارط متاعو ترجع للصفر"]').count()) === 0);
+    const sweptOff = await admin.rpc("reset_sweep");
+    check("…and the daily sweep takes nothing", !sweptOff.error && (await cardRow(cS.id)).stamps === 3 && (await cardRow(cL.id)).stamps === 2, sweptOff.data ?? sweptOff.error?.message);
+    await admin.from("shops").update({ reset_days: null, reset_since: null }).eq("id", shop.id);
+    await setSwitch("1");
+  } else console.log("\n(the founder's switch is ON for every shop: the «switch off» checks are skipped, nothing is flipped)");
 
   // ── a new owner: the first card asks about the clock, «لا» until chosen ──
   console.log("\nThe first card: the clock's question");
@@ -191,27 +198,37 @@ try {
   check("the first card is saved with its clock: 15 days, counted from today", fr?.goal && fr.reset_days === 15 && Date.now() - Date.parse(fr.reset_since) < 5 * 60_000, { db: fr, url: n.page.url(), screen: (await text(n.page)).slice(0, 240) });
   await n.ctx.close();
 
-  console.log("\nThe switch on — the owner: the note, then the clock set");
-  await go(o.page, "/shop");
+  console.log("\nThe switch on — the owner: the note, then the clock turned on from its page");
+  if (o) await go(o.page, "/shop");
+  else o = await signIn(owner);
   // the home: the note rises there, once (shown twice it would be a bug)
   const tip = o.page.getByRole("dialog", { name: TIP });
   check("the «جديد» note shows on the home", await tip.waitFor({ timeout: 30000 }).then(() => true, () => false));
   check("…and is written down as seen at once", ((await admin.from("people").select("seen").eq("id", owner.id).single()).data?.seen ?? []).includes("reset_tip"));
   await shot(o.page, "2-home-note");
-  await o.page.getByRole("link", { name: "نحدّدها توّا" }).click();
-  await o.page.waitForURL(/\/shop\/card\?at=reset/, { timeout: 60000 });
+  check("…and says it is off until the owner turns it on", (await text(o.page)).includes("مطفي عندك، وما يتبدّل شي حتى تشعلو انت"));
+  await o.page.getByRole("link", { name: "نشوف ونشعلو" }).click();
+  await o.page.waitForURL(/\/shop\/clock/, { timeout: 60000 });
   await o.page.waitForTimeout(1500);
-  check("«نحدّدها توّا» opens the card straight on its clock", (await text(o.page)).includes("الحريف كان غاب، الكارط ترجع للصفر؟"));
+  const offPage = await text(o.page);
+  check("«نشوف ونشعلو» opens the clock's page: off, until the owner turns it on", offPage.includes("العدّاد مطفي") && offPage.includes("مطفي عندك: حتى كارط ما ترجع للصفر حتى تشعلو انت"), offPage.slice(0, 300));
+  check("…nothing chosen: «شعّل العدّاد» waits for the days", await o.page.getByRole("button", { name: "شعّل العدّاد" }).isDisabled());
   await o.page.getByRole("button", { name: "7 أيّام" }).click();
-  await shot(o.page, "3-wizard-clock");
-  await o.page.getByRole("button", { name: "كمّل", exact: true }).click();
-  await o.page.waitForTimeout(600);
-  await o.page.getByRole("button", { name: "كمّل", exact: true }).click();
-  await o.page.waitForTimeout(600);
-  await o.page.getByRole("button", { name: "سجّل" }).click();
-  await o.page.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }).catch(() => {});
-  const s1 = await shopRow(shop.id);
-  check("the clock is saved: 7 days", s1.reset_days === 7, s1);
+  check("picking 7 days says what it does", (await text(o.page)).includes("كان ما خذاش تامبون 7 أيّام، الكارط ترجع للصفر."));
+  await shot(o.page, "3-clock-turn-on");
+  await o.page.getByRole("button", { name: "شعّل العدّاد" }).click();
+  let s1 = null;
+  for (let i = 0; i < 30 && s1?.reset_days !== 7; i++) {
+    await o.page.waitForTimeout(500);
+    s1 = await shopRow(shop.id);
+  }
+  check("«شعّل العدّاد»: on, 7 days, counted from today", s1?.reset_days === 7 && Date.now() - Date.parse(s1.reset_since) < 5 * 60_000, s1);
+  let onPage = "";
+  for (let i = 0; i < 30 && !onPage.includes("يخدم"); i++) {
+    await o.page.waitForTimeout(500);
+    onPage = await text(o.page);
+  }
+  check("…and the page shows it running", onPage.includes("كان الحريف غاب 7 أيّام") && onPage.includes("يخدم"), onPage.slice(0, 300));
 
   // the clock set 8 days ago: Sami (10 days quiet) is past it, Omar (5 days) runs out in 2, Rania in 5
   await admin.from("shops").update({ reset_since: ago(8 * DAY) }).eq("id", shop.id);
@@ -378,11 +395,36 @@ try {
   console.log("\nThe customer told the day before");
   // the clock set 6½ days ago: Rania's card goes back to zero in half a day
   await admin.from("shops").update({ reset_since: ago(6.5 * DAY) }).eq("id", shop.id);
-  const w1 = await admin.rpc("reset_warnings");
-  const mine = (w1.data ?? []).filter((w) => w.card === cR.id);
-  check("the daily job finds Rania's card, with her 5", !w1.error && mine.length === 1 && mine[0].stamps === 5 && mine[0].shop === "Café Clock", w1.data ?? w1.error?.message);
-  const w2 = await admin.rpc("reset_warnings");
-  check("…once: the next day's run does not tell her again", !w2.error && !(w2.data ?? []).some((w) => w.card === cR.id));
+  // reset_warnings() is every shop's: on the real database with real clocks, it would write their customers
+  // down as told without the push going out — so there it is left to the daily job (the Postgres tests cover it)
+  const { count: realClocks } = await admin.from("shops").select("id", { count: "exact", head: true }).not("reset_days", "is", null).not("id", "in", `(${shop.id},${freshShop.id})`);
+  if (LIVE && realClocks > 0) console.log(`  (skipped: ${realClocks} real shop(s) have a clock — their customers would be written down as told, without a push)`);
+  else {
+    const w1 = await admin.rpc("reset_warnings");
+    const mine = (w1.data ?? []).filter((w) => w.card === cR.id);
+    check("the daily job finds Rania's card, with her 5", !w1.error && mine.length === 1 && mine[0].stamps === 5 && mine[0].shop === "Café Clock", w1.data ?? w1.error?.message);
+    const w2 = await admin.rpc("reset_warnings");
+    check("…once: the next day's run does not tell her again", !w2.error && !(w2.data ?? []).some((w) => w.card === cR.id));
+  }
+
+  console.log("\nThe days changed on the clock's page");
+  await go(o.page, "/shop/clock");
+  await o.page.getByRole("button", { name: "بدّل عدد الأيام" }).click();
+  await o.page.waitForTimeout(500);
+  await o.page.getByRole("button", { name: "15 يوم" }).click();
+  await o.page.getByRole("button", { name: "سجّل", exact: true }).click();
+  let d15 = null;
+  for (let i = 0; i < 30 && d15?.reset_days !== 15; i++) {
+    await o.page.waitForTimeout(500);
+    d15 = await shopRow(shop.id);
+  }
+  check("«بدّل عدد الأيام», right on its page: 15 days", d15?.reset_days === 15, d15);
+  let p15 = "";
+  for (let i = 0; i < 30 && !p15.includes("كان الحريف غاب 15 يوم"); i++) {
+    await o.page.waitForTimeout(500);
+    p15 = await text(o.page);
+  }
+  check("…and the page says it", p15.includes("كان الحريف غاب 15 يوم"), p15.slice(0, 200));
 
   console.log("\nThe clock taken off");
   await go(o.page, "/shop/clock");
@@ -400,6 +442,8 @@ try {
   await o.page.waitForTimeout(1200);
   check("…and the page says «العدّاد مطفي»", (await text(o.page)).includes("العدّاد مطفي"));
   await shot(o.page, "14-clock-off");
+  await go(o.page, "/shop/settings");
+  check("«المحل» says it is off", (await text(o.page)).includes("مطفي: الكارط ما ترجعش للصفر"));
 
   console.log("\n«شكون رجع؟»");
   await go(o.page, "/shop/insights");
@@ -415,7 +459,7 @@ try {
   console.log(`  ✗ crashed: ${e.message}`);
 } finally {
   await setSwitch(SWITCH).catch((e) => console.log(`  ✗ the switch could not be put back: ${e.message}`));
-  console.log(`  (the founder's switch put back as found: ${JSON.stringify(SWITCH)})`);
+  console.log(FLIP ? `  (the founder's switch put back as found: ${JSON.stringify(SWITCH)})` : "  (the founder's switch never touched: ON)");
   await browser.close();
   for (const id of made) await admin.auth.admin.deleteUser(id);
   await unrobot(admin, phones);

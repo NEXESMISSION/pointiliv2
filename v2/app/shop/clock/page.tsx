@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { Check, Hourglass } from "lucide-react";
 import { ClockControls } from "@/components/ClockControls";
+import { ClockDays } from "@/components/ClockDays";
 import { Top } from "@/components/Top";
-import { Icon3D, LinkBtn, Screen } from "@/components/ui";
+import { Icon3D, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { daysN, fill, t } from "@/lib/t";
@@ -33,14 +34,14 @@ export default async function ShopClock() {
       {!c?.ok ? (
         <p className="mt-8 text-center text-[0.9375rem] text-muted">{t.errNetwork}</p>
       ) : !c.days ? (
-        // no clock: what it would do, and the one way to set it
-        <section className="mt-[3dvh] flex shrink-0 flex-col items-center rounded-[1.5rem] bg-surface px-5 py-6 text-center shadow-card">
-          <Icon3D name="hourglass" size={64} />
-          <h2 className="mt-3 text-[1.25rem] font-bold">{t.clockOffTitle}</h2>
-          <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted">{t.clockOffBody}</p>
-          <LinkBtn href="/shop/card?at=reset" className="mt-4 w-full">
-            {t.clockSet}
-          </LinkBtn>
+        // no clock (every shop until its owner turns it on): what it would do, the days, and the one button
+        <section className="mt-[3dvh] flex shrink-0 flex-col items-center rounded-[1.5rem] bg-surface px-4 py-5 text-center shadow-card">
+          <Icon3D name="hourglass" size={56} />
+          <h2 className="mt-2.5 text-[1.25rem] font-bold">{t.clockOffTitle}</h2>
+          <p className="mt-1 text-[0.9375rem] leading-relaxed text-muted">{t.clockOffBody}</p>
+          <div className="mt-3.5 w-full">
+            <ClockDays current={null} />
+          </div>
         </section>
       ) : (
         <>
