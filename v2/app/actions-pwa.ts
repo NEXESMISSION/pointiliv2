@@ -1,26 +1,23 @@
 "use server";
 
-import { db, service } from "@/lib/supabase";
+import { service } from "@/lib/supabase";
 
-const SCREEN = /^\d{2,5}x\d{2,5}$/;
+const VISITOR = /^[A-Za-z0-9_-]{8,64}$/;
 
 /**
- * Pointili already on this phone: the signed-in person has opened it as the installed app (a visit
- * in standalone mode) on an Android phone with this very screen. Chrome never offers an app it
- * already has, and Brave or another browser on the same phone cannot tell — the owner of «سلطان
- * العطور» installed it on 3 Nov 2026, then tapped install for days in vain (6 Nov). Asked only by
- * a tap Chrome has not answered (lib/pwa: tapInstall), never on a page's load.
+ * Pointili already on this phone, from this very browser: the installed app shares the storage of
+ * the browser that installed it (Android), so it carries the same visitor id (lib/track: pt_v) —
+ * and the traffic has a visit opened as the app with it. Chrome never offers an app it already has,
+ * and its own check (getInstalledRelatedApps) can miss an install from before the manifest named it.
+ *
+ * The visitor, not the account or the screen: an owner can be signed in on several phones of the
+ * same model (the owner of «سلطان العطور», 6 Nov 2026: two Androids of 360×820, the app installed on
+ * one, never offered on the other) — and a «same account, same screen» guess told the other phone it
+ * had the app. Asked only by a tap the browser has not answered (lib/pwa: tapInstall), never on a
+ * page's load. It says yes or no, nothing about the visit.
  */
-export async function appOnThisPhone(screen: string): Promise<boolean> {
-  if (!SCREEN.test(String(screen ?? ""))) return false;
-  const { data } = await (await db()).auth.getUser();
-  if (!data.user) return false;
-  const { count, error } = await service()
-    .from("visits")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", data.user.id)
-    .eq("standalone", true)
-    .eq("os", "Android")
-    .eq("screen", screen);
+export async function appOnThisPhone(visitor: string): Promise<boolean> {
+  if (!VISITOR.test(String(visitor ?? ""))) return false;
+  const { count, error } = await service().from("visits").select("id", { count: "exact", head: true }).eq("visitor", visitor).eq("standalone", true);
   return !error && (count ?? 0) > 0;
 }

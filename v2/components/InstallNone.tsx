@@ -6,8 +6,8 @@ import { t } from "@/lib/t";
 
 /**
  * An install tap on Android the browser did not answer (lib/pwa: tapInstall): one short dark note at
- * the foot of the screen — never the filmed guide. Either Pointili is already on this phone (this
- * browser opened as the app before, or this account opened the app on a phone with this screen): where
+ * the foot of the screen — never the filmed guide. Either Pointili is already on this phone (this very
+ * browser opened as the installed app before: its own word, or its visitor id in the traffic): where
  * to find it, and the way back if it was deleted. Or the browser never offered in fifteen seconds:
  * where its own menu has the install. It goes by itself after a few seconds, or at a tap. In the
  * layout (components/Pwa), so every install button on every page shares it.

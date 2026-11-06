@@ -5,10 +5,11 @@
  * and no button at all once Pointili is on the phone. Chrome's offer is played by the page (a
  * `beforeinstallprompt` sent when the script says), and like Chrome's its dialog opens only on a
  * fresh tap. The owner's home (beside «؟»), «المحل», and the front door's footer. And Pointili
- * already on the phone where Chrome cannot tell (6 Nov 2026): this browser opened as the app
- * before, or the account opened the app on a phone with this screen — «Pointili راهو في تليفونك»
- * at once; another screen is another phone, and still waits. Throwaway accounts, deleted at the
- * end; pictures in .e2e/install/.
+ * already on the phone where Chrome cannot tell (6 Nov 2026): this very browser opened as the app
+ * before (its own word, or a visit as the app under its visitor id) — «Pointili راهو في تليفونك» at
+ * once; and the same account on another phone of the same model (the owner of «سلطان العطور» has
+ * two) is told nothing of the kind: it waits for its own browser's offer, and installs. Throwaway
+ * accounts, deleted at the end; pictures in .e2e/install/.
  *
  *   node scripts/install.mjs      (from v2/, dev server on :3200 — or BASE=)
  */
@@ -195,28 +196,31 @@ try {
   c = await counts(local.page);
   check("this browser opened as the app before: at once «Pointili راهو في تليفونك», no guide", (await local.page.getByText(HERE).isVisible()) && c.guide === 0 && c.prompted === 0, c);
   await shot(local.page, "5-already-local");
-  // the account opened the installed app on an Android phone with this screen, from another browser
+  // this browser opened as the installed app before this word was kept (an install from before 6 Nov):
+  // the traffic has a visit as the app under its visitor id
+  const same = await phone();
+  await open(same.page, "/shop");
+  const myVisitor = await same.page.evaluate(() => localStorage.getItem("pt_v"));
   const { data: appVisit, error: ve } = await admin
     .from("visits")
-    .insert({ id: randomUUID(), visitor: `robotapp${Date.now()}`, user_id: u.user.id, standalone: true, os: "Android", device: "phone", browser: "Chrome", screen: "390x844" })
+    .insert({ id: randomUUID(), visitor: myVisitor, user_id: u.user.id, standalone: true, os: "Android", device: "phone", browser: "Chrome", screen: "390x844" })
     .select("id")
     .single();
   if (ve) throw ve;
   visitsMade.push(appVisit.id);
-  const same = await phone();
-  await open(same.page, "/shop");
   const t0 = Date.now();
   await same.page.locator(ICON).first().click();
   const said = await same.page.getByText(HERE).waitFor({ timeout: 8000 }).then(() => true, () => false);
   const ms = Date.now() - t0;
   c = await counts(same.page);
-  check("the account opened the app on a phone with this screen: «Pointili راهو في تليفونك» in a moment, not fifteen seconds", said && ms < 8000 && c.guide === 0 && c.prompted === 0, { ms, ...c });
-  await shot(same.page, "6-already-account");
-  const second = await phone({ size: { width: 412, height: 915 } });
+  check("this browser opened as the app before (the traffic knows it): «Pointili راهو في تليفونك» in a moment, not fifteen seconds", said && ms < 8000 && c.guide === 0 && c.prompted === 0, { ms, ...c });
+  await shot(same.page, "6-already-visits");
+  // the same account on a second phone of the very same model (the owner of «سلطان العطور»): nothing installed there
+  const second = await phone();
   await open(second.page, "/shop");
   await second.page.locator(ICON).first().click();
   await second.page.waitForTimeout(3000);
-  check("…another screen is another phone: it still waits for Chrome", (await second.page.locator('button[aria-label="لحظة… قاعد يتحضّر"]').count()) === 1 && (await second.page.getByText(HERE).count()) === 0);
+  check("…the same account on another phone of the same model: never told it has the app, it waits for its browser", (await second.page.locator('button[aria-label="لحظة… قاعد يتحضّر"]').count()) === 1 && (await second.page.getByText(HERE).count()) === 0);
   await offer(second.page);
   await second.page.waitForTimeout(500);
   c = await counts(second.page);

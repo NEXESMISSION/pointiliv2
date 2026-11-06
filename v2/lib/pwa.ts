@@ -194,11 +194,12 @@ export async function installApp(where: string): Promise<boolean> {
  * more tap installs. No offer at all in fifteen seconds (Chrome not ready, or not willing): a short
  * note says where the browser's own menu has it. iPhones keep their guide, the only way there.
  *
- * And Chrome never offers an app that is already on the phone (the owner of «سلطان العطور», 6 Nov
- * 2026: installed on 3 Nov, then a tap in vain in Chrome and in Brave for days). So a tap Chrome has
- * not answered asks first: this browser opened as the app before (a word it keeps), or the server saw
- * this account open the app on an Android phone with this screen (actions-pwa) — then the note says
- * at once that Pointili is already there, and where to find it.
+ * And Chrome never offers an app that is already on the phone. So a tap Chrome has not answered asks
+ * first: did this very browser ever open as the installed app — the word it keeps, or the traffic's
+ * visits with its visitor id (actions-pwa: the installed app shares the browser's storage)? Then the
+ * note says at once that Pointili is already there, and where to find it. Never «the same account»
+ * or «the same screen»: the owner of «سلطان العطور» is signed in on two Androids of one model (6 Nov
+ * 2026), the app installed on one — the other has to keep waiting for its own browser's offer.
  */
 let waiting = false;
 let late = false;
@@ -236,6 +237,15 @@ function showNote(kind: "none" | "already") {
   notify();
   window.clearTimeout(noteTimer);
   noteTimer = window.setTimeout(dismissInstallNote, kind === "already" ? 14000 : 9000);
+}
+
+/** This browser's visitor id, as the traffic keeps it (lib/track: pt_v); none yet: null. */
+function visitorHere(): string | null {
+  try {
+    return localStorage.getItem("pt_v");
+  } catch {
+    return null;
+  }
 }
 
 /** What browser this is, said short, for the counts of a tap Chrome never answered. */
@@ -289,14 +299,17 @@ export async function tapInstall(where: string): Promise<void> {
       resolve(ok);
     }
     listeners.add(check);
-    // meanwhile: has this account opened the app on a phone with this screen? Then Chrome will not offer
-    void appOnThisPhone(`${screen.width}x${screen.height}`)
-      .then((yes) => {
-        if (!yes || deferred) return;
-        onPhone = true;
-        finish(false);
-      })
-      .catch(() => {});
+    // meanwhile: did this very browser open as the installed app before (its visitor id, lib/track)?
+    // Then Chrome will not offer. A browser with no id yet has never been anywhere: nothing to ask
+    const me = visitorHere();
+    if (me)
+      void appOnThisPhone(me)
+        .then((yes) => {
+          if (!yes || deferred) return;
+          onPhone = true;
+          finish(false);
+        })
+        .catch(() => {});
   });
   waiting = false;
   if (came && Date.now() - t0 < TAP_MS) {
@@ -311,7 +324,7 @@ export async function tapInstall(where: string): Promise<void> {
     return;
   }
   if (onPhone) {
-    signal("pwa_here", `${where} · account`);
+    signal("pwa_here", `${where} · visits`);
     showNote("already");
     return;
   }
