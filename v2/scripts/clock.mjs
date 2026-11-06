@@ -103,8 +103,14 @@ const TIP = "الكارط ترجع للصفر كان الحريف غاب";
 const ASK = "الحريف كان غاب، الكارط ترجع للصفر؟";
 
 // the founder's switch for the clock, every shop at once: found as it is, off for the first checks, on for
-// the rest, and put back as it was found at the end (the live shops have no clock: on, it changes nothing for them)
+// the rest, and put back as it was found at the end. The clock is live since 6 Nov 2026: flipping the switch
+// on the real database turns the clock off, or on, for every real owner and customer for the minutes this
+// runs. So it never does without being told to (CLOCK_TEST_LIVE=1) — a database of its own needs no flag.
 const SWITCH = (await admin.from("settings").select("value").eq("key", "clock_on").maybeSingle()).data?.value ?? null;
+if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes("srhqhulyijtzwmqhcsse") && process.env.CLOCK_TEST_LIVE !== "1") {
+  console.log(`The real database (the founder's switch is ${SWITCH === "1" ? "ON for every shop" : "off"}): this test flips it for every real owner while it runs. Not run — CLOCK_TEST_LIVE=1 to run it anyway.`);
+  process.exit(2);
+}
 const setSwitch = async (v) => {
   const { error } = v === null ? await admin.from("settings").delete().eq("key", "clock_on") : await admin.from("settings").upsert({ key: "clock_on", value: v });
   if (error) throw error;
