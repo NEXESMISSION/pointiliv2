@@ -4,11 +4,15 @@
  * tap's five seconds, one more tap («جاهز») when it comes later, a short note when it never comes,
  * and no button at all once Pointili is on the phone. Chrome's offer is played by the page (a
  * `beforeinstallprompt` sent when the script says), and like Chrome's its dialog opens only on a
- * fresh tap. The owner's home (beside «؟»), «المحل», and the front door's footer. Throwaway
- * accounts, deleted at the end; pictures in .e2e/install/.
+ * fresh tap. The owner's home (beside «؟»), «المحل», and the front door's footer. And Pointili
+ * already on the phone where Chrome cannot tell (6 Nov 2026): this browser opened as the app
+ * before, or the account opened the app on a phone with this screen — «Pointili راهو في تليفونك»
+ * at once; another screen is another phone, and still waits. Throwaway accounts, deleted at the
+ * end; pictures in .e2e/install/.
  *
  *   node scripts/install.mjs      (from v2/, dev server on :3200 — or BASE=)
  */
+import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { config } from "dotenv";
 import { chromium } from "playwright-core";
@@ -22,10 +26,12 @@ mkdirSync(OUT, { recursive: true });
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 for (const ip of ["local", "::1", "127.0.0.1"]) await admin.rpc("forget_tries", { p_key: `login-ip:${ip}` });
 const PASS = "install-e2e-2026";
-const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "fix_tip", "first_scan", "first_gift", "mission", "links_tip"];
+// every one-time note already seen (lib/once: Note), so nothing covers the buttons
+const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "fix_tip", "first_scan", "first_gift", "mission", "links_tip", "reset_tip", "new_insights"];
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const made = [];
 const phones = [];
+const visitsMade = [];
 let passed = 0;
 const failed = [];
 const check = (name, ok, detail) => {
@@ -51,7 +57,9 @@ if (live?.length) await admin.from("news_views").insert(live.map((n) => ({ news_
 const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36";
 const browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
 // Chrome's offer, sent when the script says; like Chrome's, its dialog opens only while a tap is fresh
-const offerScript = ({ installed }) => {
+const offerScript = ({ installed, appHere }) => {
+  // this browser opened as the installed app before: its own word (lib/pwa: markAppHere)
+  if (appHere) localStorage.setItem("pl-app-here", "1");
   window.__prompted = 0;
   window.__refused = 0;
   window.__offer = () => {
@@ -68,9 +76,9 @@ const offerScript = ({ installed }) => {
   };
   if (installed) navigator.getInstalledRelatedApps = async () => [{ platform: "webapp", url: `${location.origin}/manifest.webmanifest` }];
 };
-async function phone({ installed = false, signedIn = true } = {}) {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN", userAgent: UA });
-  await ctx.addInitScript(offerScript, { installed });
+async function phone({ installed = false, appHere = false, signedIn = true, size = { width: 390, height: 844 } } = {}) {
+  const ctx = await browser.newContext({ viewport: size, screen: size, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN", userAgent: UA });
+  await ctx.addInitScript(offerScript, { installed, appHere });
   const page = await ctx.newPage();
   if (signedIn) {
     for (let attempt = 1; ; attempt++) {
@@ -92,7 +100,7 @@ const shot = async (page, name) => {
 };
 const counts = (page) => page.evaluate(() => ({ prompted: window.__prompted, refused: window.__refused, guide: document.querySelectorAll('[role="dialog"]').length }));
 const offer = (page) => page.evaluate(() => window.__offer());
-const ICON = 'button[aria-label="حطّ Pointili في تليفونك"], button[aria-label="لحظة… Chrome يحضّر"], button[aria-label="جاهز! انقر باش تحطّو"]';
+const ICON = 'button[aria-label="حطّ Pointili في تليفونك"], button[aria-label="لحظة… قاعد يتحضّر"], button[aria-label="جاهز! انقر باش تحطّو"]';
 const open = async (page, path) => {
   await page.goto(`${BASE}${path}`, { waitUntil: "load", timeout: 90000 });
   await page.waitForTimeout(1500);
@@ -114,7 +122,7 @@ try {
   await open(page, "/shop");
   await icon.click();
   await page.waitForTimeout(300);
-  check("tapped before Chrome is ready: «لحظة…» on the button, no guide", (await page.locator('button[aria-label="لحظة… Chrome يحضّر"]').count()) === 1 && (await counts(page)).guide === 0);
+  check("tapped before Chrome is ready: «لحظة…» on the button, no guide", (await page.locator('button[aria-label="لحظة… قاعد يتحضّر"]').count()) === 1 && (await counts(page)).guide === 0);
   await shot(page, "1-home-waiting");
   await page.waitForTimeout(1700);
   await offer(page);
@@ -139,7 +147,7 @@ try {
   await open(page, "/shop");
   await icon.click();
   await page.waitForTimeout(15800);
-  const note = page.getByText("Chrome مازال ما حضّرش التثبيت");
+  const note = page.getByText("التثبيت مازال ما تحضّرش");
   check("Chrome never offers: a short note on its own menu, never the guide", (await note.isVisible()) && (await counts(page)).guide === 0);
   await shot(page, "3-home-none");
   await note.click();
@@ -152,7 +160,7 @@ try {
   check("the line is there", await line.isVisible());
   await line.click();
   await page.waitForTimeout(800);
-  check("…tapped: «لحظة…» on the line", await page.getByText("لحظة… Chrome يحضّر").isVisible());
+  check("…tapped: «لحظة…» on the line", await page.getByText("لحظة… قاعد يتحضّر").isVisible());
   await offer(page);
   await page.waitForTimeout(500);
   c = await counts(page);
@@ -177,6 +185,42 @@ try {
   await shot(home.page, "4-home-installed");
   await open(home.page, "/shop/settings");
   check("«المحل» has no install line", (await home.page.getByRole("button", { name: /حطّ Pointili في تليفونك/ }).count()) === 0);
+
+  console.log("\nAlready on the phone, and Chrome cannot tell (Brave, another browser, an old install)");
+  const HERE = "Pointili راهو في تليفونك ✓";
+  const local = await phone({ appHere: true });
+  await open(local.page, "/shop");
+  await local.page.locator(ICON).first().click();
+  await local.page.waitForTimeout(600);
+  c = await counts(local.page);
+  check("this browser opened as the app before: at once «Pointili راهو في تليفونك», no guide", (await local.page.getByText(HERE).isVisible()) && c.guide === 0 && c.prompted === 0, c);
+  await shot(local.page, "5-already-local");
+  // the account opened the installed app on an Android phone with this screen, from another browser
+  const { data: appVisit, error: ve } = await admin
+    .from("visits")
+    .insert({ id: randomUUID(), visitor: `robotapp${Date.now()}`, user_id: u.user.id, standalone: true, os: "Android", device: "phone", browser: "Chrome", screen: "390x844" })
+    .select("id")
+    .single();
+  if (ve) throw ve;
+  visitsMade.push(appVisit.id);
+  const same = await phone();
+  await open(same.page, "/shop");
+  const t0 = Date.now();
+  await same.page.locator(ICON).first().click();
+  const said = await same.page.getByText(HERE).waitFor({ timeout: 8000 }).then(() => true, () => false);
+  const ms = Date.now() - t0;
+  c = await counts(same.page);
+  check("the account opened the app on a phone with this screen: «Pointili راهو في تليفونك» in a moment, not fifteen seconds", said && ms < 8000 && c.guide === 0 && c.prompted === 0, { ms, ...c });
+  await shot(same.page, "6-already-account");
+  const second = await phone({ size: { width: 412, height: 915 } });
+  await open(second.page, "/shop");
+  await second.page.locator(ICON).first().click();
+  await second.page.waitForTimeout(3000);
+  check("…another screen is another phone: it still waits for Chrome", (await second.page.locator('button[aria-label="لحظة… قاعد يتحضّر"]').count()) === 1 && (await second.page.getByText(HERE).count()) === 0);
+  await offer(second.page);
+  await second.page.waitForTimeout(500);
+  c = await counts(second.page);
+  check("…and installs when Chrome offers", c.prompted === 1 && c.guide === 0, c);
 } catch (e) {
   failed.push(`crashed: ${e.message}`);
   console.log(`  ✗ crashed: ${e.message}`);
@@ -186,6 +230,7 @@ try {
   }
 } finally {
   await browser.close();
+  for (const id of visitsMade) await admin.from("visits").delete().eq("id", id);
   for (const id of made) {
     await admin.from("shops").delete().eq("owner_id", id);
     await admin.auth.admin.deleteUser(id);

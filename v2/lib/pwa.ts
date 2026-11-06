@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import { appOnThisPhone } from "@/app/actions-pwa";
 import { signal } from "@/lib/track";
 
 /**
@@ -23,6 +24,22 @@ export function standalone(): boolean {
   return window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
 
+const APP_HERE = "pl-app-here";
+function markAppHere() {
+  try {
+    localStorage.setItem(APP_HERE, String(Date.now()));
+  } catch {
+    /* no storage: the server still knows (actions-pwa: appOnThisPhone) */
+  }
+}
+function appHereLocally(): boolean {
+  try {
+    return !!localStorage.getItem(APP_HERE);
+  } catch {
+    return false;
+  }
+}
+
 /** Once per page load, from the layout: the worker, the prompt kept, the counts. */
 export function startPwa() {
   if (started || typeof window === "undefined") return;
@@ -39,9 +56,13 @@ export function startPwa() {
   window.addEventListener("appinstalled", () => {
     deferred = null;
     installed = true;
+    markAppHere();
     notify();
     signal("pwa_installed");
   });
+  // the installed app shares the storage of the browser that installed it (Android): opened as the
+  // app, it leaves a word there, so that browser knows the app is on this phone
+  if (standalone()) markAppHere();
   // already on this phone's home screen (installed another day): Chrome will never offer it again, so
   // every install button steps aside. Chrome on Android answers from the manifest's related_applications
   const nav = navigator as Navigator & { getInstalledRelatedApps?: () => Promise<{ platform: string }[]> };
@@ -171,15 +192,22 @@ export async function installApp(where: string): Promise<boolean> {
  * word: «لحظة…» on the button, and Chrome's own dialog the moment the offer comes. A tap lets a page
  * open a dialog for about five seconds only, so an offer later than that turns the button «جاهز»: one
  * more tap installs. No offer at all in fifteen seconds (Chrome not ready, or not willing): a short
- * note says where Chrome's own menu has it. iPhones keep their guide, the only way there.
+ * note says where the browser's own menu has it. iPhones keep their guide, the only way there.
+ *
+ * And Chrome never offers an app that is already on the phone (the owner of «سلطان العطور», 6 Nov
+ * 2026: installed on 3 Nov, then a tap in vain in Chrome and in Brave for days). So a tap Chrome has
+ * not answered asks first: this browser opened as the app before (a word it keeps), or the server saw
+ * this account open the app on an Android phone with this screen (actions-pwa) — then the note says
+ * at once that Pointili is already there, and where to find it.
  */
 let waiting = false;
 let late = false;
 let none = false;
+let already = false;
 const TAP_MS = 4500;
 const WAIT_MS = 15000;
-export type InstallStage = "idle" | "waiting" | "ready" | "none";
-const stage = (): InstallStage => (waiting ? "waiting" : late && deferred ? "ready" : none ? "none" : "idle");
+export type InstallStage = "idle" | "waiting" | "ready" | "none" | "already";
+const stage = (): InstallStage => (waiting ? "waiting" : late && deferred ? "ready" : already ? "already" : none ? "none" : "idle");
 
 /** Where a tap on an install button stands: waiting for Chrome, ready for one more tap, or nothing came. */
 export function useInstallStage(): InstallStage {
@@ -193,10 +221,37 @@ export function useInstallStage(): InstallStage {
   );
 }
 
-/** The note «Chrome is not ready», put away by a tap. */
+/** The note at the foot («not ready» or «already on your phone»), put away by a tap. */
 export function dismissInstallNote() {
   none = false;
+  already = false;
   notify();
+}
+
+/** A note at the foot for a while, then gone by itself. */
+let noteTimer = 0;
+function showNote(kind: "none" | "already") {
+  none = kind === "none";
+  already = kind === "already";
+  notify();
+  window.clearTimeout(noteTimer);
+  noteTimer = window.setTimeout(dismissInstallNote, kind === "already" ? 14000 : 9000);
+}
+
+/** What browser this is, said short, for the counts of a tap Chrome never answered. */
+function browserSaid(): string {
+  const ua = navigator.userAgent;
+  return [
+    (navigator as Navigator & { brave?: unknown }).brave ? "brave" : null,
+    /; wv\)/.test(ua) ? "webview" : null,
+    /GSA\//.test(ua) ? "google-app" : null,
+    /SamsungBrowser|EdgA|OPR|YaBrowser|MiuiBrowser|HeyTapBrowser|UCBrowser|Firefox/.exec(ua)?.[0] ?? null,
+    `chrome ${/Chrome\/(\d+)/.exec(ua)?.[1] ?? "?"}`,
+    "getInstalledRelatedApps" in navigator ? "rel" : "no-rel",
+    `${screen.width}x${screen.height}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /** Android's tap on any install button: Chrome's dialog now, or as soon as Chrome offers it. */
@@ -206,23 +261,42 @@ export async function tapInstall(where: string): Promise<void> {
     return;
   }
   if (waiting) return;
+  // this browser opened as the installed app before: it is on this phone
+  if (appHereLocally()) {
+    signal("pwa_here", `${where} · local`);
+    showNote("already");
+    return;
+  }
   signal("pwa_wait", where);
   waiting = true;
   late = false;
   none = false;
+  already = false;
   notify();
   const t0 = Date.now();
+  let onPhone = false;
   const came = await new Promise<boolean>((resolve) => {
+    let done = false;
     const check = () => {
       if (deferred) finish(true);
     };
     const id = window.setTimeout(() => finish(false), WAIT_MS);
     function finish(ok: boolean) {
+      if (done) return;
+      done = true;
       window.clearTimeout(id);
       listeners.delete(check);
       resolve(ok);
     }
     listeners.add(check);
+    // meanwhile: has this account opened the app on a phone with this screen? Then Chrome will not offer
+    void appOnThisPhone(`${screen.width}x${screen.height}`)
+      .then((yes) => {
+        if (!yes || deferred) return;
+        onPhone = true;
+        finish(false);
+      })
+      .catch(() => {});
   });
   waiting = false;
   if (came && Date.now() - t0 < TAP_MS) {
@@ -236,13 +310,13 @@ export async function tapInstall(where: string): Promise<void> {
     notify();
     return;
   }
-  none = true;
-  signal("pwa_none", where);
-  notify();
-  window.setTimeout(() => {
-    none = false;
-    notify();
-  }, 9000);
+  if (onPhone) {
+    signal("pwa_here", `${where} · account`);
+    showNote("already");
+    return;
+  }
+  signal("pwa_none", `${where} · ${browserSaid()}`);
+  showNote("none");
 }
 
 /**
