@@ -5,6 +5,7 @@ import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
 import { FirstGift } from "@/components/FirstGift";
 import { LinksTip } from "@/components/LinksTip";
+import { NewTip } from "@/components/NewTip";
 import { ResetTip } from "@/components/ResetTip";
 import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
@@ -94,9 +95,12 @@ export default async function ShopHome() {
   const offerNote = !firstGift && !logoTip && !grant && offer && (served || offerLastDay) && !seen.includes("offer");
   // the new way to give a tampon (a link, for the customers who buy online): said once, when nothing else is
   const linksTip = !firstGift && !logoTip && !grant && !offerNote && !news && !seen.includes("links_tip");
+  // what is new for every owner (6 Nov 2026: «شكون رجع؟», a customer removed): said once, after the links'
+  // note, to a shop that has customers (to a shop with none yet, there is nobody to look back on)
+  const newTip = served && !firstGift && !logoTip && !grant && !offerNote && !news && !linksTip && !seen.includes("new_insights");
   // the card's clock (6 Nov 2026): said once, after the links' note, to a shop with no clock set yet
   // only once the founder has turned the clock on for every shop (off, no owner hears of it)
-  const resetTip = !!shop.clock_on && !firstGift && !logoTip && !grant && !offerNote && !news && !linksTip && !shop.reset_days && !shop.store_on && !seen.includes("reset_tip");
+  const resetTip = !!shop.clock_on && !firstGift && !logoTip && !grant && !offerNote && !news && !linksTip && !newTip && !shop.reset_days && !shop.store_on && !seen.includes("reset_tip");
   const first = (me.name ?? "").split(" ")[0];
   // the trial's line only when it matters: its last two days, or once it is over
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
@@ -287,8 +291,9 @@ export default async function ShopHome() {
       <NewsPopup news={firstGift || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
       {/* Pointili on the home screen, asked once where Android's Chrome offers it — never over another note */}
       <LinksTip who={me.id} show={linksTip} />
+      <NewTip who={me.id} show={newTip} />
       <ResetTip who={me.id} show={resetTip} />
-      <InstallPopup where="home" who={shop.id} show={served && !firstGift && !logoTip && !offerNote && !grant && !news && !linksTip && !resetTip && !seen.includes("install")} />
+      <InstallPopup where="home" who={shop.id} show={served && !firstGift && !logoTip && !offerNote && !grant && !news && !linksTip && !newTip && !resetTip && !seen.includes("install")} />
       {/* and offered all along, floating over «آخر حركة» clear of «شوف الكل», once a customer came */}
       {served && <InstallFab where="home" lift="4rem" />}
     </main>

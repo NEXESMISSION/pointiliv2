@@ -360,6 +360,14 @@ export const t = {
   customerRestore: "رجّعلو {n}",
   customerWasReset: "الكارط متاعو رجعت للصفر",
   customerRestored: "رجعولو تامبوناتو",
+  // what is new for every owner (6 Nov 2026), said once on the home: «شكون رجع؟» and a customer removed
+  newTitle: "زدنالك حاجتين جداد",
+  newBody: "باش تعرف حرفاءك خير، وتخلّي الليستة نظيفة:",
+  newInsights: "شكون رجع؟",
+  newInsightsSub: "قدّاش من حريف رجعلك، شكون بدا يغيب، والأوفى عندك",
+  newRemove: "تنجم تنحّي حريف",
+  newRemoveSub: "في «الحرفاء»: حلّ الحريف، وتحت لقاها «نحّي الحريف»",
+  newGo: "نشوف شكون رجع",
   pushResetTitle: "{shop}: الكارط متاعك ترجع للصفر {when}",
   pushResetBody: "عندك {n} عليها. تعدّى خوذ تامبون باش تحافظ عليهم.",
   // the owner takes a customer off the list

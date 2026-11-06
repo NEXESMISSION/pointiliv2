@@ -23,7 +23,7 @@ const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: 
 for (const ip of ["local", "::1", "127.0.0.1"]) await admin.rpc("forget_tries", { p_key: `login-ip:${ip}` });
 const PASS = "clock-e2e-2026";
 // every one-time note but the clock's: the home shows that one and nothing else
-const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "fix_tip", "first_scan", "first_gift", "mission", "links_tip"];
+const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "fix_tip", "first_scan", "first_gift", "mission", "links_tip", "new_insights"];
 const DAY = 86_400_000;
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const made = [];
