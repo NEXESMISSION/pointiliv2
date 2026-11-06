@@ -1143,6 +1143,12 @@ export const t = {
   // Pointili on the phone's home screen (Android offers it)
   installApp: "حطّ Pointili في تليفونك",
   installAppHint: "تحلّها من الشاشة كيما أي أبليكاسيون",
+  // Android's tap before Chrome is ready (lib/pwa: tapInstall): it waits, then one more tap, or a word on Chrome's menu
+  installWaiting: "لحظة… Chrome يحضّر",
+  installReady: "جاهز! انقر باش تحطّو",
+  installNoneTitle: "Chrome مازال ما حضّرش التثبيت",
+  installNoneBody: "عاود بعد شوية، ولا من قائمة Chrome فوق اختار",
+  installNoneWord: "«Installer l’application»",
   // in Facebook's or Instagram's own browser: the phone's browser keeps the account, and installs
   openOutside: "حلّ Pointili في {browser}",
   openOutsideHint: "هكا تلقاها ديما، وتنجم تحطّها في تليفونك",

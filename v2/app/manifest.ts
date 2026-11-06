@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE } from "@/lib/seo";
 
 /**
  * Pointili as an app on the phone (Android's install, iOS's «Add to Home
@@ -34,6 +35,9 @@ export default function manifest(): MetadataRoute.Manifest {
       { name: "سكاني الكود", short_name: "سكاني", url: "/scan", icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }] },
       { name: "ورّي الكود متاع المحل", short_name: "الكود", url: "/shop/qr", icons: [{ src: "/icon-192.png", sizes: "192x192", type: "image/png" }] },
     ],
+    // the app itself, so a page can ask Chrome whether it is already on this phone (lib/pwa:
+    // getInstalledRelatedApps) — the install buttons then step aside; never preferred over the site
+    related_applications: [{ platform: "webapp", url: `${SITE}/manifest.webmanifest` }],
     prefer_related_applications: false,
   };
 }

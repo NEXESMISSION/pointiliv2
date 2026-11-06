@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AndroidInstall } from "@/components/AndroidInstall";
+import { InstallNone } from "@/components/InstallNone";
 import { startPwa } from "@/lib/pwa";
 
 /**
@@ -13,5 +14,11 @@ import { startPwa } from "@/lib/pwa";
  */
 export function Pwa() {
   useEffect(() => startPwa(), []);
-  return <AndroidInstall />;
+  return (
+    <>
+      <AndroidInstall />
+      {/* an install tap Chrome never answered: where its own menu has it (components/InstallNone) */}
+      <InstallNone />
+    </>
+  );
 }
