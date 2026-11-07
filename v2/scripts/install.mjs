@@ -77,8 +77,8 @@ const offerScript = ({ installed, appHere }) => {
   };
   if (installed) navigator.getInstalledRelatedApps = async () => [{ platform: "webapp", url: `${location.origin}/manifest.webmanifest` }];
 };
-async function phone({ installed = false, appHere = false, signedIn = true, size = { width: 390, height: 844 } } = {}) {
-  const ctx = await browser.newContext({ viewport: size, screen: size, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN", userAgent: UA });
+async function phone({ installed = false, appHere = false, signedIn = true, size = { width: 390, height: 844 }, ua = UA } = {}) {
+  const ctx = await browser.newContext({ viewport: size, screen: size, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "ar-TN", userAgent: ua });
   await ctx.addInitScript(offerScript, { installed, appHere });
   const page = await ctx.newPage();
   if (signedIn) {
@@ -154,7 +154,7 @@ try {
   check("…its button is the app itself, a download", (await apk.getAttribute("href")) === "/pointili.apk" && (await apk.getAttribute("download")) === "Pointili.apk");
   const got = await page.request.get(`${BASE}/pointili.apk`);
   const body = await got.body();
-  check("…and the site hands over a real Android app (a zip with its manifest)", got.ok() && body.length > 100_000 && body.subarray(0, 2).toString() === "PK" && body.includes(Buffer.from("AndroidManifest.xml")), { status: got.status(), bytes: body.length });
+  check("…and the site hands over a real Android app (a zip with its manifest)", got.ok() && body.length > 20_000 && body.subarray(0, 2).toString() === "PK" && body.includes(Buffer.from("AndroidManifest.xml")), { status: got.status(), bytes: body.length });
   await shot(page, "3-home-none");
   await page.getByRole("button", { name: "فهمت" }).click();
   await page.waitForTimeout(300);
@@ -237,6 +237,28 @@ try {
   await second.page.waitForTimeout(500);
   c = await counts(second.page);
   check("…and installs when Chrome offers", c.prompted === 1 && c.guide === 0, c);
+
+  console.log("\nInside Pointili's own Android app, and inside another app's web view");
+  // the app (android/): Android's WebView, its user agent ending in PointiliApp/2
+  const WV = "Mozilla/5.0 (Linux; Android 14; Pixel 8; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/141.0.0.0 Mobile Safari/537.36";
+  const inApp = await phone({ ua: `${WV} PointiliApp/2` });
+  await open(inApp.page, "/shop");
+  check("in the app: no install button on the home", (await inApp.page.locator(ICON).count()) === 0);
+  check("…no «open in Chrome» either", (await inApp.page.getByText("ابعثها لروحك في واتساب").count()) === 0);
+  await open(inApp.page, "/shop/settings");
+  check("…nor a line in «المحل»", (await inApp.page.getByRole("button", { name: /حطّ Pointili في تليفونك/ }).count()) === 0);
+  const appVisitor = await inApp.page.evaluate(() => localStorage.getItem("pt_v"));
+  await inApp.page.waitForTimeout(31000);
+  const { data: appVisits } = await admin.from("visits").select("standalone").eq("visitor", appVisitor);
+  check("…and its visits are counted as the app", (appVisits ?? []).length > 0 && appVisits.every((v) => v.standalone), appVisits);
+  await shot(inApp.page, "7-in-the-app");
+  // another app's web view (a Facebook ad opened in a browser that did not say Facebook, 7 Nov 2026)
+  const other = await phone({ ua: WV, signedIn: false });
+  await open(other.page, "/");
+  check("in another app's web view: no install offered", (await other.page.getByRole("button", { name: /حطّ Pointili في تليفونك/ }).count()) === 0);
+  const ownerThere = await phone({ ua: WV });
+  await open(ownerThere.page, "/shop");
+  check("…and the owner there is shown the way out (WhatsApp to himself, or his browser)", await ownerThere.page.getByText("ابعثها لروحك في واتساب").isVisible());
 } catch (e) {
   failed.push(`crashed: ${e.message}`);
   console.log(`  ✗ crashed: ${e.message}`);

@@ -21,7 +21,15 @@ const notify = () => listeners.forEach((l) => l());
 /** Opened from the home screen (the installed app), not from the browser. */
 export function standalone(): boolean {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true || inOurApp();
+}
+
+/**
+ * Inside Pointili's own Android app (android/webapp: the site in Android's WebView, which says
+ * «PointiliApp» in its user agent): already installed — no install button, no «open in Chrome».
+ */
+export function inOurApp(): boolean {
+  return typeof navigator !== "undefined" && /PointiliApp\//.test(navigator.userAgent);
 }
 
 const APP_HERE = "pl-app-here";
@@ -338,9 +346,15 @@ export async function tapInstall(where: string): Promise<void> {
  * installed from it, and the account stays shut inside that app — the next
  * day, in Chrome, the owner is a stranger. (2026-10-07: 90% of the ad's
  * visits came this way, and 21 of the 27 shops never came back.)
+ *
+ * And any Android app's own web view («; wv)» in its user agent): on 7 Nov 2026 a visitor from the
+ * ad came through one that did not say Facebook, waited for an install that cannot come there, and
+ * was offered a download it cannot take. Pointili's own app is the one web view that is at home.
  */
 export function inAppBrowser(): boolean {
-  return typeof navigator !== "undefined" && /FBAN|FBAV|FB_IAB|Instagram/i.test(navigator.userAgent);
+  if (typeof navigator === "undefined" || inOurApp()) return false;
+  const ua = navigator.userAgent;
+  return /FBAN|FBAV|FB_IAB|Instagram/i.test(ua) || (/Android/i.test(ua) && /; wv\)/.test(ua));
 }
 
 export const isIphone = (): boolean => typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);

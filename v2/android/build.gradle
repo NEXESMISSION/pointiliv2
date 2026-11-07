@@ -1,0 +1,17 @@
+// Pointili for Android, the site in Android's own WebView: no Chrome, no Play services, nothing else on the phone needed.
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.9.1'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}

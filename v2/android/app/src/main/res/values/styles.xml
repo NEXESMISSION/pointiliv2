@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="canvas">#F4F3F9</color>
+    <!-- the site's own ground colour from the first frame, no white flash; light bars with dark icons -->
+    <style name="Pointili" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/canvas</item>
+        <item name="android:colorPrimary">@color/canvas</item>
+        <item name="android:colorPrimaryDark">@color/canvas</item>
+        <item name="android:colorAccent">#6C47FF</item>
+        <item name="android:statusBarColor">@color/canvas</item>
+        <item name="android:navigationBarColor">@color/canvas</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

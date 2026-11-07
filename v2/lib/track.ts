@@ -136,6 +136,8 @@ function arrival(): Record<string, string | boolean | null> {
 
 /** Opened as the installed app (home screen), not in a browser tab. */
 function standaloneNow(): boolean {
+  // Pointili's own Android app (android/webapp) says so in its user agent: it is the app, not a browser tab
+  if (typeof navigator !== "undefined" && /PointiliApp\//.test(navigator.userAgent)) return true;
   return typeof matchMedia === "function" && (matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: minimal-ui)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
 }
 
