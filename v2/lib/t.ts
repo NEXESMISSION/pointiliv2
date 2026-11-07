@@ -310,6 +310,12 @@ export const t = {
   wizResetOff: "لا: التامبونات يقعدو ديما في الكارط متاعو.",
   wizResetEx: "كان ما خذاش تامبون {days}، الكارط ترجع للصفر. يبدا يحسب من اليوم للكل، والكادوات اللي ربحهم يقعدولو.",
   resetNo: "لا",
+  // the first card's clock question, said plainly on every phone, the shortest too (7 Nov 2026, the founder:
+  // «make sure … they understand it when creating the card»): an example, and off unless the owner picks days
+  firstResetRule: "كان الحريف ما جاش {days}، الكارط ترجع للصفر.",
+  firstResetEg: "مثال: {rule}",
+  firstResetOff: "اختياري، ومطفي حتى تشعلو انت: مع «لا» التامبونات يقعدو ديما.",
+  firstResetOn: "يشوف في الكارط متاعو قدّاش بقالو، والكادوات اللي ربحهم يقعدولو. تنجم تبدّلو ولا تطفيه وقت ما تحب.",
   wizResetOther: "ولا اكتب الأيام",
   wizResetRange: "من 7 لـ 365",
   resetToday: "اليوم",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Check, ChevronRight, Pencil } from "lucide-react";
+import { Check, ChevronRight, Hourglass, Pencil } from "lucide-react";
 import { saveCard, setShopLogo } from "@/app/actions";
 import { setStampLogo } from "@/app/shop/card/actions";
 import { HelpButton, type HelpSettings } from "@/components/Help";
@@ -187,7 +187,8 @@ export function CardFirst({ shop, help, wheel = false, clock = false }: { shop: 
         : step === WAIT
           ? { title: t.firstCardWait, sub: waitSays(gap) }
           : step === RESET
-            ? { title: t.wizResetQ, sub: reset ? fill(t.wizResetEx, { days: daysN(reset) }) : t.wizResetOff }
+            ? // no quiet line here: the box under the days says it all, on the shortest phones too (where that line hides)
+              { title: t.wizResetQ, sub: undefined }
             : { title: t.morphLookTitle, sub: t.firstCardLater };
 
   return (
@@ -386,6 +387,15 @@ export function CardFirst({ shop, help, wheel = false, clock = false }: { shop: 
               />
               <span className={`text-[0.75rem] ${resetBad ? "font-semibold text-coral" : "text-faint"}`}>{t.wizResetRange}</span>
             </label>
+            {/* what the answer means, under it and following it: with «لا», an example (30 days) and that it stays
+                off unless the owner picks days; with days, the rule itself, what the customer sees and what is kept */}
+            <div aria-live="polite" className="mt-[1.6dvh] flex items-start gap-2.5 rounded-[1.125rem] bg-surface px-3.5 py-2.5 text-[0.8125rem] leading-snug shadow-card">
+              <Hourglass className="mt-0.5 size-4 shrink-0 text-brand" strokeWidth={2.4} aria-hidden />
+              <p className="min-w-0 text-pretty">
+                <span className="block font-bold text-ink">{reset ? fill(t.firstResetRule, { days: daysN(reset) }) : fill(t.firstResetEg, { rule: fill(t.firstResetRule, { days: daysN(30) }) })}</span>
+                <span className="mt-0.5 block text-body">{reset ? t.firstResetOn : t.firstResetOff}</span>
+              </p>
+            </div>
           </>
         ) : (
           <>
