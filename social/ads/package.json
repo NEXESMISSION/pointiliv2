@@ -1,0 +1,16 @@
+{
+  "name": "pointili-ads",
+  "private": true,
+  "type": "module",
+  "description": "Pointili's video ads: scenes in HTML, moved by GSAP, filmed frame by frame in Chrome, sound made in code, mixed by ffmpeg",
+  "scripts": {
+    "film": "node render.mjs",
+    "voice": "node voice.mjs",
+    "scripts": "node scripts.mjs"
+  },
+  "dependencies": {
+    "gsap": "3.13.0",
+    "playwright-core": "1.63.0",
+    "@huggingface/transformers": "3.7.2"
+  }
+}
