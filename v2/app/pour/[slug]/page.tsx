@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Check, Gift, QrCode, Stamp } from "lucide-react";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
 import { nicheFacts } from "@/lib/niches";
-import { faqJsonLd, nicheBySlug, NICHES, orgJsonLd, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
+import { faqJsonLd, GIFT, nicheBySlug, NICHES, orgJsonLd, PRICE_MONTH, PRICE_YEAR, PRICES, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 import { t } from "@/lib/t";
 
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const f = nicheFacts(n);
   return {
     title: `Carte de fidélité pour ${n.fr} en Tunisie — كارط فيديليتي ${n.tn}`,
-    description: `Carte de fidélité digitale pour ${n.fr} en Tunisie : vos clients cumulent des tampons sur leur téléphone, sans application, et reçoivent ${f.giftsFr[0]} après ${f.goal} visites. ${PRICE} DT par an. — كارط فيديليتي ${n.tn} في تونس.`,
+    description: `Carte de fidélité digitale pour ${n.fr} en Tunisie : vos clients cumulent des tampons sur leur téléphone, sans application, et reçoivent ${f.giftsFr[0]} après ${f.goal} visites. ${PRICE_MONTH} DT par mois ou ${PRICE_YEAR} DT par an. — كارط فيديليتي ${n.tn} في تونس.`,
     alternates: { canonical: `${SITE}/pour/${n.slug}` },
     openGraph: { title: `Carte de fidélité pour ${n.fr} — Pointili Tunisie`, url: `${SITE}/pour/${n.slug}`, images: [{ url: "/og.jpg", width: 1200, height: 630 }] },
   };
@@ -42,8 +42,8 @@ export default async function NichePage({ params }: { params: Promise<{ slug: st
     { q: "Combien de tampons faut-il prévoir ?", a: `${f.rhythmFr} Nous proposons ${f.goal} tampons, modifiables à tout moment (de 3 à 30).` },
     { q: "شنوّة الكادو؟", a: `اللي تحب: ${f.gifts.join("، ")}… وكي يكمّل الحريف الكارط، الكادو يستنّاه في تليفونو كيما بون، والكارط تبدا من جديد. ينجم يلمّ أكثر من كادو.` },
     { q: "Quelle récompense offrir ?", a: `Celle que vous voulez : ${f.giftsFr.join(", ")}… Quand la carte est complète, le cadeau attend dans le téléphone du client comme un bon, et la carte recommence à zéro. Il peut en cumuler plusieurs.` },
-    { q: "قدّاش يسوى؟", a: `${PRICE} د في العام للمحل (${PRICE_MONTH} د في الشهر)، أبونمان واحد والكل داخل.` },
-    { q: "Combien ça coûte ?", a: `${PRICE} DT par an et par commerce (${PRICE_MONTH} DT par mois), un seul abonnement, tout compris.` },
+    { q: "قدّاش يسوى؟", a: `للمحل: ${PRICES.tn}، والكل داخل. ${GIFT.tn}` },
+    { q: "Combien ça coûte ?", a: `Par commerce : ${PRICES.fr}, tout compris. ${GIFT.fr}` },
   ];
   const crumbs = {
     "@context": "https://schema.org",

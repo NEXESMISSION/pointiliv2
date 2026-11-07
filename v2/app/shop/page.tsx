@@ -11,7 +11,8 @@ import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
 import { InstallFab, InstallPopup, OpenOutside } from "@/components/InstallApp";
 import { Mark } from "@/components/Owner";
-import { OfferPopup, PayBanner, TrialBanner, type Pay } from "@/components/Pay";
+import { OfferPopup, PayBanner, RenewBanner, TrialBanner, type Pay } from "@/components/Pay";
+import { RENEW_DAYS } from "@/lib/plans";
 import { ShopMark } from "@/components/ShopMark";
 import { PlanOn } from "@/components/PlanOn";
 import { RecentList } from "@/components/RecentList";
@@ -106,6 +107,10 @@ export default async function ShopHome() {
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const lastDays = !!pay?.trial_until && Date.parse(pay.trial_until) - Date.now() < 48 * 3600_000;
   const trialLine = !paid && !!pay && !pay.exempt && !!pay.trial_until && pay.trial_started !== false && (!!pay.shut || lastDays);
+  // paid, and a few days from its end (a month goes fast): when, and «جدّد»
+  // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
+  const renewLeft = paid && !pay?.exempt && pay?.paid_until ? Date.parse(pay.paid_until) - Date.now() : null;
+  const renewLine = renewLeft !== null && renewLeft < RENEW_DAYS * 86_400_000;
   const recent = home?.recent ?? [];
   const held = home?.held ?? [];
   const lately = recent.length > 0 || held.length > 0;
@@ -145,6 +150,7 @@ export default async function ShopHome() {
       {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-semibold text-coral">{t.pausedBanner}</p>}
       {/* the trial's clock and a call, until the year is turned on (the founder's own and the tests: just the price) */}
       {!paid && pay && (pay.exempt || !pay.trial_until ? <PayBanner pay={pay} offer={offer} /> : trialLine ? <TrialBanner pay={pay} phone={help.phone} from={help.from} /> : null)}
+      {renewLine && <RenewBanner date={new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", timeZone: "Africa/Tunis" }).format(new Date(pay!.paid_until!))} last={renewLeft! < 86_400_000} />}
       {/* in Facebook's own browser: the way out to the phone's browser, where Pointili stays */}
       <OpenOutside where="home" look="line" className="mt-1" />
 

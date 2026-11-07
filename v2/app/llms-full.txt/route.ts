@@ -1,4 +1,4 @@
-import { FAQ, giftsOf, NICHES, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
+import { FAQ, GIFT, giftsOf, NICHES, PRICES, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 import { t } from "@/lib/t";
 
@@ -10,7 +10,7 @@ export async function GET() {
   const text = `# Pointili — carte de fidélité digitale en Tunisie / كارط فيديليتي ديجيتال في تونس
 
 Site: ${SITE}
-Prix / السوم: un seul abonnement, ${PRICE} TND par an et par commerce, soit ${PRICE_MONTH} TND par mois (${PRICE} د في العام، يعني ${PRICE_MONTH} د في الشهر)
+Prix / السوم, par commerce, tout compris : ${PRICES.fr}. ${GIFT.fr} (${PRICES.tn}. ${GIFT.tn})
 Contact: ${supportPhone ? `+${supportPhone} (téléphone, WhatsApp)` : SITE}
 À ne pas confondre avec Pointili, l'application algérienne de pointage (pointili.com, pointili.dz) : ce Pointili-ci est la carte de fidélité tunisienne de ${SITE}.
 

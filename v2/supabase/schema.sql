@@ -83,6 +83,15 @@ create table if not exists public.shops (
 -- the year paid for: until when (null: not paid yet); the offer's clock starts the first time the owner sees it
 alter table public.shops add column if not exists paid_until timestamptz;
 alter table public.shops add column if not exists offer_at timestamptz;
+-- the prices (the founder, 7 Nov 2026): a month 35 د, six months 120, a year 180 (v2/lib/plans.ts; the
+-- offer: offer_end, below). A shop that paid before keeps its year at 120: old_price, set once — the day the
+-- column came — for every shop paid until then, never for a shop that pays from then on
+do $$ begin
+  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'shops' and column_name = 'old_price') then
+    alter table public.shops add column old_price boolean not null default false;
+    update public.shops set old_price = true where paid_until is not null;
+  end if;
+end $$;
 
 -- the trial: a shop works this many days from its opening, then waits for its
 -- year (paid_until, turned on by the founder). The shops opened before
@@ -104,8 +113,8 @@ alter table public.shops add column if not exists wheel_allowed boolean not null
 alter table public.people add column if not exists made_by_shop uuid references public.shops (id) on delete set null;
 alter table public.shops alter column trial_first set default true;
 
--- an owner's payment: the way they chose, then the founder's word (paid or not);
--- 15 months for the price of 12 when it came within 48 hours of opening the shop
+-- an owner's payment: the plan and the way they chose, then the founder's word (paid or not);
+-- two months more on six months or a year when it came within the trial's first 3 days (pay_request)
 create table if not exists public.payments (
   id          uuid primary key default gen_random_uuid(),
   shop_id     uuid not null references public.shops (id) on delete cascade,
@@ -1130,6 +1139,16 @@ language sql stable security definer set search_path = '' as $$
                                       where m.shop_id = s.id and m.kind = 'stamp' and c.user_id <> s.owner_id)
 $$;
 
+-- the offer's end: two months more on six months or a year, paid within the trial's first 3 days (the
+-- founder, 7 Nov 2026 — before, 3 months on the year within 48 hours of offer_at). Null: no offer — a shop
+-- that paid before (old_price), or a trial whose clock waits for its first customer. Days the founder adds
+-- to a trial lengthen the trial, never the offer
+create or replace function public.offer_end(s public.shops) returns timestamptz
+language sql stable security definer set search_path = '' as $$
+  select case when s.old_price or not public.trial_started(s) then null
+    else least(public.trial_start(s) + interval '3 days', public.trial_end(s)) end
+$$;
+
 -- every shop's trial end, for the founder's morning digest (the service's key only)
 create or replace function public.trial_ends() returns table (id uuid, ends timestamptz, started boolean)
 language sql stable security definer set search_path = '' as $$
@@ -1766,8 +1785,9 @@ begin
     'plan', jsonb_build_object(
       'paid_until', s.paid_until,
       'paid', s.paid_until is not null and s.paid_until > now(),
-      'offer_until', s.offer_at + interval '48 hours',
-      'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
+      'old_price', s.old_price,
+      'offer_until', public.offer_end(s),
+      'offer', coalesce((s.paid_until is null or s.paid_until <= now()) and now() <= public.offer_end(s), false),
       'log', coalesce((select jsonb_agg(jsonb_build_object('id', l.id, 'kind', l.kind, 'months', l.months, 'until', l.until_at, 'note', l.note, 'method', l.method, 'amount', l.amount,
                                                            'shown', l.show_owner, 'seen', l.seen_at, 'at', l.created_at) order by l.created_at desc)
                        from (select * from public.plan_log where shop_id = s.id order by created_at desc limit 20) l), '[]'::jsonb),
@@ -2292,8 +2312,10 @@ begin
 end $$;
 
 -- ═══ paying for the year ═══════════════════════════════════════════════════
--- the shop's year: paid until when, the offer's end (48 hours from the first
--- time the owner sees it: 3 more months), and the last payment asked
+-- the shop's subscription: paid until when, its prices (old_price: the year at
+-- 120, kept by the shops that paid before 7 Nov 2026), the offer's end (the
+-- trial's first 3 days: 2 months more on six months or a year), and the last
+-- payment asked
 create or replace function public.my_payment() returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare v_uid uuid := auth.uid(); s public.shops%rowtype; y public.payments%rowtype;
@@ -2301,7 +2323,7 @@ begin
   if v_uid is null then return null; end if;
   select * into s from public.shops where owner_id = v_uid;
   if s.id is null then return null; end if;
-  -- the offer's 48 hours start the first time the owner's home asks — once the trial's clock runs
+  -- the first time the owner's home asked once the trial's clock ran (the founder's funnel reads it)
   if s.offer_at is null and (s.paid_until is null or s.paid_until < now()) and public.trial_started(s) then
     update public.shops set offer_at = now() where id = s.id returning * into s;
   end if;
@@ -2311,8 +2333,9 @@ begin
     'paid', s.paid_until is not null and s.paid_until > now(),
     'grant', (select jsonb_build_object('id', l.id, 'kind', l.kind, 'months', l.months, 'until', l.until_at, 'note', l.note, 'method', l.method, 'amount', l.amount)
               from public.plan_log l where l.shop_id = s.id and l.show_owner and l.seen_at is null order by l.created_at desc limit 1),
-    'offer_until', s.offer_at + interval '48 hours',
-    'offer', (s.paid_until is null or s.paid_until <= now()) and s.offer_at is not null and now() <= s.offer_at + interval '48 hours',
+    'old_price', s.old_price,
+    'offer_until', public.offer_end(s),
+    'offer', coalesce((s.paid_until is null or s.paid_until <= now()) and now() <= public.offer_end(s), false),
     -- the trial's end (its clock on the owner's home), and whether it is over
     'trial_until', public.trial_end(s),
     -- a clock that waits for the first customer has not started yet: the home says so instead of a countdown
@@ -2322,23 +2345,30 @@ begin
     'last', case when y.id is null then null else jsonb_build_object('id', y.id, 'method', y.method, 'months', y.months, 'status', y.status, 'at', y.created_at) end);
 end $$;
 
--- the owner chose a way to pay and says it is sent: one waiting at a time
-create or replace function public.pay_request(p_method text) returns jsonb
+-- the owner chose a plan and a way to pay and says it is sent: one waiting at
+-- a time. The plan is its months (1, 6 or 12; a shop of the old price: 12),
+-- its price the list's (v2/lib/plans.ts), and the months it gives the gift's
+-- too when it came within the offer
+drop function if exists public.pay_request(text);
+create or replace function public.pay_request(p_method text, p_months int default 12) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare v_uid uuid := auth.uid(); s public.shops%rowtype; v_months int; v_id uuid;
+declare v_uid uuid := auth.uid(); s public.shops%rowtype; v_months int; v_amount int; v_id uuid;
 begin
   if v_uid is null then return public.err('not_signed_in'); end if;
   select * into s from public.shops where owner_id = v_uid;
   if s.id is null then return public.err('no_shop'); end if;
   if p_method is null or p_method not in ('card', 'd17', 'virement', 'versement', 'mandat', 'contact') then return public.err('invalid'); end if;
-  v_months := case when s.offer_at is not null and now() <= s.offer_at + interval '48 hours' then 15 else 12 end;
+  v_amount := case when s.old_price then case p_months when 12 then 120 end
+                   else case p_months when 1 then 35 when 6 then 120 when 12 then 180 end end;
+  if v_amount is null then return public.err('invalid'); end if;
+  v_months := p_months + case when p_months in (6, 12) and not s.old_price and now() <= public.offer_end(s) then 2 else 0 end;
   select id into v_id from public.payments where shop_id = s.id and status = 'pending' order by created_at desc limit 1;
   if v_id is null then
-    insert into public.payments (shop_id, method, months) values (s.id, p_method, v_months) returning id into v_id;
+    insert into public.payments (shop_id, method, months, amount) values (s.id, p_method, v_months, v_amount) returning id into v_id;
   else
-    update public.payments set method = p_method, created_at = now() where id = v_id;
+    update public.payments set method = p_method, months = v_months, amount = v_amount, created_at = now() where id = v_id;
   end if;
-  return jsonb_build_object('ok', true, 'id', v_id, 'months', v_months);
+  return jsonb_build_object('ok', true, 'id', v_id, 'months', v_months, 'amount', v_amount);
 end $$;
 
 -- the founder's list: every payment asked, the newest first, with the shop and its owner
@@ -4108,6 +4138,7 @@ begin
       'owner', jsonb_build_object('name', nullif(p.name, ''), 'phone', p.phone),
       'paid_until', s.paid_until, 'paid', s.paid_until is not null and s.paid_until > now(),
       'trial_end', public.trial_end(s), 'started', public.trial_started(s), 'shut', public.shut(s),
+      'old_price', s.old_price, 'offer_until', public.offer_end(s),
       'stamps', coalesce(st.stamps, 0), 'today', coalesce(st.today, 0), 'week', coalesce(st.week, 0),
       'customers', coalesce(st.customers, 0), 'real', coalesce(st.real, 0), 'last_at', st.last_at,
       'returning', coalesce(bk.returning, 0), 'gifts', coalesce(gf.gifts, 0), 'spark', sp.spark,
@@ -4209,7 +4240,8 @@ begin
         'stamp_gap', s.stamp_gap, 'stamp_logo', s.stamp_logo, 'paused', s.paused, 'created_at', s.created_at,
         'items_on', s.items_on, 'store_on', s.store_on, 'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed,
         'paid_until', s.paid_until, 'paid', s.paid_until is not null and s.paid_until > now(),
-        'trial_end', public.trial_end(s), 'started', public.trial_started(s), 'shut', public.shut(s), 'offer_at', s.offer_at),
+        'trial_end', public.trial_end(s), 'started', public.trial_started(s), 'shut', public.shut(s), 'offer_at', s.offer_at,
+        'old_price', s.old_price, 'offer_until', public.offer_end(s)),
       'owner', jsonb_build_object('id', p.id, 'name', nullif(p.name, ''), 'phone', p.phone, 'created_at', p.created_at),
       'origin', (select jsonb_build_object('at', v.started_at, 'source', v.source, 'medium', v.medium, 'campaign', v.campaign, 'content', v.content,
                   'landing', v.landing, 'referrer', v.referrer, 'device', v.device, 'os', v.os, 'browser', v.browser, 'city', v.city, 'fbclid', v.fbclid)
@@ -4657,7 +4689,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_news_save(text, text, text, text, text, uuid[], jsonb), public.admin_news_list(), public.admin_news(uuid),
   public.admin_news_set_active(uuid, boolean), public.admin_news_delete(uuid),
   public.customer_at(text), public.give_stamp(text, bigint), public.push_subscribe(text, text, text), public.push_unsubscribe(text),
-  public.my_payment(), public.pay_request(text), public.admin_payments(), public.admin_payment_decide(uuid, boolean),
+  public.my_payment(), public.pay_request(text, int), public.admin_payments(), public.admin_payment_decide(uuid, boolean),
   public.admin_guard(), public.admin_block(text, text, text, int), public.admin_unblock(text), public.set_wheel(boolean) to authenticated;
 grant execute on all functions in schema public to service_role;
 -- «تحميل البيانات» (its block above, before the revoke): the founder's switch, the owner's file

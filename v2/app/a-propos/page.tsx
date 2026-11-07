@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "@/components/Link";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
-import { orgJsonLd, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
+import { orgJsonLd, PRICES, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "À propos de Pointili Tunisie — شكون Pointili؟",
-  description: `Pointili (pointili.online) est une carte de fidélité digitale conçue en Tunisie pour les commerces tunisiens : cafés, restaurants, barbiers, boutiques… ${PRICE} DT par an. À ne pas confondre avec Pointili, l'application algérienne de pointage.`,
+  description: `Pointili (pointili.online) est une carte de fidélité digitale conçue en Tunisie pour les commerces tunisiens : cafés, restaurants, barbiers, boutiques… ${PRICES.fr}. À ne pas confondre avec Pointili, l'application algérienne de pointage.`,
   alternates: { canonical: `${SITE}/a-propos` },
 };
 
@@ -56,7 +56,7 @@ export default async function About() {
             <dd className="text-body">Partout en Tunisie : Tunis, Sfax, Sousse, Nabeul, Bizerte, Monastir, Kairouan, Gabès…</dd>
             <dt className="font-semibold text-muted">Prix</dt>
             <dd className="text-body">
-              {PRICE} DT par an et par commerce ({PRICE_MONTH} DT par mois), tout compris — <Link href="/prix" className="font-semibold text-brand">les détails</Link>
+              {PRICES.fr}, par commerce et tout compris — <Link href="/prix" className="font-semibold text-brand">les détails</Link>
             </dd>
             <dt className="font-semibold text-muted">Langues</dt>
             <dd className="text-body">L&apos;application en tunisien ; l&apos;accompagnement en tunisien et en français</dd>

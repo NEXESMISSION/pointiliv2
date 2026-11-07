@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import type { Pay } from "@/components/Pay";
 import { Counter } from "@/components/Counter";
+import { lapsed } from "@/lib/plans";
 import { getMe } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
 import { call } from "@/lib/supabase";
@@ -8,7 +10,7 @@ export const metadata = { title: "الكود", robots: { index: false } };
 
 /** The counter: the code, and the gifts to hand over, full screen — and, when the owner came here from the welcome on their home, the note about the code. */
 export default async function ShopQr({ searchParams }: { searchParams: Promise<{ welcome?: string; tip?: string }> }) {
-  const [me, { welcome, tip }, help] = await Promise.all([getMe(), searchParams, getHelp()]);
+  const [me, { welcome, tip }, help, pay] = await Promise.all([getMe(), searchParams, getHelp(), call<Pay | null>("my_payment").catch(() => null)]);
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
@@ -26,6 +28,7 @@ export default async function ShopQr({ searchParams }: { searchParams: Promise<{
       // number, the account under it (help.from: «shop» · number)
       phone={help.phone}
       from={help.from}
+      lapsed={lapsed(pay)}
       firstWaits={firstWaits}
     />
   );

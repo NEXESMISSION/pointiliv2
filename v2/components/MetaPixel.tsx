@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { drainPixel, pixel, pixelHere, pixelOnce, startPixel } from "@/lib/pixel";
-import { PRICE } from "@/lib/seo";
+import { PRICE_YEAR } from "@/lib/seo";
 
 /**
  * Facebook's pixel on the pages (lib/pixel). It starts on the first page that
@@ -22,7 +22,7 @@ export function MetaPixel({ id }: { id: string | null }) {
     if (last.current === path) return;
     last.current = path;
     pixel("PageView");
-    if (path === "/prix") pixel("ViewContent", { content_name: "prix", value: PRICE, currency: "TND" });
+    if (path === "/prix") pixel("ViewContent", { content_name: "prix", value: PRICE_YEAR, currency: "TND" });
     else if (path === "/guide" || path === "/faq") pixel("ViewContent", { content_name: path.slice(1) });
     else if (path === "/shop/new") pixelOnce("Lead");
     // the shop just made: our server told Facebook already (lib/meta) and left its event_id in the

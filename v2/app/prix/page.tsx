@@ -4,17 +4,24 @@ import { Check, Sparkles } from "lucide-react";
 import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
 import { Icon3D } from "@/components/ui";
-import { orgJsonLd, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
+import { perMonth, PLANS } from "@/lib/plans";
+import { GIFT, orgJsonLd, PRICES, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
-import { t } from "@/lib/t";
+import { fill, monthsSaid, t } from "@/lib/t";
 
 export const metadata: Metadata = {
-  title: `Prix — ${PRICE} DT par an (${PRICE_MONTH} DT/mois) · السوم: ${PRICE} د في العام`,
-  description: `Un seul abonnement : Pointili coûte ${PRICE} dinars par an et par commerce, soit ${PRICE_MONTH} DT par mois, tout compris. Paiement par D17, virement, versement ou mandat. — أبونمان واحد: ${PRICE} د في العام (${PRICE_MONTH} د في الشهر)، الكل داخل.`,
+  title: `Prix — ${PRICES.fr} · السوم: ${PRICES.tn}`,
+  description: `Pointili coûte ${PRICES.fr}, par commerce et tout compris. ${GIFT.fr} Paiement par D17, virement, versement ou mandat. — ${PRICES.tn}، الكل داخل.`,
   alternates: { canonical: `${SITE}/prix` },
 };
 
-/** One price, everything in it, and the four ways to pay — finished by a call or a WhatsApp. */
+/**
+ * The three lengths side by side (the founder, 7 Nov 2026): a month 35, six
+ * months 120, a year 180 — each with what a month comes to, the year marked
+ * the best — the same «everything included» under all three, the two months
+ * of the trial's first 3 days, and the four ways to pay, finished by a call or
+ * a WhatsApp.
+ */
 export default async function Prix() {
   const { supportPhone, social } = await getSettings();
   return (
@@ -25,34 +32,55 @@ export default async function Prix() {
         Prix de la carte de fidélité Pointili
       </p>
 
-      <section className="relative mt-6 overflow-hidden rounded-[2rem] bg-[linear-gradient(140deg,#7c4dff,#6c47ff_45%,#3f22c9)] p-7 text-white">
-        <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_0%_0%,rgb(255_255_255/0.25),transparent_60%)]" aria-hidden />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-[0.9375rem] font-semibold text-white/80">{t.payPlan}</p>
-            <p className="mt-1 flex items-end gap-2">
-              <span className="num text-[3.5rem] font-bold leading-none">{PRICE}</span>
-              <span className="pb-2 text-[1.125rem] font-bold">
-                {t.payCurrency} <span className="font-semibold text-white/80">{t.payPer}</span>
-              </span>
-            </p>
-            <p className="mt-1 text-[1rem] font-semibold text-white/85">
-              {`يعني ${PRICE_MONTH} د في الشهر · soit ${PRICE_MONTH} DT/mois`}
-            </p>
-          </div>
-          <Icon3D name="crown" size={64} />
-        </div>
-        <ul className="relative mt-5 space-y-2">
+      {/* the three lengths, in their order (a month, six months, a year), the year lit and marked the best;
+          each card in one language — the French is said in full under «En bref» */}
+      <ul className="mt-8 grid gap-4 sm:grid-cols-3 sm:gap-3">
+        {PLANS.map((p) => {
+          const best = p.id === "year";
+          return (
+            <li
+              key={p.id}
+              className={`relative flex flex-col rounded-[1.75rem] p-6 ${best ? "bg-[linear-gradient(140deg,#7c4dff,#6c47ff_45%,#3f22c9)] text-white shadow-[0_24px_50px_-28px_rgb(74_42_214/0.8)]" : "bg-surface shadow-card"}`}
+            >
+              {best && (
+                <span className="absolute -top-3 start-6 inline-flex items-center gap-1 rounded-full bg-mint px-3 py-1 text-[0.8125rem] font-bold text-white">
+                  <Sparkles className="size-3.5" /> {t.planBest}
+                </span>
+              )}
+              <p className={`text-[1.0625rem] font-bold ${best ? "text-white/90" : "text-body"}`}>{monthsSaid(p.months)}</p>
+              <p className="mt-2 flex items-end gap-1.5">
+                <span className={`num text-[3rem] font-bold leading-none ${best ? "" : "text-brand"}`}>{p.price}</span>
+                <span className="pb-1.5 text-[1.0625rem] font-bold">{t.payCurrency}</span>
+              </p>
+              <p className={`mt-1.5 text-[0.9375rem] font-semibold ${best ? "text-white/85" : "text-muted"}`}>{p.months === 1 ? t.planFree : fill(t.planPerMonth, { n: perMonth(p) })}</p>
+              {p.gift > 0 && (
+                <p className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-[0.8125rem] font-bold ${best ? "bg-white/20" : "bg-mint-soft text-mint"}`}>
+                  {t.payOfferPlus} في أوّل 3 أيّام
+                </p>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* what every length has in it */}
+      <section className="mt-4 flex items-start gap-4 rounded-[1.75rem] bg-surface p-6 shadow-card">
+        <ul className="min-w-0 flex-1 space-y-2">
           {[...t.payPerks, "اللوغو متاعك واللون متاعك على كارط كل حريف", "تبيع أونلاين؟ تامبونات بالرابط في واتساب", "تبدا في دقيقتين، من التليفون متاعك"].map((p) => (
             <li key={p} className="flex items-start gap-2.5 text-[1rem]">
-              <Check className="mt-1 size-4 shrink-0" strokeWidth={3} /> {p}
+              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-mint text-white">
+                <Check className="size-3" strokeWidth={3.5} />
+              </span>
+              {p}
             </li>
           ))}
         </ul>
-        <p className="relative mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-[0.9375rem] font-bold backdrop-blur">
-          <Sparkles className="size-4" /> كي تخلّص في 48 ساعة بعد ما تحلّ المحل: 3 شهور زايدين بلاش
-        </p>
+        <Icon3D name="crown" size={64} className="hidden shrink-0 sm:block" />
       </section>
+
+      <p className="mt-4 flex items-start gap-2.5 rounded-[1.25rem] bg-brand-soft px-5 py-4 text-[0.9375rem] font-bold leading-relaxed text-brand">
+        <Sparkles className="mt-1 size-4 shrink-0" /> {GIFT.tn}
+      </p>
 
       <section className="mt-10">
         <h2 className="text-[1.375rem] font-bold">كيفاش تخلّص</h2>
@@ -78,7 +106,7 @@ export default async function Prix() {
       <section className="mt-10 rounded-[1.25rem] bg-surface p-5 shadow-card" dir="ltr" lang="fr">
         <h2 className="text-[1.125rem] font-bold">En bref</h2>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted">
-          Pointili a un seul abonnement : {PRICE} dinars tunisiens par an et par commerce (soit {PRICE_MONTH} DT par mois), tout compris : clients illimités, tampons illimités, votre logo sur la carte, et notre accompagnement. Si vous payez dans les 48 heures après l&apos;ouverture de votre compte, vous recevez 3 mois offerts (15 mois pour le prix de 12). Paiement par D17, virement, versement ou mandat postal : appelez-nous ou écrivez-nous sur WhatsApp et on finalise ensemble.
+          Pointili coûte {PRICES.fr}, par commerce. Tout est compris dans chacun : clients illimités, tampons illimités, votre logo sur la carte, et notre accompagnement. {GIFT.fr} Paiement par D17, virement, versement ou mandat postal : appelez-nous ou écrivez-nous sur WhatsApp et on finalise ensemble.
         </p>
       </section>
 

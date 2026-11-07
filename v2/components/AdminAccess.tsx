@@ -6,6 +6,7 @@ import { adminPlan, adminTrial } from "@/app/actions";
 import type { BoardMore } from "@/app/admin/actions";
 import type { AccessShop } from "@/lib/board";
 import { PlanImage, type PlanShot } from "@/components/PlanImage";
+import { GIFT_MONTHS, planFirst, plansFor } from "@/lib/plans";
 import { daysN, fill, monthsSaid, t } from "@/lib/t";
 
 const TZ = "Africa/Tunis";
@@ -21,20 +22,33 @@ const METHODS = [
   { id: "versement", label: "Versement" },
   { id: "mandat", label: "Mandat" },
 ];
-const MONTHS = [1, 3, 6, 12, 15, 24];
+// besides the price list's lengths: months given with no money, or a length agreed apart
+const OTHER_MONTHS = [2, 3, 24];
 
 /**
  * The access: where it stands, and the founder's three moves once the owner
  * paid by hand or asked for time — turn the subscription on (how long, what
  * came in and how), add days of trial, or stop it. The subscription turned
  * on, its picture opens by itself, to send the owner on WhatsApp.
+ *
+ * The lengths are the shop's own price list (lib/plans.ts: a month 35, six
+ * months 120, a year 180 — or the year at 120 for a shop that paid before),
+ * each a tap that writes what came in; the two months of the offer ride on
+ * six months or a year, ticked by themselves while the shop's offer runs.
  */
 export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; plan?: BoardMore["plan"] | null; reload?: () => Promise<void> }) {
   const [mode, setMode] = useState<null | "plan" | "trial" | "end">(null);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [months, setMonths] = useState(12);
-  const [amount, setAmount] = useState<number | null>(120);
+  const plans = plansFor(shop.old_price);
+  // the offer still running for this shop (the trial's first 3 days, nothing paid): its two months, ticked
+  const [inOffer] = useState(() => !shop.paid && !!shop.offer_until && Date.parse(shop.offer_until) > Date.now());
+  const [base, setBase] = useState(() => planFirst(shop.old_price).months);
+  const [gift, setGift] = useState(inOffer);
+  const [amount, setAmount] = useState<number | null>(planFirst(shop.old_price).price);
+  const listed = plans.find((p) => p.months === base) ?? null;
+  const giftOn = gift && !!listed?.gift;
+  const months = base + (giftOn ? GIFT_MONTHS : 0);
   const [other, setOther] = useState("");
   const [method, setMethod] = useState<string | null>(null);
   const [show, setShow] = useState(true);
@@ -83,18 +97,39 @@ export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; p
           <div>
             <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanMonths}</span>
             <div className="flex flex-wrap gap-1.5">
-              {MONTHS.map((m) => (
-                <button key={m} type="button" onClick={() => setMonths(m)} className={chip(months === m)}>
+              {plans.map((p) => (
+                <button
+                  key={p.months}
+                  type="button"
+                  onClick={() => {
+                    setBase(p.months);
+                    setAmount(p.price);
+                    setOther("");
+                  }}
+                  className={chip(base === p.months)}
+                >
+                  {monthsSaid(p.months)} · {p.price} {t.payCurrency}
+                </button>
+              ))}
+              {OTHER_MONTHS.map((m) => (
+                <button key={m} type="button" onClick={() => setBase(m)} className={chip(base === m)}>
                   {monthsSaid(m)}
                 </button>
               ))}
             </div>
+            {!!listed?.gift && (
+              <label className="mt-2 flex items-center gap-2 text-[0.8438rem] font-semibold text-body">
+                <input type="checkbox" checked={gift} onChange={(e) => setGift(e.target.checked)} className="size-4 accent-[#6c47ff]" />
+                {t.payOfferPlus} {inOffer ? "(العرض مازال يجري)" : "(العرض وفى)"}
+              </label>
+            )}
+            {shop.old_price && <p className="mt-1 text-[0.75rem] text-muted">خلّص قبل 7 نوفمبر 2026: يقعد بالسوم القديم</p>}
             {shop.paid && shop.paid_until && <p className="mt-1 text-[0.75rem] text-muted">{fill(t.aPlanFromEnd, { date: day(shop.paid_until) })}</p>}
           </div>
           <div>
             <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanAmount}</span>
             <div className="flex flex-wrap gap-1.5">
-              {[120, 0].map((a) => (
+              {[...new Set([listed?.price ?? amount ?? 0, 0])].map((a) => (
                 <button
                   key={a}
                   type="button"

@@ -18,7 +18,7 @@ type Study = {
   shop: {
     id: string; name: string; kind: string; color: string; logo: string | null; goal: number | null; gift: string | null; stamp_gap: number; stamp_logo: boolean;
     paused: boolean; created_at: string; items_on: boolean; store_on: boolean; wheel_on: boolean; wheel_allowed: boolean;
-    paid_until: string | null; paid: boolean; trial_end: string; started: boolean; shut: boolean; offer_at: string | null;
+    paid_until: string | null; paid: boolean; trial_end: string; started: boolean; shut: boolean; offer_at: string | null; old_price?: boolean; offer_until?: string | null;
   };
   owner: { id: string; name: string | null; phone: string | null; created_at: string };
   origin: { at: string; source: string | null; medium: string | null; campaign: string | null; content: string | null; landing: string | null; referrer: string | null; device: string | null; os: string | null; browser: string | null; city: string | null; fbclid: boolean } | null;
@@ -198,7 +198,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
     now,
   );
   const profile = line ? profileShop(line, null, now) : null;
-  const access: AccessShop = { id: shop.id, name: shop.name, owner: { name: owner.name, phone: owner.phone }, paid: shop.paid, paid_until: shop.paid_until, shut: shop.shut, started: shop.started, trial_end: shop.trial_end };
+  const access: AccessShop = { id: shop.id, name: shop.name, owner: { name: owner.name, phone: owner.phone }, paid: shop.paid, paid_until: shop.paid_until, shut: shop.shut, started: shop.started, trial_end: shop.trial_end, old_price: shop.old_price, offer_until: shop.offer_until };
   const night = (() => {
     const h = hourOf(shop.created_at);
     return h >= 19 || h < 8;

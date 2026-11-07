@@ -235,7 +235,7 @@ try {
     await bravo.waitFor({ state: "detached", timeout: 10000 });
     console.log("  · the first customer, celebrated on the counter ✓");
     // right after it, once: the price, so the owner knows Pointili is paid (the founder, 23 Oct 2026)
-    const offer = o.getByRole("dialog", { name: "عام كامل + 3 شهور بلاش" });
+    const offer = o.getByRole("dialog", { name: "شهرين بلاش" });
     await offer.waitFor({ timeout: 20000 });
     await shot(o, "09c-first-offer", 1300);
     await offer.getByRole("button", { name: "من بعد" }).click();
@@ -338,7 +338,7 @@ try {
   await never(o, "the logo tip (reload)", o.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
   // one note a visit: after the logo tip, the news. The offer already showed on the counter, right after the first
   // customer: once per person, so never again here
-  const offer = o.getByRole("dialog", { name: "عام كامل + 3 شهور بلاش" });
+  const offer = o.getByRole("dialog", { name: "شهرين بلاش" });
   await never(o, "the offer again (home)", offer, 1800);
   const news = o.getByRole("dialog", { name: NEWS_TITLE });
   await news.waitFor({ timeout: 20000 });
@@ -360,7 +360,7 @@ try {
     await Promise.all([other.waitForURL("**/shop", { timeout: 60000 }), other.locator('button[type="submit"]').click()]);
     await never(other, "the logo tip (another phone)", other.getByRole("dialog", { name: "اللوغو متاعك هوني" }));
     await never(other, "the news (another phone)", other.getByRole("dialog", { name: NEWS_TITLE }), 500);
-    await never(other, "the offer (another phone)", other.getByRole("dialog", { name: "عام كامل + 3 شهور بلاش" }), 300);
+    await never(other, "the offer (another phone)", other.getByRole("dialog", { name: "شهرين بلاش" }), 300);
     await other.goto(BASE + "/shop?welcome=1", { waitUntil: "load" });
     await never(other, "the bravo (another phone)", other.getByText("برافو"));
     await other.context().close();

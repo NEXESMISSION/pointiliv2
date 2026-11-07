@@ -28,6 +28,10 @@ export type BoardShop = {
   started: boolean;
   /** the trial is over and nothing is paid: the counter is stopped */
   shut: boolean;
+  /** paid before 7 Nov 2026: the year stays at 120 (lib/plans.ts) */
+  old_price?: boolean;
+  /** the offer's end — the trial's first 3 days: 2 months more on six months or a year (null: none) */
+  offer_until?: string | null;
   /** tampons to customers (never the owner's own, a test's or a robot's): all, today, the last 7 days (the first hour after the opening left out) */
   stamps: number;
   today: number;
@@ -143,7 +147,7 @@ export const STAGE_LOOK: Record<StageTone, { box: string; ring: string; dot: str
 export const STAGE_GROUPS = [...new Set(STAGES.map((x) => x.group))].map((g) => ({ group: g, stages: STAGES.filter((x) => x.group === g) }));
 
 /** what the access controls need of a shop (the board's line, or the study page) */
-export type AccessShop = Pick<BoardShop, "id" | "name" | "owner" | "paid" | "paid_until" | "shut" | "started" | "trial_end">;
+export type AccessShop = Pick<BoardShop, "id" | "name" | "owner" | "paid" | "paid_until" | "shut" | "started" | "trial_end" | "old_price" | "offer_until">;
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "@/components/Link";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
-import { groupOf, NICHES, orgJsonLd, PRICE, SITE } from "@/lib/seo";
+import { groupOf, NICHES, orgJsonLd, PRICE_MONTH, PRICE_YEAR, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 import { KIND_GROUPS, t } from "@/lib/t";
 
 export const metadata: Metadata = {
   title: "Carte de fidélité par type de commerce en Tunisie — كارط فيديليتي لكل محل",
-  description: `Café, barbier, boulangerie, restaurant, parfumerie, boutique, lavage auto… la carte de fidélité digitale Pointili pour chaque type de commerce en Tunisie, ${PRICE} DT par an. — كارط فيديليتي لكل نوع محل في تونس.`,
+  description: `Café, barbier, boulangerie, restaurant, parfumerie, boutique, lavage auto… la carte de fidélité digitale Pointili pour chaque type de commerce en Tunisie, ${PRICE_MONTH} DT par mois ou ${PRICE_YEAR} DT par an. — كارط فيديليتي لكل نوع محل في تونس.`,
   alternates: { canonical: `${SITE}/pour` },
 };
 

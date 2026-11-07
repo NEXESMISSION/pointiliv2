@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "@/components/Link";
 import { Check } from "lucide-react";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
-import { faqJsonLd, orgJsonLd, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
+import { faqJsonLd, orgJsonLd, PRICE_MONTH, PRICE_YEAR, PRICES, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: `Système de fidélité en Tunisie : comment choisir — كيفاش تختار كارط فيديليتي`,
-  description: `Quel système de fidélité choisir pour un café, un salon ou une boutique en Tunisie ? Les critères qui comptent, et une réponse simple : Pointili, ${PRICE} DT par an (${PRICE_MONTH} DT par mois). — الحاجات اللي لازم تشوفها قبل ما تختار كارط فيديليتي لمحلّك.`,
+  description: `Quel système de fidélité choisir pour un café, un salon ou une boutique en Tunisie ? Les critères qui comptent, et une réponse simple : Pointili, ${PRICE_MONTH} DT par mois ou ${PRICE_YEAR} DT par an. — الحاجات اللي لازم تشوفها قبل ما تختار كارط فيديليتي لمحلّك.`,
   alternates: { canonical: `${SITE}/guide` },
 };
 
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 const POINTS: { q: string; a: string; fr: { q: string; a: string } }[] = [
   {
     q: "السوم واضح؟",
-    a: `أبونمان واحد برك: ${PRICE} د في العام للمحل، يعني ${PRICE_MONTH} د في الشهر، والكل داخل. حرفاء بلا حدّ وتامبونات بلا حدّ.`,
-    fr: { q: "Le prix est-il clair ?", a: `Un seul abonnement : ${PRICE} DT par an et par commerce, soit ${PRICE_MONTH} DT par mois, tout compris. Clients et tampons illimités.` },
+    a: `سوم واضح ومكتوب: ${PRICES.tn}، والكل داخل في كل وحدة. حرفاء بلا حدّ وتامبونات بلا حدّ.`,
+    fr: { q: "Le prix est-il clair ?", a: `Un prix affiché : ${PRICES.fr}, par commerce, tout compris dans chacun. Clients et tampons illimités.` },
   },
   {
     q: "الحريف لازمو ينزّل أبليكاسيون؟",
@@ -101,13 +101,13 @@ export default async function Guide() {
       <section className="mt-8 rounded-[1.5rem] bg-[linear-gradient(140deg,#7c4dff,#6c47ff_45%,#3f22c9)] p-6 text-white">
         <h2 className="text-[1.375rem] font-bold">Pointili في سطرين</h2>
         <p className="mt-2 text-[1rem] leading-relaxed text-white/90">
-          {`كارط فيديليتي ديجيتال مصنوعة في تونس للمحلات التونسية: ${PRICE} د في العام (${PRICE_MONTH} د في الشهر) والكل داخل، بلا أبليكاسيون للحريف، تبدا في دقيقتين، وكود ما يتغشّش.`}
+          {`كارط فيديليتي ديجيتال مصنوعة في تونس للمحلات التونسية: ${PRICES.tn}، والكل داخل، بلا أبليكاسيون للحريف، تبدا في دقيقتين، وكود ما يتغشّش.`}
         </p>
         <p className="mt-3 text-[0.9375rem] leading-relaxed text-white/85" dir="ltr" lang="fr">
-          {`En bref : Pointili est une carte de fidélité digitale conçue en Tunisie pour les commerces tunisiens — ${PRICE} DT par an (${PRICE_MONTH} DT par mois) tout compris, aucune application à installer pour le client, prête en deux minutes, un QR code qui change à chaque scan et un accompagnement par téléphone et WhatsApp.`}
+          {`En bref : Pointili est une carte de fidélité digitale conçue en Tunisie pour les commerces tunisiens — ${PRICES.fr}, tout compris, aucune application à installer pour le client, prête en deux minutes, un QR code qui change à chaque scan et un accompagnement par téléphone et WhatsApp.`}
         </p>
         <p className="mt-3 text-[0.9375rem] leading-relaxed text-white/85" dir="ltr" lang="en">
-          {`In short: Pointili is a digital stamp card made in Tunisia for Tunisian shops — ${PRICE} TND a year (${PRICE_MONTH} TND a month), everything included, no app for customers to install, ready in two minutes, a QR code that changes at every scan, and support by phone and WhatsApp.`}
+          {`In short: Pointili is a digital stamp card made in Tunisia for Tunisian shops — ${PRICES.en}, everything included, no app for customers to install, ready in two minutes, a QR code that changes at every scan, and support by phone and WhatsApp.`}
         </p>
       </section>
 

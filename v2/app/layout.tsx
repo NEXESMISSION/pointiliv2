@@ -4,14 +4,14 @@ import { Pwa } from "@/components/Pwa";
 import { Clarity } from "@/components/Clarity";
 import { MetaPixel } from "@/components/MetaPixel";
 import { Tracker } from "@/components/Tracker";
-import { PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
+import { PRICE_MONTH, PRICE_YEAR, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 import "./globals.css";
 
 // One typeface for Arabic, French and the numbers.
 const readex = Readex_Pro({ subsets: ["arabic", "latin"], variable: "--font-readex", display: "swap" });
 
-const description = `Pointili: كارط فيديليتي ديجيتال للمحلات في تونس — الحريف يلمّ التامبونات في تليفونو ويرجعلك. Carte de fidélité digitale pour les commerces en Tunisie, sans application, ${PRICE} DT/an (${PRICE_MONTH} DT/mois).`;
+const description = `Pointili: كارط فيديليتي ديجيتال للمحلات في تونس — الحريف يلمّ التامبونات في تليفونو ويرجعلك. Carte de fidélité digitale pour les commerces en Tunisie, sans application, ${PRICE_MONTH} DT/mois ou ${PRICE_YEAR} DT/an.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),

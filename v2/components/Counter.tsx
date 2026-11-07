@@ -72,7 +72,7 @@ const BRAVO_MS = 3600;
  * title's place, above the code — never on it: try it with another phone.
  * Everything fits one screen.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = null, items = [], firstWaits = false }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; phone?: string | null; from?: string | null; items?: Item[]; firstWaits?: boolean }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false, phone, from = null, items = [], firstWaits = false }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; /** paid once, and it ran out: «الأبونمان وفى», never the trial's words */ lapsed?: boolean; phone?: string | null; from?: string | null; items?: Item[]; firstWaits?: boolean }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -494,13 +494,13 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, phone, from = n
             ))}
             <div className="absolute inset-0 rounded-[2.125rem] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
               {paused && shut ? (
-                // the trial is over: the founder turns the year on, a WhatsApp message away (already written)
+                // the trial (or the subscription) is over: the founder turns it on, a WhatsApp message away (already written)
                 <div className="grid size-full place-items-center p-[8%] text-center text-ink">
                   <div>
-                    <p className="text-[clamp(1.0625rem,5cqw,1.375rem)] font-bold">{t.trialOverTitle}</p>
-                    <p className="mt-1.5 text-balance text-[clamp(0.8125rem,3.6cqw,0.9375rem)] leading-snug text-body">{t.trialOverBody}</p>
+                    <p className="text-[clamp(1.0625rem,5cqw,1.375rem)] font-bold">{lapsed ? t.planOverTitle : t.trialOverTitle}</p>
+                    <p className="mt-1.5 text-balance text-[clamp(0.8125rem,3.6cqw,0.9375rem)] leading-snug text-body">{lapsed ? t.planOverBody : t.trialOverBody}</p>
                     {phone && (
-                      <a href={trialOverWa(phone, from)} target="_blank" rel="noreferrer" onClick={() => signal("trial_call", "counter · whatsapp")} className="press mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-[0.9375rem] font-bold text-white">
+                      <a href={trialOverWa(phone, from, lapsed)} target="_blank" rel="noreferrer" onClick={() => signal("trial_call", lapsed ? "counter · plan over · whatsapp" : "counter · whatsapp")} className="press mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-[#25D366] px-5 text-[0.9375rem] font-bold text-white">
                         <MessageCircle className="size-4" /> {t.trialOverWa}
                       </a>
                     )}

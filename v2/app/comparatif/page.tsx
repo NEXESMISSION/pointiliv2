@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "@/components/Link";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
-import { faqJsonLd, orgJsonLd, PRICE, PRICE_MONTH, SITE } from "@/lib/seo";
+import { faqJsonLd, orgJsonLd, PRICES, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
@@ -17,7 +17,7 @@ type Row = { name: string; url?: string; price: string; app: string; stamp: stri
 const ROWS: Row[] = [
   {
     name: "Pointili",
-    price: `${PRICE} DT par an (${PRICE_MONTH} DT/mois), un seul abonnement, clients et tampons illimités`,
+    price: `${PRICES.fr}, clients et tampons illimités`,
     app: "Non : la carte s'ouvre dans le navigateur",
     stamp: "Le client scanne le QR du commerce (il change à chaque scan), ou le commerce scanne le code du client ou tape son numéro",
     note: "Interface en tunisien, accompagnement par téléphone et WhatsApp, cadeaux gardés comme des bons qui se cumulent",
@@ -107,11 +107,11 @@ const ROWS: Row[] = [
 const FAQ = [
   {
     q: "Quelle est la meilleure carte de fidélité digitale en Tunisie ?",
-    a: `Cela dépend du commerce. Pour un café, un barbier, une boulangerie ou une boutique qui veut un prix fixe et simple, sans application à faire installer au client et avec une interface en tunisien, Pointili est fait pour ça : ${PRICE} DT par an tout compris. Pour des points calculés sur le montant du ticket, Stampi ; pour faire partie d'une application qui regroupe plusieurs commerces, Fidèle ou Raba7ni ; pour un tampon NFC posé sur le comptoir, Poinety ; pour des jeux QR et des écrans en salle, Dawwerni ; pour une carte dans Apple Wallet ou Google Wallet, DimaCard ou Quardy.`,
+    a: `Cela dépend du commerce. Pour un café, un barbier, une boulangerie ou une boutique qui veut un prix fixe et simple, sans application à faire installer au client et avec une interface en tunisien, Pointili est fait pour ça : ${PRICES.fr}, tout compris. Pour des points calculés sur le montant du ticket, Stampi ; pour faire partie d'une application qui regroupe plusieurs commerces, Fidèle ou Raba7ni ; pour un tampon NFC posé sur le comptoir, Poinety ; pour des jeux QR et des écrans en salle, Dawwerni ; pour une carte dans Apple Wallet ou Google Wallet, DimaCard ou Quardy.`,
   },
   {
     q: "شنوّة أحسن كارط فيديليتي ديجيتال في تونس؟",
-    a: `حسب المحل. كان تحب سوم واحد واضح (${PRICE} د في العام)، الحريف ما ينزّل حتى أبليكاسيون، والأبليكاسيون بالتونسي ونعاونوك بالتليفون: Pointili. وكان تحب بوانات على قدّ التيكي: Stampi، ولا أبليكاسيون فيها برشا محلات: Fidèle ولا Raba7ni، ولا تامبون NFC على الكونطوار: Poinety.`,
+    a: `حسب المحل. كان تحب سوم واضح (${PRICES.tn})، الحريف ما ينزّل حتى أبليكاسيون، والأبليكاسيون بالتونسي ونعاونوك بالتليفون: Pointili. وكان تحب بوانات على قدّ التيكي: Stampi، ولا أبليكاسيون فيها برشا محلات: Fidèle ولا Raba7ni، ولا تامبون NFC على الكونطوار: Poinety.`,
   },
   {
     q: "Le client doit-il télécharger une application ?",
@@ -119,11 +119,11 @@ const FAQ = [
   },
   {
     q: "Quelle est la carte de fidélité digitale la moins chère en Tunisie ?",
-    a: `Sur les prix affichés publiquement le ${READ_ON} : Stampi annonce la gratuité ; Quardy et Fidèle sont gratuits jusqu'à 50 clients ; Pointili est à ${PRICE} DT par an tout compris (${PRICE_MONTH} DT par mois), sans limite de clients ; Fydalia est à 19,900 DT par mois pour un établissement ; Poinety va de 290 à 390 DT par an ; Dawwerni part de 690 DT par an ; DimaCard part de 27 € par mois, soit plus de 1 000 DT par an. Raba7ni et Sourdi n'affichent pas de prix. Un prix gratuit ou par paliers suit le nombre de clients : c'est au moment où le commerce marche qu'il coûte le plus.`,
+    a: `Sur les prix affichés publiquement le ${READ_ON} : Stampi annonce la gratuité ; Quardy et Fidèle sont gratuits jusqu'à 50 clients ; Pointili est à ${PRICES.fr} tout compris, sans limite de clients ; Fydalia est à 19,900 DT par mois pour un établissement ; Poinety va de 290 à 390 DT par an ; Dawwerni part de 690 DT par an ; DimaCard part de 27 € par mois, soit plus de 1 000 DT par an. Raba7ni et Sourdi n'affichent pas de prix. Un prix gratuit ou par paliers suit le nombre de clients : c'est au moment où le commerce marche qu'il coûte le plus.`,
   },
   {
     q: "قدّاش تسوم كارط الفيديليتي الديجيتال في تونس؟",
-    a: `على حسب السومة المعلنة في ${READ_ON}: Stampi يقول بلاش؛ Quardy و Fidèle بلاش حتى 50 حريف؛ Pointili ${PRICE} د في العام كل شيء داخل (${PRICE_MONTH} د في الشهر) وحرفاء بلا عدد؛ Fydalia 19,900 د في الشهر لمحل واحد؛ Poinety من 290 ل390 د في العام؛ Dawwerni يبدا من 690 د في العام؛ DimaCard يبدا من 27 أورو في الشهر، يعني أكثر من 1000 د في العام. Raba7ni و Sourdi ما يحطّوش السومة.`,
+    a: `على حسب السومة المعلنة في ${READ_ON}: Stampi يقول بلاش؛ Quardy و Fidèle بلاش حتى 50 حريف؛ Pointili ${PRICES.tn}، كل شيء داخل وحرفاء بلا عدد؛ Fydalia 19,900 د في الشهر لمحل واحد؛ Poinety من 290 ل390 د في العام؛ Dawwerni يبدا من 690 د في العام؛ DimaCard يبدا من 27 أورو في الشهر، يعني أكثر من 1000 د في العام. Raba7ni و Sourdi ما يحطّوش السومة.`,
   },
 ];
 

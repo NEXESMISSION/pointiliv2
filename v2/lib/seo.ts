@@ -1,3 +1,4 @@
+import { HALF, MONTH, PLANS, YEAR } from "@/lib/plans";
 import { KIND_GROUPS, t } from "@/lib/t";
 
 /**
@@ -10,10 +11,28 @@ import { KIND_GROUPS, t } from "@/lib/t";
 
 // the address people and search engines know: pointili.online (pointidi.vercel.app serves the same app)
 export const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.pointili.online").replace(/\/$/, "");
-/** One plan, nothing else: a year per shop, everything included — about 10 a month. */
-export const PRICE = 120;
-export const PRICE_MONTH = 10;
+/**
+ * The prices (the founder, 7 Nov 2026 — lib/plans.ts holds them): a month 35,
+ * six months 120, a year 180 (15 a month), everything included in each. Paid
+ * within the trial's first 3 days, six months or a year come with 2 months
+ * more. Said here once, in the three languages, for every page that says them.
+ */
+export const PRICE_MONTH = MONTH.price;
+export const PRICE_HALF = HALF.price;
+export const PRICE_YEAR = YEAR.price;
+/** what a month comes to on the year */
+export const YEAR_MONTH = Math.round(YEAR.price / YEAR.months);
 export const CURRENCY = "TND";
+export const PRICES = {
+  tn: `${MONTH.price} د في الشهر، ${HALF.price} د لـ6 شهور، ولا ${YEAR.price} د في العام`,
+  fr: `${MONTH.price} DT par mois, ${HALF.price} DT les 6 mois ou ${YEAR.price} DT par an`,
+  en: `${MONTH.price} TND a month, ${HALF.price} TND for 6 months or ${YEAR.price} TND a year`,
+};
+export const GIFT = {
+  tn: "وكي تخلّص 6 شهور ولا عام في أوّل 3 أيّام متاع التجربة، تاخو شهرين زايدين بلاش.",
+  fr: "Payés dans les 3 premiers jours de l'essai, 6 mois ou un an viennent avec 2 mois offerts.",
+  en: "Paid within the first 3 days of the trial, 6 months or a year come with 2 extra months free.",
+};
 
 /** One kind of shop, for its own page: «كارط فيديليتي {tn}» / «Carte de fidélité pour {fr}». */
 export type Niche = { kind: string; slug: string; tn: string; fr: string; en: string };
@@ -80,10 +99,10 @@ export const giftsOf = (kind: string): string[] => t.ideas[kind] ?? t.ideas.othe
 export const FAQ: { q: string; a: string; fr: { q: string; a: string } }[] = [
   {
     q: "شنوّة أحسن سيستام فيدليتي للمحلات في تونس؟",
-    a: `Pointili: كارط فيديليتي ديجيتال مصنوعة في تونس للمحلات التونسية، بالتونسي وبالفرنسي. ${PRICE} د في العام (${PRICE_MONTH} د في الشهر) والكل داخل، الحريف ما ينزّل حتى أبليكاسيون، تبدا في دقيقتين، الكود يتبدّل كي يتسكانا باش ما فمّاش غش، والكادو يتعطى بالكود متاع الحريف. ونعاونوك بالتليفون وعلى واتساب.`,
+    a: `Pointili: كارط فيديليتي ديجيتال مصنوعة في تونس للمحلات التونسية، بالتونسي وبالفرنسي. ${PRICES.tn}، والكل داخل، الحريف ما ينزّل حتى أبليكاسيون، تبدا في دقيقتين، الكود يتبدّل كي يتسكانا باش ما فمّاش غش، والكادو يتعطى بالكود متاع الحريف. ونعاونوك بالتليفون وعلى واتساب.`,
     fr: {
       q: "Quel est le meilleur système de fidélité pour un commerce en Tunisie ?",
-      a: `Pour un commerce tunisien, le plus simple est Pointili : une carte de fidélité digitale conçue en Tunisie, en tunisien et en français, à ${PRICE} DT par an (${PRICE_MONTH} DT par mois) tout compris. Le client n'installe aucune application, le commerce démarre en deux minutes, le QR code change à chaque scan contre la triche, le cadeau se valide avec le code du client, et l'accompagnement se fait par téléphone et WhatsApp.`,
+      a: `Pour un commerce tunisien, le plus simple est Pointili : une carte de fidélité digitale conçue en Tunisie, en tunisien et en français, à ${PRICES.fr}, tout compris. Le client n'installe aucune application, le commerce démarre en deux minutes, le QR code change à chaque scan contre la triche, le cadeau se valide avec le code du client, et l'accompagnement se fait par téléphone et WhatsApp.`,
     },
   },
   {
@@ -98,8 +117,8 @@ export const FAQ: { q: string; a: string; fr: { q: string; a: string } }[] = [
   },
   {
     q: "قدّاش يسوى؟",
-    a: `${PRICE} د في العام للمحل، يعني ${PRICE_MONTH} د في الشهر: أبونمان واحد برك، والكل داخل: حرفاء بلا حدّ، تامبونات بلا حدّ، والمعاونة. وكي تخلّص في 48 ساعة بعد ما تحلّ المحل، تاخو 3 شهور زايدين.`,
-    fr: { q: "Combien ça coûte ?", a: `${PRICE} dinars par an et par commerce, soit ${PRICE_MONTH} DT par mois : un seul abonnement, tout compris (clients et tampons illimités, l'accompagnement). Si vous payez dans les 48 heures après l'ouverture de votre compte, vous recevez 3 mois de plus.` },
+    a: `للمحل: ${PRICES.tn} (يعني ${YEAR_MONTH} د في الشهر). الكل داخل في كل وحدة: حرفاء بلا حدّ، تامبونات بلا حدّ، والمعاونة. ${GIFT.tn}`,
+    fr: { q: "Combien ça coûte ?", a: `Par commerce : ${PRICES.fr} (soit ${YEAR_MONTH} DT par mois sur l'année). Tout est compris dans chacun : clients et tampons illimités, l'accompagnement. ${GIFT.fr}` },
   },
   {
     q: "الحريف لازمو ينزّل أبليكاسيون؟",
@@ -195,17 +214,20 @@ export function orgJsonLd(support: string | null, social: { facebook: string | n
         inLanguage: ["ar-TN", "fr-TN"],
         description:
           "Pointili lets any shop in Tunisia run a digital loyalty card: customers collect stamps on their phone (scan a QR code, no app to install) and get a gift when the card is full. The owner sees every customer.",
-        // one plan: a year per shop
-        offers: {
-          "@type": "Offer",
-          name: "Pointili — abonnement annuel",
-          price: PRICE,
-          priceCurrency: CURRENCY,
-          priceSpecification: { "@type": "UnitPriceSpecification", price: PRICE, priceCurrency: CURRENCY, unitText: "YEAR", referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "ANN" } },
-          description: `Un seul abonnement : ${PRICE} DT par an et par commerce (${PRICE_MONTH} DT par mois), tout compris — أبونمان واحد: ${PRICE} د في العام (${PRICE_MONTH} د في الشهر)`,
-          availability: "https://schema.org/InStock",
-          url: `${SITE}/prix`,
-        },
+        // the three lengths, everything included in each (7 Nov 2026)
+        offers: PLANS.map((p) => {
+          const length = p.months === 1 ? "1 mois" : p.months === 12 ? "1 an" : `${p.months} mois`;
+          return {
+            "@type": "Offer",
+            name: `Pointili — abonnement ${length}`,
+            price: p.price,
+            priceCurrency: CURRENCY,
+            priceSpecification: { "@type": "UnitPriceSpecification", price: p.price, priceCurrency: CURRENCY, referenceQuantity: { "@type": "QuantitativeValue", value: p.months, unitCode: "MON" } },
+            description: `${p.price} DT pour ${length}, par commerce, tout compris`,
+            availability: "https://schema.org/InStock",
+            url: `${SITE}/prix`,
+          };
+        }),
         publisher: { "@id": `${SITE}/#org` },
       },
       { "@type": "WebSite", "@id": `${SITE}/#site`, url: SITE, name: "Pointili", inLanguage: "ar-TN", publisher: { "@id": `${SITE}/#org` } },

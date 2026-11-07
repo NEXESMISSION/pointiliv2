@@ -6,17 +6,21 @@ import { Check, ChevronLeft, Clock, Hourglass, MessageCircle, Phone, Sparkles, X
 import { Confetti } from "@/components/StampLand";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
+import { HALF, lapsed, MONTH, plansFor, YEAR } from "@/lib/plans";
 import { signal } from "@/lib/track";
-import { fill, t } from "@/lib/t";
+import { fill, monthsSaid, t } from "@/lib/t";
 
-/** The shop's year, as the server tells it (v2.my_payment). */
+/** The shop's subscription, as the server tells it (v2.my_payment). */
 export type Pay = {
   paid_until: string | null;
   paid: boolean;
+  /** a shop that paid before 7 Nov 2026: it keeps the year at 120 (lib/plans.ts) */
+  old_price?: boolean;
+  /** the offer's end: the trial's first 3 days (null: none — paid before, or the trial's clock not started) */
   offer_until: string | null;
   /** the access the founder just turned on, to say once (PlanOn) */
   grant?: import("@/components/PlanOn").Grant | null;
-  /** within the 48 hours, and not paid: the year counts 15 months */
+  /** within the trial's first 3 days, and not paid: six months or a year come with 2 months more */
   offer: boolean;
   /** the trial's end (3 days from the opening; 7 for the shops opened before 7 Oct 2026) */
   trial_until?: string | null;
@@ -28,9 +32,13 @@ export type Pay = {
   exempt?: boolean;
 };
 
-/** The trial is over: the WhatsApp message to the founder, already written, with the account it is about (`from`: «shop» · number). */
-export function trialOverWa(phone: string, from?: string | null): string {
-  return `https://wa.me/${phone}?text=${encodeURIComponent(t.trialOverMsg + (from ? fill(t.waFrom, { who: from }) : ""))}`;
+/**
+ * The trial is over — or, `lapsed`, the subscription paid for ran out: the
+ * WhatsApp message to the founder, already written, with the account it is
+ * about (`from`: «shop» · number).
+ */
+export function trialOverWa(phone: string, from?: string | null, lapsed = false): string {
+  return `https://wa.me/${phone}?text=${encodeURIComponent((lapsed ? t.planOverMsg : t.trialOverMsg) + (from ? fill(t.waFrom, { who: from }) : ""))}`;
 }
 
 /** Hours, minutes and seconds left until `until`, ticking every second (zeros once it is over). */
@@ -57,8 +65,8 @@ export function Left({ until, className = "" }: { until: string; className?: str
 }
 
 /**
- * The thin line under the shop's name until the year is paid: during the
- * first 48 hours, the offer with its clock ticking; after, the price.
+ * The thin line under the shop's name until the subscription is paid: during
+ * the offer (the trial's first 3 days), its clock ticking; after, the price.
  */
 export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
   // the offer, calm: the clock large — information, not an advert shouting under the shop's own name —
@@ -81,12 +89,27 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
   // Not a button inside a button: the price is the thing to read, and the way
   // to pay is a word at the end of the same line. A hairline rather than a
   // shadow, so it sits under the shop's name instead of competing with it.
+  // The month leads (what a shop pays to start), the year after it.
+  const plans = plansFor(pay.old_price);
+  const first = plans[0];
   return (
     <Link href="/shop/pay" className="press mt-3 flex shrink-0 items-center gap-3 rounded-[1.125rem] bg-surface px-4 py-2.5 ring-1 ring-line">
       <span className="min-w-0 flex-1 leading-tight">
         <span className="block text-[0.6875rem] font-semibold text-muted">{t.payTitle}</span>
         <span className="mt-0.5 block truncate text-[0.9375rem] font-bold text-ink">
-          <bdi className="num">{t.payPrice}</bdi> {t.payCurrency} <span className="font-semibold text-body">{t.payPer}</span>
+          {pay.old_price ? (
+            <>
+              <bdi className="num">{first.price}</bdi> {t.payCurrency} <span className="font-semibold text-body">{t.payPer}</span>
+            </>
+          ) : (
+            <>
+              <bdi className="num">{MONTH.price}</bdi> {t.payCurrency} <span className="font-semibold text-body">{t.payPerMonth}</span>
+              <span className="font-semibold text-muted">
+                {" · "}
+                <bdi className="num">{YEAR.price}</bdi> {t.payCurrency} {t.payPer}
+              </span>
+            </>
+          )}
         </span>
       </span>
       <span className="flex shrink-0 items-center gap-0.5 text-[0.875rem] font-bold text-brand">
@@ -97,25 +120,27 @@ export function PayBanner({ pay, offer }: { pay: Pay; offer: boolean }) {
 }
 
 /**
- * The trial on the owner's home, until the year is turned on: «التجربة: مازال
- * 2 يوم · 05:12:33», ticking, the way to the year — and a call to the founder,
- * who turns it on. Once it is over (or the clock reaches zero on screen) the
- * same line turns red: the counter gives nothing until then, and the call
- * becomes a WhatsApp message, already written, with the account under it —
- * the founder turns the year on from a message (23 Oct 2026).
+ * The trial on the owner's home, until the subscription is turned on:
+ * «التجربة: مازال 2 يوم · 05:12:33», ticking, the way to pay — and a call to
+ * the founder, who turns it on. Once it is over (or the clock reaches zero on
+ * screen) the same line turns red: the counter gives nothing until then, and
+ * the call becomes a WhatsApp message, already written, with the account under
+ * it — the founder turns it on from a message (23 Oct 2026). A shop that paid
+ * once and ran out reads «الأبونمان وفى», never the trial's words.
  */
 export function TrialBanner({ pay, phone, from = null }: { pay: Pay; phone: string | null; from?: string | null }) {
   const left = useLeft(pay.trial_until ?? new Date().toISOString());
+  const ran = lapsed(pay);
   // a clock that waits for the first customer: no countdown yet, just that
-  const waits = pay.trial_started === false && !pay.shut;
-  const over = !waits && (!!pay.shut || left.over);
+  const waits = !ran && pay.trial_started === false && !pay.shut;
+  const over = ran || (!waits && (!!pay.shut || left.over));
   const days = Math.floor(left.h / 24);
   const call = !phone ? null : over ? (
     <a
-      href={trialOverWa(phone, from)}
+      href={trialOverWa(phone, from, ran)}
       target="_blank"
       rel="noreferrer"
-      onClick={() => signal("trial_call", "over · whatsapp")}
+      onClick={() => signal("trial_call", ran ? "plan over · whatsapp" : "over · whatsapp")}
       className="press flex shrink-0 items-center gap-1.5 rounded-full bg-[#25D366] px-3.5 text-[0.8125rem] font-bold text-white"
       aria-label={t.trialOverWa}
     >
@@ -138,7 +163,7 @@ export function TrialBanner({ pay, phone, from = null }: { pay: Pay; phone: stri
         {waits ? (
           <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-semibold text-body">{t.trialWaits}</span>
         ) : over ? (
-          <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-bold">{t.trialOverTitle}</span>
+          <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-bold">{ran ? t.planOverTitle : t.trialOverTitle}</span>
         ) : (
           <>
             {/* the words give way on a narrow phone, never the time: «1 يوم · 02:50» while
@@ -160,10 +185,30 @@ export function TrialBanner({ pay, phone, from = null }: { pay: Pay; phone: stri
 }
 
 /**
- * The offer, once in a new owner's life (their first 48 hours): a card that
- * rises with a little party — a whole year and three months for nothing, the
- * clock ticking down in big digits, what the year gives — and one button to
- * the page where they pay. Written down the moment it shows.
+ * A few days before a subscription runs out (a month goes fast): the date on
+ * the owner's home, and «جدّد» to the page where they pay. Quiet — a hairline,
+ * like the price's line — until its last day, when it turns coral.
+ */
+export function RenewBanner({ date, last = false }: { /** «12 نوفمبر», the day it ends */ date: string; /** its last day: coral */ last?: boolean }) {
+  return (
+    <Link href="/shop/pay" onClick={() => signal("pay", "renew · home")} className={`press mt-3 flex shrink-0 items-center gap-2 rounded-full py-2 pe-3 ps-3.5 ${last ? "bg-coral-soft text-coral" : "bg-surface ring-1 ring-line"}`}>
+      <Hourglass className={`size-4 shrink-0 ${last ? "" : "text-brand"}`} />
+      <span className={`min-w-0 flex-1 truncate text-[0.8125rem] font-semibold ${last ? "" : "text-body"}`} suppressHydrationWarning>
+        {fill(t.planEndsSoon, { date })}
+      </span>
+      <span className={`flex shrink-0 items-center gap-0.5 text-[0.8125rem] font-bold ${last ? "" : "text-brand"}`}>
+        {t.planRenew} <ChevronLeft className="size-4" />
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * The offer, once in a new owner's life (the trial's first 3 days): a card
+ * that rises with a little party — two months for nothing on six months or a
+ * year, the two side by side, the clock ticking down in big digits, what the
+ * subscription gives — and one button to the page where they pay. Written down
+ * the moment it shows.
  */
 export function OfferPopup({ shopId, offerUntil }: { shopId: string; offerUntil: string }) {
   const [open, setOpen] = useState(false);
@@ -211,14 +256,21 @@ export function OfferPopup({ shopId, offerUntil }: { shopId: string; offerUntil:
           <svg className="relative -mt-14 block h-[3.5rem] w-full [@media(max-height:560px)]:-mt-12 [@media(max-height:560px)]:h-[3rem]" viewBox="0 0 100 14" preserveAspectRatio="none" aria-hidden>
             <path d="M0 6 C 22 -2, 78 -2, 100 6 L100 14 L0 14 Z" fill="var(--color-surface)" />
           </svg>
-          {/* the price, on a card of its own, straddling the two */}
-          <p className="relative z-10 -mt-8 mb-1 inline-flex items-end gap-1.5 rounded-[1.375rem] bg-surface px-6 py-3 shadow-[0_18px_34px_-18px_rgb(20_16_40/0.45)] [@media(max-height:560px)]:py-2">
-            <span className="num text-[2.75rem] font-bold leading-none text-brand">{t.payPrice}</span>
-            <span className="pb-1 text-start text-[0.9375rem] font-bold leading-tight text-ink">
-              {t.payCurrency}
-              <span className="block text-[0.75rem] font-semibold text-muted">{t.payPer}</span>
-            </span>
-          </p>
+          {/* the two plans the gift comes with, on a card of their own, straddling the two: what is paid,
+              and the months it gives with the gift (6 + 2, 12 + 2) */}
+          <div className="relative z-10 -mt-8 mb-1 inline-flex items-stretch rounded-[1.375rem] bg-surface py-2.5 shadow-[0_18px_34px_-18px_rgb(20_16_40/0.45)] [@media(max-height:560px)]:py-1.5">
+            {[HALF, YEAR].map((p, i) => (
+              <span key={p.id} className={`flex flex-col items-center px-5 ${i ? "border-s border-line" : ""}`}>
+                <span className="flex items-end gap-1">
+                  <span className="num text-[2rem] font-bold leading-none text-brand">{p.price}</span>
+                  <span className="pb-0.5 text-[0.875rem] font-bold text-ink">{t.payCurrency}</span>
+                </span>
+                <span className="mt-1 whitespace-nowrap text-[0.75rem] font-semibold text-muted">
+                  {monthsSaid(p.months)} <b className="text-mint">{t.planGift}</b>
+                </span>
+              </span>
+            ))}
+          </div>
           {/* the clock */}
           <div className="relative flex justify-center gap-2 px-5" dir="ltr">
             {[

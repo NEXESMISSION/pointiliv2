@@ -12,6 +12,7 @@ import { Mark } from "@/components/Owner";
 import { Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
+import { lapsed } from "@/lib/plans";
 import { call } from "@/lib/supabase";
 import { daysN, fill, t } from "@/lib/t";
 
@@ -57,7 +58,9 @@ export default async function ShopSettings() {
     : pay?.exempt
       ? null
       : pay?.shut
-        ? t.trialOverTitle
+        ? lapsed(pay)
+          ? t.planOverTitle
+          : t.trialOverTitle
         : pay?.trial_started === false
           ? t.trialWaits
           : fill(t.setTrial, { n: daysN(daysLeft) });

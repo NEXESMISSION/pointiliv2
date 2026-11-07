@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { Check, Copy, MessageCircle, Phone } from "lucide-react";
 import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
+import type { Plan } from "@/lib/plans";
 import { signal } from "@/lib/track";
-import { fill, t } from "@/lib/t";
+import { fill, monthsSaid, t } from "@/lib/t";
 
 // the D17 mark carries its own name, so it is not written twice under it
 const WAYS = [
@@ -19,18 +20,20 @@ const WAYS = [
  * them take an action»): ① how — D17, a transfer, a deposit at the bank, a
  * money order; none chosen at first — ② what to send, where: the amount and
  * the D17 number or the account, each with its copy button — ③ the receipt
- * on WhatsApp, already written with the shop and the way, and the year is
- * turned on the same day. Steps 2 and 3 wait, faded, until a way is chosen;
+ * on WhatsApp, already written with the shop, the plan and the way, and the
+ * subscription is turned on the same day. Steps 2 and 3 wait, faded, until a way is chosen;
  * a call is always there for a question. The WhatsApp message or the call is
  * the whole of it: the founder hears it from them, and turns the year on by
  * hand. A tap is only counted in the visits — it is not a payment waiting for
  * an answer (the founder, 18 Oct 2026: there is no request to manage).
  */
-export function PayMethods({ support, shop, months, details, phone }: { support: string | null; shop: string; months: number; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] }; phone?: string | null }) {
+export function PayMethods({ support, shop, plan, gift = false, details, phone }: { support: string | null; shop: string; plan: Plan; gift?: boolean; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] }; phone?: string | null }) {
   const [way, setWay] = useState<string | null>(null);
   const said = (how: string) => signal("pay", how);
-  const amount = t.payPrice;
-  const receipt = support && way ? `https://wa.me/${support}?text=${encodeURIComponent(fill(t.payReceiptMsg, { shop, months, way, from: phone ? fill(t.waFrom, { who: spaced(phone) }) : "" }))}` : null;
+  const amount = plan.price;
+  // the founder reads the plan in the message: «عام + شهرين بلاش، 180 د»
+  const which = fill(gift ? t.planSaidGift : t.planSaid, { plan: monthsSaid(plan.months), amount });
+  const receipt = support && way ? `https://wa.me/${support}?text=${encodeURIComponent(fill(t.payReceiptMsg, { shop, plan: which, way, from: phone ? fill(t.waFrom, { who: spaced(phone) }) : "" }))}` : null;
   const how =
     way === "D17" ? fill(t.payD17How, { amount }) : way === "Virement" ? fill(t.payRibHow, { amount }) : way === "Versement" ? fill(t.payVersementHow, { amount }) : way === "Mandat" ? fill(t.payMandatHow, { amount }) : fill(t.paySendWhat, { amount });
   return (
@@ -95,7 +98,7 @@ export function PayMethods({ support, shop, months, details, phone }: { support:
       {support && (
         <div className="mt-[2dvh] space-y-2">
           {receipt ? (
-            <a href={receipt} target="_blank" rel="noreferrer" onClick={() => said(`receipt · ${way}`)} className="press flex h-14 animate-pop items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(150deg,#3ee07f,#25d366_50%,#1aa851)] text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(37_211_102/0.6)]">
+            <a href={receipt} target="_blank" rel="noreferrer" onClick={() => said(`receipt · ${way} · ${plan.months}${gift ? "+2" : ""}`)} className="press flex h-14 animate-pop items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(150deg,#3ee07f,#25d366_50%,#1aa851)] text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(37_211_102/0.6)]">
               <MessageCircle className="size-5" /> {t.payReceiptGo}
             </a>
           ) : (
