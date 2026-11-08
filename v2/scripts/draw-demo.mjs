@@ -2,7 +2,8 @@
  * A golden ticket to look at, on a computer trying the branch: a shop with the golden ticket on, a
  * draw already drawn (Amira won), a new one waiting with its countdown, two customers with tickets,
  * and a founder's account — all robots. `make` writes who is who (numbers and passwords) to the file
- * given; `clean` removes every account it made.
+ * given; `clean` removes every account it made. DEMO_SOON=12: the draw waiting is drawn in 12 minutes
+ * (10 at the least), to watch it happen.
  *
  *   node scripts/draw-demo.mjs make  <state.json>
  *   node scripts/draw-demo.mjs clean <state.json>
@@ -72,7 +73,8 @@ for (let i = 0; i < 2; i++) await tampon(owner, amira);
 await sql(`update public.draws set draw_at = greatest(now(), starts_at + interval '1 millisecond') where id = '${d1.id}'`);
 await rpc(owner, "my_draw");
 // the one waiting: two days away, two gifts
-await rpc(owner, "draw_new", { p_title: "التذكرة الذهبية متاع نوفمبر", p_at: later(49.3), p_rule: "stamps", p_gifts: [{ name: "كاس عصير + كرواسون", n: 1 }, { name: "قهوة بلاش", n: 3 }] });
+const soon = Number(process.env.DEMO_SOON) >= 10 ? Number(process.env.DEMO_SOON) / 60 : 49.3;
+await rpc(owner, "draw_new", { p_title: "التذكرة الذهبية متاع نوفمبر", p_at: later(soon), p_rule: "stamps", p_gifts: [{ name: "كاس عصير + كرواسون", n: 1 }, { name: "قهوة بلاش", n: 3 }] });
 for (let i = 0; i < 3; i++) await tampon(owner, amira);
 await tampon(owner, yassine);
 const card = (await rpc(amira, "wallet")).find((c) => c.shop.id === shop.id).id;
