@@ -156,7 +156,7 @@ export default {
 .jeans:before{content:"";position:absolute;left:0;right:0;top:0;height:70px;background:#2f3d6d;border-bottom:4px dashed #8ea0d6}
 .jeans .pk{position:absolute;left:120px;top:250px;width:460px;height:400px;border:6px dashed #8ea0d6;border-radius:30px 30px 160px 160px;background:linear-gradient(170deg,#4d63a3,#3a4c86)}
 .jeans .ph{position:absolute;left:200px;top:110px;width:300px;height:420px;border-radius:44px;background:#14121b;padding:12px}
-.jeans .ph div{width:100%;height:100%;border-radius:34px;background:linear-gradient(165deg,#9b80ff,#6c47ff 55%,#5a37e8);}
+.jeans .ph>div{width:100%;height:100%;border-radius:34px;background:linear-gradient(165deg,#9b80ff,#6c47ff 55%,#5a37e8);}
 .jeans .ph .pass{transform-origin:0 0}
 .share{position:absolute;display:flex;align-items:center;justify-content:space-between;left:150px;right:150px;top:600px}
 .share .p{width:230px;height:230px;border-radius:50%;display:grid;place-items:center;box-shadow:0 24px 46px -24px rgb(40 20 90/.5)}

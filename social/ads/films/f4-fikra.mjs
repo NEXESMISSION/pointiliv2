@@ -73,37 +73,42 @@ ${ART_CSS}
 .xb{position:absolute;width:150px;height:150px;border-radius:50%;background:var(--coral);display:grid;place-items:center;z-index:30}
 .xb svg{width:84px;height:84px;color:#fff}
 .heart{position:absolute;width:70px;height:70px;color:var(--coral);z-index:30}
+.sc.photo .drawn{display:none}
+.shade{position:absolute;inset:0;display:none;background:linear-gradient(180deg,rgb(0 0 0/.28),rgb(0 0 0/0) 32%,rgb(0 0 0/0) 62%,rgb(0 0 0/.35))}
+.sc.photo .shade{display:block}
+.sc.photo .loop{left:290px;top:1040px;width:500px;height:500px}
+.sc.photo .heart{width:120px;height:120px;filter:drop-shadow(0 8px 16px rgb(0 0 0/.35))}
 `,
   html: (A) => {
     const bg = (k, color) => (A[k] ? `<img class="bg cover" src="${A[k]}">` : `<div class="bg" style="background:${color}"></div>`);
     return `
-<div class="sc" id="S1">${bg("w1", "radial-gradient(90% 70% at 50% 30%,#ffe2c4,#ffc896)")}
-  ${front({ id: "f1", x: 330, top: 760, w: 420, name: "قهوة الحومة", awning: "#6c47ff" })}<div class="street" style="top:1280px"></div>
-  <div class="art" id="g1" style="left:80px;top:900px;width:180px;height:387px">${guy}</div>
+<div class="sc${A.w1 ? " photo" : ""}" id="S1">${bg("w1", "radial-gradient(90% 70% at 50% 30%,#ffe2c4,#ffc896)")}<div class="shade"></div>
+  <div class="drawn">${front({ id: "f1", x: 330, top: 760, w: 420, name: "قهوة الحومة", awning: "#6c47ff" })}<div class="street" style="top:1280px"></div>
+  <div class="art" id="g1" style="left:80px;top:900px;width:180px;height:387px">${guy}</div></div>
   <div class="tagp" id="rem" style="left:250px;top:780px;--k:0">-20%</div></div>
-<div class="sc" id="S3">${bg("w3", "radial-gradient(90% 70% at 50% 30%,#fff3c4,#ffe08a)")}
+<div class="sc${A.w3 ? " photo" : ""}" id="S3">${bg("w3", "radial-gradient(90% 70% at 50% 30%,#fff3c4,#ffe08a)")}${A.w5 ? `<img class="bg cover" id="bg5" src="${A.w5}">` : ""}<div class="shade"></div>
   ${paper(8, 0, "pc1").replace('class="pcard ', 'style="left:220px;top:900px" class="pcard ')}
-  <div class="art" id="cp" style="left:400px;top:640px;width:290px;height:247px">${cup()}</div>
+  <div class="art drawn" id="cp" style="left:400px;top:640px;width:290px;height:247px">${cup()}</div>
   <div class="stampr" id="stp" style="left:700px;top:620px"><i class="h"></i><i class="b"></i><i class="f"></i></div>
   <div class="art" id="gf" style="left:440px;top:1260px;width:200px;height:200px">${gift}</div>
   <div class="free" id="fr" style="left:660px;top:660px">بلاش</div></div>
-<div class="sc" id="S9">${bg("w9", "radial-gradient(90% 70% at 50% 30%,#e7f9ef,#bdebd2)")}
+<div class="sc${A.w9 ? " photo" : ""}" id="S9">${bg("w9", "radial-gradient(90% 70% at 50% 30%,#e7f9ef,#bdebd2)")}<div class="shade"></div>
   <svg class="loop" viewBox="0 0 100 100"><path id="lp" d="M50 8a42 42 0 1 1-0.1 0" fill="none" stroke="#12b76a" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264"/><path d="M47 3l6 5-6 5" fill="none" stroke="#12b76a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  ${front({ id: "f9", x: 330, top: 760, w: 420, name: "قهوة الحومة", awning: "#6c47ff" })}
+  <div class="drawn">${front({ id: "f9", x: 330, top: 760, w: 420, name: "قهوة الحومة", awning: "#6c47ff" })}
   ${front({ id: "f10", x: 1160, top: 760, w: 420, name: "قهوة أخرى", awning: "#8f8ba3", lit: false })}
   <div class="street" style="top:1280px"></div>
-  <div class="art" id="g9" style="left:110px;top:900px;width:180px;height:387px">${guy}</div>
-  <div class="xb" id="x10" style="left:470px;top:960px">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'}</div></div>
+  <div class="art" id="g9" style="left:110px;top:900px;width:180px;height:387px">${guy}</div></div>
+  <div class="xb drawn" id="x10" style="left:470px;top:960px">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'}</div></div>
 <div class="sc" id="S11">${bg("w11", "radial-gradient(90% 70% at 50% 30%,#ffe7e1,#ffc3b4)")}
   ${paper(20, 2, "pc20", "many").replace('class="pcard ', 'style="left:220px;top:900px" class="pcard ')}
   <div class="big20" id="b20" style="left:400px;top:660px">20</div>
   <div class="art" id="sd" style="left:820px;top:980px;width:200px;height:430px">${sad}</div>
   ${paper(8, 6, "pc8").replace('class="pcard ', 'style="left:220px;top:860px" class="pcard ')}
   <div class="okb" id="ok8" style="left:780px;top:790px">${'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'}</div></div>
-<div class="sc" id="S14">${bg("w14", "radial-gradient(90% 70% at 50% 30%,#efeaff,#d9ceff)")}
-  ${front({ id: "f14", x: 330, top: 700, w: 420, name: "قهوة الحومة", awning: "#6c47ff" })}<div class="street" style="top:1220px"></div>
-  <div class="art" id="one" style="left:470px;top:860px;width:170px;height:366px">${guy}</div>
-  ${crowd.map((p, i) => `<div class="art cr" id="cr${i}" style="left:${1100 + i * 120}px;top:860px;width:170px;height:366px">${p}</div>`).join("")}
+<div class="sc${A.w14 ? " photo" : ""}" id="S14">${bg("w14", "radial-gradient(90% 70% at 50% 30%,#efeaff,#d9ceff)")}<div class="shade"></div>
+  <div class="drawn">${front({ id: "f14", x: 330, top: 700, w: 420, name: "قهوة الحومة", awning: "#6c47ff" })}<div class="street" style="top:1220px"></div></div>
+  <div class="art drawn" id="one" style="left:470px;top:860px;width:170px;height:366px">${guy}</div>
+  ${crowd.map((p, i) => `<div class="art cr drawn" id="cr${i}" style="left:${1100 + i * 120}px;top:860px;width:170px;height:366px">${p}</div>`).join("")}
   ${[0, 1, 2].map((i) => `<svg class="heart" id="h${i}" style="left:${380 + i * 140}px;top:${640 - (i % 2) * 40}px" viewBox="0 0 24 24" fill="currentColor"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`).join("")}</div>
 `;
   },
@@ -146,6 +151,11 @@ ${ART_CSS}
       K.sfx("thud", t + 0.02);
     };
     tl.to($("cp"), { x: -260, scale: 0.7, duration: 0.35 }, at("w5", 0));
+    // the fifth photo under «every coffee, a tampon»: the barista hands it over
+    if ($("bg5")) {
+      tl.fromTo($("bg5"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.45, ease: "none" }, at("w5", -0.15));
+      K.drift($("bg5"), at("w5", -0.15), at("w8"), { from: 1.04, to: 1.0 });
+    }
     stampAt(0, at("w5", 0.5)); stampAt(1, at("w5", 0.95)); stampAt(2, at("w5", 1.4));
     [3, 4, 5, 6, 7].forEach((i, k) => stampAt(i, at("w6", 0.15 + k * 0.22)));
     tl.to($("stp"), { autoAlpha: 0, y: "-=200", duration: 0.25 }, at("w6", 1.4));
@@ -162,11 +172,19 @@ ${ART_CSS}
     tl.to(K.$("#lp"), { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" }, at("w9", 0.1));
     K.sfx("whoosh", at("w9", 0.1));
     tl.to($("g9"), { x: 300, duration: 1.0, ease: "none" }, at("w9", 0.3));
-    tl.to([$("f9"), $("g9"), K.$("#S9 .loop")], { x: "-=380", duration: 0.6, ease: "power3.inOut" }, at("w10", 0));
-    tl.to($("f10"), { x: -620, duration: 0.6, ease: "power3.inOut" }, at("w10", 0));
-    tl.set($("x10"), { left: 860 }, at("w10", 0));
-    K.pop($("x10"), at("w10", 0.7), { from: 0.4 });
-    K.sfx("buzz", at("w10", 0.75), -4);
+    if (K.asset("w9")) {
+      // on the photo: the loop says «he comes back»; then «another café», crossed
+      K.fadeOut(K.$("#S9 .loop"), at("w10", -0.1), 0.25);
+      const other = K.pill("قهوة أخرى", { y: 1180, cls: "coral", icon: "x", parent: $("S9"), z: 40, size: 56 });
+      K.pop(other, at("w10", 0.5), { from: 0.5 });
+      K.sfx("buzz", at("w10", 0.55), -4);
+    } else {
+      tl.to([$("f9"), $("g9"), K.$("#S9 .loop")], { x: "-=380", duration: 0.6, ease: "power3.inOut" }, at("w10", 0));
+      tl.to($("f10"), { x: -620, duration: 0.6, ease: "power3.inOut" }, at("w10", 0));
+      tl.set($("x10"), { left: 860 }, at("w10", 0));
+      K.pop($("x10"), at("w10", 0.7), { from: 0.4 });
+      K.sfx("buzz", at("w10", 0.75), -4);
+    }
 
     /* 11 — the gift not so far he gives up on it */
     K.scene($("S11"), at("w11", -0.05), at("w14", -0.05), { inn: "fade" });
@@ -185,6 +203,7 @@ ${ART_CSS}
     /* 14 — not one visit and gone: customers who come back */
     K.scene($("S14"), at("w14", -0.05), at("w16", -0.05), { inn: "fade" });
     gsap.set(K.$$("#S14 .heart"), { autoAlpha: 0 });
+    K.drift(K.$("#S14 .bg"), at("w14", -0.05), at("w16"), { from: 1.0, to: 1.08 });
     tl.to($("one"), { x: -560, duration: 1.3, ease: "none" }, at("w14", 0.4));
     tl.to($("one"), { autoAlpha: 0, duration: 0.2 }, at("w14", 1.5));
     K.sfx("swish", at("w14", 0.4));

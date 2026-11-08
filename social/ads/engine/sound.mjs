@@ -182,6 +182,7 @@ const C = {
   Fmaj7: [53, 57, 60, 64], Em7: [52, 55, 59, 62], Dm7: [50, 53, 57, 60], Cmaj7: [48, 52, 55, 59],
   C: [48, 55, 60, 64], G: [47, 55, 59, 62], Am: [48, 52, 57, 60], F: [48, 53, 57, 60],
   Am7: [55, 57, 60, 64], Dm9: [53, 57, 60, 64], G7: [53, 55, 59, 62], Am_: [57, 60, 64], F_: [57, 60, 65], C_: [55, 60, 64], G_: [55, 59, 62],
+  Dm_: [57, 62, 65], E_: [56, 59, 64],
 };
 export const STYLES = {
   // a warm story: electric piano, soft swung drums
@@ -192,6 +193,8 @@ export const STYLES = {
   tech: { bpm: 100, swing: 0, prog: ["Am_", "F_", "C_", "G_"], roots: [45, 41, 36, 43], kick: [0, 4, 8, 12], clap: [12], hats: [2, 6, 10, 14], shaker: true, keys: "pad", bassAt: [0, 2, 4, 6, 8, 10, 12, 14], pluck: [0, 6, 10], room: 0.2 },
   // a comic: quick, plucky, staccato stabs — chaos that stays friendly
   comic: { bpm: 120, swing: 0, prog: ["C", "F", "G", "C"], roots: [36, 41, 43, 36], kick: [0, 8, 11], clap: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14], keys: "stab", keysAt: [0, 3, 6, 10], bassAt: [0, 3, 8, 11], pluck: [0, 2, 4, 7, 9, 12, 14], room: 0.12 },
+  // noir: a slow minor pulse, a pad, a few plucks in the dark
+  noir: { bpm: 88, swing: 0, prog: ["Am_", "F_", "Dm_", "E_"], roots: [45, 41, 38, 40], kick: [0, 10], clap: [8], hats: [4, 12], keys: "pad", bassAt: [0, 3, 8, 11], pluck: [0, 6], room: 0.3 },
   // lo-fi: slow, swung, a crackle under it
   lofi: { bpm: 84, swing: 0.2, prog: ["Am7", "Dm7", "G7", "Cmaj7"], roots: [45, 38, 43, 36], kick: [0, 6, 10], snare: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14], keys: "ep", keysAt: [0, 7], bassAt: [0, 10], pluck: null, crackle: true, room: 0.25 },
 };

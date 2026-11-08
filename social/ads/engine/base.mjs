@@ -111,7 +111,7 @@ img.cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .end{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;color:#fff;
   background:radial-gradient(90% 60% at 20% 0%,rgb(255 255 255/.22),transparent 60%),linear-gradient(150deg,#7c4dff,#6c47ff 45%,#3f22c9);visibility:hidden;opacity:0;z-index:80}
 /* the classes of a film (.word, .tag…) never move the pieces of the end card */
-.end>*{position:relative;inset:auto;transform:none}
+#stage .end>*{position:relative;inset:auto;transform:none}
 .end .logo{width:250px;height:250px;border-radius:64px;background:#fff;display:grid;place-items:center;box-shadow:0 40px 80px -30px rgb(20 8 80/.7)}
 .end .logo svg{width:170px}
 .end .word{margin-top:44px;font-size:116px;font-weight:700;letter-spacing:-1px;direction:ltr}

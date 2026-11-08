@@ -183,13 +183,15 @@
 
   /* ── Pointili's card, stamps landing on it as they do in the app ── */
   const passLine = (n, goal, gift) => (n >= goal ? `ربحت ${gift}!` : goal - n === 1 ? `مازالك تامبون واحد باش تربح ${gift}` : `مازالولك ${goal - n} باش تربح ${gift}`);
-  function pass({ name = "Café El Medina", color = "#6c47ff", goal = 8, stamps = 0, gift = "قهوة بلاش", icon = "coffee", x = 130, y = 700, w = 820, size = 36, parent = stage, z = 20 } = {}) {
+  // mark: the shop's own logo (an emoji here) in place of the tick on every tampon — «اللوغو متاعك»
+  function pass({ name = "Café El Medina", color = "#6c47ff", goal = 8, stamps = 0, gift = "قهوة بلاش", icon = "coffee", x = 130, y = 700, w = 820, size = 36, parent = stage, z = 20, mark = null, logo = null } = {}) {
     const cols = goal <= 6 ? goal : goal <= 10 ? 5 : goal <= 12 ? 6 : 8;
-    const dots = Array.from({ length: goal }, (_, i) => `<span class="dot">${i === goal - 1 ? ICON.gift : ""}<span class="on">${i === goal - 1 ? ICON.gift : ICON.check}</span></span>`).join("");
+    const tick = mark ? `<em style="font-style:normal;font-size:1.15em;line-height:1">${mark}</em>` : ICON.check;
+    const dots = Array.from({ length: goal }, (_, i) => `<span class="dot">${i === goal - 1 ? ICON.gift : ""}<span class="on">${i === goal - 1 ? ICON.gift : tick}</span></span>`).join("");
     const counts = Array.from({ length: goal + 1 }, (_, n) => `<span data-n="${n}"><b>${n}</b><i>/${goal}</i></span>`).join("");
     const lines = Array.from({ length: goal + 1 }, (_, n) => `<span data-n="${n}">${ICON.gift}<span>${esc(passLine(n, goal, gift))}</span></span>`).join("");
     const el = add(`<div class="pass" style="--c:${color};left:${x}px;top:${y}px;width:${w}px;font-size:${size}px;z-index:${z}">
-      <div class="top"><span class="mark">${ICON[icon] ?? ICON.coffee}</span><span class="name" dir="auto">${esc(name)}</span><span class="count">${counts}</span></div>
+      <div class="top"><span class="mark">${logo ? `<em style="font-style:normal;font-size:1.3em">${logo}</em>` : ICON[icon] ?? ICON.coffee}</span><span class="name" dir="auto">${esc(name)}</span><span class="count">${counts}</span></div>
       <div class="dots" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${dots}</div>
       <div class="line">${lines}</div></div>`, parent);
     const ons = $$(".dot .on", el);
@@ -307,18 +309,33 @@
     return add(`<div class="mark-bug"><span class="m">${brandMark()}</span><span style="color:${white ? "#fff" : "var(--ink)"}">Pointili</span></div>`);
   }
 
+  /* ── per-frame hooks: what a tween cannot say (a number counting), recomputed for each frame ── */
+  const HOOKS = [];
+  const each = (fn) => HOOKS.push(fn);
+  const easeOut3 = (x) => 1 - Math.pow(1 - x, 3);
+  /** a number counting on an element, from a to b between t0 and t0 + dur */
+  function counter(el, a, b, t0, dur, { fmt = (n) => String(Math.round(n)), ease = easeOut3, sound = null, every = 0.08 } = {}) {
+    each((t) => {
+      const p = Math.min(1, Math.max(0, (t - t0) / dur));
+      el.textContent = fmt(a + (b - a) * ease(p));
+    });
+    if (sound) for (let s = t0; s < t0 + dur; s += every) sfx(sound, s, -8);
+  }
+
   // returns nothing: the timeline itself would be serialised back to Node, the whole graph of it
   window.__seek = (t) => {
     tl.seek(t, false);
+    for (const h of HOOKS) h(t);
   };
   window.K = {
     tl, at, end, sfx, $, $$, add, mark, esc, tokens, ICON, brandMark,
     pop, rise, fadeIn, out, fadeOut, show, hide, drift, shake, scene,
     subs, phone, pass, pill, typeIn, commentBox, reply, chat, endcard, tap, burst, progress, bug,
+    each, counter,
     asset: (k) => F.assets[k],
     ready: () => {
       window.__SFX = SFX.sort((a, b) => a.t - b.t);
-      tl.seek(0, false);
+      window.__seek(0);
       window.__READY = true;
     },
   };
