@@ -97,7 +97,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
           was for when the shop says what it sells, and every gift. A card with nothing on it yet has
           no story, and that is exactly when how-it-works is worth the room instead. */}
       {card.history.length > 0 ? (
-        <div className="mx-auto mt-[1.6dvh] flex w-full max-w-[min(100%,52dvh)] min-h-0 flex-1 flex-col">
+        // with a golden ticket under the card the story keeps room for a few lines, the page scrolling on a short
+        // phone (9 Nov 2026: the draw's boxes left it 4px on a 667px screen); a card without one, as it always was
+        <div className={`mx-auto mt-[1.6dvh] flex w-full max-w-[min(100%,52dvh)] ${draw ? "min-h-[7.5rem]" : "min-h-0"} flex-1 flex-col`}>
           <p className="shrink-0 px-1 pb-1.5 text-[0.75rem] font-bold text-faint">{t.cardStory}</p>
           {/* a real list: it may scroll inside itself, the page may not */}
           <ol data-list className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pb-1">

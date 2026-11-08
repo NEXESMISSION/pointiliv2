@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { myCardDraw } from "@/app/actions-draw";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon3D } from "@/components/ui";
-import { D, giftsLine, leftOf, peopleN, ticketsN, whenSaid, winnersN, type CardDraw as Draw } from "@/lib/draw";
+import { D, giftsLine, leftOf, leftSaid, peopleN, ticketsN, whenSaid, winnersN, type CardDraw as Draw } from "@/lib/draw";
 import { fill } from "@/lib/t";
 
 /** the phone's clock, a second at a time — null while the server draws the page */
@@ -79,12 +79,14 @@ export function CardDraw({ draw }: { draw: NonNullable<Draw> }) {
             <span className="min-w-0 flex-1">
               <b className="block truncate text-[0.9375rem] font-bold">{open.title ?? D.cardTitle}</b>
               <span className="block truncate text-[0.75rem] font-semibold opacity-80">{fill(D.cardDrawAt, { when: whenSaid(open.draw_at) })}</span>
+              {/* a short screen: the countdown in one line here, in place of its four boxes below */}
+              {!due && now !== null && <span className="num hidden truncate text-[0.8125rem] font-bold [@media(max-height:720px)]:block">{leftSaid(open.draw_at, now)}</span>}
             </span>
           </div>
           <p className="relative mt-1.5 truncate text-[0.8125rem] font-semibold">
             🎁 <bdi>{giftsLine(open.gifts)}</bdi>
           </p>
-          <div className="relative mt-2">{due ? <p className="py-2 text-center text-[0.9375rem] font-bold">{D.cardDrawing}</p> : <Countdown at={open.draw_at} now={now} />}</div>
+          <div className={`relative mt-2 ${due ? "" : "[@media(max-height:720px)]:hidden"}`}>{due ? <p className="py-2 text-center text-[0.9375rem] font-bold">{D.cardDrawing}</p> : <Countdown at={open.draw_at} now={now} />}</div>
           <p className="relative mt-2 text-center text-[0.8125rem] font-bold">
             {open.rule === "cards" ? D.cardIn : open.mine > 0 ? fill(D.cardMine, { n: ticketsN(open.mine) }) : D.cardNone}
             {open.people > 1 && <span className="font-semibold opacity-75"> · {fill(D.cardPeople, { n: peopleN(open.people) })}</span>}

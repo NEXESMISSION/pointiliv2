@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { Power } from "lucide-react";
 import { adminPlan, adminTrial } from "@/app/actions";
+import { adminSetPack } from "@/app/actions-packs";
+import { P, PACK_NAME } from "@/lib/packs";
 import type { BoardMore } from "@/app/admin/actions";
 import type { AccessShop } from "@/lib/board";
 import { PlanImage, type PlanShot } from "@/components/PlanImage";
@@ -35,11 +37,14 @@ const typedBox = (lit: boolean, bad = false) => `h-9 rounded-full bg-surface px-
  * the amount is said by hand too); the way it came, a few words of his own
  * next to the usual ones (lib/plans.ts, payWayOf).
  */
-export function AdminAccess({ shop, plan = null, reload, pack = "old" }: { shop: AccessShop; plan?: BoardMore["plan"] | null; reload?: () => Promise<void>; /** the shop's pack (lib/plans): Pro's own prices; an old shop, its own as always */ pack?: Pack }) {
+export function AdminAccess({ shop, plan = null, reload, pack = "old", packChanged }: { shop: AccessShop; plan?: BoardMore["plan"] | null; reload?: () => Promise<void>; /** the shop's pack (lib/plans): Pro's own prices; an old shop, its own as always */ pack?: Pack; /** the pack chosen here and set with the subscription: read the shop's systems again */ packChanged?: () => Promise<void> }) {
   const [mode, setMode] = useState<null | "plan" | "trial" | "end">(null);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const plans = plansOfPack(pack, shop.old_price);
+  // the pack the owner paid for, chosen here with the length (the founder, 9 Nov 2026: one place for both) —
+  // the price list follows it; an old shop stays old unless another is chosen
+  const [packNow, setPackNow] = useState<Pack>(pack);
+  const plans = plansOfPack(packNow, shop.old_price);
   const first = plans.find((p) => p.id === "year") ?? plans[0];
   // the offer still running for this shop (the trial's first 3 days, nothing paid): its two months, ticked
   const [inOffer] = useState(() => !shop.paid && !!shop.offer_until && Date.parse(shop.offer_until) > Date.now());
@@ -75,6 +80,16 @@ export function AdminAccess({ shop, plan = null, reload, pack = "old" }: { shop:
       if (!canGo) return;
       const res = await adminPlan(shop.id, "paid", months, null, null, show, sum ? way : null, sum);
       if (res.ok) setMade({ at: new Date().toISOString(), kind: "paid", months, until: res.until ?? null, amount: sum ?? null, method: sum ? way : null, shop: shop.name, owner: shop.owner.name });
+      // the pack paid for, set with it (its switches follow); the subscription stands even when the pack is refused
+      if (res.ok && packNow !== pack) {
+        const set = await adminSetPack(shop.id, packNow);
+        if (!set.ok) {
+          setError(set.error === "store_on" ? P.aPackStoreOn : NOT_DONE);
+          await reload?.();
+          return;
+        }
+        await packChanged?.();
+      }
       await done(res.ok);
     });
 
@@ -103,6 +118,29 @@ export function AdminAccess({ shop, plan = null, reload, pack = "old" }: { shop:
 
       {mode === "plan" && (
         <div className="mt-2.5 space-y-3">
+          <div>
+            <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{P.aPack}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {(pack === "old" ? (["old", "base", "pro"] as const) : (["base", "pro"] as const)).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    setPackNow(p);
+                    const list = plansOfPack(p, shop.old_price);
+                    const y = list.find((x) => x.id === "year") ?? list[0];
+                    setBase(y.months);
+                    setAmount(y.price);
+                    setOther("");
+                    setTyped("");
+                  }}
+                  className={chip(packNow === p)}
+                >
+                  {p === "old" ? P.aPackOld : PACK_NAME[p]}
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanMonths}</span>
             <div className="flex flex-wrap gap-1.5">

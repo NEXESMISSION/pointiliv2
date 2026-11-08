@@ -18,7 +18,7 @@ const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "
  * confiance.» No party: the owner paid, nothing was given. Written as seen
  * the moment it shows, so it never comes back, on this phone or another.
  */
-export function PlanOn({ grant }: { grant: Grant }) {
+export function PlanOn({ grant, pro = false }: { grant: Grant; /** the shop is on Pointili Pro (lib/packs): what it has now, said with the rest */ pro?: boolean }) {
   const [open, setOpen] = useState(true);
   const said = useRef(false);
   useEffect(() => {
@@ -57,6 +57,11 @@ export function PlanOn({ grant }: { grant: Grant }) {
         <p className="mt-3 rounded-[1rem] bg-mint-soft px-3 py-2.5 text-[0.9375rem] font-bold text-mint">
           {grant.months ? fill(t.grantPaidFor, { d: monthsSaid(grant.months), date: until }) : fill(t.grantUntil, { date: until })}
         </p>
+        {pro && (
+          <p className="mt-2 rounded-[1rem] px-3 py-2.5 text-[0.8125rem] font-bold leading-snug" style={{ background: "linear-gradient(135deg,#fff6d3,#ffd766)", color: "#5a3700" }}>
+            Pointili Pro: التذكرة الذهبية، الماغازة، تليفونات الخدّامة وتحميل البيانات — تلقاهم في «النظام متاعي».
+          </p>
+        )}
         {grant.note && <p className="mt-3 text-balance text-[0.9375rem] leading-relaxed text-body">«{grant.note}»</p>}
         <p dir="ltr" lang="fr" className="mt-3 text-[0.9375rem] font-semibold text-body">
           {t.grantThanks}

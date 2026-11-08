@@ -311,7 +311,7 @@ export default async function ShopHome() {
       <LogoTip shopId={shop.id} logo={shop.logo ?? null} show={logoTip} />
       {offerNote && pay?.offer_until && <OfferPopup shopId={shop.id} offerUntil={pay.offer_until} />}
       {firstGift && <FirstGift shopId={shop.id} name={firstGift.name} gift={firstGift.gift} />}
-      {grant && <PlanOn grant={grant} />}
+      {grant && <PlanOn grant={grant} pro={(systems as { pack?: string } | null)?.pack === "pro"} />}
       <NewsPopup news={firstGift || logoTip || offerNote || grant ? null : (news ?? null)} who={me.id} />
       {/* Pointili on the home screen, asked once where Android's Chrome offers it — never over another note */}
       <LinksTip who={me.id} show={linksTip} />

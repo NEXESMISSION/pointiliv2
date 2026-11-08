@@ -70,6 +70,13 @@ export function leftOf(iso: string, now: number) {
   return { ms, d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 };
 }
 
+/** «باقي يومين و 01:15», «باقي 05:12:40» — the countdown in one line, for a short screen (the card's compact draw) */
+export function leftSaid(iso: string, now: number): string {
+  const { d, h, m, s } = leftOf(iso, now);
+  const two = (n: number) => String(n).padStart(2, "0");
+  return d > 0 ? `باقي ${counted(d, "نهار", "يومين", "أيّام", "يوم")} و ${two(h)}:${two(m)}` : `باقي ${two(h)}:${two(m)}:${two(s)}`;
+}
+
 /** «بعد يومين», «بعد 5 سوايع», «بعد 20 دقيقة», «توّا» — the countdown in one breath (the wallet's line) */
 export function soonSaid(iso: string, now: number): string {
   const { ms, d, h, m } = leftOf(iso, now);

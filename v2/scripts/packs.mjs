@@ -116,7 +116,11 @@ try {
   const yassine = await person("Yassine Staff");
   check("a person not signed in cannot use it", !!(await createClient(URL_, ANON, { auth: { persistSession: false } }).rpc("staff_join", { p_token: inv.token })).error);
   check("an owner of another shop cannot be staff", (await rpc(plain, "staff_join", { p_token: inv.token })).error === "owner");
+  const before = (await admin.rpc("staff_invite_info", { p_token: inv.token })).data;
+  check("a phone not signed in yet is told which shop invites (by the server's own key)", before?.ok && before.shop === "Nova Café" && before.state === "open", before);
+  check("…a visitor cannot ask the database itself", !!(await createClient(URL_, ANON, { auth: { persistSession: false } }).rpc("staff_invite_info", { p_token: inv.token })).error);
   check("Yassine joins with it", (await rpc(yassine, "staff_join", { p_token: inv.token })).ok);
+  check("…and the invite says it is used", (await admin.rpc("staff_invite_info", { p_token: inv.token })).data?.state === "used");
   check("…opening it again: he is in already", (await rpc(yassine, "staff_join", { p_token: inv.token })).already === true);
   check("…nobody else can use it", (await rpc(sami, "staff_join", { p_token: inv.token })).error === "used");
   check("a made-up invite: invalid", (await rpc(sami, "staff_join", { p_token: "A".repeat(32) })).error === "invalid");

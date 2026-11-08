@@ -80,7 +80,17 @@ export function AdminShopMore({ shop, now, bare = false }: { shop: AccessShop; n
         />
       )}
       {/* a pack changed: the price list changes with it (Pro's own), so the form starts again */}
-      <AdminAccess key={`access-${sys?.pack ?? "old"}`} shop={shop} plan={more.plan} reload={load} pack={sys?.pack ?? "old"} />
+      <AdminAccess
+        key={`access-${sys?.pack ?? "old"}`}
+        shop={shop}
+        plan={more.plan}
+        reload={load}
+        pack={sys?.pack ?? "old"}
+        packChanged={async () => {
+          await load();
+          setRound((r) => r + 1);
+        }}
+      />
       <Switches key={`switches-${round}`} shop={shop} more={more} reload={load} />
       <Account shop={shop} more={more} />
     </div>

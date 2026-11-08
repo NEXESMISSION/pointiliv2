@@ -278,6 +278,20 @@ begin
                   when i.expires_at <= now() then 'expired' else 'open' end);
 end $$;
 
+-- the same invite, for a phone not signed in yet (the server only, with its own key — a visitor can call
+-- nothing): the shop it is for and whether it still works, so the page says who invites before the sign-in
+create or replace function public.staff_invite_info(p_token text) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare i public.staff_invites%rowtype; s public.shops%rowtype;
+begin
+  if p_token is null or p_token !~ '^[A-Za-z0-9_-]{20,64}$' then return public.err('invalid'); end if;
+  select * into i from public.staff_invites where hash = public.sha(p_token);
+  if i.id is null then return public.err('invalid'); end if;
+  select * into s from public.shops where id = i.shop_id;
+  return jsonb_build_object('ok', true, 'shop', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo,
+    'state', case when i.used_at is not null then 'used' when i.expires_at <= now() then 'expired' else 'open' end);
+end $$;
+
 -- the wallet's extras in one call: the cards with a golden ticket on them (my_draws), and the shop this
 -- person works at as staff (its name: a door to its counter) — null for nearly everybody
 create or replace function public.my_extras() returns jsonb
@@ -363,7 +377,8 @@ end $$;
 revoke execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
   public.my_systems(), public.store_preview(), public.set_store(boolean),
   public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
-  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras()
+  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
+  public.staff_invite_info(text)
   from public, anon, authenticated;
 grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text), public.my_systems(), public.store_preview(), public.set_store(boolean),
   public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text), public.my_staff_shop(), public.staff_leave(),
@@ -372,7 +387,8 @@ grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_p
 grant execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
   public.my_systems(), public.store_preview(), public.set_store(boolean),
   public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
-  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras()
+  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
+  public.staff_invite_info(text)
   to service_role;
 
 notify pgrst, 'reload schema';

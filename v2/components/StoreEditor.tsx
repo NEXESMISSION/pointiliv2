@@ -22,7 +22,7 @@ const START = 10;
  * counter by scanning the customer's code — and the things on sale, each a
  * name and a price in tampons, changed in place and saved at once.
  */
-export function StoreEditor({ items, waiting, sold, first = false }: { items: StoreItem[]; waiting: Waiting[]; sold: { name: string; n: number }[]; first?: boolean }) {
+export function StoreEditor({ items, waiting, sold, first = false, back = "/shop" }: { items: StoreItem[]; waiting: Waiting[]; sold: { name: string; n: number }[]; first?: boolean; /** where its way back leads (a shop that chose the store on «النظام متاعي»: back there) */ back?: string }) {
   useScreen("store");
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>(() => items.map((x) => ({ key: `i${x.id}`, id: x.id, name: x.name, cost: x.cost })));
@@ -68,7 +68,7 @@ export function StoreEditor({ items, waiting, sold, first = false }: { items: St
 
   return (
     <>
-      <Top back={first ? undefined : "/shop"} title={t.storeOwnerTitle} hint={first ? undefined : t.storeOwnerHint} />
+      <Top back={first ? undefined : back} title={t.storeOwnerTitle} hint={first ? undefined : t.storeOwnerHint} />
       {first && (
         <>
           <h1 className="mt-1 shrink-0 text-balance text-[1.25rem] font-bold leading-tight">شنوّة يشريو الحرفاء بالتامبونات؟</h1>
