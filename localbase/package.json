@@ -1,0 +1,13 @@
+{
+  "name": "pointili-localbase",
+  "private": true,
+  "type": "module",
+  "description": "Pointili's database on this computer: Postgres (PGlite) with Supabase's REST and sign-in in front, so the app runs and is tested with no contact at all with the live database.",
+  "scripts": {
+    "start": "node server.mjs",
+    "reset": "node server.mjs --reset"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.11"
+  }
+}

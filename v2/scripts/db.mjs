@@ -11,7 +11,9 @@ import { config } from "dotenv";
 config({ path: ".env.local", quiet: true });
 const REF = process.env.SUPABASE_PROJECT_REF;
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
-if (!REF || !TOKEN) throw new Error("SUPABASE_PROJECT_REF / SUPABASE_ACCESS_TOKEN missing in v2/.env.local");
+// the database on this computer (localbase/): its own SQL door, and no key of the live one anywhere near
+const LOCAL = process.env.LOCAL_SQL_URL;
+if (!LOCAL && (!REF || !TOKEN)) throw new Error("SUPABASE_PROJECT_REF / SUPABASE_ACCESS_TOKEN missing in v2/.env.local");
 
 export async function api(path, { method = "GET", body } = {}) {
   for (let attempt = 1; ; attempt++) {
@@ -31,7 +33,15 @@ export async function api(path, { method = "GET", body } = {}) {
   }
 }
 
-export const sql = (query) => api("/database/query", { method: "POST", body: { query } });
+export const sql = (query) => (LOCAL ? localSql(query) : api("/database/query", { method: "POST", body: { query } }));
+
+/** the same SQL, on this computer's database (localbase/server.mjs) */
+async function localSql(query) {
+  const res = await fetch(LOCAL, { method: "POST", headers: { Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ query }) });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`localbase SQL: HTTP ${res.status} — ${text.slice(0, 600)}`);
+  return text ? JSON.parse(text) : null;
+}
 
 /** The «logos» box: public to read (a logo shows on every customer's card), written by the server only; small WebP only. */
 async function logosBucket() {
@@ -74,10 +84,10 @@ async function voicesBucket() {
  * perfume shop's counter stopped asking which perfume. So: read before,
  * read after, and anything that moved is put back and said loudly.
  */
-const KEPT = ["items_on", "store_on", "wheel_on", "wheel_allowed", "export_allowed", "links_allowed", "draw_allowed", "reset_days", "reset_since", "reset_paused_at", "paused", "paid_until", "trial_days", "trial_first", "trial_from"];
+const KEPT = ["items_on", "store_on", "wheel_on", "wheel_allowed", "export_allowed", "links_allowed", "draw_allowed", "pack", "store_allowed", "staff_max", "reset_days", "reset_since", "reset_paused_at", "paused", "paid_until", "trial_days", "trial_first", "trial_from"];
 // the files laid after schema.sql, in this order: their own functions and grants, after its «who may call what»
 // (whose revoke takes every function's grants away first)
-const AFTER = ["supabase/systems-2026-11-08.sql"];
+const AFTER = ["supabase/systems-2026-11-08.sql", "supabase/packs-2026-11-09.sql"];
 const keptNow = async () => new Map((await sql(`select id, name, ${KEPT.join(", ")} from public.shops`)).map((r) => [r.id, r]));
 const lit = (v) => (v === null ? "null" : typeof v === "boolean" || typeof v === "number" ? String(v) : `'${String(v).replace(/'/g, "''")}'`);
 
@@ -105,8 +115,11 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   // of what it will serve: without this, the app gets a 404 from it for a while
   await sql("select pg_notify('pgrst', 'reload schema')");
   console.log(`✓ schema.sql (${Date.now() - t0} ms)`);
-  await logosBucket();
-  await voicesBucket();
+  // the boxes for logos and voice notes live on Supabase's Storage, which the database on this computer has not
+  if (!LOCAL) {
+    await logosBucket();
+    await voicesBucket();
+  }
 
   const phones = String(process.env.ADMIN_PHONES ?? "")
     .split(",")

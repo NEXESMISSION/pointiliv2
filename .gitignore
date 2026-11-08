@@ -43,3 +43,8 @@ social/carousels/review/
 # the voice-over takes made by edge-tts (judged not Tunisian enough, 14 Oct 2026): kept on disk, never in the repo
 social/voice/*.mp3
 social/voice/*.srt
+
+# the database on this computer (localbase): its packages and its data stay here
+localbase/node_modules/
+localbase/.data/
+localbase/.data-logins.txt
