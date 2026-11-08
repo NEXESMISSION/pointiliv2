@@ -13,7 +13,7 @@ The founder's rule: the shops and customers already on Pointili, the paying ones
 Before every release, run these checks again:
 - `node scripts/draw.mjs`: the golden ticket's rules, on throwaway robot accounts (67/67).
 - `node scripts/same-pages.mjs <main> <branch>`: 44 pages compared between main and the branch, for an ordinary shop, a roulette shop, a store shop and their customer (44/44 identical).
-- The live-data check (`real-check.sql` in the session notes) asks the new functions, as every real owner and every real customer, what they would show. It runs in a transaction that is never committed. On 8 Nov:
+- The live-data check (`scripts/real-check.sql`) asks the new functions, as every real owner and every real customer, what they would show. It runs in a transaction that is never committed. On 8 Nov:
   - 384 real shops (10 paying) returned today's screens.
   - 553 cards (338 at paying shops) showed nothing new.
   - 555 wallets showed nothing new.
