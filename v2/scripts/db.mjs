@@ -74,7 +74,10 @@ async function voicesBucket() {
  * perfume shop's counter stopped asking which perfume. So: read before,
  * read after, and anything that moved is put back and said loudly.
  */
-const KEPT = ["items_on", "store_on", "wheel_on", "wheel_allowed", "export_allowed", "reset_days", "reset_since", "reset_paused_at", "paused", "paid_until", "trial_days", "trial_first", "trial_from"];
+const KEPT = ["items_on", "store_on", "wheel_on", "wheel_allowed", "export_allowed", "links_allowed", "draw_allowed", "reset_days", "reset_since", "reset_paused_at", "paused", "paid_until", "trial_days", "trial_first", "trial_from"];
+// the files laid after schema.sql, in this order: their own functions and grants, after its «who may call what»
+// (whose revoke takes every function's grants away first)
+const AFTER = ["supabase/systems-2026-11-08.sql"];
 const keptNow = async () => new Map((await sql(`select id, name, ${KEPT.join(", ")} from public.shops`)).map((r) => [r.id, r]));
 const lit = (v) => (v === null ? "null" : typeof v === "boolean" || typeof v === "number" ? String(v) : `'${String(v).replace(/'/g, "''")}'`);
 
@@ -83,6 +86,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   // trial_first is new on 14 Oct: on a database from before it, the snapshot simply goes without it
   const before = await keptNow().catch(async () => new Map((await sql("select id, name, items_on, store_on, wheel_on, paused, paid_until, trial_days from public.shops")).map((r) => [r.id, r])));
   await sql(readFileSync(process.env.SCHEMA || "supabase/schema.sql", "utf8"));
+  for (const f of process.env.SCHEMA ? [] : AFTER) await sql(readFileSync(f, "utf8"));
   const after = await keptNow();
   const moved = [];
   for (const [id, was] of before) {

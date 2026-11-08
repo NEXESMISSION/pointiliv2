@@ -1,7 +1,7 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChartColumn, ChevronLeft, Crown, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, Trophy, UserRound, WalletCards } from "lucide-react";
 import { ExportRow } from "@/components/ExportRow";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
@@ -16,6 +16,7 @@ import { getHelp } from "@/lib/settings";
 import { lapsed } from "@/lib/plans";
 import { call } from "@/lib/supabase";
 import { daysN, fill, t } from "@/lib/t";
+import { D, drawOn, whenSaid, type Systems } from "@/lib/draw";
 
 export const metadata = { title: "المحل", robots: { index: false } };
 
@@ -58,10 +59,12 @@ export default async function ShopSettings() {
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
   // «تحميل البيانات»: only for a shop the founder allowed it, from the console (off for every shop)
-  const [pay, help, exportState] = await Promise.all([
+  // the systems the founder gave this shop beyond the card (the golden ticket): missing, the page is as it was
+  const [pay, help, exportState, systems] = await Promise.all([
     call<Pay | null>("my_payment"),
     getHelp(),
     call<{ on: boolean; open?: boolean; last?: string | null; next?: string | null }>("my_export_state"),
+    call<Systems>("my_systems"),
   ]);
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const daysLeft = pay?.trial_until ? Math.max(0, Math.ceil((Date.parse(pay.trial_until) - Date.now()) / 86_400_000)) : 0;
@@ -116,6 +119,10 @@ export default async function ShopSettings() {
               founder allowed it. It had no way in since the wheel moved into the card's question. */}
           {(shop.wheel_allowed || shop.wheel_on) && (
             <Row href="/shop/wheel" mark={<Mark icon={PieChart} />} title={t.wheelOwnerTitle} sub={shop.wheel_on ? t.wheelSetOn : t.wheelSetOff} />
+          )}
+          {/* the golden ticket: a draw for the customers, for a shop the founder gave it (supabase/systems-2026-11-08.sql) */}
+          {drawOn(systems) && (
+            <Row href="/shop/draw" mark={<Mark icon={Trophy} />} title={D.name} sub={systems?.draw_open ? fill(D.homeRowOpen, { when: whenSaid(systems.draw_open) }) : D.homeRowNone} />
           )}
           <Row href="/shop/items" mark={<Mark icon={ShoppingBasket} />} title={t.itemsTile} sub={shop.items_on ? t.setItemsOn : t.setItemsOff} />
         </Group>

@@ -7,6 +7,8 @@ import { adminPause, adminResetPassword, adminSetTester } from "@/app/actions";
 import { adminSetItems, adminSetStore } from "@/app/actions-store";
 import { adminSetWheel } from "@/app/actions-wheel";
 import { adminExportState, adminSetExport } from "@/app/actions-export";
+import { adminSetSystem, adminSystems, type AdminSystems } from "@/app/actions-draw";
+import { D, whenSaid } from "@/lib/draw";
 import { adminBoardShop, type BoardMore } from "@/app/admin/actions";
 import { AdminAccess } from "@/components/AdminAccess";
 import type { AccessShop } from "@/lib/board";
@@ -160,6 +162,7 @@ function Switches({ shop, more, reload }: { shop: AccessShop; more: BoardMore; r
         flip={async () => after(await adminSetStore(shop.id, !more.store_on), noCard)}
       />
       <ExportLine shopId={shop.id} />
+      <SystemLines shopId={shop.id} />
     </section>
   );
 }
@@ -202,6 +205,47 @@ function ExportLine({ shopId }: { shopId: string }) {
         return null;
       }}
     />
+  );
+}
+
+/**
+ * The systems separated on 8 Nov 2026 (supabase/systems-2026-11-08.sql): the tampon sent as a link
+ * (on for every shop, as it always was) and the golden ticket (off until the founder turns it on).
+ * Read on their own when the shop is opened, like the export's switch.
+ */
+function SystemLines({ shopId }: { shopId: string }) {
+  const [s, setS] = useState<AdminSystems | null>(null);
+  useEffect(() => {
+    let live = true;
+    void adminSystems(shopId).then((v) => live && setS(v));
+    return () => {
+      live = false;
+    };
+  }, [shopId]);
+  if (!s) return null;
+  const flip = (key: "links" | "draw") => async () => {
+    const on = !s[key];
+    if (!(await adminSetSystem(shopId, key, on))) return NOT_DONE;
+    setS((await adminSystems(shopId)) ?? { ...s, [key]: on });
+    return null;
+  };
+  return (
+    <>
+      <SwitchLine
+        title={D.aLinks}
+        line={s.links ? `${D.aLinksOn}${s.links_made ? ` (${s.links_made})` : ""}` : D.aLinksOff}
+        on={s.links}
+        ask={s.links ? D.aLinksAskOff : null}
+        flip={flip("links")}
+      />
+      <SwitchLine
+        title={D.aDraw}
+        line={s.draw ? (s.draw_open ? fill(D.aDrawOnLive, { when: whenSaid(s.draw_open) }) : D.aDrawOn) : D.aDrawOff}
+        on={s.draw}
+        ask={s.draw ? D.aDrawAskOff : D.aDrawAskOn}
+        flip={flip("draw")}
+      />
+    </>
   );
 }
 

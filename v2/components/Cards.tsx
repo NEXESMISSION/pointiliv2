@@ -15,6 +15,7 @@ import { daysN, fill, giftsSaid, t } from "@/lib/t";
 import { resetLately, resetSoon, resetWhen } from "@/lib/reset";
 import { nextTampon } from "@/lib/when";
 import type { CardView } from "@/lib/types";
+import { D, daySaid, soonSaid, type WalletDraw } from "@/lib/draw";
 
 /**
  * The customer's cards — the screen they open the app to see.
@@ -53,6 +54,7 @@ export function Cards({
   seen,
   passwordSet,
   back,
+  draws = [],
 }: {
   me: string;
   name: string;
@@ -62,6 +64,8 @@ export function Cards({
   seen: string[];
   passwordSet: boolean;
   back?: string;
+  /** the cards with a golden ticket on them (lib/draw): none for nearly every customer — then nothing changes */
+  draws?: WalletDraw[];
 }) {
   const first = (name.split(" ")[0] ?? "").trim();
   const now = useNow();
@@ -128,6 +132,7 @@ export function Cards({
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[1.0625rem] font-bold">{c.shop.name}</span>
                 <span className="block truncate text-[0.8125rem] text-white/85">{says(c, now)}</span>
+                <DrawChip draw={draws.find((d) => d.card === c.id)} now={now} />
               </span>
               {/* something waiting at the counter is said in a picture as well as in words: the
                   coral alone cannot carry it, since a shop may have chosen coral for itself
@@ -170,6 +175,17 @@ export function Cards({
         </Go>
       </div>
     </Screen>
+  );
+}
+
+/** the golden ticket on a card: a prize won and waiting, or the draw coming and when */
+function DrawChip({ draw, now }: { draw: WalletDraw | undefined; now: number | null }) {
+  if (!draw) return null;
+  const when = draw.draw_at ? (now === null ? daySaid(draw.draw_at) : soonSaid(draw.draw_at, now)) : "";
+  return (
+    <span className="mt-1 inline-flex max-w-full truncate rounded-full px-2 py-0.5 text-[0.6875rem] font-bold" style={{ background: "linear-gradient(135deg,#fff6d3,#ffd766)", color: "#5a3700" }}>
+      {draw.won > 0 ? D.walletWon : fill(D.walletOpen, { when })}
+    </span>
   );
 }
 

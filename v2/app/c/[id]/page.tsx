@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { Check, Gift, Hourglass, QrCode, ScanLine } from "lucide-react";
+import { CardDraw } from "@/components/CardDraw";
 import { CardStore } from "@/components/CardStore";
 import { CardWheel, WheelPeek } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
@@ -15,6 +16,7 @@ import { call } from "@/lib/supabase";
 import { daysN, fill, giftsSaid, stampsN, t } from "@/lib/t";
 import { resetLately, resetRuns, resetWhen } from "@/lib/reset";
 import type { CardStore as Store, CardView } from "@/lib/types";
+import type { CardDraw as Draw } from "@/lib/draw";
 
 type Card = CardView & { prizes?: Prize[] | null; history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
 
@@ -32,7 +34,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const me = await getMe();
   if (!me) redirect(`/login?next=/c/${id}`);
-  const card = await call<Card | null>("card", { p_id: id });
+  // and the golden ticket of its shop, in the same breath (null: a shop that never made a draw — nearly all)
+  const [card, draw] = await Promise.all([call<Card | null>("card", { p_id: id }), call<Draw>("card_draw", { p_card: id })]);
   if (!card) notFound();
 
   // a shop the founder switched to the store: the tampons kept, and the things to spend them on
@@ -45,6 +48,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
         <Top back={cardsHome(me)} title={card.shop.name} />
         <Live me={me.id} />
+        {draw && <CardDraw draw={draw} />}
         <CardStore card={id} shop={card.shop} balance={store?.balance ?? card.stamps} items={store?.items ?? []} waiting={store?.waiting ?? []} code={me.code ?? null} svg={code} />
       </Screen>
     );
@@ -70,6 +74,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.8125rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
       {/* the card's clock: how long before it goes back to zero (a bar that empties), or that it just did */}
       <ResetLine card={card} />
+      {/* the golden ticket: the draw's countdown and this customer's tickets, or what they won */}
+      {draw && <CardDraw draw={draw} />}
 
 
       {/* the roulette: a popup that opens by itself, and a banner to open it again */}

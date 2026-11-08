@@ -5,6 +5,7 @@ import { siteOrigin } from "@/lib/origin";
 import type { Me } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import type { CardView } from "@/lib/types";
+import type { WalletDraw } from "@/lib/draw";
 
 /**
  * The customer's cards, fetched: the cards themselves and the person's own
@@ -18,11 +19,13 @@ import type { CardView } from "@/lib/types";
  * The look itself is components/Cards.tsx.
  */
 export async function Wallet({ me, back }: { me: Me; back?: string }) {
-  const cards = (await call<CardView[]>("wallet")) ?? [];
+  // the cards with a golden ticket on them (a draw waiting, a prize to take), in the same breath
+  const [list, draws] = await Promise.all([call<CardView[]>("wallet"), call<WalletDraw[]>("my_draws")]);
+  const cards = list ?? [];
   const svg = me.code
     ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
     : null;
-  return <Cards me={me.id} name={me.name ?? ""} code={me.code ?? null} svg={svg} cards={cards} seen={me.seen ?? []} passwordSet={me.password_set !== false} back={back} />;
+  return <Cards me={me.id} name={me.name ?? ""} code={me.code ?? null} svg={svg} cards={cards} seen={me.seen ?? []} passwordSet={me.password_set !== false} back={back} draws={draws ?? []} />;
 }
 
 /**

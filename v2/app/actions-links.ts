@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { call } from "@/lib/supabase";
 import { SITE } from "@/lib/seo";
+import { linksOn, type Systems } from "@/lib/draw";
 
 /** The site's own address in production; on a computer trying it, the address it is opened at. */
 async function origin(): Promise<string> {
@@ -29,6 +30,8 @@ const TOKEN = /^[A-Za-z0-9_-]{20,64}$/;
 export async function newLink(label: string, item: number | null): Promise<{ ok: true; url: string; id: string } | { ok: false; error: string }> {
   const name = String(label ?? "").slice(0, 80);
   if (item !== null && !Number.isSafeInteger(item)) return { ok: false, error: "pick_item" };
+  // a shop the founder took the link from (8 Nov 2026) makes none (unknown: as before, it may)
+  if (!linksOn(await call<Systems>("my_systems"))) return { ok: false, error: "not_allowed" };
   const res = await call<{ ok: boolean; error?: string; id?: string; token?: string }>("link_new", { p_label: name, p_item: item });
   if (!res) return { ok: false, error: "network" };
   if (!res.ok || !res.token || !TOKEN.test(res.token) || !res.id) return { ok: false, error: res.error ?? "network" };

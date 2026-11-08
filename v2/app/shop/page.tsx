@@ -1,6 +1,6 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, Link2, QrCode, ScanLine, Smartphone, Store, Ticket, Users } from "lucide-react";
+import { ChevronLeft, Link2, QrCode, ScanLine, Smartphone, Store, Ticket, Trophy, Users } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
 import { FirstGift } from "@/components/FirstGift";
@@ -24,6 +24,7 @@ import { getHelp } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { fill, t } from "@/lib/t";
 import type { CardView } from "@/lib/types";
+import { D, drawOn, linksOn, whenSaid, type Systems } from "@/lib/draw";
 
 export const metadata = { title: "المحل" };
 
@@ -75,7 +76,8 @@ export default async function ShopHome() {
   // an owner is somebody's customer too: their own cards, asked for beside the rest
   // so it costs nothing. Never a card at their own shop — the counter refuses one —
   // so every card here is at another business (the founder, 18 Oct 2026)
-  const [home, help, news, pay, mine] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), call<CardView[]>("wallet")]);
+  // and the systems the founder gave this shop (the link, the golden ticket): missing, the home is as it always was
+  const [home, help, news, pay, mine, systems] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), call<CardView[]>("wallet"), call<Systems>("my_systems")]);
   const myCards = mine ?? [];
   const seen = me.seen ?? [];
   const paid = !!pay?.paid;
@@ -182,6 +184,8 @@ export default async function ShopHome() {
       </div>
       {/* the third way, for the customers who buy online: a tampon sent as a link (4 Nov 2026) —
           one slim row, so the two ways above stay the home's first thing. «relative»: over the tiles' shadow */}
+      {/* (a system of its own since 8 Nov 2026: the founder may take it from a shop — then the row is not there) */}
+      {linksOn(systems) && (
       <Link href="/shop/links" id="links-row" className="press relative mt-2 flex shrink-0 items-center gap-3 rounded-[1.125rem] bg-surface px-3 py-[clamp(0.5rem,1.3dvh,0.75rem)] shadow-card">
         <span className="grid size-9 shrink-0 place-items-center rounded-[0.75rem] bg-brand-soft text-brand">
           <Link2 className="size-5" strokeWidth={2.4} />
@@ -192,6 +196,20 @@ export default async function ShopHome() {
         </span>
         <ChevronLeft className="size-5 shrink-0 text-faint" />
       </Link>
+      )}
+      {/* the golden ticket, for a shop the founder gave it: a slim row as gold as the draw itself */}
+      {drawOn(systems) && (
+        <Link href="/shop/draw" id="draw-row" className="press relative mt-2 flex shrink-0 items-center gap-3 rounded-[1.125rem] px-3 py-[clamp(0.5rem,1.3dvh,0.75rem)] shadow-card" style={{ background: "linear-gradient(135deg,#fff6d3 0%,#ffe08a 45%,#f7c041 100%)", color: "#5a3700" }}>
+          <span className="grid size-9 shrink-0 place-items-center rounded-[0.75rem] bg-white/60">
+            <Trophy className="size-5" strokeWidth={2.4} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <b className="block truncate text-[0.9375rem] font-bold">{D.homeRow}</b>
+            <span className="block truncate text-[0.75rem] font-semibold opacity-80">{systems?.draw_open ? fill(D.homeRowOpen, { when: whenSaid(systems.draw_open) }) : D.homeRowNone}</span>
+          </span>
+          <ChevronLeft className="size-5 shrink-0 opacity-60" />
+        </Link>
+      )}
       {/* the three places, as they always were: the camera for a customer's own code, the customers, and
           «المحل» — the account and the shop. «relative»: drawn over the shadow of the code's tile above */}
       <nav className="relative mt-2 grid shrink-0 grid-cols-3 gap-2">
