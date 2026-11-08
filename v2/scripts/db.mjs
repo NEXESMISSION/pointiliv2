@@ -88,16 +88,24 @@ const KEPT = ["items_on", "store_on", "wheel_on", "wheel_allowed", "export_allow
 // the files laid after schema.sql, in this order: their own functions and grants, after its «who may call what»
 // (whose revoke takes every function's grants away first)
 const AFTER = ["supabase/systems-2026-11-08.sql", "supabase/packs-2026-11-09.sql"];
-const keptNow = async () => new Map((await sql(`select id, name, ${KEPT.join(", ")} from public.shops`)).map((r) => [r.id, r]));
+// the switches this database has (a column a file brings for the first time is not there before it runs:
+// the snapshot keeps every other one — never a short list in its place, on the very run that lays them)
+const keptCols = async () => {
+  const have = new Set((await sql("select column_name from information_schema.columns where table_schema = 'public' and table_name = 'shops'")).map((r) => r.column_name));
+  return KEPT.filter((k) => have.has(k));
+};
+const keptNow = async (cols) => new Map((await sql(`select id, name, ${cols.join(", ")} from public.shops`)).map((r) => [r.id, r]));
 const lit = (v) => (v === null ? "null" : typeof v === "boolean" || typeof v === "number" ? String(v) : `'${String(v).replace(/'/g, "''")}'`);
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const t0 = Date.now();
-  // trial_first is new on 14 Oct: on a database from before it, the snapshot simply goes without it
-  const before = await keptNow().catch(async () => new Map((await sql("select id, name, items_on, store_on, wheel_on, paused, paid_until, trial_days from public.shops")).map((r) => [r.id, r])));
+  const cols = await keptCols();
+  const missing = KEPT.filter((k) => !cols.includes(k));
+  if (missing.length) console.log(`(new columns, not in the database yet: ${missing.join(", ")} — every other switch is kept)`);
+  const before = await keptNow(cols);
   await sql(readFileSync(process.env.SCHEMA || "supabase/schema.sql", "utf8"));
   for (const f of process.env.SCHEMA ? [] : AFTER) await sql(readFileSync(f, "utf8"));
-  const after = await keptNow();
+  const after = await keptNow(cols);
   const moved = [];
   for (const [id, was] of before) {
     const now = after.get(id);

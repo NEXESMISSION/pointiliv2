@@ -51,18 +51,35 @@ revoke all on public.shop_staff from anon, authenticated, public;
 alter table public.staff_invites enable row level security;
 alter table public.staff_invites force row level security;
 revoke all on public.staff_invites from anon, authenticated, public;
+-- what each staff phone did, for its owner to see (staff_act writes it): a tampon given by number, a gift or
+-- a prize handed over, a tampon taken back, what the clock took given back. `n`: how many at once
+create table if not exists public.staff_log (
+  id        bigint generated always as identity primary key,
+  shop_id   uuid not null references public.shops (id) on delete cascade,
+  staff_id  uuid not null references auth.users (id) on delete cascade,
+  fn        text not null,
+  n         int not null default 1,
+  at        timestamptz not null default now()
+);
+create index if not exists staff_log_shop_idx on public.staff_log (shop_id, staff_id, at desc);
+alter table public.staff_log enable row level security;
+alter table public.staff_log force row level security;
+revoke all on public.staff_log from anon, authenticated, public;
 
--- the shop the caller works at as staff (the pack still giving staff phones), or nothing
+-- the shop the caller works at as staff (the pack still giving staff phones), or nothing. Someone who has
+-- opened a shop of their own since is that shop's owner, and staff nowhere (their counter is their own)
 create or replace function public.staff_shop() returns public.shops
 language sql stable security definer set search_path = '' as $$
   select sh.* from public.shop_staff st join public.shops sh on sh.id = st.shop_id
-  where st.user_id = auth.uid() and st.removed_at is null and sh.staff_max > 0 limit 1
+  where st.user_id = auth.uid() and st.removed_at is null and sh.staff_max > 0
+    and not exists (select 1 from public.shops x where x.owner_id = auth.uid()) limit 1
 $$;
 
 -- ═══ the founder ═════════════════════════════════════════════════════════════
 -- A shop's pack. The pack sets the shop's switches all at once; 'old' only names it (every switch stays
--- where it is). Down to Pointili: the golden ticket's draw waiting is called off, the staff phones signed
--- out; a shop on the store goes back to the card first (with what that does to its customers, seen first)
+-- where it is — but its staff phones go: an old shop has no page to see or sign them out). Down to
+-- Pointili: the golden ticket's draw waiting is called off, the staff phones signed out; a shop on the
+-- store goes back to the card first (with what that does to its customers, seen first)
 create or replace function public.admin_set_pack(p_id uuid, p_pack text) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_pro boolean := p_pack = 'pro';
@@ -72,16 +89,20 @@ begin
   select * into s from public.shops where id = p_id for update;
   if s.id is null then return public.err('not_found'); end if;
   if p_pack = 'old' then
-    update public.shops set pack = 'old' where id = p_id;
-    return jsonb_build_object('ok', true, 'pack', 'old');
+    update public.shops set pack = 'old', staff_max = 0 where id = p_id;
+  else
+    if not v_pro and s.store_on then return public.err('store_on'); end if;
+    update public.shops set pack = p_pack, wheel_allowed = true, links_allowed = true, draw_allowed = v_pro,
+      store_allowed = v_pro, export_allowed = v_pro, staff_max = case when v_pro then 3 else 0 end
+    where id = p_id;
+    if not v_pro then
+      update public.draws set status = 'cancelled', cancelled_at = now() where shop_id = p_id and status = 'open';
+    end if;
   end if;
-  if not v_pro and s.store_on then return public.err('store_on'); end if;
-  update public.shops set pack = p_pack, wheel_allowed = true, links_allowed = true, draw_allowed = v_pro,
-    store_allowed = v_pro, export_allowed = v_pro, staff_max = case when v_pro then 3 else 0 end
-  where id = p_id;
-  if not v_pro then
-    update public.draws set status = 'cancelled', cancelled_at = now() where shop_id = p_id and status = 'open';
+  if p_pack <> 'pro' then
+    -- no staff phones any more: the ones in are signed out, the invites not yet used stop working
     update public.shop_staff set removed_at = now() where shop_id = p_id and removed_at is null;
+    update public.staff_invites set expires_at = now() where shop_id = p_id and used_at is null and expires_at > now();
   end if;
   return jsonb_build_object('ok', true, 'pack', p_pack);
 end $$;
@@ -110,7 +131,13 @@ begin
   perform public.require_admin();
   select * into s from public.shops where id = p_id;
   if s.id is null then return public.err('not_found'); end if;
-  if p_pack = 'old' then return jsonb_build_object('ok', true, 'changes', '[]'::jsonb); end if;
+  -- «old» moves no switch: only the staff phones go
+  if p_pack = 'old' then
+    return jsonb_build_object('ok', true, 'changes', (select coalesce(jsonb_agg(x.c), '[]'::jsonb) from (values
+      (case when s.staff_max > 0 then 'staff_off' end),
+      (case when exists (select 1 from public.shop_staff st where st.shop_id = s.id and st.removed_at is null) then 'staff_signed_out' end)
+    ) as x(c) where x.c is not null));
+  end if;
   return jsonb_build_object('ok', true, 'blocked', case when not v_pro and s.store_on then 'store_on' end, 'changes', (
     select coalesce(jsonb_agg(x.c), '[]'::jsonb) from (values
       (case when not s.wheel_allowed then 'wheel_on' end),
@@ -149,14 +176,20 @@ begin
   if not s.store_on then
     return jsonb_build_object('ok', true, 'to', 'store', 'allowed', s.store_allowed,
       'customers', (select count(*) from public.cards c where c.shop_id = s.id and c.stamps > 0),
-      'points', (select coalesce(sum(c.stamps), 0) from public.cards c where c.shop_id = s.id),
+      -- the points: every tampon on the cards, but those a gift from before still holds (set_store takes them)
+      'points', (select coalesce(sum(greatest(c.stamps - coalesce(u.n, 0) * coalesce(c.goal, s.goal), 0)), 0)
+                 from public.cards c
+                 left join (select m.card_id, count(*)::int as n from public.moments m
+                            where m.shop_id = s.id and m.kind = 'gift' and m.given_at is null and not m.banked group by m.card_id) u on u.card_id = c.id
+                 where c.shop_id = s.id),
       'gifts_waiting', (select count(*) from public.moments m where m.shop_id = s.id and m.kind = 'gift' and m.given_at is null),
       'items', (select count(*) from public.store_items i where i.shop_id = s.id and not i.gone));
   end if;
   return jsonb_build_object('ok', true, 'to', 'card', 'goal', s.goal, 'gift', s.gift,
     'customers', (select count(*) from public.cards c where c.shop_id = s.id and c.stamps > 0),
     'over', (select count(*) from public.cards c where c.shop_id = s.id and c.stamps >= coalesce(c.goal, s.goal)),
-    'gifts', (select coalesce(sum(c.stamps / nullif(coalesce(c.goal, s.goal), 0)), 0) from public.cards c where c.shop_id = s.id),
+    -- as bank() writes them: 50 at most on one card at a time (the rest on its next tampon)
+    'gifts', (select coalesce(sum(least(c.stamps / nullif(coalesce(c.goal, s.goal), 0), 50)), 0) from public.cards c where c.shop_id = s.id),
     'orders_waiting', (select count(distinct o.batch) from public.orders o where o.shop_id = s.id and o.status = 'waiting'));
 end $$;
 
@@ -173,6 +206,14 @@ begin
   if coalesce(p_on, false) then
     if not s.store_allowed then return public.err('not_allowed'); end if;
     if s.goal is null then return public.err('no_card'); end if;
+    -- a gift won before the vouchers still holds its tampons on the card (they leave it when it is handed
+    -- over): they leave it now, so the points to spend are only what is left over — and the gift itself
+    -- still waits, to take at the counter (it is not taken twice: it is a voucher from now on)
+    update public.cards k set stamps = greatest(k.stamps - x.n * coalesce(k.goal, s.goal), 0)
+    from (select m.card_id, count(*)::int as n from public.moments m
+          where m.shop_id = s.id and m.kind = 'gift' and m.given_at is null and not m.banked group by m.card_id) x
+    where k.id = x.card_id;
+    update public.moments set banked = true where shop_id = s.id and kind = 'gift' and given_at is null and not banked;
     update public.shops set store_on = true, wheel_on = false where id = s.id;
   else
     update public.shops set store_on = false where id = s.id;
@@ -183,17 +224,44 @@ begin
   return jsonb_build_object('ok', true, 'on', coalesce(p_on, false), 'gifts', v_gifts);
 end $$;
 
--- the owner's staff phones: who, since when, and the room left
+-- the owner's staff phones: who, since when, what each did today and these 7 days (the tampons given by
+-- number, the gifts and prizes handed over, the tampons taken back — staff_log), the room left, and the
+-- invites sent and not yet used (still open: they can be called off)
 create or replace function public.my_staff() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
-declare s public.shops%rowtype;
+declare s public.shops%rowtype; v_day timestamptz := (date_trunc('day', now() at time zone 'Africa/Tunis')) at time zone 'Africa/Tunis';
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
   return jsonb_build_object('ok', true, 'max', s.staff_max,
-    'staff', coalesce((select jsonb_agg(jsonb_build_object('id', st.id, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone), 'since', st.added_at) order by st.added_at)
+    'invites', (select count(*) from public.staff_invites i where i.shop_id = s.id and i.used_at is null and i.expires_at > now()),
+    'staff', coalesce((select jsonb_agg(jsonb_build_object('id', st.id, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone), 'since', st.added_at,
+                        'today', jsonb_build_object('stamps', d.stamps_day, 'gifts', d.gifts_day, 'back', d.back_day),
+                        'week', jsonb_build_object('stamps', d.stamps_week, 'gifts', d.gifts_week, 'back', d.back_week),
+                        'last', d.last) order by st.added_at)
                       from public.shop_staff st left join public.people p on p.id = st.user_id
+                      cross join lateral (
+                        select coalesce(sum(l.n) filter (where l.fn = 'give_stamp' and l.at >= v_day), 0) as stamps_day,
+                               coalesce(sum(l.n) filter (where l.fn <> 'give_stamp' and l.fn <> 'unstamp' and l.fn <> 'restore_reset' and l.at >= v_day), 0) as gifts_day,
+                               coalesce(sum(l.n) filter (where l.fn = 'unstamp' and l.at >= v_day), 0) as back_day,
+                               coalesce(sum(l.n) filter (where l.fn = 'give_stamp'), 0) as stamps_week,
+                               coalesce(sum(l.n) filter (where l.fn <> 'give_stamp' and l.fn <> 'unstamp' and l.fn <> 'restore_reset'), 0) as gifts_week,
+                               coalesce(sum(l.n) filter (where l.fn = 'unstamp'), 0) as back_week,
+                               max(l.at) as last
+                        from public.staff_log l where l.shop_id = s.id and l.staff_id = st.user_id and l.at > now() - interval '7 days') d
                       where st.shop_id = s.id and st.removed_at is null), '[]'::jsonb));
+end $$;
+
+-- the invites sent and not yet used, called off (a link sent to the wrong person, or never needed)
+create or replace function public.staff_invite_cancel() returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_n int;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  update public.staff_invites set expires_at = now() where shop_id = s.id and used_at is null and expires_at > now();
+  get diagnostics v_n = row_count;
+  return jsonb_build_object('ok', true, 'n', v_n);
 end $$;
 
 -- a link to invite one more: one use, a day (only its SHA-256 is kept, like the counter's codes)
@@ -234,7 +302,8 @@ begin
   if p_token is null or p_token !~ '^[A-Za-z0-9_-]{20,64}$' then return public.err('invalid'); end if;
   select * into i from public.staff_invites where hash = public.sha(p_token) for update;
   if i.id is null then return public.err('invalid'); end if;
-  select * into s from public.shops where id = i.shop_id;
+  -- the shop held while its staff are counted: two invites opened at once never pass its limit together
+  select * into s from public.shops where id = i.shop_id for update;
   if i.used_at is not null then
     -- the same phone opening its own link again: it is in already
     if i.used_by = v_uid and exists (select 1 from public.shop_staff st where st.user_id = v_uid and st.shop_id = s.id and st.removed_at is null) then
@@ -313,25 +382,40 @@ end $$;
 
 -- What a staff phone does at the counter: the owner's own counter functions, the very same ones, run for
 -- the shop it works at — the code, the counter's heartbeat, a customer read, the tampon given, a gift or
--- a prize handed over, the wheel spun, an order given, a tampon taken back. Nothing else is reachable (no
--- settings, no list, no numbers). They run under the owner's id for this one call (it is how they find the
--- shop), the staff phone's own id kept beside it; a tampon is never given to the hand that gives it.
+-- a prize handed over, the wheel spun, an order given, a tampon taken back, what the clock took from the
+-- card in front of it given back. Nothing else is reachable (no settings, no list, no numbers). They run
+-- under the owner's id for this one call (it is how they find the shop), the staff phone's own id kept
+-- beside it; a tampon is never given to the hand that gives it. Three things are the phone's own:
+--   · its tries: a customer looked up, a tampon given by number — counted for this phone as the owner's
+--     are for him (60 and 30 in 10 minutes), and never on the owner's (what the call wrote there is taken
+--     back), so a busy counter never locks the owner's out, nor one phone the others;
+--   · how far back its counter looks: a working day (12 hours), never the shop's whole past;
+--   · what it did, written for the owner (staff_log): the tampons by number, the gifts and prizes handed
+--     over, the tampons taken back, what the clock took given back.
 create or replace function public.staff_act(p_fn text, p_args jsonb default '{}'::jsonb) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare v_uid uuid := auth.uid(); s public.shops%rowtype; v_claims text := current_setting('request.jwt.claims', true); r jsonb; a jsonb := coalesce(p_args, '{}'::jsonb);
+        v_tries text; v_n int;
 begin
   if v_uid is null then return public.err('not_signed_in'); end if;
   s := public.staff_shop();
   if s.id is null then return public.err('not_staff'); end if;
   if p_fn is null or p_fn not in ('new_code', 'counter', 'customer_at', 'give_stamp', 'give', 'give_all', 'held_back', 'my_items',
-                                   'draw_wins_at', 'draw_give', 'spin_at_counter', 'store_give', 'set_moment_item', 'unstamp', 'my_wheel') then
+                                   'draw_wins_at', 'draw_give', 'spin_at_counter', 'store_give', 'unstamp', 'my_wheel', 'restore_reset') then
     return public.err('invalid');
   end if;
   if p_fn in ('customer_at', 'give_stamp', 'draw_wins_at') and public.person_of(a ->> 'p_who') = v_uid then return public.err('own_shop'); end if;
+  -- what the clock took, given back for the card at the counter — never every card of the shop at once
+  if p_fn = 'restore_reset' and coalesce(a ->> 'p_card', '') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then return public.err('invalid'); end if;
+  v_tries := case p_fn when 'customer_at' then 'look:' when 'give_stamp' then 'give:' end;
+  if v_tries is not null and not public.try_once(v_tries || 'staff:' || v_uid, case p_fn when 'customer_at' then 60 else 30 end, 10) then
+    return public.err('too_many');
+  end if;
   perform set_config('request.jwt.claims', jsonb_build_object('sub', s.owner_id, 'role', 'authenticated', 'staff', v_uid)::text, true);
   r := case p_fn
     when 'new_code' then public.new_code((a ->> 'p_item')::bigint)
-    when 'counter' then public.counter((a ->> 'p_code')::uuid, (a ->> 'p_since')::timestamptz)
+    when 'counter' then public.counter((a ->> 'p_code')::uuid,
+      case when a ->> 'p_since' is null then null else greatest((a ->> 'p_since')::timestamptz, now() - interval '12 hours') end)
     when 'customer_at' then public.customer_at(a ->> 'p_who')
     when 'give_stamp' then public.give_stamp(a ->> 'p_who', (a ->> 'p_item')::bigint)
     when 'give' then public.give((a ->> 'p_moment')::bigint)
@@ -342,11 +426,24 @@ begin
     when 'draw_give' then public.draw_give((a ->> 'p_win')::bigint)
     when 'spin_at_counter' then public.spin_at_counter((a ->> 'p_moment')::bigint)
     when 'store_give' then public.store_give((a ->> 'p_card')::uuid, (a ->> 'p_batch')::uuid)
-    when 'set_moment_item' then public.set_moment_item((a ->> 'p_moment')::bigint, (a ->> 'p_item')::bigint)
     when 'unstamp' then public.unstamp((a ->> 'p_moment')::bigint)
-    when 'my_wheel' then public.my_wheel()
+    -- the wheel's prizes and their chances, to turn it at the counter — not how many are left, nor its month
+    when 'my_wheel' then (select case when w ->> 'ok' = 'true' then jsonb_build_object('ok', true, 'on', w -> 'on', 'allowed', w -> 'allowed',
+        'prizes', (select coalesce(jsonb_agg(jsonb_build_object('id', p -> 'id', 'name', p -> 'name', 'chance', p -> 'chance')), '[]'::jsonb)
+                   from jsonb_array_elements(coalesce(w -> 'prizes', '[]'::jsonb)) p)) else w end
+      from (select public.my_wheel() as w) x)
+    when 'restore_reset' then public.restore_reset((a ->> 'p_card')::uuid)
   end;
   perform set_config('request.jwt.claims', coalesce(v_claims, ''), true);
+  -- the owner's own tries left as they were: this phone's were counted above
+  if v_tries is not null then
+    delete from public.tries where key = v_tries || s.owner_id::text and at = now();
+  end if;
+  if p_fn in ('give_stamp', 'give', 'give_all', 'draw_give', 'spin_at_counter', 'store_give', 'unstamp', 'restore_reset')
+     and r ->> 'ok' = 'true' and coalesce(r ->> 'already', '') <> 'true' then
+    v_n := case when p_fn in ('give_all', 'restore_reset') then case when coalesce(r ->> 'n', '') ~ '^\d{1,6}$' then (r ->> 'n')::int else 0 end else 1 end;
+    if v_n > 0 then insert into public.staff_log (shop_id, staff_id, fn, n) values (s.id, v_uid, p_fn, v_n); end if;
+  end if;
   return r;
 end $$;
 
@@ -381,22 +478,51 @@ begin
   return coalesce((select jsonb_object_agg(s.id, s.pack) from public.shops s where s.pack <> 'old'), '{}'::jsonb);
 end $$;
 
+-- ═══ the golden ticket, with staff phones there are ══════════════════════════
+-- Who is in a draw (systems-2026-11-08.sql), now without the shop's own staff either: like its owner,
+-- the hands that give the tampons are not in the shop's draw
+create or replace function public.draw_pool(d public.draws) returns table (card_id uuid, user_id uuid, tickets int)
+language sql stable security definer set search_path = '' as $$
+  select c.id, c.user_id, count(*)::int
+  from public.moments m join public.cards c on c.id = m.card_id
+  where d.rule = 'stamps' and m.shop_id = d.shop_id and m.kind = 'stamp'
+    and m.created_at >= d.starts_at and m.created_at < d.draw_at
+    and c.user_id <> (select s.owner_id from public.shops s where s.id = d.shop_id)
+    and not exists (select 1 from public.people p where p.id = c.user_id and (p.is_admin or p.is_tester))
+    and not exists (select 1 from public.shop_staff st where st.shop_id = d.shop_id and st.user_id = c.user_id and st.removed_at is null)
+  group by c.id, c.user_id
+  union all
+  select c.id, c.user_id, 1
+  from public.cards c
+  where d.rule = 'cards' and c.shop_id = d.shop_id and c.created_at < d.draw_at
+    and c.user_id <> (select s.owner_id from public.shops s where s.id = d.shop_id)
+    and not exists (select 1 from public.people p where p.id = c.user_id and (p.is_admin or p.is_tester))
+    and not exists (select 1 from public.shop_staff st where st.shop_id = d.shop_id and st.user_id = c.user_id and st.removed_at is null)
+$$;
+
 -- ═══ who may call what (these functions only) ═══════════════════════════════
-revoke execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
-  public.my_systems(), public.store_preview(), public.set_store(boolean),
-  public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
-  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
-  public.staff_invite_info(text), public.admin_pack_map()
-  from public, anon, authenticated;
-grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text), public.my_systems(), public.store_preview(), public.set_store(boolean),
-  public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text), public.my_staff_shop(), public.staff_leave(),
-  public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(), public.admin_pack_map()
-  to authenticated;
-grant execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
-  public.my_systems(), public.store_preview(), public.set_store(boolean),
-  public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
-  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
-  public.staff_invite_info(text), public.admin_pack_map()
-  to service_role;
+-- Kept in a function, so schema.sql gives them again when it runs on its own: its «who may call what»
+-- takes every function's grants away first, and these files come after it (scripts/db.mjs)
+create or replace function public.packs_grants() returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  revoke execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
+    public.my_systems(), public.store_preview(), public.set_store(boolean),
+    public.my_staff(), public.staff_invite(), public.staff_invite_cancel(), public.staff_remove(bigint), public.staff_join(text),
+    public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
+    public.staff_invite_info(text), public.admin_pack_map(), public.draw_pool(public.draws), public.packs_grants()
+    from public, anon, authenticated;
+  grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text), public.my_systems(), public.store_preview(), public.set_store(boolean),
+    public.my_staff(), public.staff_invite(), public.staff_invite_cancel(), public.staff_remove(bigint), public.staff_join(text), public.my_staff_shop(), public.staff_leave(),
+    public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(), public.admin_pack_map()
+    to authenticated;
+  grant execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
+    public.my_systems(), public.store_preview(), public.set_store(boolean),
+    public.my_staff(), public.staff_invite(), public.staff_invite_cancel(), public.staff_remove(bigint), public.staff_join(text),
+    public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
+    public.staff_invite_info(text), public.admin_pack_map(), public.draw_pool(public.draws), public.packs_grants()
+    to service_role;
+end $$;
+select public.packs_grants();
 
 notify pgrst, 'reload schema';

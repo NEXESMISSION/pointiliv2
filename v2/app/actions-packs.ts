@@ -67,6 +67,12 @@ export async function staffInvite(): Promise<{ ok: true; url: string } | { ok: f
   return { ok: true, url: `${await origin()}/staff/join/${res.token}` };
 }
 
+/** The invites sent and not used yet, called off: how many (null: not done). */
+export async function staffInviteCancel(): Promise<number | null> {
+  const res = await call<{ ok: boolean; n?: number }>("staff_invite_cancel");
+  return res?.ok ? (res.n ?? 0) : null;
+}
+
 export async function staffRemove(id: number): Promise<boolean> {
   if (!Number.isSafeInteger(id) || id < 1) return false;
   return !!(await call<{ ok: boolean }>("staff_remove", { p_id: id }))?.ok;

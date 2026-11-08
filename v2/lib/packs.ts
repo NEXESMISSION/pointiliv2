@@ -38,7 +38,15 @@ export type StorePreview =
   | { ok: true; to: "card"; goal: number | null; gift: string | null; customers: number; over: number; gifts: number; orders_waiting: number };
 
 /** the owner's staff phones (my_staff) */
-export type MyStaff = { ok: boolean; max: number; staff: { id: number; name: string | null; phone: string | null; since: string }[] };
+/** what a staff phone did (staff_log): tampons given by number, gifts and prizes handed over, tampons taken back */
+export type StaffDid = { stamps: number; gifts: number; back: number };
+export type MyStaff = {
+  ok: boolean;
+  max: number;
+  /** invites sent and not used yet, still open */
+  invites?: number;
+  staff: { id: number; name: string | null; phone: string | null; since: string; today?: StaffDid; week?: StaffDid; last?: string | null }[];
+};
 
 /** the shop a staff phone works at (my_staff_shop) */
 export type StaffShop = {
@@ -71,6 +79,9 @@ export function pointsN(n: number): string {
 }
 
 export const P = {
+  // the customer's card, after the shop changed its reward: what was won before still waits
+  cardGiftWaits: "كادو يستنّاك: {gift} — ورّي الكود متاعك في الكاسة",
+  cardOrderWaits: "عندك طلبية من الماغازة تستنّى — ورّي الكود متاعك في الكاسة",
   // the owner's «النظام متاعي»
   title: "النظام متاعي",
   hint: "كل زيارة = تامبون. اختار شنوّة يربح بيه الحريف، وزيد اللي تحب.",
@@ -109,11 +120,12 @@ export const P = {
   toCardTitle: "ترجع للكارط؟",
   toCardBody: "النقاط يوليو تامبونات على كارط {goal}. {over} عندهم أكثر من كارط كاملة: يربحو {gifts} توّا.",
   toCardNone: "النقاط يوليو تامبونات على كارط {goal}. حتى حريف ما عندو كارط كاملة توّا.",
-  toCardOrders: "الطلبات اللي تستنّى ({orders}) تقعد تستنّى تسلّمها.",
+  toCardOrders: "الطلبات اللي تستنّى ({orders}) يقعدو: تسلّمهم في الكاسة كيف يجي الحريف، والكارط متاعو تقلّو.",
   confirm: "إيه، بدّل",
   cancel: "لا",
   switched: "تبدّل.",
   err: "ما تعدّاتش، عاود.",
+  retry: "عاود",
   errNotAllowed: "الماغازة في Pointili Pro برك.",
   errNoCard: "اعمل الكارط متاعك قبل.",
   wheelGo: "حطّ كادوات الروليت",
@@ -122,6 +134,17 @@ export const P = {
   staffHint: "كل خدّام عندو تليفونو: يعطي التامبونات ويسلّم الكادوات، وما يشوفش الإعدادات ولا ليستة الحرفاء.",
   staffOf: "{n} من {max}",
   staffNone: "حتى خدّام مازال.",
+  // what each phone did, under its name: the tampons by number and the gifts (a scan of the code is the customer's own doing)
+  staffToday: "اليوم: {what}",
+  staffWeek: "7 أيّام: {what}",
+  staffByNumber: "{n} بالنومرو",
+  staffBack: "رجّع {n}",
+  staffNothing: "ما عطى شي بيدّو",
+  staffDidHint: "تحت كل إسم: اللي عطاه بيدّو — التامبونات بالنومرو والكادوات. اللي يسكانيو الكود ما يتحسبوش هنا.",
+  staffInvitesOne: "رابط واحد بعثتو مازال ما تستعملش",
+  staffInvitesMany: "{n} روابط بعثتهم مازالو ما تستعملوش",
+  staffInvitesCancel: "بطّلهم",
+  staffInvitesGone: "الروابط تبطّلو: حتى واحد ما ينجم يدخل بيهم.",
   staffAdd: "زيد خدّام",
   staffLink: "ابعثلو الرابط هذا: يحلّو في تليفونو ويدخل بالنومرو متاعو. الرابط يخدم مرّة وحدة، 24 ساعة.",
   staffShare: "ابعثو في الواتساب",

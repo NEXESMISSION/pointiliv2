@@ -418,6 +418,8 @@ export async function openShop(_: FormState, fd: FormData): Promise<FormState> {
   if (!res?.ok) return { error: t.errNetwork };
   // a new shop: a word to the founder's Telegram, and the sign-up to Facebook (not when an owner only renames theirs)
   if (!me.shop) {
+    // someone who was a staff phone somewhere (Pro) is an owner now: out of that shop's staff, so its owner's list is right
+    await call("staff_leave");
     const req = await metaRequest();
     after(() => Promise.all([alertNewShop(me.id), metaRegistration(me.id, req)]));
   }
@@ -608,14 +610,17 @@ export async function giveStamp(who: string, item?: number | null, back?: string
  */
 export async function giveStampNew(phoneRaw: string, item?: number | null): Promise<Awaited<ReturnType<typeof giveStamp>>> {
   const me = await getMe();
-  if (!me?.shop) return { ok: false, error: "no_shop" };
+  if (!me) return { ok: false, error: "no_shop" };
+  // the shop it is given at: the owner's own — or, for a staff phone (Pro), the shop it works at
+  const shopId = me.shop?.id ?? (await call<{ id?: string } | null>("my_staff_shop"))?.id ?? null;
+  if (!shopId) return { ok: false, error: "no_shop" };
   const phone = digits(String(phoneRaw ?? ""));
   if (!validPhone(phone)) return { ok: false, error: "invalid" };
   if (!(await gate("phone_card", phone, 40, 60, 200))) return { ok: false, error: "too_many" };
   const admin = service();
   const { data, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password: randomBytes(24).toString("base64url"), email_confirm: true, app_metadata: { phone: `+216${phone}` } });
   if (error && !/already|registered|exists/i.test(error.message)) return { ok: false, error: "network" };
-  if (data?.user) await admin.from("people").upsert({ id: data.user.id, name: "", phone: `+216${phone}`, password_set: false, made_by_shop: me.shop.id });
+  if (data?.user) await admin.from("people").upsert({ id: data.user.id, name: "", phone: `+216${phone}`, password_set: false, made_by_shop: shopId });
   return giveStamp(phone, item);
 }
 

@@ -17,6 +17,7 @@ import { daysN, fill, giftsSaid, stampsN, t } from "@/lib/t";
 import { resetLately, resetRuns, resetWhen } from "@/lib/reset";
 import type { CardStore as Store, CardView } from "@/lib/types";
 import type { CardDraw as Draw } from "@/lib/draw";
+import { P } from "@/lib/packs";
 
 type Card = CardView & { prizes?: Prize[] | null; history: { kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item?: string | null }[] };
 
@@ -44,18 +45,30 @@ export default async function CardPage({ params, searchParams }: { params: Promi
     const code = me.code
       ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
       : null;
+    // what this card won before the shop went to the store still waits for it (9 Nov 2026: it was hidden here,
+    // while the wallet said it waited): a turn of the roulette to spin, a gift to take at the counter
+    const turn = card.spin && card.prizes?.length ? card.spin : null;
+    const won = card.ready && card.won_list?.length ? card.won_list.map((x) => (x.n > 1 ? `${x.gift} ×${x.n}` : x.gift)).join(" · ") : null;
     return (
       <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
         <Top back={cardsHome(me)} title={card.shop.name} />
         <Live me={me.id} />
+        {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} turns={card.spins_n ?? 1} />}
+        {won && (
+          <p className="mx-auto mt-2 flex w-full max-w-[min(100%,52dvh)] shrink-0 items-center gap-2 rounded-[1rem] bg-coral-soft px-3.5 py-2.5 text-[0.8125rem] font-semibold text-coral">
+            <Icon3D name="gift" size={26} className="shrink-0" /> <span className="min-w-0 flex-1">{fill(P.cardGiftWaits, { gift: won })}</span>
+          </p>
+        )}
         {draw && <CardDraw draw={draw} />}
         <CardStore card={id} shop={card.shop} balance={store?.balance ?? card.stamps} items={store?.items ?? []} waiting={store?.waiting ?? []} code={me.code ?? null} svg={code} />
       </Screen>
     );
   }
+  // an order from the store, still waiting after the shop went back to the card: taken at the counter with the customer's code
+  const orders = !card.ready && (card.orders_n ?? 0) > 0;
   // the gift waiting: the customer's own code is the gift's (the shop scans it, sees the gift, hands it over)
   const svg =
-    card.ready && me.code
+    (card.ready || orders) && me.code
       ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
       : null;
 
@@ -152,9 +165,17 @@ export default async function CardPage({ params, searchParams }: { params: Promi
             )}
           </div>
         ) : (
-          <LinkBtn href="/scan" className="h-14 rounded-[1.25rem] text-[1.0625rem]">
-            <ScanLine className="size-6" strokeWidth={2.4} /> {t.scan}
-          </LinkBtn>
+          <>
+            {orders && (
+              <div className="mb-2.5 text-center">
+                <p className="text-balance text-[0.8125rem] font-semibold text-coral">{P.cardOrderWaits}</p>
+                {me.code && svg && <MyCode code={me.code} svg={svg} className="press mx-auto mt-1.5 flex h-11 items-center gap-2 rounded-full bg-surface pe-4 ps-3 text-[0.9375rem] font-bold text-ink shadow-card" />}
+              </div>
+            )}
+            <LinkBtn href="/scan" className="h-14 rounded-[1.25rem] text-[1.0625rem]">
+              <ScanLine className="size-6" strokeWidth={2.4} /> {t.scan}
+            </LinkBtn>
+          </>
         )}
       </div>
     </Screen>

@@ -224,7 +224,7 @@ begin
   if s.paused or public.shut(s) then return public.err('paused'); end if;
   if p_at is null or p_at < now() + interval '10 minutes' or p_at > now() + interval '90 days' then return public.err('bad_time'); end if;
   if coalesce(p_rule, '') not in ('stamps', 'cards') then return public.err('invalid'); end if;
-  if jsonb_typeof(p_gifts) <> 'array' or jsonb_array_length(p_gifts) not between 1 and 10 then return public.err('bad_gifts'); end if;
+  if p_gifts is null or jsonb_typeof(p_gifts) <> 'array' or jsonb_array_length(p_gifts) not between 1 and 10 then return public.err('bad_gifts'); end if;
   for x in select * from jsonb_array_elements(p_gifts) loop
     v_name := btrim(coalesce(x ->> 'name', ''));
     v_n := case when coalesce(x ->> 'n', '') ~ '^\d{1,3}$' then (x ->> 'n')::int else 0 end;
@@ -391,19 +391,26 @@ begin
 end $$;
 
 -- ═══ who may call what (these functions only) ═══════════════════════════════
-revoke execute on function public.draw_pool(public.draws), public.draw_gift_list(uuid), public.draw_settle(uuid),
-  public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid), public.draw_give(bigint),
-  public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
-  public.draw_wins_at(text), public.admin_systems_all()
-  from public, anon, authenticated;
-grant execute on function public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid),
-  public.draw_give(bigint), public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
-  public.draw_wins_at(text), public.admin_systems_all()
-  to authenticated;
-grant execute on function public.draw_pool(public.draws), public.draw_gift_list(uuid), public.draw_settle(uuid),
-  public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid), public.draw_give(bigint),
-  public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
-  public.draw_wins_at(text), public.admin_systems_all()
-  to service_role;
+-- Kept in a function, so schema.sql gives them again when it runs on its own: its «who may call what»
+-- takes every function's grants away first, and this file comes after it (scripts/db.mjs)
+create or replace function public.systems_grants() returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  revoke execute on function public.draw_pool(public.draws), public.draw_gift_list(uuid), public.draw_settle(uuid),
+    public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid), public.draw_give(bigint),
+    public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
+    public.draw_wins_at(text), public.admin_systems_all(), public.systems_grants()
+    from public, anon, authenticated;
+  grant execute on function public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid),
+    public.draw_give(bigint), public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
+    public.draw_wins_at(text), public.admin_systems_all()
+    to authenticated;
+  grant execute on function public.draw_pool(public.draws), public.draw_gift_list(uuid), public.draw_settle(uuid),
+    public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid), public.draw_give(bigint),
+    public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
+    public.draw_wins_at(text), public.admin_systems_all(), public.systems_grants()
+    to service_role;
+end $$;
+select public.systems_grants();
 
 notify pgrst, 'reload schema';

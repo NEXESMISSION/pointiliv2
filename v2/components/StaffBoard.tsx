@@ -3,14 +3,21 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Copy, Lock, MessageCircle, Plus, Smartphone, X } from "lucide-react";
-import { staffInvite, staffRemove } from "@/app/actions-packs";
+import { staffInvite, staffInviteCancel, staffRemove } from "@/app/actions-packs";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
 import { Btn } from "@/components/ui";
-import { P, type MyStaff } from "@/lib/packs";
-import { fill } from "@/lib/t";
+import { P, type MyStaff, type StaffDid } from "@/lib/packs";
+import { fill, giftsN, stampsN } from "@/lib/t";
 
 const ERR: Record<string, string> = { full: P.staffFull, not_allowed: P.staffNotPro };
+
+/** «3 بالنومرو · زوز كادوات · 1 رجّعهم», or null when the phone gave nothing by hand */
+function didSaid(d: StaffDid | undefined): string | null {
+  if (!d) return null;
+  const parts = [d.stamps > 0 ? fill(P.staffByNumber, { n: stampsN(d.stamps) }) : null, d.gifts > 0 ? giftsN(d.gifts) : null, d.back > 0 ? fill(P.staffBack, { n: stampsN(d.back) }) : null].filter(Boolean);
+  return parts.length ? parts.join(" · ") : null;
+}
 
 /**
  * The owner's staff phones (Pro): who works the counter on their own phone, the room left, a link to
@@ -25,6 +32,7 @@ export function StaffBoard({ staff, shop }: { staff: MyStaff; shop: string }) {
   const [asking, setAsking] = useState<number | null>(null);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [gone, setGone] = useState(false);
   const full = staff.staff.length >= staff.max;
   const invite = () =>
     start(async () => {
@@ -75,6 +83,9 @@ export function StaffBoard({ staff, shop }: { staff: MyStaff; shop: string }) {
                               {s.phone}
                             </bdi>
                           )}
+                          {/* what this phone gave by hand: today, and these 7 days */}
+                          <span className="mt-0.5 block text-[0.75rem] font-semibold text-body">{fill(P.staffToday, { what: didSaid(s.today) ?? P.staffNothing })}</span>
+                          {didSaid(s.week) && didSaid(s.week) !== didSaid(s.today) && <span className="block text-[0.75rem] text-muted">{fill(P.staffWeek, { what: didSaid(s.week)! })}</span>}
                         </span>
                         <button type="button" onClick={() => setAsking(asking === s.id ? null : s.id)} className="press flex h-8 items-center gap-1 rounded-full px-3 text-[0.8125rem] font-semibold text-coral ring-1 ring-coral/30">
                           <X className="size-3.5" /> {P.staffRemove}
@@ -107,7 +118,32 @@ export function StaffBoard({ staff, shop }: { staff: MyStaff; shop: string }) {
                   ))}
                 </ul>
               )}
+              {staff.staff.length > 0 && <p className="border-t border-line px-4 py-2.5 text-[0.75rem] leading-snug text-muted">{P.staffDidHint}</p>}
             </section>
+
+            {/* the links sent and not used yet: still open for 24 hours — called off with a tap (sent to the wrong person, or not needed) */}
+            {!url && (staff.invites ?? 0) > 0 && (
+              <p className="flex items-center gap-2 rounded-[1.125rem] bg-surface px-4 py-2.5 text-[0.8125rem] font-semibold text-body shadow-card">
+                <span className="min-w-0 flex-1">{staff.invites === 1 ? P.staffInvitesOne : fill(P.staffInvitesMany, { n: staff.invites ?? 0 })}</span>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() =>
+                    start(async () => {
+                      const n = await staffInviteCancel();
+                      if (n === null) return setError(P.err);
+                      setError(null);
+                      setGone(true);
+                      router.refresh();
+                    })
+                  }
+                  className="press h-8 shrink-0 rounded-full px-3 text-[0.8125rem] font-bold text-coral ring-1 ring-coral/30 disabled:opacity-60"
+                >
+                  {P.staffInvitesCancel}
+                </button>
+              </p>
+            )}
+            {gone && (staff.invites ?? 0) === 0 && <p className="text-center text-[0.8125rem] font-semibold text-mint">{P.staffInvitesGone}</p>}
 
             {url ? (
               <section className="space-y-2 rounded-[1.25rem] bg-surface p-4 shadow-card">

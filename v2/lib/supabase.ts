@@ -33,7 +33,7 @@ export function service() {
  * code, the counter's heartbeat, a customer read, the tampon given, a gift or prize handed over, the wheel
  * spun, an order given, a tampon taken back. Nothing else.
  */
-const STAFF_FNS = new Set(["new_code", "counter", "customer_at", "give_stamp", "give", "give_all", "held_back", "my_items", "draw_wins_at", "draw_give", "spin_at_counter", "store_give", "set_moment_item", "unstamp", "my_wheel"]);
+const STAFF_FNS = new Set(["new_code", "counter", "customer_at", "give_stamp", "give", "give_all", "held_back", "my_items", "draw_wins_at", "draw_give", "spin_at_counter", "store_give", "unstamp", "my_wheel", "restore_reset"]);
 
 /**
  * A counter function answered «no shop»: the caller owns none — and may be a staff phone of a shop (Pro).

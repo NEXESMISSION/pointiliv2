@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Power } from "lucide-react";
 import { adminPlan, adminTrial } from "@/app/actions";
-import { adminSetPack } from "@/app/actions-packs";
+import { adminPackPreview, adminSetPack } from "@/app/actions-packs";
 import { P, PACK_NAME } from "@/lib/packs";
 import type { BoardMore } from "@/app/admin/actions";
 import type { AccessShop } from "@/lib/board";
@@ -44,6 +44,17 @@ export function AdminAccess({ shop, plan = null, reload, pack = "old", packChang
   // the pack the owner paid for, chosen here with the length (the founder, 9 Nov 2026: one place for both) —
   // the price list follows it; an old shop stays old unless another is chosen
   const [packNow, setPackNow] = useState<Pack>(pack);
+  // another pack chosen here: what it changes for the shop, read and said before the button (the same list
+  // as the pack's own line) — a shop on the store cannot go down to Pointili until it is back on the card
+  const [packSaid, setPackSaid] = useState<{ changes: string[]; blocked: string | null } | "…" | "failed" | null>(null);
+  const packAsk = (p: Pack) => {
+    if (p === pack) return setPackSaid(null);
+    setPackSaid("…");
+    void adminPackPreview(shop.id, p)
+      .catch(() => null)
+      .then((got) => setPackSaid(got ?? "failed"));
+  };
+  const packBlocked = packNow !== pack && (packSaid === null || typeof packSaid === "string" || !!packSaid.blocked);
   const plans = plansOfPack(packNow, shop.old_price);
   const first = plans.find((p) => p.id === "year") ?? plans[0];
   // the offer still running for this shop (the trial's first 3 days, nothing paid): its two months, ticked
@@ -65,8 +76,8 @@ export function AdminAccess({ shop, plan = null, reload, pack = "old", packChang
   const [show, setShow] = useState(true);
   const [made, setMade] = useState<PlanShot | null>(null);
   const sum = other ? Number(other) : amount;
-  // something to turn on, and what came in said (a sum, or «with no money»)
-  const canGo = months >= 1 && sum !== null;
+  // something to turn on, and what came in said (a sum, or «with no money») — and another pack, once its changes are read
+  const canGo = months >= 1 && sum !== null && !packBlocked;
 
   const line = shop.paid && shop.paid_until ? `خالص حتى ${day(shop.paid_until)}` : shop.shut ? `التجربة وفات ${day(shop.trial_end)}` : shop.started ? `التجربة توفى ${day(shop.trial_end)}` : "التجربة تبدا مع أوّل حريف";
   const done = async (ok: boolean) => {
@@ -127,6 +138,7 @@ export function AdminAccess({ shop, plan = null, reload, pack = "old", packChang
                   type="button"
                   onClick={() => {
                     setPackNow(p);
+                    packAsk(p);
                     const list = plansOfPack(p, shop.old_price);
                     const y = list.find((x) => x.id === "year") ?? list[0];
                     setBase(y.months);
@@ -140,6 +152,28 @@ export function AdminAccess({ shop, plan = null, reload, pack = "old", packChang
                 </button>
               ))}
             </div>
+            {/* another pack than the shop's: what it changes, before the button that does it */}
+            {packNow !== pack && packSaid !== null && (
+              <div className="mt-1.5 rounded-[0.75rem] bg-surface p-2.5 ring-1 ring-line">
+                <p className="text-[0.8125rem] font-bold text-ink">{fill(P.aPackAsk, { pack: packNow === "old" ? P.aPackOld : PACK_NAME[packNow] })}</p>
+                {packSaid === "…" ? (
+                  <p className="mt-1 text-[0.75rem] text-muted">…</p>
+                ) : packSaid === "failed" ? (
+                  <p className="mt-1 flex items-center gap-2 text-[0.75rem] font-semibold text-coral">
+                    <span className="min-w-0 flex-1">{NOT_DONE}</span>
+                    <button type="button" onClick={() => packAsk(packNow)} className="h-7 rounded-[0.5rem] bg-canvas px-2.5 text-[0.75rem] font-bold text-brand">
+                      عاود
+                    </button>
+                  </p>
+                ) : packSaid.blocked ? (
+                  <p className="mt-1 text-[0.75rem] font-semibold text-coral">{P.aPackStoreOn}</p>
+                ) : (
+                  <ul className="mt-1 list-disc space-y-0.5 ps-4 text-[0.75rem] text-body">
+                    {packSaid.changes.length === 0 ? <li>{P.aPackNothing}</li> : packSaid.changes.map((c) => <li key={c}>{P.aPackChanges[c] ?? c}</li>)}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanMonths}</span>

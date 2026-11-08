@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { myCardDraw } from "@/app/actions-draw";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Icon3D } from "@/components/ui";
 import { D, giftsLine, leftOf, leftSaid, peopleN, ticketsN, whenSaid, winnersN, type CardDraw as Draw } from "@/lib/draw";
 import { fill } from "@/lib/t";
@@ -20,6 +20,54 @@ const useTick = (): number | null =>
 
 export const GOLD = "linear-gradient(135deg,#fff6d3 0%,#ffe08a 38%,#f7c041 72%,#e9a21c 100%)";
 const INK = "#5a3700";
+
+/**
+ * The countdown at zero: the next look at the page draws it. The page is asked again a moment after zero,
+ * then a little later each time — another look may be drawing it right then, or the phone's clock may run
+ * ahead of the server's — for about a minute and a half; then a button asks again by hand. It stops as soon
+ * as the page comes back with the draw made (`due` is false: the draw is no longer the open one). Only
+ * `due` starts it: the clock ticking every second never restarts it (9 Nov 2026: it did, and the refresh
+ * never came).
+ */
+export function useAtZero(due: boolean): { gaveUp: boolean; again: () => void } {
+  const router = useRouter();
+  const [gaveUp, setGaveUp] = useState(false);
+  const [round, setRound] = useState(0);
+  useEffect(() => {
+    if (!due) return;
+    let n = 0;
+    let id: ReturnType<typeof setTimeout>;
+    const ask = () => {
+      router.refresh();
+      n += 1;
+      if (n < 8) id = setTimeout(ask, Math.min(3000 * n, 20_000));
+      else id = setTimeout(() => setGaveUp(true), 8000);
+    };
+    id = setTimeout(ask, 1500);
+    return () => clearTimeout(id);
+  }, [due, round, router]);
+  return {
+    gaveUp: due && gaveUp,
+    again: () => {
+      setGaveUp(false);
+      setRound((r) => r + 1);
+    },
+  };
+}
+
+/** the countdown at zero: «drawing now…», and when the page took too long, a button to ask again */
+export function AtZero({ text, gaveUp, again, big = false }: { text: string; gaveUp: boolean; again: () => void; big?: boolean }) {
+  return (
+    <div className="py-2 text-center">
+      <p className={`${big ? "text-[1rem]" : "text-[0.9375rem]"} font-bold`}>{text}</p>
+      {gaveUp && (
+        <button type="button" onClick={again} className="press mt-1.5 h-9 rounded-full bg-white/70 px-4 text-[0.8125rem] font-bold">
+          {D.askAgain}
+        </button>
+      )}
+    </div>
+  );
+}
 
 /** the four boxes of a countdown: days, hours, minutes, seconds */
 export function Countdown({ at, now, dark = false }: { at: string; now: number | null; dark?: boolean }) {
@@ -50,21 +98,12 @@ export function Countdown({ at, now, dark = false }: { at: string; now: number |
  * phone). At the end of the countdown the page asks the server again: the first look draws.
  */
 export function CardDraw({ draw }: { draw: NonNullable<Draw> }) {
-  const router = useRouter();
   const now = useTick();
   const { open, last, waiting } = draw;
 
-  // the countdown at zero: the draw is made by the next look — asked a moment after, then twice more
-  const tries = useRef(0);
+  // the countdown at zero: the draw is made by the next look at the page
   const due = !!open && now !== null && Date.parse(open.draw_at) <= now;
-  useEffect(() => {
-    if (!due || tries.current >= 3) return;
-    const id = setTimeout(() => {
-      tries.current += 1;
-      router.refresh();
-    }, 1500 + tries.current * 3000);
-    return () => clearTimeout(id);
-  }, [due, now, router]);
+  const zero = useAtZero(due);
 
   // a shop whose draws are all long past, with nothing of this customer's waiting: nothing to say
   if (!open && !last && !waiting.length) return null;
@@ -86,7 +125,7 @@ export function CardDraw({ draw }: { draw: NonNullable<Draw> }) {
           <p className="relative mt-1.5 truncate text-[0.8125rem] font-semibold">
             🎁 <bdi>{giftsLine(open.gifts)}</bdi>
           </p>
-          <div className={`relative mt-2 ${due ? "" : "[@media(max-height:720px)]:hidden"}`}>{due ? <p className="py-2 text-center text-[0.9375rem] font-bold">{D.cardDrawing}</p> : <Countdown at={open.draw_at} now={now} />}</div>
+          <div className={`relative mt-2 ${due ? "" : "[@media(max-height:720px)]:hidden"}`}>{due ? <AtZero text={D.cardDrawing} {...zero} /> : <Countdown at={open.draw_at} now={now} />}</div>
           <p className="relative mt-2 text-center text-[0.8125rem] font-bold">
             {open.rule === "cards" ? D.cardIn : open.mine > 0 ? fill(D.cardMine, { n: ticketsN(open.mine) }) : D.cardNone}
             {open.people > 1 && <span className="font-semibold opacity-75"> · {fill(D.cardPeople, { n: peopleN(open.people) })}</span>}

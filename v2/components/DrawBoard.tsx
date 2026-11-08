@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { Check, MessageCircle, Minus, Plus, Trophy, X } from "lucide-react";
 import { drawCancel, drawGive, drawNew } from "@/app/actions-draw";
-import { Countdown, GOLD } from "@/components/CardDraw";
+import { AtZero, Countdown, GOLD, useAtZero } from "@/components/CardDraw";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
 import { Btn, Icon3D } from "@/components/ui";
@@ -94,16 +94,8 @@ function Open({ open, shop }: { open: NonNullable<OwnerDraw["open"]>; shop: stri
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const due = now !== null && Date.parse(open.draw_at) <= now;
-  // at zero: the page asked again — this look draws it (a moment after, then twice more)
-  const tries = useRef(0);
-  useEffect(() => {
-    if (!due || tries.current >= 3) return;
-    const id = setTimeout(() => {
-      tries.current += 1;
-      router.refresh();
-    }, 1500 + tries.current * 3000);
-    return () => clearTimeout(id);
-  }, [due, now, router]);
+  // at zero: the page asked again — this look draws it
+  const zero = useAtZero(due);
 
   const msg = fill(D.shareMsg, { shop, when: whenSaid(open.draw_at), gifts: giftsLine(open.gifts), how: open.rule === "cards" ? D.shareHowCards : D.shareHowStamps });
   return (
@@ -123,7 +115,7 @@ function Open({ open, shop }: { open: NonNullable<OwnerDraw["open"]>; shop: stri
         <p className="mt-2 text-[0.875rem] font-semibold">
           🎁 <bdi>{giftsLine(open.gifts)}</bdi>
         </p>
-        <div className="mt-2.5">{due ? <p className="py-2 text-center text-[1rem] font-bold">{D.drawing}</p> : <Countdown at={open.draw_at} now={now} />}</div>
+        <div className="mt-2.5">{due ? <AtZero text={D.drawing} big {...zero} /> : <Countdown at={open.draw_at} now={now} />}</div>
         <div className="mt-2.5 grid grid-cols-2 gap-1.5 text-center">
           <span className="rounded-[0.875rem] bg-white/55 py-1.5">
             <b className="num block text-[1.375rem] font-bold leading-tight">{open.people}</b>
@@ -281,7 +273,7 @@ function NewDraw() {
           })}
         </div>
         <div className="grid grid-cols-[1fr_auto] gap-1.5">
-          <input type="date" value={date} min={tunisDate(0)} max={tunisDate(90)} onChange={(e) => setDate(e.target.value)} aria-label={D.dateLabel} className={input} />
+          <input type="date" value={date} min={tunisDate(0)} max={tunisDate(89)} onChange={(e) => setDate(e.target.value)} aria-label={D.dateLabel} className={input} />
           <input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label={D.timeLabel} className={`${input} w-[7.5rem]`} />
         </div>
       </div>

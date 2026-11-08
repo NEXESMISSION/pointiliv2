@@ -180,6 +180,8 @@ export const D = {
   cardGifts: "الكادوات",
   cardPeople: "{n} داخلين",
   cardDrawing: "السحب صاير توّا…",
+  // the page took too long at zero (another look drawing it, a phone clock ahead): ask again by hand
+  askAgain: "شوف النتيجة",
   units: { d: "نهار", h: "ساعة", m: "دقيقة", s: "ثانية" },
   wonTitle: "مبروك! ربحت",
   wonShow: "ورّي الشاشة هذي في المحل باش تاخذ الكادو",

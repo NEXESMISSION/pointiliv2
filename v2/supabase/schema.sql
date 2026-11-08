@@ -1542,6 +1542,9 @@ end $$;
 -- wheel. A link that leaks gives one tampon, once, to one person; the owner
 -- can cancel one that waits. The token is shown once, when it is made: a
 -- link lost is cancelled and another made, never shown again.
+-- the founder's switch for it (supabase/systems-2026-11-08.sql makes it too): here as well, so this file
+-- run on its own never leaves link_new reading a column that is not there
+alter table public.shops add column if not exists links_allowed boolean not null default true;
 create or replace function public.link_new(p_label text default null, p_item bigint default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_token text; v_id uuid; v_label text;
@@ -4769,6 +4772,14 @@ grant execute on function public.set_reset_days(int), public.remove_customer(uui
 -- its safeguards: the owner's pause, what the clock took given back, the clock's page, the founder's switch
 -- (the warnings are the daily job's: service_role only)
 grant execute on function public.set_reset_paused(boolean), public.restore_reset(uuid), public.my_clock(), public.admin_set_clock(boolean) to authenticated;
+-- the systems and the packs (their own files, laid after this one: supabase/systems-2026-11-08.sql,
+-- supabase/packs-2026-11-09.sql): the revoke above took their grants too — given back here when they are
+-- in the database already, so this file run on its own never cuts a staff phone or a golden ticket off
+do $$
+begin
+  if to_regprocedure('public.systems_grants()') is not null then perform public.systems_grants(); end if;
+  if to_regprocedure('public.packs_grants()') is not null then perform public.packs_grants(); end if;
+end $$;
 
 -- nothing a visitor without an account can call
 do $$

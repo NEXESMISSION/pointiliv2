@@ -4,7 +4,7 @@ import { Check, Crown, Sparkles } from "lucide-react";
 import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
 import { Icon3D } from "@/components/ui";
-import { perMonth, PLANS, PRO_PLANS } from "@/lib/plans";
+import { perMonth, PLANS, PRO_PLANS, PRO_PUBLIC } from "@/lib/plans";
 import { GIFT, orgJsonLd, PRICES, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 import { fill, monthsSaid, t } from "@/lib/t";
@@ -83,7 +83,9 @@ export default async function Prix() {
       </p>
 
       {/* Pointili Pro (9 Nov 2026): the same card, and what brings the customers back more — said apart,
-          under Pointili's own prices, so the page still opens on the price most shops pay */}
+          under Pointili's own prices, so the page still opens on the price most shops pay. Shown once the
+          founder says so (PRO_PUBLIC=1 on Vercel): until then this page is the one everybody knows */}
+      {PRO_PUBLIC && (
       <section className="mt-10 rounded-[1.75rem] p-6 shadow-card" style={{ background: "linear-gradient(135deg,#fff6d3 0%,#ffe08a 45%,#f7c041 100%)", color: "#5a3700" }}>
         <h2 className="flex items-center gap-2 text-[1.375rem] font-bold">
           <Crown className="size-6" /> Pointili Pro
@@ -108,6 +110,7 @@ export default async function Prix() {
           ))}
         </div>
       </section>
+      )}
 
       <section className="mt-10">
         <h2 className="text-[1.375rem] font-bold">كيفاش تخلّص</h2>

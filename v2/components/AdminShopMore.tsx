@@ -250,14 +250,20 @@ function ExportLine({ shopId }: { shopId: string }) {
 function PackLine({ shopId, pack, changed }: { shopId: string; pack: Pack; changed: () => Promise<void> }) {
   const [want, setWant] = useState<Pack | null>(null);
   const [preview, setPreview] = useState<{ changes: string[]; blocked: string | null } | null>(null);
+  const [failed, setFailed] = useState(false);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const choose = (p: Pack) => {
     if (p === pack) return setWant(null);
     setWant(p);
     setPreview(null);
+    setFailed(false);
     setError(null);
-    start(async () => setPreview(await adminPackPreview(shopId, p)));
+    start(async () => {
+      const got = await adminPackPreview(shopId, p).catch(() => null);
+      setPreview(got);
+      setFailed(!got);
+    });
   };
   const options: Pack[] = pack === "old" ? ["old", "base", "pro"] : ["base", "pro", "old"];
   return (
@@ -281,7 +287,16 @@ function PackLine({ shopId, pack, changed }: { shopId: string; pack: Pack; chang
         <div className="mt-2 rounded-[0.75rem] bg-surface p-2.5 ring-1 ring-line">
           <p className="text-[0.8125rem] font-bold text-ink">{fill(P.aPackAsk, { pack: want === "old" ? P.aPackOld : PACK_NAME[want] })}</p>
           {!preview ? (
-            <p className="mt-1 text-[0.75rem] text-muted">…</p>
+            failed ? (
+              <p className="mt-1 flex items-center gap-2 text-[0.75rem] font-semibold text-coral">
+                <span className="min-w-0 flex-1">{NOT_DONE}</span>
+                <button type="button" onClick={() => choose(want)} className="h-7 rounded-[0.5rem] bg-surface px-2.5 text-[0.75rem] font-bold text-brand ring-1 ring-line">
+                  عاود
+                </button>
+              </p>
+            ) : (
+              <p className="mt-1 text-[0.75rem] text-muted">…</p>
+            )
           ) : preview.blocked ? (
             <p className="mt-1 text-[0.75rem] font-semibold text-coral">{P.aPackStoreOn}</p>
           ) : (

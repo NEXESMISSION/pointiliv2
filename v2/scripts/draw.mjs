@@ -90,6 +90,7 @@ try {
   check("a moment too soon is refused", (await rpc(owner, "draw_new", { p_title: "", p_at: later(0.05), p_rule: "stamps", p_gifts: gifts })).error === "bad_time");
   check("a moment too far is refused", (await rpc(owner, "draw_new", { p_title: "", p_at: later(24 * 100), p_rule: "stamps", p_gifts: gifts })).error === "bad_time");
   check("no gift: refused", (await rpc(owner, "draw_new", { p_title: "", p_at: later(2), p_rule: "stamps", p_gifts: [] })).error === "bad_gifts");
+  check("no gift list at all: refused (not a draw with nothing to win)", (await rpc(owner, "draw_new", { p_title: "", p_at: later(2), p_rule: "stamps", p_gifts: null })).error === "bad_gifts");
   check("a gift of 0 winners: refused", (await rpc(owner, "draw_new", { p_title: "", p_at: later(2), p_rule: "stamps", p_gifts: [{ name: "x", n: 0 }] })).error === "bad_gifts");
   check("a rule that does not exist: refused", (await rpc(owner, "draw_new", { p_title: "", p_at: later(2), p_rule: "all", p_gifts: gifts })).error === "invalid");
   const d1 = await rpc(owner, "draw_new", { p_title: "سحب التجربة", p_at: later(48), p_rule: "stamps", p_gifts: gifts });

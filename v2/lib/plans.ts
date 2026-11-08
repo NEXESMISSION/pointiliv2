@@ -46,6 +46,12 @@ export const PRO_PLANS: Plan[] = [
   { id: "year", months: 12, price: 300, gift: GIFT_MONTHS },
 ];
 
+/**
+ * Pro said on the public prices page (/prix) — only once the founder sets PRO_PUBLIC=1 on Vercel: until
+ * then the page is the one every owner already knows. The shops on a pack see Pro where they pay either way.
+ */
+export const PRO_PUBLIC = process.env.PRO_PUBLIC === "1";
+
 export type Pack = "old" | "base" | "pro";
 /** a pack's own price list (an old shop: its own, as plansFor says) */
 export const plansOfPack = (pack: Pack, old?: boolean | null): Plan[] => (pack === "pro" ? PRO_PLANS : plansFor(old));

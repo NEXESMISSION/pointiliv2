@@ -11,13 +11,27 @@ The founder's rule: the shops and customers already on Pointili, the paying ones
   - **Pointili Pro** adds the golden ticket, the store as the owner's choice, the customers' file and 3 staff phones. Prices: 55 / 200 / 300 (`lib/plans.ts`).
   - The founder sets a shop's pack in admin. He sees what it changes before saying yes.
 - **The owner's «النظام متاعي»** (shops on a pack only): one reward at a time (gift, roulette, store) and the extras. Switching to or from the store first shows what it does to the customers, with their numbers; the promise is kept, so nothing collected is lost.
-- **Staff phones (Pro)**: the owner invites with a link (one use, 24 h). The staff phone gets the shop's counter (code, number, camera, gifts, prizes) and nothing else. The owner or a pack downgrade signs it out.
-- **The pay page** for shops on a pack: Pointili / Pointili Pro, with the pack written in the WhatsApp receipt. The public prices page has a Pro section.
+- **Staff phones (Pro)**: the owner invites with a link (one use, 24 h). The staff phone gets the shop's counter (code, number, camera, gifts, prizes, what the clock took from the card in front of it) and nothing else. The owner or a pack downgrade signs it out.
+  - The owner sees what each phone gave by hand, today and these 7 days: tampons by number, gifts and prizes handed over, tampons taken back (`staff_log`). A scan of the code is the customer's own and is not counted.
+  - Invites not used yet show on the owner's page and can be called off.
+  - Each phone has its own try limits (60 looks and 30 tampons by number in 10 minutes, as the owner has), never the owner's own.
+  - A staff phone's counter looks back 12 hours at most, never the shop's whole past.
+  - Staff are not in the shop's golden ticket, as its owner is not.
+  - A staff member who opens a shop of their own stops being staff.
+  - The founder naming a Pro shop «old» again signs its staff out too (an old shop has no staff page).
+- **The pay page** for shops on a pack: Pointili / Pointili Pro, with the pack written in the WhatsApp receipt. The public prices page (`/prix`) shows Pro only once `PRO_PUBLIC=1` is set on Vercel; until then it is exactly today's page.
+- **The founder's payment form** names the pack paid for. Choosing another pack there first lists what it changes (the same list as the pack's own line), and the button waits for it.
 
 ## What protects the old shops by design
 - Every shop already open is `pack = 'old'`. None of the new screens (the system page, staff, the Pro pay switch) appear for an old shop.
 - The golden ticket and the store choice are off for every shop until the founder turns them on. The link stays on for all, as today.
 - The database files add new things only. The one existing function changed is `link_new`, and only at release (below).
+- `schema.sql` itself gets three small additions, none of which changes what an old shop does:
+  - `link_new` refuses a shop whose link the founder switched off;
+  - the `links_allowed` column is made there too (`add column if not exists`), so `schema.sql` run on its own never leaves `link_new` reading a column that is not there;
+  - after its «who may call what», it gives the new files' functions their grants back when they are in the database (`systems_grants()`, `packs_grants()`). Without that, a run of `schema.sql` alone took them away: staff phones stopped and winners stopped seeing their prizes.
+- `scripts/db.mjs` keeps every switch it can read before a run. On the first run with a column that does not exist yet, it used to fall back to six switches; it now keeps all the others.
+- The store page of a customer whose shop moved to the store still shows a gift or a roulette turn won before. A customer whose shop moved back to the card sees their waiting order. On live today no shop is on the store and none has such a gift or order (read-only check, 9 Nov), so no old shop's page changes.
 - The new code falls back to today's screens whenever a new answer is missing (`my_systems` failing, for example).
 - A staff phone's calls run through one new function, `staff_act`, and only when the owner's own function answered «no shop». An owner never gets that answer, so an owner's counter takes exactly today's path.
 
@@ -30,8 +44,8 @@ Everything above was built and tested on a database on this computer:
 
 ## Proof (re-run all of it before any release)
 - `node scripts/test.mjs`: the whole app's database rules.
-- `node scripts/draw.mjs`: the golden ticket (67 checks).
-- `node scripts/packs.mjs`: packs, store switching, staff phones (47 checks). It refuses any database but the local one.
+- `node scripts/draw.mjs`: the golden ticket (68 checks).
+- `node scripts/packs.mjs`: packs, store switching, staff phones (66 checks). It refuses any database but the local one.
 - `node scripts/same-pages.mjs <main> <branch>`: the same pages for an old ordinary shop, an old roulette shop, an old store shop and their customer, on today's code and on the branch. Both must run on the same database, with their Next caches cleared (`rm -rf v2/.next`): settings are cached 24 h. On 9 Nov: **47/47 identical**, including the pay page, the counter and its scan screens.
 - The live-data check (`scripts/real-check.sql`) asks the new functions, as every real owner and customer, what they would show, in a transaction never committed. On 8 Nov: 384 real shops (10 paying), 553 cards and 555 wallets showed nothing new. Run it again with the packs' functions once they are on the database.
 - A fingerprint of every old database function, taken before and after the files are laid: none changed.
@@ -53,3 +67,4 @@ Everything above was built and tested on a database on this computer:
    - The database needs nothing undone: the old site ignores the new pieces.
    - The only exception is `link_new`. Re-run main's version, or leave it: with every shop's link on, it behaves exactly as before.
 7. **Turn things on one shop at a time.** Start with a shop whose owner knows it's new, ideally not a paying one: put it on Pro, watch one full draw and one staff phone. Old shops move to a pack only when their owner asks.
+8. **Pro on the public prices page** only when the founder wants it there: set `PRO_PUBLIC=1` in Vercel's environment and redeploy. Leaving it unset keeps `/prix` exactly as today.

@@ -27,21 +27,25 @@ export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullabl
   const router = useRouter();
   const now = rewardOf(systems);
   const pro = systems.pack === "pro";
-  const [asking, setAsking] = useState<{ to: Reward; preview: StorePreview | null } | null>(null);
+  const [asking, setAsking] = useState<{ to: Reward; preview: StorePreview | null; failed?: boolean } | null>(null);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
 
+  // what the switch would do, read first; the server not answering says so, with a way to ask again
+  const ask = (to: Reward) => {
+    setAsking({ to, preview: null });
+    start(async () => {
+      const preview = await storePreview().catch(() => null);
+      setAsking({ to, preview, failed: !preview });
+    });
+  };
   const choose = (to: Reward) => {
     setError(null);
     setSaid(null);
     if (to === now) return;
     // to or from the store: what it does to the customers, read and said first
-    if (to === "store" || now === "store") {
-      setAsking({ to, preview: null });
-      start(async () => setAsking({ to, preview: await storePreview() }));
-      return;
-    }
+    if (to === "store" || now === "store") return ask(to);
     // the gift and the roulette: the roulette's own page holds its prizes and its switch
     if (to === "wheel") return router.push("/shop/wheel");
     start(async () => {
@@ -122,7 +126,16 @@ export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullabl
           {asking && (
             <div className="mt-2 rounded-[1.125rem] bg-surface p-3.5 shadow-card ring-2 ring-brand/30">
               {!asking.preview ? (
-                <p className="text-[0.875rem] text-muted">…</p>
+                asking.failed ? (
+                  <p className="flex items-center gap-2 text-[0.875rem] font-semibold text-coral">
+                    <span className="min-w-0 flex-1">{P.err}</span>
+                    <button type="button" onClick={() => ask(asking.to)} className="press h-8 shrink-0 rounded-full px-3 text-[0.8125rem] font-bold text-brand ring-1 ring-brand/30">
+                      {P.retry}
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-[0.875rem] text-muted">…</p>
+                )
               ) : asking.preview.to === "store" ? (
                 <>
                   <b className="block text-[0.9375rem]">{P.toStoreTitle}</b>
