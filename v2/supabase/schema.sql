@@ -1551,6 +1551,9 @@ begin
   if s.goal is null then return public.err('no_card'); end if;
   if s.paused then return public.err('paused'); end if;
   if public.shut(s) then return public.err('shut'); end if;
+  -- the link is a system of its own since 8 Nov 2026 (supabase/systems-2026-11-08.sql): the founder
+  -- may take it from a shop, and then none is made. On for every shop until he does (links_allowed)
+  if not s.links_allowed then return public.err('not_allowed'); end if;
   -- a hand sending links, not a machine: 60 in ten minutes, 500 waiting at once
   if (select count(*) from public.codes where shop_id = s.id and online and created_at > now() - interval '10 minutes') >= 60 then
     return public.err('slow_down');

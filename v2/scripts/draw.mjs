@@ -105,6 +105,8 @@ try {
   const amineCard = (await rpc(amine, "wallet")).find((c) => c.shop.id === shop.id).id;
   const saraCard = (await rpc(sara, "wallet")).find((c) => c.shop.id === shop.id).id;
   const omarCard = (await rpc(omar, "wallet")).find((c) => c.shop.id === shop.id).id;
+  const other = await person("Other Owner");
+  await rpc(other, "open_shop", { p_name: "Other Shop", p_kind: "cafe" });
   const a1 = await rpc(amine, "card_draw", { p_card: amineCard });
   check("Amine's card: the draw, its countdown, his 3 tickets", a1?.open?.id === d1.id && a1.open.mine === 3 && a1.open.gifts.length === 2 && a1.last === null, a1);
   check("Omar's card: the draw, no ticket yet", (await rpc(omar, "card_draw", { p_card: omarCard }))?.open?.mine === 0);
@@ -133,10 +135,17 @@ try {
   check("Omar's card: the result, nothing won, nothing waiting", o3.last?.won.length === 0 && o3.waiting.length === 0 && o3.last.mine === 0, o3);
 
   console.log("\nThe prizes handed over");
+  console.log("\nThe counter reads a winner's code");
   const amineWin = wins.find((w) => w.card === amineCard);
+  const amineCode = (await rpc(amine, "me")).code;
+  const atCounter = await rpc(owner, "draw_wins_at", { p_who: amineCode });
+  check("his code at the counter: his prize, its number", atCounter.ok && atCounter.wins.length === 1 && atCounter.wins[0].id === amineWin.id, atCounter);
+  check("…and by his number too", (await rpc(owner, "draw_wins_at", { p_who: amine.digits })).wins.length === 1);
+  check("Omar's code: nothing", (await rpc(owner, "draw_wins_at", { p_who: (await rpc(omar, "me")).code })).wins.length === 0);
+  check("another shop reading his code sees nothing of this one", (await rpc(other, "draw_wins_at", { p_who: amineCode })).wins.length === 0);
+  check("a customer cannot ask", (await rpc(amine, "draw_wins_at", { p_who: amineCode })).error === "no_shop");
+  check("the owner's systems count the prizes waiting", (await rpc(owner, "my_systems")).wins === 2);
   check("a customer cannot hand a prize over", (await rpc(amine, "draw_give", { p_win: amineWin.id })).error === "no_shop");
-  const other = await person("Other Owner");
-  await rpc(other, "open_shop", { p_name: "Other Shop", p_kind: "cafe" });
   check("another shop cannot hand it over", (await rpc(other, "draw_give", { p_win: amineWin.id })).error === "not_found");
   check("the owner hands it over", (await rpc(owner, "draw_give", { p_win: amineWin.id })).ok);
   check("…once", (await rpc(owner, "draw_give", { p_win: amineWin.id })).already === true);
@@ -176,6 +185,9 @@ try {
   check("its wallet has no golden line", (await rpc(plain, "my_draws")).length === 0);
   const sysOther = await rpc(other, "my_systems");
   check("its owner's systems: the link on, the golden ticket off", sysOther?.ok === true && sysOther.links === true && sysOther.draw === false && sysOther.draw_open === null, sysOther);
+  const all = await rpc(boss, "admin_systems_all");
+  check("the console's «الأنظمة»: every shop with its systems (a robot founder sees the robots' shops)", Array.isArray(all) && all.some((x) => x.id === shop.id && x.draw === true && x.links === true && x.card === true), all.length);
+  check("…an owner cannot read it", !!(await rpc(owner, "admin_systems_all")).error);
   const anon = createClient(URL_, ANON, { auth: { persistSession: false } });
   check("a visitor without an account calls none of it", !!(await anon.rpc("my_systems")).error && !!(await anon.rpc("card_draw", { p_card: plainCard })).error);
 } finally {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { myCardDraw } from "@/app/actions-draw";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon3D } from "@/components/ui";
 import { D, giftsLine, leftOf, peopleN, ticketsN, whenSaid, winnersN, type CardDraw as Draw } from "@/lib/draw";
@@ -96,6 +97,36 @@ export function CardDraw({ draw }: { draw: NonNullable<Draw> }) {
       )}
       {last && <Reveal last={last} />}
     </div>
+  );
+}
+
+/**
+ * Right after a tampon (the scan's screen): the shop has a draw waiting — this tampon is one more ticket
+ * in it, and how many this customer has now. Asked once the screen is up; a shop that never made a draw
+ * (nearly every one) answers null and nothing at all is shown.
+ */
+export function DrawAfterStamp({ cardId, style }: { cardId: string; style?: React.CSSProperties }) {
+  const [open, setOpen] = useState<NonNullable<Draw>["open"] | null>(null);
+  useEffect(() => {
+    let live = true;
+    void myCardDraw(cardId)
+      .then((d) => live && setOpen(d?.open ?? null))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [cardId]);
+  if (!open) return null;
+  return (
+    <p className="relative mt-2.5 flex w-full max-w-xs animate-pop items-center gap-2.5 overflow-hidden rounded-[1.125rem] px-3.5 py-2.5 text-start shadow-card" style={{ ...style, background: GOLD, color: INK }}>
+      <Icon3D name="ticket" size={34} className="shrink-0 animate-float" />
+      <span className="min-w-0 flex-1">
+        <b className="block truncate text-[0.9375rem] font-bold">{open.rule === "cards" ? D.afterStampIn : D.afterStamp}</b>
+        <span className="block truncate text-[0.75rem] font-semibold opacity-80">
+          {open.rule === "cards" ? fill(D.afterStampWhen, { when: whenSaid(open.draw_at) }) : fill(D.afterStampSub, { n: ticketsN(open.mine), when: whenSaid(open.draw_at) })}
+        </span>
+      </span>
+    </p>
   );
 }
 

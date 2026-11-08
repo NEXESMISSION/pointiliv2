@@ -205,7 +205,7 @@ export default async function ShopHome() {
           </span>
           <span className="min-w-0 flex-1">
             <b className="block truncate text-[0.9375rem] font-bold">{D.homeRow}</b>
-            <span className="block truncate text-[0.75rem] font-semibold opacity-80">{systems?.draw_open ? fill(D.homeRowOpen, { when: whenSaid(systems.draw_open) }) : D.homeRowNone}</span>
+            <span className="block truncate text-[0.75rem] font-semibold opacity-80">{systems?.draw_open ? fill(D.homeRowOpen, { when: whenSaid(systems.draw_open) }) : systems?.wins ? fill(D.homeRowWaiting, { n: systems.wins }) : D.homeRowNone}</span>
           </span>
           <ChevronLeft className="size-5 shrink-0 opacity-60" />
         </Link>

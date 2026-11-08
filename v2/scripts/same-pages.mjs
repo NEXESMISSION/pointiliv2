@@ -118,11 +118,13 @@ try {
   // one link sent by the plain shop, so its links page has a row
   await rpc(plain, "link_new", { p_label: "Facebook", p_item: null });
   const cards = await rpc(sami, "wallet");
+  // the customer's own code, as an owner's camera opens it (/u/…: the counter, ready to give)
+  const samiCode = (await rpc(sami, "me")).code;
   const cardAt = (name) => cards.find((c) => c.shop.name === name).id;
 
   for (const [who, label] of [[plain, "ordinary shop"], [wheel, "roulette shop"], [store, "store shop"]]) {
     console.log(`\nThe ${label}'s owner`);
-    for (const p of ["/shop", "/shop/settings", "/shop/links", "/shop/customers", "/shop/card", "/shop/stats", "/shop/qr", "/shop/collect?by=phone", "/wallet", "/me"]) await compare(`${label}: ${p}`, p, who);
+    for (const p of ["/shop", "/shop/settings", "/shop/links", "/shop/customers", "/shop/card", "/shop/stats", "/shop/qr", "/shop/collect?by=phone", "/shop/collect?by=code", `/u/${samiCode}`, "/wallet", "/me"]) await compare(`${label}: ${p}`, p, who);
     if (who === wheel) await compare(`${label}: /shop/wheel`, "/shop/wheel", who);
     if (who === store) await compare(`${label}: /shop/store`, "/shop/store", who);
   }

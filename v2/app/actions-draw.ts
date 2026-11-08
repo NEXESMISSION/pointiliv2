@@ -1,7 +1,7 @@
 "use server";
 
 import { call } from "@/lib/supabase";
-import { tunisMoment, type DrawGift, type DrawRule } from "@/lib/draw";
+import { tunisMoment, type CardDraw, type DrawGift, type DrawRule } from "@/lib/draw";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type Res = { ok: true } | { ok: false; error: string };
@@ -35,6 +35,18 @@ export async function drawCancel(id: string): Promise<boolean> {
 export async function drawGive(win: number): Promise<boolean> {
   if (!Number.isSafeInteger(win) || win < 1) return false;
   return !!(await call<{ ok: boolean }>("draw_give", { p_win: win }))?.ok;
+}
+
+/** One card's golden ticket, for the screen right after a tampon (null: a shop that never made a draw). */
+export async function myCardDraw(cardId: string): Promise<CardDraw> {
+  if (!UUID.test(String(cardId ?? ""))) return null;
+  return call<CardDraw>("card_draw", { p_card: cardId });
+}
+
+/** The golden prizes this customer (a code or a number, as the counter read it) won here and has not taken. */
+export async function drawWinsAt(who: string): Promise<{ id: number; gift: string }[]> {
+  const res = await call<{ ok: boolean; wins?: { id: number; gift: string }[] }>("draw_wins_at", { p_who: String(who ?? "").slice(0, 20) });
+  return res?.ok ? (res.wins ?? []) : [];
 }
 
 /** the founder's view of a shop's new systems (the link, the golden ticket) */

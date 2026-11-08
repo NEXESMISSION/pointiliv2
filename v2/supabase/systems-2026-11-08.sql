@@ -143,12 +143,31 @@ end $$;
 
 -- ═══ the owner ═══════════════════════════════════════════════════════════════
 -- which systems the founder gave this shop (the owner's screens show only those)
+-- (and how many golden prizes wait to be handed over: the counter asks about them even after the founder
+-- took the golden ticket away)
 create or replace function public.my_systems() returns jsonb
 language sql stable security definer set search_path = '' as $$
   select jsonb_build_object('ok', true, 'links', s.links_allowed, 'draw', s.draw_allowed,
-    'draw_open', (select d.draw_at from public.draws d where d.shop_id = s.id and d.status = 'open' limit 1))
+    'draw_open', (select d.draw_at from public.draws d where d.shop_id = s.id and d.status = 'open' limit 1),
+    'wins', (select count(*) from public.draw_wins w where w.shop_id = s.id and w.given_at is null))
   from public.shops s where s.owner_id = auth.uid()
 $$;
+
+-- the golden prizes a customer won here and has not taken, for the counter that just read their code or
+-- their number (customer_at's way of knowing who it is): the owner hands them over from there, as a gift
+create or replace function public.draw_wins_at(p_who text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_person uuid;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  v_person := public.person_of(p_who);
+  if v_person is null or v_person = s.owner_id then return jsonb_build_object('ok', true, 'wins', '[]'::jsonb); end if;
+  perform public.draw_settle(s.id);
+  return jsonb_build_object('ok', true, 'wins', coalesce((
+    select jsonb_agg(jsonb_build_object('id', w.id, 'gift', w.gift, 'at', w.created_at) order by w.id)
+    from public.draw_wins w where w.shop_id = s.id and w.user_id = v_person and w.given_at is null), '[]'::jsonb));
+end $$;
 
 -- the owner's golden ticket: the draw waiting (how many are in it so far), the last one drawn and its
 -- winners, every prize still to hand over, and the draws before. Draws first what is due.
@@ -320,6 +339,31 @@ begin
     'draws', (select count(*) from public.draws d where d.shop_id = s.id and d.status = 'drawn'));
 end $$;
 
+-- every shop and its systems, for the console's «الأنظمة» (which shop has what, to sell them one by one):
+-- the real shops only (never the founder's own, the tests or the robots — unless a robot is looking), the
+-- busiest first. Each system as it stands: the card, the roulette (allowed / on), the store, «شنوّة يبيع»,
+-- the export, the link (and how many were sent), the golden ticket (and its draw waiting)
+create or replace function public.admin_systems_all() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v_all boolean;
+begin
+  perform public.require_admin();
+  v_all := public.sees_robots();
+  return coalesce((
+    select jsonb_agg(x.j order by x.week desc, x.last desc nulls last) from (
+      select jsonb_build_object(
+        'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo,
+        'card', s.goal is not null, 'paused', s.paused, 'paid', s.paid_until is not null and s.paid_until > now(), 'shut', public.shut(s),
+        'wheel', s.wheel_allowed, 'wheel_on', s.wheel_on, 'store', s.store_on, 'items', s.items_on, 'export', s.export_allowed,
+        'links', s.links_allowed, 'links_made', (select count(*) from public.codes k where k.shop_id = s.id and k.online),
+        'draw', s.draw_allowed, 'draw_open', (select d.draw_at from public.draws d where d.shop_id = s.id and d.status = 'open' limit 1),
+        'week', wk.n) as j, wk.n as week, wk.last
+      from public.shops s left join public.people p on p.id = s.owner_id
+      cross join lateral (select count(*) filter (where m.kind = 'stamp' and m.created_at > now() - interval '7 days') as n, max(m.created_at) as last
+                          from public.moments m where m.shop_id = s.id) wk
+      where v_all or (not public.is_robot(s.owner_id) and not coalesce(p.is_admin or p.is_tester, false))) x), '[]'::jsonb);
+end $$;
+
 -- the founder turns one of a shop's new systems on or off: 'links' (a tampon sent as a link) or 'draw'
 -- (the golden ticket). The golden ticket taken away: its draw waiting is called off (nobody would see it
 -- drawn); prizes already won stay to hand over
@@ -344,14 +388,17 @@ end $$;
 -- ═══ who may call what (these functions only) ═══════════════════════════════
 revoke execute on function public.draw_pool(public.draws), public.draw_gift_list(uuid), public.draw_settle(uuid),
   public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid), public.draw_give(bigint),
-  public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean)
+  public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
+  public.draw_wins_at(text), public.admin_systems_all()
   from public, anon, authenticated;
 grant execute on function public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid),
-  public.draw_give(bigint), public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean)
+  public.draw_give(bigint), public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
+  public.draw_wins_at(text), public.admin_systems_all()
   to authenticated;
 grant execute on function public.draw_pool(public.draws), public.draw_gift_list(uuid), public.draw_settle(uuid),
   public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid), public.draw_give(bigint),
-  public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean)
+  public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
+  public.draw_wins_at(text), public.admin_systems_all()
   to service_role;
 
 notify pgrst, 'reload schema';

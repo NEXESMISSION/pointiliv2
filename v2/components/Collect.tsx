@@ -6,6 +6,9 @@ import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Smartphone,
 import { customerAt, give as handOver, giveAll, giveStamp, giveStampNew, unstamp, type WaitingGift } from "@/app/actions";
 import { restoreReset } from "@/app/actions-clock";
 import { storeGive } from "@/app/actions-store";
+import { drawGive, drawWinsAt } from "@/app/actions-draw";
+import { DrawPop } from "@/components/DrawPop";
+import { D } from "@/lib/draw";
 import { spinAtCounter } from "@/app/actions-wheel";
 import { Wheel, type Prize } from "@/components/Wheel";
 import { Pass } from "@/components/Pass";
@@ -216,7 +219,7 @@ function errorText(code?: string): string {
  * code in their wallet is the same one), and a question comes up — give it
  * now, or not now.
  */
-export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }: { by: Mode; preset?: string; shop?: DemoShop; items?: Item[]; back?: string; prizes?: Prize[] }) {
+export function Collect({ by, preset = "", shop, items = [], back, prizes = [], draws = false }: { by: Mode; preset?: string; shop?: DemoShop; items?: Item[]; back?: string; prizes?: Prize[]; /** the golden ticket (lib/draw drawCounter): ask whether this customer won a prize here — off for every shop without it */ draws?: boolean }) {
   const [mode, setMode] = useState<Mode>(by);
   const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
   const [step, setStep] = useState<Step>({ kind: "idle" });
@@ -228,6 +231,9 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
   const [orders, setOrders] = useState<{ card: string; list: Order[] } | null>(null);
   const [ordersBusy, setOrdersBusy] = useState(false);
   const [ordersDone, setOrdersDone] = useState<string | null>(null);
+  // the golden ticket's prizes this customer won here and has not taken (asked once the store and the gift are answered)
+  const [drawPop, setDrawPop] = useState<{ id: number; gift: string }[] | null>(null);
+  const [drawBusy, setDrawBusy] = useState(false);
   // who this customer is, by the shop's forms of identification (to check)
   const [said, setSaid] = useState<Said>([]);
   const later = useRef<number | null>(null);
@@ -249,6 +255,11 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
         // an order from the store waits: that question first; else a gift waits: its question
         if (res.orders?.length && res.card) setOrders({ card: res.card.id, list: res.orders });
         else if (res.waiting && later.current !== res.waiting.id) setPop({ w: res.waiting, won: false });
+        // a shop with the golden ticket: did this customer win a prize here? (its question after the others)
+        if (draws)
+          void drawWinsAt(digits)
+            .then((w) => asked.current === digits && w.length > 0 && setDrawPop(w))
+            .catch(() => {});
       }
       else if (res.error === "unknown" && mode === "phone") {
         // a number with no account yet: the tampon makes its card, the person finds it when they sign up with it
@@ -264,7 +275,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
       } else setStep({ kind: "error", text: errorText(res.error) });
     }, 220);
     return () => clearTimeout(id);
-  }, [digits, mode, shop]);
+  }, [digits, mode, shop, draws]);
 
   // a shop that says what it sells: the tampon is given by tapping what it was for (one tap, as at the counter)
   const give = async (item?: Item) => {
@@ -349,6 +360,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
     setPop(null);
     setOrders(null);
     setOrdersDone(null);
+    setDrawPop(null);
     setSaid([]);
     setUndo("no");
     setUndoSaid(null);
@@ -683,6 +695,25 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
             } else setStep({ kind: "error", text: t.errNetwork });
           }}
           onLater={() => setOrders(null)}
+        />
+      )}
+      {drawPop && !orders && !pop && (
+        <DrawPop
+          who={who}
+          wins={drawPop}
+          busy={drawBusy}
+          onGive={async () => {
+            setDrawBusy(true);
+            const done = await Promise.all(drawPop.map((w) => drawGive(w.id).catch(() => false)));
+            setDrawBusy(false);
+            setDrawPop(null);
+            if (done.every(Boolean)) {
+              navigator.vibrate?.(60);
+              signal("draw_give", mode);
+              setOrdersDone(fill(D.popGiven, { name: who }));
+            } else setStep({ kind: "error", text: t.errNetwork });
+          }}
+          onLater={() => setDrawPop(null)}
         />
       )}
       {pop && (

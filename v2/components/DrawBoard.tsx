@@ -43,12 +43,14 @@ export function DrawBoard({ draw, shop }: { draw: OwnerDraw; shop: { name: strin
   useScreen("draw");
   const lastWins = draw.last ? draw.wins.filter((w) => w.draw === draw.last!.id) : [];
   const olderWaiting = draw.wins.filter((w) => !w.given_at && w.draw !== draw.last?.id);
+  // the draws before: the last one has its own card above, so not twice
+  const past = draw.past.filter((p) => p.id !== draw.last?.id);
   return (
     <>
       <Top back="/shop" title={D.name} hint={D.ownerHint} />
       <div data-list className="-mx-1 mt-[1.5dvh] min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-1 pb-4">
         {draw.open ? <Open open={draw.open} shop={shop.name} /> : draw.allowed && draw.card ? <NewDraw /> : null}
-        {draw.last && <Results last={draw.last} wins={lastWins} />}
+        {draw.last && <Results last={draw.last} wins={lastWins} shop={shop.name} />}
         {olderWaiting.length > 0 && (
           <section className={box}>
             <h2 className="text-[0.9375rem] font-bold">{D.toGive}</h2>
@@ -59,11 +61,11 @@ export function DrawBoard({ draw, shop }: { draw: OwnerDraw; shop: { name: strin
             </ul>
           </section>
         )}
-        {draw.past.length > 0 && (
+        {past.length > 0 && (
           <section className={box}>
             <h2 className="text-[0.9375rem] font-bold">{D.past}</h2>
             <ul className="mt-1 divide-y divide-line">
-              {draw.past.map((p) => (
+              {past.map((p) => (
                 <li key={p.id} className="flex items-center gap-2 py-2 text-[0.8125rem]">
                   <span className="min-w-0 flex-1 truncate font-semibold text-ink">{p.title ?? whenSaid(p.draw_at)}</span>
                   {p.status === "cancelled" ? (
@@ -303,8 +305,11 @@ function NewDraw() {
   );
 }
 
-/** the last draw: when, how many were in, and its winners — each one's prize handed over here */
-function Results({ last, wins }: { last: NonNullable<OwnerDraw["last"]>; wins: OwnerDraw["wins"] }) {
+/** the last draw: when, how many were in, and its winners — each one's prize handed over here — and the
+ *  winners said to everyone on WhatsApp (first names only: the numbers stay the shop's) */
+function Results({ last, wins, shop }: { last: NonNullable<OwnerDraw["last"]>; wins: OwnerDraw["wins"]; shop: string }) {
+  const lines = wins.map((w) => fill(D.winnersLine, { gift: w.gift, name: (w.name ?? "").split(" ")[0] || D.someone }));
+  const msg = fill(D.winnersMsg, { shop, title: last.title ?? D.name, lines: lines.join("\n") });
   return (
     <section className={box}>
       <h2 className="flex items-center gap-2 text-[1rem] font-bold">
@@ -317,11 +322,21 @@ function Results({ last, wins }: { last: NonNullable<OwnerDraw["last"]>; wins: O
       {wins.length === 0 ? (
         <p className="mt-2 rounded-[0.875rem] bg-canvas px-3 py-2.5 text-center text-[0.875rem] text-muted">{D.nobody}</p>
       ) : (
-        <ul className="mt-1 divide-y divide-line">
-          {wins.map((w) => (
-            <WinRow key={w.id} w={w} />
-          ))}
-        </ul>
+        <>
+          <ul className="mt-1 divide-y divide-line">
+            {wins.map((w) => (
+              <WinRow key={w.id} w={w} />
+            ))}
+          </ul>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(msg)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="press mt-2 flex h-11 items-center justify-center gap-2 rounded-[0.875rem] bg-[#25D366] text-[0.875rem] font-bold text-white"
+          >
+            <MessageCircle className="size-4" /> {D.winnersShare}
+          </a>
+        </>
       )}
     </section>
   );

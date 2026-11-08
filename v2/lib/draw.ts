@@ -33,11 +33,13 @@ export type CardDraw = {
 export type WalletDraw = { card: string; draw_at: string | null; won: number };
 
 /** what the systems of a shop are (my_systems): null when it could not be read — then the screens stay as they were */
-export type Systems = { ok: boolean; links: boolean; draw: boolean; draw_open: string | null } | null;
+export type Systems = { ok: boolean; links: boolean; draw: boolean; draw_open: string | null; wins?: number } | null;
 
 /** the systems as they ran before they were separated: what a screen falls back on when the answer is missing */
 export const linksOn = (s: Systems) => s?.links !== false;
 export const drawOn = (s: Systems) => s?.draw === true;
+/** the counter asks about golden prizes: the golden ticket on, or prizes still waiting from before it went off */
+export const drawCounter = (s: Systems) => drawOn(s) || (s?.wins ?? 0) > 0;
 
 const counted = (n: number, one: string, two: string, few: string, many: string) => {
   if (n === 1) return one;
@@ -127,6 +129,11 @@ export const D = {
   resultsOf: "سحب {when}",
   resultsPool: "{people} دخلو، {tickets} في الكل",
   nobody: "حتى حد ما دخل في السحب هذا.",
+  winnersShare: "قول شكون ربح في الواتساب",
+  winnersMsg: "🎉 رابحين {title} في {shop}:\n{lines}\n\nمبروك للرابحين! السحب الجاي قريب، كل تامبون = تذكرة 🍀",
+  winnersLine: "🏆 {gift}: {name}",
+  someone: "حريف",
+  homeRowWaiting: "{n} يستنّاو الكادو متاعهم",
   give: "سلّم",
   giveAsk: "سلّمت {gift} لـ{name}؟",
   given: "تسلّم",
@@ -145,7 +152,16 @@ export const D = {
   homeRow: "التذكرة الذهبية",
   homeRowOpen: "السحب {when}",
   homeRowNone: "اعمل سحب للحرفاء متاعك",
-  homeRowWins: "{n} يستنّاو الكادو متاعهم",
+  // right after a tampon
+  afterStamp: "+1 تذكرة في السحب",
+  afterStampIn: "إنت داخل في السحب",
+  afterStampSub: "عندك {n} · السحب {when}",
+  afterStampWhen: "السحب {when}",
+  // the counter: a winner's code read
+  popWon: "{name} ربح في التذكرة الذهبية",
+  popGive: "سلّمو الكادو توّا",
+  popLater: "موش توّا",
+  popGiven: "تسلّم الكادو متاع التذكرة الذهبية لـ{name}",
   // the customer's card
   cardTitle: "التذكرة الذهبية",
   cardDrawAt: "السحب {when}",

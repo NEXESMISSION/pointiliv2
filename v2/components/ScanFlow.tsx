@@ -10,6 +10,7 @@ import { Wheel } from "@/components/Wheel";
 import { PasswordField } from "@/components/PasswordField";
 import { PhoneField } from "@/components/PhoneField";
 import { Pass } from "@/components/Pass";
+import { DrawAfterStamp } from "@/components/CardDraw";
 import { useScreen } from "@/components/Tracker";
 import { Confetti, IMPACT_MS, StampLand } from "@/components/StampLand";
 import { Btn, Field, Icon3D, LinkBtn } from "@/components/ui";
@@ -159,6 +160,9 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
           {fill(t.resetWas, { days: daysN(card.shop.reset_days) })}
         </p>
       )}
+
+      {/* the golden ticket: this tampon is one more ticket in the shop's draw (nothing for a shop without one) */}
+      <DrawAfterStamp cardId={card.id} style={after(360)} />
 
       {/* the gift: one line to show at the counter, not a second card. On the wheel it is the turn
           itself — it opens the wheel back up here, and once spun it is the prize and its code */}

@@ -5,6 +5,7 @@ import { Icon3D, Logo, Middle, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { t } from "@/lib/t";
+import { drawCounter, type Systems } from "@/lib/draw";
 
 export const metadata = { title: "كود كارط Pointili", robots: { index: false } };
 
@@ -17,11 +18,13 @@ export default async function CustomerCode({ params }: { params: Promise<{ code:
   const valid = /^\d{6}$/.test(code);
   if (valid && me?.shop?.goal && me.code !== code) {
     // in one breath, not one after the other: every shop is allowed the wheel since 18 Oct
-    const [items, wheel] = await Promise.all([
+    const [items, wheel, systems] = await Promise.all([
       me.shop.items_on ? call<{ id: number; name: string }[]>("my_items") : Promise.resolve(null),
       me.shop.wheel_on || me.shop.wheel_allowed ? call<{ prizes: { id: number; name: string; chance: number }[] }>("my_wheel") : Promise.resolve(null),
+      // the golden ticket: whether to ask about this customer's prize (never for a shop without it)
+      call<Systems>("my_systems"),
     ]);
-    return <Collect by="code" preset={code} items={items ?? []} prizes={wheel?.prizes ?? []} />;
+    return <Collect by="code" preset={code} items={items ?? []} prizes={wheel?.prizes ?? []} draws={drawCounter(systems)} />;
   }
   return (
     <Screen>
