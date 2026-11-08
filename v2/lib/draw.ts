@@ -15,7 +15,7 @@ export type OwnerDraw = {
   error?: string;
   allowed: boolean;
   card: boolean;
-  open: { id: string; title: string | null; rule: DrawRule; starts_at: string; draw_at: string; gifts: DrawGift[]; people: number; tickets: number } | null;
+  open: { id: string; title: string | null; rule: DrawRule; starts_at: string; draw_at: string; gifts: DrawGift[]; people: number; tickets: number; pool?: { name: string | null; phone: string | null; tickets: number }[] } | null;
   last: { id: string; title: string | null; rule: DrawRule; draw_at: string; drawn_at: string; people: number; tickets: number; gifts: DrawGift[] } | null;
   wins: { id: number; draw: string; gift: string; tickets: number; given_at: string | null; card: string | null; name: string | null; phone: string | null; at: string }[];
   past: { id: string; title: string | null; status: "drawn" | "cancelled"; draw_at: string; people: number | null; winners: number }[];
@@ -117,6 +117,8 @@ export const D = {
   livePeople: "داخلين",
   liveTickets: "تذاكر",
   share: "قول للحرفاء في الواتساب",
+  poolTitle: "شكون داخل ({n})",
+  poolNone: "حتى حد مازال. كل حريف ياخذ تامبون من توّا يدخل.",
   shareMsg: "🎟️ التذكرة الذهبية في {shop}!\nالسحب {when}.\nالكادوات: {gifts}\n{how}",
   shareHowStamps: "كل تامبون تاخذو من توّا = تذكرة في السحب. اللي يجي أكثر عندو حظ أكثر 🍀",
   shareHowCards: "كل حريف عندو كارط عندنا داخل في السحب 🍀",

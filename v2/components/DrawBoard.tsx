@@ -135,6 +135,27 @@ function Open({ open, shop }: { open: NonNullable<OwnerDraw["open"]>; shop: stri
           </span>
         </div>
         <p className="mt-2 text-center text-[0.75rem] font-semibold opacity-80">{open.rule === "cards" ? D.ruleCards : D.ruleStamps}</p>
+        {/* who is in it so far, the most tickets first: opened on a tap (the owner checks his draw is real) */}
+        <details className="mt-2 rounded-[0.875rem] bg-white/55 px-3 py-2 [&_summary::-webkit-details-marker]:hidden">
+          <summary className="cursor-pointer list-none text-center text-[0.8125rem] font-bold">{fill(D.poolTitle, { n: open.people })} ▾</summary>
+          {open.pool && open.pool.length > 0 ? (
+            <ul className="mt-1.5 max-h-48 space-y-1 overflow-y-auto">
+              {open.pool.map((p, i) => (
+                <li key={i} className="flex items-center gap-2 text-[0.8125rem]">
+                  <bdi className="min-w-0 flex-1 truncate font-semibold">{p.name ?? D.someone}</bdi>
+                  {p.phone && (
+                    <bdi dir="ltr" className="shrink-0 opacity-70">
+                      {p.phone}
+                    </bdi>
+                  )}
+                  <span className="num shrink-0 rounded-full bg-white/80 px-2 font-bold">{ticketsN(p.tickets)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-center text-[0.75rem] font-semibold opacity-75">{D.poolNone}</p>
+          )}
+        </details>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(msg)}`}
           target="_blank"

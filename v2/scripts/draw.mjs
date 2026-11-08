@@ -102,6 +102,7 @@ try {
   await tampon(owner, sara);
   const own = await rpc(owner, "my_draw");
   check("the owner sees the pool grow: 2 customers, 4 tickets (Omar's card has no tampon in it)", own.open?.people === 2 && own.open.tickets === 4, own.open);
+  check("…and who is in it, the most tickets first, numbers masked", own.open?.pool?.[0]?.name === "Amine" && own.open.pool[0].tickets === 3 && own.open.pool[1]?.name === "Sara" && /•••/.test(own.open.pool[0].phone ?? ""), own.open?.pool);
   const amineCard = (await rpc(amine, "wallet")).find((c) => c.shop.id === shop.id).id;
   const saraCard = (await rpc(sara, "wallet")).find((c) => c.shop.id === shop.id).id;
   const omarCard = (await rpc(omar, "wallet")).find((c) => c.shop.id === shop.id).id;

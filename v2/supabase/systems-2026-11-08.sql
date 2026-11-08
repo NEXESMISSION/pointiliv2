@@ -182,7 +182,12 @@ begin
   if d.id is not null then
     v_open := jsonb_build_object('id', d.id, 'title', d.title, 'rule', d.rule, 'starts_at', d.starts_at, 'draw_at', d.draw_at,
       'gifts', public.draw_gift_list(d.id),
-      'people', (select count(*) from public.draw_pool(d)), 'tickets', (select coalesce(sum(p.tickets), 0) from public.draw_pool(d) p));
+      'people', (select count(*) from public.draw_pool(d)), 'tickets', (select coalesce(sum(p.tickets), 0) from public.draw_pool(d) p),
+      -- who is in it so far, the most tickets first (fifty at most): their name and the end of their number
+      'pool', (select coalesce(jsonb_agg(jsonb_build_object('name', nullif(pp.name, ''), 'phone', public.masked(pp.phone), 'tickets', x.tickets)
+                                         order by x.tickets desc, pp.name), '[]'::jsonb)
+               from (select p.user_id, p.tickets from public.draw_pool(d) p order by p.tickets desc limit 50) x
+               left join public.people pp on pp.id = x.user_id));
   end if;
   select * into d from public.draws where shop_id = s.id and status = 'drawn' order by drawn_at desc limit 1;
   if d.id is not null then

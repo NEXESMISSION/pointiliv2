@@ -70,9 +70,7 @@ export function CardDraw({ draw }: { draw: NonNullable<Draw> }) {
   if (!open && !last && !waiting.length) return null;
   return (
     <div className="mx-auto mt-2.5 w-full max-w-[min(100%,52dvh)] shrink-0 space-y-2">
-      {waiting.map((w) => (
-        <Won key={w.id} id={w.id} gift={w.gift} />
-      ))}
+      {waiting.length > 0 && <Won wins={waiting} />}
       {open ? (
         <section className="relative overflow-hidden rounded-[1.25rem] px-3.5 pb-3 pt-2.5 shadow-card" style={{ background: GOLD, color: INK }}>
           <Shine />
@@ -131,20 +129,40 @@ export function DrawAfterStamp({ cardId, style }: { cardId: string; style?: Reac
 }
 
 /** a prize won and not taken yet: the gift, how to take it, and its number (the owner's list says the same) */
-function Won({ id, gift }: { id: number; gift: string }) {
+function Won({ wins }: { wins: { id: number; gift: string }[] }) {
+  const one = wins.length === 1 ? wins[0] : null;
   return (
     <section className="relative animate-pop overflow-hidden rounded-[1.25rem] px-3.5 py-3 text-center shadow-card" style={{ background: GOLD, color: INK }}>
       <Shine />
       <p className="relative flex items-center justify-center gap-1.5 text-[0.875rem] font-bold">
         <Icon3D name="trophy" size={26} className="animate-float" /> {D.wonTitle}
       </p>
-      <p className="relative mt-0.5 truncate text-[1.375rem] font-bold leading-tight">
-        <bdi>{gift}</bdi>
-      </p>
-      <p className="relative mt-1 text-[0.8125rem] font-semibold opacity-85">{D.wonShow}</p>
-      <p className="num relative mt-1.5 inline-block rounded-full bg-white/60 px-3 py-0.5 text-[0.8125rem] font-bold" dir="ltr">
-        {D.wonNo} #{id}
-      </p>
+      {one ? (
+        <>
+          <p className="relative mt-0.5 truncate text-[1.375rem] font-bold leading-tight">
+            <bdi>{one.gift}</bdi>
+          </p>
+          <p className="relative mt-1 text-[0.8125rem] font-semibold opacity-85">{D.wonShow}</p>
+          <p className="num relative mt-1.5 inline-block rounded-full bg-white/60 px-3 py-0.5 text-[0.8125rem] font-bold" dir="ltr">
+            {D.wonNo} #{one.id}
+          </p>
+        </>
+      ) : (
+        // several prizes (several draws won): one box, each prize on its line with its number
+        <>
+          <ul className="relative mt-1.5 space-y-1">
+            {wins.map((w) => (
+              <li key={w.id} className="flex items-center gap-2 rounded-[0.75rem] bg-white/55 px-3 py-1.5 text-start">
+                <bdi className="min-w-0 flex-1 truncate text-[1rem] font-bold">{w.gift}</bdi>
+                <span className="num shrink-0 text-[0.8125rem] font-bold" dir="ltr">
+                  #{w.id}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="relative mt-1.5 text-[0.8125rem] font-semibold opacity-85">{D.wonShow}</p>
+        </>
+      )}
     </section>
   );
 }
