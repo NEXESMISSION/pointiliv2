@@ -12,6 +12,26 @@ const tunisHour = (iso: string) => Number(new Intl.DateTimeFormat("en-GB", { hou
 const list = (names: string[], max = 8) => (names.length ? names.slice(0, max).map((n) => `• ${n}`).join("\n") + (names.length > max ? `\n• … و${names.length - max} آخرين` : "") : "");
 
 type Shop = { id: string; name: string; owner_id: string; created_at: string; trial_days: number; paid_until: string | null; goal: number | null };
+type Stamp = { shop_id: string; card_id: string; kind: string; created_at: string };
+
+/** one answer of the database's API holds 1,000 rows at most (PostgREST max_rows), and says nothing of the rest */
+const PAGE = 1000;
+/**
+ * Every row of a read, not the first thousand only: page after page (the read ordered,
+ * so no row falls between two pages) until a page comes back empty. A page that fails
+ * stops the digest — better no morning than one told from half the shops.
+ */
+async function every<T>(what: string, read: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) {
+  const rows: T[] = [];
+  for (;;) {
+    const { data, error } = await read(rows.length, rows.length + PAGE - 1);
+    if (error) throw new Error(`[digest] ${what}: ${error.message}`);
+    if (!data?.length) return rows;
+    rows.push(...data);
+  }
+}
+/** 200 at a time: a list in the address stays short (an .in() read of 200 keys is one page) */
+const by200 = <T,>(xs: T[]) => Array.from({ length: Math.ceil(xs.length / 200) }, (_, i) => xs.slice(i * 200, i * 200 + 200));
 
 /**
  * Every morning at 8 (Tunis, vercel.json): yesterday in numbers on the
@@ -34,16 +54,25 @@ export async function GET(request: NextRequest) {
   );
 
   // who never counts: robots (by phone), testers, the founder
-  const [{ data: robots }, { data: staff }] = await Promise.all([
-    db.from("robots").select("phone"),
-    db.from("people").select("id").or("is_admin.eq.true,is_tester.eq.true"),
+  const [robots, staff] = await Promise.all([
+    every<{ phone: string }>("robots", (a, b) => db.from("robots").select("phone").order("phone").range(a, b)),
+    every<{ id: string }>("staff", (a, b) => db.from("people").select("id").or("is_admin.eq.true,is_tester.eq.true").order("id").range(a, b)),
   ]);
-  const robotPhones = new Set((robots ?? []).map((r) => r.phone));
-  const { data: people } = await db.from("people").select("id, phone");
-  const out = new Set([...(staff ?? []).map((p) => p.id), ...(people ?? []).filter((p) => p.phone && robotPhones.has(p.phone)).map((p) => p.id)]);
+  // the people who hold a robot's phone, looked up by those phones (one phone, one person) — never everybody read
+  const bots = await Promise.all(
+    by200([...new Set(robots.map((r) => r.phone).filter(Boolean))]).map(async (phones) => {
+      const { data, error } = await db.from("people").select("id").in("phone", phones);
+      if (error) throw new Error(`[digest] robot people: ${error.message}`);
+      return (data ?? []) as { id: string }[];
+    }),
+  );
+  const out = new Set([...staff.map((p) => p.id), ...bots.flat().map((p) => p.id)]);
 
-  const { data: all } = await db.from("shops").select("id, name, owner_id, created_at, trial_days, paid_until, goal");
-  const shops = ((all ?? []) as Shop[]).filter((s) => !out.has(s.owner_id));
+  // in the order they opened
+  const all = await every<Shop>("shops", (a, b) =>
+    db.from("shops").select("id, name, owner_id, created_at, trial_days, paid_until, goal").order("created_at").order("id").range(a, b),
+  );
+  const shops = all.filter((s) => !out.has(s.owner_id));
   const byId = new Map(shops.map((s) => [s.id, s]));
   const paid = (s: Shop) => !!s.paid_until && Date.parse(s.paid_until) > now.getTime();
 
@@ -51,14 +80,16 @@ export async function GET(request: NextRequest) {
   const born = shops.filter((s) => tunisDay(new Date(s.created_at)) === yesterday);
   // tampons of the last 8 days at real shops, to real customers (not the owner, not a robot or a tester, not in the first hour)
   const since = new Date(now.getTime() - 8 * DAY).toISOString();
-  const { data: moments } = await db.from("moments").select("shop_id, card_id, kind, created_at").eq("kind", "stamp").gte("created_at", since);
-  const cardIds = [...new Set((moments ?? []).map((m) => m.card_id))];
+  const moments = await every<Stamp>("moments", (a, b) =>
+    db.from("moments").select("shop_id, card_id, kind, created_at").eq("kind", "stamp").gte("created_at", since).order("id").range(a, b),
+  );
+  const cardIds = [...new Set(moments.map((m) => m.card_id))];
   const cards = new Map<string, string>();
   for (let i = 0; i < cardIds.length; i += 200) {
     const { data } = await db.from("cards").select("id, user_id").in("id", cardIds.slice(i, i + 200));
     for (const c of data ?? []) cards.set(c.id, c.user_id);
   }
-  const real = (moments ?? []).filter((m) => {
+  const real = moments.filter((m) => {
     const s = byId.get(m.shop_id);
     const who = cards.get(m.card_id);
     // a real tampon: to someone else than the owner, an hour or more after the shop opened (the first hour is a test)
@@ -69,9 +100,14 @@ export async function GET(request: NextRequest) {
   const activeWeek = [...new Set(real.map((m) => m.shop_id))].map((id) => byId.get(id)!).filter((s) => !paid(s));
 
   // trials that end today, at shops that gave at least one real tampon this week (the end as the database
-  // counts it: from the opening, or from the first customer for the shops opened since 14 Oct 2026)
-  const { data: ends } = await db.rpc("trial_ends");
-  const endOf = new Map(((ends ?? []) as { id: string; ends: string }[]).map((e) => [e.id, e.ends]));
+  // counts it: from the opening, or from the first customer for the shops opened since 14 Oct 2026) —
+  // asked for this week's shops only (trial_ends is a row per shop, and an answer stops at 1,000)
+  const endOf = new Map<string, string>();
+  for (const ids of by200(activeWeek.map((s) => s.id))) {
+    const { data, error } = await db.rpc("trial_ends").in("id", ids);
+    if (error) console.error("[trial_ends]", error.message);
+    for (const e of (data ?? []) as { id: string; ends: string }[]) endOf.set(e.id, e.ends);
+  }
   const endsToday = activeWeek.filter((s) => {
     const end = endOf.get(s.id) ?? new Date(Date.parse(s.created_at) + s.trial_days * DAY).toISOString();
     return tunisDay(new Date(end)) === today;
