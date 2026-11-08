@@ -9,7 +9,7 @@ The founder's rule: the shops and customers already on Pointili, the paying ones
   - Every shop already open is **old**, frozen exactly as it is.
   - New shops start on **Pointili** (base): the card with a gift or the roulette, plus the link.
   - **Pointili Pro** adds the golden ticket, the store as the owner's choice, the customers' file and 3 staff phones. Prices: 55 / 200 / 300 (`lib/plans.ts`).
-  - The founder sets a shop's pack in admin. He sees what it changes before saying yes.
+  - The founder sets a shop's pack in admin, and sees what it changes before saying yes.
 - **The owner's «النظام متاعي»** (shops on a pack only): one reward at a time (gift, roulette, store) and the extras. Switching to or from the store first shows what it does to the customers, with their numbers; the promise is kept, so nothing collected is lost.
 - **Staff phones (Pro)**: the owner invites with a link (one use, 24 h). The staff phone gets the shop's counter (code, number, camera, gifts, prizes, what the clock took from the card in front of it) and nothing else. The owner or a pack downgrade signs it out.
   - The owner sees what each phone gave by hand, today and these 7 days: tampons by number, gifts and prizes handed over, tampons taken back (`staff_log`). A scan of the code is the customer's own and is not counted.
@@ -19,7 +19,7 @@ The founder's rule: the shops and customers already on Pointili, the paying ones
   - Staff are not in the shop's golden ticket, as its owner is not.
   - A staff member who opens a shop of their own stops being staff.
   - The founder naming a Pro shop «old» again signs its staff out too (an old shop has no staff page).
-- **The pay page** for shops on a pack: Pointili / Pointili Pro, with the pack written in the WhatsApp receipt. The public prices page (`/prix`) shows Pro only once `PRO_PUBLIC=1` is set on Vercel; until then it is exactly today's page.
+- **The pay page** for shops on a pack: Pointili / Pointili Pro, with the pack written in the WhatsApp receipt. The public prices page (`/prix`) shows Pro only once `PRO_PUBLIC=1` is set on Vercel; until then it is exactly today's page. The founder's choice: hidden at launch.
 - **The founder's payment form** names the pack paid for. Choosing another pack there first lists what it changes (the same list as the pack's own line), and the button waits for it.
 
 ## What protects the old shops by design
@@ -67,4 +67,4 @@ Everything above was built and tested on a database on this computer:
    - The database needs nothing undone: the old site ignores the new pieces.
    - The only exception is `link_new`. Re-run main's version, or leave it: with every shop's link on, it behaves exactly as before.
 7. **Turn things on one shop at a time.** Start with a shop whose owner knows it's new, ideally not a paying one: put it on Pro, watch one full draw and one staff phone. Old shops move to a pack only when their owner asks.
-8. **Pro on the public prices page** only when the founder wants it there: set `PRO_PUBLIC=1` in Vercel's environment and redeploy. Leaving it unset keeps `/prix` exactly as today.
+8. **Pro stays off the public prices page at launch** (the founder, 9 Nov 2026: «keep it hidden»). Do not set `PRO_PUBLIC` on Vercel: `/prix` stays exactly as today. Set `PRO_PUBLIC=1` and redeploy only when the founder says to show it.
