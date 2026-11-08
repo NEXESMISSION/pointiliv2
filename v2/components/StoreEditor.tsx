@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Check, Minus, Plus, ShoppingCart, X } from "lucide-react";
 import { storeGive, storeSave } from "@/app/actions-store";
+import { storeOpen } from "@/app/actions-packs";
+import { P } from "@/lib/packs";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
 import { Btn } from "@/components/ui";
@@ -22,7 +24,7 @@ const START = 10;
  * counter by scanning the customer's code — and the things on sale, each a
  * name and a price in tampons, changed in place and saved at once.
  */
-export function StoreEditor({ items, waiting, sold, first = false, back = "/shop" }: { items: StoreItem[]; waiting: Waiting[]; sold: { name: string; n: number }[]; first?: boolean; /** where its way back leads (a shop that chose the store on «النظام متاعي»: back there) */ back?: string }) {
+export function StoreEditor({ items, waiting, sold, first = false, back = "/shop", opening = false }: { items: StoreItem[]; waiting: Waiting[]; sold: { name: string; n: number }[]; first?: boolean; /** where its way back leads (a shop that chose the store on «النظام متاعي»: back there) */ back?: string; /** the store not on yet: its list written first, and the store opens with it (lib/packs storeOpen) */ opening?: boolean }) {
   useScreen("store");
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>(() => items.map((x) => ({ key: `i${x.id}`, id: x.id, name: x.name, cost: x.cost })));
@@ -47,7 +49,15 @@ export function StoreEditor({ items, waiting, sold, first = false, back = "/shop
   };
   const save = () =>
     start(async () => {
-      const res = await storeSave(rows.filter((x) => x.name.trim()).map((x) => ({ id: x.id, name: x.name, cost: x.cost })));
+      const list = rows.filter((x) => x.name.trim()).map((x) => ({ id: x.id, name: x.name, cost: x.cost }));
+      // the store opens with this list: back to «النظام متاعي», which says it is open
+      if (opening) {
+        const done = await storeOpen(list);
+        if (!done.ok) return setError(done.error === "not_allowed" ? P.errNotAllowed : t.storeErr);
+        router.push("/shop/system?store=open");
+        return;
+      }
+      const res = await storeSave(list);
       if (!res.ok || !res.items) {
         setError(t.storeErr);
         return;
@@ -68,7 +78,7 @@ export function StoreEditor({ items, waiting, sold, first = false, back = "/shop
 
   return (
     <>
-      <Top back={first ? undefined : back} title={t.storeOwnerTitle} hint={first ? undefined : t.storeOwnerHint} />
+      <Top back={first ? undefined : back} title={t.storeOwnerTitle} hint={first ? undefined : opening ? P.storeOpenHint : t.storeOwnerHint} />
       {first && (
         <>
           <h1 className="mt-1 shrink-0 text-balance text-[1.25rem] font-bold leading-tight">شنوّة يشريو الحرفاء بالتامبونات؟</h1>
@@ -175,8 +185,14 @@ export function StoreEditor({ items, waiting, sold, first = false, back = "/shop
 
         <div className="shrink-0 pb-3 pt-2">
           {error && <p className="mb-1.5 text-center text-[0.8125rem] font-semibold text-coral">{error}</p>}
-          <Btn type="button" onClick={save} disabled={pending || !dirty}>
-            {saved && !dirty ? (
+          <Btn type="button" onClick={save} disabled={pending || (opening ? !rows.some((x) => x.name.trim()) : !dirty)}>
+            {opening ? (
+              pending ? (
+                t.checking
+              ) : (
+                P.storeOpenGo
+              )
+            ) : saved && !dirty ? (
               <>
                 <Check className="size-5" /> {t.storeSaved}
               </>

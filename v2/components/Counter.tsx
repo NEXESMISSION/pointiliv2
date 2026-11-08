@@ -16,6 +16,7 @@ import { seenBefore, shown } from "@/lib/once";
 import { tuneIn } from "@/lib/radio";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
+import { P } from "@/lib/packs";
 import { pretty } from "@/lib/phone";
 import { nextTampon } from "@/lib/when";
 import { mix, useBars } from "@/lib/bars";
@@ -97,6 +98,9 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
   const asking = !paused && items.length > 0 && !item;
   // stopped at the trial's end (not by the founder's switch): the code's place says so, with a call
   const [shut, setShut] = useState(!!shutAtFirst);
+  // a staff phone's counter (Pro): its words are for the person at the counter — tell the owner — and a phone
+  // signed out by the owner goes back to its home, which says so
+  const staffPhone = home !== "/shop";
   const [live, setLive] = useState(false);
   const [party, setParty] = useState(0);
   const codeRef = useRef<Code | null>(null);
@@ -150,6 +154,10 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
       setShut(j.error === "shut");
       return "paused";
     }
+    if (j.error === "no_shop" && home !== "/shop") {
+      window.location.assign(home);
+      return "paused";
+    }
     setShut(false);
     // the shop was switched to «شنوّة يبيع» while this screen was open (it has no things to ask about yet):
     // the server makes no code without a thing — the page comes back with the question
@@ -161,7 +169,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
     const offset = Date.parse(j.server_now) - Date.now();
     const local = (x: { id: string; svg: string; expires_at: string }): Code => ({ id: x.id, svg: x.svg, expiresLocal: Date.parse(x.expires_at) - offset });
     return { code: local(j), spare: j.spare ? local(j.spare) : null };
-  }, []);
+  }, [home]);
 
   // the next code, kept ready (made again when it gets old)
   const prepare = useCallback(async () => {
@@ -493,7 +501,15 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
               <span key={f.id} className="absolute inset-0 rounded-[2.125rem] border-[6px] border-white" style={{ animation: "ct-ring 900ms ease-out both" }} />
             ))}
             <div className="absolute inset-0 rounded-[2.125rem] bg-white p-[5%] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.45)]">
-              {paused && shut ? (
+              {paused && staffPhone ? (
+                // a staff phone: the shop is stopped (its subscription ran out, or the founder paused it) — the owner sees to it
+                <div className="grid size-full place-items-center p-[8%] text-center text-ink">
+                  <div>
+                    <p className="text-[clamp(1.0625rem,5cqw,1.375rem)] font-bold">{shut ? P.staffShutTitle : P.staffPausedTitle}</p>
+                    <p className="mt-1.5 text-balance text-[clamp(0.8125rem,3.6cqw,0.9375rem)] leading-snug text-body">{P.staffStoppedBody}</p>
+                  </div>
+                </div>
+              ) : paused && shut ? (
                 // the trial (or the subscription) is over: the founder turns it on, a WhatsApp message away (already written)
                 <div className="grid size-full place-items-center p-[8%] text-center text-ink">
                   <div>

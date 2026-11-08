@@ -64,7 +64,7 @@ export function StaffBoard({ staff, shop }: { staff: MyStaff; shop: string }) {
             <section className="rounded-[1.25rem] bg-surface shadow-card">
               <p className="flex items-center justify-between px-4 pt-3 text-[0.8125rem] font-bold text-muted">
                 <span>{P.staffTitle}</span>
-                <span className="num">{fill(P.staffOf, { n: staff.staff.length, max: staff.max })}</span>
+                <span>{fill(P.staffOf, { n: staff.staff.length, max: staff.max })}</span>
               </p>
               {staff.staff.length === 0 ? (
                 <p className="px-4 pb-4 pt-2 text-[0.875rem] text-muted">{P.staffNone}</p>
@@ -79,9 +79,9 @@ export function StaffBoard({ staff, shop }: { staff: MyStaff; shop: string }) {
                         <span className="min-w-0 flex-1">
                           <b className="block truncate text-[0.9375rem]">{s.name ?? "—"}</b>
                           {s.phone && (
-                            <bdi dir="ltr" className="block text-[0.75rem] text-muted">
-                              {s.phone}
-                            </bdi>
+                            <span className="block text-[0.75rem] text-muted">
+                              <bdi dir="ltr">{s.phone}</bdi>
+                            </span>
                           )}
                           {/* what this phone gave by hand: today, and these 7 days */}
                           <span className="mt-0.5 block text-[0.75rem] font-semibold text-body">{fill(P.staffToday, { what: didSaid(s.today) ?? P.staffNothing })}</span>

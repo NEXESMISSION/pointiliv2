@@ -244,6 +244,36 @@ begin
   return jsonb_build_object('ok', true, 'id', v_id);
 end $$;
 
+-- The winners of the draws just made, to tell on their phones (lib/draw-tell, the server's own key): read once
+-- — the draw marked told as it is read, so two looks at once never tell anyone twice. A draw made more than a
+-- day ago is not told any more (its winners have seen it on their card since)
+alter table public.draws add column if not exists told_at timestamptz;
+create or replace function public.draw_tell() returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v jsonb;
+begin
+  with t as (
+    update public.draws set told_at = now()
+    where status = 'drawn' and told_at is null and drawn_at > now() - interval '1 day'
+    returning id, shop_id
+  )
+  select coalesce(jsonb_agg(jsonb_build_object('user_id', w.user_id, 'card', w.card_id, 'gift', w.gift, 'shop', s.name, 'draw', t.id)), '[]'::jsonb) into v
+  from t join public.draw_wins w on w.draw_id = t.id join public.shops s on s.id = t.shop_id
+  where w.given_at is null;
+  return v;
+end $$;
+
+-- every draw whose moment has come, made now — the daily job's, for the shops nobody looked at since (lazy otherwise)
+create or replace function public.draw_settle_all() returns int
+language plpgsql security definer set search_path = '' as $$
+declare x record; v_n int := 0;
+begin
+  for x in select distinct d.shop_id from public.draws d where d.status = 'open' and d.draw_at <= now() loop
+    v_n := v_n + public.draw_settle(x.shop_id);
+  end loop;
+  return v_n;
+end $$;
+
 -- the draw waiting, called off by its owner (nobody wins anything; the customers see it no more)
 create or replace function public.draw_cancel(p_id uuid) returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -399,7 +429,7 @@ begin
   revoke execute on function public.draw_pool(public.draws), public.draw_gift_list(uuid), public.draw_settle(uuid),
     public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid), public.draw_give(bigint),
     public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
-    public.draw_wins_at(text), public.admin_systems_all(), public.systems_grants()
+    public.draw_wins_at(text), public.admin_systems_all(), public.systems_grants(), public.draw_tell(), public.draw_settle_all()
     from public, anon, authenticated;
   grant execute on function public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid),
     public.draw_give(bigint), public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
@@ -408,7 +438,7 @@ begin
   grant execute on function public.draw_pool(public.draws), public.draw_gift_list(uuid), public.draw_settle(uuid),
     public.my_systems(), public.my_draw(), public.draw_new(text, timestamptz, text, jsonb), public.draw_cancel(uuid), public.draw_give(bigint),
     public.card_draw(uuid), public.my_draws(), public.admin_systems(uuid), public.admin_set_system(uuid, text, boolean),
-    public.draw_wins_at(text), public.admin_systems_all(), public.systems_grants()
+    public.draw_wins_at(text), public.admin_systems_all(), public.systems_grants(), public.draw_tell(), public.draw_settle_all()
     to service_role;
 end $$;
 select public.systems_grants();

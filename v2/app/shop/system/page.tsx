@@ -12,8 +12,8 @@ export const metadata = { title: P.title, robots: { index: false } };
  * «النظام متاعي» (supabase/packs-2026-11-09.sql): the reward and the extras of a shop on a pack. A shop
  * already open the day the packs came («old») has its settings as they always were, and comes back there.
  */
-export default async function ShopSystem() {
-  const me = await getMe();
+export default async function ShopSystem({ searchParams }: { searchParams: Promise<{ store?: string }> }) {
+  const [me, { store }] = await Promise.all([getMe(), searchParams]);
   if (!me) redirect("/login?next=/shop/system");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
@@ -21,7 +21,7 @@ export default async function ShopSystem() {
   if (!onPack(systems)) redirect("/shop/settings");
   return (
     <Screen>
-      <SystemBoard shop={{ goal: me.shop.goal, gift: me.shop.gift, wheel_on: me.shop.wheel_on, store_on: me.shop.store_on, items_on: me.shop.items_on }} systems={systems} />
+      <SystemBoard shop={{ goal: me.shop.goal, gift: me.shop.gift, wheel_on: me.shop.wheel_on, store_on: me.shop.store_on, items_on: me.shop.items_on }} systems={systems} opened={store === "open"} />
     </Screen>
   );
 }

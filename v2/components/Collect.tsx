@@ -19,6 +19,7 @@ import { Confetti } from "@/components/StampLand";
 import { Btn, Icon3D } from "@/components/ui";
 import { signal } from "@/lib/track";
 import { fill, giftsSaid, stampsN, t } from "@/lib/t";
+import { P } from "@/lib/packs";
 import { nextTampon } from "@/lib/when";
 import type { CardView, DemoShop, Order, Said } from "@/lib/types";
 
@@ -200,7 +201,10 @@ function OrderPop({ who, orders, busy, onGive, onLater }: { who: string; orders:
   );
 }
 
-function errorText(code?: string): string {
+function errorText(code?: string, staff = false): string {
+  // a staff phone (Pro): the shop stopped is the owner's to see to; signed out, it says so
+  if (staff && (code === "paused" || code === "shut")) return `${code === "shut" ? P.staffShutTitle : P.staffPausedTitle}. ${P.staffStoppedBody}`;
+  if (staff && code === "no_shop") return P.staffGone;
   if (code === "own_shop") return t.collectOwn;
   if (code === "paused") return t.pausedBanner;
   if (code === "shut") return `${t.trialOverTitle}. ${t.trialOverBody}`;
@@ -272,10 +276,10 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [], 
         // the owner typed (or scanned) their own code: not a mistake to scold, the moment to show the customer's side
         setStep({ kind: "own" });
         signal("collect_own", mode);
-      } else setStep({ kind: "error", text: errorText(res.error) });
+      } else setStep({ kind: "error", text: errorText(res.error, home !== "/shop") });
     }, 220);
     return () => clearTimeout(id);
-  }, [digits, mode, shop, draws]);
+  }, [digits, mode, shop, draws, home]);
 
   // a shop that says what it sells: the tampon is given by tapping what it was for (one tap, as at the counter)
   const give = async (item?: Item) => {
@@ -297,7 +301,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [], 
     } else if (res.error === "too_soon" && res.next_at) {
       setStep({ kind: "soon", name: res.name ?? name, at: res.next_at, card: res.card, waiting: res.waiting ?? null });
       ask(res.waiting);
-    } else setStep({ kind: "error", text: errorText(res.error) });
+    } else setStep({ kind: "error", text: errorText(res.error, home !== "/shop") });
   };
 
   // the gift handed over at the counter: the card as it is now (the rest of the stamps carried on)

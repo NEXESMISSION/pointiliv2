@@ -8,6 +8,7 @@ import { setStore, storePreview } from "@/app/actions-packs";
 import { setWheel } from "@/app/actions-wheel";
 import { Top } from "@/components/Top";
 import { useScreen } from "@/components/Tracker";
+import { D, whenSaid } from "@/lib/draw";
 import { P, PACK_NAME, pointsN, rewardOf, type Reward, type ShopSystems, type StorePreview } from "@/lib/packs";
 import { PRO_PLANS } from "@/lib/plans";
 import { customersN, fill, giftsN, monthsSaid, stampsN, t } from "@/lib/t";
@@ -22,7 +23,7 @@ type Shop = { goal: number | null; gift: string | null; wheel_on?: boolean; stor
  *
  * Only for a shop on a pack (Pointili or Pro): a shop already open the day the packs came never sees it.
  */
-export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullable<ShopSystems> & { pack: "base" | "pro" } }) {
+export function SystemBoard({ shop, systems, opened = false }: { shop: Shop; systems: NonNullable<ShopSystems> & { pack: "base" | "pro" }; /** back from the store's list: it opened with it */ opened?: boolean }) {
   useScreen("system");
   const router = useRouter();
   const now = rewardOf(systems);
@@ -30,7 +31,7 @@ export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullabl
   const [asking, setAsking] = useState<{ to: Reward; preview: StorePreview | null; failed?: boolean } | null>(null);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [said, setSaid] = useState<string | null>(null);
+  const [said, setSaid] = useState<string | null>(opened && systems.store_on ? P.storeOpened : null);
 
   // what the switch would do, read first; the server not answering says so, with a way to ask again
   const ask = (to: Reward) => {
@@ -62,6 +63,8 @@ export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullabl
   const confirm = () =>
     start(async () => {
       if (!asking) return;
+      // to the store with nothing in it yet: its list first, and it opens with it (the customers never meet it empty)
+      if (asking.to === "store" && asking.preview?.to === "store" && asking.preview.items === 0) return router.push("/shop/store?from=system&open=1");
       const res = await setStore(asking.to === "store");
       if (!res.ok) return setError(res.error === "not_allowed" ? P.errNotAllowed : res.error === "no_card" ? P.errNoCard : P.err);
       setAsking(null);
@@ -162,7 +165,7 @@ export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullabl
                   {P.cancel}
                 </button>
                 <button type="button" disabled={pending || !asking.preview} onClick={confirm} className="h-9 rounded-[0.625rem] bg-brand px-3.5 text-[0.8125rem] font-bold text-white disabled:opacity-50">
-                  {pending ? "…" : P.confirm}
+                  {pending ? "…" : asking.preview?.to === "store" && asking.preview.items === 0 ? P.storeSetUp : P.confirm}
                 </button>
               </div>
             </div>
@@ -175,7 +178,15 @@ export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullabl
           <h2 className="px-0.5 text-[1rem] font-bold">{P.extrasTitle}</h2>
           <ul className="mt-2 divide-y divide-line overflow-hidden rounded-[1.125rem] bg-surface shadow-card">
             {/* a lock says why: not in this pack (Pro), or in it but turned off for this shop by the founder */}
-            <Extra href="/shop/draw" icon={Trophy} title={P.draw} sub={P.drawSub} locked={!systems.draw && !(systems.wins ?? 0)} why={pro ? P.offHere : P.proOnly} />
+            <Extra
+              href="/shop/draw"
+              icon={Trophy}
+              title={P.draw}
+              sub={systems.draw ? (systems.draw_open ? fill(D.homeRowOpen, { when: whenSaid(systems.draw_open) }) : P.drawSub) : P.prizesWait(systems.wins ?? 0)}
+              locked={!systems.draw && !(systems.wins ?? 0)}
+              why={pro ? P.offHere : P.proOnly}
+              tag={!pro && !systems.draw}
+            />
             <Extra href="/shop/links" icon={Link2} title={P.links} sub={P.linksSub} locked={!systems.links} why={P.offHere} />
             <Extra href="/shop/items" icon={ShoppingBasket} title={P.items} sub={P.itemsSub} />
             <Extra href="/shop/staff" icon={Smartphone} title={P.staff} sub={P.staffSub} locked={!(systems.staff_max ?? 0)} why={pro ? P.offHere : P.proOnly} />
@@ -189,8 +200,13 @@ export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullabl
               <Crown className="size-5" /> {PACK_NAME.pro}
             </b>
             <p className="mt-1 text-[0.8125rem] font-semibold leading-snug">{P.proLine}</p>
-            <p className="num mt-1.5 text-[0.8125rem] font-bold">
-              {PRO_PLANS.map((p) => `${p.price} ${t.payCurrency} / ${monthsSaid(p.months)}`).join(" · ")}
+            {/* each price on its own chip: a number and its words side by side, right to left (one line of them read backwards) */}
+            <p className="mt-2 flex flex-wrap gap-1.5 text-[0.8125rem] font-bold">
+              {PRO_PLANS.map((p) => (
+                <span key={p.id} className="rounded-full bg-white/60 px-2.5 py-0.5">
+                  <span className="num">{p.price}</span> {t.payCurrency} / {monthsSaid(p.months)}
+                </span>
+              ))}
             </p>
             <Link href="/shop/pay?pack=pro" className="press mt-3 flex h-11 items-center justify-center rounded-[0.875rem] bg-[#5a3700] text-[0.9375rem] font-bold text-white">
               {P.proCall}
@@ -203,7 +219,7 @@ export function SystemBoard({ shop, systems }: { shop: Shop; systems: NonNullabl
 }
 
 /** an extra: its page, or, not in this shop's pack, locked with «Pro» */
-function Extra({ href, icon: Icon, title, sub, locked = false, why = P.proOnly }: { href: string; icon: LucideIcon; title: string; sub: string; locked?: boolean; why?: string }) {
+function Extra({ href, icon: Icon, title, sub, locked = false, why = P.proOnly, tag = false }: { href: string; icon: LucideIcon; title: string; sub: string; locked?: boolean; why?: string; /** the Pro chip on a row still open (prizes of a draw left to hand over in Pointili) */ tag?: boolean }) {
   const inner = (
     <>
       <span className="grid size-9 shrink-0 place-items-center rounded-[0.75rem] bg-brand-soft text-brand">
@@ -212,7 +228,7 @@ function Extra({ href, icon: Icon, title, sub, locked = false, why = P.proOnly }
       <span className="min-w-0 flex-1">
         <b className="flex items-center gap-1.5 text-[0.9062rem]">
           {title}
-          {locked && why === P.proOnly && (
+          {((locked && why === P.proOnly) || tag) && (
             <span className="inline-flex items-center gap-0.5 rounded-full bg-[#fff2c7] px-2 py-px text-[0.6875rem] font-bold text-[#8a5a00]">
               <Lock className="size-3" /> {P.pro}
             </span>

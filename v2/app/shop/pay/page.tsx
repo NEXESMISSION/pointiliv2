@@ -8,7 +8,7 @@ import { getMe } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { fill, t } from "@/lib/t";
-import { onPack, type ShopSystems } from "@/lib/packs";
+import { onPack, P, type ShopSystems } from "@/lib/packs";
 
 export const metadata = { title: "الأبونمان", robots: { index: false } };
 
@@ -33,12 +33,17 @@ export default async function ShopPay({ searchParams }: { searchParams: Promise<
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const near = paid && Date.parse(pay!.paid_until!) - Date.now() < RENEW_DAYS * 86_400_000;
   const renew = near || lapsed(pay);
+  // a shop on Pointili, paid, that came for Pro (9 Nov 2026): an upgrade — Pro's lengths and the ways to pay, its
+  // paid months said (the founder settles them by hand). Paid otherwise, the page shows the shop's own pack only
+  const upgrade = paid && !near && pack === "base" && asked === "pro";
+  const want = pack ? (paid && !near && !upgrade ? pack : asked === "pro" || asked === "base" ? asked : pack) : null;
 
   return (
     <Screen>
       <Top back="/shop" />
-      <h1 className="mt-[1.6dvh] shrink-0 text-[1.625rem] font-bold leading-tight">{paid && !near ? t.payTitle : renew ? t.planRenewTitle : t.payPageTitle}</h1>
+      <h1 className="mt-[1.6dvh] shrink-0 text-[1.625rem] font-bold leading-tight">{upgrade ? P.upgradeTitle : paid && !near ? t.payTitle : renew ? t.planRenewTitle : t.payPageTitle}</h1>
       {near && <p className="mt-1 shrink-0 text-[0.9375rem] font-semibold text-muted">{fill(t.payPaidUntil, { date: day(pay!.paid_until!) })}</p>}
+      {upgrade && <p className="mt-1 shrink-0 text-balance text-[0.9375rem] font-semibold text-muted">{fill(P.upgradeNote, { date: day(pay!.paid_until!) })}</p>}
 
       {/* the plans and the ways, centred in the room left: one screen, nothing scrolls (on a screen too short, it starts under the title) */}
       <div className="flex min-h-0 flex-1 flex-col pb-[3dvh]">
@@ -46,13 +51,14 @@ export default async function ShopPay({ searchParams }: { searchParams: Promise<
           <PayPlans
             old={!!pay?.old_price}
             offerUntil={pay?.offer && pay.offer_until ? pay.offer_until : null}
-            paidUntil={paid && !near ? pay!.paid_until : null}
+            paidUntil={paid && !near && !upgrade ? pay!.paid_until : null}
             shop={me.shop.name}
             support={settings.supportPhone}
             details={settings.pay}
             phone={me.phone}
             pack={pack}
-            want={pack ? (asked === "pro" || asked === "base" ? asked : pack) : null}
+            want={want}
+            fixed={upgrade}
           />
         </div>
       </div>

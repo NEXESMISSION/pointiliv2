@@ -33,6 +33,7 @@ export function PayPlans({
   phone,
   pack = null,
   want = null,
+  fixed = false,
 }: {
   old: boolean;
   /** the offer's end while it runs (null: no offer) */
@@ -46,6 +47,8 @@ export function PayPlans({
   pack?: "base" | "pro" | null;
   /** the pack chosen first (the owner came for Pro) */
   want?: "base" | "pro" | null;
+  /** that pack only, no switch between the two (a shop paid on Pointili moving up to Pro) */
+  fixed?: boolean;
 }) {
   const [chosen, setChosen] = useState<"base" | "pro" | null>(want ?? pack);
   const plans = chosen ? plansOfPack(chosen, old) : plansFor(old);
@@ -85,7 +88,7 @@ export function PayPlans({
         </div>
 
         {/* a shop on a pack: Pointili or Pointili Pro, side by side (Pro: the golden ticket, the store, staff phones, the file) */}
-        {chosen && !paidUntil && (
+        {chosen && !paidUntil && !fixed && (
           <div className="relative mt-3 grid grid-cols-2 gap-1 rounded-[1rem] bg-white/15 p-1" role="radiogroup" aria-label="Pointili">
             {(["base", "pro"] as const).map((p) => (
               <button

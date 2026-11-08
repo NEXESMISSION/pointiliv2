@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { justDrawn, tellWinners } from "@/lib/draw-tell";
 import { DrawBoard } from "@/components/DrawBoard";
 import { Screen } from "@/components/ui";
 import { D, type OwnerDraw } from "@/lib/draw";
@@ -20,6 +22,9 @@ export default async function ShopDraw() {
   const draw = await call<OwnerDraw>("my_draw");
   if (!draw?.ok) redirect("/shop");
   if (!draw.allowed && !draw.wins.some((w) => !w.given_at)) redirect("/shop");
+  // the owner's look at the moment made the draw: its winners told on their phones, if not yet
+  // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
+  if (justDrawn(draw.last?.drawn_at, Date.now())) after(tellWinners);
   return (
     <Screen>
       <DrawBoard draw={draw} shop={{ name: me.shop.name }} />

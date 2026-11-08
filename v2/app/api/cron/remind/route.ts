@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sendPush } from "@/lib/push";
+import { tellWinners } from "@/lib/draw-tell";
 import { service } from "@/lib/supabase";
 import { resetWhen } from "@/lib/reset";
 import { fill, stampsN, t } from "@/lib/t";
@@ -24,6 +25,11 @@ export async function GET(request: NextRequest) {
   // daily job that already runs, so the clock costs no call of its own. A failure is said, never fatal.
   const swept = await service().rpc("reset_sweep");
   if (swept.error) console.error("[reset_sweep]", swept.error.message);
+  // the golden ticket: a draw whose moment came with nobody looking since is made now, and its winners told
+  // (a look at a card or at the owner's page makes it and tells them at once; this is for the draws nobody looked at)
+  const drawn = await service().rpc("draw_settle_all");
+  if (drawn.error) console.error("[draw_settle_all]", drawn.error.message);
+  const told = await tellWinners();
   // a safeguard for the customers: a card going back to zero within two days (the day before: a card goes
   // back at the end of its day) is said on their phone first (once for each stretch: reset_warnings writes it down)
   const warn = await service().rpc("reset_warnings");
@@ -55,5 +61,5 @@ export async function GET(request: NextRequest) {
           : { title: fill(t.pushNearTitle, { shop: d.shop }), body: fill(t.pushNearBody, { n: stampsN(d.left), gift: d.gift }), url: `/c/${d.card}`, tag: `near-${d.card}` };
     sent += await sendPush(d.user_id, note);
   }
-  return NextResponse.json({ ok: true, due: due.length, sent, swept: swept.data ?? 0, warned });
+  return NextResponse.json({ ok: true, due: due.length, sent, swept: swept.data ?? 0, warned, drawn: drawn.data ?? 0, told });
 }

@@ -55,6 +55,8 @@ export type StaffShop = {
   kind: string;
   color: string;
   paused: boolean;
+  /** its trial or its subscription over */
+  shut?: boolean;
   signal: string;
   logo: string | null;
   stamp_logo: boolean;
@@ -79,6 +81,11 @@ export function pointsN(n: number): string {
 }
 
 export const P = {
+  // the pay page, a Pointili shop already paid that came for Pro
+  upgradeTitle: "تولّي Pointili Pro",
+  upgradeNote: "إنت مخلّص في Pointili حتى {date}. باش تولّي Pro: اختار المدّة وابعثلنا، ونشوفو معاك الأيّام اللي بقالك.",
+  // the golden ticket's row in Pointili: its draws are Pro, the prizes already won still to hand over
+  prizesWait: (n: number) => (n === 1 ? "كادو واحد يستنّى يتسلّم" : `${n === 2 ? "زوز كادوات" : `${n} كادوات`} يستنّاو يتسلّمو`),
   // the customer's card, after the shop changed its reward: what was won before still waits
   cardGiftWaits: "كادو يستنّاك: {gift} — ورّي الكود متاعك في الكاسة",
   cardOrderWaits: "عندك طلبية من الماغازة تستنّى — ورّي الكود متاعك في الكاسة",
@@ -116,7 +123,12 @@ export const P = {
   toStoreTitle: "تخدّم الماغازة؟",
   toStoreBody: "{customers} عندهم تامبونات: يوليو {points} يشريو بيهم من الماغازة.",
   toStoreWaiting: "والكادوات اللي ربحوهم قبل ({n}) يقعدو يستنّاو.",
-  toStoreItems: "بعد، زيد الحاجات اللي تبيعها في الماغازة وقدّاش من نقطة كل وحدة.",
+  toStoreItems: "الماغازة مازالت فارغة: اكتب قبل الحاجات اللي يشريو بيها الحرفاء وقدّاش من نقطة كل وحدة — وتتحلّ معاهم.",
+  // the store with nothing in it yet: its list first, and it opens with it
+  storeSetUp: "حضّر الماغازة",
+  storeOpenHint: "اكتب الحاجات اللي يشريو بيها الحرفاء وقدّاش من نقطة كل وحدة. الماغازة تتحلّ كيف تسجّل.",
+  storeOpenGo: "سجّل وحلّ الماغازة",
+  storeOpened: "الماغازة تحلّت: الحرفاء يشوفو النقاط متاعهم والحاجات اللي يشريو بيها.",
   toCardTitle: "ترجع للكارط؟",
   toCardBody: "النقاط يوليو تامبونات على كارط {goal}. {over} عندهم أكثر من كارط كاملة: يربحو {gifts} توّا.",
   toCardNone: "النقاط يوليو تامبونات على كارط {goal}. حتى حريف ما عندو كارط كاملة توّا.",
@@ -134,6 +146,10 @@ export const P = {
   staffHint: "كل خدّام عندو تليفونو: يعطي التامبونات ويسلّم الكادوات، وما يشوفش الإعدادات ولا ليستة الحرفاء.",
   staffOf: "{n} من {max}",
   staffNone: "حتى خدّام مازال.",
+  // a staff phone, its shop stopped: the owner sees to it (never «call Pointili», never the price)
+  staffShutTitle: "الأبونمان متاع المحل وفى",
+  staffPausedTitle: "المحل موقّف توّا",
+  staffStoppedBody: "قول لمولى المحل: كيف يرجع يخدم، ترجع تعطي التامبونات.",
   // what each phone did, under its name: the tampons by number and the gifts (a scan of the code is the customer's own doing)
   staffToday: "اليوم: {what}",
   staffWeek: "7 أيّام: {what}",

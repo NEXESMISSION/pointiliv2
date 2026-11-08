@@ -140,7 +140,7 @@ function Open({ open, shop }: { open: NonNullable<OwnerDraw["open"]>; shop: stri
                       {p.phone}
                     </bdi>
                   )}
-                  <span className="num shrink-0 rounded-full bg-white/80 px-2 font-bold">{ticketsN(p.tickets)}</span>
+                  <span className="shrink-0 rounded-full bg-white/80 px-2 font-bold">{ticketsN(p.tickets)}</span>
                 </li>
               ))}
             </ul>
@@ -330,7 +330,7 @@ function Results({ last, wins, shop }: { last: NonNullable<OwnerDraw["last"]>; w
       </h2>
       <p className="mt-0.5 text-[0.8125rem] text-muted">
         {last.title ? `${last.title} · ` : ""}
-        {fill(D.resultsOf, { when: whenSaid(last.draw_at) })} · {fill(D.resultsPool, { people: peopleN(last.people ?? 0), tickets: ticketsN(last.tickets ?? 0) })}
+        {fill(D.resultsOf, { when: whenSaid(last.draw_at) })} · {last.people === 1 ? fill(D.resultsPoolOne, { tickets: ticketsN(last.tickets ?? 0) }) : fill(D.resultsPool, { people: peopleN(last.people ?? 0), tickets: ticketsN(last.tickets ?? 0) })}
       </p>
       {wins.length === 0 ? (
         <p className="mt-2 rounded-[0.875rem] bg-canvas px-3 py-2.5 text-center text-[0.875rem] text-muted">{D.nobody}</p>

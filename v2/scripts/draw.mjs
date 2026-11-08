@@ -178,6 +178,18 @@ try {
   const w4 = own4.wins.filter((w) => w.draw === d4.id);
   check("5 gifts, 3 customers: each of the 3 wins one, the rest are nobody's", w4.length === 3 && new Set(w4.map((w) => w.card)).size === 3, w4);
 
+  console.log("\nThe winners told on their phones, once");
+  const told = (await sql("select public.draw_tell() as v"))[0].v;
+  check("the draws just made: each prize waiting is a winner to tell", Array.isArray(told) && told.filter((x) => x.draw === d4.id).length === 3, told?.length);
+  check("…told once: asked again, nobody", (await sql("select public.draw_tell() as v"))[0].v.length === 0);
+  check("an account cannot ask who won (the server's own key only)", !!(await rpc(owner, "draw_tell")).error && !!(await rpc(owner, "draw_settle_all")).error);
+  // a draw whose moment came with nobody looking since: the daily job makes it, then tells its winner
+  const d5 = await rpc(owner, "draw_new", { p_title: "", p_at: later(24), p_rule: "cards", p_gifts: [{ name: "قهوة", n: 1 }] });
+  await comeNow(d5.id);
+  const settled = (await sql("select public.draw_settle_all() as n"))[0].n;
+  check("the daily job makes a draw nobody looked at", settled >= 1 && (await sql(`select status from public.draws where id = '${d5.id}'`))[0].status === "drawn", settled);
+  check("…and its winner is told", (await sql("select public.draw_tell() as v"))[0].v.some((x) => x.draw === d5.id));
+
   console.log("\nA shop with no draw: nothing at all");
   const plain = await person("Plain Customer");
   const code = await rpc(other, "save_card", { p_goal: 5, p_gift: "x x", p_color: "#6c47ff" });

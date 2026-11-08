@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { call } from "@/lib/supabase";
 import { SITE } from "@/lib/seo";
 import type { MyStaff, StorePreview } from "@/lib/packs";
+import type { StoreItem } from "@/lib/types";
 import type { Pack } from "@/lib/plans";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,6 +51,20 @@ export async function setStore(on: boolean): Promise<{ ok: true; gifts: number }
   if (!res.ok) return { ok: false, error: res.error ?? "network" };
   revalidatePath("/shop", "layout");
   return { ok: true, gifts: res.gifts ?? 0 };
+}
+
+/** The store opened with its first things to buy, in one go (nothing in it yet): the list as the store saves it. */
+export async function storeOpen(items: { id?: number; name: string; cost: number }[]): Promise<{ ok: true; items: StoreItem[] } | { ok: false; error: string }> {
+  const clean = items
+    .map((x) => ({ id: Number.isSafeInteger(x.id) ? x.id : null, name: String(x.name ?? "").trim().slice(0, 40), cost: Math.round(Number(x.cost)) }))
+    .filter((x) => x.name.length > 0 && x.cost >= 1 && x.cost <= 9999)
+    .slice(0, 40);
+  if (!clean.length) return { ok: false, error: "no_items" };
+  const res = await call<{ ok: boolean; error?: string; items?: StoreItem[] }>("store_open", { p_items: clean });
+  if (!res) return { ok: false, error: "network" };
+  if (!res.ok || !res.items) return { ok: false, error: res.error ?? "network" };
+  revalidatePath("/shop", "layout");
+  return { ok: true, items: res.items };
 }
 
 // ─── the owner: staff phones (Pro) ──────────────────────────────────────────

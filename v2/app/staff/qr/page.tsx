@@ -22,6 +22,7 @@ export default async function StaffQr() {
       home="/staff"
       shop={{ id: shop.id, name: shop.name, kind: shop.kind, color: shop.color, paused: shop.paused, signal: shop.signal, logo: shop.logo, stamp_logo: shop.stamp_logo, goal: shop.goal, gift: shop.gift }}
       items={Array.isArray(items) ? items : []}
+      shut={!!shop.shut}
       phone={help.phone}
       from={help.from}
     />

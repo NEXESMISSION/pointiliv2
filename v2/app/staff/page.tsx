@@ -50,7 +50,12 @@ export default async function StaffHome() {
           <b className="block truncate text-[1.375rem] leading-tight">{shop.name}</b>
         </span>
       </header>
-      {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-semibold text-coral">{t.pausedBanner}</p>}
+      {/* the shop stopped (paused by the founder, or its subscription over): the owner sees to it */}
+      {(shop.paused || shop.shut) && (
+        <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-semibold text-coral">
+          {shop.shut ? P.staffShutTitle : P.staffPausedTitle}. {P.staffStoppedBody}
+        </p>
+      )}
 
       <h2 className="mt-[3dvh] shrink-0 px-0.5 text-[1rem] font-bold">{t.giveTitle}</h2>
       <div className="mt-2 grid shrink-0 grid-cols-2 gap-2">

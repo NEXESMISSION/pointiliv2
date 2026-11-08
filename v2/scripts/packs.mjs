@@ -114,6 +114,13 @@ try {
   check("a shop on the store cannot go down to Pointili before it leaves the store", (await rpc(boss, "admin_set_pack", { p_id: novaShop.id, p_pack: "base" })).error === "store_on");
   const back = await rpc(nova, "set_store", { p_on: false });
   check("back to the card: the 2 gifts written now", back.ok && back.gifts === 2, back);
+  // the store opened with its first things to buy, in one go — or not at all: never an empty store for the customers
+  check("opening the store with nothing in it: refused", (await rpc(nova, "store_open", { p_items: [] })).error === "no_items");
+  const badOpen = await rpc(nova, "store_open", { p_items: [{ name: "قهوة", cost: 0 }] });
+  check("…with a list that will not do: refused, and the store stays shut", !!badOpen.error && (await shopOf(novaShop.id)).store_on === false, badOpen);
+  const opened = await rpc(nova, "store_open", { p_items: [{ name: "قهوة", cost: 5 }, { name: "كرواسون", cost: 4 }] });
+  check("…with its list: the store opens with its 2 things", opened.ok && opened.on === true && opened.items?.length === 2 && (await shopOf(novaShop.id)).store_on === true, opened);
+  check("…and back to the card again (the rest goes on from there)", (await rpc(nova, "set_store", { p_on: false })).ok && (await shopOf(novaShop.id)).store_on === false);
   const after = (await rpc(amira, "wallet")).find((c) => c.shop.id === novaShop.id);
   check("…Amira: 2 gifts waiting, 2 tampons on her new card — nothing lost", after.waiting_n === 2 && after.stamps === 2, { waiting_n: after.waiting_n, stamps: after.stamps });
   const samiAfter = (await rpc(sami, "wallet")).find((c) => c.shop.id === novaShop.id);
@@ -143,6 +150,7 @@ try {
   check("a made-up invite: invalid", (await rpc(sami, "staff_join", { p_token: "A".repeat(32) })).error === "invalid");
   const ys = await rpc(yassine, "my_staff_shop");
   check("his phone knows the shop it works at, and nothing about the owner but a first name", ys?.name === "Nova Café" && ys.owner === "New" && ys.signal && !("owner_id" in ys), ys);
+  check("…and whether the shop is stopped (open: not)", ys?.shut === false && ys.paused === false, { shut: ys?.shut, paused: ys?.paused });
   check("the owner sees his staff, numbers masked", (await rpc(nova, "my_staff")).staff.some((x) => x.name === "Yassine Staff" && /•••/.test(x.phone)));
   check("as himself, the owner's counter is closed to him (no shop)", (await rpc(yassine, "new_code")).error === "no_shop");
   const code = await rpc(yassine, "staff_act", { p_fn: "new_code", p_args: {} });

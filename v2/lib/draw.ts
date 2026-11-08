@@ -50,6 +50,8 @@ const counted = (n: number, one: string, two: string, few: string, many: string)
 export const ticketsN = (n: number) => counted(n, "تذكرة وحدة", "زوز تذاكر", "تذاكر", "تذكرة");
 export const peopleN = (n: number) => counted(n, "حريف واحد", "زوز حرفاء", "حرفاء", "حريف");
 export const winnersN = (n: number) => counted(n, "رابح واحد", "زوز رابحين", "رابحين", "رابح");
+/** who is in a draw, said whole: «حريف واحد داخل», «زوز حرفاء داخلين», «12 حريف داخلين» */
+export const peopleIn = (n: number) => (n === 1 ? D.cardPeopleOne : D.cardPeople.replace("{n}", peopleN(n)));
 
 /** «قهوة · كيك ×3»: every gift of a draw, by name and how many winners each */
 export const giftsLine = (gifts: DrawGift[]) => gifts.map((g) => (g.n > 1 ? `${g.name} ×${g.n}` : g.name)).join(" · ");
@@ -137,6 +139,7 @@ export const D = {
   results: "الرابحين",
   resultsOf: "سحب {when}",
   resultsPool: "{people} دخلو، {tickets} في الكل",
+  resultsPoolOne: "حريف واحد دخل، {tickets} في الكل",
   nobody: "حتى حد ما دخل في السحب هذا.",
   winnersShare: "قول شكون ربح في الواتساب",
   winnersMsg: "🎉 رابحين {title} في {shop}:\n{lines}\n\nمبروك للرابحين! السحب الجاي قريب، كل تامبون = تذكرة 🍀",
@@ -179,6 +182,7 @@ export const D = {
   cardIn: "إنت داخل في السحب ✓",
   cardGifts: "الكادوات",
   cardPeople: "{n} داخلين",
+  cardPeopleOne: "حريف واحد داخل",
   cardDrawing: "السحب صاير توّا…",
   // the page took too long at zero (another look drawing it, a phone clock ahead): ask again by hand
   askAgain: "شوف النتيجة",
@@ -194,6 +198,9 @@ export const D = {
   revealWait: "السيستام يختار…",
   revealOk: "باهي",
   walletOpen: "🎟️ سحب {when}",
+  // the winner's phone, the moment the draw is made
+  pushTitle: "🎉 ربحت {gift}!",
+  pushBody: "في التذكرة الذهبية متاع {shop}. ورّي الكارط متاعك في المحل باش تاخذو.",
   walletWon: "🏆 ربحت في السحب",
   // the founder's console
   aDraw: "التذكرة الذهبية",

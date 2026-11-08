@@ -1,4 +1,6 @@
 import { notFound, redirect } from "next/navigation";
+import { after } from "next/server";
+import { justDrawn, tellWinners } from "@/lib/draw-tell";
 import QRCode from "qrcode";
 import { Check, Gift, Hourglass, QrCode, ScanLine } from "lucide-react";
 import { CardDraw } from "@/components/CardDraw";
@@ -38,6 +40,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   // and the golden ticket of its shop, in the same breath (null: a shop that never made a draw — nearly all)
   const [card, draw] = await Promise.all([call<Card | null>("card", { p_id: id }), call<Draw>("card_draw", { p_card: id })]);
   if (!card) notFound();
+  // a draw made within the hour (this look may be the one that made it): its winners told on their phones, if not yet
+  // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
+  if (justDrawn(draw?.last?.drawn_at, Date.now())) after(tellWinners);
 
   // a shop the founder switched to the store: the tampons kept, and the things to spend them on
   if (card.shop.store) {
@@ -75,6 +80,9 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   // a wheel shop, a full card not spun yet: the roulette (a popup) takes the gift's place
   const turn = card.spin && card.prizes?.length ? card.spin : null;
   const ready = card.ready && !turn;
+  // the golden ticket's boxes under the card (a prize to take, the draw running or how the last one ended): with two,
+  // the story keeps room for two lines only, so the scan button stays on a 667px screen (9 Nov 2026)
+  const golden = draw ? (draw.waiting.length > 0 ? 1 : 0) + (draw.open || (draw.last && !draw.last.won.length) ? 1 : 0) : 0;
   return (
     // one screen: the card, one quiet line, and one thing to do (shorter than 548px, the page scrolls)
     <Screen className="[@media(max-height:547.98px)]:h-auto [@media(max-height:547.98px)]:min-h-dvh">
@@ -112,7 +120,7 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       {card.history.length > 0 ? (
         // with a golden ticket under the card the story keeps room for a few lines, the page scrolling on a short
         // phone (9 Nov 2026: the draw's boxes left it 4px on a 667px screen); a card without one, as it always was
-        <div className={`mx-auto mt-[1.6dvh] flex w-full max-w-[min(100%,52dvh)] ${draw ? "min-h-[7.5rem]" : "min-h-0"} flex-1 flex-col`}>
+        <div className={`mx-auto mt-[1.6dvh] flex w-full max-w-[min(100%,52dvh)] ${golden >= 2 ? "min-h-[4.5rem]" : golden ? "min-h-[7.5rem]" : "min-h-0"} flex-1 flex-col`}>
           <p className="shrink-0 px-1 pb-1.5 text-[0.75rem] font-bold text-faint">{t.cardStory}</p>
           {/* a real list: it may scroll inside itself, the page may not */}
           <ol data-list className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pb-1">

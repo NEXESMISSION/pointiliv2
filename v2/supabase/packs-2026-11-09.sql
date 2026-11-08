@@ -224,6 +224,26 @@ begin
   return jsonb_build_object('ok', true, 'on', coalesce(p_on, false), 'gifts', v_gifts);
 end $$;
 
+-- The store opened with its first things to buy, in one go (the owner chose it on «النظام متاعي» with nothing in it
+-- yet): the switch (set_store, with all it does to the customers' tampons) and the list (store_save) together, or
+-- neither — the customers never meet an empty store. Its errors as theirs: not_allowed, no_card, invalid…
+create or replace function public.store_open(p_items jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare r jsonb; v jsonb; v_why text;
+begin
+  if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then return public.err('no_items'); end if;
+  r := public.set_store(true);
+  if coalesce(r ->> 'ok', '') <> 'true' then return r; end if;
+  v := public.store_save(p_items);
+  if coalesce(v ->> 'ok', '') <> 'true' then
+    raise exception 'store_open' using errcode = 'P0001', detail = coalesce(v ->> 'error', 'invalid');
+  end if;
+  return v || jsonb_build_object('on', true);
+exception when sqlstate 'P0001' then
+  get stacked diagnostics v_why = pg_exception_detail;
+  return public.err(coalesce(nullif(v_why, ''), 'invalid'));
+end $$;
+
 -- the owner's staff phones: who, since when, what each did today and these 7 days (the tampons given by
 -- number, the gifts and prizes handed over, the tampons taken back — staff_log), the room left, and the
 -- invites sent and not yet used (still open: they can be called off)
@@ -321,15 +341,16 @@ begin
   return jsonb_build_object('ok', true, 'shop', s.name);
 end $$;
 
--- the shop a staff phone works at, as its screens need it (null: not staff anywhere)
+-- the shop a staff phone works at, as its screens need it (null: not staff anywhere) — and whether it is stopped
+-- (its trial or its subscription over: the staff phone says so, and tells its person to see the owner)
 create or replace function public.my_staff_shop() returns jsonb
 language sql stable security definer set search_path = '' as $$
   select case when s.id is null then null else jsonb_build_object(
-    'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'paused', s.paused, 'signal', s.signal, 'logo', s.logo,
+    'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'paused', s.paused, 'shut', public.shut(s), 'signal', s.signal, 'logo', s.logo,
     'stamp_logo', s.stamp_logo, 'goal', s.goal, 'gift', s.gift, 'items_on', s.items_on, 'wheel_on', s.wheel_on,
     'wheel_allowed', s.wheel_allowed, 'store_on', s.store_on, 'draw', s.draw_allowed or exists (select 1 from public.draw_wins w where w.shop_id = s.id and w.given_at is null),
     'owner', nullif(split_part(coalesce((select p.name from public.people p where p.id = s.owner_id), ''), ' ', 1), '')) end
-  from (select * from public.staff_shop()) s
+  from public.staff_shop() s
 $$;
 
 -- an invite looked at before it is used: the shop it is for (its name, its look), or why it will not do
@@ -507,17 +528,17 @@ create or replace function public.packs_grants() returns void
 language plpgsql security definer set search_path = '' as $$
 begin
   revoke execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
-    public.my_systems(), public.store_preview(), public.set_store(boolean),
+    public.my_systems(), public.store_preview(), public.set_store(boolean), public.store_open(jsonb),
     public.my_staff(), public.staff_invite(), public.staff_invite_cancel(), public.staff_remove(bigint), public.staff_join(text),
     public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
     public.staff_invite_info(text), public.admin_pack_map(), public.draw_pool(public.draws), public.packs_grants()
     from public, anon, authenticated;
-  grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text), public.my_systems(), public.store_preview(), public.set_store(boolean),
+  grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text), public.my_systems(), public.store_preview(), public.set_store(boolean), public.store_open(jsonb),
     public.my_staff(), public.staff_invite(), public.staff_invite_cancel(), public.staff_remove(bigint), public.staff_join(text), public.my_staff_shop(), public.staff_leave(),
     public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(), public.admin_pack_map()
     to authenticated;
   grant execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
-    public.my_systems(), public.store_preview(), public.set_store(boolean),
+    public.my_systems(), public.store_preview(), public.set_store(boolean), public.store_open(jsonb),
     public.my_staff(), public.staff_invite(), public.staff_invite_cancel(), public.staff_remove(bigint), public.staff_join(text),
     public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
     public.staff_invite_info(text), public.admin_pack_map(), public.draw_pool(public.draws), public.packs_grants()

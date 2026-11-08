@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { myCardDraw } from "@/app/actions-draw";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Icon3D } from "@/components/ui";
-import { D, giftsLine, leftOf, leftSaid, peopleN, ticketsN, whenSaid, winnersN, type CardDraw as Draw } from "@/lib/draw";
+import { D, giftsLine, leftOf, leftSaid, peopleIn, peopleN, ticketsN, whenSaid, winnersN, type CardDraw as Draw } from "@/lib/draw";
 import { fill } from "@/lib/t";
 
 /** the phone's clock, a second at a time — null while the server draws the page */
@@ -119,7 +119,7 @@ export function CardDraw({ draw }: { draw: NonNullable<Draw> }) {
               <b className="block truncate text-[0.9375rem] font-bold">{open.title ?? D.cardTitle}</b>
               <span className="block truncate text-[0.75rem] font-semibold opacity-80">{fill(D.cardDrawAt, { when: whenSaid(open.draw_at) })}</span>
               {/* a short screen: the countdown in one line here, in place of its four boxes below */}
-              {!due && now !== null && <span className="num hidden truncate text-[0.8125rem] font-bold [@media(max-height:720px)]:block">{leftSaid(open.draw_at, now)}</span>}
+              {!due && now !== null && <span className="hidden truncate text-[0.8125rem] font-bold tabular-nums [@media(max-height:720px)]:block">{leftSaid(open.draw_at, now)}</span>}
             </span>
           </div>
           <p className="relative mt-1.5 truncate text-[0.8125rem] font-semibold">
@@ -128,7 +128,7 @@ export function CardDraw({ draw }: { draw: NonNullable<Draw> }) {
           <div className={`relative mt-2 ${due ? "" : "[@media(max-height:720px)]:hidden"}`}>{due ? <AtZero text={D.cardDrawing} {...zero} /> : <Countdown at={open.draw_at} now={now} />}</div>
           <p className="relative mt-2 text-center text-[0.8125rem] font-bold">
             {open.rule === "cards" ? D.cardIn : open.mine > 0 ? fill(D.cardMine, { n: ticketsN(open.mine) }) : D.cardNone}
-            {open.people > 1 && <span className="font-semibold opacity-75"> · {fill(D.cardPeople, { n: peopleN(open.people) })}</span>}
+            {open.people > 1 && <span className="font-semibold opacity-75"> · {peopleIn(open.people)}</span>}
           </p>
         </section>
       ) : (
@@ -184,8 +184,8 @@ function Won({ wins }: { wins: { id: number; gift: string }[] }) {
             <bdi>{one.gift}</bdi>
           </p>
           <p className="relative mt-1 text-[0.8125rem] font-semibold opacity-85">{D.wonShow}</p>
-          <p className="num relative mt-1.5 inline-block rounded-full bg-white/60 px-3 py-0.5 text-[0.8125rem] font-bold" dir="ltr">
-            {D.wonNo} #{one.id}
+          <p className="relative mt-1.5 inline-block rounded-full bg-white/60 px-3 py-0.5 text-[0.8125rem] font-bold">
+            {D.wonNo} <bdi className="num">#{one.id}</bdi>
           </p>
         </>
       ) : (
@@ -267,7 +267,7 @@ function Reveal({ last }: { last: NonNullable<NonNullable<Draw>["last"]> }) {
           <>
             <Icon3D name="ticket" size={96} className="mx-auto animate-breathe" />
             <p className="mt-3 text-[1.0625rem] font-bold">{D.revealWait}</p>
-            <p className="mt-1 text-[0.8125rem] font-semibold opacity-75">{fill(D.cardPeople, { n: peopleN(last.people) })}</p>
+            <p className="mt-1 text-[0.8125rem] font-semibold opacity-75">{peopleIn(last.people)}</p>
           </>
         ) : won ? (
           <>
