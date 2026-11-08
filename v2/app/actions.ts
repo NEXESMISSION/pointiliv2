@@ -13,6 +13,7 @@ import { call, db, service } from "@/lib/supabase";
 import { gate, note, TRAP, trapped } from "@/lib/guard";
 import { getMe, homeOf, type Me } from "@/lib/session";
 import { digits, passwordOf, passwordTries, phoneEmail, validPhone } from "@/lib/phone";
+import { payWayOf } from "@/lib/plans";
 import { clarityId, domainCode, pixelId, socialUrl, youtubeId } from "@/lib/settings";
 import { fill, t } from "@/lib/t";
 import type { CardView, FormState, Order, Said, ScanResult } from "@/lib/types";
@@ -691,7 +692,8 @@ export async function adminPlan(shopId: string, kind: "paid" | "until" | "end", 
     p_until: until && /^\d{4}-\d{2}-\d{2}$/.test(until) ? `${until}T23:59:00+01:00` : null,
     p_note: note?.trim().slice(0, 200) || null,
     p_show: show,
-    p_method: method && ["cash", "d17", "virement", "versement", "mandat"].includes(method) ? method : null,
+    // a usual way, or the founder's own words (lib/plans.ts, payWayOf: trimmed, 40 characters at most)
+    p_method: payWayOf(method),
     p_amount: amount !== null && Number.isInteger(amount) && amount >= 0 && amount <= 100_000 ? amount : null,
   });
   // what was paid, to Facebook: the ads learn which sign-ups became paying shops (lib/meta)

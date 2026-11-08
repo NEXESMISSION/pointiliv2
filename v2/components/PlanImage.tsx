@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Copy, Download, ImageIcon, Share2, X } from "lucide-react";
+import { payWayLabel } from "@/lib/plans";
 import { monthsSaid } from "@/lib/t";
 
 /** one subscription turned on, as the founder's books keep it */
@@ -11,7 +12,6 @@ const W = 1080;
 const H = 1350;
 const TZ = "Africa/Tunis";
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: TZ }).format(new Date(iso));
-const WAYS: Record<string, string> = { cash: "كاش", d17: "D17", virement: "Virement", versement: "Versement", mandat: "Mandat" };
 
 /** a rounded rectangle path */
 function round(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -104,7 +104,9 @@ async function draw(p: PlanShot): Promise<string> {
   const rows: [string, string][] = [];
   if (p.months) rows.push(["المدّة", monthsSaid(p.months)]);
   if (p.amount !== null && p.amount > 0) rows.push(["المبلغ", `${p.amount} د`]);
-  if (p.method && WAYS[p.method]) rows.push(["الخلاص", WAYS[p.method]!]);
+  // a usual way by its name, or the founder's own words
+  const way = payWayLabel(p.method);
+  if (way) rows.push(["الخلاص", way]);
   rows.push(["نهار التفعيل", day(p.at)]);
   let y = cy + 670;
   for (const [label, value] of rows.slice(0, 4)) {
@@ -113,10 +115,12 @@ async function draw(p: PlanShot): Promise<string> {
     ctx.fillStyle = "#6B6880";
     ctx.font = font(400, 38);
     ctx.fillText(label, cx + cw - 70, y);
+    // never over its label: a way the founder typed can be long, the canvas squeezes it to fit
+    const room = cw - 140 - ctx.measureText(label).width - 32;
     ctx.textAlign = "left";
     ctx.fillStyle = "#0F0E17";
     ctx.font = font(700, 40);
-    ctx.fillText(value, cx + 70, y);
+    ctx.fillText(value, cx + 70, y, room);
     y += 62;
   }
   if (p.id) {

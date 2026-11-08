@@ -6,7 +6,7 @@ import { BarChart3, Copy, FlaskConical, Gift, KeyRound, MessageCircle, Stamp } f
 import { adminPause, adminResetPassword, adminSetTester } from "@/app/actions";
 import { adminSetItems, adminSetStore } from "@/app/actions-store";
 import { adminSetWheel } from "@/app/actions-wheel";
-import { adminExportAllowed, adminSetExport } from "@/app/actions-export";
+import { adminExportState, adminSetExport } from "@/app/actions-export";
 import { adminBoardShop, type BoardMore } from "@/app/admin/actions";
 import { AdminAccess } from "@/components/AdminAccess";
 import type { AccessShop } from "@/lib/board";
@@ -171,10 +171,14 @@ function Switches({ shop, more, reload }: { shop: AccessShop; more: BoardMore; r
  */
 function ExportLine({ shopId }: { shopId: string }) {
   const [on, setOn] = useState<boolean | null>(null);
+  // when the owner last took the file, said once it is read («من 3 أيّام»)
+  const [last, setLast] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    void adminExportAllowed(shopId).then((v) => {
-      if (live) setOn(v);
+    void adminExportState(shopId).then((v) => {
+      if (!live) return;
+      setOn(v ? v.on : null);
+      setLast(v?.last ? agoSaid(Date.now() - Date.parse(v.last)) : null);
     });
     return () => {
       live = false;
@@ -184,9 +188,13 @@ function ExportLine({ shopId }: { shopId: string }) {
   return (
     <SwitchLine
       title="تحميل البيانات"
-      line={on ? "مولى المحل ينجم يحمّل ليستة الحرفاء متاعو (فيشي Excel) من «المحل»." : "مطفية: مولى المحل ما يشوفش الزرّ."}
+      line={
+        on
+          ? `مولى المحل ينجم يحمّل ليستة الحرفاء متاعو (فيشي Excel، بالنومروات كاملين) من «المحل»، مرّة في الجمعة.${last ? ` آخر تحميل: ${last}.` : " ما حمّلش حتى مرّة."}`
+          : "مطفية: مولى المحل ما يشوفش الزرّ."
+      }
       on={on}
-      ask={on ? null : "تخلّي مولى المحل يحمّل ليستة الحرفاء متاعو؟ النومروات مخبّية كيما في الليستة."}
+      ask={on ? null : "تخلّي مولى المحل يحمّل ليستة الحرفاء متاعو؟ النومروات كاملين، مرّة في الجمعة."}
       flip={async () => {
         const res = await adminSetExport(shopId, !on);
         if (!res.ok) return NOT_DONE;

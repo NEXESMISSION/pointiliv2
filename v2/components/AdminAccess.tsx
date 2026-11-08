@@ -6,7 +6,7 @@ import { adminPlan, adminTrial } from "@/app/actions";
 import type { BoardMore } from "@/app/admin/actions";
 import type { AccessShop } from "@/lib/board";
 import { PlanImage, type PlanShot } from "@/components/PlanImage";
-import { GIFT_MONTHS, planFirst, plansFor } from "@/lib/plans";
+import { GIFT_MONTHS, PAY_WAY_MAX, PAY_WAYS, payWayOf, planFirst, plansFor } from "@/lib/plans";
 import { daysN, fill, monthsSaid, t } from "@/lib/t";
 
 const TZ = "Africa/Tunis";
@@ -15,15 +15,8 @@ const NOT_DONE = "ما تعدّاتش، عاود.";
 const chip = (on: boolean) => `h-9 rounded-full px-3.5 text-[0.8438rem] font-bold ${on ? "bg-brand text-white" : "bg-surface text-body ring-1 ring-line"}`;
 const quiet = "press flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-surface px-3.5 text-[0.875rem] font-semibold text-body ring-1 ring-line disabled:opacity-60";
 
-const METHODS = [
-  { id: "cash", label: t.aPlanCash },
-  { id: "d17", label: "D17" },
-  { id: "virement", label: "Virement" },
-  { id: "versement", label: "Versement" },
-  { id: "mandat", label: "Mandat" },
-];
-// besides the price list's lengths: months given with no money, or a length agreed apart
-const OTHER_MONTHS = [2, 3, 24];
+/** a box typed into: lit while it holds something, coral while what it holds will not do */
+const typedBox = (lit: boolean, bad = false) => `h-9 rounded-full bg-surface px-3 text-center text-[16px] ring-1 ${bad ? "ring-coral" : lit ? "ring-brand" : "ring-line"}`;
 
 /**
  * The access: where it stands, and the founder's three moves once the owner
@@ -35,6 +28,12 @@ const OTHER_MONTHS = [2, 3, 24];
  * months 120, a year 180 — or the year at 120 for a shop that paid before),
  * each a tap that writes what came in; the two months of the offer ride on
  * six months or a year, ticked by themselves while the shop's offer runs.
+ *
+ * Anything else is typed (the founder, 8 Nov 2026: «add the option of typing
+ * the number of months I want … and an option to type the payment method»):
+ * the months, 1 to 120, exactly as typed (no offer on top, no price guessed —
+ * the amount is said by hand too); the way it came, a few words of his own
+ * next to the usual ones (lib/plans.ts, payWayOf).
  */
 export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; plan?: BoardMore["plan"] | null; reload?: () => Promise<void> }) {
   const [mode, setMode] = useState<null | "plan" | "trial" | "end">(null);
@@ -46,14 +45,22 @@ export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; p
   const [base, setBase] = useState(() => planFirst(shop.old_price).months);
   const [gift, setGift] = useState(inOffer);
   const [amount, setAmount] = useState<number | null>(planFirst(shop.old_price).price);
-  const listed = plans.find((p) => p.months === base) ?? null;
+  // the months typed by hand, in place of the price list's lengths
+  const [typed, setTyped] = useState("");
+  const typedOk = /^\d{1,3}$/.test(typed) && Number(typed) >= 1 && Number(typed) <= 120;
+  const listed = typed ? null : (plans.find((p) => p.months === base) ?? null);
   const giftOn = gift && !!listed?.gift;
-  const months = base + (giftOn ? GIFT_MONTHS : 0);
+  const months = typed ? (typedOk ? Number(typed) : 0) : base + (giftOn ? GIFT_MONTHS : 0);
   const [other, setOther] = useState("");
   const [method, setMethod] = useState<string | null>(null);
+  // the way it came, typed: it takes the place of a chip
+  const [wayTyped, setWayTyped] = useState("");
+  const way = payWayOf(wayTyped) ?? method;
   const [show, setShow] = useState(true);
   const [made, setMade] = useState<PlanShot | null>(null);
   const sum = other ? Number(other) : amount;
+  // something to turn on, and what came in said (a sum, or «with no money»)
+  const canGo = months >= 1 && sum !== null;
 
   const line = shop.paid && shop.paid_until ? `خالص حتى ${day(shop.paid_until)}` : shop.shut ? `التجربة وفات ${day(shop.trial_end)}` : shop.started ? `التجربة توفى ${day(shop.trial_end)}` : "التجربة تبدا مع أوّل حريف";
   const done = async (ok: boolean) => {
@@ -64,8 +71,9 @@ export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; p
   };
   const turnOn = () =>
     start(async () => {
-      const res = await adminPlan(shop.id, "paid", months, null, null, show, sum ? method : null, sum);
-      if (res.ok) setMade({ at: new Date().toISOString(), kind: "paid", months, until: res.until ?? null, amount: sum ?? null, method: sum ? method : null, shop: shop.name, owner: shop.owner.name });
+      if (!canGo) return;
+      const res = await adminPlan(shop.id, "paid", months, null, null, show, sum ? way : null, sum);
+      if (res.ok) setMade({ at: new Date().toISOString(), kind: "paid", months, until: res.until ?? null, amount: sum ?? null, method: sum ? way : null, shop: shop.name, owner: shop.owner.name });
       await done(res.ok);
     });
 
@@ -105,18 +113,32 @@ export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; p
                     setBase(p.months);
                     setAmount(p.price);
                     setOther("");
+                    setTyped("");
                   }}
-                  className={chip(base === p.months)}
+                  className={chip(!typed && base === p.months)}
                 >
                   {monthsSaid(p.months)} · {p.price} {t.payCurrency}
                 </button>
               ))}
-              {OTHER_MONTHS.map((m) => (
-                <button key={m} type="button" onClick={() => setBase(m)} className={chip(base === m)}>
-                  {monthsSaid(m)}
-                </button>
-              ))}
+              {/* any other length, typed: exactly that many months, its amount said below by hand */}
+              <input
+                value={typed}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 3);
+                  setTyped(v);
+                  // a price list's amount means nothing for a length typed by hand (a «with no money» chosen stays)
+                  if (v) {
+                    if (amount !== 0) setAmount(null);
+                  } else setAmount(plans.find((p) => p.months === base)?.price ?? null);
+                }}
+                inputMode="numeric"
+                placeholder={t.aPlanMonthsTyped}
+                aria-label={t.aPlanMonthsTyped}
+                aria-invalid={!!typed && !typedOk}
+                className={`${typedBox(!!typed, !!typed && !typedOk)} w-[10.5rem]`}
+              />
             </div>
+            {!!typed && !typedOk && <p className="mt-1 text-[0.75rem] font-semibold text-coral">{t.aPlanMonthsRange}</p>}
             {!!listed?.gift && (
               <label className="mt-2 flex items-center gap-2 text-[0.8438rem] font-semibold text-body">
                 <input type="checkbox" checked={gift} onChange={(e) => setGift(e.target.checked)} className="size-4 accent-[#6c47ff]" />
@@ -144,23 +166,44 @@ export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; p
               ))}
               <input
                 value={other}
-                onChange={(e) => setOther(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) => setOther(e.target.value.replace(/\D/g, "").slice(0, 5))}
                 inputMode="numeric"
                 placeholder={t.aPlanAmountOther}
                 aria-label={t.aPlanAmountOther}
-                className={`h-9 w-[7.5rem] rounded-full bg-surface px-3 text-center text-[16px] ring-1 ${other ? "ring-brand" : "ring-line"}`}
+                className={`${typedBox(!!other)} w-[7.5rem]`}
               />
             </div>
+            {sum === null && <p className="mt-1 text-[0.75rem] font-semibold text-muted">{t.aPlanAmountNeed}</p>}
           </div>
           {sum !== 0 && (
             <div>
               <span className="mb-1 block text-[0.8125rem] font-semibold text-muted">{t.aPlanHow}</span>
-              <div className="flex flex-wrap gap-1.5">
-                {METHODS.map((m) => (
-                  <button key={m.id} type="button" onClick={() => setMethod(method === m.id ? null : m.id)} className={`h-8 rounded-full px-3 text-[0.8125rem] font-bold ${method === m.id ? "bg-ink text-white" : "bg-surface text-body ring-1 ring-line"}`}>
-                    {m.label}
-                  </button>
-                ))}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {PAY_WAYS.map((m) => {
+                  const on = !wayTyped.trim() && method === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => {
+                        setMethod(on ? null : m.id);
+                        setWayTyped("");
+                      }}
+                      className={`h-8 rounded-full px-3 text-[0.8125rem] font-bold ${on ? "bg-ink text-white" : "bg-surface text-body ring-1 ring-line"}`}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
+                {/* any other way, in the founder's own words (a usual one typed is taken as that one) */}
+                <input
+                  value={wayTyped}
+                  onChange={(e) => setWayTyped(e.target.value.slice(0, PAY_WAY_MAX))}
+                  maxLength={PAY_WAY_MAX}
+                  placeholder={t.aPlanHowTyped}
+                  aria-label={t.aPlanHowTyped}
+                  className={`${typedBox(!!wayTyped.trim())} w-[9.5rem]`}
+                />
               </div>
             </div>
           )}
@@ -169,8 +212,8 @@ export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; p
             {t.aPlanShow}
           </label>
           <div className="flex gap-2">
-            <button type="button" disabled={pending} onClick={turnOn} className="press flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[0.75rem] bg-brand text-[0.875rem] font-bold text-white disabled:opacity-60">
-              <Power className="size-4" /> {pending ? "…" : `خدّم ${monthsSaid(months)}`}
+            <button type="button" disabled={pending || !canGo} onClick={turnOn} className="press flex h-10 flex-1 items-center justify-center gap-1.5 rounded-[0.75rem] bg-brand text-[0.875rem] font-bold text-white disabled:opacity-60">
+              <Power className="size-4" /> {pending ? "…" : months >= 1 ? `خدّم ${monthsSaid(months)}` : t.aPlanGive}
             </button>
             <button type="button" onClick={() => setMode(null)} className={quiet}>
               {t.back}

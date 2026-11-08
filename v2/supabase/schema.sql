@@ -146,6 +146,10 @@ create table if not exists public.plan_log (
 );
 create index if not exists plan_log_shop_idx on public.plan_log (shop_id, created_at desc);
 alter table public.plan_log add column if not exists method text check (method is null or method in ('cash', 'd17', 'virement', 'versement', 'mandat'));
+-- how it came: one of the usual ways (cash, d17, virement, versement, mandat), or a few words the founder
+-- typed himself (8 Nov 2026: «add an option to type the payment method manually»)
+alter table public.plan_log drop constraint if exists plan_log_method_check;
+alter table public.plan_log add constraint plan_log_method_check check (method is null or char_length(method) between 1 and 40);
 alter table public.plan_log add column if not exists amount int check (amount is null or amount between 0 and 100000);
 -- the kinds: months turned on, an end date, stopped (never called a gift) — and
 -- days of trial added by the founder (not a subscription: no money, no year)
@@ -2416,11 +2420,13 @@ drop function if exists public.admin_plan(uuid, text, int, timestamptz, text, bo
 create or replace function public.admin_plan(p_shop uuid, p_kind text, p_months int default null, p_until timestamptz default null, p_note text default null, p_show boolean default true, p_method text default null, p_amount int default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_until timestamptz; v_note text := nullif(trim(coalesce(p_note, '')), '');
+  -- one of the usual ways, or the founder's own words (plan_log_method_check: 1 to 40 characters)
+  v_method text := nullif(btrim(coalesce(p_method, '')), '');
 begin
   perform public.require_admin();
   select * into s from public.shops where id = p_shop for update;
   if s.id is null then return public.err('not_found'); end if;
-  if p_method is not null and p_method not in ('cash', 'd17', 'virement', 'versement', 'mandat') then return public.err('invalid'); end if;
+  if v_method is not null and char_length(v_method) > 40 then return public.err('invalid'); end if;
   if p_amount is not null and p_amount not between 0 and 100000 then return public.err('invalid'); end if;
   if p_kind = 'paid' then
     if p_months is null or p_months not between 1 and 120 then return public.err('invalid'); end if;
@@ -2438,7 +2444,7 @@ begin
   -- months added with no money came no way at all
   insert into public.plan_log (shop_id, kind, months, until_at, note, show_owner, method, amount)
   values (s.id, p_kind, case when p_kind = 'paid' then p_months end, v_until, v_note, coalesce(p_show, false) and p_kind <> 'end',
-          case when p_kind <> 'end' and coalesce(p_amount, 1) > 0 then p_method end, case when p_kind <> 'end' then p_amount end);
+          case when p_kind <> 'end' and coalesce(p_amount, 1) > 0 then v_method end, case when p_kind <> 'end' then p_amount end);
   -- money taken by hand settles the payment the owner said was coming
   if p_kind in ('paid', 'until') and coalesce(p_amount, 1) > 0 then
     update public.payments set status = 'paid', decided_at = now() where shop_id = s.id and status = 'pending';
@@ -4379,9 +4385,13 @@ end $$;
 -- ═══ «تحميل البيانات»: an owner downloads their customers (5 Nov 2026) ═══════
 -- A file of the shop's customers, for an owner the founder allows it: export_allowed, the console's
 -- switch, OFF for every shop — the founder turns it on, shop by shop, by hand. It is one of the
--- switches scripts/db.mjs keeps: no re-run of this file ever turns it on or off. The numbers come
--- masked, as in the owner's own list (shop_customers): the file is that list, nothing more.
+-- switches scripts/db.mjs keeps: no re-run of this file ever turns it on or off.
+-- Since 8 Nov 2026 (the founder: «add the phone number of the client … more data … he can only export
+-- once every week»): the numbers whole, each customer's tampons and gifts, month by month — and one file
+-- a week. export_at is when the week's file was taken; the same file again within half an hour is free (a
+-- download cut off, or the Android app's DownloadManager fetching the link a second time).
 alter table public.shops add column if not exists export_allowed boolean not null default false;
+alter table public.shops add column if not exists export_at timestamptz;
 
 create or replace function public.admin_set_export(p_id uuid, p_on boolean) returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -4408,23 +4418,79 @@ begin
   return coalesce(s.export_allowed, false);
 end $$;
 
+-- when the next file may be taken (null: now) — the one rule, for my_export and the owner's screen alike
+create or replace function public.export_next(s public.shops) returns timestamptz
+language sql stable set search_path = '' as $$
+  select case when s.export_at > now() - interval '7 days' and s.export_at <= now() - interval '30 minutes'
+              then s.export_at + interval '7 days' end;
+$$;
+
+-- the owner's file: the customers (never the owner's own card), each with the whole number, the card
+-- now, every tampon and gift, and when the clock takes the card back to zero; then the shop month by
+-- month (Tunis months). Taking it starts the week (export_at): no longer `stable`, it writes.
 create or replace function public.my_export() returns jsonb
-language plpgsql stable security definer set search_path = '' as $$
-declare s public.shops%rowtype;
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_next timestamptz;
 begin
   s := public.my_shop();
   if s.id is null then return public.err('no_shop'); end if;
   if not coalesce(s.export_allowed, false) then return public.err('not_allowed'); end if;
-  return jsonb_build_object('ok', true, 'shop', s.name, 'rows', coalesce((
-    select jsonb_agg(jsonb_build_object(
-             'name', nullif(p.name, ''), 'phone', public.masked(p.phone), 'stamps', c.stamps,
-             'total', (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'stamp'),
-             'given', (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is not null),
-             'waiting', (select count(*) from public.moments m where m.card_id = c.id and m.kind = 'gift' and m.given_at is null),
-             'since', c.created_at, 'last_at', c.last_at)
-           order by c.last_at desc nulls last, c.created_at desc)
-    from public.cards c left join public.people p on p.id = c.user_id
-    where c.shop_id = s.id), '[]'::jsonb));
+  v_next := public.export_next(s);
+  if v_next is not null then return jsonb_build_object('ok', false, 'error', 'too_soon', 'next', v_next); end if;
+  -- a new week starts with this file; within its first half hour the same file again keeps the week as it is
+  if s.export_at is null or s.export_at <= now() - interval '7 days' then
+    update public.shops set export_at = now() where id = s.id returning * into s;
+  end if;
+  return jsonb_build_object('ok', true, 'shop', s.name, 'goal', s.goal, 'gift', s.gift, 'next', s.export_at + interval '7 days',
+    'rows', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'name', nullif(p.name, ''), 'phone', p.phone, 'stamps', c.stamps, 'goal', coalesce(c.goal, s.goal),
+               'total', m.stamps, 'given', m.given, 'waiting', m.waiting,
+               'since', c.created_at, 'last_at', c.last_at, 'reset_due', public.card_due(c, s))
+             order by c.last_at desc nulls last, c.created_at desc)
+      from public.cards c
+      left join public.people p on p.id = c.user_id
+      cross join lateral (
+        select count(*) filter (where x.kind = 'stamp') as stamps,
+               count(*) filter (where x.kind = 'gift' and x.given_at is not null) as given,
+               count(*) filter (where x.kind = 'gift' and x.given_at is null) as waiting
+        from public.moments x where x.card_id = c.id) m
+      where c.shop_id = s.id and c.user_id <> s.owner_id), '[]'::jsonb),
+    'months', coalesce((
+      select jsonb_agg(jsonb_build_object('month', k.month, 'customers', k.customers, 'stamps', k.stamps, 'gifts', k.gifts) order by k.month desc)
+      from (
+        select u.month, sum(u.customers)::int as customers, sum(u.stamps)::int as stamps, sum(u.gifts)::int as gifts
+        from (
+          select to_char(c.created_at at time zone 'Africa/Tunis', 'YYYY-MM') as month, 1 as customers, 0 as stamps, 0 as gifts
+          from public.cards c where c.shop_id = s.id and c.user_id <> s.owner_id
+          union all
+          select to_char(x.created_at at time zone 'Africa/Tunis', 'YYYY-MM'), 0, (x.kind = 'stamp')::int, (x.kind = 'gift')::int
+          from public.moments x join public.cards c on c.id = x.card_id
+          where x.shop_id = s.id and c.user_id <> s.owner_id) u
+        group by u.month) k), '[]'::jsonb));
+end $$;
+
+-- the owner's screen («المحل»): may this shop download; `open`: a file can be taken now (a new week, or
+-- this week's again in its first half hour); `next`: while a week runs, when the next one starts
+create or replace function public.my_export_state() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null or not coalesce(s.export_allowed, false) then return jsonb_build_object('on', false); end if;
+  return jsonb_build_object('on', true, 'last', s.export_at, 'open', public.export_next(s) is null,
+    'next', case when s.export_at > now() - interval '7 days' then s.export_at + interval '7 days' end);
+end $$;
+
+-- the founder's console: the switch, and when the owner last took the file
+create or replace function public.admin_export_state(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_id;
+  if s.id is null then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true, 'on', coalesce(s.export_allowed, false), 'last', s.export_at);
 end $$;
 
 -- ═══ the card's clock, the customer removed, the owner's insights (6 Nov 2026) ═══
@@ -4693,7 +4759,8 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.admin_guard(), public.admin_block(text, text, text, int), public.admin_unblock(text), public.set_wheel(boolean) to authenticated;
 grant execute on all functions in schema public to service_role;
 -- «تحميل البيانات» (its block above, before the revoke): the founder's switch, the owner's file
-grant execute on function public.admin_set_export(uuid, boolean), public.admin_export_allowed(uuid), public.my_export_allowed(), public.my_export() to authenticated;
+grant execute on function public.admin_set_export(uuid, boolean), public.admin_export_allowed(uuid), public.my_export_allowed(), public.my_export(),
+  public.my_export_state(), public.admin_export_state(uuid) to authenticated;
 -- the card's clock, the customer removed, the insights (the sweep is the daily job's: service_role only)
 grant execute on function public.set_reset_days(int), public.remove_customer(uuid), public.shop_insights() to authenticated;
 -- its safeguards: the owner's pause, what the clock took given back, the clock's page, the founder's switch

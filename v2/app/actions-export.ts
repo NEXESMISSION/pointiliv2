@@ -17,8 +17,9 @@ export async function adminSetExport(id: string, on: boolean): Promise<{ ok: boo
   return res ?? { ok: false, error: "network" };
 }
 
-/** Whether the founder allowed this shop (its switch on the console); null when it could not be read. */
-export async function adminExportAllowed(id: string): Promise<boolean | null> {
+/** Whether the founder allowed this shop (its switch on the console), and when its owner last took the file; null when it could not be read. */
+export async function adminExportState(id: string): Promise<{ on: boolean; last: string | null } | null> {
   if (!UUID.test(id)) return null;
-  return call<boolean>("admin_export_allowed", { p_id: id });
+  const res = await call<{ ok: boolean; on?: boolean; last?: string | null }>("admin_export_state", { p_id: id });
+  return res?.ok ? { on: !!res.on, last: res.last ?? null } : null;
 }

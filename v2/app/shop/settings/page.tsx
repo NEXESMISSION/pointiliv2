@@ -1,7 +1,8 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChartColumn, ChevronLeft, Crown, FileDown, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
+import { ExportRow } from "@/components/ExportRow";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -19,6 +20,13 @@ import { daysN, fill, t } from "@/lib/t";
 export const metadata = { title: "المحل", robots: { index: false } };
 
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Tunis" }).format(new Date(iso));
+/** «السبت 15 نوفمبر، 10:51»: when the next file of the customers can be taken */
+const moment = (iso: string) => {
+  const d = new Date(iso);
+  const date = new Intl.DateTimeFormat("ar-TN-u-nu-latn", { weekday: "long", day: "numeric", month: "long", timeZone: "Africa/Tunis" }).format(d);
+  const hour = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Africa/Tunis" }).format(d);
+  return `${date}، ${hour}`;
+};
 
 /** One line of the list: a picture, what it is, how it stands now, and the way in. */
 function Row({ href, mark, title, sub }: { href: string; mark: ReactNode; title: string; sub?: string | null }) {
@@ -50,7 +58,11 @@ export default async function ShopSettings() {
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
   // «تحميل البيانات»: only for a shop the founder allowed it, from the console (off for every shop)
-  const [pay, help, exportOn] = await Promise.all([call<Pay | null>("my_payment"), getHelp(), call<boolean>("my_export_allowed")]);
+  const [pay, help, exportState] = await Promise.all([
+    call<Pay | null>("my_payment"),
+    getHelp(),
+    call<{ on: boolean; open?: boolean; last?: string | null; next?: string | null }>("my_export_state"),
+  ]);
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const daysLeft = pay?.trial_until ? Math.max(0, Math.ceil((Date.parse(pay.trial_until) - Date.now()) / 86_400_000)) : 0;
   const plan = pay?.paid && pay.paid_until
@@ -110,18 +122,13 @@ export default async function ShopSettings() {
         <Group>
           <Row href="/shop/stats" mark={<Mark icon={ChartColumn} />} title={t.statsTitle} sub={t.setStatsSub} />
           <Row href="/shop/insights" mark={<Mark icon={Repeat} />} title={t.insTitle} sub={t.insLinkSub} />
-          {/* a file, not a page: a plain link the phone downloads (app/api/export) */}
-          {exportOn === true && (
-            <a href="/api/export" download className="press flex items-center gap-3 px-3.5 py-[clamp(0.5rem,1.4dvh,0.8rem)] active:bg-canvas">
-              <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[0.75rem]">
-                <Mark icon={FileDown} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.9375rem] font-bold">{t.setExport}</span>
-                <span className="block truncate text-[0.8125rem] text-muted [@media(max-height:520px)]:hidden">{t.setExportSub}</span>
-              </span>
-              <ChevronLeft className="size-4 shrink-0 text-faint" />
-            </a>
+          {/* the customers as a file, once a week, for a shop the founder allowed it (components/ExportRow.tsx) */}
+          {exportState?.on && (
+            <ExportRow
+              open={!!exportState.open}
+              next={exportState.next ? moment(exportState.next) : null}
+              shut={exportState.open && exportState.next && exportState.last ? new Date(Date.parse(exportState.last) + 30 * 60_000).toISOString() : null}
+            />
           )}
           {plan && <Row href="/shop/pay" mark={<Mark icon={Crown} />} title={t.payTitle} sub={plan} />}
         </Group>

@@ -51,3 +51,32 @@ export const YEAR = PLANS[2];
 
 /** Paid once, and it ran out: not a trial any more — the home, the counter and «المحل» say «الأبونمان وفى». */
 export const lapsed = (pay: { paid: boolean; paid_until: string | null } | null | undefined) => !!pay && !pay.paid && !!pay.paid_until;
+
+/**
+ * How a payment taken by hand came (plan_log.method, the founder's form): one of the usual ways — or a
+ * few words the founder typed himself (8 Nov 2026: «add an option to type the payment method manually»),
+ * kept as he wrote them, 40 characters at most.
+ */
+export const PAY_WAYS = [
+  { id: "cash", label: "كاش" },
+  { id: "d17", label: "D17" },
+  { id: "virement", label: "Virement" },
+  { id: "versement", label: "Versement" },
+  { id: "mandat", label: "Mandat" },
+] as const;
+export const PAY_WAY_MAX = 40;
+
+/** What to show for a way written down: its name for a usual one, else the words themselves. */
+export const payWayLabel = (m: string | null | undefined): string | null => (m ? (PAY_WAYS.find((w) => w.id === m)?.label ?? m) : null);
+
+/**
+ * A way as the founder gave it (a chip's id or typed words) → what is written down: a usual way typed by
+ * hand («d17», «كاش», «Virement») becomes that way; anything else is kept trimmed, control characters out;
+ * nothing (or too long) → null.
+ */
+export function payWayOf(raw: string | null | undefined): string | null {
+  const v =(raw ?? "").replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
+  if (!v || v.length > PAY_WAY_MAX) return null;
+  const low = v.toLowerCase();
+  return PAY_WAYS.find((w) => w.id === low || w.label.toLowerCase() === low)?.id ?? v;
+}
