@@ -6,7 +6,7 @@ import { adminPlan, adminTrial } from "@/app/actions";
 import type { BoardMore } from "@/app/admin/actions";
 import type { AccessShop } from "@/lib/board";
 import { PlanImage, type PlanShot } from "@/components/PlanImage";
-import { GIFT_MONTHS, PAY_WAY_MAX, PAY_WAYS, payWayOf, planFirst, plansFor } from "@/lib/plans";
+import { GIFT_MONTHS, PAY_WAY_MAX, PAY_WAYS, payWayOf, plansOfPack, type Pack } from "@/lib/plans";
 import { daysN, fill, monthsSaid, t } from "@/lib/t";
 
 const TZ = "Africa/Tunis";
@@ -35,16 +35,17 @@ const typedBox = (lit: boolean, bad = false) => `h-9 rounded-full bg-surface px-
  * the amount is said by hand too); the way it came, a few words of his own
  * next to the usual ones (lib/plans.ts, payWayOf).
  */
-export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; plan?: BoardMore["plan"] | null; reload?: () => Promise<void> }) {
+export function AdminAccess({ shop, plan = null, reload, pack = "old" }: { shop: AccessShop; plan?: BoardMore["plan"] | null; reload?: () => Promise<void>; /** the shop's pack (lib/plans): Pro's own prices; an old shop, its own as always */ pack?: Pack }) {
   const [mode, setMode] = useState<null | "plan" | "trial" | "end">(null);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const plans = plansFor(shop.old_price);
+  const plans = plansOfPack(pack, shop.old_price);
+  const first = plans.find((p) => p.id === "year") ?? plans[0];
   // the offer still running for this shop (the trial's first 3 days, nothing paid): its two months, ticked
   const [inOffer] = useState(() => !shop.paid && !!shop.offer_until && Date.parse(shop.offer_until) > Date.now());
-  const [base, setBase] = useState(() => planFirst(shop.old_price).months);
+  const [base, setBase] = useState(() => first.months);
   const [gift, setGift] = useState(inOffer);
-  const [amount, setAmount] = useState<number | null>(planFirst(shop.old_price).price);
+  const [amount, setAmount] = useState<number | null>(first.price);
   // the months typed by hand, in place of the price list's lengths
   const [typed, setTyped] = useState("");
   const typedOk = /^\d{1,3}$/.test(typed) && Number(typed) >= 1 && Number(typed) <= 120;

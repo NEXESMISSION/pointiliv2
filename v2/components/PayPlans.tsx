@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Check, Clock, Crown, Sparkles } from "lucide-react";
 import { Left } from "@/components/Pay";
 import { PayMethods } from "@/components/PayMethods";
-import { perMonth, planFirst, plansFor, type Plan } from "@/lib/plans";
+import { perMonth, planFirst, plansFor, plansOfPack, type Plan } from "@/lib/plans";
+import { PACK_NAME } from "@/lib/packs";
 import { signal } from "@/lib/track";
 import { fill, monthsSaid, t } from "@/lib/t";
 
@@ -30,6 +31,8 @@ export function PayPlans({
   support,
   details,
   phone,
+  pack = null,
+  want = null,
 }: {
   old: boolean;
   /** the offer's end while it runs (null: no offer) */
@@ -39,9 +42,21 @@ export function PayPlans({
   support: string | null;
   details?: Details;
   phone?: string | null;
+  /** a shop on a pack (lib/packs): its pack now — it chooses between the two; null: a shop already open, as always */
+  pack?: "base" | "pro" | null;
+  /** the pack chosen first (the owner came for Pro) */
+  want?: "base" | "pro" | null;
 }) {
-  const plans = plansFor(old);
-  const [plan, setPlan] = useState<Plan>(() => planFirst(old));
+  const [chosen, setChosen] = useState<"base" | "pro" | null>(want ?? pack);
+  const plans = chosen ? plansOfPack(chosen, old) : plansFor(old);
+  const [plan, setPlan] = useState<Plan>(() => (chosen ? (plans.find((p) => p.id === "year") ?? plans[0]) : planFirst(old)));
+  // the pack changed: the same length on the other pack's list
+  const pick = (p: "base" | "pro") => {
+    setChosen(p);
+    const list = plansOfPack(p, old);
+    setPlan(list.find((x) => x.id === plan.id) ?? list[list.length - 1]);
+    signal("pay", `pack · ${p}`);
+  };
   const offer = !!offerUntil;
   const gift = offer && plan.gift > 0;
 
@@ -51,7 +66,7 @@ export function PayPlans({
         <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_0%_0%,rgb(255_255_255/0.25),transparent_60%)]" aria-hidden />
         <div className="relative flex items-start justify-between gap-3">
           <span className="min-w-0">
-            <span className="block text-[0.8125rem] font-semibold text-white/80">{t.payPlan}</span>
+            <span className="block text-[0.8125rem] font-semibold text-white/80">{chosen ? `${PACK_NAME[chosen]} · ${t.payTitle}` : t.payPlan}</span>
             {/* one price (the shops that paid before), said as it always was */}
             {plans.length === 1 && !paidUntil && (
               <span className="mt-1 flex items-end gap-1.5">
@@ -69,6 +84,23 @@ export function PayPlans({
           </span>
         </div>
 
+        {/* a shop on a pack: Pointili or Pointili Pro, side by side (Pro: the golden ticket, the store, staff phones, the file) */}
+        {chosen && !paidUntil && (
+          <div className="relative mt-3 grid grid-cols-2 gap-1 rounded-[1rem] bg-white/15 p-1" role="radiogroup" aria-label="Pointili">
+            {(["base", "pro"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                role="radio"
+                aria-checked={chosen === p}
+                onClick={() => pick(p)}
+                className={`press h-9 rounded-[0.75rem] text-[0.875rem] font-bold ${chosen === p ? "bg-white text-brand" : "text-white/90"}`}
+              >
+                {PACK_NAME[p]}
+              </button>
+            ))}
+          </div>
+        )}
         {plans.length > 1 && !paidUntil && (
           <div className="relative mt-3.5 grid grid-cols-3 gap-2 [@media(max-height:700px)]:mt-3" role="radiogroup" aria-label={t.planPick}>
             {plans.map((p) => {
@@ -127,7 +159,7 @@ export function PayPlans({
         {/* a phone of ordinary height keeps the plans and the ways to pay (with the numbers to copy) on one
             screen: the perks step aside under 760px — the owner has used them for days already */}
         <ul className={`relative mt-3 space-y-1.5 ${paidUntil ? "" : "[@media(max-height:760px)]:hidden"}`}>
-          {t.payPerks.map((p) => (
+          {[...t.payPerks, ...(chosen === "pro" ? PRO_PERKS : [])].map((p) => (
             <li key={p} className="flex items-start gap-2 text-[0.8125rem] text-white/95">
               <Check className="mt-0.5 size-4 shrink-0" strokeWidth={3} /> {p}
             </li>
@@ -140,10 +172,13 @@ export function PayPlans({
           <Check className="size-5" strokeWidth={3} /> {fill(t.payPaidUntil, { date: day(paidUntil) })}
         </p>
       ) : (
-        <PayMethods support={support} shop={shop} plan={plan} gift={gift} details={details} phone={phone} />
+        <PayMethods support={support} shop={shop} plan={plan} gift={gift} details={details} phone={phone} pack={chosen ? PACK_NAME[chosen] : null} />
       )}
     </>
   );
 }
+
+/** what Pro adds, said with the rest (lib/packs) */
+const PRO_PERKS = ["التذكرة الذهبية: سحب للحرفاء", "الماغازة: التامبونات يوليو نقاط", "3 تليفونات للخدّامة", "ليستة الحرفاء في فيشي Excel"];
 
 const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Tunis" }).format(new Date(iso));

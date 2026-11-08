@@ -6,6 +6,7 @@ import { getMe } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import { t } from "@/lib/t";
 import { drawCounter, type Systems } from "@/lib/draw";
+import type { StaffShop } from "@/lib/packs";
 
 export const metadata = { title: "كود كارط Pointili", robots: { index: false } };
 
@@ -25,6 +26,17 @@ export default async function CustomerCode({ params }: { params: Promise<{ code:
       call<Systems>("my_systems"),
     ]);
     return <Collect by="code" preset={code} items={items ?? []} prizes={wheel?.prizes ?? []} draws={drawCounter(systems)} />;
+  }
+  // a staff phone of a shop (Pro) reads a customer's code with any camera: its counter, as the owner's
+  if (valid && me && !me.shop && me.code !== code) {
+    const staff = await call<StaffShop>("my_staff_shop");
+    if (staff?.goal) {
+      const [items, wheel] = await Promise.all([
+        staff.items_on ? call<{ id: number; name: string }[]>("staff_act", { p_fn: "my_items", p_args: {} }) : Promise.resolve(null),
+        staff.wheel_on || staff.wheel_allowed ? call<{ prizes: { id: number; name: string; chance: number }[] }>("staff_act", { p_fn: "my_wheel", p_args: {} }) : Promise.resolve(null),
+      ]);
+      return <Collect home="/staff" by="code" preset={code} items={Array.isArray(items) ? items : []} prizes={wheel?.prizes ?? []} draws={staff.draw} />;
+    }
   }
   return (
     <Screen>

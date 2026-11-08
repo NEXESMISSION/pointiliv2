@@ -29,7 +29,7 @@ export function verify(token) {
 export const ANON_KEY = sign({ iss: "localbase", role: "anon", iat: 1762560000, exp: 4102444800 });
 export const SERVICE_KEY = sign({ iss: "localbase", role: "service_role", iat: 1762560000, exp: 4102444800 });
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = process.env.LOCALBASE_PORT || 54321;
   console.log(`# Pointili on this computer only (localbase): no live key here, so nothing can reach the live database
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:${port}

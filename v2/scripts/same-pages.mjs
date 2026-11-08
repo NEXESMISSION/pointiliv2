@@ -13,6 +13,7 @@ import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { robot, unrobot } from "./robots.mjs";
+import { sql } from "./db.mjs";
 
 config({ path: ".env.local", quiet: true });
 const [A, B] = process.argv.slice(2);
@@ -111,6 +112,10 @@ try {
   await rpc(store, "save_card", { p_goal: 10, p_gift: "x x", p_color: "#0e9f6e", p_gap: 0 });
   await admin.from("shops").update({ store_on: true }).eq("owner_id", store.id);
   await rpc(store, "store_save", { p_items: [{ name: "حليب", cost: 3 }, { name: "خبز", cost: 1 }] });
+  // every shop already open the day the packs came is «old»: these three stand for them (supabase/packs-2026-11-09.sql)
+  const ids = [];
+  for (const o of [plain, wheel, store]) ids.push((await rpc(o, "me")).shop.id);
+  await sql(`update public.shops set pack = 'old' where id in (${ids.map((x) => `'${x}'`).join(", ")})`).catch(() => null);
   const sami = await person("Sami Customer");
   for (let i = 0; i < 6; i++) await tampon(plain, sami); // a gift waiting, and one on the next card
   for (let i = 0; i < 2; i++) await tampon(wheel, sami);
@@ -124,7 +129,7 @@ try {
 
   for (const [who, label] of [[plain, "ordinary shop"], [wheel, "roulette shop"], [store, "store shop"]]) {
     console.log(`\nThe ${label}'s owner`);
-    for (const p of ["/shop", "/shop/settings", "/shop/links", "/shop/customers", "/shop/card", "/shop/stats", "/shop/qr", "/shop/collect?by=phone", "/shop/collect?by=code", `/u/${samiCode}`, "/wallet", "/me"]) await compare(`${label}: ${p}`, p, who);
+    for (const p of ["/shop", "/shop/settings", "/shop/links", "/shop/customers", "/shop/card", "/shop/stats", "/shop/qr", "/shop/collect?by=phone", "/shop/collect?by=code", `/u/${samiCode}`, "/shop/pay", "/wallet", "/me"]) await compare(`${label}: ${p}`, p, who);
     if (who === wheel) await compare(`${label}: /shop/wheel`, "/shop/wheel", who);
     if (who === store) await compare(`${label}: /shop/store`, "/shop/store", who);
   }

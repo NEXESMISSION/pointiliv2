@@ -1,7 +1,7 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChartColumn, ChevronLeft, Crown, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, Trophy, UserRound, WalletCards } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, Hourglass, Layers, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, Trophy, UserRound, WalletCards } from "lucide-react";
 import { ExportRow } from "@/components/ExportRow";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
@@ -17,6 +17,7 @@ import { lapsed } from "@/lib/plans";
 import { call } from "@/lib/supabase";
 import { daysN, fill, t } from "@/lib/t";
 import { D, drawOn, whenSaid, type Systems } from "@/lib/draw";
+import { onPack, P, PACK_NAME, rewardOf, type ShopSystems } from "@/lib/packs";
 
 export const metadata = { title: "المحل", robots: { index: false } };
 
@@ -105,6 +106,16 @@ export default async function ShopSettings() {
             sub={`${t.setShop} · ${t.kinds[shop.kind] ?? ""}`}
           />
           <Row href={card.href} mark={<Mark icon={card.icon} />} title={card.title} sub={card.sub} />
+          {/* a shop on a pack (9 Nov 2026): its whole system on one page — the reward, the extras. A shop
+              already open the day the packs came («old») has its settings as they always were */}
+          {onPack(systems as ShopSystems) && (
+            <Row
+              href="/shop/system"
+              mark={<Mark icon={Layers} />}
+              title={P.title}
+              sub={`${PACK_NAME[(systems as NonNullable<ShopSystems>).pack ?? "base"]} · ${{ gift: P.gift, wheel: P.wheel, store: P.store }[rewardOf(shop)]}`}
+            />
+          )}
           {/* the card's clock: so many days with no tampon and a card starts over — its own page (the pause,
               what it took, given back). Only while the founder's switch is on: off, owners never see it */}
           {shop.clock_on && !shop.store_on && (

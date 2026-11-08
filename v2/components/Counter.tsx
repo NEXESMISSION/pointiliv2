@@ -72,7 +72,7 @@ const BRAVO_MS = 3600;
  * title's place, above the code — never on it: try it with another phone.
  * Everything fits one screen.
  */
-export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false, phone, from = null, items = [], firstWaits = false }: { shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; /** paid once, and it ran out: «الأبونمان وفى», never the trial's words */ lapsed?: boolean; phone?: string | null; from?: string | null; items?: Item[]; firstWaits?: boolean }) {
+export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false, phone, from = null, items = [], firstWaits = false, home = "/shop" }: { /** where its way back leads: the owner's home, or a staff phone's (/staff) */ home?: string; shop: { id: string; name: string; kind: string; color: string; paused?: boolean; signal?: string; logo?: string | null; stamp_logo?: boolean; goal?: number | null; gift?: string | null }; welcome?: string | null; tip?: boolean; shut?: boolean; /** paid once, and it ran out: «الأبونمان وفى», never the trial's words */ lapsed?: boolean; phone?: string | null; from?: string | null; items?: Item[]; firstWaits?: boolean }) {
   // `tip`: the owner pressed «ورّي الكود» on the welcome at home, so the bravo
   // already happened there and only the note about the code is left
   const [coach, setCoach] = useState<"bravo" | "leaving" | "tip" | null>(() =>
@@ -432,7 +432,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
       {party > 0 && <Confetti key={party} count={50} />}
 
       <header className="safe-t relative z-10 flex shrink-0 items-center gap-3 px-[clamp(1rem,5vw,1.5rem)] pt-2">
-        <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-white/15 hover:bg-white/25" aria-label={t.back}>
+        <Link href={home} className="press grid size-11 shrink-0 place-items-center rounded-full bg-white/15 hover:bg-white/25" aria-label={t.back}>
           <ChevronRight className="size-5" />
         </Link>
         <p className="min-w-0 flex-1 truncate text-center text-[1.25rem] font-bold">{shop.name}</p>
@@ -546,7 +546,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
             </button>
           </p>
         )}
-        {item && !paused && (
+        {item && !paused && home === "/shop" && (
           <Link href="/shop/tampons" className="shrink-0 text-[0.8125rem] font-semibold text-white/80 underline underline-offset-4">
             غلطت في تامبون؟ بدّل الحاجة متاعو
           </Link>

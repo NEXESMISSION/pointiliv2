@@ -28,12 +28,32 @@ export function service() {
   return createClient(URL, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
+/**
+ * The owner's counter functions a staff phone may also run (supabase/packs-2026-11-09.sql, staff_act): the
+ * code, the counter's heartbeat, a customer read, the tampon given, a gift or prize handed over, the wheel
+ * spun, an order given, a tampon taken back. Nothing else.
+ */
+const STAFF_FNS = new Set(["new_code", "counter", "customer_at", "give_stamp", "give", "give_all", "held_back", "my_items", "draw_wins_at", "draw_give", "spin_at_counter", "store_give", "set_moment_item", "unstamp", "my_wheel"]);
+
+/**
+ * A counter function answered «no shop»: the caller owns none — and may be a staff phone of a shop (Pro).
+ * Asked again through staff_act, which runs the same function for the shop it works at; anyone who is not
+ * staff anywhere gets the first answer back, unchanged. An owner never gets «no shop», so never comes here.
+ */
+export async function asStaff(sb: Awaited<ReturnType<typeof db>>, fn: string, args: Record<string, unknown> | undefined, first: unknown): Promise<unknown> {
+  if (!STAFF_FNS.has(fn) || (first as { error?: string } | null)?.error !== "no_shop") return first;
+  const { data, error } = await sb.rpc("staff_act", { p_fn: fn, p_args: args ?? {} });
+  if (error || (data as { error?: string } | null)?.error === "not_staff") return first;
+  return data;
+}
+
 /** One call, one answer: the function's JSON, or null when the network or the database said no. */
 export async function call<T>(fn: string, args?: Record<string, unknown>): Promise<T | null> {
-  const { data, error } = await (await db()).rpc(fn, args);
+  const sb = await db();
+  const { data, error } = await sb.rpc(fn, args);
   if (error) {
     console.error(`[${fn}]`, error.message);
     return null;
   }
-  return data as T;
+  return (await asStaff(sb, fn, args, data)) as T;
 }

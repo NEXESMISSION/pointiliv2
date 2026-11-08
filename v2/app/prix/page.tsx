@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "@/components/Link";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Crown, Sparkles } from "lucide-react";
 import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
 import { JsonLd, SiteFrame } from "@/components/SiteFrame";
 import { Icon3D } from "@/components/ui";
-import { perMonth, PLANS } from "@/lib/plans";
+import { perMonth, PLANS, PRO_PLANS } from "@/lib/plans";
 import { GIFT, orgJsonLd, PRICES, SITE } from "@/lib/seo";
 import { getSettings } from "@/lib/settings";
 import { fill, monthsSaid, t } from "@/lib/t";
@@ -81,6 +81,33 @@ export default async function Prix() {
       <p className="mt-4 flex items-start gap-2.5 rounded-[1.25rem] bg-brand-soft px-5 py-4 text-[0.9375rem] font-bold leading-relaxed text-brand">
         <Sparkles className="mt-1 size-4 shrink-0" /> {GIFT.tn}
       </p>
+
+      {/* Pointili Pro (9 Nov 2026): the same card, and what brings the customers back more — said apart,
+          under Pointili's own prices, so the page still opens on the price most shops pay */}
+      <section className="mt-10 rounded-[1.75rem] p-6 shadow-card" style={{ background: "linear-gradient(135deg,#fff6d3 0%,#ffe08a 45%,#f7c041 100%)", color: "#5a3700" }}>
+        <h2 className="flex items-center gap-2 text-[1.375rem] font-bold">
+          <Crown className="size-6" /> Pointili Pro
+        </h2>
+        <p className="mt-1 text-[0.9375rem] font-semibold">كل شي في Pointili، وزيد اللي يرجّع الحرفاء أكثر:</p>
+        <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
+          {["التذكرة الذهبية: سحب، كل تامبون = تذكرة", "الماغازة: التامبونات يوليو نقاط يشريو بيهم", "3 تليفونات للخدّامة، يعطيو التامبونات", "ليستة الحرفاء في فيشي Excel"].map((p) => (
+            <li key={p} className="flex items-start gap-2 text-[0.9375rem] font-semibold">
+              <Check className="mt-1 size-4 shrink-0" strokeWidth={3} /> {p}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          {PRO_PLANS.map((p) => (
+            <p key={p.id} className="rounded-[1.125rem] bg-white/60 px-4 py-3">
+              <span className="block text-[0.875rem] font-bold opacity-80">{monthsSaid(p.months)}</span>
+              <span className="mt-0.5 flex items-end gap-1">
+                <span className="num text-[2rem] font-bold leading-none">{p.price}</span>
+                <span className="pb-0.5 text-[0.9375rem] font-bold">{t.payCurrency}</span>
+              </span>
+            </p>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-10">
         <h2 className="text-[1.375rem] font-bold">كيفاش تخلّص</h2>

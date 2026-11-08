@@ -9,6 +9,9 @@ import { adminSetWheel } from "@/app/actions-wheel";
 import { adminExportState, adminSetExport } from "@/app/actions-export";
 import { adminSetSystem, adminSystems, type AdminSystems } from "@/app/actions-draw";
 import { D, whenSaid } from "@/lib/draw";
+import { adminPackPreview, adminSetPack } from "@/app/actions-packs";
+import { P, PACK_NAME } from "@/lib/packs";
+import type { Pack } from "@/lib/plans";
 import { adminBoardShop, type BoardMore } from "@/app/admin/actions";
 import { AdminAccess } from "@/components/AdminAccess";
 import type { AccessShop } from "@/lib/board";
@@ -43,6 +46,16 @@ export function AdminShopMore({ shop, now, bare = false }: { shop: AccessShop; n
     const r = await adminBoardShop(shop.id).catch(() => null);
     if (r) setMore(r);
   }, [shop.id]);
+  // the shop's pack and new systems (admin_systems), read on their own; a pack changed reads the rest again
+  const [sys, setSys] = useState<AdminSystems | null>(null);
+  const [round, setRound] = useState(0);
+  useEffect(() => {
+    let live = true;
+    void adminSystems(shop.id).then((v) => live && setSys(v));
+    return () => {
+      live = false;
+    };
+  }, [shop.id, round]);
 
   if (more === undefined) return <div className="mt-3 h-40 animate-pulse rounded-[0.875rem] bg-canvas" aria-label="…" />;
   if (more === null) return <p className="mt-3 rounded-[0.875rem] bg-coral-soft px-3 py-2.5 text-[0.875rem] font-medium text-coral">{NOT_DONE}</p>;
@@ -56,8 +69,19 @@ export function AdminShopMore({ shop, now, bare = false }: { shop: AccessShop; n
       )}
       {/* on the study page the card and the story have their own places: only what is done to the shop here */}
       {!bare && <Story more={more} now={now} />}
-      <AdminAccess shop={shop} plan={more.plan} reload={load} />
-      <Switches shop={shop} more={more} reload={load} />
+      {sys && (
+        <PackLine
+          shopId={shop.id}
+          pack={sys.pack ?? "old"}
+          changed={async () => {
+            await load();
+            setRound((r) => r + 1);
+          }}
+        />
+      )}
+      {/* a pack changed: the price list changes with it (Pro's own), so the form starts again */}
+      <AdminAccess key={`access-${sys?.pack ?? "old"}`} shop={shop} plan={more.plan} reload={load} pack={sys?.pack ?? "old"} />
+      <Switches key={`switches-${round}`} shop={shop} more={more} reload={load} />
       <Account shop={shop} more={more} />
     </div>
   );
@@ -205,6 +229,80 @@ function ExportLine({ shopId }: { shopId: string }) {
         return null;
       }}
     />
+  );
+}
+
+/**
+ * The shop's pack (supabase/packs-2026-11-09.sql): «old» (a shop already open the day the packs came,
+ * kept exactly as it is), Pointili, or Pointili Pro. Another chosen, what it changes is read first and said
+ * as a list — the founder says yes, and the shop's switches follow at once.
+ */
+function PackLine({ shopId, pack, changed }: { shopId: string; pack: Pack; changed: () => Promise<void> }) {
+  const [want, setWant] = useState<Pack | null>(null);
+  const [preview, setPreview] = useState<{ changes: string[]; blocked: string | null } | null>(null);
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const choose = (p: Pack) => {
+    if (p === pack) return setWant(null);
+    setWant(p);
+    setPreview(null);
+    setError(null);
+    start(async () => setPreview(await adminPackPreview(shopId, p)));
+  };
+  const options: Pack[] = pack === "old" ? ["old", "base", "pro"] : ["base", "pro", "old"];
+  return (
+    <section className="rounded-[0.875rem] bg-canvas/70 p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <b className="text-[0.9062rem] text-ink">{P.aPack}</b>
+        {options.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => choose(p)}
+            aria-pressed={p === pack}
+            className={`h-8 rounded-full px-3 text-[0.8125rem] font-bold ${p === pack ? "bg-ink text-white" : p === want ? "bg-brand text-white" : "bg-surface text-body ring-1 ring-line"}`}
+          >
+            {p === "old" ? P.aPackOld : PACK_NAME[p]}
+          </button>
+        ))}
+      </div>
+      <p className="mt-1.5 text-[0.75rem] leading-snug text-muted">{P.aPackLine[pack]}</p>
+      {want && (
+        <div className="mt-2 rounded-[0.75rem] bg-surface p-2.5 ring-1 ring-line">
+          <p className="text-[0.8125rem] font-bold text-ink">{fill(P.aPackAsk, { pack: want === "old" ? P.aPackOld : PACK_NAME[want] })}</p>
+          {!preview ? (
+            <p className="mt-1 text-[0.75rem] text-muted">…</p>
+          ) : preview.blocked ? (
+            <p className="mt-1 text-[0.75rem] font-semibold text-coral">{P.aPackStoreOn}</p>
+          ) : (
+            <ul className="mt-1 list-disc space-y-0.5 ps-4 text-[0.75rem] text-body">
+              {preview.changes.length === 0 ? <li>{P.aPackNothing}</li> : preview.changes.map((c) => <li key={c}>{P.aPackChanges[c] ?? c}</li>)}
+            </ul>
+          )}
+          <div className="mt-2 flex justify-end gap-2">
+            <button type="button" onClick={() => setWant(null)} className="h-8 rounded-[0.5rem] bg-surface px-3 text-[0.8125rem] font-semibold text-body ring-1 ring-line">
+              لا
+            </button>
+            <button
+              type="button"
+              disabled={pending || !preview || !!preview.blocked}
+              onClick={() =>
+                start(async () => {
+                  const res = await adminSetPack(shopId, want);
+                  if (!res.ok) return setError(res.error === "store_on" ? P.aPackStoreOn : NOT_DONE);
+                  setWant(null);
+                  await changed();
+                })
+              }
+              className="h-8 rounded-[0.5rem] bg-brand px-3 text-[0.8125rem] font-bold text-white disabled:opacity-50"
+            >
+              {pending ? "…" : "إيه"}
+            </button>
+          </div>
+          {error && <p className="mt-1 text-[0.75rem] font-semibold text-coral">{error}</p>}
+        </div>
+      )}
+    </section>
   );
 }
 

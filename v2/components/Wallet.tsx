@@ -6,6 +6,7 @@ import type { Me } from "@/lib/session";
 import { call } from "@/lib/supabase";
 import type { CardView } from "@/lib/types";
 import type { WalletDraw } from "@/lib/draw";
+import type { StaffAt } from "@/components/Cards";
 
 /**
  * The customer's cards, fetched: the cards themselves and the person's own
@@ -19,13 +20,15 @@ import type { WalletDraw } from "@/lib/draw";
  * The look itself is components/Cards.tsx.
  */
 export async function Wallet({ me, back }: { me: Me; back?: string }) {
-  // the cards with a golden ticket on them (a draw waiting, a prize to take), in the same breath
-  const [list, draws] = await Promise.all([call<CardView[]>("wallet"), call<WalletDraw[]>("my_draws")]);
+  // in the same breath: the cards with a golden ticket on them (a draw waiting, a prize to take), and the shop this
+  // person works at as staff (Pro) — both null for nearly everybody (supabase/packs-2026-11-09.sql, my_extras)
+  const [list, extras] = await Promise.all([call<CardView[]>("wallet"), call<{ draws: WalletDraw[] | null; staff: StaffAt | null } | null>("my_extras")]);
   const cards = list ?? [];
+  const draws = extras?.draws ?? [];
   const svg = me.code
     ? await QRCode.toString(`${await siteOrigin()}/u/${me.code}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#0F0E17", light: "#FFFFFF" } })
     : null;
-  return <Cards me={me.id} name={me.name ?? ""} code={me.code ?? null} svg={svg} cards={cards} seen={me.seen ?? []} passwordSet={me.password_set !== false} back={back} draws={draws ?? []} />;
+  return <Cards me={me.id} name={me.name ?? ""} code={me.code ?? null} svg={svg} cards={cards} seen={me.seen ?? []} passwordSet={me.password_set !== false} back={back} draws={draws} staff={extras?.staff ?? null} />;
 }
 
 /**

@@ -5,7 +5,9 @@
 --   · Pointili (base): the card with a gift or the roulette, the link — 35 / 120 / 180, today's prices;
 --   · Pointili Pro (pro): + the golden ticket, the store, the customers' file, 3 staff phones — 55 / 200 / 300.
 -- Every shop already open is «old»: frozen exactly as it is, every switch where the founder left it, its
--- price its own. Only a shop opened from now on starts on a pack (base), and only the founder moves a shop.
+-- price its own. Only a shop opened from now on starts on a pack (base), and only the founder moves a shop
+-- — by hand, as he turns a subscription on after a payment (no payment is asked through the app: the
+-- owner pays and sends the receipt on WhatsApp; the prices are v2/lib/plans.ts).
 --
 -- ONLY NEW THINGS, as the systems' file: no function, table or column already there is changed.
 
@@ -20,19 +22,6 @@ alter table public.shops add column if not exists store_allowed boolean not null
 alter table public.shops add column if not exists staff_max int not null default 0;
 alter table public.shops drop constraint if exists shops_staff_max_check;
 alter table public.shops add constraint shops_staff_max_check check (staff_max between 0 and 20);
--- the pack a payment asked for (null: a payment of before the packs, or of an old shop — as it always was)
-alter table public.payments add column if not exists pack text;
-alter table public.payments drop constraint if exists payments_pack_check;
-alter table public.payments add constraint payments_pack_check check (pack is null or pack in ('base', 'pro'));
-
--- what a pack costs (v2/lib/plans.ts says the same: change them together)
-create or replace function public.pack_price(p_pack text, p_months int) returns int
-language sql immutable set search_path = '' as $$
-  select case p_pack
-    when 'base' then case p_months when 1 then 35 when 6 then 120 when 12 then 180 end
-    when 'pro' then case p_months when 1 then 55 when 6 then 200 when 12 then 300 end end
-$$;
-
 -- ═══ staff phones (Pro) ═══════════════════════════════════════════════════════
 -- A shop's staff: people with their own account and their own phone, who give tampons and hand gifts
 -- over at the counter — never the settings, the customers' list, the numbers or the file. The owner
@@ -97,6 +86,22 @@ begin
   return jsonb_build_object('ok', true, 'pack', p_pack);
 end $$;
 
+-- a shop's systems as the console shows them — now with its pack and its staff phones
+create or replace function public.admin_systems(p_id uuid) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_id;
+  if s.id is null then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true, 'links', s.links_allowed, 'draw', s.draw_allowed,
+    'links_made', (select count(*) from public.codes k where k.shop_id = s.id and k.online),
+    'draw_open', (select d.draw_at from public.draws d where d.shop_id = s.id and d.status = 'open' limit 1),
+    'draws', (select count(*) from public.draws d where d.shop_id = s.id and d.status = 'drawn'),
+    'pack', s.pack, 'store_allowed', s.store_allowed, 'store_on', s.store_on, 'staff_max', s.staff_max,
+    'staff', (select count(*) from public.shop_staff st where st.shop_id = s.id and st.removed_at is null));
+end $$;
+
 -- what moving a shop to a pack would change, said before it is done (the console's question)
 create or replace function public.admin_pack_preview(p_id uuid, p_pack text) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
@@ -119,31 +124,6 @@ begin
     ) as x(c) where x.c is not null));
 end $$;
 
--- the founder's word on a payment, as always (admin_payment_decide), and then the pack it asked for
-create or replace function public.admin_payment_decide_pack(p_id uuid, p_paid boolean) returns jsonb
-language plpgsql security definer set search_path = '' as $$
-declare r jsonb; y public.payments%rowtype; v_pack text;
-begin
-  perform public.require_admin();
-  r := public.admin_payment_decide(p_id, p_paid);
-  if coalesce((r ->> 'ok')::boolean, false) and coalesce(p_paid, false) then
-    select * into y from public.payments where id = p_id;
-    if y.pack is not null then
-      select pack into v_pack from public.shops where id = y.shop_id;
-      if v_pack is distinct from y.pack then r := r || jsonb_build_object('pack', public.admin_set_pack(y.shop_id, y.pack)); end if;
-    end if;
-  end if;
-  return r;
-end $$;
-
--- the packs the payments asked for (the console's list of payments shows them beside each one)
-create or replace function public.admin_payment_packs() returns jsonb
-language plpgsql stable security definer set search_path = '' as $$
-begin
-  perform public.require_admin();
-  return coalesce((select jsonb_object_agg(y.id, y.pack) from public.payments y where y.pack is not null), '{}'::jsonb);
-end $$;
-
 -- ═══ the owner ═══════════════════════════════════════════════════════════════
 -- which systems the founder gave this shop — now with its pack, its reward, and its staff phones
 create or replace function public.my_systems() returns jsonb
@@ -153,8 +133,7 @@ language sql stable security definer set search_path = '' as $$
     'wins', (select count(*) from public.draw_wins w where w.shop_id = s.id and w.given_at is null),
     'pack', s.pack, 'store_allowed', s.store_allowed, 'store_on', s.store_on, 'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed,
     'export', s.export_allowed, 'staff_max', s.staff_max,
-    'staff', (select count(*) from public.shop_staff st where st.shop_id = s.id and st.removed_at is null),
-    'pending_pack', (select y.pack from public.payments y where y.shop_id = s.id and y.status = 'pending' order by y.created_at desc limit 1))
+    'staff', (select count(*) from public.shop_staff st where st.shop_id = s.id and st.removed_at is null))
   from public.shops s where s.owner_id = auth.uid()
 $$;
 
@@ -202,28 +181,6 @@ begin
     end loop;
   end if;
   return jsonb_build_object('ok', true, 'on', coalesce(p_on, false), 'gifts', v_gifts);
-end $$;
-
--- the owner of a shop on a pack asks to pay (as pay_request, with the pack chosen): one waiting at a time.
--- An old shop pays as it always did (pay_request): this refuses it
-create or replace function public.pay_request_pack(p_pack text, p_method text, p_months int default 12) returns jsonb
-language plpgsql security definer set search_path = '' as $$
-declare s public.shops%rowtype; v_months int; v_amount int; v_id uuid;
-begin
-  s := public.my_shop();
-  if s.id is null then return public.err('no_shop'); end if;
-  if s.pack = 'old' then return public.err('old'); end if;
-  if p_method is null or p_method not in ('card', 'd17', 'virement', 'versement', 'mandat', 'contact') then return public.err('invalid'); end if;
-  v_amount := public.pack_price(p_pack, p_months);
-  if v_amount is null then return public.err('invalid'); end if;
-  v_months := p_months + case when p_months in (6, 12) and now() <= public.offer_end(s) then 2 else 0 end;
-  select id into v_id from public.payments where shop_id = s.id and status = 'pending' order by created_at desc limit 1;
-  if v_id is null then
-    insert into public.payments (shop_id, method, months, amount, pack) values (s.id, p_method, v_months, v_amount, p_pack) returning id into v_id;
-  else
-    update public.payments set method = p_method, months = v_months, amount = v_amount, pack = p_pack, created_at = now() where id = v_id;
-  end if;
-  return jsonb_build_object('ok', true, 'id', v_id, 'months', v_months, 'amount', v_amount, 'pack', p_pack);
 end $$;
 
 -- the owner's staff phones: who, since when, and the room left
@@ -306,6 +263,31 @@ language sql stable security definer set search_path = '' as $$
   from (select * from public.staff_shop()) s
 $$;
 
+-- an invite looked at before it is used: the shop it is for (its name, its look), or why it will not do
+create or replace function public.staff_invite_peek(p_token text) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare i public.staff_invites%rowtype; s public.shops%rowtype;
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  if p_token is null or p_token !~ '^[A-Za-z0-9_-]{20,64}$' then return public.err('invalid'); end if;
+  select * into i from public.staff_invites where hash = public.sha(p_token);
+  if i.id is null then return public.err('invalid'); end if;
+  select * into s from public.shops where id = i.shop_id;
+  return jsonb_build_object('ok', true, 'shop', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo,
+    'state', case when i.used_at is not null then case when i.used_by = auth.uid() then 'mine' else 'used' end
+                  when i.expires_at <= now() then 'expired' else 'open' end);
+end $$;
+
+-- the wallet's extras in one call: the cards with a golden ticket on them (my_draws), and the shop this
+-- person works at as staff (its name: a door to its counter) — null for nearly everybody
+create or replace function public.my_extras() returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then return null; end if;
+  return jsonb_build_object('draws', public.my_draws(),
+    'staff', (select jsonb_build_object('name', s.name, 'color', s.color, 'kind', s.kind, 'logo', s.logo) from public.staff_shop() s where s.id is not null));
+end $$;
+
 -- a staff phone leaves the shop itself
 create or replace function public.staff_leave() returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -354,31 +336,43 @@ begin
   return r;
 end $$;
 
--- ═══ the founder's view of every shop: the packs beside the systems ═════════
-create or replace function public.admin_packs() returns jsonb
+-- ═══ the founder's view of every shop: its pack and its staff phones beside its systems ═══
+create or replace function public.admin_systems_all() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
+declare v_all boolean;
 begin
   perform public.require_admin();
-  return coalesce((select jsonb_object_agg(s.id, jsonb_build_object('pack', s.pack, 'staff',
-           (select count(*) from public.shop_staff st where st.shop_id = s.id and st.removed_at is null), 'store_allowed', s.store_allowed))
-         from public.shops s), '{}'::jsonb);
+  v_all := public.sees_robots();
+  return coalesce((
+    select jsonb_agg(x.j order by x.week desc, x.last desc nulls last) from (
+      select jsonb_build_object(
+        'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo,
+        'card', s.goal is not null, 'paused', s.paused, 'paid', s.paid_until is not null and s.paid_until > now(), 'shut', public.shut(s),
+        'wheel', s.wheel_allowed, 'wheel_on', s.wheel_on, 'store', s.store_on, 'items', s.items_on, 'export', s.export_allowed,
+        'links', s.links_allowed, 'links_made', (select count(*) from public.codes k where k.shop_id = s.id and k.online),
+        'draw', s.draw_allowed, 'draw_open', (select d.draw_at from public.draws d where d.shop_id = s.id and d.status = 'open' limit 1),
+        'week', wk.n, 'pack', s.pack, 'store_allowed', s.store_allowed,
+        'staff', (select count(*) from public.shop_staff st where st.shop_id = s.id and st.removed_at is null)) as j, wk.n as week, wk.last
+      from public.shops s left join public.people p on p.id = s.owner_id
+      cross join lateral (select count(*) filter (where m.kind = 'stamp' and m.created_at > now() - interval '7 days') as n, max(m.created_at) as last
+                          from public.moments m where m.shop_id = s.id) wk
+      where v_all or (not public.is_robot(s.owner_id) and not coalesce(p.is_admin or p.is_tester, false))) x), '[]'::jsonb);
 end $$;
 
 -- ═══ who may call what (these functions only) ═══════════════════════════════
-revoke execute on function public.pack_price(text, int), public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
-  public.admin_payment_decide_pack(uuid, boolean), public.admin_payment_packs(), public.my_systems(), public.store_preview(), public.set_store(boolean),
-  public.pay_request_pack(text, text, int), public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
-  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.admin_packs()
+revoke execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
+  public.my_systems(), public.store_preview(), public.set_store(boolean),
+  public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
+  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras()
   from public, anon, authenticated;
-grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text), public.admin_payment_decide_pack(uuid, boolean),
-  public.admin_payment_packs(), public.my_systems(), public.store_preview(), public.set_store(boolean), public.pay_request_pack(text, text, int),
+grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text), public.my_systems(), public.store_preview(), public.set_store(boolean),
   public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text), public.my_staff_shop(), public.staff_leave(),
-  public.staff_act(text, jsonb), public.admin_packs()
+  public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras()
   to authenticated;
-grant execute on function public.pack_price(text, int), public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
-  public.admin_payment_decide_pack(uuid, boolean), public.admin_payment_packs(), public.my_systems(), public.store_preview(), public.set_store(boolean),
-  public.pay_request_pack(text, text, int), public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
-  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.admin_packs()
+grant execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
+  public.my_systems(), public.store_preview(), public.set_store(boolean),
+  public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
+  public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras()
   to service_role;
 
 notify pgrst, 'reload schema';

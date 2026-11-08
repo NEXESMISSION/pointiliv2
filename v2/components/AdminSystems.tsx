@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, Search } from "lucide-react";
 import { ShopMark } from "@/components/ShopMark";
 import { D } from "@/lib/draw";
+import { PACK_NAME } from "@/lib/packs";
+import type { Pack } from "@/lib/plans";
 
 /** a shop and its systems (admin_systems_all) */
 export type SystemsRow = {
@@ -27,7 +29,18 @@ export type SystemsRow = {
   draw: boolean;
   draw_open: string | null;
   week: number;
+  /** its pack (supabase/packs-2026-11-09.sql): «old» for every shop already open the day the packs came */
+  pack?: Pack;
+  store_allowed?: boolean;
+  staff?: number;
 };
+
+/** the packs, as the console names them */
+const PACKS: { key: Pack; label: string; tone: string }[] = [
+  { key: "pro", label: PACK_NAME.pro, tone: "bg-[#fff2c7] text-[#8a5a00]" },
+  { key: "base", label: PACK_NAME.base, tone: "bg-brand-soft text-brand" },
+  { key: "old", label: "قديم", tone: "bg-canvas text-muted" },
+];
 
 /** the systems, one by one: its name, which shops have it, and the chip a shop's line wears for it */
 const SYSTEMS: { key: string; label: string; has: (s: SystemsRow) => boolean; tone: string }[] = [
@@ -47,17 +60,30 @@ const SYSTEMS: { key: string; label: string; has: (s: SystemsRow) => boolean; to
  */
 export function AdminSystems({ shops }: { shops: SystemsRow[] }) {
   const [only, setOnly] = useState<string | null>(null);
+  const [pack, setPack] = useState<Pack | null>(null);
   const [q, setQ] = useState("");
   const [active, setActive] = useState(false);
   const list = useMemo(() => {
     const sys = SYSTEMS.find((x) => x.key === only);
     const needle = q.trim().toLowerCase();
-    return shops.filter((s) => (!sys || sys.has(s)) && (!active || s.week > 0) && (!needle || s.name.toLowerCase().includes(needle)));
-  }, [shops, only, q, active]);
+    return shops.filter((s) => (!sys || sys.has(s)) && (!pack || (s.pack ?? "old") === pack) && (!active || s.week > 0) && (!needle || s.name.toLowerCase().includes(needle)));
+  }, [shops, only, pack, q, active]);
 
   return (
     <div className="space-y-3">
       <h1 className="text-[1.375rem] font-bold">الأنظمة</h1>
+      {/* the packs first: how many shops on each (a tap shows only them) */}
+      <div className="flex flex-wrap gap-2">
+        {PACKS.map((p) => {
+          const n = shops.filter((s) => (s.pack ?? "old") === p.key).length;
+          const on = pack === p.key;
+          return (
+            <button key={p.key} type="button" onClick={() => setPack(on ? null : p.key)} aria-pressed={on} className={`flex h-9 items-center gap-2 rounded-full px-3.5 text-[0.8125rem] font-bold shadow-card ${on ? "bg-ink text-white" : "bg-surface text-body"}`}>
+              {p.label} <span className={`num rounded-full px-2 ${on ? "bg-white/20" : p.tone}`}>{n}</span>
+            </button>
+          );
+        })}
+      </div>
       {/* how many shops have each system (the ones with a tampon this week, beside) — a tap shows only them */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {SYSTEMS.map((x) => {
@@ -90,7 +116,7 @@ export function AdminSystems({ shops }: { shops: SystemsRow[] }) {
       </div>
 
       <p className="px-1 text-[0.8125rem] text-muted">
-        {list.length} محل{only ? ` · ${SYSTEMS.find((x) => x.key === only)?.label}` : ""}
+        {list.length} محل{pack ? ` · ${PACKS.find((x) => x.key === pack)?.label}` : ""}{only ? ` · ${SYSTEMS.find((x) => x.key === only)?.label}` : ""}
       </p>
       <ul className="divide-y divide-line overflow-hidden rounded-[1.125rem] bg-surface shadow-card">
         {list.slice(0, 200).map((s) => (
@@ -102,10 +128,12 @@ export function AdminSystems({ shops }: { shops: SystemsRow[] }) {
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
                   <b className="truncate text-[0.9375rem] text-ink">{s.name}</b>
+                  {s.pack && s.pack !== "old" && <span className={`shrink-0 rounded-full px-1.5 text-[0.625rem] font-bold ${PACKS.find((x) => x.key === s.pack)?.tone}`}>{PACK_NAME[s.pack]}</span>}
                   {s.paid && <span className="shrink-0 rounded-full bg-mint-soft px-1.5 text-[0.625rem] font-bold text-mint">خالص</span>}
                   {(s.paused || s.shut) && <span className="shrink-0 rounded-full bg-coral-soft px-1.5 text-[0.625rem] font-bold text-coral">{s.paused ? "موقوف" : "مسكّر"}</span>}
                 </span>
                 <span className="mt-1 flex flex-wrap gap-1">
+                  {!!s.staff && <span className="rounded-full bg-canvas px-2 py-0.5 text-[0.6875rem] font-bold text-body">خدّامة {s.staff}</span>}
                   {SYSTEMS.filter((x) => x.has(s)).map((x) => (
                     <span key={x.key} className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-bold ${x.tone}`}>
                       {x.key === "links" && s.links_made ? `${x.label} (${s.links_made})` : x.key === "draw" && s.draw_open ? `${x.label} ⏳` : x.label}

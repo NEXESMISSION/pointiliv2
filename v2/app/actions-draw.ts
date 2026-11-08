@@ -50,7 +50,7 @@ export async function drawWinsAt(who: string): Promise<{ id: number; gift: strin
 }
 
 /** the founder's view of a shop's new systems (the link, the golden ticket) */
-export type AdminSystems = { ok: boolean; links: boolean; draw: boolean; links_made: number; draw_open: string | null; draws: number };
+export type AdminSystems = { ok: boolean; links: boolean; draw: boolean; links_made: number; draw_open: string | null; draws: number; pack?: "old" | "base" | "pro"; store_allowed?: boolean; store_on?: boolean; staff_max?: number; staff?: number };
 
 export async function adminSystems(shopId: string): Promise<AdminSystems | null> {
   if (!UUID.test(String(shopId ?? ""))) return null;

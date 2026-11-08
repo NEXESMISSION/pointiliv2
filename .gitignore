@@ -48,3 +48,4 @@ social/voice/*.srt
 localbase/node_modules/
 localbase/.data/
 localbase/.data-logins.txt
+localbase/.data-logins-demo.txt

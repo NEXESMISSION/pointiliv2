@@ -27,12 +27,13 @@ const WAYS = [
  * hand. A tap is only counted in the visits — it is not a payment waiting for
  * an answer (the founder, 18 Oct 2026: there is no request to manage).
  */
-export function PayMethods({ support, shop, plan, gift = false, details, phone }: { support: string | null; shop: string; plan: Plan; gift?: boolean; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] }; phone?: string | null }) {
+export function PayMethods({ support, shop, plan, gift = false, details, phone, pack = null }: { support: string | null; shop: string; plan: Plan; gift?: boolean; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] }; phone?: string | null; /** a shop on a pack: its name rides in the message («Pointili Pro · عام، 300 د»); null: as always */ pack?: string | null }) {
   const [way, setWay] = useState<string | null>(null);
   const said = (how: string) => signal("pay", how);
   const amount = plan.price;
   // the founder reads the plan in the message: «عام + شهرين بلاش، 180 د»
-  const which = fill(gift ? t.planSaidGift : t.planSaid, { plan: monthsSaid(plan.months), amount });
+  const planSaid = fill(gift ? t.planSaidGift : t.planSaid, { plan: monthsSaid(plan.months), amount });
+  const which = pack ? `${pack} · ${planSaid}` : planSaid;
   const receipt = support && way ? `https://wa.me/${support}?text=${encodeURIComponent(fill(t.payReceiptMsg, { shop, plan: which, way, from: phone ? fill(t.waFrom, { who: spaced(phone) }) : "" }))}` : null;
   const how =
     way === "D17" ? fill(t.payD17How, { amount }) : way === "Virement" ? fill(t.payRibHow, { amount }) : way === "Versement" ? fill(t.payVersementHow, { amount }) : way === "Mandat" ? fill(t.payMandatHow, { amount }) : fill(t.paySendWhat, { amount });

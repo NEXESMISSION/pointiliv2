@@ -16,6 +16,10 @@ import { resetLately, resetSoon, resetWhen } from "@/lib/reset";
 import { nextTampon } from "@/lib/when";
 import type { CardView } from "@/lib/types";
 import { D, daySaid, soonSaid, type WalletDraw } from "@/lib/draw";
+import { P } from "@/lib/packs";
+
+/** the shop a person works at as staff, as their wallet shows it (my_extras) */
+export type StaffAt = { name: string; color: string; kind: string; logo: string | null };
 
 /**
  * The customer's cards — the screen they open the app to see.
@@ -55,6 +59,7 @@ export function Cards({
   passwordSet,
   back,
   draws = [],
+  staff = null,
 }: {
   me: string;
   name: string;
@@ -66,6 +71,8 @@ export function Cards({
   back?: string;
   /** the cards with a golden ticket on them (lib/draw): none for nearly every customer — then nothing changes */
   draws?: WalletDraw[];
+  /** the shop this person works at as staff (Pro): a door to its counter — null for nearly everybody */
+  staff?: StaffAt | null;
 }) {
   const first = (name.split(" ")[0] ?? "").trim();
   const now = useNow();
@@ -102,6 +109,20 @@ export function Cards({
       {!passwordSet && (
         <Link href="/me" className="press mt-1.5 flex shrink-0 items-center gap-2 rounded-full bg-brand-soft px-3.5 py-2 text-[0.8125rem] font-bold text-brand">
           <Lock className="size-4 shrink-0" /> <span className="min-w-0 flex-1 truncate">{t.passwordAsk}</span> <ChevronLeft className="size-4 shrink-0" />
+        </Link>
+      )}
+
+      {/* a staff phone (Pro): the shop it works at, one tap from its counter */}
+      {staff && (
+        <Link href="/staff" className="press mt-2 flex shrink-0 items-center gap-3 rounded-[1.125rem] bg-surface px-3 py-2.5 shadow-card">
+          <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full" style={{ background: staff.color }}>
+            <ShopMark shop={staff} size={24} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[0.75rem] text-muted">{fill(P.walletStaff, { shop: staff.name })}</span>
+            <b className="block truncate text-[0.9375rem] text-brand">{P.walletStaffGo}</b>
+          </span>
+          <ChevronLeft className="size-5 shrink-0 text-faint" />
         </Link>
       )}
 

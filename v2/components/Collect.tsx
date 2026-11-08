@@ -219,7 +219,7 @@ function errorText(code?: string): string {
  * code in their wallet is the same one), and a question comes up — give it
  * now, or not now.
  */
-export function Collect({ by, preset = "", shop, items = [], back, prizes = [], draws = false }: { by: Mode; preset?: string; shop?: DemoShop; items?: Item[]; back?: string; prizes?: Prize[]; /** the golden ticket (lib/draw drawCounter): ask whether this customer won a prize here — off for every shop without it */ draws?: boolean }) {
+export function Collect({ by, preset = "", shop, items = [], back, prizes = [], draws = false, home = "/shop" }: { by: Mode; preset?: string; shop?: DemoShop; items?: Item[]; back?: string; prizes?: Prize[]; /** the golden ticket (lib/draw drawCounter): ask whether this customer won a prize here — off for every shop without it */ draws?: boolean; /** where its ways back lead: the owner's home, or a staff phone's (/staff), its counter under it */ home?: string }) {
   const [mode, setMode] = useState<Mode>(by);
   const [digits, setDigits] = useState(preset.replace(/\D/g, "").slice(0, 11));
   const [step, setStep] = useState<Step>({ kind: "idle" });
@@ -375,7 +375,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [], 
     return (
       <Scanner
         key={round}
-        back="/shop"
+        back={home}
         title={t.collect}
         hint={t.collectScanHint}
         read={codeOf}
@@ -400,7 +400,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [], 
     <main className="safe-t safe-b relative mx-auto flex h-dvh w-full max-w-md flex-col px-[clamp(1rem,5vw,1.5rem)]">
       {((step.kind === "done" && step.gift) || step.kind === "handed") && <Confetti count={70} />}
       <header className="flex shrink-0 items-center gap-3 pt-2">
-        <Link href="/shop" className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
+        <Link href={home} className="press grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
           <ChevronRight className="size-5" />
         </Link>
         <h1 className="min-w-0 flex-1 truncate text-[1.25rem] font-bold">{t.collect}</h1>
@@ -461,7 +461,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [], 
               <Btn type="button" onClick={again}>
                 <RotateCcw className="size-5" /> {t.collectNext}
               </Btn>
-              <Link href="/shop" className="block py-2 text-center text-[0.9375rem] font-semibold text-muted [@media(max-height:560px)]:py-1.5">
+              <Link href={home} className="block py-2 text-center text-[0.9375rem] font-semibold text-muted [@media(max-height:560px)]:py-1.5">
                 {t.done}
               </Link>
             </div>
@@ -500,7 +500,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [], 
               <Btn type="button" onClick={again}>
                 <RotateCcw className="size-5" /> {t.collectNext}
               </Btn>
-              <Link href="/shop" className="block py-2 text-center text-[0.9375rem] font-semibold text-muted">
+              <Link href={home} className="block py-2 text-center text-[0.9375rem] font-semibold text-muted">
                 {t.done}
               </Link>
             </div>
@@ -584,7 +584,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [], 
                 <div className="rounded-[1.375rem] bg-coral-soft px-4 py-3.5 text-center">
                   <p className="text-[0.9375rem] font-bold text-coral">{t.collectUnknown}</p>
                   <p className="mt-1 text-[0.8125rem] text-body">{t.collectUnknownHint}</p>
-                  <Link href="/shop/qr" className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-[0.8125rem] font-bold text-brand shadow-card">
+                  <Link href={`${home}/qr`} className="press mt-2.5 inline-flex h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-[0.8125rem] font-bold text-brand shadow-card">
                     <QrCode className="size-4" /> {t.showCode}
                   </Link>
                 </div>
@@ -738,7 +738,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [], 
       )}
 
       {mode === "code" && step.kind !== "done" && step.kind !== "handed" && step.kind !== "undone" && (
-        <Link href="/shop/qr" className="mb-[2dvh] flex shrink-0 items-center justify-center gap-1.5 text-[0.8125rem] font-semibold text-brand">
+        <Link href={`${home}/qr`} className="mb-[2dvh] flex shrink-0 items-center justify-center gap-1.5 text-[0.8125rem] font-semibold text-brand">
           <QrCode className="size-4" /> {t.collectOr}
         </Link>
       )}

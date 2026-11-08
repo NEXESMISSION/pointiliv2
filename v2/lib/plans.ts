@@ -34,6 +34,22 @@ export const PLANS: Plan[] = [
 /** the price of the shops that paid before 7 Nov 2026 */
 export const OLD_PLANS: Plan[] = [{ id: "year", months: 12, price: 120, gift: 0 }];
 
+/**
+ * Pointili Pro (9 Nov 2026, the packs: supabase/packs-2026-11-09.sql): everything in Pointili, and the
+ * golden ticket, the store, the customers' file and 3 staff phones — a month 55, six months 200, a year
+ * 300, the offer's two months as on Pointili. PLANS above are Pointili's own. A shop already open («old»)
+ * keeps its own prices: these are for the shops on a pack.
+ */
+export const PRO_PLANS: Plan[] = [
+  { id: "month", months: 1, price: 55, gift: 0 },
+  { id: "half", months: 6, price: 200, gift: GIFT_MONTHS },
+  { id: "year", months: 12, price: 300, gift: GIFT_MONTHS },
+];
+
+export type Pack = "old" | "base" | "pro";
+/** a pack's own price list (an old shop: its own, as plansFor says) */
+export const plansOfPack = (pack: Pack, old?: boolean | null): Plan[] => (pack === "pro" ? PRO_PLANS : plansFor(old));
+
 export const plansFor = (old?: boolean | null): Plan[] => (old ? OLD_PLANS : PLANS);
 
 /** the plan an owner sees chosen first: the year (the best value, and what most owners take) */

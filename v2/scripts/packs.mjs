@@ -2,8 +2,8 @@
  * The packs (supabase/packs-2026-11-09.sql): a shop opened now starts on Pointili, a shop already open is
  * «old» and nothing moves it but the founder; the founder's pack sets the switches all at once (said
  * before, refused when the shop is on the store); the owner's own store switch with what it does to the
- * customers (the promise kept: points become tampons, full cards become gifts at once); a payment for a
- * pack, and the founder's word that sets it; staff phones — invited by a link, giving tampons for the
+ * customers (the promise kept: points become tampons, full cards become gifts at once); staff phones —
+ * invited by a link, giving tampons for the
  * shop and nothing else, signed out by the owner or by the pack going down.
  *
  * Its own throwaway accounts, robots, removed at the end. Meant for the database on this computer
@@ -106,32 +106,10 @@ try {
   const samiAfter = (await rpc(sami, "wallet")).find((c) => c.shop.id === novaShop.id);
   check("…Sami: his 4 tampons on the card, no gift yet", samiAfter.stamps === 4 && !samiAfter.ready, { stamps: samiAfter.stamps });
 
-  console.log("\nPaying for a pack");
-  check("an old shop pays as it always did: the pack's way refuses it", (await rpc(old, "pay_request_pack", { p_pack: "pro", p_method: "d17", p_months: 12 })).error === "old");
+  console.log("\nStaff phones (Pro)");
+  // the owner of another shop, who could not be staff anywhere
   const plain = await person("Plain Owner");
   await rpc(plain, "open_shop", { p_name: "Plain Shop", p_kind: "grocery" });
-  await rpc(plain, "save_card", { p_goal: 6, p_gift: "x x", p_color: "#0e9f6e" });
-  const plainShop = (await rpc(plain, "me")).shop;
-  // its first customer: the trial's clock starts, and with it the offer's 3 days (offer_end, as for pay_request)
-  await tampon(plain, sami);
-  check("a price that is not on the list is refused", (await rpc(plain, "pay_request_pack", { p_pack: "pro", p_method: "d17", p_months: 3 })).error === "invalid");
-  const ask = await rpc(plain, "pay_request_pack", { p_pack: "pro", p_method: "d17", p_months: 12 });
-  check("Pro for a year: 300, and the 2 months of the trial's first days", ask.ok && ask.amount === 300 && ask.months === 14 && ask.pack === "pro", ask);
-  const base6 = await rpc(plain, "pay_request_pack", { p_pack: "base", p_method: "d17", p_months: 6 });
-  check("changed to Pointili for six months: 120, the same payment asked (one at a time)", base6.ok && base6.amount === 120 && base6.id === ask.id, base6);
-  await rpc(plain, "pay_request_pack", { p_pack: "pro", p_method: "virement", p_months: 1 });
-  check("…and to Pro for a month: 55", (await sql(`select amount, pack from public.payments where id = '${ask.id}'`))[0].amount === 55);
-  check("the founder sees which pack each payment asks", (await rpc(boss, "admin_payment_packs"))[ask.id] === "pro");
-  check("the owner's screens see it waiting", (await rpc(plain, "my_systems")).pending_pack === "pro");
-  const decided = await rpc(boss, "admin_payment_decide_pack", { p_id: ask.id, p_paid: true });
-  check("the founder says it is paid: the month runs and the shop is on Pro", decided.ok && decided.pack?.pack === "pro" && (await shopOf(plainShop.id)).pack === "pro", decided);
-  check("a payment of before the packs is decided exactly as before (no pack touched)", (await (async () => {
-    const r = await rpc(old, "pay_request", { p_method: "d17", p_months: 12 });
-    const d = await rpc(boss, "admin_payment_decide_pack", { p_id: r.id, p_paid: true });
-    return d.ok && !d.pack && (await shopOf(oldShop.id)).pack === "old";
-  })()));
-
-  console.log("\nStaff phones (Pro)");
   check("Pointili has no staff phones", (await rpc(old, "staff_invite")).error === "not_allowed");
   const inv = await rpc(nova, "staff_invite");
   check("the owner makes an invite: one link", inv.ok && /^[A-Za-z0-9_-]{32}$/.test(inv.token), inv);

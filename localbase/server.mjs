@@ -47,9 +47,14 @@ await db.waitReady;
 if (fresh) {
   const t0 = Date.now();
   await db.exec(readFileSync(join(HERE, "prelude.sql"), "utf8"));
-  // a fresh database: functions name columns schema.sql adds further down (as on the live one, where they are there already)
-  await db.exec("set check_function_bodies = off;");
-  for (const f of FILES) if (existsSync(join(V2, f))) await db.exec(readFileSync(join(V2, f), "utf8"));
+  // a fresh database: schema.sql's functions name columns it adds further down (as on the live one, where
+  // they are there already) — so its bodies are checked when they run; every file after it, strictly, as
+  // the live database will check them
+  for (const f of FILES) {
+    if (!existsSync(join(V2, f))) continue;
+    await db.exec(`set check_function_bodies = ${f.endsWith("schema.sql") ? "off" : "on"};`);
+    await db.exec(readFileSync(join(V2, f), "utf8"));
+  }
   await db.exec("set check_function_bodies = on;");
   console.log(`localbase: a new database, ${FILES.filter((f) => existsSync(join(V2, f))).join(" + ")} (${Date.now() - t0} ms)`);
 }

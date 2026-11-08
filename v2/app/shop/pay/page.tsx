@@ -8,6 +8,7 @@ import { getMe } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { fill, t } from "@/lib/t";
+import { onPack, type ShopSystems } from "@/lib/packs";
 
 export const metadata = { title: "الأبونمان", robots: { index: false } };
 
@@ -21,11 +22,13 @@ const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "
  * and a WhatsApp or a call to finish it with the founder. Paid, the page says
  * until when; a few days before the end it takes the next one («جدّد»).
  */
-export default async function ShopPay() {
+export default async function ShopPay({ searchParams }: { searchParams: Promise<{ pack?: string }> }) {
   const me = await getMe();
   if (!me) redirect("/login?next=/shop/pay");
   if (!me.shop) redirect("/shop/setup");
-  const [pay, settings] = await Promise.all([call<Pay | null>("my_payment"), getSettings()]);
+  // a shop on a pack (9 Nov 2026) chooses between Pointili and Pointili Pro; a shop already open («old») pays as always
+  const [pay, settings, systems, { pack: asked }] = await Promise.all([call<Pay | null>("my_payment"), getSettings(), call<ShopSystems>("my_systems"), searchParams]);
+  const pack = onPack(systems) ? systems.pack : null;
   const paid = !!pay?.paid && !!pay.paid_until;
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const near = paid && Date.parse(pay!.paid_until!) - Date.now() < RENEW_DAYS * 86_400_000;
@@ -48,6 +51,8 @@ export default async function ShopPay() {
             support={settings.supportPhone}
             details={settings.pay}
             phone={me.phone}
+            pack={pack}
+            want={pack ? (asked === "pro" || asked === "base" ? asked : pack) : null}
           />
         </div>
       </div>
