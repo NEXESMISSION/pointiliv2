@@ -113,7 +113,7 @@ const howLong = (ms: number) => {
  * Searching and the filters work on the list already here, with no wait; the
  * list grows as it is scrolled, so a phone never draws it all.
  */
-export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { shops: BoardShop[]; now: number; open?: string | null }) {
+export function AdminBoard({ shops, now: serverNow, open: openFirst = null, packs = {} }: { shops: BoardShop[]; now: number; open?: string | null; /** the shops on a pack (admin_pack_map): «Pointili» / «Pointili Pro» beside the name; an old shop has none */ packs?: Record<string, "base" | "pro"> }) {
   // one clock for the whole list (not one per line): the server's first, then the phone's, every minute
   const [now, setNow] = useState(serverNow);
   useEffect(() => {
@@ -255,7 +255,7 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
       <div className="mt-3 space-y-3">
         {list.length === 0 && <p className="rounded-[1.125rem] bg-surface px-4 py-10 text-center text-[0.9375rem] text-muted ring-1 ring-line/70">ما لقينا حتى محل</p>}
         {list.slice(0, limit).map((s) => (
-          <ShopLine key={s.id} s={s} now={now} bench={bench.get(s.id)} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} onPicked={(key, at) => pickedOne(s.id, key, at)} />
+          <ShopLine key={s.id} s={s} now={now} bench={bench.get(s.id)} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} onPicked={(key, at) => pickedOne(s.id, key, at)} pack={packs[s.id]} />
         ))}
         {list.length > limit && <div ref={end} className="h-10" aria-hidden />}
       </div>
@@ -264,7 +264,7 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
 }
 
 /** One shop: who and where it stands, its numbers and its last 14 days, the owner's signs, the founder's stage and line, and the call. */
-function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; now: number; bench?: Bench; open: boolean; onToggle: () => void; onPicked: (stage: string, at: string | null) => void }) {
+function ShopLine({ s, now, bench, open, onToggle, onPicked, pack }: { s: BoardShop; now: number; bench?: Bench; open: boolean; onToggle: () => void; onPicked: (stage: string, at: string | null) => void; pack?: "base" | "pro" }) {
   const p = profileShop(s, bench, now);
   const st = standing(s, now);
   const d = digits(s.owner.phone ?? "");
@@ -281,6 +281,9 @@ function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; n
             <Link href={`/admin/shop/${s.id}`} className="min-w-0 flex-1 pt-0.5 text-[1rem] font-bold leading-snug text-ink">
               <bdi className="block truncate">{s.name}</bdi>
             </Link>
+            {pack && (
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-bold ${pack === "pro" ? "bg-[#fff2c7] text-[#8a5a00]" : "bg-brand-soft text-brand"}`}>{pack === "pro" ? "Pro" : "Pointili"}</span>
+            )}
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${PILL[st.tone]}`}>{st.say}</span>
           </div>
           {/* the owner, and when the shop opened — that one never cut (a new client is the first thing to see); the number is on the call */}

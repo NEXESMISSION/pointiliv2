@@ -12,8 +12,9 @@ const UUID = /^[0-9a-f-]{36}$/i;
  * opens that shop on the board.
  */
 export default async function Console({ searchParams }: { searchParams: Promise<{ shop?: string }> }) {
-  const [{ shop }, shops] = await Promise.all([searchParams, call<BoardShop[]>("admin_board")]);
+  // and the shops on a pack (9 Nov 2026), named beside their name — none of the shops already open, which stay «old»
+  const [{ shop }, shops, packs] = await Promise.all([searchParams, call<BoardShop[]>("admin_board"), call<Record<string, "base" | "pro">>("admin_pack_map")]);
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const now = Date.now();
-  return <AdminBoard shops={shops ?? []} now={now} open={shop && UUID.test(shop) ? shop : null} />;
+  return <AdminBoard shops={shops ?? []} now={now} open={shop && UUID.test(shop) ? shop : null} packs={packs ?? {}} />;
 }

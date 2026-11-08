@@ -373,22 +373,30 @@ begin
       where v_all or (not public.is_robot(s.owner_id) and not coalesce(p.is_admin or p.is_tester, false))) x), '[]'::jsonb);
 end $$;
 
+-- the shops on a pack, for the console's list of shops (a chip beside the name): every old shop is left out
+create or replace function public.admin_pack_map() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return coalesce((select jsonb_object_agg(s.id, s.pack) from public.shops s where s.pack <> 'old'), '{}'::jsonb);
+end $$;
+
 -- ═══ who may call what (these functions only) ═══════════════════════════════
 revoke execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
   public.my_systems(), public.store_preview(), public.set_store(boolean),
   public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
   public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
-  public.staff_invite_info(text)
+  public.staff_invite_info(text), public.admin_pack_map()
   from public, anon, authenticated;
 grant execute on function public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text), public.my_systems(), public.store_preview(), public.set_store(boolean),
   public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text), public.my_staff_shop(), public.staff_leave(),
-  public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras()
+  public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(), public.admin_pack_map()
   to authenticated;
 grant execute on function public.staff_shop(), public.admin_set_pack(uuid, text), public.admin_pack_preview(uuid, text),
   public.my_systems(), public.store_preview(), public.set_store(boolean),
   public.my_staff(), public.staff_invite(), public.staff_remove(bigint), public.staff_join(text),
   public.my_staff_shop(), public.staff_leave(), public.staff_act(text, jsonb), public.staff_invite_peek(text), public.my_extras(),
-  public.staff_invite_info(text)
+  public.staff_invite_info(text), public.admin_pack_map()
   to service_role;
 
 notify pgrst, 'reload schema';

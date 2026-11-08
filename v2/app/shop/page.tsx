@@ -130,6 +130,8 @@ export default async function ShopHome() {
           <span className="block truncate text-[0.8125rem] text-muted">
             {t.hello}
             {first ? ` ${first}` : ""}
+            {/* a shop on Pointili Pro (9 Nov 2026): said where the owner looks every day — no other shop shows anything here */}
+            {(systems as { pack?: string } | null)?.pack === "pro" && <span className="ms-1.5 rounded-full bg-[#fff2c7] px-1.5 py-px align-middle text-[0.6875rem] font-bold text-[#8a5a00]">Pro</span>}
           </span>
           {/* the name opens «المحل»: owners kept tapping it */}
           <Link href="/shop/settings" className="block truncate text-[1.5rem] font-bold leading-tight">
