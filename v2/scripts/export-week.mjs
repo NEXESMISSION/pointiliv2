@@ -6,8 +6,9 @@
  *
  * A throwaway shop with three customers (one close to its gift with a gift already taken, one away for
  * forty days, one who never got a tampon) and the owner's own card, which the file leaves out. The owner
- * downloads the file from «المحل» like a person (the phone's download), and the script opens it: three
- * sheets, the whole numbers, the counts. Then the week: the same file again within its half hour, the
+ * downloads the file from «المحل» like a person (the phone's download), and the script opens it: four
+ * sheets, the whole numbers, the counts, every tampon (here all by number: scripts/export-sold.mjs has
+ * the counter's QR code, the links and what was sold). Then the week: the same file again within its half hour, the
  * row locked an hour later with the date of the next one (and the link answering 429), open again after
  * eight days. Then a throwaway founder turns a subscription on with months and a way typed by hand.
  * Accounts deleted at the end; pictures and the file in .e2e/export-week/.
@@ -158,10 +159,16 @@ try {
 
   const x = unzip(readFileSync(file));
   const sheetNames = [...(x["xl/workbook.xml"] ?? "").matchAll(/<sheet name="([^"]+)"/g)].map((m) => m[1]);
-  check("three sheets: ملخّص, الحرفاء, كل شهر", sheetNames.join("|") === "ملخّص|الحرفاء|كل شهر", sheetNames);
+  check("four sheets: ملخّص, الحرفاء, كل تامبون, كل شهر", sheetNames.join("|") === "ملخّص|الحرفاء|كل تامبون|كل شهر", sheetNames);
   const sum = x["xl/worksheets/sheet1.xml"] ?? "";
   const list = x["xl/worksheets/sheet2.xml"] ?? "";
-  const months = x["xl/worksheets/sheet3.xml"] ?? "";
+  const tampons = x["xl/worksheets/sheet3.xml"] ?? "";
+  const months = x["xl/worksheets/sheet4.xml"] ?? "";
+  const tRows = rowsOf(tampons);
+  check("«كل تامبون»: a head and the customers' 13 tampons — never the owner's own", tRows.length === 14 && !texts(tampons).includes("رياض"), tRows.length);
+  check("…its head: when, name, phone, how it came — no «what» or «for whom» in a shop that says neither", texts(tRows[0] ?? "").join("|") === "النهار والوقت|الاسم|التليفون|كيفاش خذاه", texts(tRows[0] ?? ""));
+  check("…given by hand here, every one «بالنومرو»; the latest first (سنية, two days ago)", tRows.slice(1).every((r) => texts(r).includes("بالنومرو")) && texts(tRows[1] ?? "")[0] === "سنية", texts(tRows[1] ?? ""));
+  check("…its moments are real dates with their hour, a filter on every column", /<c r="A2" s="2"><v>[\d.]+<\/v>/.test(tampons) && tampons.includes('<autoFilter ref="A1:D14"/>'), tampons.slice(0, 300));
   const listRows = rowsOf(list);
   check("«الحرفاء»: a head and three customers — never the owner's own card", listRows.length === 4 && !texts(list).includes("رياض"), listRows.length);
   const words = texts(list);
