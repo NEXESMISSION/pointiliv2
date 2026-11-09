@@ -14,6 +14,13 @@ and only what Pointili really does.
 
 The finished films are in `out/`. What each one says is in `SCRIPTS.md`.
 
+One explainer is made with the same engine: `apk-install` (`node render.mjs apk`, copied to
+`../explainers/install-apk.mp4`) shows an owner how to put the Android app on a phone. It goes
+from `pointili.online/android` through what a phone in French asks: «Télécharger quand même»,
+«Ouvrir», «Paramètres» → «Autoriser cette source» (only the first time), «Installer». Then
+Pointili opens and its icon is on the home screen. The camera moves in on each button, there's
+no voice, and Derja captions explain each step.
+
 ## Making them
 
 ```
