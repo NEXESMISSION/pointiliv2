@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Clock, Copy, Eye, Link2, Send, Share2, X } from "lucide-react";
 import { cancelLink, myLinks, newLink, type LinkRow, type Links } from "@/app/actions-links";
 import { Ago } from "@/components/Ago";
@@ -12,7 +13,8 @@ import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
 
 type Item = { id: number; name: string };
-type Made = { url: string; label: string };
+/** the link just made: its address, who it is for, and what the tampon is for (a shop that says what it sells) */
+type Made = { url: string; label: string; item: string | null };
 
 const ERR: Record<string, string> = {
   slow_down: t.linkErrSlow,
@@ -56,6 +58,7 @@ async function copy(text: string): Promise<boolean> {
  */
 export function LinksBoard({ shop, items, first }: { shop: { name: string; color: string }; items: Item[]; first: Links }) {
   useScreen("links");
+  const router = useRouter();
   const [list, setList] = useState<Links>(first);
   const [label, setLabel] = useState("");
   const [item, setItem] = useState<number | null>(items.length === 1 ? items[0]!.id : null);
@@ -85,19 +88,29 @@ export function LinksBoard({ shop, items, first }: { shop: { name: string; color
 
   const need = items.length > 0 && item === null;
   const make = async () => {
-    if (busy || need) return;
+    if (busy) return;
+    // the question above the button, said again: a tap (or «go» on the keyboard) never does nothing
+    if (need) {
+      setErr(t.linkErrPick);
+      return;
+    }
     setBusy(true);
     setErr(null);
     try {
       const r = await newLink(label.trim(), items.length ? item : null);
       if (r.ok) {
         signal("link_made", label.trim() ? "label" : "none");
-        setMade({ url: r.url, label: label.trim() });
+        setMade({ url: r.url, label: label.trim(), item: items.find((it) => it.id === item)?.name ?? null });
         setLabel("");
+        // the next link is another customer's, asked again — as the counter asks before each code — so
+        // a tampon is never written down against what the one before bought (one thing: nothing to ask)
+        if (items.length > 1) setItem(null);
         void refresh();
       } else {
         signal("form_error", `link · ${r.error}`);
         setErr(ERR[r.error] ?? t.errNetwork);
+        // the shop says what it sells, but this page had no list (turned on since, or not read): read it again
+        if (r.error === "pick_item" && items.length === 0) router.refresh();
       }
     } catch {
       setErr(t.errNetwork);
@@ -133,7 +146,10 @@ export function LinksBoard({ shop, items, first }: { shop: { name: string; color
                 <button
                   key={it.id}
                   type="button"
-                  onClick={() => setItem(it.id)}
+                  onClick={() => {
+                    setItem(it.id);
+                    setErr((e) => (e === t.linkErrPick ? null : e));
+                  }}
                   aria-pressed={item === it.id}
                   className={`press h-9 max-w-full truncate rounded-full px-3.5 text-[0.9375rem] font-bold ${item === it.id ? "bg-brand text-white" : "bg-canvas text-body"}`}
                 >
@@ -162,7 +178,7 @@ export function LinksBoard({ shop, items, first }: { shop: { name: string; color
         />
         <p className="mt-1 px-1 text-[0.75rem] text-faint">{t.linkForHint}</p>
         {err && <p className="mt-2 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-medium text-coral">{err}</p>}
-        <Btn type="button" onClick={() => void make()} disabled={busy || need} className="mt-3 h-[3.25rem] font-bold">
+        <Btn type="button" onClick={() => void make()} disabled={busy} className="mt-3 h-[3.25rem] font-bold">
           <Link2 className="size-5" strokeWidth={2.4} /> {busy ? t.linkMaking : t.linkMake}
         </Btn>
       </section>
@@ -171,7 +187,8 @@ export function LinksBoard({ shop, items, first }: { shop: { name: string; color
       <section className="mt-[2dvh] flex min-h-[9rem] flex-1 flex-col pb-3">
         <div className="mb-2 flex items-baseline justify-between gap-2 px-0.5">
           <h2 className="text-[0.9375rem] font-bold">{t.linksList}</h2>
-          {list.links.length > 0 && <span className="num text-[0.75rem] text-muted">{fill(t.linksCount, { waiting: String(list.waiting), used: String(list.used) })}</span>}
+          {/* words and numbers together: right to left as the page (never .num, whose left-to-right reads it backwards) */}
+          {list.links.length > 0 && <span className="text-[0.75rem] tabular-nums text-muted">{fill(t.linksCount, { waiting: String(list.waiting), used: String(list.used) })}</span>}
         </div>
         <div data-list className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[1.25rem] bg-surface shadow-card">
           {list.links.length === 0 ? (
@@ -295,6 +312,7 @@ function SendSheet({ made, shop, onClose, onAnother }: { made: Made; shop: strin
       dismiss={t.done}
     >
       {made.label && <p className="mt-2 truncate text-[0.9375rem] font-bold text-brand">{made.label}</p>}
+      {made.item && <p className="mt-1 truncate text-[0.8125rem] font-semibold text-muted">{fill(t.linkItemIs, { item: made.item })}</p>}
       {/* the link itself, left to right, a tap copies it */}
       <button type="button" onClick={() => void doCopy()} dir="ltr" className="press mt-3 flex w-full items-center gap-2 rounded-[1rem] bg-canvas px-3.5 py-3 text-start ring-1 ring-inset ring-line">
         <Link2 className="size-4 shrink-0 text-brand" />

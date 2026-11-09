@@ -4426,8 +4426,17 @@ language sql stable set search_path = '' as $$
 $$;
 
 -- the owner's file: the customers (never the owner's own card), each with the whole number, the card
--- now, every tampon and gift, and when the clock takes the card back to zero; then the shop month by
--- month (Tunis months). Taking it starts the week (export_at): no longer `stable`, it writes.
+-- now, every tampon and gift, what they take most (a shop that says what it sells), and when the clock
+-- takes the card back to zero; then the shop month by month (Tunis months); then every tampon, one by one.
+-- Taking it starts the week (export_at): no longer `stable`, it writes.
+--
+-- Every tampon (9 Nov 2026, the founder: «the export should track what I sold, so I can filter the Excel …
+-- the tampons with the QR and the links, and what I sold exactly»): when, who, how it came and what it was
+-- for. How it came is read from the code it used, so nothing new is written for it and the tampons from
+-- before are told apart too: stamp() marks its code used in the very transaction that writes the tampon,
+-- so the code's used_at is the tampon's created_at to the microsecond, by the same person — «qr» the
+-- counter's code, «link» a link (with who the owner made it for); a tampon no code matches was given by
+-- number (give_stamp). The latest 50 000.
 create or replace function public.my_export() returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_next timestamptz;
@@ -4442,11 +4451,16 @@ begin
     update public.shops set export_at = now() where id = s.id returning * into s;
   end if;
   return jsonb_build_object('ok', true, 'shop', s.name, 'goal', s.goal, 'gift', s.gift, 'next', s.export_at + interval '7 days',
+    'items_on', s.items_on,
     'rows', coalesce((
       select jsonb_agg(jsonb_build_object(
                'name', nullif(p.name, ''), 'phone', p.phone, 'stamps', c.stamps, 'goal', coalesce(c.goal, s.goal),
                'total', m.stamps, 'given', m.given, 'waiting', m.waiting,
-               'since', c.created_at, 'last_at', c.last_at, 'reset_due', public.card_due(c, s))
+               'since', c.created_at, 'last_at', c.last_at, 'reset_due', public.card_due(c, s),
+               -- what this customer takes most (the latest of two as often)
+               'item', (select i.name from public.moments x join public.items i on i.id = x.item_id
+                        where x.card_id = c.id and x.kind = 'stamp'
+                        group by i.id, i.name order by count(*) desc, max(x.created_at) desc limit 1))
              order by c.last_at desc nulls last, c.created_at desc)
       from public.cards c
       left join public.people p on p.id = c.user_id
@@ -4467,7 +4481,23 @@ begin
           select to_char(x.created_at at time zone 'Africa/Tunis', 'YYYY-MM'), 0, (x.kind = 'stamp')::int, (x.kind = 'gift')::int
           from public.moments x join public.cards c on c.id = x.card_id
           where x.shop_id = s.id and c.user_id <> s.owner_id) u
-        group by u.month) k), '[]'::jsonb));
+        group by u.month) k), '[]'::jsonb),
+    'stamps', coalesce((
+      select jsonb_agg(jsonb_build_object('at', t.created_at, 'name', t.name, 'phone', t.phone, 'via', t.via, 'item', t.item, 'label', t.label)
+                       order by t.created_at desc, t.id desc)
+      from (
+        -- one line per tampon, whatever matches it (a code is used once: two never match one tampon)
+        select distinct on (m.id) m.id, m.created_at, nullif(p.name, '') as name, p.phone,
+               case when k.id is null then 'number' when k.online then 'link' else 'qr' end as via,
+               i.name as item, k.label
+        from (select x.id, x.created_at, x.item_id, c.user_id
+              from public.moments x join public.cards c on c.id = x.card_id
+              where x.shop_id = s.id and x.kind = 'stamp' and c.user_id <> s.owner_id
+              order by x.created_at desc, x.id desc limit 50000) m
+        left join public.people p on p.id = m.user_id
+        left join public.codes k on k.shop_id = s.id and k.used_by = m.user_id and k.used_at = m.created_at
+        left join public.items i on i.id = m.item_id
+        order by m.id, k.id) t), '[]'::jsonb));
 end $$;
 
 -- the owner's screen («المحل»): may this shop download; `open`: a file can be taken now (a new week, or

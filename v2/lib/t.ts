@@ -304,14 +304,15 @@ export const t = {
   setMine: "الكارطات اللي عندك في محلات أخرى",
   // «تحميل البيانات»: the customers as an Excel file, for a shop the founder allowed it
   setExport: "تحميل البيانات",
-  setExportSub: "فيشي Excel: الحرفاء، نومرواتهم وتامبوناتهم · مرّة في الجمعة",
+  setExportSub: "فيشي Excel: الحرفاء، نومرواتهم، وكل تامبون · مرّة في الجمعة",
   // once a week (8 Nov 2026): the file just taken, or the week still running
   setExportDone: "حمّلتو · الفيشي الجاي {date}",
   setExportWait: "الفيشي الجاي {date}",
-  // the file itself (app/api/export): its three sheets
+  // the file itself (app/api/export): its four sheets
   xl: {
     summary: "ملخّص",
     customers: "الحرفاء",
+    tampons: "كل تامبون",
     months: "كل شهر",
     made: "تاريخ الفيشي",
     card: "الكارط",
@@ -346,6 +347,18 @@ export const t = {
     newOnes: "حرفاء جدد",
     monthStamps: "تامبونات",
     won: "كادوات ربحوهم",
+    // every tampon (9 Nov 2026): how it came, what it was for
+    when: "النهار والوقت",
+    way: "كيفاش خذاه",
+    what: "شنوّة خذا",
+    linkFor: "الرابط لشكون",
+    viaQr: "كود QR",
+    viaLink: "رابط",
+    viaNumber: "بالنومرو",
+    favourite: "أكثر حاجة يشريها",
+    ways: "كيفاش جات التامبونات",
+    sold: "شنوّة تباع",
+    capped: "فيه آخر {n} تامبون برك",
   },
   // the card's clock (6 Nov 2026): so many days with no tampon and the card starts over
   wizResetQ: "الحريف كان غاب، الكارط ترجع للصفر؟",
@@ -1115,6 +1128,7 @@ export const t = {
   linkForPh: "مثلا: سامي · كوموند 12",
   linkForHint: "موش لازم · يبان كان ليك",
   linkPick: "التامبون على شنوّة؟",
+  linkItemIs: "التامبون على: {item}",
   linkMake: "اعمل رابط جديد",
   linkMaking: "قاعد نحضّر في الرابط…",
   linkReady: "الرابط حاضر",
