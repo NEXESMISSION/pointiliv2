@@ -16,7 +16,8 @@ The founder's rule: the shops and customers already on Pointili, the paying ones
   - Choosing the store with nothing in it yet: the owner writes the list first, and the store opens with it, in one go (`store_open`). The customers never meet an empty store.
   - In Pointili, the golden ticket's row says Pro; with prizes of an earlier draw still to hand over, it leads to them.
 - **Staff phones (Pro)**: the owner invites with a link (one use, 24 h). The staff phone gets the shop's counter (code, number, camera, gifts, prizes, what the clock took from the card in front of it) and nothing else. The owner or a pack downgrade signs it out.
-  - The owner sees what each phone gave by hand, today and these 7 days: tampons by number, gifts and prizes handed over, tampons taken back (`staff_log`). A scan of the code is the customer's own and is not counted.
+  - The owner sees what each phone gave, today and these 7 days: the customers who scanned the code it showed, tampons by number, gifts and prizes handed over, tampons taken back (`staff_log`, `codes.staff_id`).
+  - The owner's Excel file says who gave each tampon («شكون عطاه», and the counts in its summary): the staff phone that showed the code or gave it by number (`codes.staff_id`, `moments.staff_id`, written by `staff_act` only), or the owner. A shop with no staff gets no such column.
   - Invites not used yet show on the owner's page and can be called off.
   - Each phone has its own try limits (60 looks and 30 tampons by number in 10 minutes, as the owner has), never the owner's own.
   - A staff phone's counter looks back 12 hours at most, never the shop's whole past.
@@ -31,11 +32,13 @@ The founder's rule: the shops and customers already on Pointili, the paying ones
 ## What protects the old shops by design
 - Every shop already open is `pack = 'old'`. None of the new screens (the system page, staff, the Pro pay switch) appear for an old shop.
 - The golden ticket and the store choice are off for every shop until the founder turns them on. The link stays on for all, as today.
-- The database files add new things only. The one existing function changed is `link_new`, and only at release (below).
-- `schema.sql` itself gets three small additions, none of which changes what an old shop does:
+- The database files add new things only. The existing functions that change are `link_new` and `my_export`, and only at release (below).
+- `schema.sql` itself gets five small additions, none of which changes what an old shop does:
   - `link_new` refuses a shop whose link the founder switched off;
   - the `links_allowed` column is made there too (`add column if not exists`), so `schema.sql` run on its own never leaves `link_new` reading a column that is not there;
   - after its «who may call what», it gives the new files' functions their grants back when they are in the database (`systems_grants()`, `packs_grants()`). Without that, a run of `schema.sql` alone took them away: staff phones stopped and winners stopped seeing their prizes.
+  - two empty columns, `codes.staff_id` and `moments.staff_id` (who gave it, in a shop with staff phones), made beside their tables so `my_export` can read them even where the packs' file never ran;
+  - `my_export` (the owner's file) adds `staff` and `by` to each tampon. Like `link_new`, it is an old function that changes: compare the live one with main's before laying it, as for every patch. For a shop without staff, both are always false and empty, and its file is as before.
 - `scripts/db.mjs` keeps every switch it can read before a run. On the first run with a column that does not exist yet, it used to fall back to six switches; it now keeps all the others.
 - The screens old shops share (the counter, give-by-number, the store editor, the pay page, the card page) changed only where a staff phone, a pack shop or a golden ticket is involved; the old-shop comparison is 47/47 again.
 - The morning job (`/api/cron/remind`) also makes the draws whose moment came and tells their winners; with no draw anywhere, it does nothing more than today.
@@ -53,7 +56,7 @@ Everything above was built and tested on a database on this computer:
 ## Proof (re-run all of it before any release)
 - `node scripts/test.mjs`: the whole app's database rules.
 - `node scripts/draw.mjs`: the golden ticket (73 checks).
-- `node scripts/packs.mjs`: packs, store switching, staff phones (71 checks). It refuses any database but the local one.
+- `node scripts/packs.mjs`: packs, store switching, staff phones, who gave each tampon (74 checks). It refuses any database but the local one.
 - `node scripts/same-pages.mjs <main> <branch>`: the same pages for an old ordinary shop, an old roulette shop, an old store shop and their customer, on today's code and on the branch. Both must run on the same database, with their Next caches cleared (`rm -rf v2/.next`): settings are cached 24 h. On 9 Nov: **47/47 identical**, including the pay page, the counter and its scan screens.
 - The live-data check (`scripts/real-check.sql`) asks the new functions, as every real owner and customer, what they would show, in a transaction never committed. On 8 Nov: 384 real shops (10 paying), 553 cards and 555 wallets showed nothing new. Run it again with the packs' functions once they are on the database.
 - A fingerprint of every old database function, taken before and after the files are laid: none changed.
@@ -64,7 +67,7 @@ Everything above was built and tested on a database on this computer:
 2. **Pick a quiet hour: 03:00–07:00 Tunis.** Over the last 30 days that window had 1 tampon, against 121 between 12:00 and 13:00.
 3. **Apply the database first.** Run `node scripts/db.mjs` from the branch, with the live keys: schema.sql, then the systems and packs files, the KEPT switches guarded. Expected results:
    - `pack` comes as `'old'` for every shop already there.
-   - `link_new` is the only old function that changes. It refuses a shop whose link is switched off (dry run on 8 Nov: off → refused, on → made). Before that, compare the live `link_new` with the one in main's schema.sql, as for every patch.
+   - `link_new` and `my_export` are the only old functions that change. `link_new` refuses a shop whose link is switched off (dry run on 8 Nov: off → refused, on → made); `my_export` adds who gave each tampon (nothing for a shop without staff). Before that, compare the live `link_new` and `my_export` with the ones in main's schema.sql, as for every patch.
 4. **Deploy** after `git fetch`, making sure origin/main is contained in what is deployed.
 5. **Watch for 30 minutes:**
    - run `same-pages.mjs` against the live site;

@@ -359,6 +359,11 @@ export const t = {
     ways: "كيفاش جات التامبونات",
     sold: "شنوّة تباع",
     capped: "فيه آخر {n} تامبون برك",
+    // who gave it, in a shop with staff phones (Pro)
+    byWho: "شكون عطاه",
+    byWhoTitle: "شكون عطى التامبونات",
+    byOwner: "مولى المحل",
+    staffNoName: "تليفون خدّام",
   },
   // the card's clock (6 Nov 2026): so many days with no tampon and the card starts over
   wizResetQ: "الحريف كان غاب، الكارط ترجع للصفر؟",

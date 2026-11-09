@@ -189,11 +189,14 @@ try {
   await o.getByRole("link", { name: /بالنومرو/ }).waitFor({ timeout: 15000 });
   await shot(o, "05e-home", 400);
   // the logo, from «المحل» (not asked on the way in): a picture from the phone, made small, shown beside the name
-  await o.goto(BASE + "/shop/setup?edit=1", { waitUntil: "load" });
-  await o.locator('input[type="file"]').setInputFiles("app/apple-icon.png");
-  await o.locator('img[src*="/logos/"]').first().waitFor({ timeout: 30000 });
-  await shot(o, "03-owner-shop", 300);
-  await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
+  // (NOLOGO=1: a database with no Storage, as the one on this computer — the logo cannot be uploaded there)
+  if (!process.env.NOLOGO) {
+    await o.goto(BASE + "/shop/setup?edit=1", { waitUntil: "load" });
+    await o.locator('input[type="file"]').setInputFiles("app/apple-icon.png");
+    await o.locator('img[src*="/logos/"]').first().waitFor({ timeout: 30000 });
+    await shot(o, "03-owner-shop", 300);
+    await Promise.all([o.waitForURL((u) => u.pathname === "/shop", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
+  }
   await o.goto(BASE + "/shop/qr", { waitUntil: "load" });
   await o.locator("[data-qr]").waitFor({ timeout: 30000 });
 
@@ -278,9 +281,11 @@ try {
     await how.getByRole("button", { name: "من بعد" }).click();
     // one note a visit: the next one is the logo's (the shop has a customer now)
     await o.reload({ waitUntil: "load" });
-    await o.getByRole("dialog", { name: "اللوغو متاعك هوني" }).waitFor({ timeout: 20000 });
+    // with a logo, «اللوغو متاعك هوني» (and «باهي»); without one (NOLOGO), «حطّ اللوغو متاعك» (and «من بعد»)
+    const logoTip = o.getByRole("dialog", { name: /اللوغو متاعك/ });
+    await logoTip.waitFor({ timeout: 20000 });
     await shot(o, "17d-logo-tip", 700);
-    await o.getByRole("button", { name: "باهي", exact: true }).click();
+    await logoTip.getByRole("button", { name: process.env.NOLOGO ? "من بعد" : "باهي", exact: true }).click();
     await never(o, "the first gift's how-to (reload)", o.getByRole("dialog", { name: "باش تعطيهولو:" }), 500);
   }
   // the owner types the code under the customer's QR: the question comes up, the gift is handed over

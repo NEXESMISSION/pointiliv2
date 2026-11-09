@@ -39,7 +39,7 @@ export type StorePreview =
 
 /** the owner's staff phones (my_staff) */
 /** what a staff phone did (staff_log): tampons given by number, gifts and prizes handed over, tampons taken back */
-export type StaffDid = { stamps: number; gifts: number; back: number };
+export type StaffDid = { stamps: number; gifts: number; back: number; /** customers who scanned the code this phone showed */ scans?: number };
 export type MyStaff = {
   ok: boolean;
   max: number;
@@ -95,6 +95,8 @@ export const P = {
   rewardTitle: "شنوّة يربح الحريف؟",
   rewardOne: "واحد برك في نفس الوقت",
   rewardNow: "توّا",
+  // the reward on now, tapped: its own page, to change it (the gift, the prizes, the list)
+  rewardEdit: "بدّل",
   gift: "كادو ثابت",
   giftSub: "يكمّل الكارط، ياخذ الكادو اللي اخترتو.",
   wheel: "الروليت",
@@ -150,13 +152,14 @@ export const P = {
   staffShutTitle: "الأبونمان متاع المحل وفى",
   staffPausedTitle: "المحل موقّف توّا",
   staffStoppedBody: "قول لمولى المحل: كيف يرجع يخدم، ترجع تعطي التامبونات.",
-  // what each phone did, under its name: the tampons by number and the gifts (a scan of the code is the customer's own doing)
+  // what each phone did, under its name: the customers who scanned the code it showed, the tampons by number, the gifts
   staffToday: "اليوم: {what}",
   staffWeek: "7 أيّام: {what}",
   staffByNumber: "{n} بالنومرو",
+  staffByCode: "{n} بالكود",
   staffBack: "رجّع {n}",
-  staffNothing: "ما عطى شي بيدّو",
-  staffDidHint: "تحت كل إسم: اللي عطاه بيدّو — التامبونات بالنومرو والكادوات. اللي يسكانيو الكود ما يتحسبوش هنا.",
+  staffNothing: "ما عطى حتى شي",
+  staffDidHint: "تحت كل إسم: التامبونات اللي عطاهم (الكود متاع التليفون متاعو، ولا بالنومرو) والكادوات اللي سلّمهم.",
   staffInvitesOne: "رابط واحد بعثتو مازال ما تستعملش",
   staffInvitesMany: "{n} روابط بعثتهم مازالو ما تستعملوش",
   staffInvitesCancel: "بطّلهم",

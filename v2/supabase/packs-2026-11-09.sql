@@ -6,7 +6,7 @@
 --   · Pointili Pro (pro): + the golden ticket, the store, the customers' file, 3 staff phones — 55 / 200 / 300.
 -- Every shop already open is «old»: frozen exactly as it is, every switch where the founder left it, its
 -- price its own. Only a shop opened from now on starts on a pack (base), and only the founder moves a shop
--- — by hand, as he turns a subscription on after a payment (no payment is asked through the app: the
+-- — by hand, as they turn a subscription on after a payment (no payment is asked through the app: the
 -- owner pays and sends the receipt on WhatsApp; the prices are v2/lib/plans.ts).
 --
 -- ONLY NEW THINGS, as the systems' file: no function, table or column already there is changed.
@@ -245,8 +245,9 @@ exception when sqlstate 'P0001' then
 end $$;
 
 -- the owner's staff phones: who, since when, what each did today and these 7 days (the tampons given by
--- number, the gifts and prizes handed over, the tampons taken back — staff_log), the room left, and the
--- invites sent and not yet used (still open: they can be called off)
+-- number, the gifts and prizes handed over, the tampons taken back — staff_log; and the customers who scanned
+-- the code it showed — codes.staff_id, their tampon still there), the room left, and the invites sent and
+-- not yet used (still open: they can be called off)
 create or replace function public.my_staff() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_day timestamptz := (date_trunc('day', now() at time zone 'Africa/Tunis')) at time zone 'Africa/Tunis';
@@ -256,9 +257,9 @@ begin
   return jsonb_build_object('ok', true, 'max', s.staff_max,
     'invites', (select count(*) from public.staff_invites i where i.shop_id = s.id and i.used_at is null and i.expires_at > now()),
     'staff', coalesce((select jsonb_agg(jsonb_build_object('id', st.id, 'name', nullif(p.name, ''), 'phone', public.masked(p.phone), 'since', st.added_at,
-                        'today', jsonb_build_object('stamps', d.stamps_day, 'gifts', d.gifts_day, 'back', d.back_day),
-                        'week', jsonb_build_object('stamps', d.stamps_week, 'gifts', d.gifts_week, 'back', d.back_week),
-                        'last', d.last) order by st.added_at)
+                        'today', jsonb_build_object('stamps', d.stamps_day, 'gifts', d.gifts_day, 'back', d.back_day, 'scans', q.scans_day),
+                        'week', jsonb_build_object('stamps', d.stamps_week, 'gifts', d.gifts_week, 'back', d.back_week, 'scans', q.scans_week),
+                        'last', greatest(d.last, q.last)) order by st.added_at)
                       from public.shop_staff st left join public.people p on p.id = st.user_id
                       cross join lateral (
                         select coalesce(sum(l.n) filter (where l.fn = 'give_stamp' and l.at >= v_day), 0) as stamps_day,
@@ -269,6 +270,12 @@ begin
                                coalesce(sum(l.n) filter (where l.fn = 'unstamp'), 0) as back_week,
                                max(l.at) as last
                         from public.staff_log l where l.shop_id = s.id and l.staff_id = st.user_id and l.at > now() - interval '7 days') d
+                      cross join lateral (
+                        -- its code, scanned: one tampon each (stamp() used the code in the tampon's own transaction)
+                        select count(*) filter (where k.used_at >= v_day) as scans_day, count(*) as scans_week, max(k.used_at) as last
+                        from public.codes k join public.cards c on c.shop_id = k.shop_id and c.user_id = k.used_by
+                        where k.shop_id = s.id and k.staff_id = st.user_id and k.used_at > now() - interval '7 days'
+                          and exists (select 1 from public.moments m where m.card_id = c.id and m.kind = 'stamp' and m.created_at = k.used_at)) q
                       where st.shop_id = s.id and st.removed_at is null), '[]'::jsonb));
 end $$;
 
@@ -408,7 +415,7 @@ end $$;
 -- under the owner's id for this one call (it is how they find the shop), the staff phone's own id kept
 -- beside it; a tampon is never given to the hand that gives it. Three things are the phone's own:
 --   · its tries: a customer looked up, a tampon given by number — counted for this phone as the owner's
---     are for him (60 and 30 in 10 minutes), and never on the owner's (what the call wrote there is taken
+--     are counted (60 and 30 in 10 minutes), and never on the owner's (what the call wrote there is taken
 --     back), so a busy counter never locks the owner's out, nor one phone the others;
 --   · how far back its counter looks: a working day (12 hours), never the shop's whole past;
 --   · what it did, written for the owner (staff_log): the tampons by number, the gifts and prizes handed
@@ -456,6 +463,15 @@ begin
     when 'restore_reset' then public.restore_reset((a ->> 'p_card')::uuid)
   end;
   perform set_config('request.jwt.claims', coalesce(v_claims, ''), true);
+  -- who gave it (the owner's file «كل تامبون», the staff list): the code this phone showed — a customer who
+  -- scans it got the tampon from this phone — and the tampon it gave by number (schema.sql made the columns)
+  if r ->> 'ok' = 'true' then
+    if p_fn = 'new_code' and coalesce(r ->> 'id', '') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+      update public.codes set staff_id = v_uid where id = (r ->> 'id')::uuid and shop_id = s.id;
+    elsif p_fn = 'give_stamp' and coalesce(r ->> 'moment', '') ~ '^\d{1,18}$' then
+      update public.moments set staff_id = v_uid where id = (r ->> 'moment')::bigint and shop_id = s.id;
+    end if;
+  end if;
   -- the owner's own tries left as they were: this phone's were counted above
   if v_tries is not null then
     delete from public.tries where key = v_tries || s.owner_id::text and at = now();

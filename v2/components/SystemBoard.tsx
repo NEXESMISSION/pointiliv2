@@ -3,7 +3,7 @@
 import Link from "@/components/Link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Check, ChevronLeft, Crown, FileSpreadsheet, Gift, Link2, Lock, PieChart, ShoppingBasket, ShoppingCart, Smartphone, Trophy, type LucideIcon } from "lucide-react";
+import { ChevronLeft, Crown, FileSpreadsheet, Gift, Link2, Lock, PieChart, ShoppingBasket, ShoppingCart, Smartphone, Trophy, type LucideIcon } from "lucide-react";
 import { setStore, storePreview } from "@/app/actions-packs";
 import { setWheel } from "@/app/actions-wheel";
 import { Top } from "@/components/Top";
@@ -14,6 +14,8 @@ import { PRO_PLANS } from "@/lib/plans";
 import { customersN, fill, giftsN, monthsSaid, stampsN, t } from "@/lib/t";
 
 type Shop = { goal: number | null; gift: string | null; wheel_on?: boolean; store_on?: boolean; items_on?: boolean };
+/** where the reward on now is changed: the card's gift, the roulette's prizes, the store's list */
+const EDIT: Record<Reward, string> = { gift: "/shop/card", wheel: "/shop/wheel", store: "/shop/store?from=system" };
 
 /**
  * «النظام متاعي»: the owner's whole system on one screen (the model of 8 Nov 2026). Every visit is a
@@ -44,7 +46,8 @@ export function SystemBoard({ shop, systems, opened = false }: { shop: Shop; sys
   const choose = (to: Reward) => {
     setError(null);
     setSaid(null);
-    if (to === now) return;
+    // the reward already chosen: its own page, to change it — the card's gift, the roulette's prizes, the store's list
+    if (to === now) return router.push(EDIT[now]);
     // to or from the store: what it does to the customers, read and said first
     if (to === "store" || now === "store") return ask(to);
     // the gift and the roulette: the roulette's own page holds its prizes and its switch
@@ -120,7 +123,13 @@ export function SystemBoard({ shop, systems, opened = false }: { shop: Shop; sys
                     </b>
                     <span className="block text-[0.8125rem] leading-snug text-muted">{r.sub}</span>
                   </span>
-                  {on ? <Check className="size-5 shrink-0 text-brand" strokeWidth={3} /> : <ChevronLeft className="size-5 shrink-0 text-faint" />}
+                  {on ? (
+                    <span className="flex shrink-0 items-center gap-0.5 text-[0.8125rem] font-bold text-brand">
+                      {P.rewardEdit} <ChevronLeft className="size-4" strokeWidth={2.6} />
+                    </span>
+                  ) : (
+                    <ChevronLeft className="size-5 shrink-0 text-faint" />
+                  )}
                 </button>
               );
             })}

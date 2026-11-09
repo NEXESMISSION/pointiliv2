@@ -127,8 +127,10 @@ export default async function ShopSettings() {
             />
           )}
           {/* the wheel's own page — its prizes, each one's chance, and what fell — for a shop the
-              founder allowed it. It had no way in since the wheel moved into the card's question. */}
-          {(shop.wheel_allowed || shop.wheel_on) && (
+              founder allowed it. It had no way in since the wheel moved into the card's question.
+              A shop on a pack chooses its reward on «النظام متاعي»: the line only while the wheel is that
+              reward (to change its prizes), never «مطفية» beside a system that says «كادو ثابت» */}
+          {(onPack(systems as ShopSystems) ? !!shop.wheel_on : shop.wheel_allowed || shop.wheel_on) && (
             <Row href="/shop/wheel" mark={<Mark icon={PieChart} />} title={t.wheelOwnerTitle} sub={shop.wheel_on ? t.wheelSetOn : t.wheelSetOff} />
           )}
           {/* the golden ticket: a draw for the customers, for a shop the founder gave it (supabase/systems-2026-11-08.sql) */}

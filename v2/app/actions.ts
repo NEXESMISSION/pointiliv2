@@ -105,6 +105,14 @@ async function claim(name: string, phone: string, password: string): Promise<str
 }
 
 /**
+ * What was announced as new to the owners already there — a tampon by link (5 Nov 2026), «شكون رجع؟» (6 Nov),
+ * the card's clock (7 Nov) — is not news to an owner who opens a shop today: their home shows the link's row from
+ * the start, and their first card asks about the clock. Marked seen when the shop opens, those notes never cover
+ * the home of a shop with no customer yet (whose one job is the code), nor ask again what the first card asked.
+ */
+const NOT_NEWS = ["links_tip", "new_insights", "reset_tip"] as const;
+
+/**
  * A new owner's first screen: their account and their shop at once — their
  * name, the shop's name, what it sells, the phone and a password. Everything
  * is checked before the account is made; then the account, then the shop, as
@@ -127,6 +135,7 @@ export async function joinShop(_: FormState, fd: FormData): Promise<FormState> {
   if ("error" in made) return made;
   const { data: res } = await made.supabase.rpc("open_shop", { p_name: shop, p_kind: kind });
   if (!(res as { ok?: boolean } | null)?.ok) redirect("/shop/setup");
+  await Promise.all(NOT_NEWS.map((k) => made.supabase.rpc("see", { p_key: k })));
   // a new shop: a word to the founder's Telegram, and the sign-up to Facebook from our side too (lib/meta)
   const req = await metaRequest();
   after(() => Promise.all([alertNewShop(made.id), metaRegistration(made.id, req)]));
@@ -420,6 +429,7 @@ export async function openShop(_: FormState, fd: FormData): Promise<FormState> {
   if (!me.shop) {
     // someone who was a staff phone somewhere (Pro) is an owner now: out of that shop's staff, so its owner's list is right
     await call("staff_leave");
+    await Promise.all(NOT_NEWS.map((k) => call("see", { p_key: k })));
     const req = await metaRequest();
     after(() => Promise.all([alertNewShop(me.id), metaRegistration(me.id, req)]));
   }

@@ -1189,6 +1189,14 @@ revoke all on public.items from anon, authenticated, public;
 alter table public.codes   add column if not exists item_id bigint references public.items (id) on delete set null;
 alter table public.moments add column if not exists item_id bigint references public.items (id) on delete set null;
 create index if not exists moments_item_idx on public.moments (item_id) where item_id is not null;
+-- who gave it, in a shop with staff phones (Pro, supabase/packs-2026-11-09.sql: staff_act writes these, nothing
+-- else does): the staff phone that showed a code, and the one that gave a tampon by number. Null: the owner's
+-- own hand — every shop without staff, every tampon from before. Made here, beside their tables, so my_export
+-- (below) reads them even on a database the packs' file never reached
+alter table public.codes   add column if not exists staff_id uuid references auth.users (id) on delete set null;
+alter table public.moments add column if not exists staff_id uuid references auth.users (id) on delete set null;
+create index if not exists codes_staff_idx on public.codes (staff_id, used_at) where staff_id is not null;
+create index if not exists moments_staff_idx on public.moments (staff_id, created_at) where staff_id is not null;
 
 -- the owner's own list
 create or replace function public.my_items() returns jsonb
@@ -4442,7 +4450,8 @@ $$;
 -- before are told apart too: stamp() marks its code used in the very transaction that writes the tampon,
 -- so the code's used_at is the tampon's created_at to the microsecond, by the same person — «qr» the
 -- counter's code, «link» a link (with who the owner made it for); a tampon no code matches was given by
--- number (give_stamp). The latest 50 000.
+-- number (give_stamp). The latest 50 000. In a shop with staff phones (Pro), who gave each one: the staff
+-- phone that showed the code or gave it by number (codes.staff_id, moments.staff_id) — `staff` false: the owner.
 create or replace function public.my_export() returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; v_next timestamptz;
@@ -4489,20 +4498,23 @@ begin
           where x.shop_id = s.id and c.user_id <> s.owner_id) u
         group by u.month) k), '[]'::jsonb),
     'stamps', coalesce((
-      select jsonb_agg(jsonb_build_object('at', t.created_at, 'name', t.name, 'phone', t.phone, 'via', t.via, 'item', t.item, 'label', t.label)
+      select jsonb_agg(jsonb_build_object('at', t.created_at, 'name', t.name, 'phone', t.phone, 'via', t.via, 'item', t.item, 'label', t.label,
+                                          'staff', t.staff, 'by', t.by_name)
                        order by t.created_at desc, t.id desc)
       from (
         -- one line per tampon, whatever matches it (a code is used once: two never match one tampon)
         select distinct on (m.id) m.id, m.created_at, nullif(p.name, '') as name, p.phone,
                case when k.id is null then 'number' when k.online then 'link' else 'qr' end as via,
-               i.name as item, k.label
-        from (select x.id, x.created_at, x.item_id, c.user_id
+               i.name as item, k.label,
+               coalesce(m.staff_id, k.staff_id) is not null as staff, nullif(btrim(w.name), '') as by_name
+        from (select x.id, x.created_at, x.item_id, x.staff_id, c.user_id
               from public.moments x join public.cards c on c.id = x.card_id
               where x.shop_id = s.id and x.kind = 'stamp' and c.user_id <> s.owner_id
               order by x.created_at desc, x.id desc limit 50000) m
         left join public.people p on p.id = m.user_id
         left join public.codes k on k.shop_id = s.id and k.used_by = m.user_id and k.used_at = m.created_at
         left join public.items i on i.id = m.item_id
+        left join public.people w on w.id = coalesce(m.staff_id, k.staff_id)
         order by m.id, k.id) t), '[]'::jsonb));
 end $$;
 

@@ -172,6 +172,12 @@ try {
   check("he hands over one of Amira's gifts", waiting.length > 0 && (await rpc(yassine, "staff_act", { p_fn: "give", p_args: { p_moment: waiting[0].id } })).ok);
   const did = (await rpc(nova, "my_staff")).staff.find((x) => x.name === "Yassine Staff");
   check("the owner sees what he did today: 1 tampon by number, 1 gift handed over", did?.today?.stamps === 1 && did.today.gifts === 1 && did.week?.stamps === 1 && !!did.last, did);
+  check("…and the customers who scanned the code his phone showed: Sami, 1 today and this week", did?.today?.scans === 1 && did.week?.scans === 1, did);
+  const tagged = (await sql(`select (select staff_id from public.codes where id = '${code.id}') as code_by, (select staff_id from public.moments where id = ${Number(given.moment)}) as stamp_by`))[0];
+  check("who gave it, written down: the code his phone showed, the tampon he gave by number", tagged?.code_by === yassine.id && tagged?.stamp_by === yassine.id, tagged);
+  const file = await rpc(nova, "my_export");
+  const byHim = (file.stamps ?? []).filter((x) => x.staff);
+  check("the owner's file says who gave each tampon: his two by name (the scan, the number), the owner's own unnamed", file.ok && byHim.length === 2 && byHim.every((x) => x.by === "Yassine Staff") && byHim.some((x) => x.via === "qr") && byHim.some((x) => x.via === "number") && (file.stamps ?? []).some((x) => !x.staff && x.by === null), { n: byHim.length, first: file.stamps?.slice(0, 3) });
   check("what the clock took: given back for one card only, never every card at once",
     (await rpc(yassine, "staff_act", { p_fn: "restore_reset", p_args: {} })).error === "invalid"
       && (await rpc(yassine, "staff_act", { p_fn: "restore_reset", p_args: { p_card: given.card.id } })).error === "not_found");

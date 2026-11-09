@@ -10,7 +10,8 @@ type Row = { name: string | null; phone: string | null; stamps: number; goal: nu
 type Month = { month: string; customers: number; stamps: number; gifts: number };
 /** one tampon: how it came — «qr» the counter's code, «link» a link, «number» given by number */
 type Way = "qr" | "link" | "number";
-type Stamp = { at: string; name: string | null; phone: string | null; via: Way; item: string | null; label: string | null };
+/** `staff`: given by a staff phone (Pro) — `by` its person's name; otherwise by the owner */
+type Stamp = { at: string; name: string | null; phone: string | null; via: Way; item: string | null; label: string | null; staff?: boolean; by?: string | null };
 type Export = { ok: boolean; error?: string; next?: string; shop?: string; goal?: number | null; gift?: string | null; items_on?: boolean; rows?: Row[]; months?: Month[]; stamps?: Stamp[] };
 
 const DAY = 86_400_000;
@@ -59,6 +60,10 @@ export async function GET() {
   const items = !!res.items_on || stamps.some((s) => !!s.item) || rows.some((r) => !!r.item);
   // who a link was for: only when the owner wrote it on one
   const labels = stamps.some((s) => !!s.label);
+  // who gave it: only in a shop where a staff phone gave some (Pro) — the owner's own hand needs no column
+  const staffed = stamps.some((s) => !!s.staff);
+  const giver = (s: Stamp) => (s.staff ? (s.by ?? X.staffNoName) : X.byOwner);
+  const byWho = staffed ? [...stamps.reduce((m, s) => m.set(giver(s), (m.get(giver(s)) ?? 0) + 1), new Map<string, number>())].sort((a, b) => b[1] - a[1]) : [];
   const byWay = WAYS.map((w) => [w, stamps.filter((s) => s.via === w).length] as const).filter(([, n]) => n > 0);
   const sold = [...stamps.reduce((m, s) => (s.item ? m.set(s.item, (m.get(s.item) ?? 0) + 1) : m), new Map<string, number>())].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ar"));
 
@@ -81,6 +86,7 @@ export async function GET() {
     // how the tampons came, and what sold — the same counts the «كل تامبون» sheet filters to
     ...(byWay.length ? [[], [{ bold: X.ways }] as Cell[], ...byWay.map(([w, n]) => [WAY[w], n] as Cell[])] : []),
     ...(sold.length ? [[], [{ bold: X.sold }] as Cell[], ...sold.map(([name, n]) => [name, n] as Cell[])] : []),
+    ...(byWho.length ? [[], [{ bold: X.byWhoTitle }] as Cell[], ...byWho.map(([who, n]) => [who, n] as Cell[])] : []),
     ...(stamps.length >= CAP ? [[], [fill(X.capped, { n: String(CAP) })] as Cell[]] : []),
     [],
     ...(res.next ? [[{ bold: X.next }, { at: res.next, time: true }] as Cell[]] : []),
@@ -105,7 +111,7 @@ export async function GET() {
   ]);
 
   // ③ every tampon, the latest first: a filter on each column (how it came, what it was for, a day, a customer)
-  const tHead = [X.when, X.name, X.phone, X.way, ...(items ? [X.what] : []), ...(labels ? [X.linkFor] : [])];
+  const tHead = [X.when, X.name, X.phone, X.way, ...(items ? [X.what] : []), ...(labels ? [X.linkFor] : []), ...(staffed ? [X.byWho] : [])];
   const tList: Cell[][] = stamps.map((s) => [
     { at: s.at, time: true },
     s.name ?? "—",
@@ -113,6 +119,7 @@ export async function GET() {
     WAY[s.via] ?? X.viaNumber,
     ...(items ? [s.item ?? null] : []),
     ...(labels ? [s.label ?? null] : []),
+    ...(staffed ? [giver(s)] : []),
   ]);
 
   // ④ month by month, the latest first
@@ -121,7 +128,7 @@ export async function GET() {
   const file = workbook([
     { name: X.summary, rows: summary, widths: [30, 34] },
     { name: X.customers, head, rows: list, widths: [22, 17, 13, 13, 13, 13, 13, 13, 17, 14, 16, ...(clock ? [17] : []), ...(items ? [20] : [])] },
-    { name: X.tampons, head: tHead, rows: tList, widths: [17, 22, 17, 13, ...(items ? [20] : []), ...(labels ? [24] : [])] },
+    { name: X.tampons, head: tHead, rows: tList, widths: [17, 22, 17, 13, ...(items ? [20] : []), ...(labels ? [24] : []), ...(staffed ? [18] : [])] },
     { name: X.months, head: [X.month, X.newOnes, X.monthStamps, X.won], rows: byMonth, widths: [12, 13, 13, 15] },
   ]);
   const day = new Date(now).toLocaleDateString("sv-SE", { timeZone: "Africa/Tunis" });

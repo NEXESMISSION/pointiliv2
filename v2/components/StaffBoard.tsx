@@ -12,10 +12,15 @@ import { fill, giftsN, stampsN } from "@/lib/t";
 
 const ERR: Record<string, string> = { full: P.staffFull, not_allowed: P.staffNotPro };
 
-/** «3 بالنومرو · زوز كادوات · 1 رجّعهم», or null when the phone gave nothing by hand */
+/** «9 بالكود · 3 بالنومرو · زوز كادوات · رجّع 1», or null when the phone gave nothing */
 function didSaid(d: StaffDid | undefined): string | null {
   if (!d) return null;
-  const parts = [d.stamps > 0 ? fill(P.staffByNumber, { n: stampsN(d.stamps) }) : null, d.gifts > 0 ? giftsN(d.gifts) : null, d.back > 0 ? fill(P.staffBack, { n: stampsN(d.back) }) : null].filter(Boolean);
+  const parts = [
+    (d.scans ?? 0) > 0 ? fill(P.staffByCode, { n: stampsN(d.scans ?? 0) }) : null,
+    d.stamps > 0 ? fill(P.staffByNumber, { n: stampsN(d.stamps) }) : null,
+    d.gifts > 0 ? giftsN(d.gifts) : null,
+    d.back > 0 ? fill(P.staffBack, { n: stampsN(d.back) }) : null,
+  ].filter(Boolean);
   return parts.length ? parts.join(" · ") : null;
 }
 
