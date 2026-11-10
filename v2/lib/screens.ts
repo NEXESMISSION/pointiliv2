@@ -26,6 +26,8 @@ export const ROUTES: Record<string, string> = {
   "/shop/settings": "المحل",
   "/shop/start": "الفيديو (كيفاش يخدم)",
   "/shop/tampons": "بدّل الحاجة",
+  "/shop/history": "التاريخ",
+  "/shop/join": "كود التسجيل",
   "/shop/pay": "الخلاص",
   "/shop/store": "الماغازة",
   "/shop/wheel": "الروليت",

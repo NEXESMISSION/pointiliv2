@@ -11,6 +11,7 @@ import { ClipButton } from "@/components/HowClip";
 import { PickItem, type Item } from "@/components/PickItem";
 import { useScreen } from "@/components/Tracker";
 import { ShopMark } from "@/components/ShopMark";
+import { UndoButton } from "@/components/Undo";
 import { Icon3D } from "@/components/ui";
 import { seenBefore, shown } from "@/lib/once";
 import { tuneIn } from "@/lib/radio";
@@ -124,8 +125,9 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
       })
       .catch(() => {});
   };
-  // the last tampon given here since the screen opened: it stays under the code once its «+1» is gone
-  const [lastScan, setLastScan] = useState<{ name: string | null; at: string } | null>(null);
+  // the last tampon given here since the screen opened: it stays under the code once its «+1» is gone,
+  // with «فسّخ» beside it (10 Nov 2026) — the scan the owner did not mean, taken back where it was given
+  const [lastScan, setLastScan] = useState<{ name: string | null; at: string; moment: number; iso: string; gone?: boolean } | null>(null);
   const celebrate = useCallback(
     (who: string | null) => {
       shown("first_scan", shop.id);
@@ -230,7 +232,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
       } else {
         const res = await fetch(`/api/counter?code=${c.id}&since=${encodeURIComponent(openedAt.current)}`, { cache: "no-store" });
         if (!res.ok) throw new Error("state");
-        const s = (await res.json()) as { taken: boolean; expired: boolean; served?: number; stamps: { id: number; name: string | null }[]; gifts: Gift[]; held?: string[]; ids?: Known[]; tried?: { id: string; why: string; name: string | null; next_at: string | null }[] };
+        const s = (await res.json()) as { taken: boolean; expired: boolean; served?: number; stamps: { id: number; at?: string; name: string | null }[]; gifts: Gift[]; held?: string[]; ids?: Known[]; tried?: { id: string; why: string; name: string | null; next_at: string | null }[] };
         // the code on screen changed while asking (the radio swapped it): its answer is about the old one
         const same = codeRef.current?.id === c.id;
         const fresh = s.stamps.filter((x) => !seen.current.has(x.id));
@@ -239,7 +241,7 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
           const shown = fresh.slice(-2);
           setFlashes((f) => [...f, ...shown]);
           const newest = fresh[fresh.length - 1]!;
-          setLastScan({ name: newest.name, at: new Intl.DateTimeFormat("fr-TN", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date()) });
+          setLastScan({ name: newest.name, at: new Intl.DateTimeFormat("fr-TN", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Tunis" }).format(new Date()), moment: newest.id, iso: newest.at ?? new Date().toISOString() });
           navigator.vibrate?.(60);
           setTimeout(() => setFlashes((f) => f.filter((x) => !shown.some((y) => y.id === x.id))), 2600);
           // the shop's very first customer (not the owner trying it): after the «+1», the bravo
@@ -565,10 +567,15 @@ export function Counter({ shop, welcome, tip, shut: shutAtFirst, lapsed = false,
             <p key={latest.id} className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[1.0625rem] font-bold" style={{ color: COUNTER, animation: "ct-pill 520ms cubic-bezier(0.2,0.9,0.3,1.3) both" }} role="status">
               <Check className="size-5" strokeWidth={3} /> <span className="num">+1</span> {latest.name ?? t.someone}
             </p>
+          ) : lastScan?.gone ? (
+            <p className="max-w-xs truncate text-center text-[0.9375rem] font-semibold text-white/85">{fill(t.histCancel, { who: lastScan.name ?? t.someone })}</p>
           ) : lastScan ? (
-            <p className="flex max-w-xs items-center gap-1.5 truncate text-center text-[0.9375rem] font-semibold text-white/85">
-              <Check className="size-4 shrink-0" strokeWidth={3} /> {fill(t.lateStamp, { who: lastScan.name ?? t.someone })} · <span className="num">{lastScan.at}</span>
-            </p>
+            <span className="flex max-w-xs items-center gap-2">
+              <span className="flex min-w-0 items-center gap-1.5 truncate text-[0.9375rem] font-semibold text-white/85">
+                <Check className="size-4 shrink-0" strokeWidth={3} /> {fill(t.lateStamp, { who: lastScan.name ?? t.someone })} · <span className="num">{lastScan.at}</span>
+              </span>
+              <UndoButton moment={lastScan.moment} who={lastScan.name} at={lastScan.iso} where="counter" tone="dark" onDone={() => setLastScan((l) => (l ? { ...l, gone: true } : l))} />
+            </span>
           ) : (
             <p className="max-w-xs text-center text-[0.9375rem] text-white/80">{t.counterHint}</p>
           )}

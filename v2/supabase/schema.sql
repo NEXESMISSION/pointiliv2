@@ -282,6 +282,17 @@ create index if not exists cards_shop_idx on public.cards (shop_id, last_at desc
 -- a card reminded: once a month at most
 alter table public.cards add column if not exists reminded_at timestamptz;
 
+-- the shop's sign-up code (10 Nov 2026, the founder: «a static QR that leads to the account creation for
+-- the customer only, nothing else — turned on for the owner by the admin, off by default»). Printed and left
+-- on the counter or the door, it never gives a tampon: a customer scans it, makes an account (or signs in)
+-- and finds the shop's card in the wallet, at zero. join_on is the founder's switch; the token is made the
+-- first time it is turned on and kept, so a printed code works for good
+alter table public.shops add column if not exists join_on boolean not null default false;
+alter table public.shops add column if not exists join_token text;
+create unique index if not exists shops_join_token_idx on public.shops (join_token) where join_token is not null;
+-- a card made by that code (the owner counts them on its page)
+alter table public.cards add column if not exists joined boolean not null default false;
+
 -- ═══ the card's clock (6 Nov 2026) ═══════════════════════════════════════════
 -- A shop may have its cards start over when a customer stays away (the founder: «the owner sets a
 -- timer: if the customer does not get a tampon in like 7 days, the card is zeroed — so a half-full
@@ -652,6 +663,15 @@ language sql stable set search_path = '' as $$
 $$;
 
 -- 22 123 456 → 22 ••• 456
+-- may the owner still take this tampon back (10 Nov 2026: «more ways for the owner to cancel a tampon»)?
+-- within a day of it, while it is the last one on its card, and no gift of that card was handed over since
+create or replace function public.can_unstamp(p_card uuid, p_id bigint, p_at timestamptz) returns boolean
+language sql stable set search_path = '' as $$
+  select p_at > now() - interval '24 hours'
+     and not exists (select 1 from public.moments x where x.card_id = p_card and x.kind = 'stamp' and x.id > p_id)
+     and not exists (select 1 from public.moments g where g.card_id = p_card and g.kind = 'gift' and g.id > p_id and g.given_at is not null)
+$$;
+
 create or replace function public.masked(p_phone text) returns text
 language sql immutable set search_path = '' as $$
   select case when p_phone is null or length(p_phone) < 8 then null
@@ -791,6 +811,8 @@ begin
       'id', s.id, 'name', s.name, 'kind', s.kind, 'goal', s.goal, 'gift', s.gift, 'color', s.color, 'paused', s.paused,
       'signal', s.signal, 'logo', s.logo, 'stamp_logo', s.stamp_logo, 'items_on', s.items_on, 'stamp_gap', s.stamp_gap, 'store_on', s.store_on, 'wheel_on', s.wheel_on, 'wheel_allowed', s.wheel_allowed,
       'reset_days', s.reset_days, 'reset_paused', s.reset_paused_at is not null,
+      -- the founder's switch for the sign-up code: off, the owner never sees it at all
+      'join_on', s.join_on,
       -- the founder's switch for the card's clock: off, the owner never sees it at all
       'clock_on', coalesce((select x.value from public.settings x where x.key = 'clock_on'), '') = '1') end);
 end $$;
@@ -1058,7 +1080,9 @@ create or replace function public.shop_card_moments(p_card uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
   select coalesce(jsonb_agg(jsonb_build_object('id', m.id, 'kind', m.kind, 'at', m.created_at, 'given', m.given_at is not null,
                                                'gift', coalesce(m.gift, c.gift, s.gift),
-                                               'item', (select i.name from public.items i where i.id = m.item_id))
+                                               'item', (select i.name from public.items i where i.id = m.item_id),
+                                               -- the newest tampon of the day, before its gift is handed over: it can be taken back
+                                               'undo', m.kind = 'stamp' and public.can_unstamp(m.card_id, m.id, m.created_at))
                             order by m.created_at desc), '[]'::jsonb)
   from public.moments m join public.cards c on c.id = m.card_id join public.shops s on s.id = c.shop_id
   where m.card_id = p_card and s.owner_id = auth.uid()
@@ -2072,6 +2096,31 @@ end $$;
 -- twice. Only the card's latest tampon, within ten minutes; the gift it had
 -- just filled goes with it while it waits — one already handed over is too
 -- late, and so is the tampon under it. The card's last visit steps back too.
+-- a tampon the owner took back (10 Nov 2026): what it was, for «التاريخ» — the tampon itself is gone from the card
+create table if not exists public.cancels (
+  id            bigint generated always as identity primary key,
+  shop_id       uuid not null references public.shops (id) on delete cascade,
+  card_id       uuid references public.cards (id) on delete set null,
+  user_id       uuid references auth.users (id) on delete set null,
+  stamped_at    timestamptz not null,
+  item_id       bigint references public.items (id) on delete set null,
+  via           text check (via in ('qr', 'link', 'number')),
+  cancelled_at  timestamptz not null default now()
+);
+create index if not exists cancels_shop_idx on public.cancels (shop_id, cancelled_at desc);
+alter table public.cancels enable row level security;
+alter table public.cancels force row level security;
+revoke all on public.cancels from anon, authenticated, public;
+
+-- how a tampon came: a code scanned at the counter, a link sent, or the customer's number typed
+create or replace function public.via_of(p_shop uuid, p_user uuid, p_at timestamptz) returns text
+language sql stable set search_path = '' as $$
+  select coalesce((select case when k.online then 'link' else 'qr' end from public.codes k
+                   where k.shop_id = p_shop and k.used_by = p_user and k.used_at = p_at limit 1), 'number')
+$$;
+
+-- the owner takes a tampon back — from «التاريخ», a customer's card, the counter or right after giving it:
+-- within a day (it was ten minutes until 10 Nov 2026), the last one on its card, its gift not handed over
 create or replace function public.unstamp(p_moment bigint) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare s public.shops%rowtype; m public.moments%rowtype; c public.cards%rowtype; v_prev timestamptz; v_back int;
@@ -2080,7 +2129,7 @@ begin
   if s.id is null then return public.err('no_shop'); end if;
   select * into m from public.moments where id = p_moment and shop_id = s.id and kind = 'stamp' for update;
   if m.id is null then return public.err('not_found'); end if;
-  if m.created_at < now() - interval '10 minutes' then return public.err('too_late'); end if;
+  if m.created_at < now() - interval '24 hours' then return public.err('too_late'); end if;
   select * into c from public.cards where id = m.card_id for update;
   if exists (select 1 from public.moments x where x.card_id = c.id and x.kind = 'stamp' and x.id > m.id) then return public.err('not_last'); end if;
   if exists (select 1 from public.moments g where g.card_id = c.id and g.kind = 'gift' and g.id > m.id and g.given_at is not null) then return public.err('too_late'); end if;
@@ -2088,10 +2137,57 @@ begin
   select coalesce(count(*), 0) * coalesce(c.goal, s.goal) into v_back
   from public.moments g where g.card_id = c.id and g.kind = 'gift' and g.id > m.id and g.given_at is null and g.banked;
   delete from public.moments g where g.card_id = c.id and g.kind = 'gift' and g.id > m.id and g.given_at is null;
+  insert into public.cancels (shop_id, card_id, user_id, stamped_at, item_id, via)
+  values (s.id, c.id, c.user_id, m.created_at, m.item_id, public.via_of(s.id, c.user_id, m.created_at));
   delete from public.moments where id = m.id;
   select max(created_at) into v_prev from public.moments where card_id = c.id and kind = 'stamp';
   update public.cards set stamps = greatest(stamps + coalesce(v_back, 0) - 1, 0), last_at = v_prev where id = c.id returning * into c;
   return jsonb_build_object('ok', true, 'card', public.card_view(c.id));
+end $$;
+
+-- the owner's history (10 Nov 2026: «a page called history»): every tampon — and how it came —, every
+-- gift won and handed over, every tampon taken back; the newest first, sixty at a time (p_before: older
+-- than that). A tampon that can still be taken back says so
+create or replace function public.shop_history(p_before timestamptz default null) returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_before timestamptz := coalesce(p_before, now() + interval '1 minute');
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  return jsonb_build_object('ok', true, 'rows', coalesce((
+    select jsonb_agg(to_jsonb(e) order by e.at desc, e.id desc) from (
+      select * from (
+        select * from (
+          select m.id::text as id, 'stamp'::text as kind, m.created_at as at, m.id as moment,
+                 coalesce(nullif(split_part(p.name, ' ', 1), ''), public.masked(p.phone)) as who,
+                 (select i.name from public.items i where i.id = m.item_id) as item, null::text as gift,
+                 public.via_of(s.id, c.user_id, m.created_at) as via, null::timestamptz as was,
+                 public.can_unstamp(m.card_id, m.id, m.created_at) as undo
+          from public.moments m join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id
+          where m.shop_id = s.id and m.kind = 'stamp' and m.created_at < v_before
+          order by m.created_at desc limit 60) a
+        union all
+        select * from (
+          select 'w' || m.id, 'won', m.created_at, m.id, coalesce(nullif(split_part(p.name, ' ', 1), ''), public.masked(p.phone)),
+                 null::text, coalesce(m.gift, c.gift, s.gift), null::text, null::timestamptz, false
+          from public.moments m join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id
+          where m.shop_id = s.id and m.kind = 'gift' and m.created_at < v_before
+          order by m.created_at desc limit 60) b
+        union all
+        select * from (
+          select 'g' || m.id, 'given', m.given_at, m.id, coalesce(nullif(split_part(p.name, ' ', 1), ''), public.masked(p.phone)),
+                 null::text, coalesce(m.gift, c.gift, s.gift), null::text, null::timestamptz, false
+          from public.moments m join public.cards c on c.id = m.card_id left join public.people p on p.id = c.user_id
+          where m.shop_id = s.id and m.kind = 'gift' and m.given_at is not null and m.given_at < v_before
+          order by m.given_at desc limit 60) g
+        union all
+        select * from (
+          select 'x' || x.id, 'cancel', x.cancelled_at, null::bigint, coalesce(nullif(split_part(p.name, ' ', 1), ''), public.masked(p.phone)),
+                 (select i.name from public.items i where i.id = x.item_id), null::text, x.via, x.stamped_at, false
+          from public.cancels x left join public.people p on p.id = x.user_id
+          where x.shop_id = s.id and x.cancelled_at < v_before
+          order by x.cancelled_at desc limit 60) d
+      ) u order by u.at desc, u.id desc limit 60) e), '[]'::jsonb));
 end $$;
 
 -- ═══ a word to the customer's phone ════════════════════════════════════════
@@ -3856,6 +3952,69 @@ begin
 end $$;
 
 
+-- ═══ the sign-up code ══════════════════════════════════════════════════════
+-- the founder turns a shop's sign-up code on, or off (its token is made once, and kept)
+create or replace function public.admin_set_join(p_id uuid, p_on boolean) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  perform public.require_admin();
+  select * into s from public.shops where id = p_id;
+  if s.id is null then return public.err('not_found'); end if;
+  if coalesce(p_on, false) and s.goal is null then return public.err('no_card'); end if;
+  update public.shops set join_on = coalesce(p_on, false),
+         join_token = coalesce(join_token, translate(encode(extensions.gen_random_bytes(9), 'base64'), '+/=', '-_'))
+  where id = p_id;
+  return jsonb_build_object('ok', true, 'on', coalesce(p_on, false));
+end $$;
+
+-- the owner's sign-up code: on or not, its token, and how many customers it brought (all, and this week)
+create or replace function public.my_join() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare s public.shops%rowtype;
+begin
+  s := public.my_shop();
+  if s.id is null then return public.err('no_shop'); end if;
+  if not s.join_on or s.join_token is null then return jsonb_build_object('ok', true, 'on', false); end if;
+  return jsonb_build_object('ok', true, 'on', true, 'token', s.join_token,
+    'joined', (select count(*) from public.cards c where c.shop_id = s.id and c.joined),
+    'week', (select count(*) from public.cards c where c.shop_id = s.id and c.joined and c.created_at >= public.tunis_today() - interval '6 days'));
+end $$;
+
+-- the code opened (by anybody): the shop it belongs to, as its card shows it — only while it is on
+create or replace function public.join_open(p_token text) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object('ok', true, 'id', s.id, 'name', s.name, 'kind', s.kind, 'color', s.color, 'logo', s.logo,
+           'stamp_logo', s.stamp_logo, 'goal', s.goal, 'gift', s.gift, 'store', s.store_on,
+           'mine', s.owner_id = auth.uid(),
+           'card', (select c.id from public.cards c where c.shop_id = s.id and c.user_id = auth.uid()))
+  from public.shops s
+  where s.join_token = p_token and s.join_on and s.goal is not null
+$$;
+
+-- a signed-in customer takes the shop's card by its sign-up code: at zero, never a tampon. A card they
+-- already hold stays as it is
+create or replace function public.join_take(p_token text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare s public.shops%rowtype; v_card uuid; v_new boolean := false;
+begin
+  if auth.uid() is null then return public.err('not_signed_in'); end if;
+  select * into s from public.shops where join_token = p_token and join_on;
+  if s.id is null or s.goal is null then return public.err('not_found'); end if;
+  if s.owner_id = auth.uid() then return public.err('own_shop'); end if;
+  select id into v_card from public.cards where shop_id = s.id and user_id = auth.uid();
+  if v_card is null then
+    if not public.try_once('join:' || auth.uid(), 20, 10) then return public.err('too_many'); end if;
+    insert into public.people (id) values (auth.uid()) on conflict (id) do nothing;
+    insert into public.cards (shop_id, user_id, goal, gift, joined) values (s.id, auth.uid(), s.goal, s.gift, true)
+    on conflict (shop_id, user_id) do nothing returning id into v_card;
+    v_new := v_card is not null;
+    if v_card is null then select id into v_card from public.cards where shop_id = s.id and user_id = auth.uid(); end if;
+  end if;
+  return jsonb_build_object('ok', true, 'card', v_card, 'new', v_new, 'shop', s.name);
+end $$;
+
+
 -- ═══ a tampon written against the wrong thing ═════════════════════════════
 -- The counter asks which thing a tampon is for, and a finger can tap the wrong
 -- one. The owner sees the latest tampons (a week back) and puts each right in a
@@ -4198,6 +4357,7 @@ begin
   return jsonb_build_object(
     'id', s.id, 'goal', s.goal, 'gift', s.gift, 'paused', s.paused,
     'wheel_allowed', s.wheel_allowed, 'wheel_on', s.wheel_on, 'store_on', s.store_on, 'items_on', s.items_on,
+    'join_on', s.join_on, 'joined', (select count(*) from public.cards c where c.shop_id = s.id and c.joined),
     'owner_id', s.owner_id,
     'recent', coalesce((select jsonb_agg(jsonb_build_object('kind', x.kind, 'at', x.at, 'given', x.given, 'who', x.who) order by x.at desc) from (
         select m.kind, coalesce(m.given_at, m.created_at) as at, m.given_at is not null as given,
@@ -4770,9 +4930,10 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.counter(uuid, timestamptz), public.give(bigint), public.give_all(bigint), public.held_back(uuid),
   public.admin_set_store(uuid, boolean), public.admin_set_items(uuid, boolean), public.admin_trial(uuid, int, boolean), public.admin_phone_ask(uuid, boolean), public.phone_give(text),
   public.admin_set_wheel(uuid, boolean), public.my_stamps(), public.set_moment_item(bigint, bigint),
+  public.admin_set_join(uuid, boolean), public.my_join(), public.join_open(text), public.join_take(text),
   public.admin_forms(uuid), public.admin_form_save(uuid, uuid, text, jsonb, boolean), public.admin_form_delete(uuid), public.admin_form_entries(uuid),
   public.form_open(text), public.form_fill(text, jsonb), public.my_wheel(), public.wheel_save(jsonb), public.spin(bigint), public.spin_at_counter(bigint), public.my_store(), public.store_save(jsonb), public.card_store(uuid), public.store_buy(uuid, jsonb),
-  public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint),
+  public.store_cancel(uuid, uuid), public.store_give(uuid, uuid), public.unstamp(bigint), public.shop_history(timestamptz),
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.link_new(text, bigint), public.my_links(), public.link_cancel(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(uuid), public.admin_board_shop(uuid), public.admin_study(uuid),

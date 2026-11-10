@@ -227,7 +227,15 @@ export default async function ShopHome() {
       {/* who came lately: a box that takes all the room left, never less than a row
           and the link; before the first customer, as tall as its three steps */}
       <section className={`mt-[2dvh] flex flex-1 flex-col pb-3 ${lately ? "min-h-[9.5rem]" : ""}`}>
-        <h2 className="mb-2 px-0.5 text-[0.9375rem] font-bold">{t.lately}</h2>
+        {/* «التاريخ» (10 Nov 2026): everything, day by day, and a tampon given by mistake taken back there */}
+        <h2 className="mb-2 flex items-center justify-between px-0.5 text-[0.9375rem] font-bold">
+          {t.lately}
+          {lately && (
+            <Link href="/shop/history" className="press -my-1 flex h-8 items-center gap-0.5 rounded-full px-2 text-[0.8125rem] font-bold text-brand">
+              {t.histTitle} <ChevronLeft className="size-4" />
+            </Link>
+          )}
+        </h2>
         <div className={`flex flex-1 flex-col rounded-[1.25rem] bg-surface shadow-card ${lately ? "min-h-0 overflow-hidden" : ""}`}>
           {lately ? (
             <>

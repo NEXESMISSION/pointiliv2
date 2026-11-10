@@ -502,11 +502,11 @@ try {
   const filled = await rpc(owner, "give_stamp", { p_who: nourMe.code });
   const unfilled = await rpc(owner, "unstamp", { p_moment: filled.moment });
   check("the tampon that won the gift, taken back: the gift waits no more", filled.gift === true && unfilled.ok && unfilled.card.stamps === (nourCard.goal ?? 0) - 1 && !unfilled.card.waiting, [filled.card?.stamps, unfilled]);
-  // ten minutes gone: too late; and only the latest tampon goes back
-  await admin.from("cards").update({ stamps: 0, last_at: new Date(Date.now() - 2 * 3600_000).toISOString() }).eq("id", nourCard.id);
+  // a day gone: too late (it was ten minutes until 10 Nov 2026); and only the latest tampon goes back
+  await admin.from("cards").update({ stamps: 0, last_at: new Date(Date.now() - 26 * 3600_000).toISOString() }).eq("id", nourCard.id);
   const old = await rpc(owner, "give_stamp", { p_who: nourMe.code });
-  await admin.from("moments").update({ created_at: new Date(Date.now() - 11 * 60_000).toISOString() }).eq("id", old.moment);
-  check("ten minutes later it is too late", (await rpc(owner, "unstamp", { p_moment: old.moment })).error === "too_late");
+  await admin.from("moments").update({ created_at: new Date(Date.now() - 25 * 3600_000).toISOString() }).eq("id", old.moment);
+  check("a day later it is too late", (await rpc(owner, "unstamp", { p_moment: old.moment })).error === "too_late");
   await admin.from("cards").update({ last_at: new Date(Date.now() - 2 * 3600_000).toISOString() }).eq("id", nourCard.id);
   const newer = await rpc(owner, "give_stamp", { p_who: nourMe.code });
   await admin.from("moments").update({ created_at: new Date(Date.now() - 60_000).toISOString() }).eq("id", old.moment);

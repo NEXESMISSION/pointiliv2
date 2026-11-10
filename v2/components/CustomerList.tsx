@@ -242,7 +242,7 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
               }
             />
             {/* every tampon on the card, and what each one was for (the things' totals are above) */}
-            <CardMoments card={open.id} color={shop.color} tally={!(open.items && open.items.length)} />
+            <CardMoments card={open.id} color={shop.color} who={open.name} tally={!(open.items && open.items.length)} />
             {/* off the list, for good: asked first — the sheet below says exactly what goes */}
             <button
               type="button"

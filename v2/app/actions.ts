@@ -633,11 +633,36 @@ export async function pushUnsubscribe(endpoint: string): Promise<boolean> {
   return !!res?.ok;
 }
 
-/** The tampon just given by hand, taken back (the wrong customer, or twice): the card as it is after. */
+/**
+ * A tampon taken back (the wrong customer, or twice) — right after giving it, from «التاريخ», a customer's
+ * card or the counter: within a day, the last one on its card, its gift not handed over. The card as it is after.
+ */
 export async function unstamp(moment: number): Promise<{ ok: boolean; error?: string; card?: CardView }> {
   if (!Number.isInteger(moment) || moment <= 0) return { ok: false, error: "invalid" };
+  // no revalidation here: the counter and the giving screen keep their own state; the lists refresh themselves
   const res = await call<{ ok: boolean; error?: string; card?: CardView }>("unstamp", { p_moment: moment });
   return res ?? { ok: false, error: "network" };
+}
+
+/** one line of «التاريخ»: a tampon (how it came, whether it can still be taken back), a gift won or handed over, a tampon taken back */
+export type HistoryRow = {
+  id: string;
+  kind: "stamp" | "won" | "given" | "cancel";
+  at: string;
+  moment: number | null;
+  who: string | null;
+  item: string | null;
+  gift: string | null;
+  via: "qr" | "link" | "number" | null;
+  /** a tampon taken back: when it had been given */
+  was: string | null;
+  undo: boolean;
+};
+
+/** The history, sixty lines at a time: the newest first, or those older than `before`. */
+export async function shopHistory(before?: string | null): Promise<HistoryRow[]> {
+  const at = before && !Number.isNaN(Date.parse(before)) ? new Date(before).toISOString() : null;
+  return (await call<{ ok: boolean; rows: HistoryRow[] }>("shop_history", { p_before: at }))?.rows ?? [];
 }
 
 /** The founder writes a line in the books: what came in (in) or what the business spent (out) — on what, how much (dinars, millimes if any), which day (today in Tunis when not said), its kind. */
@@ -817,7 +842,8 @@ export async function adminResetPassword(id: string): Promise<{ ok: boolean; pas
 }
 
 /** (the owner) one customer's card: every tampon and gift on it, newest first, with what each tampon was for. */
-export type CardMoment = { id: number; kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item: string | null };
+/** `undo`: the newest tampon of the card, within a day and before its gift is handed over — it can be taken back */
+export type CardMoment = { id: number; kind: "stamp" | "gift"; at: string; given: boolean; gift: string | null; item: string | null; undo?: boolean };
 export async function cardMoments(card: string): Promise<CardMoment[]> {
   if (!UUID.test(card)) return [];
   return (await call<CardMoment[]>("shop_card_moments", { p_card: card })) ?? [];

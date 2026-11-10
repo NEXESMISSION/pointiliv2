@@ -10,10 +10,14 @@
  *   links   — a tampon sent as a link: the owner's home → «اعمل رابط جديد» → WhatsApp → the
  *             customer takes it → the owner's list. Real screens from a run of
  *             scripts/links.mjs (.e2e/links/); the chat is drawn.
+ *   cancel  — a tampon given by mistake, taken back (10 Nov 2026): the home's «التاريخ» →
+ *             «فسّخ» → «إيه، فسّخو» → the line taken back, and the two other ways, a
+ *             customer's card and the counter. Real screens from a run of
+ *             scripts/history.mjs (.e2e/history/).
  *
  *   node scripts/explainer-videos.mjs                 (from v2/: both)
  *   ONLY=install node scripts/explainer-videos.mjs    (one of them)
- *   → ../social/explainers/install-android-app.mp4, tampon-by-link.mp4
+ *   → ../social/explainers/install-android-app.mp4, tampon-by-link.mp4, cancel-tampon.mp4
  *
  * Needs Chrome, and ffmpeg (FFMPEG=path, else on the PATH).
  */
@@ -194,6 +198,48 @@ function linksFilm() {
         fx: [{ type: "ring", id: "ring", at: 600 }],
       },
       { kind: "card", dur: 2800, title: "تامبون برابط", sub: "لكل حريف رابط جديد · مرّة وحدة" },
+    ],
+  };
+}
+
+function cancelFilm() {
+  const e2e = (n) => file(`.e2e/history/${n}.png`);
+  const at = JSON.parse(readFileSync(".e2e/history/taps.json", "utf8"));
+  const ring = (id, b, pad = 6) => `<div class="ring" id="${id}" style="left:${b.x - b.w / 2 - pad}px;top:${b.y - b.h / 2 - pad}px;width:${b.w + 2 * pad}px;height:${b.h + 2 * pad}px"></div>`;
+  return {
+    name: "cancel-tampon",
+    scenes: [
+      { kind: "card", dur: 2000, title: "غلطت في تامبون؟", sub: "فسّخو في ثانيتين" },
+      { kind: "screen", dur: 3100, step: 1, title: "اضغط «التاريخ»", sub: "في الصفحة متاعك، فوق «آخر حركة»", html: img(e2e("1-home"), 0, 844) + status(), taps: [{ at: 1800, x: at.home.x, y: at.home.y }] },
+      { kind: "screen", dur: 3300, step: 2, title: "على التامبون الغالط، اضغط «فسّخ»", sub: "كل تامبون وكل كادو، نهار بنهار", html: img(e2e("2-history"), 0, 844) + status(), taps: [{ at: 1950, x: at.undo.x, y: at.undo.y }] },
+      { kind: "screen", dur: 3200, step: 3, title: "اضغط «إيه، فسّخو»", sub: "والكادو اللي ربحو بيه يتنحّى زادة", html: img(e2e("3-sheet"), 0, 844) + status(), taps: [{ at: 1900, x: at.yes.x, y: at.yes.y }] },
+      {
+        kind: "screen",
+        dur: 3200,
+        title: "وفات! التامبون تفسّخ",
+        sub: "والكارط متاع الحريف رجعت كيما كانت",
+        html: img(e2e("4-done"), 0, 844) + status() + ring("ring-done", at.done),
+        fx: [{ type: "ring", id: "ring-done", at: 500 }],
+      },
+      {
+        kind: "screen",
+        dur: 3600,
+        step: 4,
+        title: "ولا من كارط الحريف",
+        sub: "في «الحرفاء»: «فسّخ» على آخر تامبون متاعو",
+        html: img(e2e("6-card"), 0, 844) + status() + ring("ring-card", at.card, 4),
+        fx: [{ type: "ring", id: "ring-card", at: 700 }],
+      },
+      {
+        kind: "screen",
+        dur: 3400,
+        step: 5,
+        title: "ولا من الكود، كي يسكاني",
+        sub: "«فسّخ» حذا آخر تامبون",
+        html: img(e2e("7-counter"), 0, 844) + status("light"),
+        taps: [{ at: 2000, x: at.counter.x, y: at.counter.y }],
+      },
+      { kind: "card", dur: 3200, title: "آخر تامبون لكل حريف", sub: "تنجم تفسّخو في 24 ساعة، قبل ما ياخو الكادو" },
     ],
   };
 }
@@ -422,6 +468,10 @@ try {
   if (!ONLY || ONLY === "links") {
     if (!existsSync(".e2e/links/11-home.png")) throw new Error("no .e2e/links/ pictures: run scripts/links.mjs first");
     await render(browser, linksFilm());
+  }
+  if (!ONLY || ONLY === "cancel") {
+    if (!existsSync(".e2e/history/taps.json")) throw new Error("no .e2e/history/ pictures: run scripts/history.mjs first");
+    await render(browser, cancelFilm());
   }
 } finally {
   await browser.close();

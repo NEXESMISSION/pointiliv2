@@ -114,7 +114,7 @@ export function RecentList({ rows, shop, fix = false }: { rows: RecentRow[]; sho
               }
             />
             {/* every tampon on the card, and what each one was for */}
-            {open.card && <CardMoments card={open.card} color={shop.color} />}
+            {open.card && <CardMoments card={open.card} color={shop.color} who={open.name} />}
             {/* the wrong thing tapped at the counter: put right in two taps */}
             {fix && open.kind === "stamp" && (
               <Link href={`/shop/tampons?m=${open.id}`} className="press mt-3 flex h-11 items-center justify-center rounded-[1rem] bg-brand-soft text-[0.9375rem] font-bold text-brand">

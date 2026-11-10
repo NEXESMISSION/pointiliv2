@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cardMoments, type CardMoment } from "@/app/actions";
+import { UndoButton } from "@/components/Undo";
 import { Icon3D } from "@/components/ui";
 import { fill } from "@/lib/t";
 
@@ -19,10 +20,14 @@ const when = (iso: string) =>
  * One customer's card, tampon by tampon, under the card in the owner's sheet:
  * what each one was for (a shop that says what it sells), numbered in the
  * order they came, with the day and the hour — and on top, how many of each
- * thing. Gifts sit in the line where they were won.
+ * thing. Gifts sit in the line where they were won. The newest tampon, within a
+ * day and before its gift is handed over, carries «فسّخ» (components/Undo): one
+ * of the ways to take a tampon back (10 Nov 2026), on the home and in «الحرفاء».
  */
-export function CardMoments({ card, color, tally: showTally = true }: { card: string; color: string; tally?: boolean }) {
+export function CardMoments({ card, color, who = null, tally: showTally = true }: { card: string; color: string; who?: string | null; tally?: boolean }) {
   const [rows, setRows] = useState<CardMoment[] | null>(null);
+  // read again after a tampon is taken back
+  const [version, setVersion] = useState(0);
   useEffect(() => {
     let live = true;
     cardMoments(card)
@@ -31,7 +36,7 @@ export function CardMoments({ card, color, tally: showTally = true }: { card: st
     return () => {
       live = false;
     };
-  }, [card]);
+  }, [card, version]);
 
   if (!rows) {
     return (
@@ -78,6 +83,7 @@ export function CardMoments({ card, color, tally: showTally = true }: { card: st
                   <bdi>{r.item ?? say.stamp}</bdi>
                 </span>
                 <span className="shrink-0 text-[0.75rem] tabular-nums text-muted">{when(r.at)}</span>
+                {r.undo && <UndoButton moment={r.id} who={who} at={r.at} item={r.item} where="card" onDone={() => setVersion((v) => v + 1)} />}
               </li>
             ) : (
               <li key={r.id} className="flex items-center gap-3 bg-coral-soft/50 px-3.5 py-2.5">

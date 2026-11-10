@@ -1,7 +1,7 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChartColumn, ChevronLeft, Crown, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, UserRound, WalletCards } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, History, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, UserPlus, UserRound, WalletCards } from "lucide-react";
 import { ExportRow } from "@/components/ExportRow";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
@@ -120,6 +120,9 @@ export default async function ShopSettings() {
           <Row href="/shop/items" mark={<Mark icon={ShoppingBasket} />} title={t.itemsTile} sub={shop.items_on ? t.setItemsOn : t.setItemsOff} />
         </Group>
         <Group>
+          <Row href="/shop/history" mark={<Mark icon={History} />} title={t.histTitle} sub={t.histRowSub} />
+          {/* the sign-up code: only for a shop the founder turned it on for (off, the owner never sees it) */}
+          {shop.join_on && <Row href="/shop/join" mark={<Mark icon={UserPlus} />} title={t.joinCodeTitle} sub={t.joinRowSub} />}
           <Row href="/shop/stats" mark={<Mark icon={ChartColumn} />} title={t.statsTitle} sub={t.setStatsSub} />
           <Row href="/shop/insights" mark={<Mark icon={Repeat} />} title={t.insTitle} sub={t.insLinkSub} />
           {/* the customers as a file, once a week, for a shop the founder allowed it (components/ExportRow.tsx) */}

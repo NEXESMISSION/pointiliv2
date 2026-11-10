@@ -7,7 +7,7 @@ import { adminPause, adminResetPassword, adminSetTester } from "@/app/actions";
 import { adminSetItems, adminSetStore } from "@/app/actions-store";
 import { adminSetWheel } from "@/app/actions-wheel";
 import { adminExportState, adminSetExport } from "@/app/actions-export";
-import { adminBoardShop, type BoardMore } from "@/app/admin/actions";
+import { adminBoardShop, adminSetJoin, type BoardMore } from "@/app/admin/actions";
 import { AdminAccess } from "@/components/AdminAccess";
 import type { AccessShop } from "@/lib/board";
 import { Switch } from "@/components/Owner";
@@ -158,6 +158,13 @@ function Switches({ shop, more, reload }: { shop: AccessShop; more: BoardMore; r
         on={more.store_on}
         ask={more.store_on ? "ترجّعو للكارط العادية؟ التامبونات اللي عند الحرفاء يقعدو." : "تخدّم الماغازة للمحل هذا؟ يتبدّل اللي يشوفوه الحرفاء متاعو."}
         flip={async () => after(await adminSetStore(shop.id, !more.store_on), noCard)}
+      />
+      <SwitchLine
+        title="كود التسجيل"
+        line={more.join_on ? `مولى المحل عندو كود ثابت يطبعو: الحريف يعمل بيه الكونت ويلقى الكارط، بلا تامبون. ${more.joined ? `${more.joined} عملو بيه الكونت.` : "مازال حتى حد."}` : "مطفي: مولى المحل ما يشوفوش."}
+        on={!!more.join_on}
+        ask={more.join_on ? "تطفّي كود التسجيل؟ الكود المطبوع ما عادش يخدم حتى ترجّعو." : null}
+        flip={async () => after(await adminSetJoin(shop.id, !more.join_on), noCard)}
       />
       <ExportLine shopId={shop.id} />
     </section>

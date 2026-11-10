@@ -331,6 +331,11 @@ const SCREENS = [
   },
 
   { name: "home", as: "owner", path: "/shop" },
+  // «التاريخ» (10 Nov 2026): the day's lines, «فسّخ» on the newest tampons
+  { name: "history", as: "owner", path: "/shop/history" },
+  // «كود التسجيل» (10 Nov 2026): the founder's switch on for this run, the owner's poster, and the page a stranger lands on
+  { name: "join-code", as: "owner", before: () => admin.from("shops").update({ join_on: true, join_token: `sizes${shop.id.slice(0, 8)}` }).eq("id", shop.id), path: "/shop/join", after: () => admin.from("shops").update({ join_on: false }).eq("id", shop.id) },
+  { name: "join-public", before: () => admin.from("shops").update({ join_on: true, join_token: `sizes${shop.id.slice(0, 8)}` }).eq("id", shop.id), path: () => `/j/sizes${shop.id.slice(0, 8)}`, after: () => admin.from("shops").update({ join_on: false }).eq("id", shop.id) },
   { name: "home-help", as: "owner", path: "/shop", act: (p) => press(p, "عندك سؤال؟") },
   { name: "home-welcome", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "coach")), path: "/shop?welcome=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   // the shop's first gift waiting: how to hand it over, before any other note

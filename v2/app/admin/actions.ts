@@ -15,6 +15,9 @@ export type BoardMore = {
   wheel_on: boolean;
   store_on: boolean;
   items_on: boolean;
+  /** the sign-up code: on, and how many customers it brought */
+  join_on: boolean;
+  joined: number;
   owner_id: string;
   recent: { kind: "stamp" | "gift"; at: string; given: boolean; who: string | null }[];
   plan: { kind: "paid" | "until" | "end" | "trial"; months: number | null; until: string | null; amount: number | null; at: string }[];
@@ -44,6 +47,12 @@ export type Voice = { id: string; secs: number; at: string };
 export async function adminVoices(shopId: string): Promise<Voice[]> {
   if (!UUID.test(shopId)) return [];
   return (await call<Voice[]>("admin_voices", { p_shop: shopId })) ?? [];
+}
+
+/** The founder turns a shop's sign-up code on or off (/shop/join: a static QR that only makes accounts). */
+export async function adminSetJoin(shopId: string, on: boolean): Promise<{ ok: boolean; error?: string }> {
+  if (!UUID.test(shopId)) return { ok: false };
+  return (await call<{ ok: boolean; error?: string }>("admin_set_join", { p_id: shopId, p_on: !!on })) ?? { ok: false, error: "network" };
 }
 
 /** The founder's follow-up of a shop, picked next to his note (lib/board STAGES): kept with when it was picked. */
