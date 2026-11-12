@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تبيع أونلاين؟ · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/ads/out/f8-online.mp4</span></div>
+<div class="kind">Ad 8 of 15</div>
+<h1 dir="auto">تبيع أونلاين؟</h1>
+<p class="lede">Built like a chat story for online sellers: a tampon sent as a link on WhatsApp</p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/f8-online.jpg" src="../ads/out/f8-online.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f8-online.mp4</code>
+      
+      <div class="chips"><span class="chip">33.0 s</span><span class="chip">1080×1920</span><span class="chip">30 fps</span><span class="chip">with sound</span><span class="chip">3.5 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <div class="about"><p>f8 — <bdi>«تبيع أونلاين؟»</bdi> (selling online): a perfume shop on Instagram — a customer buys once and vanishes; with Pointili, after each order the shop makes a tampon link and sends it on WhatsApp; she opens it, the tampon lands on her card; each link works once and does not expire; the shop sees who took it. The app's own words (links*, linkWaText). Female voice.</p></div>
+  <p class="note">10 lines, 33.0 s. Every line is said by the voice; ▶ plays one line alone. Click a line to jump the video there. <b>Bold</b> words are the ones coloured on screen.</p>
+  <div class="tablewrap"><table class="lines">
+    <thead><tr><th>#</th><th>time (s)</th><th>said (voice)</th><th>subtitle on screen</th><th></th></tr></thead>
+    <tbody><tr data-start="0.25" data-end="2.64"><td class="n">1</td><td class="t num">0.3–2.6</td><td class="ar" dir="rtl">تبيع في <b>الأنستغرام</b> ولا الفيسبوك؟</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">0.3–2.8</small></td><td><button class="play" data-src="../ads/voice/f8-online/e1.wav" title="Play this line's voice" aria-label="Play line 1">▶</button></td></tr>
+<tr data-start="2.8" data-end="5.19"><td class="n">2</td><td class="t num">2.8–5.2</td><td class="ar" dir="rtl">الحريفة تشري مرّة.. <b>وتغبر</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">2.8–5.3</small></td><td><button class="play" data-src="../ads/voice/f8-online/e2.wav" title="Play this line's voice" aria-label="Play line 2">▶</button></td></tr>
+<tr data-start="5.35" data-end="7.74"><td class="n">3</td><td class="t num">5.3–7.7</td><td class="ar" dir="rtl">مع Pointili، بعد كل كوموند،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">5.3–7.9</small></td><td><button class="play" data-src="../ads/voice/f8-online/e3.wav" title="Play this line's voice" aria-label="Play line 3">▶</button></td></tr>
+<tr data-start="7.9" data-end="11.26"><td class="n">4</td><td class="t num">7.9–11.3</td><td class="ar" dir="rtl">تعمل <b>رابط فيه تامبون</b>، وتبعثو في الواتساب.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">7.9–11.4</small></td><td><button class="play" data-src="../ads/voice/f8-online/e4.wav" title="Play this line's voice" aria-label="Play line 4">▶</button></td></tr>
+<tr data-start="11.42" data-end="14.5"><td class="n">5</td><td class="t num">11.4–14.5</td><td class="ar" dir="rtl">تحلّو.. والتامبون يطيح <b>في الكارط متاعها</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">11.4–14.6</small></td><td><button class="play" data-src="../ads/voice/f8-online/e5.wav" title="Play this line's voice" aria-label="Play line 5">▶</button></td></tr>
+<tr data-start="14.66" data-end="17.71"><td class="n">6</td><td class="t num">14.7–17.7</td><td class="ar" dir="rtl">كل رابط يخدم <b>مرّة وحدة</b>، وما يوفاش.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">14.7–17.8</small></td><td><button class="play" data-src="../ads/voice/f8-online/e6.wav" title="Play this line's voice" aria-label="Play line 6">▶</button></td></tr>
+<tr data-start="17.87" data-end="19.38"><td class="n">7</td><td class="t num">17.9–19.4</td><td class="ar" dir="rtl">وانت تعرف <b>شكون خذاه</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">17.9–19.5</small></td><td><button class="play" data-src="../ads/voice/f8-online/e7.wav" title="Play this line's voice" aria-label="Play line 7">▶</button></td></tr>
+<tr data-start="19.54" data-end="23.22"><td class="n">8</td><td class="t num">19.5–23.2</td><td class="ar" dir="rtl">وكل ما تحلّ الكارط، تشوف قدّاش <b>مازالها للكادو</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">19.5–23.4</small></td><td><button class="play" data-src="../ads/voice/f8-online/e8.wav" title="Play this line's voice" aria-label="Play line 8">▶</button></td></tr>
+<tr data-start="23.38" data-end="25.64"><td class="n">9</td><td class="t num">23.4–25.6</td><td class="ar" dir="rtl">ترجعلك انت.. <b>موش لغيرك</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">23.4–26.0</small></td><td><button class="play" data-src="../ads/voice/f8-online/e9.wav" title="Play this line's voice" aria-label="Play line 9">▶</button></td></tr>
+<tr data-start="25.8" data-end="28.81"><td class="n">10</td><td class="t num">25.8–28.8</td><td class="ar" dir="rtl">جرّب Pointili بلاش، الرابط في البيو.</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f8-online/e10.wav" title="Play this line's voice" aria-label="Play line 10">▶</button></td></tr></tbody>
+  </table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3>
+  <pre class="ar block" dir="rtl" id="full">تبيع في الأنستغرام ولا الفيسبوك؟
+الحريفة تشري مرّة.. وتغبر.
+مع Pointili، بعد كل كوموند،
+تعمل رابط فيه تامبون، وتبعثو في الواتساب.
+تحلّو.. والتامبون يطيح في الكارط متاعها.
+كل رابط يخدم مرّة وحدة، وما يوفاش.
+وانت تعرف شكون خذاه.
+وكل ما تحلّ الكارط، تشوف قدّاش مازالها للكادو.
+ترجعلك انت.. موش لغيرك.
+جرّب Pointili بلاش، الرابط في البيو.</pre>
+</section>
+
+<section id="sound">
+  <h2>Sound</h2>
+  <div class="player"><span>The soundtrack, alone</span><audio controls preload="none" src="sound/f8-online.m4a"></audio><a href="sound/f8-online.m4a" download>sound/f8-online.m4a</a></div>
+  <dl class="facts">
+    <dt>Voice</dt><dd>Coral — a woman's voice, from OpenAI's voice studio (openai.fm), in Tunisian Derja. One take for the whole film, cut into its 10 lines.
+      <div class="player"><span>The take, as recorded</span><audio controls preload="none" src="../ads/voice/f8-online/take.mp3"></audio></div></dd>
+    <dt>Music</dt><dd>«warm» — a warm story: electric piano, soft swung drums. Written and played in code (engine/sound.mjs), nothing licensed. It ducks under the voice.</dd>
+    <dt>Effects</dt><dd>21 sounds: msg ×5, swish ×4, tap ×3, pop ×3, boing ×1, sparkle ×1, stamp ×1, tick ×1, whoosh ×1, impact ×1.</dd>
+    <dt>Level</dt><dd>Levelled to −14 LUFS (what Instagram plays at), AAC 192 kb/s, 48 kHz stereo.</dd>
+  </dl>
+  <p class="note">The instructions given to the studio were the same Tunisian-Derja ones as film 1 (tts.mjs), with the Coral voice.</p>
+  <h3>Every effect, in order</h3>
+  <div class="tablewrap"><table class="fx"><thead><tr><th>time (s)</th><th>sound</th></tr></thead><tbody>
+    <tr data-start="2.7"><td class="num">2.7</td><td>swish (short whoosh)</td></tr><tr data-start="3"><td class="num">3.0–3.5</td><td>message ping <span class="muted">×2</span></td></tr><tr data-start="4.84"><td class="num">4.8</td><td>boing</td></tr><tr data-start="5.25"><td class="num">5.3</td><td>swish (short whoosh)</td></tr><tr data-start="8.17"><td class="num">8.2</td><td>tap — a finger on the glass</td></tr><tr data-start="8.3"><td class="num">8.3</td><td>pop</td></tr><tr data-start="10.78"><td class="num">10.8</td><td>tap — a finger on the glass</td></tr><tr data-start="11.21"><td class="num">11.2</td><td>message ping</td></tr><tr data-start="11.64"><td class="num">11.6</td><td>tap — a finger on the glass</td></tr><tr data-start="12.52"><td class="num">12.5</td><td>sparkle</td></tr><tr data-start="12.54"><td class="num">12.5</td><td>stamp — a tampon lands</td></tr><tr data-start="14.76"><td class="num">14.8</td><td>pop</td></tr><tr data-start="15.51"><td class="num">15.5</td><td>pop</td></tr><tr data-start="17.77"><td class="num">17.8</td><td>swish (short whoosh)</td></tr><tr data-start="18.22"><td class="num">18.2</td><td>tick (clock)</td></tr><tr data-start="23.28"><td class="num">23.3</td><td>swish (short whoosh)</td></tr><tr data-start="23.63"><td class="num">23.6–24.1</td><td>message ping <span class="muted">×2</span></td></tr><tr data-start="25.65"><td class="num">25.6</td><td>whoosh</td></tr><tr data-start="26.05"><td class="num">26.1</td><td>impact — a low hit</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">Already burned into the film: a white pill near the bottom, the key words in purple. 9 subtitles; 1 line has none (the scene or the end card shows it). The .srt has them as shown; “every line said” has the whole voice, for a platform's own captions.</p>
+  <div class="dl"><button data-dl="srt">f8-online.srt</button><button data-dl="vtt">f8-online.vtt</button><button data-dl="said">f8-online.said.srt — every line said</button></div>
+  <pre class="block srt">1
+00:00:00,250 --&gt; 00:00:02,770
+تبيع في الأنستغرام ولا الفيسبوك؟
+
+2
+00:00:02,800 --&gt; 00:00:05,320
+الحريفة تشري مرّة.. وتغبر.
+
+3
+00:00:05,350 --&gt; 00:00:07,870
+مع Pointili، بعد كل كوموند،
+
+4
+00:00:07,900 --&gt; 00:00:11,390
+تعمل رابط فيه تامبون، وتبعثو في الواتساب.
+
+5
+00:00:11,420 --&gt; 00:00:14,630
+تحلّو.. والتامبون يطيح في الكارط متاعها.
+
+6
+00:00:14,660 --&gt; 00:00:17,840
+كل رابط يخدم مرّة وحدة، وما يوفاش.
+
+7
+00:00:17,870 --&gt; 00:00:19,510
+وانت تعرف شكون خذاه.
+
+8
+00:00:19,540 --&gt; 00:00:23,350
+وكل ما تحلّ الكارط، تشوف قدّاش مازالها للكادو.
+
+9
+00:00:23,380 --&gt; 00:00:25,990
+ترجعلك انت.. موش لغيرك.
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"id":"e1","start":0.25,"end":2.77,"text":"تبيع في الأنستغرام ولا الفيسبوك؟"},{"id":"e2","start":2.8,"end":5.32,"text":"الحريفة تشري مرّة.. وتغبر."},{"id":"e3","start":5.35,"end":7.87,"text":"مع Pointili، بعد كل كوموند،"},{"id":"e4","start":7.9,"end":11.39,"text":"تعمل رابط فيه تامبون، وتبعثو في الواتساب."},{"id":"e5","start":11.42,"end":14.63,"text":"تحلّو.. والتامبون يطيح في الكارط متاعها."},{"id":"e6","start":14.66,"end":17.84,"text":"كل رابط يخدم مرّة وحدة، وما يوفاش."},{"id":"e7","start":17.87,"end":19.51,"text":"وانت تعرف شكون خذاه."},{"id":"e8","start":19.54,"end":23.35,"text":"وكل ما تحلّ الكارط، تشوف قدّاش مازالها للكادو."},{"id":"e9","start":23.38,"end":25.99,"text":"ترجعلك انت.. موش لغيرك."}],"lines":[{"start":0.25,"end":2.64},{"start":2.8,"end":5.19},{"start":5.35,"end":7.74},{"start":7.9,"end":11.26},{"start":11.42,"end":14.5},{"start":14.66,"end":17.71},{"start":17.87,"end":19.38},{"start":19.54,"end":23.22},{"start":23.38,"end":25.64},{"start":25.8,"end":28.81}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,250 --> 00:00:02,770\nتبيع في الأنستغرام ولا الفيسبوك؟\n\n2\n00:00:02,800 --> 00:00:05,320\nالحريفة تشري مرّة.. وتغبر.\n\n3\n00:00:05,350 --> 00:00:07,870\nمع Pointili، بعد كل كوموند،\n\n4\n00:00:07,900 --> 00:00:11,390\nتعمل رابط فيه تامبون، وتبعثو في الواتساب.\n\n5\n00:00:11,420 --> 00:00:14,630\nتحلّو.. والتامبون يطيح في الكارط متاعها.\n\n6\n00:00:14,660 --> 00:00:17,840\nكل رابط يخدم مرّة وحدة، وما يوفاش.\n\n7\n00:00:17,870 --> 00:00:19,510\nوانت تعرف شكون خذاه.\n\n8\n00:00:19,540 --> 00:00:23,350\nوكل ما تحلّ الكارط، تشوف قدّاش مازالها للكادو.\n\n9\n00:00:23,380 --> 00:00:25,990\nترجعلك انت.. موش لغيرك.\n","vtt":"WEBVTT\n\n1\n00:00:00.250 --> 00:00:02.770\nتبيع في الأنستغرام ولا الفيسبوك؟\n\n2\n00:00:02.800 --> 00:00:05.320\nالحريفة تشري مرّة.. وتغبر.\n\n3\n00:00:05.350 --> 00:00:07.870\nمع Pointili، بعد كل كوموند،\n\n4\n00:00:07.900 --> 00:00:11.390\nتعمل رابط فيه تامبون، وتبعثو في الواتساب.\n\n5\n00:00:11.420 --> 00:00:14.630\nتحلّو.. والتامبون يطيح في الكارط متاعها.\n\n6\n00:00:14.660 --> 00:00:17.840\nكل رابط يخدم مرّة وحدة، وما يوفاش.\n\n7\n00:00:17.870 --> 00:00:19.510\nوانت تعرف شكون خذاه.\n\n8\n00:00:19.540 --> 00:00:23.350\nوكل ما تحلّ الكارط، تشوف قدّاش مازالها للكادو.\n\n9\n00:00:23.380 --> 00:00:25.990\nترجعلك انت.. موش لغيرك.\n","said":"1\n00:00:00,250 --> 00:00:02,640\nتبيع في الأنستغرام ولا الفيسبوك؟\n\n2\n00:00:02,800 --> 00:00:05,190\nالحريفة تشري مرّة.. وتغبر.\n\n3\n00:00:05,350 --> 00:00:07,740\nمع Pointili، بعد كل كوموند،\n\n4\n00:00:07,900 --> 00:00:11,260\nتعمل رابط فيه تامبون، وتبعثو في الواتساب.\n\n5\n00:00:11,420 --> 00:00:14,500\nتحلّو.. والتامبون يطيح في الكارط متاعها.\n\n6\n00:00:14,660 --> 00:00:17,710\nكل رابط يخدم مرّة وحدة، وما يوفاش.\n\n7\n00:00:17,870 --> 00:00:19,380\nوانت تعرف شكون خذاه.\n\n8\n00:00:19,540 --> 00:00:23,220\nوكل ما تحلّ الكارط، تشوف قدّاش مازالها للكادو.\n\n9\n00:00:23,380 --> 00:00:25,640\nترجعلك انت.. موش لغيرك.\n\n10\n00:00:25,800 --> 00:00:28,810\nجرّب Pointili بلاش، الرابط في البيو.\n","name":"f8-online"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>

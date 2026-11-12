@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>حركة بسيطة · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/ads/out/f4-fikra.mp4</span></div>
+<div class="kind">Ad 4 of 15</div>
+<h1 dir="auto">حركة بسيطة</h1>
+<p class="lede">Built like an <bdi>«idea for your business»</bdi> reel (forsa's): one big word at a time over the pictures</p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/f4-fikra.jpg" src="../ads/out/f4-fikra.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f4-fikra.mp4</code>
+      <b>Also</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\whatsapp\f4-fikra.mp4  (lighter copy for WhatsApp)</code>
+      <div class="chips"><span class="chip">51.5 s</span><span class="chip">1080×1920</span><span class="chip">30 fps</span><span class="chip">with sound</span><span class="chip">16.2 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <div class="about"><p>f4 — <bdi>«حركة بسيطة»</bdi> (a simple move that brings the customer back): a business tip, one big word at a time — a loyalty card, the free coffee as the reason to come back, a gift close enough not to give up on — then <bdi>«and in his phone, no paper: Pointili»</bdi>. Modelled on the structure of an <bdi>«idea for your business»</bdi> reel; drawn scenes behind the words for now (a photo per scene can replace them: assets/gpt/f4-&lt;line&gt;.jpg, when there is one).</p></div>
+  <p class="note">17 lines, 51.5 s. Every line is said by the voice; ▶ plays one line alone. Click a line to jump the video there. <b>Bold</b> words are the ones coloured on screen.</p>
+  <div class="tablewrap"><table class="lines">
+    <thead><tr><th>#</th><th>time (s)</th><th>said (voice)</th><th>subtitle on screen</th><th></th></tr></thead>
+    <tbody><tr data-start="0.25" data-end="3.37"><td class="n">1</td><td class="t num">0.3–3.4</td><td class="ar" dir="rtl">تحب الحريف <b>يرجعلك</b> مرّة أخرى،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">0.3–3.5</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w1.wav" title="Play this line's voice" aria-label="Play line 1">▶</button></td></tr>
+<tr data-start="3.53" data-end="5.97"><td class="n">2</td><td class="t num">3.5–6.0</td><td class="ar" dir="rtl">من غير ما تعمل <b>ريميز</b> كل شوية؟</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">3.5–6.2</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w2.wav" title="Play this line's voice" aria-label="Play line 2">▶</button></td></tr>
+<tr data-start="6.22" data-end="8.49"><td class="n">3</td><td class="t num">6.2–8.5</td><td class="ar" dir="rtl">جرّب <b>كارط فيدليتي</b> بسيطة.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">6.2–8.7</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w3.wav" title="Play this line's voice" aria-label="Play line 3">▶</button></td></tr>
+<tr data-start="8.74" data-end="10.66"><td class="n">4</td><td class="t num">8.7–10.7</td><td class="ar" dir="rtl">مثلا، عندك <b>قهوة</b>:</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">8.7–10.7</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w4.wav" title="Play this line's voice" aria-label="Play line 4">▶</button></td></tr>
+<tr data-start="10.76" data-end="13.35"><td class="n">5</td><td class="t num">10.8–13.3</td><td class="ar" dir="rtl">كل ما يشري قهوة، ياخو <b>تامبون</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">10.8–13.5</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w5.wav" title="Play this line's voice" aria-label="Play line 5">▶</button></td></tr>
+<tr data-start="13.5" data-end="16.33"><td class="n">6</td><td class="t num">13.5–16.3</td><td class="ar" dir="rtl">يكمّل <b>ثمانية</b>؟ ياخو قهوة <b>بلاش</b>،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">13.5–16.5</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w6.wav" title="Play this line's voice" aria-label="Play line 6">▶</button></td></tr>
+<tr data-start="16.49" data-end="18.33"><td class="n">7</td><td class="t num">16.5–18.3</td><td class="ar" dir="rtl">ولا <b>كادو</b> تختارو انت.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">16.5–18.6</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w7.wav" title="Play this line's voice" aria-label="Play line 7">▶</button></td></tr>
+<tr data-start="18.63" data-end="21.03"><td class="n">8</td><td class="t num">18.6–21.0</td><td class="ar" dir="rtl"><b>الفكرة</b> موش في القهوة البلاش.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">18.6–21.1</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w8.wav" title="Play this line's voice" aria-label="Play line 8">▶</button></td></tr>
+<tr data-start="21.13" data-end="23.95"><td class="n">9</td><td class="t num">21.1–23.9</td><td class="ar" dir="rtl">انت هكا تعطيه <b>سبب</b> باش يرجعلك،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">21.1–24.1</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w9.wav" title="Play this line's voice" aria-label="Play line 9">▶</button></td></tr>
+<tr data-start="24.11" data-end="25.94"><td class="n">10</td><td class="t num">24.1–25.9</td><td class="ar" dir="rtl">في عوض ما يمشي <b>لقهوة أخرى</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">24.1–26.2</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w10.wav" title="Play this line's voice" aria-label="Play line 10">▶</button></td></tr>
+<tr data-start="26.24" data-end="29.39"><td class="n">11</td><td class="t num">26.2–29.4</td><td class="ar" dir="rtl"><b>والأهم</b>: ما تبعّدش الكادو برشا،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">26.2–29.5</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w11.wav" title="Play this line's voice" aria-label="Play line 11">▶</button></td></tr>
+<tr data-start="29.55" data-end="31.62"><td class="n">12</td><td class="t num">29.6–31.6</td><td class="ar" dir="rtl">لدرجة الحريف <b>ييأس</b> منو.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">29.6–31.9</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w12.wav" title="Play this line's voice" aria-label="Play line 12">▶</button></td></tr>
+<tr data-start="31.92" data-end="33.14"><td class="n">13</td><td class="t num">31.9–33.1</td><td class="ar" dir="rtl">اعملها <b>صحيحة</b>،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">31.9–33.3</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w13.wav" title="Play this line's voice" aria-label="Play line 13">▶</button></td></tr>
+<tr data-start="33.3" data-end="35.79"><td class="n">14</td><td class="t num">33.3–35.8</td><td class="ar" dir="rtl">وفي عوض حريف يشري <b>مرّة</b> ويمشي،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">33.3–35.9</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w14.wav" title="Play this line's voice" aria-label="Play line 14">▶</button></td></tr>
+<tr data-start="35.95" data-end="38"><td class="n">15</td><td class="t num">36.0–38.0</td><td class="ar" dir="rtl">تبني حرفاء <b>يرجعولك ديما</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">36.0–38.3</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w15.wav" title="Play this line's voice" aria-label="Play line 15">▶</button></td></tr>
+<tr data-start="38.35" data-end="43.07"><td class="n">16</td><td class="t num">38.4–43.1</td><td class="ar" dir="rtl">وكان تحبها في تليفون الحريف، بلا كرتون: <b>Pointili</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">38.4–43.4</small></td><td><button class="play" data-src="../ads/voice/f4-fikra/w16.wav" title="Play this line's voice" aria-label="Play line 16">▶</button></td></tr>
+<tr data-start="43.37" data-end="46.91"><td class="n">17</td><td class="t num">43.4–46.9</td><td class="ar" dir="rtl">عجبتك الفكرة؟ اكتب «فكرة» في الكومونتار.</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f4-fikra/w17.wav" title="Play this line's voice" aria-label="Play line 17">▶</button></td></tr></tbody>
+  </table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3>
+  <pre class="ar block" dir="rtl" id="full">تحب الحريف يرجعلك مرّة أخرى،
+من غير ما تعمل ريميز كل شوية؟
+جرّب كارط فيدليتي بسيطة.
+مثلا، عندك قهوة:
+كل ما يشري قهوة، ياخو تامبون.
+يكمّل ثمانية؟ ياخو قهوة بلاش،
+ولا كادو تختارو انت.
+الفكرة موش في القهوة البلاش.
+انت هكا تعطيه سبب باش يرجعلك،
+في عوض ما يمشي لقهوة أخرى.
+والأهم: ما تبعّدش الكادو برشا،
+لدرجة الحريف ييأس منو.
+اعملها صحيحة،
+وفي عوض حريف يشري مرّة ويمشي،
+تبني حرفاء يرجعولك ديما.
+وكان تحبها في تليفون الحريف، بلا كرتون: Pointili.
+عجبتك الفكرة؟ اكتب «فكرة» في الكومونتار.</pre>
+</section>
+
+<section id="sound">
+  <h2>Sound</h2>
+  <div class="player"><span>The soundtrack, alone</span><audio controls preload="none" src="sound/f4-fikra.m4a"></audio><a href="sound/f4-fikra.m4a" download>sound/f4-fikra.m4a</a></div>
+  <dl class="facts">
+    <dt>Voice</dt><dd>Ash — a man's voice, from OpenAI's voice studio (openai.fm), in Tunisian Derja. One take for the whole film, cut into its 17 lines.
+      <div class="player"><span>The take, as recorded</span><audio controls preload="none" src="../ads/voice/f4-fikra/take.mp3"></audio></div></dd>
+    <dt>Music</dt><dd>«lofi» — lo-fi: slow, swung, a crackle under it. Written and played in code (engine/sound.mjs), nothing licensed. It ducks under the voice.</dd>
+    <dt>Effects</dt><dd>33 sounds: thud ×9, tick ×4, key ×4, pop ×3, whoosh ×3, swish ×2, sparkle ×2, scratch ×1, win ×1, buzz ×1, boing ×1, ding ×1, impact ×1.</dd>
+    <dt>Level</dt><dd>Levelled to −14 LUFS (what Instagram plays at), AAC 192 kb/s, 48 kHz stereo.</dd>
+  </dl>
+  <details><summary>What the voice studio was given (take.txt)</summary><pre class="block" dir="auto">voice: ash
+
+Accent: Tunisian Arabic (Derja, Tounsi), a young man from Tunis. Read the Arabic-script Derja exactly as written, the way Tunisians speak it every day: Tunisian vowels, rhythm and melody. Not Modern Standard Arabic, not Egyptian, not Gulf, not Levantine.
+French words used in Tunisia (كارط, تامبون, كونتوار, أبليكاسيون, سيستام, كومونتار, ريميز, كادو) are said the Tunisian way, close to French. The brand «بوانتيلي» is said like the French «Pointili» (pwan-tee-lee).
+Tone: warm, friendly and confident — a popular Instagram ad voice-over telling a short story to café and shop owners.
+Pacing: lively but clear. A short pause at every line break. A little weight on the key words.
+
+تحب الحريف يرجعلك مرّة أخرى،
+من غير ما تعمل ريميز كل شوية؟
+جرّب كارط فيدليتي بسيطة.
+مثلا، عندك قهوة:
+كل ما يشري قهوة، ياخو تامبون.
+يكمّل ثمانية؟ ياخو قهوة بلاش،
+ولا كادو تختارو انت.
+الفكرة موش في القهوة البلاش.
+انت هكا تعطيه سبب باش يرجعلك،
+في عوض ما يمشي لقهوة أخرى.
+والأهم: ما تبعّدش الكادو برشا،
+لدرجة الحريف ييأس منو.
+اعملها صحيحة،
+وفي عوض حريف يشري مرّة ويمشي،
+تبني حرفاء يرجعولك ديما.
+وكان تحبها في تليفون الحريف، بلا كرتون: بوانتيلي.
+عجبتك الفكرة؟ اكتب «فكرة» في الكومونتار.</pre></details>
+  <h3>Every effect, in order</h3>
+  <div class="tablewrap"><table class="fx"><thead><tr><th>time (s)</th><th>sound</th></tr></thead><tbody>
+    <tr data-start="4.18"><td class="num">4.2</td><td>pop</td></tr><tr data-start="4.85"><td class="num">4.8</td><td>scratch</td></tr><tr data-start="6.52"><td class="num">6.5</td><td>swish (short whoosh)</td></tr><tr data-start="8.99"><td class="num">9.0</td><td>pop</td></tr><tr data-start="11.28"><td class="num">11.3–12.2</td><td>thud <span class="muted">×3</span></td></tr><tr data-start="13.67"><td class="num">13.7–14.6</td><td>thud <span class="muted">×5</span></td></tr><tr data-start="15"><td class="num">15.0</td><td>win — four bells going up</td></tr><tr data-start="16.79"><td class="num">16.8</td><td>sparkle</td></tr><tr data-start="21.23"><td class="num">21.2</td><td>whoosh</td></tr><tr data-start="24.66"><td class="num">24.7</td><td>buzzer — wrong</td></tr><tr data-start="27.29"><td class="num">27.3</td><td>thud</td></tr><tr data-start="29.95"><td class="num">29.9</td><td>boing</td></tr><tr data-start="32.32"><td class="num">32.3</td><td>ding</td></tr><tr data-start="33.7"><td class="num">33.7</td><td>swish (short whoosh)</td></tr><tr data-start="36.15"><td class="num">36.1–36.9</td><td>tick (clock) <span class="muted">×4</span></td></tr><tr data-start="36.95"><td class="num">37.0</td><td>sparkle</td></tr><tr data-start="38.45"><td class="num">38.5</td><td>whoosh</td></tr><tr data-start="43.22"><td class="num">43.2</td><td>whoosh</td></tr><tr data-start="43.62"><td class="num">43.6</td><td>impact — a low hit</td></tr><tr data-start="44.72"><td class="num">44.7–45.0</td><td>key click — typing <span class="muted">×4</span></td></tr><tr data-start="45.79"><td class="num">45.8</td><td>pop</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">Already burned into the film: one word at a time, very big, white with a dark outline, the key words in yellow. 16 subtitles; 1 line has none (the scene or the end card shows it). The .srt has them as shown; “every line said” has the whole voice, for a platform's own captions.</p>
+  <div class="dl"><button data-dl="srt">f4-fikra.srt</button><button data-dl="vtt">f4-fikra.vtt</button><button data-dl="said">f4-fikra.said.srt — every line said</button></div>
+  <pre class="block srt">1
+00:00:00,250 --&gt; 00:00:03,500
+تحب الحريف يرجعلك مرّة أخرى،
+
+2
+00:00:03,530 --&gt; 00:00:06,190
+من غير ما تعمل ريميز كل شوية؟
+
+3
+00:00:06,220 --&gt; 00:00:08,710
+جرّب كارط فيدليتي بسيطة.
+
+4
+00:00:08,740 --&gt; 00:00:10,730
+مثلا، عندك قهوة:
+
+5
+00:00:10,760 --&gt; 00:00:13,470
+كل ما يشري قهوة، ياخو تامبون.
+
+6
+00:00:13,500 --&gt; 00:00:16,460
+يكمّل ثمانية؟ ياخو قهوة بلاش،
+
+7
+00:00:16,490 --&gt; 00:00:18,600
+ولا كادو تختارو انت.
+
+8
+00:00:18,630 --&gt; 00:00:21,100
+الفكرة موش في القهوة البلاش.
+
+9
+00:00:21,130 --&gt; 00:00:24,080
+انت هكا تعطيه سبب باش يرجعلك،
+
+10
+00:00:24,110 --&gt; 00:00:26,210
+في عوض ما يمشي لقهوة أخرى.
+
+11
+00:00:26,240 --&gt; 00:00:29,520
+والأهم: ما تبعّدش الكادو برشا،
+
+12
+00:00:29,550 --&gt; 00:00:31,890
+لدرجة الحريف ييأس منو.
+
+13
+00:00:31,920 --&gt; 00:00:33,270
+اعملها صحيحة،
+
+14
+00:00:33,300 --&gt; 00:00:35,920
+وفي عوض حريف يشري مرّة ويمشي،
+
+15
+00:00:35,950 --&gt; 00:00:38,320
+تبني حرفاء يرجعولك ديما.
+
+16
+00:00:38,350 --&gt; 00:00:43,420
+وكان تحبها في تليفون الحريف، بلا كرتون: Pointili.
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"id":"w1","start":0.25,"end":3.5,"text":"تحب الحريف يرجعلك مرّة أخرى،"},{"id":"w2","start":3.53,"end":6.19,"text":"من غير ما تعمل ريميز كل شوية؟"},{"id":"w3","start":6.22,"end":8.71,"text":"جرّب كارط فيدليتي بسيطة."},{"id":"w4","start":8.74,"end":10.73,"text":"مثلا، عندك قهوة:"},{"id":"w5","start":10.76,"end":13.47,"text":"كل ما يشري قهوة، ياخو تامبون."},{"id":"w6","start":13.5,"end":16.46,"text":"يكمّل ثمانية؟ ياخو قهوة بلاش،"},{"id":"w7","start":16.49,"end":18.6,"text":"ولا كادو تختارو انت."},{"id":"w8","start":18.63,"end":21.1,"text":"الفكرة موش في القهوة البلاش."},{"id":"w9","start":21.13,"end":24.08,"text":"انت هكا تعطيه سبب باش يرجعلك،"},{"id":"w10","start":24.11,"end":26.21,"text":"في عوض ما يمشي لقهوة أخرى."},{"id":"w11","start":26.24,"end":29.52,"text":"والأهم: ما تبعّدش الكادو برشا،"},{"id":"w12","start":29.55,"end":31.89,"text":"لدرجة الحريف ييأس منو."},{"id":"w13","start":31.92,"end":33.27,"text":"اعملها صحيحة،"},{"id":"w14","start":33.3,"end":35.92,"text":"وفي عوض حريف يشري مرّة ويمشي،"},{"id":"w15","start":35.95,"end":38.32,"text":"تبني حرفاء يرجعولك ديما."},{"id":"w16","start":38.35,"end":43.42,"text":"وكان تحبها في تليفون الحريف، بلا كرتون: Pointili."}],"lines":[{"start":0.25,"end":3.37},{"start":3.53,"end":5.97},{"start":6.22,"end":8.49},{"start":8.74,"end":10.66},{"start":10.76,"end":13.35},{"start":13.5,"end":16.33},{"start":16.49,"end":18.33},{"start":18.63,"end":21.03},{"start":21.13,"end":23.95},{"start":24.11,"end":25.94},{"start":26.24,"end":29.39},{"start":29.55,"end":31.62},{"start":31.92,"end":33.14},{"start":33.3,"end":35.79},{"start":35.95,"end":38},{"start":38.35,"end":43.07},{"start":43.37,"end":46.91}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,250 --> 00:00:03,500\nتحب الحريف يرجعلك مرّة أخرى،\n\n2\n00:00:03,530 --> 00:00:06,190\nمن غير ما تعمل ريميز كل شوية؟\n\n3\n00:00:06,220 --> 00:00:08,710\nجرّب كارط فيدليتي بسيطة.\n\n4\n00:00:08,740 --> 00:00:10,730\nمثلا، عندك قهوة:\n\n5\n00:00:10,760 --> 00:00:13,470\nكل ما يشري قهوة، ياخو تامبون.\n\n6\n00:00:13,500 --> 00:00:16,460\nيكمّل ثمانية؟ ياخو قهوة بلاش،\n\n7\n00:00:16,490 --> 00:00:18,600\nولا كادو تختارو انت.\n\n8\n00:00:18,630 --> 00:00:21,100\nالفكرة موش في القهوة البلاش.\n\n9\n00:00:21,130 --> 00:00:24,080\nانت هكا تعطيه سبب باش يرجعلك،\n\n10\n00:00:24,110 --> 00:00:26,210\nفي عوض ما يمشي لقهوة أخرى.\n\n11\n00:00:26,240 --> 00:00:29,520\nوالأهم: ما تبعّدش الكادو برشا،\n\n12\n00:00:29,550 --> 00:00:31,890\nلدرجة الحريف ييأس منو.\n\n13\n00:00:31,920 --> 00:00:33,270\nاعملها صحيحة،\n\n14\n00:00:33,300 --> 00:00:35,920\nوفي عوض حريف يشري مرّة ويمشي،\n\n15\n00:00:35,950 --> 00:00:38,320\nتبني حرفاء يرجعولك ديما.\n\n16\n00:00:38,350 --> 00:00:43,420\nوكان تحبها في تليفون الحريف، بلا كرتون: Pointili.\n","vtt":"WEBVTT\n\n1\n00:00:00.250 --> 00:00:03.500\nتحب الحريف يرجعلك مرّة أخرى،\n\n2\n00:00:03.530 --> 00:00:06.190\nمن غير ما تعمل ريميز كل شوية؟\n\n3\n00:00:06.220 --> 00:00:08.710\nجرّب كارط فيدليتي بسيطة.\n\n4\n00:00:08.740 --> 00:00:10.730\nمثلا، عندك قهوة:\n\n5\n00:00:10.760 --> 00:00:13.470\nكل ما يشري قهوة، ياخو تامبون.\n\n6\n00:00:13.500 --> 00:00:16.460\nيكمّل ثمانية؟ ياخو قهوة بلاش،\n\n7\n00:00:16.490 --> 00:00:18.600\nولا كادو تختارو انت.\n\n8\n00:00:18.630 --> 00:00:21.100\nالفكرة موش في القهوة البلاش.\n\n9\n00:00:21.130 --> 00:00:24.080\nانت هكا تعطيه سبب باش يرجعلك،\n\n10\n00:00:24.110 --> 00:00:26.210\nفي عوض ما يمشي لقهوة أخرى.\n\n11\n00:00:26.240 --> 00:00:29.520\nوالأهم: ما تبعّدش الكادو برشا،\n\n12\n00:00:29.550 --> 00:00:31.890\nلدرجة الحريف ييأس منو.\n\n13\n00:00:31.920 --> 00:00:33.270\nاعملها صحيحة،\n\n14\n00:00:33.300 --> 00:00:35.920\nوفي عوض حريف يشري مرّة ويمشي،\n\n15\n00:00:35.950 --> 00:00:38.320\nتبني حرفاء يرجعولك ديما.\n\n16\n00:00:38.350 --> 00:00:43.420\nوكان تحبها في تليفون الحريف، بلا كرتون: Pointili.\n","said":"1\n00:00:00,250 --> 00:00:03,370\nتحب الحريف يرجعلك مرّة أخرى،\n\n2\n00:00:03,530 --> 00:00:05,970\nمن غير ما تعمل ريميز كل شوية؟\n\n3\n00:00:06,220 --> 00:00:08,490\nجرّب كارط فيدليتي بسيطة.\n\n4\n00:00:08,740 --> 00:00:10,660\nمثلا، عندك قهوة:\n\n5\n00:00:10,760 --> 00:00:13,350\nكل ما يشري قهوة، ياخو تامبون.\n\n6\n00:00:13,500 --> 00:00:16,330\nيكمّل ثمانية؟ ياخو قهوة بلاش،\n\n7\n00:00:16,490 --> 00:00:18,330\nولا كادو تختارو انت.\n\n8\n00:00:18,630 --> 00:00:21,030\nالفكرة موش في القهوة البلاش.\n\n9\n00:00:21,130 --> 00:00:23,950\nانت هكا تعطيه سبب باش يرجعلك،\n\n10\n00:00:24,110 --> 00:00:25,940\nفي عوض ما يمشي لقهوة أخرى.\n\n11\n00:00:26,240 --> 00:00:29,390\nوالأهم: ما تبعّدش الكادو برشا،\n\n12\n00:00:29,550 --> 00:00:31,620\nلدرجة الحريف ييأس منو.\n\n13\n00:00:31,920 --> 00:00:33,140\nاعملها صحيحة،\n\n14\n00:00:33,300 --> 00:00:35,790\nوفي عوض حريف يشري مرّة ويمشي،\n\n15\n00:00:35,950 --> 00:00:38,000\nتبني حرفاء يرجعولك ديما.\n\n16\n00:00:38,350 --> 00:00:43,070\nوكان تحبها في تليفون الحريف، بلا كرتون: Pointili.\n\n17\n00:00:43,370 --> 00:00:46,910\nعجبتك الفكرة؟ اكتب «فكرة» في الكومونتار.\n","name":"f4-fikra"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>

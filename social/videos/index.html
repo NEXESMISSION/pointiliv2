@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pointili videos</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px}
+.card{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;text-decoration:none;color:var(--ink)}
+.card:hover{border-color:var(--brand)}
+.card img{width:96px;aspect-ratio:9/16;object-fit:cover;border-radius:10px;background:#000}
+.card .t{font-weight:700;font-size:18px;line-height:1.3}
+.card .s{color:var(--muted);font-size:13px;margin:4px 0 2px}
+.card code{display:block;margin-top:8px;font-size:11px}
+.group{margin:28px 0 10px}
+.group h2{margin:0}
+.group p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.folders{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;font-size:14px}
+.folders li{margin:4px 0}
+</style></head>
+<body><div class="wrap">
+<div class="kind">Pointili</div>
+<h1>All the videos</h1>
+<p class="lede">27 videos, 14 minutes in all. Each page has the full script with its times, the sound (voice, music, effects, the soundtrack to play) and the subtitles (.srt / .vtt).</p>
+<div class="folders"><b>The folders</b><ul>
+  <li><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out</code> — the 15 ads (and <code>out\whatsapp</code>: lighter copies of f4 and f14), plus <code>apk-install.mp4</code></li>
+  <li><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\explainers</code> — the explainers sent to owners</li>
+  <li><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\install-guide</code> — the two «add to home screen» guides</li>
+  <li><code>C:\Users\ayoub\OneDrive\Desktop\pointili\v2\public\clips</code> — the clips the site shows</li>
+  <li><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\videos</code> — these pages; <code>subs\</code> the subtitles, <code>sound\</code> each soundtrack alone</li>
+</ul></div>
+<div class="group"><h2>Video ads <span class="muted">(15)</span></h2><p>Vertical ads for Instagram, Facebook and TikTok, with a Derja voice, music and subtitles.</p></div><div class="cards"><a class="card" href="f1-zouz-qhawi.html">
+  <img src="thumbs/f1-zouz-qhawi.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">زوز قهاوي</div><div class="s">a two-cafés story reel (Daayem's): an illustrated story, a voice telling it, subtitles under it</div>
+  <div class="chips"><span class="chip">61.7 s</span><span class="chip">voice: Ash</span><span class="chip">23 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f1-zouz-qhawi.mp4</code></div></a><a class="card" href="f2-hajjam.html">
+  <img src="thumbs/f2-hajjam.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">الحريف اللي غاب</div><div class="s">a barber-shop reel (QuickStamp's): flat motion graphics, big words, <bdi>«send this to a friend»</bdi></div>
+  <div class="chips"><span class="chip">57.4 s</span><span class="chip">voice: Ash</span><span class="chip">21 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f2-hajjam.mp4</code></div></a><a class="card" href="f3-reply.html">
+  <img src="thumbs/f3-reply.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">رد على كومونتار</div><div class="s">a <bdi>«reply to a comment»</bdi> reel (menuos's): the question stickered on, the product answering</div>
+  <div class="chips"><span class="chip">40.5 s</span><span class="chip">voice: Ash</span><span class="chip">8 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f3-reply.mp4</code></div></a><a class="card" href="f4-fikra.html">
+  <img src="thumbs/f4-fikra.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">حركة بسيطة</div><div class="s">an <bdi>«idea for your business»</bdi> reel (forsa's): one big word at a time over the pictures</div>
+  <div class="chips"><span class="chip">51.5 s</span><span class="chip">voice: Ash</span><span class="chip">17 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f4-fikra.mp4</code></div></a><a class="card" href="f5-kartouna.html">
+  <img src="thumbs/f5-kartouna.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">الكارط الكرتون</div><div class="s">a café-chaos comic reel (Ayyatli's): the problem in bursts, then <bdi>«the fix is simple»</bdi></div>
+  <div class="chips"><span class="chip">41.8 s</span><span class="chip">voice: Ash</span><span class="chip">11 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f5-kartouna.mp4</code></div></a><a class="card" href="f6-hsab.html">
+  <img src="thumbs/f6-hsab.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">الحساب</div><div class="s">kinetic numbers on a dark board: 200 customers, one more visit, 2400 coffees a year</div>
+  <div class="chips"><span class="chip">33.5 s</span><span class="chip">voice: Ash</span><span class="chip">10 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f6-hsab.mp4</code></div></a><a class="card" href="f7-roulette.html">
+  <img src="thumbs/f7-roulette.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">الروليت</div><div class="s">a prize wheel under stadium lights: the app's wheel (الروليت)</div>
+  <div class="chips"><span class="chip">35.9 s</span><span class="chip">voice: Ash</span><span class="chip">9 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f7-roulette.mp4</code></div></a><a class="card" href="f8-online.html">
+  <img src="thumbs/f8-online.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">تبيع أونلاين؟</div><div class="s">a chat story for online sellers: a tampon sent as a link on WhatsApp</div>
+  <div class="chips"><span class="chip">33.0 s</span><span class="chip">voice: Coral</span><span class="chip">10 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f8-online.mp4</code></div></a><a class="card" href="f9-kod.html">
+  <img src="thumbs/f9-kod.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">الكود اللي يتبدّل</div><div class="s">a little noir: the photographed code that no longer works</div>
+  <div class="chips"><span class="chip">33.5 s</span><span class="chip">voice: Ash</span><span class="chip">11 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f9-kod.mp4</code></div></a><a class="card" href="f10-dqiqtin.html">
+  <img src="thumbs/f10-dqiqtin.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">دقيقتين</div><div class="s">a stopwatch speedrun: the card made in under two minutes</div>
+  <div class="chips"><span class="chip">34.3 s</span><span class="chip">voice: Ash</span><span class="chip">10 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f10-dqiqtin.mp4</code></div></a><a class="card" href="f11-thletha.html">
+  <img src="thumbs/f11-thletha.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">ثلاثة حرفاء</div><div class="s">trading cards: the regular, the drifting one, the lost one — and <bdi>«شكون رجع؟»</bdi></div>
+  <div class="chips"><span class="chip">35.1 s</span><span class="chip">voice: Coral</span><span class="chip">10 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f11-thletha.mp4</code></div></a><a class="card" href="f12-3addad.html">
+  <img src="thumbs/f12-3addad.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">العدّاد</div><div class="s">a countdown: the reset clock the owner turns on (and pauses)</div>
+  <div class="chips"><span class="chip">35.1 s</span><span class="chip">voice: Ash</span><span class="chip">10 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f12-3addad.mp4</code></div></a><a class="card" href="f13-logo.html">
+  <img src="thumbs/f13-logo.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">اللوغو متاعك</div><div class="s">quick cuts on the beat: your colour and your logo on every tampon</div>
+  <div class="chips"><span class="chip">28.3 s</span><span class="chip">voice: Coral</span><span class="chip">10 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f13-logo.mp4</code></div></a><a class="card" href="f14-kol-mahal.html">
+  <img src="thumbs/f14-kol-mahal.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">مش كان القهاوي</div><div class="s">a photo tour of the trades (ChatGPT photos), each with its own gift</div>
+  <div class="chips"><span class="chip">36.3 s</span><span class="chip">voice: Ash</span><span class="chip">10 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f14-kol-mahal.mp4</code></div></a><a class="card" href="f15-maghaza.html">
+  <img src="thumbs/f15-maghaza.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">الماغازة</div><div class="s">an arcade store: tampons spent on things from the shop (الماغازة)</div>
+  <div class="chips"><span class="chip">34.9 s</span><span class="chip">voice: Coral</span><span class="chip">10 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f15-maghaza.mp4</code></div></a></div><div class="group"><h2>Explainers to send owners <span class="muted">(7)</span></h2><p>Short how-tos to send on WhatsApp: no voice, the words on screen say it.</p></div><div class="cards"><a class="card" href="apk-install.html">
+  <img src="thumbs/apk-install.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">كيفاش تحطّ Pointili في تليفونك</div><div class="s">How to put the Android app on a phone, step by step</div>
+  <div class="chips"><span class="chip">45.1 s</span><span class="chip">music</span><span class="chip">13 lines</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\apk-install.mp4</code></div></a><a class="card" href="install-android-app.html">
+  <img src="thumbs/install-android-app.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">حطّ Pointili في تليفونك</div><div class="s">Explainer to send on WhatsApp: how to put Pointili on an Android phone from Chrome (site → <bdi>«؟»</bdi> → <bdi>«حطّ Pointili في تليفونك»</bdi> → Chrome's <bdi>«تثبيت»</bdi> → the icon on the home screen).</div>
+  <div class="chips"><span class="chip">18.9 s</span><span class="chip">silent</span><span class="chip">6 steps</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\explainers\install-android-app.mp4</code></div></a><a class="card" href="tampon-by-link.html">
+  <img src="thumbs/tampon-by-link.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">ابعث تامبون برابط</div><div class="s">Explainer to send owners on WhatsApp: giving a tampon to an online customer as a one-time link (owner's home → <bdi>«اعمل رابط جديد»</bdi> → WhatsApp → the customer opens it → the owner's list shows who took it).</div>
+  <div class="chips"><span class="chip">23.9 s</span><span class="chip">silent</span><span class="chip">8 steps</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\explainers\tampon-by-link.mp4</code></div></a><a class="card" href="tampon-by-phone.html">
+  <img src="thumbs/tampon-by-phone.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">Tampon for a customer without their phone (by phone number)</div><div class="s">Explainer to send owners: a customer without their phone gets the tampon from their phone number, in a perfume shop where the counter asks which perfume.</div>
+  <div class="chips"><span class="chip">24.4 s</span><span class="chip">silent</span><span class="chip">6 steps</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\explainers\tampon-by-phone.mp4</code></div></a><a class="card" href="fix-tampon.html">
+  <img src="thumbs/fix-tampon.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">بدّل الحاجة متاع تامبون</div><div class="s">Explainer to send owners: fixing the thing a tampon was given for (wrong item) — the tampon in <bdi>«آخر حركة»</bdi> → <bdi>«غلطت في الحاجة؟ بدّلها»</bdi> → the right item → done.</div>
+  <div class="chips"><span class="chip">16.0 s</span><span class="chip">silent</span><span class="chip">5 steps</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\explainers\fix-tampon.mp4</code></div></a><a class="card" href="install-android.html">
+  <img src="thumbs/install-android.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">حطّ Pointili في تليفونك — أندرويد · Chrome</div><div class="s">Social video: putting Pointili on an Android home screen from Chrome (⋮ → Ajouter à l’écran d’accueil → Installer → the icon).</div>
+  <div class="chips"><span class="chip">17.5 s</span><span class="chip">silent</span><span class="chip">4 steps</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\install-guide\install-android.mp4</code></div></a><a class="card" href="install-iphone.html">
+  <img src="thumbs/install-iphone.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">حطّ Pointili في تليفونك — آيفون · Safari</div><div class="s">Social video: putting Pointili on an iPhone home screen from Safari, iOS 26 (⋯ → Partager → Plus d’options → Ajouter à l’écran d’accueil → Ajouter → the icon).</div>
+  <div class="chips"><span class="chip">26.5 s</span><span class="chip">silent</span><span class="chip">6 steps</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\install-guide\install-iphone.mp4</code></div></a></div><div class="group"><h2>Clips inside the app <span class="muted">(5)</span></h2><p>Short silent clips the site shows owners (how it works, the wheel).</p></div><div class="cards"><a class="card" href="how-1-v2.html">
+  <img src="thumbs/how-1-v2.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">هكّا تخدم في المحل — 1 (restaurant)</div><div class="s">Slide 1 of the in-app <bdi>«how it works»</bdi> story (owner onboarding and the <bdi>«شوف كيفاش تخدم»</bdi> button): the owner shows the code, the customer scans it with their own phone, the tampon lands — in a restaurant.</div>
+  <div class="chips"><span class="chip">7.5 s</span><span class="chip">silent</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\v2\public\clips\how-1-v2.mp4</code></div></a><a class="card" href="how-2-v2.html">
+  <img src="thumbs/how-2-v2.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">هكّا تخدم في المحل — 2 (café)</div><div class="s">Slide 2 of the in-app <bdi>«how it works»</bdi> story: the same gesture in a café.</div>
+  <div class="chips"><span class="chip">9.4 s</span><span class="chip">silent</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\v2\public\clips\how-2-v2.mp4</code></div></a><a class="card" href="how-3-v2.html">
+  <img src="thumbs/how-3-v2.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">هكّا تخدم في المحل — 3 (shop)</div><div class="s">Slide 3 (last) of the in-app <bdi>«how it works»</bdi> story: the same gesture in a shop; it loops and waits for its button.</div>
+  <div class="chips"><span class="chip">10.3 s</span><span class="chip">silent</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\v2\public\clips\how-3-v2.mp4</code></div></a><a class="card" href="wheel-set-v2.html">
+  <img src="thumbs/wheel-set-v2.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">كيفاش تحضّرها (the wheel set up)</div><div class="s">Second slide of the owners' news note about the wheel (roulette): how the owner sets it up — three prizes written, chances shared out by themselves, saved, the switch turned on.</div>
+  <div class="chips"><span class="chip">13.1 s</span><span class="chip">silent</span><span class="chip">8 steps</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\v2\public\clips\wheel-set-v2.mp4</code></div></a><a class="card" href="wheel-win-v2.html">
+  <img src="thumbs/wheel-win-v2.jpg" alt="" loading="lazy">
+  <div><div class="t" dir="auto">Wheel won (what a customer sees)</div><div class="s">First slide of the owners' news note about the wheel: what a customer sees — a full card, the wheel with three prizes, the spin, the prize with confetti.</div>
+  <div class="chips"><span class="chip">7.8 s</span><span class="chip">silent</span><span class="chip">3 steps</span></div>
+  <code>C:\Users\ayoub\OneDrive\Desktop\pointili\v2\public\clips\wheel-win-v2.mp4</code></div></a></div>
+</div></body></html>

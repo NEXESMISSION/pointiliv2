@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الكود اللي يتبدّل · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/ads/out/f9-kod.mp4</span></div>
+<div class="kind">Ad 9 of 15</div>
+<h1 dir="auto">الكود اللي يتبدّل</h1>
+<p class="lede">Built like a little noir: the photographed code that no longer works</p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/f9-kod.jpg" src="../ads/out/f9-kod.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f9-kod.mp4</code>
+      
+      <div class="chips"><span class="chip">33.5 s</span><span class="chip">1080×1920</span><span class="chip">30 fps</span><span class="chip">with sound</span><span class="chip">4.9 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <div class="about"><p>f9 — <bdi>«الكود اللي يتبدّل»</bdi> (the code that changes): a little noir. <bdi>«What if a customer photographs the code and stamps from home?»</bdi> He can't: the counter's code changes by itself and works once (the app's own <bdi>«التامبون فات — الكود تبدّل»</bdi>); the owner chooses how often a customer may get a tampon; every tampon is logged, who and when. Real screens: scan-missed, owner-activity.</p></div>
+  <p class="note">11 lines, 33.4 s. Every line is said by the voice; ▶ plays one line alone. Click a line to jump the video there. <b>Bold</b> words are the ones coloured on screen.</p>
+  <div class="tablewrap"><table class="lines">
+    <thead><tr><th>#</th><th>time (s)</th><th>said (voice)</th><th>subtitle on screen</th><th></th></tr></thead>
+    <tbody><tr data-start="0.3" data-end="1.91"><td class="n">1</td><td class="t num">0.3–1.9</td><td class="ar" dir="rtl">سؤال يجينا <b>ديما</b>:</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">0.3–2.0</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g1.wav" title="Play this line's voice" aria-label="Play line 1">▶</button></td></tr>
+<tr data-start="2.07" data-end="4.05"><td class="n">2</td><td class="t num">2.1–4.0</td><td class="ar" dir="rtl">وكان الحريف <b>صوّر الكود</b>؟</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">2.1–4.2</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g2.wav" title="Play this line's voice" aria-label="Play line 2">▶</button></td></tr>
+<tr data-start="4.21" data-end="6.41"><td class="n">3</td><td class="t num">4.2–6.4</td><td class="ar" dir="rtl">ويقعد ياخو تامبونات <b>من الدار</b>؟</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">4.2–6.5</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g3.wav" title="Play this line's voice" aria-label="Play line 3">▶</button></td></tr>
+<tr data-start="6.57" data-end="7.54"><td class="n">4</td><td class="t num">6.6–7.5</td><td class="ar" dir="rtl"><b>ما ينجمش</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">6.6–7.7</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g4.wav" title="Play this line's voice" aria-label="Play line 4">▶</button></td></tr>
+<tr data-start="7.7" data-end="10.2"><td class="n">5</td><td class="t num">7.7–10.2</td><td class="ar" dir="rtl">الكود اللي على الكونتوار <b>يتبدّل وحدو</b>،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">7.7–10.3</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g5.wav" title="Play this line's voice" aria-label="Play line 5">▶</button></td></tr>
+<tr data-start="10.36" data-end="12.37"><td class="n">6</td><td class="t num">10.4–12.4</td><td class="ar" dir="rtl">وكل كود يخدم <b>مرّة برك</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">10.4–12.5</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g6.wav" title="Play this line's voice" aria-label="Play line 6">▶</button></td></tr>
+<tr data-start="12.53" data-end="15.19"><td class="n">7</td><td class="t num">12.5–15.2</td><td class="ar" dir="rtl">والتصويرة اللي خذاها؟ <b>فات وقتها</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">12.5–15.3</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g7.wav" title="Play this line's voice" aria-label="Play line 7">▶</button></td></tr>
+<tr data-start="15.35" data-end="19.22"><td class="n">8</td><td class="t num">15.3–19.2</td><td class="ar" dir="rtl">وزيد: انت تختار <b>كل قدّاش</b> ينجم ياخو تامبون.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">15.3–19.4</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g8.wav" title="Play this line's voice" aria-label="Play line 8">▶</button></td></tr>
+<tr data-start="19.38" data-end="22.42"><td class="n">9</td><td class="t num">19.4–22.4</td><td class="ar" dir="rtl">وكل تامبون <b>مكتوب</b>: شكون، ووقتاش.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">19.4–22.6</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g9.wav" title="Play this line's voice" aria-label="Play line 9">▶</button></td></tr>
+<tr data-start="22.58" data-end="25.05"><td class="n">10</td><td class="t num">22.6–25.1</td><td class="ar" dir="rtl">انت تعطي الكادو.. <b>وانت مرتاح</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">22.6–25.4</small></td><td><button class="play" data-src="../ads/voice/f9-kod/g10.wav" title="Play this line's voice" aria-label="Play line 10">▶</button></td></tr>
+<tr data-start="25.21" data-end="29.288"><td class="n">11</td><td class="t num">25.2–29.3</td><td class="ar" dir="rtl">جرّب Pointili بلاش، واكتب «كود» في الكومونتار.</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f9-kod/g11.wav" title="Play this line's voice" aria-label="Play line 11">▶</button></td></tr></tbody>
+  </table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3>
+  <pre class="ar block" dir="rtl" id="full">سؤال يجينا ديما:
+وكان الحريف صوّر الكود؟
+ويقعد ياخو تامبونات من الدار؟
+ما ينجمش.
+الكود اللي على الكونتوار يتبدّل وحدو،
+وكل كود يخدم مرّة برك.
+والتصويرة اللي خذاها؟ فات وقتها.
+وزيد: انت تختار كل قدّاش ينجم ياخو تامبون.
+وكل تامبون مكتوب: شكون، ووقتاش.
+انت تعطي الكادو.. وانت مرتاح.
+جرّب Pointili بلاش، واكتب «كود» في الكومونتار.</pre>
+</section>
+
+<section id="sound">
+  <h2>Sound</h2>
+  <div class="player"><span>The soundtrack, alone</span><audio controls preload="none" src="sound/f9-kod.m4a"></audio><a href="sound/f9-kod.m4a" download>sound/f9-kod.m4a</a></div>
+  <dl class="facts">
+    <dt>Voice</dt><dd>Ash — a man's voice, from OpenAI's voice studio (openai.fm), in Tunisian Derja. One take for the whole film, cut into its 11 lines.
+      <div class="player"><span>The take, as recorded</span><audio controls preload="none" src="../ads/voice/f9-kod/take.mp3"></audio></div></dd>
+    <dt>Music</dt><dd>«noir» — noir: a slow minor pulse, a pad, a few plucks in the dark. Written and played in code (engine/sound.mjs), nothing licensed. It ducks under the voice.</dd>
+    <dt>Effects</dt><dd>17 sounds: key ×3, buzz ×2, impact ×2, tick ×2, pop ×2, shutter ×1, swoosh ×1, tap ×1, swish ×1, chime ×1, whoosh ×1.</dd>
+    <dt>Level</dt><dd>Levelled to −14 LUFS (what Instagram plays at), AAC 192 kb/s, 48 kHz stereo.</dd>
+  </dl>
+  <p class="note">The instructions given to the studio were the same Tunisian-Derja ones as film 1 (tts.mjs), with the Ash voice.</p>
+  <h3>Every effect, in order</h3>
+  <div class="tablewrap"><table class="fx"><thead><tr><th>time (s)</th><th>sound</th></tr></thead><tbody>
+    <tr data-start="0.1"><td class="num">0.1</td><td>buzzer — wrong</td></tr><tr data-start="3.63"><td class="num">3.6</td><td>camera shutter</td></tr><tr data-start="4.26"><td class="num">4.3</td><td>swoosh (falling)</td></tr><tr data-start="6.62"><td class="num">6.6</td><td>impact — a low hit</td></tr><tr data-start="8.62"><td class="num">8.6</td><td>tick (clock)</td></tr><tr data-start="10.51"><td class="num">10.5</td><td>pop</td></tr><tr data-start="10.68"><td class="num">10.7</td><td>tick (clock)</td></tr><tr data-start="13.13"><td class="num">13.1</td><td>buzzer — wrong</td></tr><tr data-start="16.65"><td class="num">16.6</td><td>tap — a finger on the glass</td></tr><tr data-start="19.38"><td class="num">19.4</td><td>swish (short whoosh)</td></tr><tr data-start="22.78"><td class="num">22.8</td><td>chime</td></tr><tr data-start="25.06"><td class="num">25.1</td><td>whoosh</td></tr><tr data-start="25.46"><td class="num">25.5</td><td>impact — a low hit</td></tr><tr data-start="26.56"><td class="num">26.6–26.7</td><td>key click — typing <span class="muted">×3</span></td></tr><tr data-start="27.63"><td class="num">27.6</td><td>pop</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">Already burned into the film: one word at a time, very big, white with a dark outline, the key words in yellow. 10 subtitles; 1 line has none (the scene or the end card shows it). The .srt has them as shown; “every line said” has the whole voice, for a platform's own captions.</p>
+  <div class="dl"><button data-dl="srt">f9-kod.srt</button><button data-dl="vtt">f9-kod.vtt</button><button data-dl="said">f9-kod.said.srt — every line said</button></div>
+  <pre class="block srt">1
+00:00:00,300 --&gt; 00:00:02,040
+سؤال يجينا ديما:
+
+2
+00:00:02,070 --&gt; 00:00:04,180
+وكان الحريف صوّر الكود؟
+
+3
+00:00:04,210 --&gt; 00:00:06,540
+ويقعد ياخو تامبونات من الدار؟
+
+4
+00:00:06,570 --&gt; 00:00:07,670
+ما ينجمش.
+
+5
+00:00:07,700 --&gt; 00:00:10,330
+الكود اللي على الكونتوار يتبدّل وحدو،
+
+6
+00:00:10,360 --&gt; 00:00:12,500
+وكل كود يخدم مرّة برك.
+
+7
+00:00:12,530 --&gt; 00:00:15,320
+والتصويرة اللي خذاها؟ فات وقتها.
+
+8
+00:00:15,350 --&gt; 00:00:19,350
+وزيد: انت تختار كل قدّاش ينجم ياخو تامبون.
+
+9
+00:00:19,380 --&gt; 00:00:22,550
+وكل تامبون مكتوب: شكون، ووقتاش.
+
+10
+00:00:22,580 --&gt; 00:00:25,400
+انت تعطي الكادو.. وانت مرتاح.
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"id":"g1","start":0.3,"end":2.04,"text":"سؤال يجينا ديما:"},{"id":"g2","start":2.07,"end":4.18,"text":"وكان الحريف صوّر الكود؟"},{"id":"g3","start":4.21,"end":6.54,"text":"ويقعد ياخو تامبونات من الدار؟"},{"id":"g4","start":6.57,"end":7.67,"text":"ما ينجمش."},{"id":"g5","start":7.7,"end":10.33,"text":"الكود اللي على الكونتوار يتبدّل وحدو،"},{"id":"g6","start":10.36,"end":12.5,"text":"وكل كود يخدم مرّة برك."},{"id":"g7","start":12.53,"end":15.32,"text":"والتصويرة اللي خذاها؟ فات وقتها."},{"id":"g8","start":15.35,"end":19.35,"text":"وزيد: انت تختار كل قدّاش ينجم ياخو تامبون."},{"id":"g9","start":19.38,"end":22.55,"text":"وكل تامبون مكتوب: شكون، ووقتاش."},{"id":"g10","start":22.58,"end":25.4,"text":"انت تعطي الكادو.. وانت مرتاح."}],"lines":[{"start":0.3,"end":1.91},{"start":2.07,"end":4.05},{"start":4.21,"end":6.41},{"start":6.57,"end":7.54},{"start":7.7,"end":10.2},{"start":10.36,"end":12.37},{"start":12.53,"end":15.19},{"start":15.35,"end":19.22},{"start":19.38,"end":22.42},{"start":22.58,"end":25.05},{"start":25.21,"end":29.288}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,300 --> 00:00:02,040\nسؤال يجينا ديما:\n\n2\n00:00:02,070 --> 00:00:04,180\nوكان الحريف صوّر الكود؟\n\n3\n00:00:04,210 --> 00:00:06,540\nويقعد ياخو تامبونات من الدار؟\n\n4\n00:00:06,570 --> 00:00:07,670\nما ينجمش.\n\n5\n00:00:07,700 --> 00:00:10,330\nالكود اللي على الكونتوار يتبدّل وحدو،\n\n6\n00:00:10,360 --> 00:00:12,500\nوكل كود يخدم مرّة برك.\n\n7\n00:00:12,530 --> 00:00:15,320\nوالتصويرة اللي خذاها؟ فات وقتها.\n\n8\n00:00:15,350 --> 00:00:19,350\nوزيد: انت تختار كل قدّاش ينجم ياخو تامبون.\n\n9\n00:00:19,380 --> 00:00:22,550\nوكل تامبون مكتوب: شكون، ووقتاش.\n\n10\n00:00:22,580 --> 00:00:25,400\nانت تعطي الكادو.. وانت مرتاح.\n","vtt":"WEBVTT\n\n1\n00:00:00.300 --> 00:00:02.040\nسؤال يجينا ديما:\n\n2\n00:00:02.070 --> 00:00:04.180\nوكان الحريف صوّر الكود؟\n\n3\n00:00:04.210 --> 00:00:06.540\nويقعد ياخو تامبونات من الدار؟\n\n4\n00:00:06.570 --> 00:00:07.670\nما ينجمش.\n\n5\n00:00:07.700 --> 00:00:10.330\nالكود اللي على الكونتوار يتبدّل وحدو،\n\n6\n00:00:10.360 --> 00:00:12.500\nوكل كود يخدم مرّة برك.\n\n7\n00:00:12.530 --> 00:00:15.320\nوالتصويرة اللي خذاها؟ فات وقتها.\n\n8\n00:00:15.350 --> 00:00:19.350\nوزيد: انت تختار كل قدّاش ينجم ياخو تامبون.\n\n9\n00:00:19.380 --> 00:00:22.550\nوكل تامبون مكتوب: شكون، ووقتاش.\n\n10\n00:00:22.580 --> 00:00:25.400\nانت تعطي الكادو.. وانت مرتاح.\n","said":"1\n00:00:00,300 --> 00:00:01,910\nسؤال يجينا ديما:\n\n2\n00:00:02,070 --> 00:00:04,050\nوكان الحريف صوّر الكود؟\n\n3\n00:00:04,210 --> 00:00:06,410\nويقعد ياخو تامبونات من الدار؟\n\n4\n00:00:06,570 --> 00:00:07,540\nما ينجمش.\n\n5\n00:00:07,700 --> 00:00:10,200\nالكود اللي على الكونتوار يتبدّل وحدو،\n\n6\n00:00:10,360 --> 00:00:12,370\nوكل كود يخدم مرّة برك.\n\n7\n00:00:12,530 --> 00:00:15,190\nوالتصويرة اللي خذاها؟ فات وقتها.\n\n8\n00:00:15,350 --> 00:00:19,220\nوزيد: انت تختار كل قدّاش ينجم ياخو تامبون.\n\n9\n00:00:19,380 --> 00:00:22,420\nوكل تامبون مكتوب: شكون، ووقتاش.\n\n10\n00:00:22,580 --> 00:00:25,050\nانت تعطي الكادو.. وانت مرتاح.\n\n11\n00:00:25,210 --> 00:00:29,288\nجرّب Pointili بلاش، واكتب «كود» في الكومونتار.\n","name":"f9-kod"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>

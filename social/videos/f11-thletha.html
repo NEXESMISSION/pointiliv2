@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ثلاثة حرفاء · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/ads/out/f11-thletha.mp4</span></div>
+<div class="kind">Ad 11 of 15</div>
+<h1 dir="auto">ثلاثة حرفاء</h1>
+<p class="lede">Built like trading cards: the regular, the drifting one, the lost one — and <bdi>«شكون رجع؟»</bdi></p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/f11-thletha.jpg" src="../ads/out/f11-thletha.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f11-thletha.mp4</code>
+      
+      <div class="chips"><span class="chip">35.1 s</span><span class="chip">1080×1920</span><span class="chip">30 fps</span><span class="chip">with sound</span><span class="chip">3.5 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <div class="about"><p>f11 — <bdi>«ثلاثة حرفاء»</bdi> (three kinds of customers): trading cards flip over — the regular, the one drifting away, the lost one. You can't tell who is who; Pointili sorts them by itself (the app's <bdi>«شكون رجع؟»</bdi>: نشطين / يبعدو / ضاعو), a gift tampon on WhatsApp brings the drifting ones back, and you know your best customers by name (<bdi>«أوفى الحرفاء»</bdi>). Female voice.</p></div>
+  <p class="note">10 lines, 35.1 s. Every line is said by the voice; ▶ plays one line alone. Click a line to jump the video there. <b>Bold</b> words are the ones coloured on screen.</p>
+  <div class="tablewrap"><table class="lines">
+    <thead><tr><th>#</th><th>time (s)</th><th>said (voice)</th><th>subtitle on screen</th><th></th></tr></thead>
+    <tbody><tr data-start="0.25" data-end="3.36"><td class="n">1</td><td class="t num">0.3–3.4</td><td class="ar" dir="rtl">في كل محل، فما <b>ثلاثة أنواع</b> حرفاء.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">0.3–3.5</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i1.wav" title="Play this line's voice" aria-label="Play line 1">▶</button></td></tr>
+<tr data-start="3.52" data-end="6.16"><td class="n">2</td><td class="t num">3.5–6.2</td><td class="ar" dir="rtl">الأوّل: <b>ديما يجي</b>. هذا كنزك.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">3.5–6.3</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i2.wav" title="Play this line's voice" aria-label="Play line 2">▶</button></td></tr>
+<tr data-start="6.32" data-end="9.28"><td class="n">3</td><td class="t num">6.3–9.3</td><td class="ar" dir="rtl">الثاني: <b>بدا يبعد</b>.. جمعة، جمعتين.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">6.3–9.4</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i3.wav" title="Play this line's voice" aria-label="Play line 3">▶</button></td></tr>
+<tr data-start="9.44" data-end="11.75"><td class="n">4</td><td class="t num">9.4–11.8</td><td class="ar" dir="rtl">الثالث: <b>ضاع</b>. ما عادش جا.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">9.4–11.9</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i4.wav" title="Play this line's voice" aria-label="Play line 4">▶</button></td></tr>
+<tr data-start="11.91" data-end="14.21"><td class="n">5</td><td class="t num">11.9–14.2</td><td class="ar" dir="rtl">المشكل؟ <b>ما تعرفش</b> شكون شكون.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">11.9–14.3</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i5.wav" title="Play this line's voice" aria-label="Play line 5">▶</button></td></tr>
+<tr data-start="14.37" data-end="18.85"><td class="n">6</td><td class="t num">14.4–18.9</td><td class="ar" dir="rtl">Pointili يقسّمهملك <b>وحدو</b>: نشطين، يبعدو، ضاعو.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">14.4–19.0</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i6.wav" title="Play this line's voice" aria-label="Play line 6">▶</button></td></tr>
+<tr data-start="19.01" data-end="21.95"><td class="n">7</td><td class="t num">19.0–21.9</td><td class="ar" dir="rtl">اللي يبعدو؟ <b>كلمة منك</b> ترجّعهم:</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">19.0–22.1</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i7.wav" title="Play this line's voice" aria-label="Play line 7">▶</button></td></tr>
+<tr data-start="22.11" data-end="23.94"><td class="n">8</td><td class="t num">22.1–23.9</td><td class="ar" dir="rtl"><b>تامبون هدية</b> في الواتساب.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">22.1–24.1</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i8.wav" title="Play this line's voice" aria-label="Play line 8">▶</button></td></tr>
+<tr data-start="24.1" data-end="26.77"><td class="n">9</td><td class="t num">24.1–26.8</td><td class="ar" dir="rtl">وأوفى الحرفاء؟ <b>تعرفهم بالاسم</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">24.1–27.1</small></td><td><button class="play" data-src="../ads/voice/f11-thletha/i9.wav" title="Play this line's voice" aria-label="Play line 9">▶</button></td></tr>
+<tr data-start="26.93" data-end="30.988"><td class="n">10</td><td class="t num">26.9–31.0</td><td class="ar" dir="rtl">جرّب Pointili بلاش، واكتب «حرفاء» في الكومونتار.</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f11-thletha/i10.wav" title="Play this line's voice" aria-label="Play line 10">▶</button></td></tr></tbody>
+  </table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3>
+  <pre class="ar block" dir="rtl" id="full">في كل محل، فما ثلاثة أنواع حرفاء.
+الأوّل: ديما يجي. هذا كنزك.
+الثاني: بدا يبعد.. جمعة، جمعتين.
+الثالث: ضاع. ما عادش جا.
+المشكل؟ ما تعرفش شكون شكون.
+Pointili يقسّمهملك وحدو: نشطين، يبعدو، ضاعو.
+اللي يبعدو؟ كلمة منك ترجّعهم:
+تامبون هدية في الواتساب.
+وأوفى الحرفاء؟ تعرفهم بالاسم.
+جرّب Pointili بلاش، واكتب «حرفاء» في الكومونتار.</pre>
+</section>
+
+<section id="sound">
+  <h2>Sound</h2>
+  <div class="player"><span>The soundtrack, alone</span><audio controls preload="none" src="sound/f11-thletha.m4a"></audio><a href="sound/f11-thletha.m4a" download>sound/f11-thletha.m4a</a></div>
+  <dl class="facts">
+    <dt>Voice</dt><dd>Coral — a woman's voice, from OpenAI's voice studio (openai.fm), in Tunisian Derja. One take for the whole film, cut into its 10 lines.
+      <div class="player"><span>The take, as recorded</span><audio controls preload="none" src="../ads/voice/f11-thletha/take.mp3"></audio></div></dd>
+    <dt>Music</dt><dd>«lofi» — lo-fi: slow, swung, a crackle under it. Written and played in code (engine/sound.mjs), nothing licensed. It ducks under the voice.</dd>
+    <dt>Effects</dt><dd>26 sounds: key ×5, pop ×4, swish ×3, swoosh ×3, tick ×3, whoosh ×2, msg ×2, sparkle ×1, boing ×1, chime ×1, impact ×1.</dd>
+    <dt>Level</dt><dd>Levelled to −14 LUFS (what Instagram plays at), AAC 192 kb/s, 48 kHz stereo.</dd>
+  </dl>
+  <p class="note">The instructions given to the studio were the same Tunisian-Derja ones as film 1 (tts.mjs), with the Coral voice.</p>
+  <h3>Every effect, in order</h3>
+  <div class="tablewrap"><table class="fx"><thead><tr><th>time (s)</th><th>sound</th></tr></thead><tbody>
+    <tr data-start="0.1"><td class="num">0.1–0.4</td><td>swish (short whoosh) <span class="muted">×3</span></td></tr><tr data-start="3.52"><td class="num">3.5</td><td>swoosh (falling)</td></tr><tr data-start="3.97"><td class="num">4.0</td><td>pop</td></tr><tr data-start="4.12"><td class="num">4.1</td><td>sparkle</td></tr><tr data-start="6.32"><td class="num">6.3</td><td>swoosh (falling)</td></tr><tr data-start="6.77"><td class="num">6.8</td><td>pop</td></tr><tr data-start="9.44"><td class="num">9.4</td><td>swoosh (falling)</td></tr><tr data-start="9.89"><td class="num">9.9</td><td>pop</td></tr><tr data-start="12.41"><td class="num">12.4</td><td>whoosh</td></tr><tr data-start="12.76"><td class="num">12.8</td><td>boing</td></tr><tr data-start="14.87"><td class="num">14.9–15.7</td><td>tick (clock) <span class="muted">×3</span></td></tr><tr data-start="20.06"><td class="num">20.1</td><td>message ping</td></tr><tr data-start="22.36"><td class="num">22.4</td><td>message ping</td></tr><tr data-start="24.5"><td class="num">24.5</td><td>chime</td></tr><tr data-start="26.78"><td class="num">26.8</td><td>whoosh</td></tr><tr data-start="27.18"><td class="num">27.2</td><td>impact — a low hit</td></tr><tr data-start="28.28"><td class="num">28.3–28.6</td><td>key click — typing <span class="muted">×5</span></td></tr><tr data-start="29.35"><td class="num">29.4</td><td>pop</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">Already burned into the film: a white pill near the bottom, the key words in purple. 9 subtitles; 1 line has none (the scene or the end card shows it). The .srt has them as shown; “every line said” has the whole voice, for a platform's own captions.</p>
+  <div class="dl"><button data-dl="srt">f11-thletha.srt</button><button data-dl="vtt">f11-thletha.vtt</button><button data-dl="said">f11-thletha.said.srt — every line said</button></div>
+  <pre class="block srt">1
+00:00:00,250 --&gt; 00:00:03,490
+في كل محل، فما ثلاثة أنواع حرفاء.
+
+2
+00:00:03,520 --&gt; 00:00:06,290
+الأوّل: ديما يجي. هذا كنزك.
+
+3
+00:00:06,320 --&gt; 00:00:09,410
+الثاني: بدا يبعد.. جمعة، جمعتين.
+
+4
+00:00:09,440 --&gt; 00:00:11,880
+الثالث: ضاع. ما عادش جا.
+
+5
+00:00:11,910 --&gt; 00:00:14,340
+المشكل؟ ما تعرفش شكون شكون.
+
+6
+00:00:14,370 --&gt; 00:00:18,980
+Pointili يقسّمهملك وحدو: نشطين، يبعدو، ضاعو.
+
+7
+00:00:19,010 --&gt; 00:00:22,080
+اللي يبعدو؟ كلمة منك ترجّعهم:
+
+8
+00:00:22,110 --&gt; 00:00:24,070
+تامبون هدية في الواتساب.
+
+9
+00:00:24,100 --&gt; 00:00:27,120
+وأوفى الحرفاء؟ تعرفهم بالاسم.
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"id":"i1","start":0.25,"end":3.49,"text":"في كل محل، فما ثلاثة أنواع حرفاء."},{"id":"i2","start":3.52,"end":6.29,"text":"الأوّل: ديما يجي. هذا كنزك."},{"id":"i3","start":6.32,"end":9.41,"text":"الثاني: بدا يبعد.. جمعة، جمعتين."},{"id":"i4","start":9.44,"end":11.88,"text":"الثالث: ضاع. ما عادش جا."},{"id":"i5","start":11.91,"end":14.34,"text":"المشكل؟ ما تعرفش شكون شكون."},{"id":"i6","start":14.37,"end":18.98,"text":"Pointili يقسّمهملك وحدو: نشطين، يبعدو، ضاعو."},{"id":"i7","start":19.01,"end":22.08,"text":"اللي يبعدو؟ كلمة منك ترجّعهم:"},{"id":"i8","start":22.11,"end":24.07,"text":"تامبون هدية في الواتساب."},{"id":"i9","start":24.1,"end":27.12,"text":"وأوفى الحرفاء؟ تعرفهم بالاسم."}],"lines":[{"start":0.25,"end":3.36},{"start":3.52,"end":6.16},{"start":6.32,"end":9.28},{"start":9.44,"end":11.75},{"start":11.91,"end":14.21},{"start":14.37,"end":18.85},{"start":19.01,"end":21.95},{"start":22.11,"end":23.94},{"start":24.1,"end":26.77},{"start":26.93,"end":30.988}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,250 --> 00:00:03,490\nفي كل محل، فما ثلاثة أنواع حرفاء.\n\n2\n00:00:03,520 --> 00:00:06,290\nالأوّل: ديما يجي. هذا كنزك.\n\n3\n00:00:06,320 --> 00:00:09,410\nالثاني: بدا يبعد.. جمعة، جمعتين.\n\n4\n00:00:09,440 --> 00:00:11,880\nالثالث: ضاع. ما عادش جا.\n\n5\n00:00:11,910 --> 00:00:14,340\nالمشكل؟ ما تعرفش شكون شكون.\n\n6\n00:00:14,370 --> 00:00:18,980\nPointili يقسّمهملك وحدو: نشطين، يبعدو، ضاعو.\n\n7\n00:00:19,010 --> 00:00:22,080\nاللي يبعدو؟ كلمة منك ترجّعهم:\n\n8\n00:00:22,110 --> 00:00:24,070\nتامبون هدية في الواتساب.\n\n9\n00:00:24,100 --> 00:00:27,120\nوأوفى الحرفاء؟ تعرفهم بالاسم.\n","vtt":"WEBVTT\n\n1\n00:00:00.250 --> 00:00:03.490\nفي كل محل، فما ثلاثة أنواع حرفاء.\n\n2\n00:00:03.520 --> 00:00:06.290\nالأوّل: ديما يجي. هذا كنزك.\n\n3\n00:00:06.320 --> 00:00:09.410\nالثاني: بدا يبعد.. جمعة، جمعتين.\n\n4\n00:00:09.440 --> 00:00:11.880\nالثالث: ضاع. ما عادش جا.\n\n5\n00:00:11.910 --> 00:00:14.340\nالمشكل؟ ما تعرفش شكون شكون.\n\n6\n00:00:14.370 --> 00:00:18.980\nPointili يقسّمهملك وحدو: نشطين، يبعدو، ضاعو.\n\n7\n00:00:19.010 --> 00:00:22.080\nاللي يبعدو؟ كلمة منك ترجّعهم:\n\n8\n00:00:22.110 --> 00:00:24.070\nتامبون هدية في الواتساب.\n\n9\n00:00:24.100 --> 00:00:27.120\nوأوفى الحرفاء؟ تعرفهم بالاسم.\n","said":"1\n00:00:00,250 --> 00:00:03,360\nفي كل محل، فما ثلاثة أنواع حرفاء.\n\n2\n00:00:03,520 --> 00:00:06,160\nالأوّل: ديما يجي. هذا كنزك.\n\n3\n00:00:06,320 --> 00:00:09,280\nالثاني: بدا يبعد.. جمعة، جمعتين.\n\n4\n00:00:09,440 --> 00:00:11,750\nالثالث: ضاع. ما عادش جا.\n\n5\n00:00:11,910 --> 00:00:14,210\nالمشكل؟ ما تعرفش شكون شكون.\n\n6\n00:00:14,370 --> 00:00:18,850\nPointili يقسّمهملك وحدو: نشطين، يبعدو، ضاعو.\n\n7\n00:00:19,010 --> 00:00:21,950\nاللي يبعدو؟ كلمة منك ترجّعهم:\n\n8\n00:00:22,110 --> 00:00:23,940\nتامبون هدية في الواتساب.\n\n9\n00:00:24,100 --> 00:00:26,770\nوأوفى الحرفاء؟ تعرفهم بالاسم.\n\n10\n00:00:26,930 --> 00:00:30,988\nجرّب Pointili بلاش، واكتب «حرفاء» في الكومونتار.\n","name":"f11-thletha"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>

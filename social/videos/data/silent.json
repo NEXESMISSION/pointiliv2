@@ -1,0 +1,227 @@
+[
+  {
+    "file": "social/explainers/install-android-app.mp4",
+    "title": "حطّ Pointili في تليفونك",
+    "purpose": "Explainer to send on WhatsApp: how to put Pointili on an Android phone from Chrome (site → «؟» → «حطّ Pointili في تليفونك» → Chrome's «تثبيت» → the icon on the home screen).",
+    "made_by": "v2/scripts/explainer-videos.mjs (installFilm, commit 7dcb642)",
+    "size": "720x1280",
+    "duration": 18.9,
+    "fps": 30,
+    "sound": "none (no audio stream)",
+    "filmed": "Rendered frame by frame from an HTML page: a drawn phone in the middle of the frame, one caption block above it. Inside the phone: real screenshots of the live site www.pointili.online taken as an Android phone (390x764 in Chrome, 390x820 installed), under a drawn status bar (10:30) and a drawn Chrome bar (lock, «pointili.online», tab count 1, ⋮). Chrome's install dialog and the Android home screen are drawn. A drawn finger (white circle, purple ring) presses each tap and leaves a ripple.",
+    "timing_note": "exact: the film is drawn at t = frame/30 from scene durations 1.9+3.4+3.2+3.1+4.3+3.0 = 18.9 s, which equals the file. Captions start fading in 0.12 s after their scene starts (full at +0.5 s) and are gone at the scene's end (fade over the last 0.16 s): start/end below are those fade-in start and fade-out start. Title cards: start/end = their scene; a card then fades out over 0.28 s into the next scene. The finger is visible from 0.7 s before each tap to 0.52 s after it.",
+    "fixed_text": ["www.pointili.online (small grey line at the very bottom, under the phone, whenever no title card covers it)"],
+    "steps": [
+      { "start": 0.0, "end": 1.9, "badge": null, "text": "حطّ Pointili في تليفونك\nعلى أندرويد، في ثواني", "tap": null, "screen": "Purple title card over the whole frame: white tile with the Pointili mark, the word «Pointili», the title, the subline, «www.pointili.online» at the bottom. Fades out 1.9–2.18 s." },
+      { "start": 2.02, "end": 5.14, "badge": "1", "text": "حلّ pointili.online في Chrome\nواضغط على «؟»", "tap": "the site's help button «؟» (accessible name «عندك سؤال؟»), pressed at 3.80 s (finger in view 3.10–4.32 s)", "screen": "The live site's home page as Android Chrome shows it, inside the drawn Chrome bar." },
+      { "start": 5.42, "end": 8.34, "badge": "2", "text": "اضغط «حطّ Pointili في تليفونك»", "tap": "the help sheet's row «حطّ Pointili في تليفونك» (the row whose name contains «تليفونك»), pressed at 7.00 s (finger 6.30–7.52 s)", "screen": "The live site with its «؟» help sheet open (real screenshot)." },
+      { "start": 8.62, "end": 11.44, "badge": "3", "text": "اضغط «تثبيت»\nكي يسألك Chrome · بالفرنسية: Installer", "tap": "«تثبيت» in Chrome's dialog, pressed at 10.25 s (finger 9.55–10.77 s)", "screen": "Same help-sheet screenshot, dimmed, with Chrome's drawn dialog popping in at 8.65 s (scale-in to 8.91 s) and gone 10.80–11.02 s. Dialog text: «تثبيت التطبيق؟», the Pointili icon, «Pointili», «pointili.online», buttons «تثبيت» (purple) and «إلغاء»." },
+      { "start": 11.72, "end": 15.74, "badge": "4", "text": "هاو Pointili في تليفونك!\nتحلّو كيما أي أبليكاسيون", "tap": "the new Pointili icon on the home screen, pressed at 13.80 s (finger 13.10–14.32 s)", "screen": "Drawn Android home screen: purple wallpaper, big clock «10:30», apps «الهاتف», «الرسائل», «الكاميرا», «الصور», «الساعة», «الإعدادات», «الموسيقى», a dock. The «Pointili» icon pops in at 12.05 s (0.52 s spring). At 14.10 s the app zooms open from the icon (to 14.55 s): the live site full-screen as an installed app, no Chrome bar." },
+      { "start": 15.9, "end": 18.9, "badge": null, "text": "عندك محل؟\nالزرّ هذا في الصفحة متاعك يحطّو زادة", "tap": null, "screen": "Purple closing card (fades in 15.90–16.18 s, stays to the end): logo tile, «Pointili», a round purple download-arrow button (the in-app install button), the title, the subline, «www.pointili.online»." }
+    ],
+    "app_text": null
+  },
+  {
+    "file": "social/explainers/tampon-by-link.mp4",
+    "title": "ابعث تامبون برابط",
+    "purpose": "Explainer to send owners on WhatsApp: giving a tampon to an online customer as a one-time link (owner's home → «اعمل رابط جديد» → WhatsApp → the customer opens it → the owner's list shows who took it).",
+    "made_by": "v2/scripts/explainer-videos.mjs (linksFilm, commit 7dcb642)",
+    "size": "720x1280",
+    "duration": 23.9,
+    "fps": 30,
+    "sound": "none (no audio stream)",
+    "filmed": "Rendered frame by frame from an HTML page: a drawn phone, one caption block above it. Inside the phone: real app screenshots from a run of v2/scripts/links.mjs (v2/.e2e/links/11-home, 2-page-empty, 3-link-ready, 4-customer-stamped, 7-list; shop «Boutique Sonia», customer «رانية · كوموند 12»). The WhatsApp-like chat is drawn. Drawn finger with ripple on each tap.",
+    "timing_note": "exact: scene durations 2.0+3.0+3.2+3.2+3.1+2.9+3.7+2.8 = 23.9 s = the file. Same conventions as install-android-app: caption start = scene start + 0.12 s, end = scene end − 0.16 s; cards = their scene, fading 0.28 s; finger visible 0.7 s before to 0.52 s after each tap.",
+    "fixed_text": ["www.pointili.online (bottom line under the phone, hidden by the title cards)"],
+    "steps": [
+      { "start": 0.0, "end": 2.0, "badge": null, "text": "ابعث تامبون برابط\nللحرفاء اللي يشريو منك أونلاين", "tap": null, "screen": "Purple title card: logo tile, «Pointili», title, subline, «www.pointili.online». Fades out 2.0–2.28 s." },
+      { "start": 2.12, "end": 4.84, "badge": "1", "text": "اضغط «ابعث تامبون برابط»\nمن الصفحة متاعك", "tap": "the row «ابعث تامبون برابط» (under it «للحرفاء اللي يشريو منك أونلاين») on the owner's home, pressed at 3.70 s (finger 3.00–4.22 s)", "screen": "Owner's home (real): «نهارك طيّب سنية», «Boutique Sonia», «عطي تامبون» with «ورّي الكود» and «بالنومرو», the link row, «سكاني» «الحرفاء» «المحل», today's counts, «آخر حركة»." },
+      { "start": 5.12, "end": 8.04, "badge": "2", "text": "اضغط «اعمل رابط جديد»\nتنجم تكتب اسم الحريف · موش لازم", "tap": "the purple button «اعمل رابط جديد», pressed at 6.80 s (finger 6.10–7.32 s)", "screen": "Page «تامبون برابط» (real, empty): «لكل حريف رابط جديد. يخدم مرّة وحدة، وما يوفاش بالوقت.», field «لشكون؟» (placeholder «مثلا: سامي · كوموند 12», «موش لازم · بيان كان ليك»), the button, «الروابط اللي بعثتهم» with an empty list." },
+      { "start": 8.32, "end": 11.24, "badge": "3", "text": "ابعثو للحريف في واتساب\nولا انسخو وابعثو وين تحب", "tap": "the green «واتساب» button, pressed at 10.10 s (finger 9.40–10.62 s)", "screen": "Sheet «الرابط حاضر» (real): «ابعثو للحريف: كي يحلّو، التامبون يدخل للكارط متاعو.», «رانية · كوموند 12», the link www.pointili.online/s/uPn33BlcVDGVNK…, «مرّة وحدة · ما يوفاش», buttons «واتساب» «تنسخ» «ابعث», «رابط آخر لحريف آخر», «باهي»." },
+      { "start": 11.52, "end": 14.34, "badge": "4", "text": "الحريف يحلّ الرابط…", "tap": "the link in the chat bubble, pressed at 13.30 s (finger 12.60–13.82 s)", "screen": "Drawn WhatsApp-like chat: header «Boutique Sonia» / «متّصل», one bubble «🎁 تامبون جديد من Boutique Sonia! حلّ الرابط هذا وخوذو في الكارط متاعك:» with the link «www.pointili.online/s/uPn33BlcVD…» and time «12:27», input «اكتب رسالة»." },
+      { "start": 14.62, "end": 17.24, "badge": null, "text": "والتامبون يدخل للكارط متاعو", "tap": null, "screen": "Customer's phone in the drawn Chrome bar (real screenshot): «+1», «تامبون جديد!», «Boutique Sonia», the card «Boutique Sonia» 1/5, «مازالولك 4 باش تربح تخفيض 10%», «شوف الكارط», «باهي»." },
+      { "start": 17.52, "end": 20.94, "badge": "5", "text": "وتعرف شكون خذاه\nكل رابط يخدم مرّة وحدة، وما يوفاش", "tap": null, "screen": "Page «تامبون برابط» with the sent links (real): «يستنّاو · 1 تخذاو 2», rows «رابط / يستنّى · توّا» and «رابط / تحلّ · يكمّل في الكونت · توّا» (each with «بطّل»), and «رانية · كوموند 12 / خذاه رانية · توّا». A purple ring draws around that last row from 18.00 s (0.42 s)." },
+      { "start": 21.1, "end": 23.9, "badge": null, "text": "تامبون برابط\nلكل حريف رابط جديد · مرّة وحدة", "tap": null, "screen": "Purple closing card (fades in 21.10–21.38 s, stays): logo tile, «Pointili», title, subline, «www.pointili.online»." }
+    ],
+    "app_text": null
+  },
+  {
+    "file": "social/explainers/tampon-by-phone.mp4",
+    "title": "Tampon for a customer without their phone (by phone number)",
+    "purpose": "Explainer to send owners: a customer without their phone gets the tampon from their phone number, in a perfume shop where the counter asks which perfume.",
+    "made_by": "v2/scripts/explainer-phone.mjs (as of commit e32419a, which made this file)",
+    "size": "720x1280",
+    "duration": 24.36,
+    "fps": 25,
+    "sound": "none (-an)",
+    "filmed": "Live screen recording (Playwright, 432x768, scaled to 720x1280) of the real app on a local dev server: a robot owner «Bader» with the perfume shop «Sultan al oud», a robot customer «أحمد» with 2 tampons already. The step line is a dark rounded box (white bold text, purple number badge) injected into the page, at the bottom (step 2 at the top). The finger is an injected white dot with an orange ring that slides to each target and shrinks on the press; the clicks are real.",
+    "timing_note": "approximate (±0.2 s): a live recording with fixed waits (600, 1800, 800+180 per tap, 900, 1500, 700, 1200, 8 digits × 170, 1800, 1500, 900, 1500, 3500 ms) plus page loads, trimmed 0.6 s at the start. Times below are anchored on visible changes measured in the file with ffprobe scene scores (0.68 caption 1, 4.20 camera opens, 5.08 caption 2, 8.40 typing screen, 11.3–12.7 digits, 13.44 customer found, 14.72 caption 4, 17.64 tampon given, 19.84 last caption). Each caption stays until the next replaces it. Step 5 «انزل على «زيد تامبون»» is in the script but never appears: in this app version tapping the perfume gives the tampon itself, so the script finds no «زيد تامبون» button and skips that step — the sequence jumps from 4 to ✓.",
+    "fixed_text": [],
+    "steps": [
+      { "start": 0.0, "end": 0.68, "badge": null, "text": null, "tap": null, "screen": "Owner's home (/shop) of «Sultan al oud», no caption yet." },
+      { "start": 0.68, "end": 5.08, "badge": "1", "text": "الحريف ما عندوش التليفون؟ انزل على «سكاني»", "tap": "«سكاني» on the owner's home — dot slides in ~2.6 s, press ~3.5 s", "screen": "Owner's home until ~4.2 s, then the counter's camera screen (dark fake camera). Caption at the bottom." },
+      { "start": 5.08, "end": 8.3, "badge": "2", "text": "انزل على «اكتب الكود»", "tap": "the white button «اكتب الكود» under the camera — press ~7.3 s", "screen": "Camera screen «زيد تامبون», hint «حط الكود متاع الحريف في وسط الإيكران», button «اكتب الكود». Caption box moved to the top. At ~8.4 s the typing screen opens." },
+      { "start": 8.3, "end": 14.72, "badge": "3", "text": "اكتب النومرو متاع الحريف", "tap": "the code/number field — press ~10.4 s; then the customer's 8-digit number (a test robot's 9xxxxxxx) types itself ~11.3–12.7 s", "screen": "Counter «زيد تامبون» with tabs «سكاني» / «اكتب الكود», field label «الكود (6 أرقام) ولا النومرو متاعو». At ~13.4 s the customer is found: «أحمد» with his card count, «على شنوّة التامبون؟» and six perfume buttons «Parfum 30 ml», «Parfum 50 ml», «Parfum 100 ml», «Parfum 30 ml CP», «Parfum 50 ml CP», «Parfum 100 ml CP»." },
+      { "start": 14.72, "end": 19.84, "badge": "4", "text": "انزل على البارفان اللي خذاه", "tap": "«Parfum 50 ml» — dot slides ~16.3 s, press ~17.2 s", "screen": "Perfume buttons; at ~17.6 s the tampon is given and the counter shows its done state («+1 لـأحمد!»)." },
+      { "start": 19.84, "end": 24.36, "badge": "✓", "text": "خلاص! التامبون تسجّل للحريف، على البارفان اللي خذاه", "tap": null, "screen": "Counter's done screen, finger dot hidden; held to the end." }
+    ],
+    "app_text": null
+  },
+  {
+    "file": "social/explainers/fix-tampon.mp4",
+    "title": "بدّل الحاجة متاع تامبون",
+    "purpose": "Explainer to send owners: fixing the thing a tampon was given for (wrong item) — the tampon in «آخر حركة» → «غلطت في الحاجة؟ بدّلها» → the right item → done.",
+    "made_by": "social/explainers/fix-tampon.svg (animated SVG, 16 s CSS loop; commit 58fc8b7). The MP4's renderer is not in the repo.",
+    "size": "720x1280",
+    "duration": 16.0,
+    "fps": 24,
+    "sound": "none (no audio stream)",
+    "filmed": "Fully drawn (SVG 1080x1920 scaled to 720x1280): purple gradient background, a drawn phone with a mock of the owner's screens (shop «قهوة سامي»), caption and subline above it, three step dots under the caption, a drawn finger (white disc with a ring) for each tap.",
+    "timing_note": "exact: from the SVG keyframes (16 s; 1% = 0.16 s), and the file is 16.0 s starting at the loop's 0 (scene changes measured at 5.96–6.54 and 8.83–9.12 s match the sheet and page keyframes). Captions cross-fade over 0.32 s: start = when a line starts fading in, end = when it starts fading out. The first line is fully on at 0; everything fades out 15.68–16.0 s for the loop.",
+    "fixed_text": ["Pointili (bottom)", "www.pointili.online (bottom)", "three step dots under the caption (dot 1 lit 2.88–5.92 s, dot 2 5.92–8.96 s, dot 3 8.96–12.96 s)"],
+    "steps": [
+      { "start": 0.0, "end": 2.72, "badge": null, "text": "غلطت في الحاجة متاع تامبون؟\nبدّلها في زوز ثواني 👇", "tap": null, "screen": "Owner's home (drawn): «نهارك طيّب سامي», «قهوة سامي», purple card «ورّي الكود», «آخر حركة» with rows «نور خذا تامبون · شاي» 14:20, «علي خذا تامبون · كابوسة» 14:16, «سامي خذا تامبون · اكسبراس» 13:58, link «شوف الحرفاء الكل»." },
+      { "start": 2.72, "end": 5.76, "badge": null, "text": "1. اضغط على التامبون\nفي «آخر حركة»، في الصفحة الأولى", "tap": "the row «علي خذا تامبون · كابوسة» — finger appears 3.52–4.16 s, slides up to the row by 4.80 s, ring at 4.80–4.96 s (tap ≈ 4.9 s); the row is lit 4.48–6.40 s", "screen": "Same home." },
+      { "start": 5.76, "end": 8.8, "badge": null, "text": "2. اضغط «بدّلها»\nغلطت في الحاجة؟ بدّلها", "tap": "the button «غلطت في الحاجة؟ بدّلها» — finger appears 6.88–7.36 s, reaches it at 8.00 s, ring 8.00–8.16 s (tap ≈ 8.05 s); button lit 7.84–8.96 s", "screen": "Home dimmed; a sheet slides up 5.92–6.56 s: «علي», «علي خذا تامبون · كابوسة · 14:16», a card strip «• • • 4/10 • • •», button «غلطت في الحاجة؟ بدّلها», button «الحرفاء الكل»." },
+      { "start": 8.8, "end": 12.8, "badge": null, "text": "3. اختار الحاجة الصحيحة\nتتبدّل وحدها، في بلاصتها", "tap": "the choice «اكسبراس» — finger appears 9.92–10.40 s, reaches it at 11.04 s, ring 11.04–11.20 s (tap ≈ 11.1 s)", "screen": "Page fades in 8.80–9.28 s: «بدّل الحاجة», «غلطت في الحاجة؟ اختار التامبون وبدّلها», row «علي» / «الثلاثاء 14:16» with chip «كابوسة», «التامبون هذا كان على:» with choices «اكسبراس», «كابوسة» (selected), «شاي»; rows «نور» «شاي» and «سامي» «اكسبراس». At 11.20–11.52 s the chip turns into green «✓ اكسبراس» (pops to 12.48 s), the row turns mint, «اكسبراس» becomes the selected choice." },
+      { "start": 12.8, "end": 15.68, "badge": null, "text": "✓ تبدّلت!\nالتامبون يقعد كيف ما هو", "tap": null, "screen": "The changed page held; all fades out 15.68–16.0 s." }
+    ],
+    "app_text": null
+  },
+  {
+    "file": "social/install-guide/install-android.mp4",
+    "title": "حطّ Pointili في تليفونك — أندرويد · Chrome",
+    "purpose": "Social video: putting Pointili on an Android home screen from Chrome (⋮ → Ajouter à l’écran d’accueil → Installer → the icon).",
+    "made_by": "social/install-guide/make.py (android_film → install-android.svg; commit ad46b2b). The MP4's renderer is not in the repo.",
+    "size": "1080x1920",
+    "duration": 17.5,
+    "fps": 30,
+    "sound": "none (no audio stream)",
+    "filmed": "Fully drawn (SVG): a phone with French-language Chrome on Android over a wireframe Pointili page, Chrome's ⋮ menu, the «Installer l’application» dialog and a home screen; a drawn finger (purple ring) with a ripple; the step under the phone: purple number disc, title, a pill with the phone's own label (chip), a grey hint, progress dots.",
+    "timing_note": "exact: from make.py's keyframes (D = 18 s, taps at 3, 7, 11 s); scene changes measured in the file (3.27, 7.50, 11.53 s) match. The MP4 is 17.5 s = D − 0.5: it stops before the loop's last half-second (the fade back to the first screen). Captions: start = fade-in start (0.45 s fade, rising 26 px), end = fade-out start (0.45 s). Step 1 is not in the very first frame: it fades in 0–0.45 s. The finger comes in from 1.3 s before each tap, presses at the tap, is gone 0.55 s after; the tapped item flashes.",
+    "fixed_text": ["Pointili (top, next to the mark)", "حطّ Pointili في تليفونك (headline)", "أندرويد · Chrome (purple pill)", "pointili.online (bottom)", "four progress dots (the current one is a purple bar)"],
+    "steps": [
+      { "start": 0.0, "end": 3.55, "badge": "1", "text": "اضغط على الزرّ ⋮\n⋮\nالفوق، على اليمين متاع Chrome", "tap": "Chrome's ⋮ (top right) at 3.0 s", "screen": "Drawn Chrome: status «9:41», address bar «pointili.online», tab count «1», ⋮; wireframe Pointili page. Menu scales in from the top right at 3.15 s, page dims." },
+      { "start": 3.7, "end": 7.55, "badge": "2", "text": "اختار\nAjouter à l’écran d’accueil\nولا «Installer l’application»", "tap": "menu item «Ajouter à l’écran d’accueil» at 7.0 s", "screen": "Chrome menu: an icon row, then «Nouvel onglet», «Nouvel onglet privé», «Historique», «Téléchargements», «Favoris», «Onglets récents», «Ajouter à l’écran d’accueil» (bold, highlighted), «Paramètres». Menu leaves 7.45–7.8 s." },
+      { "start": 7.7, "end": 11.55, "badge": "3", "text": "اضغط «Installer»\nInstaller\nوتتحطّ وحدها في التليفون", "tap": "«Installer» at 11.0 s", "screen": "Dialog (in 7.55–7.95 s): «Installer l’application», round Pointili icon, «Pointili», «pointili.online», «Annuler», blue «Installer». Dialog leaves 11.45–11.85 s." },
+      { "start": 11.9, "end": 17.5, "badge": "✓", "text": "وهاي Pointili على الشاشة\nتحلّها كيما أي أبليكاسيون", "tap": null, "screen": "Home screen fades in 11.4–11.85 s: wallpaper, «9:41», «ven. 24 oct.», round app icons, a search bar; the «Pointili» icon pops in 12.1–12.9 s. Held to the end of the file." }
+    ],
+    "app_text": null
+  },
+  {
+    "file": "social/install-guide/install-iphone.mp4",
+    "title": "حطّ Pointili في تليفونك — آيفون · Safari",
+    "purpose": "Social video: putting Pointili on an iPhone home screen from Safari, iOS 26 (⋯ → Partager → Plus d’options → Ajouter à l’écran d’accueil → Ajouter → the icon).",
+    "made_by": "social/install-guide/make.py (ios_film → install-iphone.svg; commit ad46b2b). The MP4's renderer is not in the repo.",
+    "size": "1080x1920",
+    "duration": 26.5,
+    "fps": 30,
+    "sound": "none (no audio stream)",
+    "filmed": "Fully drawn (SVG): an iPhone with French-language Safari (iOS 26 glass bar at the bottom) over a wireframe Pointili page, Safari's ⋯ menu, the share sheet, the all-actions sheet, the «Écran d’accueil» screen and a home screen; drawn finger with ripple; the step under the phone as in the Android film.",
+    "timing_note": "exact: from make.py's keyframes (D = 27 s, taps at 3, 7, 11, 15, 19 s); measured changes (3.27, 15.60, 19.50 s) match. The MP4 is 26.5 s = D − 0.5 (stops before the loop's fade back). Same caption/finger conventions as install-android.mp4; step 1 fades in 0–0.45 s.",
+    "fixed_text": ["Pointili (top, next to the mark)", "حطّ Pointili في تليفونك (headline)", "آيفون · Safari (purple pill)", "pointili.online (bottom)", "six progress dots"],
+    "steps": [
+      { "start": 0.0, "end": 3.55, "badge": "1", "text": "اضغط على الزرّ ⋯\n⋯\nفي البار اللوطا، على اليمين", "tap": "Safari's ⋯ in the bottom bar (right) at 3.0 s", "screen": "Drawn Safari: status «9:41», wireframe Pointili page, bottom glass bar with back arrow, «pointili.online», ⋯. Menu grows from the bottom right at 3.15 s, page dims." },
+      { "start": 3.7, "end": 7.55, "badge": "2", "text": "اختار «Partager»\nPartager\nولا «Share»", "tap": "«Partager» at 7.0 s", "screen": "Menu: «Partager» (highlighted), «Ajouter aux favoris», «Ajouter un signet», «Liste de lecture», «Rechercher dans la page», «Nouvel onglet»." },
+      { "start": 7.7, "end": 11.55, "badge": "3", "text": "اضغط على «…»\nPlus d’options\nالزرّ اللي على اليمين، يورّيك الكل", "tap": "the last action «Plus» (⋯) at 11.0 s", "screen": "Share sheet slides up 7.5–8.0 s: Pointili icon, «Pointili», «pointili.online», ×; «AirDrop», «Messages», «Mail», «WhatsApp», «Notes»; actions «Copier», «Signet», «Lecture», «Plus»." },
+      { "start": 11.7, "end": 15.55, "badge": "4", "text": "اختار\nAjouter à l’écran d’accueil\nولا «Add to Home Screen»", "tap": "«Ajouter à l’écran d’accueil» at 15.0 s", "screen": "All-actions sheet (11.45–11.95 s): «Pointili», then «Copier», «Ajouter à la liste de lecture», «Ajouter un signet», «Ajouter aux favoris», «Rechercher dans la page», «Ajouter à l’écran d’accueil» (bold, highlighted), «Imprimer»." },
+      { "start": 15.7, "end": 19.55, "badge": "5", "text": "اضغط «Ajouter»\nAjouter\nخلّي «Ouvrir comme app web» مشعولة", "tap": "the blue «Ajouter» (top right) at 19.0 s", "screen": "Screen slides up 15.5–16.05 s: ×, «Écran d’accueil», blue «Ajouter»; Pointili icon, «Pointili», «pointili.online»; «Ouvrir comme app web» with a green switch on." },
+      { "start": 19.9, "end": 26.5, "badge": "✓", "text": "وهاي Pointili على الشاشة\nتحلّها كيما أي أبليكاسيون", "tap": null, "screen": "Home screen fades in 19.4–19.85 s: wallpaper, «9:41», app squares, «Rechercher», dock; the «Pointili» icon pops in 20.1–20.9 s. Held to the end of the file." }
+    ],
+    "app_text": null
+  },
+  {
+    "file": "v2/public/clips/how-1-v2.mp4",
+    "title": "هكّا تخدم في المحل — 1 (restaurant)",
+    "purpose": "Slide 1 of the in-app «how it works» story (owner onboarding and the «شوف كيفاش تخدم» button): the owner shows the code, the customer scans it with their own phone, the tampon lands — in a restaurant.",
+    "made_by": "real camera footage («vedio pointili 3», 17 Oct 2026; clip 2 of the shoot), cut in commit 35aa05f; shown by v2/components/HowClip.tsx",
+    "size": "540x960",
+    "duration": 7.458,
+    "fps": 24,
+    "sound": "none (no audio stream; one data/metadata stream only)",
+    "filmed": "Real camera footage in a restaurant (poster: a plate of a sandwich and fries held at a table). No captions burned in according to the sources; the words are drawn by the app over the clip.",
+    "timing_note": "n/a: no burned-in text. In the app the slide's words rise in when the slide shows and stay for the whole clip; at its end the story moves to slide 2 by itself.",
+    "fixed_text": [],
+    "steps": [
+      { "start": 0.0, "end": 7.458, "badge": null, "text": null, "tap": null, "screen": "Real footage (restaurant)." }
+    ],
+    "app_text": "Over the clip (HowClip.tsx + lib/t.ts): top — three progress bars, «هكّا تخدم في المحل», and «تخطّى» (onboarding) or a × (opened from the counter/home/«سكاني»). Bottom — number «1», a pulsing nudge «زلّق ‹» until the viewer swipes, title «تورّي الكود للحريف», line «يسكانيه بكاميرا تليفونو، بلا ما ينزّل حتى أبليكاسيون», white button «كمّل». Note: the source comment and commit 35aa05f say slide 1 is the restaurant (the founder's choice), slide 2 the café, slide 3 the shop — not café/restaurant/shop."
+  },
+  {
+    "file": "v2/public/clips/how-2-v2.mp4",
+    "title": "هكّا تخدم في المحل — 2 (café)",
+    "purpose": "Slide 2 of the in-app «how it works» story: the same gesture in a café.",
+    "made_by": "real camera footage («vedio pointili 3», clip 1 of the shoot), cut in commit 35aa05f; shown by v2/components/HowClip.tsx",
+    "size": "540x960",
+    "duration": 9.417,
+    "fps": 24,
+    "sound": "none (no audio stream; one data/metadata stream only)",
+    "filmed": "Real camera footage in a café (poster: a man at a table looking at his phone while an espresso is served). No captions burned in according to the sources.",
+    "timing_note": "n/a: no burned-in text; the app's words stay for the whole clip, then the story moves to slide 3.",
+    "fixed_text": [],
+    "steps": [
+      { "start": 0.0, "end": 9.417, "badge": null, "text": null, "tap": null, "screen": "Real footage (café)." }
+    ],
+    "app_text": "Top: progress bars, «هكّا تخدم في المحل», «تخطّى» or ×. Bottom: number «2», title «التامبون يدخل في تليفونو», line «في ثانية، على الكارط متاع محلّك», white button «كمّل»."
+  },
+  {
+    "file": "v2/public/clips/how-3-v2.mp4",
+    "title": "هكّا تخدم في المحل — 3 (shop)",
+    "purpose": "Slide 3 (last) of the in-app «how it works» story: the same gesture in a shop; it loops and waits for its button.",
+    "made_by": "real camera footage («vedio pointili 3», clip 3 of the shoot), cut in commit 35aa05f; shown by v2/components/HowClip.tsx",
+    "size": "540x960",
+    "duration": 10.333,
+    "fps": 24,
+    "sound": "none (no audio stream; one data/metadata stream only)",
+    "filmed": "Real camera footage in a shop (poster: a man walking across a shop floor, shelves behind). No captions burned in according to the sources.",
+    "timing_note": "n/a: no burned-in text; this last slide loops until its button is tapped.",
+    "fixed_text": [],
+    "steps": [
+      { "start": 0.0, "end": 10.333, "badge": null, "text": null, "tap": null, "screen": "Real footage (shop)." }
+    ],
+    "app_text": "Top: progress bars, «هكّا تخدم في المحل», «تخطّى» or ×. Bottom: number «3», title «في كل محل، نفس الحركة», line «قهوة، ريستو، حانوت… والكادو يستنّاه في تليفونو», purple button «ورّيني الكود متاعي» (onboarding, FirstLook) or «فهمت» (opened from the counter/home/«سكاني»)."
+  },
+  {
+    "file": "v2/public/clips/wheel-set-v2.mp4",
+    "title": "كيفاش تحضّرها (the wheel set up)",
+    "purpose": "Second slide of the owners' news note about the wheel (roulette): how the owner sets it up — three prizes written, chances shared out by themselves, saved, the switch turned on.",
+    "made_by": "v2/scripts/wheel-clip.mjs (ONLY=set; commits 15641fd, 53ff3ec, 71ed2f2)",
+    "size": "540x720",
+    "duration": 13.083,
+    "fps": 24,
+    "sound": "none (-an)",
+    "filmed": "Live screen recording (Playwright, 540x960) of the real owner page /shop/wheel on a dev server (robot shop «Café Pointili»), cut from 2.4 s, sped up 1.6×, cropped to y 170–890 (header and foot cut off). No caption overlay and no finger: the clicks are real but invisible; all text is the app's own UI.",
+    "timing_note": "approximate (±0.2 s): live recording with waits (1200; per prize: type at 110 ms/char, 260, click «زيد كادو», 520; 500; save; 1500; switch; 2200 ms) sped up 1.6×. Anchored on changes measured in the file with ffprobe (0.54 page painted, typing 1.67–2.25 / 2.96–3.54 / 4.12–4.67, prizes added 2.46 / 3.67 / 4.96, save 5.71, saved ~8.08, switch ~10.4–11.3). The script's «قسّم بالتساوي» click never happens: adding a prize already shares the chances evenly, so that button never shows. The switch card sits at the crop's top edge, so turning it on is mostly out of frame.",
+    "fixed_text": [],
+    "steps": [
+      { "start": 0.0, "end": 0.54, "badge": null, "text": null, "tap": null, "screen": "Page still painting (light, nearly empty)." },
+      { "start": 0.54, "end": 1.5, "badge": null, "text": "حتى كادو مازال: اكتب أوّل واحد لتحت", "tap": null, "screen": "Owner's wheel page: empty prize list, field with placeholder «زيد كادو», button «زيد كادو», «المجموع: 0%», disabled «سجّل»." },
+      { "start": 1.5, "end": 2.46, "badge": null, "text": "قهوة بلاش", "tap": "the «زيد كادو» field at ~1.5 s (no finger shown); «قهوة بلاش» typed 1.67–2.25 s; button «زيد كادو» at ~2.4 s", "screen": "Prize name typing in the field." },
+      { "start": 2.46, "end": 3.67, "badge": null, "text": "كرواسون", "tap": "field ~2.9 s; «كرواسون» typed 2.96–3.54 s; «زيد كادو» ~3.6 s", "screen": "List row «قهوة بلاش» 100%." },
+      { "start": 3.67, "end": 4.96, "badge": null, "text": "ريميز 20%", "tap": "field ~4.0 s; «ريميز 20%» typed 4.12–4.67 s; «زيد كادو» ~4.9 s", "screen": "Two prizes at 50% each; the wheel preview appears (two slices)." },
+      { "start": 4.96, "end": 5.71, "badge": null, "text": "المجموع: 100%", "tap": null, "screen": "Three prizes «قهوة بلاش» 34%, «كرواسون» 33%, «ريميز 20%» 33%, each with −5%/+5% and ×; three-slice wheel; total in green." },
+      { "start": 5.71, "end": 8.08, "badge": null, "text": "لحظة…", "tap": "«سجّل» at ~5.7 s", "screen": "Save button shows «لحظة…» while saving." },
+      { "start": 8.08, "end": 13.083, "badge": null, "text": "تسجّلت", "tap": "the switch «خدّم الروليت للحرفاء» ~9.0 s (above/at the crop edge)", "screen": "Save button «✓ تسجّلت»; the switch turns on ~10.4–11.3 s (its line becomes «مخدومة: الحريف كي يكمّل الكارط ياخو دورة في الروليت», mostly out of frame). Held to the end." }
+    ],
+    "app_text": "The note lives in the database (news table, news.pic = this clip), not in the repo; nothing in v2 source mentions wheel-set-v2. Per commit 53ff3ec it is the note's second slide with the words «كيفاش تحضّرها» and the button to go and set it up. Exact live wording not verified."
+  },
+  {
+    "file": "v2/public/clips/wheel-win-v2.mp4",
+    "title": "Wheel won (what a customer sees)",
+    "purpose": "First slide of the owners' news note about the wheel: what a customer sees — a full card, the wheel with three prizes, the spin, the prize with confetti.",
+    "made_by": "v2/scripts/wheel-clip.mjs (ONLY=win; commits 53ff3ec, 71ed2f2)",
+    "size": "540x660",
+    "duration": 7.833,
+    "fps": 24,
+    "sound": "none (-an)",
+    "filmed": "Live screen recording (Playwright, 540x960) of the real customer card page /c/<id> on a dev server: the wheel popup opens by itself over the card (robot shop «Café Pointili», customer «نور», prizes «قهوة بلاش» 34%, «كرواسون» 33%, «ريميز 20%» 33%). Cut from 1.2 s, sped up 1.25×, cropped to y 150–810 (the popup's × is cut off). No caption overlay, no finger: all text is the app's own.",
+    "timing_note": "approximate but measured: waits are 2200 ms before the hub tap and 7000 ms after; the wheel's turn is a 4.6 s CSS transition (3.68 s at 1.25×). Times below come from ffprobe scene scores in the file: hub tapped ~1.46 s («…»), spin 1.875–5.55 s, prize at 5.58 s (brightness jumps), confetti to ~7.1 s. The prize is «قهوة بلاش»: the pixel colour under the pointer in the last frame is that slice's purple (#6C47FF).",
+    "fixed_text": [],
+    "steps": [
+      { "start": 0.0, "end": 1.46, "badge": null, "text": "كمّلت الكارط!\nربحت دورة في الروليت: دوّرها وشوف شنوّة تربح", "tap": null, "screen": "Dark popup over the card; the wheel with slices «قهوة بلاش» (purple), «كرواسون» (coral), «ريميز 20%» (green), pointer at the top, white hub «دوّر»." },
+      { "start": 1.46, "end": 5.58, "badge": null, "text": "كمّلت الكارط!\nربحت دورة في الروليت: دوّرها وشوف شنوّة تربح", "tap": "the hub «دوّر» at ~1.46 s (real click, no finger drawn); the hub shows «…»", "screen": "The wheel turns five times and slows (1.875–5.55 s), landing on «قهوة بلاش»." },
+      { "start": 5.58, "end": 7.833, "badge": null, "text": "ربحت قهوة بلاش!\nورّي الكود متاعك للمحل وخوذ الكادو", "tap": null, "screen": "Confetti (~5.58–7.1 s), the stopped wheel, white button «باهي». Held to the end." }
+    ],
+    "app_text": "The note lives in the database (news table), not in the repo; nothing in v2 source mentions wheel-win-v2. Per commit 53ff3ec this is the note's first slide, with the words «الحريف يكمّل الكارط، ويدوّر — يربح وحدة من الكادوات اللي تحطّهم إنت». Exact live wording not verified."
+  }
+]

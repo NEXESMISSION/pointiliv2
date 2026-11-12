@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ابعث تامبون برابط · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/explainers/tampon-by-link.mp4</span></div>
+<div class="kind">Explainer</div>
+<h1 dir="auto">ابعث تامبون برابط</h1>
+<p class="lede">Explainer to send owners on WhatsApp: giving a tampon to an online customer as a one-time link (owner's home → <bdi>«اعمل رابط جديد»</bdi> → WhatsApp → the customer opens it → the owner's list shows who took it).</p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/tampon-by-link.jpg" src="../explainers/tampon-by-link.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\explainers\tampon-by-link.mp4</code>
+      
+      <div class="chips"><span class="chip">23.9 s</span><span class="chip">720×1280</span><span class="chip">30 fps</span><span class="chip">no sound</span><span class="chip">0.7 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <dl class="facts"><dt>Made by</dt><dd><code>v2/scripts/explainer-videos.mjs (linksFilm, commit 7dcb642)</code></dd><dt>Filmed</dt><dd>Rendered frame by frame from an HTML page: a drawn phone, one caption block above it. Inside the phone: real app screenshots from a run of v2/scripts/links.mjs (v2/.e2e/links/11-home, 2-page-empty, 3-link-ready, 4-customer-stamped, 7-list; shop <bdi>«Boutique Sonia»</bdi>, customer <bdi>«رانية · كوموند 12»</bdi>). The WhatsApp-like chat is drawn. Drawn finger with ripple on each tap.</dd><dt>Always on screen</dt><dd>www.pointili.online (bottom line under the phone, hidden by the title cards)</dd><dt>Times</dt><dd>exact: scene durations 2.0+3.0+3.2+3.2+3.1+2.9+3.7+2.8 = 23.9 s = the file. Same conventions as install-android-app: caption start = scene start + 0.12 s, end = scene end − 0.16 s; cards = their scene, fading 0.28 s; finger visible 0.7 s before to 0.52 s after each tap.</dd></dl>
+  
+  <p class="note">What is on screen, step by step. Click a step to jump the video there.</p>
+  <div class="tablewrap"><table class="lines"><thead><tr><th>step</th><th>time (s)</th><th>caption</th><th>finger / screen</th></tr></thead><tbody><tr data-start="0" data-end="2"><td class="n">1</td><td class="t num">0.0–2.0</td><td class="ar pre cap" dir="auto">ابعث تامبون برابط
+للحرفاء اللي يشريو منك أونلاين</td><td><small>Purple title card: logo tile, <bdi>«Pointili»</bdi>, title, subline, <bdi>«www.pointili.online»</bdi>. Fades out 2.0–2.28 s.</small></td></tr>
+<tr data-start="2.12" data-end="4.84"><td class="n">2</td><td class="t num">2.1–4.8</td><td class="ar pre cap" dir="auto"><span class="badge">1</span>اضغط «ابعث تامبون برابط»
+من الصفحة متاعك</td><td>the row <bdi>«ابعث تامبون برابط»</bdi> (under it <bdi>«للحرفاء اللي يشريو منك أونلاين»</bdi>) on the owner's home, pressed at 3.70 s (finger 3.00–4.22 s)<small>Owner's home (real): <bdi>«نهارك طيّب سنية»</bdi>, <bdi>«Boutique Sonia»</bdi>, <bdi>«عطي تامبون»</bdi> with <bdi>«ورّي الكود»</bdi> and <bdi>«بالنومرو»</bdi>, the link row, <bdi>«سكاني»</bdi> <bdi>«الحرفاء»</bdi> <bdi>«المحل»</bdi>, today's counts, <bdi>«آخر حركة»</bdi>.</small></td></tr>
+<tr data-start="5.12" data-end="8.04"><td class="n">3</td><td class="t num">5.1–8.0</td><td class="ar pre cap" dir="auto"><span class="badge">2</span>اضغط «اعمل رابط جديد»
+تنجم تكتب اسم الحريف · موش لازم</td><td>the purple button <bdi>«اعمل رابط جديد»</bdi>, pressed at 6.80 s (finger 6.10–7.32 s)<small>Page <bdi>«تامبون برابط»</bdi> (real, empty): <bdi>«لكل حريف رابط جديد. يخدم مرّة وحدة، وما يوفاش بالوقت.»</bdi>, field <bdi>«لشكون؟»</bdi> (placeholder <bdi>«مثلا: سامي · كوموند 12»</bdi>, <bdi>«موش لازم · بيان كان ليك»</bdi>), the button, <bdi>«الروابط اللي بعثتهم»</bdi> with an empty list.</small></td></tr>
+<tr data-start="8.32" data-end="11.24"><td class="n">4</td><td class="t num">8.3–11.2</td><td class="ar pre cap" dir="auto"><span class="badge">3</span>ابعثو للحريف في واتساب
+ولا انسخو وابعثو وين تحب</td><td>the green <bdi>«واتساب»</bdi> button, pressed at 10.10 s (finger 9.40–10.62 s)<small>Sheet <bdi>«الرابط حاضر»</bdi> (real): <bdi>«ابعثو للحريف: كي يحلّو، التامبون يدخل للكارط متاعو.»</bdi>, <bdi>«رانية · كوموند 12»</bdi>, the link www.pointili.online/s/uPn33BlcVDGVNK…, <bdi>«مرّة وحدة · ما يوفاش»</bdi>, buttons <bdi>«واتساب»</bdi> <bdi>«تنسخ»</bdi> <bdi>«ابعث»</bdi>, <bdi>«رابط آخر لحريف آخر»</bdi>, <bdi>«باهي»</bdi>.</small></td></tr>
+<tr data-start="11.52" data-end="14.34"><td class="n">5</td><td class="t num">11.5–14.3</td><td class="ar pre cap" dir="auto"><span class="badge">4</span>الحريف يحلّ الرابط…</td><td>the link in the chat bubble, pressed at 13.30 s (finger 12.60–13.82 s)<small>Drawn WhatsApp-like chat: header <bdi>«Boutique Sonia»</bdi> / <bdi>«متّصل»</bdi>, one bubble <bdi>«🎁 تامبون جديد من Boutique Sonia! حلّ الرابط هذا وخوذو في الكارط متاعك:»</bdi> with the link <bdi>«www.pointili.online/s/uPn33BlcVD…»</bdi> and time <bdi>«12:27»</bdi>, input <bdi>«اكتب رسالة»</bdi>.</small></td></tr>
+<tr data-start="14.62" data-end="17.24"><td class="n">6</td><td class="t num">14.6–17.2</td><td class="ar pre cap" dir="auto">والتامبون يدخل للكارط متاعو</td><td><small>Customer's phone in the drawn Chrome bar (real screenshot): <bdi>«+1»</bdi>, <bdi>«تامبون جديد!»</bdi>, <bdi>«Boutique Sonia»</bdi>, the card <bdi>«Boutique Sonia»</bdi> 1/5, <bdi>«مازالولك 4 باش تربح تخفيض 10%»</bdi>, <bdi>«شوف الكارط»</bdi>, <bdi>«باهي»</bdi>.</small></td></tr>
+<tr data-start="17.52" data-end="20.94"><td class="n">7</td><td class="t num">17.5–20.9</td><td class="ar pre cap" dir="auto"><span class="badge">5</span>وتعرف شكون خذاه
+كل رابط يخدم مرّة وحدة، وما يوفاش</td><td><small>Page <bdi>«تامبون برابط»</bdi> with the sent links (real): <bdi>«يستنّاو · 1 تخذاو 2»</bdi>, rows <bdi>«رابط / يستنّى · توّا»</bdi> and <bdi>«رابط / تحلّ · يكمّل في الكونت · توّا»</bdi> (each with <bdi>«بطّل»</bdi>), and <bdi>«رانية · كوموند 12 / خذاه رانية · توّا»</bdi>. A purple ring draws around that last row from 18.00 s (0.42 s).</small></td></tr>
+<tr data-start="21.1" data-end="23.9"><td class="n">8</td><td class="t num">21.1–23.9</td><td class="ar pre cap" dir="auto">تامبون برابط
+لكل حريف رابط جديد · مرّة وحدة</td><td><small>Purple closing card (fades in 21.10–21.38 s, stays): logo tile, <bdi>«Pointili»</bdi>, title, subline, <bdi>«www.pointili.online»</bdi>.</small></td></tr></tbody></table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3><pre class="ar block" dir="auto" id="full">ابعث تامبون برابط
+للحرفاء اللي يشريو منك أونلاين
+
+اضغط «ابعث تامبون برابط»
+من الصفحة متاعك
+
+اضغط «اعمل رابط جديد»
+تنجم تكتب اسم الحريف · موش لازم
+
+ابعثو للحريف في واتساب
+ولا انسخو وابعثو وين تحب
+
+الحريف يحلّ الرابط…
+
+والتامبون يدخل للكارط متاعو
+
+وتعرف شكون خذاه
+كل رابط يخدم مرّة وحدة، وما يوفاش
+
+تامبون برابط
+لكل حريف رابط جديد · مرّة وحدة</pre>
+</section>
+<section id="sound">
+  <h2>Sound</h2>
+  <p class="note">None — the video is silent (no sound track at all): the words on screen say it all, so it works with the sound off.</p>
+</section>
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">The words are drawn into the video itself. These files have the same lines with their times.</p>
+  <div class="dl"><button data-dl="srt">tampon-by-link.srt</button><button data-dl="vtt">tampon-by-link.vtt</button></div>
+  <pre class="block srt">1
+00:00:00,000 --&gt; 00:00:02,000
+ابعث تامبون برابط
+للحرفاء اللي يشريو منك أونلاين
+
+2
+00:00:02,120 --&gt; 00:00:04,840
+اضغط «ابعث تامبون برابط»
+من الصفحة متاعك
+
+3
+00:00:05,120 --&gt; 00:00:08,040
+اضغط «اعمل رابط جديد»
+تنجم تكتب اسم الحريف · موش لازم
+
+4
+00:00:08,320 --&gt; 00:00:11,240
+ابعثو للحريف في واتساب
+ولا انسخو وابعثو وين تحب
+
+5
+00:00:11,520 --&gt; 00:00:14,340
+الحريف يحلّ الرابط…
+
+6
+00:00:14,620 --&gt; 00:00:17,240
+والتامبون يدخل للكارط متاعو
+
+7
+00:00:17,520 --&gt; 00:00:20,940
+وتعرف شكون خذاه
+كل رابط يخدم مرّة وحدة، وما يوفاش
+
+8
+00:00:21,100 --&gt; 00:00:23,900
+تامبون برابط
+لكل حريف رابط جديد · مرّة وحدة
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"start":0,"end":2,"text":"ابعث تامبون برابط\nللحرفاء اللي يشريو منك أونلاين"},{"start":2.12,"end":4.84,"text":"اضغط «ابعث تامبون برابط»\nمن الصفحة متاعك"},{"start":5.12,"end":8.04,"text":"اضغط «اعمل رابط جديد»\nتنجم تكتب اسم الحريف · موش لازم"},{"start":8.32,"end":11.24,"text":"ابعثو للحريف في واتساب\nولا انسخو وابعثو وين تحب"},{"start":11.52,"end":14.34,"text":"الحريف يحلّ الرابط…"},{"start":14.62,"end":17.24,"text":"والتامبون يدخل للكارط متاعو"},{"start":17.52,"end":20.94,"text":"وتعرف شكون خذاه\nكل رابط يخدم مرّة وحدة، وما يوفاش"},{"start":21.1,"end":23.9,"text":"تامبون برابط\nلكل حريف رابط جديد · مرّة وحدة"}],"lines":[{"start":0,"end":2},{"start":2.12,"end":4.84},{"start":5.12,"end":8.04},{"start":8.32,"end":11.24},{"start":11.52,"end":14.34},{"start":14.62,"end":17.24},{"start":17.52,"end":20.94},{"start":21.1,"end":23.9}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,000 --> 00:00:02,000\nابعث تامبون برابط\nللحرفاء اللي يشريو منك أونلاين\n\n2\n00:00:02,120 --> 00:00:04,840\nاضغط «ابعث تامبون برابط»\nمن الصفحة متاعك\n\n3\n00:00:05,120 --> 00:00:08,040\nاضغط «اعمل رابط جديد»\nتنجم تكتب اسم الحريف · موش لازم\n\n4\n00:00:08,320 --> 00:00:11,240\nابعثو للحريف في واتساب\nولا انسخو وابعثو وين تحب\n\n5\n00:00:11,520 --> 00:00:14,340\nالحريف يحلّ الرابط…\n\n6\n00:00:14,620 --> 00:00:17,240\nوالتامبون يدخل للكارط متاعو\n\n7\n00:00:17,520 --> 00:00:20,940\nوتعرف شكون خذاه\nكل رابط يخدم مرّة وحدة، وما يوفاش\n\n8\n00:00:21,100 --> 00:00:23,900\nتامبون برابط\nلكل حريف رابط جديد · مرّة وحدة\n","vtt":"WEBVTT\n\n1\n00:00:00.000 --> 00:00:02.000\nابعث تامبون برابط\nللحرفاء اللي يشريو منك أونلاين\n\n2\n00:00:02.120 --> 00:00:04.840\nاضغط «ابعث تامبون برابط»\nمن الصفحة متاعك\n\n3\n00:00:05.120 --> 00:00:08.040\nاضغط «اعمل رابط جديد»\nتنجم تكتب اسم الحريف · موش لازم\n\n4\n00:00:08.320 --> 00:00:11.240\nابعثو للحريف في واتساب\nولا انسخو وابعثو وين تحب\n\n5\n00:00:11.520 --> 00:00:14.340\nالحريف يحلّ الرابط…\n\n6\n00:00:14.620 --> 00:00:17.240\nوالتامبون يدخل للكارط متاعو\n\n7\n00:00:17.520 --> 00:00:20.940\nوتعرف شكون خذاه\nكل رابط يخدم مرّة وحدة، وما يوفاش\n\n8\n00:00:21.100 --> 00:00:23.900\nتامبون برابط\nلكل حريف رابط جديد · مرّة وحدة\n","said":null,"name":"tampon-by-link"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>

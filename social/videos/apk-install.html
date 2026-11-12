@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>كيفاش تحطّ Pointili في تليفونك · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/ads/out/apk-install.mp4</span></div>
+<div class="kind">Explainer</div>
+<h1 dir="auto">كيفاش تحطّ Pointili في تليفونك</h1>
+<p class="lede">How to put the Android app on a phone — sent to owners on WhatsApp</p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/apk-install.jpg" src="../ads/out/apk-install.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\apk-install.mp4</code>
+      <b>Also</b><code>C:\Users\ayoub\wt\apk-film\social\explainers\install-apk.mp4  (the copy on main, in the APK worktree)</code>
+      <div class="chips"><span class="chip">45.1 s</span><span class="chip">1080×1920</span><span class="chip">30 fps</span><span class="chip">with sound</span><span class="chip">6.4 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <div class="about"><p>apk — <bdi>«كيفاش تحطّ Pointili في تليفونك»</bdi>: an explainer, not an ad. The Android app (www.pointili.online/android → public/pointili.apk) put on a phone step by step, the way a phone in French asks it: Chrome warns before the download (<bdi>«Télécharger quand même»</bdi>), the file opens (<bdi>«Ouvrir»</bdi>), Android asks once to let Chrome install apps (<bdi>«Paramètres»</bdi> → <bdi>«Autoriser cette source»</bdi>), then <bdi>«Installer»</bdi> — and Pointili opens, its icon on the home screen like any app.</p><p>The phone's screens are drawn (the system's own dialogs, no logo); the app's screen in it is a real one (assets/screens). The camera moves in on each dialog, so the button to tap is big enough to read on the phone the film is watched on. No voice: the captions say it.</p></div>
+  <p class="note">13 lines, 45.1 s. No voice: the captions say it. Click a line to jump the video there. <b>Bold</b> words are the ones coloured on screen.</p>
+  <div class="tablewrap"><table class="lines">
+    <thead><tr><th>#</th><th>time (s)</th><th>caption</th><th>subtitle on screen</th><th></th></tr></thead>
+    <tbody><tr data-start="0.4" data-end="3"><td class="n">1</td><td class="t num">0.4–3.0</td><td class="ar" dir="rtl">تحبّ <b>Pointili</b> أبليكاسيون في تليفونك؟</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">0.4–3.3</small></td><td></td></tr>
+<tr data-start="3.3" data-end="5.9"><td class="n">2</td><td class="t num">3.3–5.9</td><td class="ar" dir="rtl"><b>4 خطوات</b>، وفي أقل من دقيقة.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">3.3–6.2</small></td><td></td></tr>
+<tr data-start="6.2" data-end="9.6"><td class="n">3</td><td class="t num">6.2–9.6</td><td class="ar" dir="rtl">حلّ الرابط: <b>pointili.online/android</b></td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">6.2–9.9</small></td><td></td></tr>
+<tr data-start="9.9" data-end="13.3"><td class="n">4</td><td class="t num">9.9–13.3</td><td class="ar" dir="rtl">Chrome يحذّرك؟ عادي، يعملها مع أي تطبيق موش من Play Store</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">9.9–13.6</small></td><td></td></tr>
+<tr data-start="13.6" data-end="16.4"><td class="n">5</td><td class="t num">13.6–16.4</td><td class="ar" dir="rtl">اختار <b>Télécharger quand même</b></td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">13.6–16.7</small></td><td></td></tr>
+<tr data-start="16.7" data-end="19.5"><td class="n">6</td><td class="t num">16.7–19.5</td><td class="ar" dir="rtl">كي يوفى التحميل، اختار <b>Ouvrir</b></td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">16.7–19.8</small></td><td></td></tr>
+<tr data-start="19.8" data-end="23"><td class="n">7</td><td class="t num">19.8–23.0</td><td class="ar" dir="rtl">أوّل مرّة برك، Android يسألك: اختار <b>Paramètres</b></td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">19.8–23.3</small></td><td></td></tr>
+<tr data-start="23.3" data-end="26.7"><td class="n">8</td><td class="t num">23.3–26.7</td><td class="ar" dir="rtl">شعّل <b>Autoriser cette source</b>، وارجع لتالي</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">23.3–27.0</small></td><td></td></tr>
+<tr data-start="27" data-end="29.6"><td class="n">9</td><td class="t num">27.0–29.6</td><td class="ar" dir="rtl">توّا اختار <b>Installer</b></td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">27.0–29.9</small></td><td></td></tr>
+<tr data-start="29.9" data-end="32.7"><td class="n">10</td><td class="t num">29.9–32.7</td><td class="ar" dir="rtl">كان سألك <b>Play Protect</b>، كمّل عادي.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">29.9–33.0</small></td><td></td></tr>
+<tr data-start="33" data-end="36"><td class="n">11</td><td class="t num">33.0–36.0</td><td class="ar" dir="rtl"><b>Ouvrir</b>… وهاو Pointili في تليفونك!</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">33.0–36.3</small></td><td></td></tr>
+<tr data-start="36.3" data-end="39.9"><td class="n">12</td><td class="t num">36.3–39.9</td><td class="ar" dir="rtl">ومن بعد، حلّو من <b>الأيقونة</b> متاعو، كيما أي أبليكاسيون.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">36.3–40.3</small></td><td></td></tr>
+<tr data-start="40.2" data-end="42.6"><td class="n">13</td><td class="t num">40.2–42.6</td><td class="ar" dir="rtl">pointili.online/android</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td></td></tr></tbody>
+  </table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3>
+  <pre class="ar block" dir="rtl" id="full">تحبّ Pointili أبليكاسيون في تليفونك؟
+4 خطوات، وفي أقل من دقيقة.
+حلّ الرابط: pointili.online/android
+Chrome يحذّرك؟ عادي، يعملها مع أي تطبيق موش من Play Store
+اختار Télécharger quand même
+كي يوفى التحميل، اختار Ouvrir
+أوّل مرّة برك، Android يسألك: اختار Paramètres
+شعّل Autoriser cette source، وارجع لتالي
+توّا اختار Installer
+كان سألك Play Protect، كمّل عادي.
+Ouvrir… وهاو Pointili في تليفونك!
+ومن بعد، حلّو من الأيقونة متاعو، كيما أي أبليكاسيون.
+pointili.online/android</pre>
+</section>
+
+<section id="sound">
+  <h2>Sound</h2>
+  <div class="player"><span>The soundtrack, alone</span><audio controls preload="none" src="sound/apk-install.m4a"></audio><a href="sound/apk-install.m4a" download>sound/apk-install.m4a</a></div>
+  <dl class="facts">
+    <dt>Voice</dt><dd>None — the captions carry it, over the music.
+      </dd>
+    <dt>Music</dt><dd>«tech» — clean and modern: a pad, a pulse, a few plucks. Written and played in code (engine/sound.mjs), nothing licensed. </dd>
+    <dt>Effects</dt><dd>64 sounds: key ×23, pop ×13, tap ×9, ding ×6, swish ×4, chime ×3, whoosh ×2, win ×1, sparkle ×1, swoosh ×1, impact ×1.</dd>
+    <dt>Level</dt><dd>Levelled to −14 LUFS (what Instagram plays at), AAC 192 kb/s, 48 kHz stereo.</dd>
+  </dl>
+  
+  <h3>Every effect, in order</h3>
+  <div class="tablewrap"><table class="fx"><thead><tr><th>time (s)</th><th>sound</th></tr></thead><tbody>
+    <tr data-start="0.05"><td class="num">0.1</td><td>whoosh</td></tr><tr data-start="1.15"><td class="num">1.1</td><td>pop</td></tr><tr data-start="3.6"><td class="num">3.6–4.3</td><td>pop <span class="muted">×4</span></td></tr><tr data-start="6.05"><td class="num">6.0</td><td>swish (short whoosh)</td></tr><tr data-start="6.75"><td class="num">6.8–8.0</td><td>key click — typing <span class="muted">×23</span></td></tr><tr data-start="8.47"><td class="num">8.5</td><td>tap — a finger on the glass</td></tr><tr data-start="9.9"><td class="num">9.9</td><td>chime</td></tr><tr data-start="13.7"><td class="num">13.7</td><td>pop</td></tr><tr data-start="15.32"><td class="num">15.3</td><td>tap — a finger on the glass</td></tr><tr data-start="16.45"><td class="num">16.4</td><td>ding</td></tr><tr data-start="16.65"><td class="num">16.6</td><td>swish (short whoosh)</td></tr><tr data-start="16.7"><td class="num">16.7</td><td>ding</td></tr><tr data-start="17.2"><td class="num">17.2</td><td>pop</td></tr><tr data-start="18.62"><td class="num">18.6</td><td>tap — a finger on the glass</td></tr><tr data-start="19.5"><td class="num">19.5</td><td>ding</td></tr><tr data-start="19.7"><td class="num">19.7</td><td>swish (short whoosh)</td></tr><tr data-start="19.75"><td class="num">19.8</td><td>chime</td></tr><tr data-start="20.7"><td class="num">20.7</td><td>pop</td></tr><tr data-start="22.32"><td class="num">22.3</td><td>tap — a finger on the glass</td></tr><tr data-start="23.75"><td class="num">23.8</td><td>pop</td></tr><tr data-start="24.52"><td class="num">24.5</td><td>tap — a finger on the glass</td></tr><tr data-start="24.55"><td class="num">24.6</td><td>ding</td></tr><tr data-start="25.3"><td class="num">25.3</td><td>pop</td></tr><tr data-start="26.37"><td class="num">26.4</td><td>tap — a finger on the glass</td></tr><tr data-start="26.7"><td class="num">26.7</td><td>ding</td></tr><tr data-start="26.9"><td class="num">26.9</td><td>swish (short whoosh)</td></tr><tr data-start="26.9"><td class="num">26.9</td><td>chime</td></tr><tr data-start="27.3"><td class="num">27.3</td><td>pop</td></tr><tr data-start="28.72"><td class="num">28.7</td><td>tap — a finger on the glass</td></tr><tr data-start="32.9"><td class="num">32.9</td><td>ding</td></tr><tr data-start="32.9"><td class="num">32.9</td><td>win — four bells going up</td></tr><tr data-start="33.2"><td class="num">33.2</td><td>pop</td></tr><tr data-start="34.02"><td class="num">34.0</td><td>tap — a finger on the glass</td></tr><tr data-start="34.35"><td class="num">34.4</td><td>sparkle</td></tr><tr data-start="36.05"><td class="num">36.0</td><td>swoosh (falling)</td></tr><tr data-start="37.1"><td class="num">37.1</td><td>pop</td></tr><tr data-start="38.52"><td class="num">38.5</td><td>tap — a finger on the glass</td></tr><tr data-start="40"><td class="num">40.0</td><td>whoosh</td></tr><tr data-start="40.4"><td class="num">40.4</td><td>impact — a low hit</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">Already burned into the film: a white pill near the bottom, the key words in purple. 12 subtitles; 1 line has none (the scene or the end card shows it). The .srt has them as shown; “every line said” has the whole voice, for a platform's own captions.</p>
+  <div class="dl"><button data-dl="srt">apk-install.srt</button><button data-dl="vtt">apk-install.vtt</button><button data-dl="said">apk-install.said.srt — every line said</button></div>
+  <pre class="block srt">1
+00:00:00,400 --&gt; 00:00:03,270
+تحبّ Pointili أبليكاسيون في تليفونك؟
+
+2
+00:00:03,300 --&gt; 00:00:06,170
+4 خطوات، وفي أقل من دقيقة.
+
+3
+00:00:06,200 --&gt; 00:00:09,870
+حلّ الرابط: pointili.online/android
+
+4
+00:00:09,900 --&gt; 00:00:13,570
+Chrome يحذّرك؟ عادي، يعملها مع أي تطبيق موش من Play Store
+
+5
+00:00:13,600 --&gt; 00:00:16,670
+اختار Télécharger quand même
+
+6
+00:00:16,700 --&gt; 00:00:19,770
+كي يوفى التحميل، اختار Ouvrir
+
+7
+00:00:19,800 --&gt; 00:00:23,270
+أوّل مرّة برك، Android يسألك: اختار Paramètres
+
+8
+00:00:23,300 --&gt; 00:00:26,970
+شعّل Autoriser cette source، وارجع لتالي
+
+9
+00:00:27,000 --&gt; 00:00:29,870
+توّا اختار Installer
+
+10
+00:00:29,900 --&gt; 00:00:32,970
+كان سألك Play Protect، كمّل عادي.
+
+11
+00:00:33,000 --&gt; 00:00:36,270
+Ouvrir… وهاو Pointili في تليفونك!
+
+12
+00:00:36,300 --&gt; 00:00:40,250
+ومن بعد، حلّو من الأيقونة متاعو، كيما أي أبليكاسيون.
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"id":"i1","start":0.4,"end":3.27,"text":"تحبّ Pointili أبليكاسيون في تليفونك؟"},{"id":"i2","start":3.3,"end":6.17,"text":"4 خطوات، وفي أقل من دقيقة."},{"id":"s1","start":6.2,"end":9.87,"text":"حلّ الرابط: pointili.online/android"},{"id":"s2","start":9.9,"end":13.57,"text":"Chrome يحذّرك؟ عادي، يعملها مع أي تطبيق موش من Play Store"},{"id":"s3","start":13.6,"end":16.67,"text":"اختار Télécharger quand même"},{"id":"s4","start":16.7,"end":19.77,"text":"كي يوفى التحميل، اختار Ouvrir"},{"id":"s5","start":19.8,"end":23.27,"text":"أوّل مرّة برك، Android يسألك: اختار Paramètres"},{"id":"s6","start":23.3,"end":26.97,"text":"شعّل Autoriser cette source، وارجع لتالي"},{"id":"s7","start":27,"end":29.87,"text":"توّا اختار Installer"},{"id":"s8","start":29.9,"end":32.97,"text":"كان سألك Play Protect، كمّل عادي."},{"id":"s9","start":33,"end":36.27,"text":"Ouvrir… وهاو Pointili في تليفونك!"},{"id":"s10","start":36.3,"end":40.25,"text":"ومن بعد، حلّو من الأيقونة متاعو، كيما أي أبليكاسيون."}],"lines":[{"start":0.4,"end":3},{"start":3.3,"end":5.9},{"start":6.2,"end":9.6},{"start":9.9,"end":13.3},{"start":13.6,"end":16.4},{"start":16.7,"end":19.5},{"start":19.8,"end":23},{"start":23.3,"end":26.7},{"start":27,"end":29.6},{"start":29.9,"end":32.7},{"start":33,"end":36},{"start":36.3,"end":39.9},{"start":40.2,"end":42.6}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,400 --> 00:00:03,270\nتحبّ Pointili أبليكاسيون في تليفونك؟\n\n2\n00:00:03,300 --> 00:00:06,170\n4 خطوات، وفي أقل من دقيقة.\n\n3\n00:00:06,200 --> 00:00:09,870\nحلّ الرابط: pointili.online/android\n\n4\n00:00:09,900 --> 00:00:13,570\nChrome يحذّرك؟ عادي، يعملها مع أي تطبيق موش من Play Store\n\n5\n00:00:13,600 --> 00:00:16,670\nاختار Télécharger quand même\n\n6\n00:00:16,700 --> 00:00:19,770\nكي يوفى التحميل، اختار Ouvrir\n\n7\n00:00:19,800 --> 00:00:23,270\nأوّل مرّة برك، Android يسألك: اختار Paramètres\n\n8\n00:00:23,300 --> 00:00:26,970\nشعّل Autoriser cette source، وارجع لتالي\n\n9\n00:00:27,000 --> 00:00:29,870\nتوّا اختار Installer\n\n10\n00:00:29,900 --> 00:00:32,970\nكان سألك Play Protect، كمّل عادي.\n\n11\n00:00:33,000 --> 00:00:36,270\nOuvrir… وهاو Pointili في تليفونك!\n\n12\n00:00:36,300 --> 00:00:40,250\nومن بعد، حلّو من الأيقونة متاعو، كيما أي أبليكاسيون.\n","vtt":"WEBVTT\n\n1\n00:00:00.400 --> 00:00:03.270\nتحبّ Pointili أبليكاسيون في تليفونك؟\n\n2\n00:00:03.300 --> 00:00:06.170\n4 خطوات، وفي أقل من دقيقة.\n\n3\n00:00:06.200 --> 00:00:09.870\nحلّ الرابط: pointili.online/android\n\n4\n00:00:09.900 --> 00:00:13.570\nChrome يحذّرك؟ عادي، يعملها مع أي تطبيق موش من Play Store\n\n5\n00:00:13.600 --> 00:00:16.670\nاختار Télécharger quand même\n\n6\n00:00:16.700 --> 00:00:19.770\nكي يوفى التحميل، اختار Ouvrir\n\n7\n00:00:19.800 --> 00:00:23.270\nأوّل مرّة برك، Android يسألك: اختار Paramètres\n\n8\n00:00:23.300 --> 00:00:26.970\nشعّل Autoriser cette source، وارجع لتالي\n\n9\n00:00:27.000 --> 00:00:29.870\nتوّا اختار Installer\n\n10\n00:00:29.900 --> 00:00:32.970\nكان سألك Play Protect، كمّل عادي.\n\n11\n00:00:33.000 --> 00:00:36.270\nOuvrir… وهاو Pointili في تليفونك!\n\n12\n00:00:36.300 --> 00:00:40.250\nومن بعد، حلّو من الأيقونة متاعو، كيما أي أبليكاسيون.\n","said":"1\n00:00:00,400 --> 00:00:03,000\nتحبّ Pointili أبليكاسيون في تليفونك؟\n\n2\n00:00:03,300 --> 00:00:05,900\n4 خطوات، وفي أقل من دقيقة.\n\n3\n00:00:06,200 --> 00:00:09,600\nحلّ الرابط: pointili.online/android\n\n4\n00:00:09,900 --> 00:00:13,300\nChrome يحذّرك؟ عادي، يعملها مع أي تطبيق موش من Play Store\n\n5\n00:00:13,600 --> 00:00:16,400\nاختار Télécharger quand même\n\n6\n00:00:16,700 --> 00:00:19,500\nكي يوفى التحميل، اختار Ouvrir\n\n7\n00:00:19,800 --> 00:00:23,000\nأوّل مرّة برك، Android يسألك: اختار Paramètres\n\n8\n00:00:23,300 --> 00:00:26,700\nشعّل Autoriser cette source، وارجع لتالي\n\n9\n00:00:27,000 --> 00:00:29,600\nتوّا اختار Installer\n\n10\n00:00:29,900 --> 00:00:32,700\nكان سألك Play Protect، كمّل عادي.\n\n11\n00:00:33,000 --> 00:00:36,000\nOuvrir… وهاو Pointili في تليفونك!\n\n12\n00:00:36,300 --> 00:00:39,900\nومن بعد، حلّو من الأيقونة متاعو، كيما أي أبليكاسيون.\n\n13\n00:00:40,200 --> 00:00:42,600\npointili.online/android\n","name":"apk-install"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>

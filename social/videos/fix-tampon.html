@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>بدّل الحاجة متاع تامبون · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/explainers/fix-tampon.mp4</span></div>
+<div class="kind">Explainer</div>
+<h1 dir="auto">بدّل الحاجة متاع تامبون</h1>
+<p class="lede">Explainer to send owners: fixing the thing a tampon was given for (wrong item) — the tampon in <bdi>«آخر حركة»</bdi> → <bdi>«غلطت في الحاجة؟ بدّلها»</bdi> → the right item → done.</p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/fix-tampon.jpg" src="../explainers/fix-tampon.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\explainers\fix-tampon.mp4</code>
+      
+      <div class="chips"><span class="chip">16.0 s</span><span class="chip">720×1280</span><span class="chip">24 fps</span><span class="chip">no sound</span><span class="chip">0.4 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <dl class="facts"><dt>Made by</dt><dd><code>social/explainers/fix-tampon.svg (animated SVG, 16 s CSS loop; commit 58fc8b7). The MP4's renderer is not in the repo.</code></dd><dt>Filmed</dt><dd>Fully drawn (SVG 1080x1920 scaled to 720x1280): purple gradient background, a drawn phone with a mock of the owner's screens (shop <bdi>«قهوة سامي»</bdi>), caption and subline above it, three step dots under the caption, a drawn finger (white disc with a ring) for each tap.</dd><dt>Always on screen</dt><dd>Pointili (bottom)<br>www.pointili.online (bottom)<br>three step dots under the caption (dot 1 lit 2.88–5.92 s, dot 2 5.92–8.96 s, dot 3 8.96–12.96 s)</dd><dt>Times</dt><dd>exact: from the SVG keyframes (16 s; 1% = 0.16 s), and the file is 16.0 s starting at the loop's 0 (scene changes measured at 5.96–6.54 and 8.83–9.12 s match the sheet and page keyframes). Captions cross-fade over 0.32 s: start = when a line starts fading in, end = when it starts fading out. The first line is fully on at 0; everything fades out 15.68–16.0 s for the loop.</dd></dl>
+  
+  <p class="note">What is on screen, step by step. Click a step to jump the video there.</p>
+  <div class="tablewrap"><table class="lines"><thead><tr><th>step</th><th>time (s)</th><th>caption</th><th>finger / screen</th></tr></thead><tbody><tr data-start="0" data-end="2.72"><td class="n">1</td><td class="t num">0.0–2.7</td><td class="ar pre cap" dir="auto">غلطت في الحاجة متاع تامبون؟
+بدّلها في زوز ثواني 👇</td><td><small>Owner's home (drawn): <bdi>«نهارك طيّب سامي»</bdi>, <bdi>«قهوة سامي»</bdi>, purple card <bdi>«ورّي الكود»</bdi>, <bdi>«آخر حركة»</bdi> with rows <bdi>«نور خذا تامبون · شاي»</bdi> 14:20, <bdi>«علي خذا تامبون · كابوسة»</bdi> 14:16, <bdi>«سامي خذا تامبون · اكسبراس»</bdi> 13:58, link <bdi>«شوف الحرفاء الكل»</bdi>.</small></td></tr>
+<tr data-start="2.72" data-end="5.76"><td class="n">2</td><td class="t num">2.7–5.8</td><td class="ar pre cap" dir="auto">1. اضغط على التامبون
+في «آخر حركة»، في الصفحة الأولى</td><td>the row <bdi>«علي خذا تامبون · كابوسة»</bdi> — finger appears 3.52–4.16 s, slides up to the row by 4.80 s, ring at 4.80–4.96 s (tap ≈ 4.9 s); the row is lit 4.48–6.40 s<small>Same home.</small></td></tr>
+<tr data-start="5.76" data-end="8.8"><td class="n">3</td><td class="t num">5.8–8.8</td><td class="ar pre cap" dir="auto">2. اضغط «بدّلها»
+غلطت في الحاجة؟ بدّلها</td><td>the button <bdi>«غلطت في الحاجة؟ بدّلها»</bdi> — finger appears 6.88–7.36 s, reaches it at 8.00 s, ring 8.00–8.16 s (tap ≈ 8.05 s); button lit 7.84–8.96 s<small>Home dimmed; a sheet slides up 5.92–6.56 s: <bdi>«علي»</bdi>, <bdi>«علي خذا تامبون · كابوسة · 14:16»</bdi>, a card strip <bdi>«• • • 4/10 • • •»</bdi>, button <bdi>«غلطت في الحاجة؟ بدّلها»</bdi>, button <bdi>«الحرفاء الكل»</bdi>.</small></td></tr>
+<tr data-start="8.8" data-end="12.8"><td class="n">4</td><td class="t num">8.8–12.8</td><td class="ar pre cap" dir="auto">3. اختار الحاجة الصحيحة
+تتبدّل وحدها، في بلاصتها</td><td>the choice <bdi>«اكسبراس»</bdi> — finger appears 9.92–10.40 s, reaches it at 11.04 s, ring 11.04–11.20 s (tap ≈ 11.1 s)<small>Page fades in 8.80–9.28 s: <bdi>«بدّل الحاجة»</bdi>, <bdi>«غلطت في الحاجة؟ اختار التامبون وبدّلها»</bdi>, row <bdi>«علي»</bdi> / <bdi>«الثلاثاء 14:16»</bdi> with chip <bdi>«كابوسة»</bdi>, <bdi>«التامبون هذا كان على:»</bdi> with choices <bdi>«اكسبراس»</bdi>, <bdi>«كابوسة»</bdi> (selected), <bdi>«شاي»</bdi>; rows <bdi>«نور»</bdi> <bdi>«شاي»</bdi> and <bdi>«سامي»</bdi> <bdi>«اكسبراس»</bdi>. At 11.20–11.52 s the chip turns into green <bdi>«✓ اكسبراس»</bdi> (pops to 12.48 s), the row turns mint, <bdi>«اكسبراس»</bdi> becomes the selected choice.</small></td></tr>
+<tr data-start="12.8" data-end="15.68"><td class="n">5</td><td class="t num">12.8–15.7</td><td class="ar pre cap" dir="auto">✓ تبدّلت!
+التامبون يقعد كيف ما هو</td><td><small>The changed page held; all fades out 15.68–16.0 s.</small></td></tr></tbody></table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3><pre class="ar block" dir="auto" id="full">غلطت في الحاجة متاع تامبون؟
+بدّلها في زوز ثواني 👇
+
+1. اضغط على التامبون
+في «آخر حركة»، في الصفحة الأولى
+
+2. اضغط «بدّلها»
+غلطت في الحاجة؟ بدّلها
+
+3. اختار الحاجة الصحيحة
+تتبدّل وحدها، في بلاصتها
+
+✓ تبدّلت!
+التامبون يقعد كيف ما هو</pre>
+</section>
+<section id="sound">
+  <h2>Sound</h2>
+  <p class="note">None — the video is silent (no sound track at all): the words on screen say it all, so it works with the sound off.</p>
+</section>
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">The words are drawn into the video itself. These files have the same lines with their times.</p>
+  <div class="dl"><button data-dl="srt">fix-tampon.srt</button><button data-dl="vtt">fix-tampon.vtt</button></div>
+  <pre class="block srt">1
+00:00:00,000 --&gt; 00:00:02,720
+غلطت في الحاجة متاع تامبون؟
+بدّلها في زوز ثواني 👇
+
+2
+00:00:02,720 --&gt; 00:00:05,760
+1. اضغط على التامبون
+في «آخر حركة»، في الصفحة الأولى
+
+3
+00:00:05,760 --&gt; 00:00:08,800
+2. اضغط «بدّلها»
+غلطت في الحاجة؟ بدّلها
+
+4
+00:00:08,800 --&gt; 00:00:12,800
+3. اختار الحاجة الصحيحة
+تتبدّل وحدها، في بلاصتها
+
+5
+00:00:12,800 --&gt; 00:00:15,680
+✓ تبدّلت!
+التامبون يقعد كيف ما هو
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"start":0,"end":2.72,"text":"غلطت في الحاجة متاع تامبون؟\nبدّلها في زوز ثواني 👇"},{"start":2.72,"end":5.76,"text":"1. اضغط على التامبون\nفي «آخر حركة»، في الصفحة الأولى"},{"start":5.76,"end":8.8,"text":"2. اضغط «بدّلها»\nغلطت في الحاجة؟ بدّلها"},{"start":8.8,"end":12.8,"text":"3. اختار الحاجة الصحيحة\nتتبدّل وحدها، في بلاصتها"},{"start":12.8,"end":15.68,"text":"✓ تبدّلت!\nالتامبون يقعد كيف ما هو"}],"lines":[{"start":0,"end":2.72},{"start":2.72,"end":5.76},{"start":5.76,"end":8.8},{"start":8.8,"end":12.8},{"start":12.8,"end":15.68}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,000 --> 00:00:02,720\nغلطت في الحاجة متاع تامبون؟\nبدّلها في زوز ثواني 👇\n\n2\n00:00:02,720 --> 00:00:05,760\n1. اضغط على التامبون\nفي «آخر حركة»، في الصفحة الأولى\n\n3\n00:00:05,760 --> 00:00:08,800\n2. اضغط «بدّلها»\nغلطت في الحاجة؟ بدّلها\n\n4\n00:00:08,800 --> 00:00:12,800\n3. اختار الحاجة الصحيحة\nتتبدّل وحدها، في بلاصتها\n\n5\n00:00:12,800 --> 00:00:15,680\n✓ تبدّلت!\nالتامبون يقعد كيف ما هو\n","vtt":"WEBVTT\n\n1\n00:00:00.000 --> 00:00:02.720\nغلطت في الحاجة متاع تامبون؟\nبدّلها في زوز ثواني 👇\n\n2\n00:00:02.720 --> 00:00:05.760\n1. اضغط على التامبون\nفي «آخر حركة»، في الصفحة الأولى\n\n3\n00:00:05.760 --> 00:00:08.800\n2. اضغط «بدّلها»\nغلطت في الحاجة؟ بدّلها\n\n4\n00:00:08.800 --> 00:00:12.800\n3. اختار الحاجة الصحيحة\nتتبدّل وحدها، في بلاصتها\n\n5\n00:00:12.800 --> 00:00:15.680\n✓ تبدّلت!\nالتامبون يقعد كيف ما هو\n","said":null,"name":"fix-tampon"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>

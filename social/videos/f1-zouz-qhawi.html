@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>زوز قهاوي · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/ads/out/f1-zouz-qhawi.mp4</span></div>
+<div class="kind">Ad 1 of 15</div>
+<h1 dir="auto">زوز قهاوي</h1>
+<p class="lede">Built like a two-cafés story reel (Daayem's): an illustrated story, a voice telling it, subtitles under it</p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/f1-zouz-qhawi.jpg" src="../ads/out/f1-zouz-qhawi.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\ads\out\f1-zouz-qhawi.mp4</code>
+      
+      <div class="chips"><span class="chip">61.7 s</span><span class="chip">1080×1920</span><span class="chip">30 fps</span><span class="chip">with sound</span><span class="chip">5.7 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <div class="about"><p>f1 — <bdi>«زوز قهاوي»</bdi> (two cafés on the same street): same coffee, same price; one is empty, the other's customers keep coming back. Why? The second one did not leave the next visit to luck: the code on the counter, the card in the customer's phone, the free coffee getting closer, <bdi>«يبعدو»</bdi> and a gift tampon on WhatsApp when he drifts. <bdi>«It has a system. It is called Pointili.»</bdi> Modelled on the structure of a two-cafés story reel, drawn flat (the same family as f2), in our words — and only what Pointili does: no notification is promised.</p></div>
+  <p class="note">23 lines, 61.7 s. Every line is said by the voice; ▶ plays one line alone. Click a line to jump the video there. <b>Bold</b> words are the ones coloured on screen.</p>
+  <div class="tablewrap"><table class="lines">
+    <thead><tr><th>#</th><th>time (s)</th><th>said (voice)</th><th>subtitle on screen</th><th></th></tr></thead>
+    <tbody><tr data-start="0.3" data-end="3.59"><td class="n">1</td><td class="t num">0.3–3.6</td><td class="ar" dir="rtl">زوز قهاوي في <b>نفس الشارع</b>،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">0.3–3.7</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b1.wav" title="Play this line's voice" aria-label="Play line 1">▶</button></td></tr>
+<tr data-start="3.69" data-end="6.12"><td class="n">2</td><td class="t num">3.7–6.1</td><td class="ar" dir="rtl">نفس القهوة، <b>ونفس السوم</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">3.7–6.3</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b2.wav" title="Play this line's voice" aria-label="Play line 2">▶</button></td></tr>
+<tr data-start="6.37" data-end="7.4"><td class="n">3</td><td class="t num">6.4–7.4</td><td class="ar" dir="rtl">وحدة <b>فارغة</b>..</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">6.4–7.5</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b3.wav" title="Play this line's voice" aria-label="Play line 3">▶</button></td></tr>
+<tr data-start="7.5" data-end="10.34"><td class="n">4</td><td class="t num">7.5–10.3</td><td class="ar" dir="rtl">والأخرى، الحرفاء <b>يرجعولها</b> كل يوم.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">7.5–10.6</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b4.wav" title="Play this line's voice" aria-label="Play line 4">▶</button></td></tr>
+<tr data-start="10.59" data-end="11.3"><td class="n">5</td><td class="t num">10.6–11.3</td><td class="ar" dir="rtl"><b>علاش؟</b></td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">10.6–11.6</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b5.wav" title="Play this line's voice" aria-label="Play line 5">▶</button></td></tr>
+<tr data-start="11.65" data-end="15.25"><td class="n">6</td><td class="t num">11.7–15.3</td><td class="ar" dir="rtl">تخيّل حريف شرب قهوة <b>في الزوز</b>، في نفس النهار.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">11.7–15.5</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b6.wav" title="Play this line's voice" aria-label="Play line 6">▶</button></td></tr>
+<tr data-start="15.5" data-end="19.56"><td class="n">7</td><td class="t num">15.5–19.6</td><td class="ar" dir="rtl">القهوة الأولى قالتلو «يعيشك».. <b>وخلاتو للزهر</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">15.5–19.8</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b7.wav" title="Play this line's voice" aria-label="Play line 7">▶</button></td></tr>
+<tr data-start="19.86" data-end="20.83"><td class="n">8</td><td class="t num">19.9–20.8</td><td class="ar" dir="rtl"><b>أما الثانية؟</b></td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">19.9–20.9</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b8.wav" title="Play this line's voice" aria-label="Play line 8">▶</button></td></tr>
+<tr data-start="20.98" data-end="23.13"><td class="n">9</td><td class="t num">21.0–23.1</td><td class="ar" dir="rtl">سكاني <b>الكود</b> اللي على الكونتوار،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">21.0–23.2</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b9.wav" title="Play this line's voice" aria-label="Play line 9">▶</button></td></tr>
+<tr data-start="23.23" data-end="26.02"><td class="n">10</td><td class="t num">23.2–26.0</td><td class="ar" dir="rtl">وطاحلو أوّل تامبون، <b>في تليفونو</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">23.2–26.1</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b10.wav" title="Play this line's voice" aria-label="Play line 10">▶</button></td></tr>
+<tr data-start="26.12" data-end="28.42"><td class="n">11</td><td class="t num">26.1–28.4</td><td class="ar" dir="rtl">من غير ما يحمّل <b>حتى أبليكاسيون</b>.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">26.1–28.6</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b11.wav" title="Play this line's voice" aria-label="Play line 11">▶</button></td></tr>
+<tr data-start="28.67" data-end="30.87"><td class="n">12</td><td class="t num">28.7–30.9</td><td class="ar" dir="rtl">كل مرّة يرجع، <b>تامبون جديد</b>..</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">28.7–30.9</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b12.wav" title="Play this line's voice" aria-label="Play line 12">▶</button></td></tr>
+<tr data-start="30.97" data-end="32.74"><td class="n">13</td><td class="t num">31.0–32.7</td><td class="ar" dir="rtl"><b>والقهوة البلاش</b> تقرب.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">31.0–33.0</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b13.wav" title="Play this line's voice" aria-label="Play line 13">▶</button></td></tr>
+<tr data-start="33.04" data-end="34.39"><td class="n">14</td><td class="t num">33.0–34.4</td><td class="ar" dir="rtl">وإذا غاب <b>جمعتين</b>؟</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">33.0–34.5</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b14.wav" title="Play this line's voice" aria-label="Play line 14">▶</button></td></tr>
+<tr data-start="34.54" data-end="36.52"><td class="n">15</td><td class="t num">34.5–36.5</td><td class="ar" dir="rtl">مولى القهوة يشوفو في <b>«يبعدو»</b>،</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">34.5–36.6</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b15.wav" title="Play this line's voice" aria-label="Play line 15">▶</button></td></tr>
+<tr data-start="36.62" data-end="39.05"><td class="n">16</td><td class="t num">36.6–39.0</td><td class="ar" dir="rtl">ويبعثلو <b>تامبون هدية</b> في الواتساب.</td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">36.6–39.2</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b16.wav" title="Play this line's voice" aria-label="Play line 16">▶</button></td></tr>
+<tr data-start="39.25" data-end="39.96"><td class="n">17</td><td class="t num">39.3–40.0</td><td class="ar" dir="rtl"><b>ويرجع.</b></td><td class="ar" dir="rtl"><span class="muted">the same words</span><small class="num">39.3–40.3</small></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b17.wav" title="Play this line's voice" aria-label="Play line 17">▶</button></td></tr>
+<tr data-start="40.36" data-end="43.25"><td class="n">18</td><td class="t num">40.4–43.3</td><td class="ar" dir="rtl">القهوة هاذي موش <b>أشطر</b>.. ولا <b>أرخص</b>.</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b18.wav" title="Play this line's voice" aria-label="Play line 18">▶</button></td></tr>
+<tr data-start="43.4" data-end="46.42"><td class="n">19</td><td class="t num">43.4–46.4</td><td class="ar" dir="rtl">هي برك ما خلاتش الزيارة الجاية <b>للزهر</b>.</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b19.wav" title="Play this line's voice" aria-label="Play line 19">▶</button></td></tr>
+<tr data-start="46.62" data-end="47.82"><td class="n">20</td><td class="t num">46.6–47.8</td><td class="ar" dir="rtl"><b>عندها سيستام.</b></td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b20.wav" title="Play this line's voice" aria-label="Play line 20">▶</button></td></tr>
+<tr data-start="48.07" data-end="50.65"><td class="n">21</td><td class="t num">48.1–50.6</td><td class="ar" dir="rtl">والسيستام هذا اسمو <b>Pointili</b>.</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b21.wav" title="Play this line's voice" aria-label="Play line 21">▶</button></td></tr>
+<tr data-start="50.9" data-end="52.72"><td class="n">22</td><td class="t num">50.9–52.7</td><td class="ar" dir="rtl">تحب نفس الحاجة لقهوتك؟</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b22.wav" title="Play this line's voice" aria-label="Play line 22">▶</button></td></tr>
+<tr data-start="52.87" data-end="57.118"><td class="n">23</td><td class="t num">52.9–57.1</td><td class="ar" dir="rtl">جرّب Pointili بلاش، واكتب «Pointili» في الكومونتار.</td><td class="ar" dir="rtl"><span class="muted">no subtitle — the scene carries it</span></td><td><button class="play" data-src="../ads/voice/f1-zouz-qhawi/b23.wav" title="Play this line's voice" aria-label="Play line 23">▶</button></td></tr></tbody>
+  </table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3>
+  <pre class="ar block" dir="rtl" id="full">زوز قهاوي في نفس الشارع،
+نفس القهوة، ونفس السوم.
+وحدة فارغة..
+والأخرى، الحرفاء يرجعولها كل يوم.
+علاش؟
+تخيّل حريف شرب قهوة في الزوز، في نفس النهار.
+القهوة الأولى قالتلو «يعيشك».. وخلاتو للزهر.
+أما الثانية؟
+سكاني الكود اللي على الكونتوار،
+وطاحلو أوّل تامبون، في تليفونو.
+من غير ما يحمّل حتى أبليكاسيون.
+كل مرّة يرجع، تامبون جديد..
+والقهوة البلاش تقرب.
+وإذا غاب جمعتين؟
+مولى القهوة يشوفو في «يبعدو»،
+ويبعثلو تامبون هدية في الواتساب.
+ويرجع.
+القهوة هاذي موش أشطر.. ولا أرخص.
+هي برك ما خلاتش الزيارة الجاية للزهر.
+عندها سيستام.
+والسيستام هذا اسمو Pointili.
+تحب نفس الحاجة لقهوتك؟
+جرّب Pointili بلاش، واكتب «Pointili» في الكومونتار.</pre>
+</section>
+
+<section id="sound">
+  <h2>Sound</h2>
+  <div class="player"><span>The soundtrack, alone</span><audio controls preload="none" src="sound/f1-zouz-qhawi.m4a"></audio><a href="sound/f1-zouz-qhawi.m4a" download>sound/f1-zouz-qhawi.m4a</a></div>
+  <dl class="facts">
+    <dt>Voice</dt><dd>Ash — a man's voice, from OpenAI's voice studio (openai.fm), in Tunisian Derja. One take for the whole film, cut into its 23 lines.
+      <div class="player"><span>The take, as recorded</span><audio controls preload="none" src="../ads/voice/f1-zouz-qhawi/take.mp3"></audio></div></dd>
+    <dt>Music</dt><dd>«warm» — a warm story: electric piano, soft swung drums. Written and played in code (engine/sound.mjs), nothing licensed. It stops for a moment at 10.5–11.8 s, 40.3–48.0 s. It ducks under the voice.</dd>
+    <dt>Effects</dt><dd>53 sounds: pop ×8, tick ×8, key ×8, stamp ×7, swish ×3, scratch ×3, thud ×2, boing ×2, sparkle ×2, msg ×2, impact ×2, ding ×1, scan ×1, chime ×1, tap ×1, win ×1, whoosh ×1.</dd>
+    <dt>Level</dt><dd>Levelled to −14 LUFS (what Instagram plays at), AAC 192 kb/s, 48 kHz stereo.</dd>
+  </dl>
+  <details><summary>What the voice studio was given (take.txt)</summary><pre class="block" dir="auto">voice: ash
+
+Accent: Tunisian Arabic (Derja, Tounsi), a young man from Tunis. Read the Arabic-script Derja exactly as written, the way Tunisians speak it every day: Tunisian vowels, rhythm and melody. Not Modern Standard Arabic, not Egyptian, not Gulf, not Levantine.
+French words used in Tunisia (كارط, تامبون, كونتوار, أبليكاسيون, سيستام, كومونتار, ريميز, كادو) are said the Tunisian way, close to French. The brand «بوانتيلي» is said like the French «Pointili» (pwan-tee-lee).
+Tone: warm, friendly and confident — a popular Instagram ad voice-over telling a short story to café and shop owners.
+Pacing: lively but clear. A short pause at every line break. A little weight on the key words.
+
+زوز قهاوي في نفس الشارع،
+نفس القهوة، ونفس السوم.
+وحدة فارغة..
+والأخرى، الحرفاء يرجعولها كل يوم.
+علاش؟
+تخيّل حريف شرب قهوة في الزوز، في نفس النهار.
+القهوة الأولى قالتلو «يعيشك».. وخلاتو للزهر.
+أما الثانية؟
+سكاني الكود اللي على الكونتوار،
+وطاحلو أوّل تامبون، في تليفونو.
+من غير ما يحمّل حتى أبليكاسيون.
+كل مرّة يرجع، تامبون جديد..
+والقهوة البلاش تقرب.
+وإذا غاب جمعتين؟
+مولى القهوة يشوفو في «يبعدو»،
+ويبعثلو تامبون هدية في الواتساب.
+ويرجع.
+القهوة هاذي موش أشطر.. ولا أرخص.
+هي برك ما خلاتش الزيارة الجاية للزهر.
+عندها سيستام.
+والسيستام هذا اسمو بوانتيلي.
+تحب نفس الحاجة لقهوتك؟
+جرّب بوانتيلي بلاش، واكتب «بوانتيلي» في الكومونتار.</pre></details>
+  <h3>Every effect, in order</h3>
+  <div class="tablewrap"><table class="fx"><thead><tr><th>time (s)</th><th>sound</th></tr></thead><tbody>
+    <tr data-start="0.4"><td class="num">0.4</td><td>pop</td></tr><tr data-start="3.74"><td class="num">3.7–3.9</td><td>pop <span class="muted">×2</span></td></tr><tr data-start="4.29"><td class="num">4.3–4.4</td><td>tick (clock) <span class="muted">×2</span></td></tr><tr data-start="6.52"><td class="num">6.5</td><td>thud</td></tr><tr data-start="7.65"><td class="num">7.7</td><td>ding</td></tr><tr data-start="8"><td class="num">8.0–8.7</td><td>tick (clock) <span class="muted">×3</span></td></tr><tr data-start="10.64"><td class="num">10.6</td><td>boing</td></tr><tr data-start="12.2"><td class="num">12.2–12.5</td><td>pop <span class="muted">×2</span></td></tr><tr data-start="15.85"><td class="num">15.8</td><td>pop</td></tr><tr data-start="16.95"><td class="num">16.9</td><td>boing</td></tr><tr data-start="20.88"><td class="num">20.9</td><td>swish (short whoosh)</td></tr><tr data-start="23.18"><td class="num">23.2</td><td>scan beep</td></tr><tr data-start="23.73"><td class="num">23.7</td><td>stamp — a tampon lands</td></tr><tr data-start="23.73"><td class="num">23.7</td><td>sparkle</td></tr><tr data-start="26.22"><td class="num">26.2</td><td>pop</td></tr><tr data-start="28.57"><td class="num">28.6</td><td>swish (short whoosh)</td></tr><tr data-start="29.19"><td class="num">29.2–30.1</td><td>stamp — a tampon lands <span class="muted">×4</span></td></tr><tr data-start="31.24"><td class="num">31.2–31.6</td><td>stamp — a tampon lands <span class="muted">×2</span></td></tr><tr data-start="32.54"><td class="num">32.5</td><td>chime</td></tr><tr data-start="33.14"><td class="num">33.1–33.7</td><td>tick (clock) <span class="muted">×3</span></td></tr><tr data-start="33.89"><td class="num">33.9</td><td>thud</td></tr><tr data-start="34.54"><td class="num">34.5</td><td>swish (short whoosh)</td></tr><tr data-start="35.39"><td class="num">35.4</td><td>tap — a finger on the glass</td></tr><tr data-start="37.02"><td class="num">37.0–37.7</td><td>message ping <span class="muted">×2</span></td></tr><tr data-start="40.25"><td class="num">40.3</td><td>sparkle</td></tr><tr data-start="40.25"><td class="num">40.3</td><td>win — four bells going up</td></tr><tr data-start="40.98"><td class="num">41.0</td><td>scratch</td></tr><tr data-start="41.78"><td class="num">41.8</td><td>scratch</td></tr><tr data-start="44.82"><td class="num">44.8</td><td>scratch</td></tr><tr data-start="46.72"><td class="num">46.7</td><td>impact — a low hit</td></tr><tr data-start="48.17"><td class="num">48.2</td><td>whoosh</td></tr><tr data-start="48.57"><td class="num">48.6</td><td>impact — a low hit</td></tr><tr data-start="50.67"><td class="num">50.7–51.3</td><td>key click — typing <span class="muted">×8</span></td></tr><tr data-start="51.74"><td class="num">51.7</td><td>pop</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">Already burned into the film: a white pill near the bottom, the key words in purple. 17 subtitles; 6 lines have none (the scene or the end card shows them). The .srt has them as shown; “every line said” has the whole voice, for a platform's own captions.</p>
+  <div class="dl"><button data-dl="srt">f1-zouz-qhawi.srt</button><button data-dl="vtt">f1-zouz-qhawi.vtt</button><button data-dl="said">f1-zouz-qhawi.said.srt — every line said</button></div>
+  <pre class="block srt">1
+00:00:00,300 --&gt; 00:00:03,660
+زوز قهاوي في نفس الشارع،
+
+2
+00:00:03,690 --&gt; 00:00:06,340
+نفس القهوة، ونفس السوم.
+
+3
+00:00:06,370 --&gt; 00:00:07,470
+وحدة فارغة..
+
+4
+00:00:07,500 --&gt; 00:00:10,560
+والأخرى، الحرفاء يرجعولها كل يوم.
+
+5
+00:00:10,590 --&gt; 00:00:11,620
+علاش؟
+
+6
+00:00:11,650 --&gt; 00:00:15,470
+تخيّل حريف شرب قهوة في الزوز، في نفس النهار.
+
+7
+00:00:15,500 --&gt; 00:00:19,830
+القهوة الأولى قالتلو «يعيشك».. وخلاتو للزهر.
+
+8
+00:00:19,860 --&gt; 00:00:20,950
+أما الثانية؟
+
+9
+00:00:20,980 --&gt; 00:00:23,200
+سكاني الكود اللي على الكونتوار،
+
+10
+00:00:23,230 --&gt; 00:00:26,090
+وطاحلو أوّل تامبون، في تليفونو.
+
+11
+00:00:26,120 --&gt; 00:00:28,640
+من غير ما يحمّل حتى أبليكاسيون.
+
+12
+00:00:28,670 --&gt; 00:00:30,940
+كل مرّة يرجع، تامبون جديد..
+
+13
+00:00:30,970 --&gt; 00:00:33,010
+والقهوة البلاش تقرب.
+
+14
+00:00:33,040 --&gt; 00:00:34,510
+وإذا غاب جمعتين؟
+
+15
+00:00:34,540 --&gt; 00:00:36,590
+مولى القهوة يشوفو في «يبعدو»،
+
+16
+00:00:36,620 --&gt; 00:00:39,220
+ويبعثلو تامبون هدية في الواتساب.
+
+17
+00:00:39,250 --&gt; 00:00:40,310
+ويرجع.
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"id":"b1","start":0.3,"end":3.66,"text":"زوز قهاوي في نفس الشارع،"},{"id":"b2","start":3.69,"end":6.34,"text":"نفس القهوة، ونفس السوم."},{"id":"b3","start":6.37,"end":7.47,"text":"وحدة فارغة.."},{"id":"b4","start":7.5,"end":10.56,"text":"والأخرى، الحرفاء يرجعولها كل يوم."},{"id":"b5","start":10.59,"end":11.62,"text":"علاش؟"},{"id":"b6","start":11.65,"end":15.47,"text":"تخيّل حريف شرب قهوة في الزوز، في نفس النهار."},{"id":"b7","start":15.5,"end":19.83,"text":"القهوة الأولى قالتلو «يعيشك».. وخلاتو للزهر."},{"id":"b8","start":19.86,"end":20.95,"text":"أما الثانية؟"},{"id":"b9","start":20.98,"end":23.2,"text":"سكاني الكود اللي على الكونتوار،"},{"id":"b10","start":23.23,"end":26.09,"text":"وطاحلو أوّل تامبون، في تليفونو."},{"id":"b11","start":26.12,"end":28.64,"text":"من غير ما يحمّل حتى أبليكاسيون."},{"id":"b12","start":28.67,"end":30.94,"text":"كل مرّة يرجع، تامبون جديد.."},{"id":"b13","start":30.97,"end":33.01,"text":"والقهوة البلاش تقرب."},{"id":"b14","start":33.04,"end":34.51,"text":"وإذا غاب جمعتين؟"},{"id":"b15","start":34.54,"end":36.59,"text":"مولى القهوة يشوفو في «يبعدو»،"},{"id":"b16","start":36.62,"end":39.22,"text":"ويبعثلو تامبون هدية في الواتساب."},{"id":"b17","start":39.25,"end":40.31,"text":"ويرجع."}],"lines":[{"start":0.3,"end":3.59},{"start":3.69,"end":6.12},{"start":6.37,"end":7.4},{"start":7.5,"end":10.34},{"start":10.59,"end":11.3},{"start":11.65,"end":15.25},{"start":15.5,"end":19.56},{"start":19.86,"end":20.83},{"start":20.98,"end":23.13},{"start":23.23,"end":26.02},{"start":26.12,"end":28.42},{"start":28.67,"end":30.87},{"start":30.97,"end":32.74},{"start":33.04,"end":34.39},{"start":34.54,"end":36.52},{"start":36.62,"end":39.05},{"start":39.25,"end":39.96},{"start":40.36,"end":43.25},{"start":43.4,"end":46.42},{"start":46.62,"end":47.82},{"start":48.07,"end":50.65},{"start":50.9,"end":52.72},{"start":52.87,"end":57.118}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,300 --> 00:00:03,660\nزوز قهاوي في نفس الشارع،\n\n2\n00:00:03,690 --> 00:00:06,340\nنفس القهوة، ونفس السوم.\n\n3\n00:00:06,370 --> 00:00:07,470\nوحدة فارغة..\n\n4\n00:00:07,500 --> 00:00:10,560\nوالأخرى، الحرفاء يرجعولها كل يوم.\n\n5\n00:00:10,590 --> 00:00:11,620\nعلاش؟\n\n6\n00:00:11,650 --> 00:00:15,470\nتخيّل حريف شرب قهوة في الزوز، في نفس النهار.\n\n7\n00:00:15,500 --> 00:00:19,830\nالقهوة الأولى قالتلو «يعيشك».. وخلاتو للزهر.\n\n8\n00:00:19,860 --> 00:00:20,950\nأما الثانية؟\n\n9\n00:00:20,980 --> 00:00:23,200\nسكاني الكود اللي على الكونتوار،\n\n10\n00:00:23,230 --> 00:00:26,090\nوطاحلو أوّل تامبون، في تليفونو.\n\n11\n00:00:26,120 --> 00:00:28,640\nمن غير ما يحمّل حتى أبليكاسيون.\n\n12\n00:00:28,670 --> 00:00:30,940\nكل مرّة يرجع، تامبون جديد..\n\n13\n00:00:30,970 --> 00:00:33,010\nوالقهوة البلاش تقرب.\n\n14\n00:00:33,040 --> 00:00:34,510\nوإذا غاب جمعتين؟\n\n15\n00:00:34,540 --> 00:00:36,590\nمولى القهوة يشوفو في «يبعدو»،\n\n16\n00:00:36,620 --> 00:00:39,220\nويبعثلو تامبون هدية في الواتساب.\n\n17\n00:00:39,250 --> 00:00:40,310\nويرجع.\n","vtt":"WEBVTT\n\n1\n00:00:00.300 --> 00:00:03.660\nزوز قهاوي في نفس الشارع،\n\n2\n00:00:03.690 --> 00:00:06.340\nنفس القهوة، ونفس السوم.\n\n3\n00:00:06.370 --> 00:00:07.470\nوحدة فارغة..\n\n4\n00:00:07.500 --> 00:00:10.560\nوالأخرى، الحرفاء يرجعولها كل يوم.\n\n5\n00:00:10.590 --> 00:00:11.620\nعلاش؟\n\n6\n00:00:11.650 --> 00:00:15.470\nتخيّل حريف شرب قهوة في الزوز، في نفس النهار.\n\n7\n00:00:15.500 --> 00:00:19.830\nالقهوة الأولى قالتلو «يعيشك».. وخلاتو للزهر.\n\n8\n00:00:19.860 --> 00:00:20.950\nأما الثانية؟\n\n9\n00:00:20.980 --> 00:00:23.200\nسكاني الكود اللي على الكونتوار،\n\n10\n00:00:23.230 --> 00:00:26.090\nوطاحلو أوّل تامبون، في تليفونو.\n\n11\n00:00:26.120 --> 00:00:28.640\nمن غير ما يحمّل حتى أبليكاسيون.\n\n12\n00:00:28.670 --> 00:00:30.940\nكل مرّة يرجع، تامبون جديد..\n\n13\n00:00:30.970 --> 00:00:33.010\nوالقهوة البلاش تقرب.\n\n14\n00:00:33.040 --> 00:00:34.510\nوإذا غاب جمعتين؟\n\n15\n00:00:34.540 --> 00:00:36.590\nمولى القهوة يشوفو في «يبعدو»،\n\n16\n00:00:36.620 --> 00:00:39.220\nويبعثلو تامبون هدية في الواتساب.\n\n17\n00:00:39.250 --> 00:00:40.310\nويرجع.\n","said":"1\n00:00:00,300 --> 00:00:03,590\nزوز قهاوي في نفس الشارع،\n\n2\n00:00:03,690 --> 00:00:06,120\nنفس القهوة، ونفس السوم.\n\n3\n00:00:06,370 --> 00:00:07,400\nوحدة فارغة..\n\n4\n00:00:07,500 --> 00:00:10,340\nوالأخرى، الحرفاء يرجعولها كل يوم.\n\n5\n00:00:10,590 --> 00:00:11,300\nعلاش؟\n\n6\n00:00:11,650 --> 00:00:15,250\nتخيّل حريف شرب قهوة في الزوز، في نفس النهار.\n\n7\n00:00:15,500 --> 00:00:19,560\nالقهوة الأولى قالتلو «يعيشك».. وخلاتو للزهر.\n\n8\n00:00:19,860 --> 00:00:20,830\nأما الثانية؟\n\n9\n00:00:20,980 --> 00:00:23,130\nسكاني الكود اللي على الكونتوار،\n\n10\n00:00:23,230 --> 00:00:26,020\nوطاحلو أوّل تامبون، في تليفونو.\n\n11\n00:00:26,120 --> 00:00:28,420\nمن غير ما يحمّل حتى أبليكاسيون.\n\n12\n00:00:28,670 --> 00:00:30,870\nكل مرّة يرجع، تامبون جديد..\n\n13\n00:00:30,970 --> 00:00:32,740\nوالقهوة البلاش تقرب.\n\n14\n00:00:33,040 --> 00:00:34,390\nوإذا غاب جمعتين؟\n\n15\n00:00:34,540 --> 00:00:36,520\nمولى القهوة يشوفو في «يبعدو»،\n\n16\n00:00:36,620 --> 00:00:39,050\nويبعثلو تامبون هدية في الواتساب.\n\n17\n00:00:39,250 --> 00:00:39,960\nويرجع.\n\n18\n00:00:40,360 --> 00:00:43,250\nالقهوة هاذي موش أشطر.. ولا أرخص.\n\n19\n00:00:43,400 --> 00:00:46,420\nهي برك ما خلاتش الزيارة الجاية للزهر.\n\n20\n00:00:46,620 --> 00:00:47,820\nعندها سيستام.\n\n21\n00:00:48,070 --> 00:00:50,650\nوالسيستام هذا اسمو Pointili.\n\n22\n00:00:50,900 --> 00:00:52,720\nتحب نفس الحاجة لقهوتك؟\n\n23\n00:00:52,870 --> 00:00:57,118\nجرّب Pointili بلاش، واكتب «Pointili» في الكومونتار.\n","name":"f1-zouz-qhawi"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>

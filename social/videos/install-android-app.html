@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>حطّ Pointili في تليفونك · Pointili video</title><style>
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-arabic.woff2) format("woff2");unicode-range:U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:160 700;font-display:swap;src:url(../ads/assets/fonts/readex-latin.woff2) format("woff2");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#f6f5fb;--card:#fff;--ink:#14121d;--muted:#6b6880;--line:#e6e3f0;--brand:#6c47ff;--brand-soft:#efeaff;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111018;--card:#1b1a24;--ink:#ecebf3;--muted:#9a97ad;--line:#2d2b39;--brand:#9d85ff;--brand-soft:#262043;--hl:#3a3313;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Readex Pro",system-ui,sans-serif}
+a{color:var(--brand)}
+code{font:13px ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:2px 6px;border-radius:6px;word-break:break-all}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.top a{text-decoration:none;font-weight:600}
+.kind{font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+h1{margin:4px 0 6px;font-size:34px;line-height:1.25}
+.lede{margin:0 0 18px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.side{position:sticky;top:16px}
+@media (max-width:860px){.side{position:static}}
+video{width:100%;max-height:72vh;background:#000;border-radius:18px;display:block}
+.where{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px}
+.where b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:6px}
+.where b:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;background:var(--brand-soft);color:var(--brand);padding:3px 10px;border-radius:999px;font-weight:600}
+.now{margin-top:12px;min-height:3.2em;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:20px;font-weight:600;text-align:center}
+.tog{margin-top:8px;font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+nav.jump{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+nav.jump a{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:18px}
+h2{margin:0 0 10px;font-size:22px}
+h3{margin:20px 0 8px;font-size:16px;display:flex;align-items:center;gap:10px}
+.about p{margin:0 0 8px;color:var(--ink)}
+.note{color:var(--muted);font-size:14px;margin:6px 0 12px}
+.muted{color:var(--muted);font-size:13px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--brand-soft)}
+tr.on{background:var(--hl)!important}
+td.n{color:var(--muted);width:2em}
+td.t{white-space:nowrap;color:var(--muted);font-size:13px}
+td small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.ar{font-size:18px;line-height:1.6;text-align:right}
+td.ar b{color:var(--brand)}
+.pre{white-space:pre-line}
+td.cap{width:42%;min-width:180px}
+.badge{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:12px;background:var(--brand);color:#fff;font-size:13px;font-weight:700;margin-inline-end:8px;padding:0 6px;vertical-align:2px}
+.note.pre{color:var(--ink);font-size:15px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+pre.block{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0;font:15px/1.7 "Readex Pro",system-ui,sans-serif;max-height:420px;overflow:auto}
+pre.ar{font-size:17px}
+pre.srt{font-size:15px;direction:ltr;unicode-bidi:plaintext;text-align:left}
+button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--brand);color:var(--brand)}
+button.play{width:34px;height:34px;padding:0;border-radius:50%}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 0 12px;font-size:14px}
+.player span{font-weight:600}
+audio{height:36px;max-width:100%}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;margin:6px 0 12px}
+dl.facts dt{font-weight:600;color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.note,td{overflow-wrap:anywhere}
+@media (max-width:520px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dd{margin-bottom:10px}}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+details pre{margin-top:8px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><a href="index.html">← All videos</a><span class="muted">social/explainers/install-android-app.mp4</span></div>
+<div class="kind">Explainer</div>
+<h1 dir="auto">حطّ Pointili في تليفونك</h1>
+<p class="lede">Explainer to send on WhatsApp: how to put Pointili on an Android phone from Chrome (site → <bdi>«؟»</bdi> → <bdi>«حطّ Pointili في تليفونك»</bdi> → Chrome's <bdi>«تثبيت»</bdi> → the icon on the home screen).</p>
+<div class="grid">
+  <div class="side">
+    <video controls playsinline preload="metadata" poster="thumbs/install-android-app.jpg" src="../explainers/install-android-app.mp4"></video>
+    <div class="now ar" dir="rtl" aria-live="polite"></div>
+    <label class="tog"><input type="checkbox" id="cc"> Show the subtitle file over the video (they are already in the picture)</label>
+    <div class="where">
+      <b>Where it is</b><code>C:\Users\ayoub\OneDrive\Desktop\pointili\social\explainers\install-android-app.mp4</code>
+      
+      <div class="chips"><span class="chip">18.9 s</span><span class="chip">720×1280</span><span class="chip">30 fps</span><span class="chip">no sound</span><span class="chip">1 MB</span></div>
+    </div>
+  </div>
+  <div>
+    <nav class="jump"><a href="#script">Script</a><a href="#sound">Sound</a><a href="#subtitles">Subtitles</a></nav>
+    
+<section id="script">
+  <h2>Script</h2>
+  <dl class="facts"><dt>Made by</dt><dd><code>v2/scripts/explainer-videos.mjs (installFilm, commit 7dcb642)</code></dd><dt>Filmed</dt><dd>Rendered frame by frame from an HTML page: a drawn phone in the middle of the frame, one caption block above it. Inside the phone: real screenshots of the live site www.pointili.online taken as an Android phone (390x764 in Chrome, 390x820 installed), under a drawn status bar (10:30) and a drawn Chrome bar (lock, <bdi>«pointili.online»</bdi>, tab count 1, ⋮). Chrome's install dialog and the Android home screen are drawn. A drawn finger (white circle, purple ring) presses each tap and leaves a ripple.</dd><dt>Always on screen</dt><dd>www.pointili.online (small grey line at the very bottom, under the phone, whenever no title card covers it)</dd><dt>Times</dt><dd>exact: the film is drawn at t = frame/30 from scene durations 1.9+3.4+3.2+3.1+4.3+3.0 = 18.9 s, which equals the file. Captions start fading in 0.12 s after their scene starts (full at +0.5 s) and are gone at the scene's end (fade over the last 0.16 s): start/end below are those fade-in start and fade-out start. Title cards: start/end = their scene; a card then fades out over 0.28 s into the next scene. The finger is visible from 0.7 s before each tap to 0.52 s after it.</dd></dl>
+  
+  <p class="note">What is on screen, step by step. Click a step to jump the video there.</p>
+  <div class="tablewrap"><table class="lines"><thead><tr><th>step</th><th>time (s)</th><th>caption</th><th>finger / screen</th></tr></thead><tbody><tr data-start="0" data-end="1.9"><td class="n">1</td><td class="t num">0.0–1.9</td><td class="ar pre cap" dir="auto">حطّ Pointili في تليفونك
+على أندرويد، في ثواني</td><td><small>Purple title card over the whole frame: white tile with the Pointili mark, the word <bdi>«Pointili»</bdi>, the title, the subline, <bdi>«www.pointili.online»</bdi> at the bottom. Fades out 1.9–2.18 s.</small></td></tr>
+<tr data-start="2.02" data-end="5.14"><td class="n">2</td><td class="t num">2.0–5.1</td><td class="ar pre cap" dir="auto"><span class="badge">1</span>حلّ pointili.online في Chrome
+واضغط على «؟»</td><td>the site's help button <bdi>«؟»</bdi> (accessible name <bdi>«عندك سؤال؟»</bdi>), pressed at 3.80 s (finger in view 3.10–4.32 s)<small>The live site's home page as Android Chrome shows it, inside the drawn Chrome bar.</small></td></tr>
+<tr data-start="5.42" data-end="8.34"><td class="n">3</td><td class="t num">5.4–8.3</td><td class="ar pre cap" dir="auto"><span class="badge">2</span>اضغط «حطّ Pointili في تليفونك»</td><td>the help sheet's row <bdi>«حطّ Pointili في تليفونك»</bdi> (the row whose name contains <bdi>«تليفونك»</bdi>), pressed at 7.00 s (finger 6.30–7.52 s)<small>The live site with its <bdi>«؟»</bdi> help sheet open (real screenshot).</small></td></tr>
+<tr data-start="8.62" data-end="11.44"><td class="n">4</td><td class="t num">8.6–11.4</td><td class="ar pre cap" dir="auto"><span class="badge">3</span>اضغط «تثبيت»
+كي يسألك Chrome · بالفرنسية: Installer</td><td><bdi>«تثبيت»</bdi> in Chrome's dialog, pressed at 10.25 s (finger 9.55–10.77 s)<small>Same help-sheet screenshot, dimmed, with Chrome's drawn dialog popping in at 8.65 s (scale-in to 8.91 s) and gone 10.80–11.02 s. Dialog text: <bdi>«تثبيت التطبيق؟»</bdi>, the Pointili icon, <bdi>«Pointili»</bdi>, <bdi>«pointili.online»</bdi>, buttons <bdi>«تثبيت»</bdi> (purple) and <bdi>«إلغاء»</bdi>.</small></td></tr>
+<tr data-start="11.72" data-end="15.74"><td class="n">5</td><td class="t num">11.7–15.7</td><td class="ar pre cap" dir="auto"><span class="badge">4</span>هاو Pointili في تليفونك!
+تحلّو كيما أي أبليكاسيون</td><td>the new Pointili icon on the home screen, pressed at 13.80 s (finger 13.10–14.32 s)<small>Drawn Android home screen: purple wallpaper, big clock <bdi>«10:30»</bdi>, apps <bdi>«الهاتف»</bdi>, <bdi>«الرسائل»</bdi>, <bdi>«الكاميرا»</bdi>, <bdi>«الصور»</bdi>, <bdi>«الساعة»</bdi>, <bdi>«الإعدادات»</bdi>, <bdi>«الموسيقى»</bdi>, a dock. The <bdi>«Pointili»</bdi> icon pops in at 12.05 s (0.52 s spring). At 14.10 s the app zooms open from the icon (to 14.55 s): the live site full-screen as an installed app, no Chrome bar.</small></td></tr>
+<tr data-start="15.9" data-end="18.9"><td class="n">6</td><td class="t num">15.9–18.9</td><td class="ar pre cap" dir="auto">عندك محل؟
+الزرّ هذا في الصفحة متاعك يحطّو زادة</td><td><small>Purple closing card (fades in 15.90–16.18 s, stays to the end): logo tile, <bdi>«Pointili»</bdi>, a round purple download-arrow button (the in-app install button), the title, the subline, <bdi>«www.pointili.online»</bdi>.</small></td></tr></tbody></table></div>
+  <h3>The whole text <button class="copy" data-copy="full">Copy</button></h3><pre class="ar block" dir="auto" id="full">حطّ Pointili في تليفونك
+على أندرويد، في ثواني
+
+حلّ pointili.online في Chrome
+واضغط على «؟»
+
+اضغط «حطّ Pointili في تليفونك»
+
+اضغط «تثبيت»
+كي يسألك Chrome · بالفرنسية: Installer
+
+هاو Pointili في تليفونك!
+تحلّو كيما أي أبليكاسيون
+
+عندك محل؟
+الزرّ هذا في الصفحة متاعك يحطّو زادة</pre>
+</section>
+<section id="sound">
+  <h2>Sound</h2>
+  <p class="note">None — the video is silent (no sound track at all): the words on screen say it all, so it works with the sound off.</p>
+</section>
+<section id="subtitles">
+  <h2>Subtitles</h2>
+  <p class="note">The words are drawn into the video itself. These files have the same lines with their times.</p>
+  <div class="dl"><button data-dl="srt">install-android-app.srt</button><button data-dl="vtt">install-android-app.vtt</button></div>
+  <pre class="block srt">1
+00:00:00,000 --&gt; 00:00:01,900
+حطّ Pointili في تليفونك
+على أندرويد، في ثواني
+
+2
+00:00:02,020 --&gt; 00:00:05,140
+حلّ pointili.online في Chrome
+واضغط على «؟»
+
+3
+00:00:05,420 --&gt; 00:00:08,340
+اضغط «حطّ Pointili في تليفونك»
+
+4
+00:00:08,620 --&gt; 00:00:11,440
+اضغط «تثبيت»
+كي يسألك Chrome · بالفرنسية: Installer
+
+5
+00:00:11,720 --&gt; 00:00:15,740
+هاو Pointili في تليفونك!
+تحلّو كيما أي أبليكاسيون
+
+6
+00:00:15,900 --&gt; 00:00:18,900
+عندك محل؟
+الزرّ هذا في الصفحة متاعك يحطّو زادة
+</pre>
+</section>
+  </div>
+</div></div>
+<script type="application/json" id="data">{"cues":[{"start":0,"end":1.9,"text":"حطّ Pointili في تليفونك\nعلى أندرويد، في ثواني"},{"start":2.02,"end":5.14,"text":"حلّ pointili.online في Chrome\nواضغط على «؟»"},{"start":5.42,"end":8.34,"text":"اضغط «حطّ Pointili في تليفونك»"},{"start":8.62,"end":11.44,"text":"اضغط «تثبيت»\nكي يسألك Chrome · بالفرنسية: Installer"},{"start":11.72,"end":15.74,"text":"هاو Pointili في تليفونك!\nتحلّو كيما أي أبليكاسيون"},{"start":15.9,"end":18.9,"text":"عندك محل؟\nالزرّ هذا في الصفحة متاعك يحطّو زادة"}],"lines":[{"start":0,"end":1.9},{"start":2.02,"end":5.14},{"start":5.42,"end":8.34},{"start":8.62,"end":11.44},{"start":11.72,"end":15.74},{"start":15.9,"end":18.9}]}</script>
+<script type="application/json" id="files">{"srt":"1\n00:00:00,000 --> 00:00:01,900\nحطّ Pointili في تليفونك\nعلى أندرويد، في ثواني\n\n2\n00:00:02,020 --> 00:00:05,140\nحلّ pointili.online في Chrome\nواضغط على «؟»\n\n3\n00:00:05,420 --> 00:00:08,340\nاضغط «حطّ Pointili في تليفونك»\n\n4\n00:00:08,620 --> 00:00:11,440\nاضغط «تثبيت»\nكي يسألك Chrome · بالفرنسية: Installer\n\n5\n00:00:11,720 --> 00:00:15,740\nهاو Pointili في تليفونك!\nتحلّو كيما أي أبليكاسيون\n\n6\n00:00:15,900 --> 00:00:18,900\nعندك محل؟\nالزرّ هذا في الصفحة متاعك يحطّو زادة\n","vtt":"WEBVTT\n\n1\n00:00:00.000 --> 00:00:01.900\nحطّ Pointili في تليفونك\nعلى أندرويد، في ثواني\n\n2\n00:00:02.020 --> 00:00:05.140\nحلّ pointili.online في Chrome\nواضغط على «؟»\n\n3\n00:00:05.420 --> 00:00:08.340\nاضغط «حطّ Pointili في تليفونك»\n\n4\n00:00:08.620 --> 00:00:11.440\nاضغط «تثبيت»\nكي يسألك Chrome · بالفرنسية: Installer\n\n5\n00:00:11.720 --> 00:00:15.740\nهاو Pointili في تليفونك!\nتحلّو كيما أي أبليكاسيون\n\n6\n00:00:15.900 --> 00:00:18.900\nعندك محل؟\nالزرّ هذا في الصفحة متاعك يحطّو زادة\n","said":null,"name":"install-android-app"}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const v = document.querySelector("video");
+const now = document.querySelector(".now");
+const rows = [...document.querySelectorAll("tbody tr[data-start]")];
+rows.forEach((r) => r.addEventListener("click", (e) => { if (e.target.closest("button")) return; v.currentTime = +r.dataset.start + 0.02; v.play().catch(() => {}); window.scrollTo({ top: 0, behavior: "smooth" }); }));
+let track = null;
+try { track = v.addTextTrack("subtitles", "Subtitles", "ar"); D.cues.forEach((c) => track.addCue(new VTTCue(c.start, c.end, c.text))); track.mode = "hidden"; } catch (e) {}
+const tog = document.getElementById("cc");
+if (tog) tog.addEventListener("change", () => { if (track) track.mode = tog.checked ? "showing" : "hidden"; });
+v.addEventListener("timeupdate", () => {
+  const t = v.currentTime;
+  const c = D.cues.find((c) => t >= c.start && t < c.end);
+  now.textContent = c ? c.text : "";
+  document.querySelectorAll("table.lines tbody tr").forEach((r) => r.classList.toggle("on", t >= +r.dataset.start && t < +r.dataset.end));
+});
+const one = new Audio();
+document.querySelectorAll("button.play").forEach((b) => b.addEventListener("click", () => { v.pause(); one.src = b.dataset.src; one.play(); }));
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const text = document.getElementById(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(text); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy)); getSelection().removeAllRanges(); getSelection().addRange(r); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500);
+}));
+const F = JSON.parse(document.getElementById("files").textContent);
+document.querySelectorAll("[data-dl]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.dl, ext = k === "vtt" ? ".vtt" : k === "said" ? ".said.srt" : ".srt";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["\ufeff" + F[k]], { type: "text/plain;charset=utf-8" }));
+  a.download = F.name + ext; a.click();
+}));
+</script>
+</body></html>
