@@ -125,6 +125,9 @@ const noShop = await person("رحمة", { seen: [] });
 // an owner alone: the card made, no customer yet (the home's three steps, the morning word)
 const lonely = await person("منير", { seen: ["card_hello", "coach", "logo_tip", "offer"] });
 await shopOf(lonely, { name: "Café Lone", goal: 8, gift: "قهوة بلاش" });
+// a number the shop gave a tampon to before it had an account: nameless, the owner may write its name (14 Nov 2026)
+const unnamed = await person("", { made_by_shop: shop.id, password_set: false });
+await cardAt(shop, unnamed, 2, { lastAgo: 30 * 60_000 });
 // someone to give a tampon to, by code, on every size
 const takers = [];
 for (const [i] of SIZES.entries()) takers.push(await person(`حريف ${i + 1}`));
@@ -379,6 +382,11 @@ const SCREENS = [
   { name: "counter-tip", as: "owner", before: () => notes(owner, ALL_NOTES.filter((n) => n !== "coach")), path: "/shop/qr?tip=1", wait: 1800, after: () => notes(owner, ALL_NOTES) },
   { name: "collect-scan", as: "owner", path: "/shop/collect?by=scan", wait: 2500 },
   { name: "collect-code", as: "owner", path: "/shop/collect?by=code" },
+  // a number with no account yet, typed at the counter: the card and its name field (nothing is given)
+  { name: "collect-new-number", as: "owner", path: "/shop/collect?by=phone", act: async (p) => {
+    await p.getByRole("textbox").first().fill(`9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`);
+    await p.getByRole("textbox", { name: "إسمو، كان تحب" }).waitFor({ timeout: 20000 });
+  } },
   {
     name: "collect-found",
     as: "owner",
@@ -426,6 +434,16 @@ const SCREENS = [
   // nothing waits above it: the wallet asks one thing at a time
   { name: "wallet-push", as: "customer", before: () => notes(customer, ["card_hello", "coach", "logo_tip", "offer"]), path: "/", after: () => notes(customer, ALL_NOTES) },
   { name: "customers", as: "owner", path: "/shop/customers" },
+  // a customer with no account yet: the sheet's «اكتب إسمو», and the field it opens (14 Nov 2026)
+  { name: "customers-name", as: "owner", path: "/shop/customers", act: async (p) => {
+    await p.getByRole("button", { name: /حريف/ }).first().click();
+    await p.getByRole("button", { name: /اكتب إسمو/ }).waitFor({ timeout: 15000 });
+  } },
+  { name: "customers-name-edit", as: "owner", path: "/shop/customers", act: async (p) => {
+    await p.getByRole("button", { name: /حريف/ }).first().click();
+    await p.getByRole("button", { name: /اكتب إسمو/ }).click({ timeout: 15000 });
+    await p.getByRole("textbox", { name: "اكتب إسمو" }).waitFor({ timeout: 15000 });
+  } },
   { name: "customers-near", as: "owner", path: "/shop/customers", act: (p) => press(p, "قربو للكادو") },
   // a gift waiting: the customer's sheet, and the question before it is written down as handed over
   { name: "customers-gift", as: "owner", before: () => giftBack(), path: "/shop/customers", act: openGift },
@@ -435,6 +453,22 @@ const SCREENS = [
     await p.getByRole("dialog", { name: /تسلّم الكادو/ }).waitFor({ timeout: 15000 });
   } },
   { name: "shop-settings", as: "owner", path: "/shop/settings" },
+  // «المحل» as most shops have it on live (the clock's switch is on for every shop since Nov 2026), and at its longest:
+  // the roulette and «شنوّة تبيع» on, the customers' file allowed
+  { name: "shop-settings-clock", as: "owner", before: () => admin.from("settings").upsert({ key: "clock_on", value: "1" }), path: "/shop/settings", after: () => admin.from("settings").delete().eq("key", "clock_on") },
+  {
+    name: "shop-settings-full",
+    as: "owner",
+    before: async () => {
+      await admin.from("settings").upsert({ key: "clock_on", value: "1" });
+      await admin.from("shops").update({ wheel_on: true, items_on: true, export_allowed: true }).eq("id", shop.id);
+    },
+    path: "/shop/settings",
+    after: async () => {
+      await admin.from("settings").delete().eq("key", "clock_on");
+      await admin.from("shops").update({ wheel_on: false, items_on: false, export_allowed: false }).eq("id", shop.id);
+    },
+  },
   { name: "shop-items", as: "owner", path: "/shop/items" },
   { name: "stats", as: "owner", path: "/shop/stats" },
   { name: "pay", as: "owner", path: "/shop/pay" },
@@ -466,27 +500,27 @@ const SCREENS = [
 
   // a new owner's three steps: the account and the shop (public-shop-new), the card's four
   // questions — nothing of it left for later (19 Oct 2026) — and then what the customer sees
-  { name: "first-card", as: "fresh", path: "/shop/card?new=1" },
-  { name: "first-card-gift", as: "fresh", path: "/shop/card?new=1", act: (p) => press(p, "كمّل") },
-  { name: "first-card-other", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+  { name: "first-card", as: "fresh", path: "/shop/card" },
+  { name: "first-card-gift", as: "fresh", path: "/shop/card", act: (p) => press(p, "كمّل") },
+  { name: "first-card-other", as: "fresh", path: "/shop/card", act: async (p) => {
     await press(p, "كمّل");
     await press(p, "حاجة أخرى");
   } },
   // the roulette, chosen on the first card: what it holds, and the sheet that explains it (it opens by itself the first time)
-  { name: "first-card-wheel", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+  { name: "first-card-wheel", as: "fresh", path: "/shop/card", act: async (p) => {
     await press(p, "كمّل");
     await press(p, "الروليت");
     await press(p, "باهي");
   } },
-  { name: "first-card-wheel-how", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+  { name: "first-card-wheel-how", as: "fresh", path: "/shop/card", act: async (p) => {
     await press(p, "كمّل");
     await press(p, "الروليت");
     await p.getByRole("dialog", { name: "كيفاش تخدم الروليت؟" }).waitFor({ timeout: 15000 });
   } },
-  { name: "first-card-wait", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+  { name: "first-card-wait", as: "fresh", path: "/shop/card", act: async (p) => {
     for (let n = 0; n < 2; n++) await press(p, "كمّل");
   } },
-  { name: "first-card-look", as: "fresh", path: "/shop/card?new=1", act: async (p) => {
+  { name: "first-card-look", as: "fresh", path: "/shop/card", act: async (p) => {
     for (let n = 0; n < 3; n++) await press(p, "كمّل");
   } },
   { name: "start", as: "owner", path: "/shop/start", wait: 900 },
@@ -519,6 +553,10 @@ const SCREENS = [
       for (const part of ["الفلوس", "الإعدادات"]) await p.getByText(part, { exact: true }).click();
     },
   },
+  // the new version (13–14 Nov 2026): «خيارات الكارط», the customer choosing the gift, the 🔔
+  { name: "options", as: "owner", path: "/shop/options" },
+  { name: "choices", as: "owner", path: "/shop/choices" },
+  { name: "inbox", as: "owner", path: "/shop/inbox" },
   // the floating «حطّ Pointili في تليفونك» and the filmed guide it opens: only a phone's browser shows them,
   // so only under a phone's UA (UA="… Android …" or "… iPhone …"); the guide measured a few seconds in
   ...(/Android|iPhone/.test(process.env.UA ?? "")

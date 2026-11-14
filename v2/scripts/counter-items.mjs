@@ -19,7 +19,7 @@ console.log = (...a) => {
   say(...a);
 };
 config({ path: ".env.local", quiet: true });
-const BASE = "http://localhost:3200";
+const BASE = process.env.BASE || "http://localhost:3200";
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const phoneNo = () => `9${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}`;
 const owner = await robot(admin, phoneNo());
@@ -37,7 +37,11 @@ try {
   await o.locator('input[type="search"]').fill("parfum");
   await o.getByRole("dialog").getByRole("button", { name: "عطورات" }).click();
   await Promise.all([o.waitForURL("**/shop/card?new=1", { timeout: 60000 }), o.locator('button[type="submit"]').click()]);
-  await o.getByRole("button", { name: "كمّل", exact: true }).click();
+  // the first card's questions (the goal, the gift, the wait, a look at it): «كمّل» until «حلّ الكارط»
+  for (let i = 0; i < 6 && !(await o.getByRole("button", { name: "حلّ الكارط" }).isVisible()); i++) {
+    await o.getByRole("button", { name: "كمّل", exact: true }).click();
+    await o.waitForTimeout(500);
+  }
   await Promise.all([o.waitForURL("**/shop/start", { timeout: 60000 }), o.getByRole("button", { name: "حلّ الكارط" }).click()]);
   // the counter open BEFORE the founder's switch: a code with no thing on it
   const { data: p } = await admin.from("people").select("id").eq("phone", `+216${owner}`).single();
@@ -94,8 +98,9 @@ try {
   const { data: mi } = await admin.from("items").select("name").eq("id", m.item_id ?? -1).maybeSingle();
   console.log(mi?.name === "Parfum 50 ml" ? "✓ the tampon is written against Parfum 50 ml" : `✗ tampon item: ${mi?.name}`);
   // and after the scan, the counter asks again (never the last customer's perfume left over)
-  await o.waitForTimeout(4000);
-  console.log((await o.locator("[data-qr]").count()) === 0 ? "✓ after the scan, the counter asks again for the next customer" : "✗ after the scan the code stayed");
+  // (with Realtime the counter hears it at once; without — this computer's database — it asks every 4 s: up to 12 s)
+  const asksAgain = await o.locator("[data-qr]").waitFor({ state: "detached", timeout: 12000 }).then(() => true, () => false);
+  console.log(asksAgain ? "✓ after the scan, the counter asks again for the next customer" : "✗ after the scan the code stayed");
   await o.screenshot({ path: "shots/items-after.png" });
 } finally {
   await browser.close();

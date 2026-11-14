@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Play, Plus, X } from "lucide-react";
 import { Back } from "@/components/Back";
+import { FilmButton } from "@/components/Help";
 import { Switch } from "@/components/Owner";
 import { useScreen } from "@/components/Tracker";
 import { saveItems } from "@/app/actions";
@@ -42,7 +43,7 @@ const USUAL: Record<string, string[]> = {
  * No prices, no pictures, no stock, no categories — the only question any of
  * this has to answer later is «which one was it».
  */
-export function Items({ names, on, kind }: { names: string[]; on: boolean; kind: string }) {
+export function Items({ names, on, kind, back = "/shop/settings" }: { names: string[]; on: boolean; kind: string; /** where «ارجع» leads: «المحل», or «خيارات الكارط» when opened from there */ back?: string }) {
   const [list, setList] = useState<string[]>(names);
   const [said, setSaid] = useState("");
   const [live, setLive] = useState(on);
@@ -90,11 +91,22 @@ export function Items({ names, on, kind }: { names: string[]; on: boolean; kind:
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-8 pt-3">
-      <Back home="/shop/settings" />
+      <Back home={back} />
       <h1 className="mt-2 text-[1.625rem] font-bold leading-tight">{t.itemsTitle}</h1>
       {/* what it is for, said in words only: an example drawn with chips and bars looked like buttons
           that did nothing (the founder, 17 Oct 2026: «look like steps and buttons, not clickable») */}
       <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted">{t.itemsIntro}</p>
+      {/* how it works, filmed on real screens in 20 seconds (13 Nov 2026, the founder: «a nice video, super easy») */}
+      <FilmButton
+        src="/clips/shop-items-v2.mp4"
+        label={t.itemsTitle}
+        className="press mt-3 flex h-11 items-center gap-2 rounded-full bg-surface pe-4 ps-1.5 text-[0.875rem] font-bold text-brand shadow-card"
+      >
+        <span className="grid size-8 place-items-center rounded-full bg-brand text-white">
+          <Play className="size-4 translate-x-[1px] fill-white" />
+        </span>
+        شوف كيفاش يخدم
+      </FilmButton>
 
       {/* everything that can be tapped, in one card: what the shop sells (a tap takes one off), the
           trade's usual ones (a tap adds one), and the field for anything else */}

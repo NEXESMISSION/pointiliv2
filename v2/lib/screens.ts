@@ -31,6 +31,11 @@ export const ROUTES: Record<string, string> = {
   "/shop/pay": "الخلاص",
   "/shop/store": "الماغازة",
   "/shop/wheel": "الروليت",
+  // the new version (13–14 Nov 2026)
+  "/shop/options": "خيارات الكارط",
+  "/shop/choices": "الحريف يختار الكادو",
+  "/shop/inbox": "الإشعارات",
+  "/shop/links": "تامبون برابط",
   "/faq": "الأسئلة",
   "/guide": "الدليل",
   "/prix": "الأسوام",
@@ -56,6 +61,7 @@ export const SCREENS: Record<string, string> = {
   "shop-items": "",
   "counter-pick": "على شنوّة",
   "shop-welcome": "مرحبا",
+  links: "تامبون برابط",
 };
 export const FAILS: Record<string, string> = { used: "كود مستعمل", expired: "كود فات وقتو", too_soon: "بكري برشا", done: "كمّل الكارط", own_shop: "محلّو هو", paused: "محل موقوف", network: "مشكل إنترنت", invalid: "كود غالط" };
 export function screenName(route: string, screen: string | null): string {

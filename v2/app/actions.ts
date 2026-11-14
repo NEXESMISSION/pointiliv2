@@ -19,6 +19,7 @@ import { fill, t } from "@/lib/t";
 import type { CardView, FormState, Order, Said, ScanResult } from "@/lib/types";
 import type { FormField } from "@/app/actions-forms";
 import type { Note } from "@/lib/once";
+import { cleanName } from "@/lib/names";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 /** Only paths inside the app: a crafted ?next= cannot send anyone elsewhere. */
@@ -105,6 +106,14 @@ async function claim(name: string, phone: string, password: string): Promise<str
 }
 
 /**
+ * What was announced as new to the owners already there — a tampon by link (5 Nov 2026), «شكون رجع؟» (6 Nov),
+ * the card's clock (7 Nov) — is not news to an owner who opens a shop today: their home shows the link's row from
+ * the start, and their first card asks about the clock. Marked seen when the shop opens, those notes never cover
+ * the home of a shop with no customer yet (whose one job is the code), nor ask again what the first card asked.
+ */
+const NOT_NEWS = ["links_tip", "new_insights", "reset_tip"] as const;
+
+/**
  * A new owner's first screen: their account and their shop at once — their
  * name, the shop's name, what it sells, the phone and a password. Everything
  * is checked before the account is made; then the account, then the shop, as
@@ -127,6 +136,7 @@ export async function joinShop(_: FormState, fd: FormData): Promise<FormState> {
   if ("error" in made) return made;
   const { data: res } = await made.supabase.rpc("open_shop", { p_name: shop, p_kind: kind });
   if (!(res as { ok?: boolean } | null)?.ok) redirect("/shop/setup");
+  await Promise.all(NOT_NEWS.map((k) => made.supabase.rpc("see", { p_key: k })));
   // a new shop: a word to the founder's Telegram, and the sign-up to Facebook from our side too (lib/meta)
   const req = await metaRequest();
   after(() => Promise.all([alertNewShop(made.id), metaRegistration(made.id, req)]));
@@ -418,6 +428,7 @@ export async function openShop(_: FormState, fd: FormData): Promise<FormState> {
   if (!res?.ok) return { error: t.errNetwork };
   // a new shop: a word to the founder's Telegram, and the sign-up to Facebook (not when an owner only renames theirs)
   if (!me.shop) {
+    await Promise.all(NOT_NEWS.map((k) => call("see", { p_key: k })));
     const req = await metaRequest();
     after(() => Promise.all([alertNewShop(me.id), metaRegistration(me.id, req)]));
   }
@@ -606,7 +617,7 @@ export async function giveStamp(who: string, item?: number | null, back?: string
  * to anyone. Whoever signs up with the number later takes the account and its
  * cards (claim). Kept to a few dozen new numbers an hour from one place.
  */
-export async function giveStampNew(phoneRaw: string, item?: number | null): Promise<Awaited<ReturnType<typeof giveStamp>>> {
+export async function giveStampNew(phoneRaw: string, item?: number | null, name?: string | null): Promise<Awaited<ReturnType<typeof giveStamp>>> {
   const me = await getMe();
   if (!me?.shop) return { ok: false, error: "no_shop" };
   const phone = digits(String(phoneRaw ?? ""));
@@ -615,7 +626,8 @@ export async function giveStampNew(phoneRaw: string, item?: number | null): Prom
   const admin = service();
   const { data, error } = await admin.auth.admin.createUser({ email: phoneEmail(phone), password: randomBytes(24).toString("base64url"), email_confirm: true, app_metadata: { phone: `+216${phone}` } });
   if (error && !/already|registered|exists/i.test(error.message)) return { ok: false, error: "network" };
-  if (data?.user) await admin.from("people").upsert({ id: data.user.id, name: "", phone: `+216${phone}`, password_set: false, made_by_shop: me.shop.id });
+  // its name, when the owner wrote one at the counter (14 Nov 2026): theirs to change until the person signs up
+  if (data?.user) await admin.from("people").upsert({ id: data.user.id, name: cleanName(name) ?? "", phone: `+216${phone}`, password_set: false, made_by_shop: me.shop.id });
   return giveStamp(phone, item);
 }
 

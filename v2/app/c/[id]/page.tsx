@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { Check, Gift, Hourglass, QrCode, ScanLine } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
+import { ChooseGift } from "@/components/ChooseGift";
 import { CardWheel, WheelPeek } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
 import { Live } from "@/components/Live";
@@ -34,6 +35,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
   if (!me) redirect(`/login?next=/c/${id}`);
   const card = await call<Card | null>("card", { p_id: id });
   if (!card) notFound();
+  // the gifts this card has to choose from (13 Nov 2026, supabase/choice-2026-11-13.sql): none for almost every card
+  const choices = card.ready ? ((await call<{ moment: number; options: string[] }[]>("card_choices", { p_card: id })) ?? []) : [];
 
   // a shop the founder switched to the store: the tampons kept, and the things to spend them on
   if (card.shop.store) {
@@ -70,8 +73,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       {card.next && <p className="mt-3 shrink-0 px-1 text-center text-[0.8125rem] text-muted">{fill(t.nextCard, { gift: card.next.gift, n: stampsN(card.next.goal) })}</p>}
       {/* the card's clock: how long before it goes back to zero (a bar that empties), or that it just did */}
       <ResetLine card={card} />
-
-
+      {/* a gift to choose (13 Nov 2026): the customer picks it here, then shows the code at the counter */}
+      {choices.length > 0 && <ChooseGift choices={choices} />}
       {/* the roulette: a popup that opens by itself, and a banner to open it again */}
       {turn && <CardWheel card={card.id} moment={turn} prizes={card.prizes ?? []} turns={card.spins_n ?? 1} />}
       {/* and before there is a turn: what the wheel holds, with its button grey and dead (19 Oct 2026) */}

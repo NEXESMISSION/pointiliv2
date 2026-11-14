@@ -102,9 +102,10 @@ try {
   await ownerPage.goto(`${BASE}/shop/settings`, { waitUntil: "load" });
   await ownerPage.getByText("كود التسجيل").first().click();
   await ownerPage.waitForURL(/\/shop\/join/, { timeout: 20000 });
-  await ownerPage.locator("[role=img] svg").first().waitFor({ timeout: 20000 });
+  // the poster is drawn on a canvas since 13 Nov 2026 (components/PosterStudio): drawn, it says so
+  await ownerPage.locator('canvas[role=img][data-drawn="1"]').first().waitFor({ timeout: 20000 });
   await shot(ownerPage, "1-poster");
-  check("«المحل» leads to its poster, with the code drawn", (await ownerPage.locator("[role=img] svg").count()) >= 1);
+  check("«المحل» leads to its poster, with the code drawn", (await ownerPage.locator('canvas[role=img][data-drawn="1"]').count()) === 1);
   check("…and the line that says it never gives a tampon", (await ownerPage.getByText("ما يعطيش تامبون").count()) === 1);
 
   console.log("\nA stranger scans it");

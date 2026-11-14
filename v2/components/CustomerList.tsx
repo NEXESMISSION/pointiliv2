@@ -3,9 +3,9 @@
 import Link from "@/components/Link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Check, Gift, Hourglass, ScanLine, Search, Trash2, Undo2, X } from "lucide-react";
+import { Check, Gift, Hourglass, Pencil, ScanLine, Search, Trash2, Undo2, X } from "lucide-react";
 import { give, giveAll, type WaitingGift } from "@/app/actions";
-import { removeCustomer } from "@/app/actions-customers";
+import { nameCustomer, removeCustomer } from "@/app/actions-customers";
 import { restoreReset } from "@/app/actions-clock";
 import { CardMoments } from "@/components/CardMoments";
 import { CardHow } from "@/components/CardHow";
@@ -17,7 +17,7 @@ import { fill, giftsN, stampsN, t } from "@/lib/t";
 import { signal } from "@/lib/track";
 import { useClock } from "@/lib/use-clock";
 
-export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; items?: { name: string; n: number }[]; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null; waiting?: WaitingGift[]; /** the card's clock: when it goes back to zero (null: never) */ reset_due?: string | null; /** what the clock took from it lately: the owner may give it back */ restorable?: number | null };
+export type CustomerRow = { id: string; name: string | null; phone: string | null; last_item?: string | null; items?: { name: string; n: number }[]; stamps: number; gifts: number; last_at: string | null; ready: boolean; goal: number | null; gift: string | null; waiting?: WaitingGift[]; /** the card's clock: when it goes back to zero (null: never) */ reset_due?: string | null; /** what the clock took from it lately: the owner may give it back */ restorable?: number | null; /** a number with no account yet, given a tampon here: the owner may write its name (14 Nov 2026) */ nameable?: boolean };
 
 /** the gifts waiting on this customer's card that can be handed over now (a turn nobody has spun has no prize yet) */
 const giveable = (c: CustomerRow) => (c.waiting ?? []).filter((w) => !w.spin);
@@ -43,6 +43,10 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
   const [removing, setRemoving] = useState<CustomerRow | null>(null);
   const [removeBusy, setRemoveBusy] = useState(false);
   const [removeErr, setRemoveErr] = useState(false);
+  // several at once (13 Nov 2026, the founder: «the option to remove clients»): a tap marks a row, one button takes them off
+  const [choosing, setChoosing] = useState(false);
+  const [marked, setMarked] = useState<string[]>([]);
+  const [removingMany, setRemovingMany] = useState(false);
   // what the clock took, being given back — and the card it was given back to (said on its sheet)
   const [restoring, setRestoring] = useState(false);
   const [restored, setRestored] = useState<string | null>(null);
@@ -81,16 +85,50 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
           )}
         </div>
       )}
+      {items.length > 0 && (
+        <div className={`flex shrink-0 items-center justify-between gap-2 px-0.5 ${many ? "mt-[1.2dvh]" : "mt-[2dvh]"}`}>
+          <span className="text-[0.8125rem] font-semibold text-muted">{choosing ? (marked.length ? `${marked.length} مختارين` : "اختار الحرفاء اللي تحب تنحّيهم") : `${items.length} حريف`}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setChoosing(!choosing);
+              setMarked([]);
+            }}
+            className={`press flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[0.8125rem] font-bold ${choosing ? "bg-ink text-white" : "bg-surface text-coral shadow-card"}`}
+          >
+            {choosing ? (
+              <>
+                <X className="size-4" /> بطّل
+              </>
+            ) : (
+              <>
+                <Trash2 className="size-4" /> نحّي حرفاء
+              </>
+            )}
+          </button>
+        </div>
+      )}
       {shown.length === 0 && <p className="mt-4 text-center text-[0.9375rem] text-muted">{t.customersNone}</p>}
-      <ul data-list data-clarity-mask="true" className={`mb-[2dvh] min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card ${many ? "mt-[1.4dvh]" : "mt-[2.5dvh]"} ${shown.length ? "" : "hidden"}`}>
+      <ul data-list data-clarity-mask="true" className={`mb-[2dvh] min-h-0 divide-y divide-line overflow-y-auto overscroll-contain rounded-[1.375rem] bg-surface shadow-card mt-[1dvh] ${shown.length ? "" : "hidden"}`}>
         {shown.map((c) => {
           // each card has its own goal: the one it started with
           const of = c.goal ?? goal;
           const pct = Math.min(100, Math.round((c.stamps / of) * 100));
           return (
             <li key={c.id}>
-              <button type="button" onClick={() => setOpen(c)} className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors active:bg-canvas">
-                <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.9375rem] font-bold text-brand">{(c.name?.[0] ?? "؟").toUpperCase()}</span>
+              <button
+                type="button"
+                onClick={() => (choosing ? setMarked((m) => (m.includes(c.id) ? m.filter((x) => x !== c.id) : [...m, c.id])) : setOpen(c))}
+                aria-pressed={choosing ? marked.includes(c.id) : undefined}
+                className={`flex w-full items-center gap-3 px-4 py-3 text-start transition-colors active:bg-canvas ${choosing && marked.includes(c.id) ? "bg-coral-soft/60" : ""}`}
+              >
+                {choosing ? (
+                  <span className={`grid size-11 shrink-0 place-items-center rounded-full border-2 ${marked.includes(c.id) ? "border-coral bg-coral text-white" : "border-line bg-surface text-transparent"}`}>
+                    <Check className="size-5" strokeWidth={3} />
+                  </span>
+                ) : (
+                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-brand-soft text-[0.9375rem] font-bold text-brand">{(c.name?.[0] ?? "؟").toUpperCase()}</span>
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[0.9375rem] font-semibold">{c.name ?? t.someone}</span>
                   <span className="block truncate text-[0.8125rem] text-muted">
@@ -136,12 +174,34 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
         })}
       </ul>
 
+      {choosing && marked.length > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            setRemoveErr(false);
+            setRemovingMany(true);
+          }}
+          className="press mb-[1.5dvh] flex h-[3.25rem] w-full shrink-0 items-center justify-center gap-2 rounded-[1.25rem] bg-coral text-[1rem] font-bold text-white shadow-[0_14px_30px_-14px_rgb(255_107_74/0.8)]"
+        >
+          <Trash2 className="size-5" /> نحّي {marked.length === 1 ? "الحريف هذا" : `${marked.length} حرفاء`}
+        </button>
+      )}
       {open && (
         <div data-clarity-mask="true" className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={open.name ?? t.someone} onClick={() => setOpen(null)}>
           <div data-list className="safe-b max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-4 pt-3 text-ink" style={{ animation: "cust-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
             <style>{`@keyframes cust-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
             <div className="flex items-center justify-between">
-              <span className="size-10" />
+              <button
+                type="button"
+                onClick={() => {
+                  setRemoveErr(false);
+                  setRemoving(open);
+                }}
+                className="press grid size-10 place-items-center rounded-full bg-surface text-coral shadow-card"
+                aria-label={t.customerRemove}
+              >
+                <Trash2 className="size-[1.125rem]" />
+              </button>
               <span className="mx-auto block h-1.5 w-10 rounded-full bg-line" aria-hidden />
               <button type="button" onClick={() => setOpen(null)} className="press grid size-10 place-items-center rounded-full bg-surface shadow-card" aria-label={t.back}>
                 <X className="size-5" />
@@ -157,6 +217,18 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                 </span>
               </span>
             </div>
+            {/* a customer with no account yet (a number given a tampon here): the owner writes their name */}
+            {open.nameable && (
+              <NameRow
+                key={`name-${open.id}`}
+                card={open.id}
+                name={open.name}
+                onSaved={(name) => {
+                  setOpen({ ...open, name });
+                  router.refresh();
+                }}
+              />
+            )}
             {/* the card's clock: when this card goes back to zero with no tampon (coral in its last three days) */}
             {now && resetRuns(open, now) && (
               <p className={`mt-2.5 flex items-center gap-1.5 rounded-[0.875rem] px-3 py-2 text-[0.8125rem] font-semibold ${resetSoon(open, now) ? "bg-coral-soft text-coral" : "bg-surface text-body shadow-card"}`}>
@@ -243,17 +315,6 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
             />
             {/* every tampon on the card, and what each one was for (the things' totals are above) */}
             <CardMoments card={open.id} color={shop.color} who={open.name} tally={!(open.items && open.items.length)} />
-            {/* off the list, for good: asked first — the sheet below says exactly what goes */}
-            <button
-              type="button"
-              onClick={() => {
-                setRemoveErr(false);
-                setRemoving(open);
-              }}
-              className="press mt-3 flex h-11 w-full items-center justify-center gap-1.5 rounded-[0.875rem] text-[0.875rem] font-semibold text-coral active:bg-coral-soft"
-            >
-              <Trash2 className="size-4" /> {t.customerRemove}
-            </button>
           </div>
         </div>
       )}
@@ -290,6 +351,52 @@ export function CustomerList({ items, shop, goal }: { items: CustomerRow[]; shop
                     signal("customer_removed");
                     setRemoving(null);
                     setOpen(null);
+                    router.refresh();
+                  })()
+                }
+              >
+                {removeBusy ? t.checking : t.customerRemoveYes}
+              </SheetGo>
+              {removeErr && <p className="mt-2 text-[0.8125rem] font-semibold text-coral">{t.errNetwork}</p>}
+            </>
+          }
+        />
+      )}
+      {removingMany && (
+        <Sheet
+          tone="coral"
+          label={t.customerRemove}
+          icon={
+            <span className="mx-auto grid size-14 place-items-center rounded-full bg-coral-soft text-coral">
+              <Trash2 className="size-6" />
+            </span>
+          }
+          title={marked.length === 1 ? fill(t.customerRemoveAsk, { name: items.find((c) => c.id === marked[0])?.name ?? t.someone }) : `تنحّي ${marked.length} حرفاء من الحرفاء متاعك؟`}
+          under={t.customerRemoveBody}
+          hold={removeBusy}
+          onClose={() => {
+            if (removeBusy) return;
+            setRemovingMany(false);
+            setRemoveErr(false);
+          }}
+          dismiss={t.customerRemoveNo}
+          action={
+            <>
+              <SheetGo
+                tone="coral"
+                onClick={() =>
+                  void (async () => {
+                    if (removeBusy) return;
+                    setRemoveBusy(true);
+                    setRemoveErr(false);
+                    let failed = 0;
+                    for (const id of marked) if (!(await removeCustomer(id).catch(() => false))) failed++;
+                    setRemoveBusy(false);
+                    signal("customers_removed", String(marked.length - failed));
+                    if (failed) return setRemoveErr(true);
+                    setRemovingMany(false);
+                    setChoosing(false);
+                    setMarked([]);
                     router.refresh();
                   })()
                 }
@@ -369,5 +476,75 @@ function HandOver({ who, busy, failed, onClose, onGive }: { who: CustomerRow; bu
         {failed && <p className="mt-2 text-center text-[0.8125rem] font-semibold text-coral">{t.handErr}</p>}
       </div>
     </div>
+  );
+}
+
+/**
+ * A customer with no account yet — a number given a tampon at this shop's counter (14 Nov 2026, a client asked for
+ * it): the owner writes their name, or corrects it, until the person signs up and writes their own.
+ */
+function NameRow({ card, name, onSaved }: { card: string; name: string | null; onSaved: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name ?? "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const save = async () => {
+    if (busy) return;
+    setBusy(true);
+    setErr(null);
+    const res = await nameCustomer(card, value).catch(() => ({ ok: false as const, name: undefined, error: "network" as const }));
+    setBusy(false);
+    if (res.ok && res.name) {
+      setEditing(false);
+      signal("customer_named");
+      onSaved(res.name);
+      return;
+    }
+    setErr(res.error === "invalid" ? t.custNameErrInvalid : res.error === "own_account" ? t.custNameErrOwn : t.errNetwork);
+  };
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setValue(name ?? "");
+          setErr(null);
+          setEditing(true);
+        }}
+        className="press mt-2.5 flex w-full items-center gap-2.5 rounded-[0.875rem] bg-surface px-3 py-2.5 text-start shadow-card"
+      >
+        <Pencil className="size-4 shrink-0 text-brand" strokeWidth={2.4} />
+        <span className="min-w-0 flex-1">
+          <b className="block text-[0.875rem] font-bold text-brand">{name ? t.custNameEdit : t.custNameAdd}</b>
+          <span className="block text-[0.75rem] leading-snug text-muted">{t.custNameHint}</span>
+        </span>
+      </button>
+    );
+  }
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void save();
+      }}
+      className="mt-2.5 rounded-[0.875rem] bg-surface p-2 shadow-card"
+    >
+      <div className="flex items-center gap-2">
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value.slice(0, 30))}
+          autoFocus
+          placeholder={t.custNameAdd}
+          aria-label={t.custNameAdd}
+          autoComplete="off"
+          enterKeyHint="done"
+          className="h-11 min-w-0 flex-1 rounded-[0.75rem] bg-canvas px-3 text-[1rem] font-semibold outline-none"
+        />
+        <button type="submit" disabled={busy} className="press h-11 shrink-0 rounded-[0.75rem] bg-brand px-4 text-[0.9375rem] font-bold text-white disabled:opacity-60">
+          {busy ? "…" : t.custNameSave}
+        </button>
+      </div>
+      {err && <p className="mt-1.5 px-1 text-[0.8125rem] font-semibold text-coral">{err}</p>}
+    </form>
   );
 }

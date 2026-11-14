@@ -90,7 +90,7 @@ try {
   const tip = o.page.getByRole("dialog", { name: TITLE });
   check("the note shows on the home", await tip.waitFor({ timeout: 30000 }).then(() => true, () => false));
   const tt = await text(o.page);
-  check("…with «شكون رجع؟» and removing a customer", tt.includes("شكون رجع؟") && tt.includes("تنجم تنحّي حريف") && tt.includes("نحّي الحريف"), tt.slice(0, 300));
+  check("…with «شكون رجع؟» and removing a customer", tt.includes("شكون رجع؟") && tt.includes("تنجم تنحّي حريف") && tt.includes("🗑"), tt.slice(0, 300));
   check("…and is written down as seen at once", (await seen(owner.id)).includes("new_insights"));
   await shot(o.page, "1-home-note");
   await tip.getByRole("link", { name: /شكون رجع؟/ }).click();

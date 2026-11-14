@@ -21,8 +21,8 @@ const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "
  * and a WhatsApp or a call to finish it with the founder. Paid, the page says
  * until when; a few days before the end it takes the next one («جدّد»).
  */
-export default async function ShopPay() {
-  const me = await getMe();
+export default async function ShopPay({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const [me, { from }] = await Promise.all([getMe(), searchParams]);
   if (!me) redirect("/login?next=/shop/pay");
   if (!me.shop) redirect("/shop/setup");
   const [pay, settings] = await Promise.all([call<Pay | null>("my_payment"), getSettings()]);
@@ -33,7 +33,8 @@ export default async function ShopPay() {
 
   return (
     <Screen>
-      <Top back="/shop" />
+      {/* opened from «المحل»: «ارجع» goes back there (13 Nov 2026) */}
+      <Top back={from === "settings" ? "/shop/settings" : "/shop"} />
       <h1 className="mt-[1.6dvh] shrink-0 text-[1.625rem] font-bold leading-tight">{paid && !near ? t.payTitle : renew ? t.planRenewTitle : t.payPageTitle}</h1>
       {near && <p className="mt-1 shrink-0 text-[0.9375rem] font-semibold text-muted">{fill(t.payPaidUntil, { date: day(pay!.paid_until!) })}</p>}
 

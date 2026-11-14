@@ -59,6 +59,44 @@ export function VideoModal({ video, onClose }: { video: HelpVideo; onClose: () =
   return browser ? createPortal(panel, document.body) : null;
 }
 
+/**
+ * A short film of how a thing works (13 Nov 2026, public/clips/*-v2.mp4, scripts/option-films.mjs), over the page:
+ * plays at once, closes with ✕ or a tap outside — «شنوّة تبيع؟», «الحريف يختار الكادو».
+ */
+export function Film({ src, label, onClose }: { src: string; label: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex animate-fade items-center justify-center bg-ink/80 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={label}>
+      <div className="relative w-full max-w-[24rem]" onClick={(e) => e.stopPropagation()}>
+        <button type="button" onClick={onClose} aria-label={t.back} className="press absolute -end-2 -top-2 z-10 grid size-9 place-items-center rounded-full bg-white text-ink shadow-card">
+          <X className="size-4" />
+        </button>
+        {/* its poster (the title card, scripts/option-films.mjs): there at once, before the first frame arrives */}
+        <video src={src} poster={src.replace(/\.mp4$/, ".webp")} controls autoPlay playsInline className="max-h-[82dvh] w-full rounded-[1.25rem] bg-ink object-contain" />
+      </div>
+    </div>
+  );
+}
+
+/** A button that opens a film (`Film`) — the page's own «▶ شوف كيفاش يخدم». */
+export function FilmButton({ src, label, className, children }: { src: string; label: string; className?: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(true);
+          signal("film_open", label);
+        }}
+        className={className}
+      >
+        {children}
+      </button>
+      {open && <Film src={src} label={label} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
 /** The floating «▶ كيفاش تخدم؟» on the front door: the first video, one tap. */
 export function VideoPill({ video, className = "" }: { video: HelpVideo | null; className?: string }) {
   const [open, setOpen] = useState(false);

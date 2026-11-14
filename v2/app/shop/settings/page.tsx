@@ -1,11 +1,13 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChartColumn, ChevronLeft, Crown, History, Hourglass, PieChart, Repeat, ShoppingBasket, ShoppingCart, Ticket, UserPlus, UserRound, WalletCards } from "lucide-react";
+import { ChartColumn, ChevronLeft, Crown, History, ShoppingCart, SlidersHorizontal, Ticket, UserPlus, UserRound, WalletCards } from "lucide-react";
+import { optionsOn } from "@/components/CardOptions";
 import { ExportRow } from "@/components/ExportRow";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
 import { LogoutButton } from "@/components/LogoutButton";
+import { OwnerBell } from "@/components/OwnerBell";
 import type { Pay } from "@/components/Pay";
 import { ShopMark } from "@/components/ShopMark";
 import { Top } from "@/components/Top";
@@ -58,10 +60,11 @@ export default async function ShopSettings() {
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
   // «تحميل البيانات»: only for a shop the founder allowed it, from the console (off for every shop)
-  const [pay, help, exportState] = await Promise.all([
+  const [pay, help, exportState, bell] = await Promise.all([
     call<Pay | null>("my_payment"),
     getHelp(),
     call<{ on: boolean; open?: boolean; last?: string | null; next?: string | null }>("my_export_state"),
+    call<{ unread: number } | null>("my_bell"),
   ]);
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const daysLeft = pay?.trial_until ? Math.max(0, Math.ceil((Date.parse(pay.trial_until) - Date.now()) / 86_400_000)) : 0;
@@ -76,17 +79,29 @@ export default async function ShopSettings() {
         : pay?.trial_started === false
           ? t.trialWaits
           : fill(t.setTrial, { n: daysN(daysLeft) });
+  // «خيارات الكارط»: the card's rules, and which are on
+  const options = optionsOn(shop);
   // the card's line: the store in its place, for a shop the founder switched; a card on the wheel says so
   // (the wheel is chosen there, among the gifts: no line of its own since 17 Oct 2026)
   const card = shop.store_on
     ? { href: "/shop/store", icon: ShoppingCart, title: t.storeOwnerTitle, sub: null }
     : shop.wheel_on
-      ? { href: "/shop/card", icon: Ticket, title: t.cardTitle, sub: fill(t.setCardWheel, { goal: shop.goal ?? 0 }) }
-      : { href: "/shop/card", icon: Ticket, title: t.cardTitle, sub: fill(t.setCard, { goal: shop.goal ?? 0, gift: shop.gift ?? "" }) };
+      ? { href: "/shop/card?from=settings", icon: Ticket, title: t.cardTitle, sub: fill(t.setCardWheel, { goal: shop.goal ?? 0 }) }
+      : { href: "/shop/card?from=settings", icon: Ticket, title: t.cardTitle, sub: fill(t.setCard, { goal: shop.goal ?? 0, gift: shop.gift ?? "" }) };
 
   return (
     <Screen>
-      <Top back="/shop" end={<HelpButton help={help} />} title={t.setTitle} />
+      <Top
+        back="/shop"
+        end={
+          <span className="flex items-center gap-2">
+            <InstallButton where="settings" look="icon" />
+            <OwnerBell unread={bell?.unread ?? 0} />
+            <HelpButton help={help} />
+          </span>
+        }
+        title={t.setTitle}
+      />
       {/* the rows have grown (the roulette has its own since every shop may have it, 18 Oct 2026):
           on a short phone the gaps give way first, so the whole shop still fits on one screen */}
       <div className="mt-[2dvh] flex flex-col gap-[1.6dvh] pb-3 [@media(max-height:700px)]:mt-[1dvh] [@media(max-height:700px)]:gap-[0.9dvh] [@media(max-height:700px)]:pb-1">
@@ -102,29 +117,18 @@ export default async function ShopSettings() {
             sub={`${t.setShop} · ${t.kinds[shop.kind] ?? ""}`}
           />
           <Row href={card.href} mark={<Mark icon={card.icon} />} title={card.title} sub={card.sub} />
-          {/* the card's clock: so many days with no tampon and a card starts over — its own page (the pause,
-              what it took, given back). Only while the founder's switch is on: off, owners never see it */}
-          {shop.clock_on && !shop.store_on && (
-            <Row
-              href="/shop/clock"
-              mark={<Mark icon={Hourglass} />}
-              title={t.setReset}
-              sub={shop.reset_days ? (shop.reset_paused ? `${t.clockPausedChip} · ${fill(t.setResetOn, { days: daysN(shop.reset_days) })}` : fill(t.setResetOn, { days: daysN(shop.reset_days) })) : t.setResetOff}
-            />
-          )}
-          {/* the wheel's own page — its prizes, each one's chance, and what fell — for a shop the
-              founder allowed it. It had no way in since the wheel moved into the card's question. */}
-          {(shop.wheel_allowed || shop.wheel_on) && (
-            <Row href="/shop/wheel" mark={<Mark icon={PieChart} />} title={t.wheelOwnerTitle} sub={shop.wheel_on ? t.wheelSetOn : t.wheelSetOff} />
-          )}
-          <Row href="/shop/items" mark={<Mark icon={ShoppingBasket} />} title={t.itemsTile} sub={shop.items_on ? t.setItemsOn : t.setItemsOff} />
+          {/* every rule of the card on one page (14 Nov 2026) — the roulette, the customer choosing the gift, «شنوّة
+              تبيع», the clock — turned on and changed there. Its line says what is on, so «المحل» stays one short
+              list that fits a small phone's screen */}
+          <Row href="/shop/options" mark={<Mark icon={SlidersHorizontal} />} title={t.optTitle} sub={options} />
         </Group>
         <Group>
-          <Row href="/shop/history" mark={<Mark icon={History} />} title={t.histTitle} sub={t.histRowSub} />
+          <Row href="/shop/history?from=settings" mark={<Mark icon={History} />} title={t.histTitle} sub={t.histRowSub} />
           {/* the sign-up code: only for a shop the founder turned it on for (off, the owner never sees it) */}
           {shop.join_on && <Row href="/shop/join" mark={<Mark icon={UserPlus} />} title={t.joinCodeTitle} sub={t.joinRowSub} />}
-          <Row href="/shop/stats" mark={<Mark icon={ChartColumn} />} title={t.statsTitle} sub={t.setStatsSub} />
-          <Row href="/shop/insights" mark={<Mark icon={Repeat} />} title={t.insTitle} sub={t.insLinkSub} />
+          {/* the numbers, one row: «شكون رجع؟» is the big button at the bottom of «الأرقام» (13 Nov 2026: one row less, so
+              «المحل» stays one screen on a small phone) */}
+          <Row href="/shop/stats?from=settings" mark={<Mark icon={ChartColumn} />} title={t.statsTitle} sub={t.setStatsSub} />
           {/* the customers as a file, once a week, for a shop the founder allowed it (components/ExportRow.tsx) */}
           {exportState?.on && (
             <ExportRow
@@ -133,14 +137,21 @@ export default async function ShopSettings() {
               shut={exportState.open && exportState.next && exportState.last ? new Date(Date.parse(exportState.last) + 30 * 60_000).toISOString() : null}
             />
           )}
-          {plan && <Row href="/shop/pay" mark={<Mark icon={Crown} />} title={t.payTitle} sub={plan} />}
+          {plan && <Row href="/shop/pay?from=settings" mark={<Mark icon={Crown} />} title={t.payTitle} sub={plan} />}
         </Group>
-        <Group>
-          {/* the app on this phone: Chrome's own dialog, or the guide (nothing once installed) */}
-          <InstallButton where="settings" look="setting" />
-          <Row href="/me" mark={<Mark icon={UserRound} />} title={t.account} sub={me.name ?? null} />
-          <Row href="/wallet" mark={<Mark icon={WalletCards} />} title={t.myCards} sub={t.setMine} />
-        </Group>
+        {/* the account and the owner's own cards at other shops, side by side (13 Nov 2026: a row less — «المحل»
+            stays one screen on a small phone, with the clock on and the app not installed yet) */}
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { href: "/me", icon: UserRound, label: t.account },
+            { href: "/wallet", icon: WalletCards, label: t.myCards },
+          ].map((x) => (
+            <Link key={x.href} href={x.href} className="press flex min-w-0 items-center justify-center gap-2 rounded-[1.125rem] bg-surface px-2 py-[clamp(0.6rem,1.6dvh,0.875rem)] shadow-card">
+              <x.icon className="size-5 shrink-0 text-brand" strokeWidth={2.2} />
+              <span className="min-w-0 truncate text-[0.9375rem] font-bold">{x.label}</span>
+            </Link>
+          ))}
+        </div>
         <LogoutButton className="mt-0" />
       </div>
     </Screen>

@@ -2,10 +2,11 @@
 
 import Link from "@/components/Link";
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Smartphone, Undo2, X } from "lucide-react";
+import { Check, ChevronRight, Keyboard, QrCode, RotateCcw, ScanLine, Smartphone, Undo2, UserRound, X } from "lucide-react";
 import { customerAt, give as handOver, giveAll, giveStamp, giveStampNew, unstamp, type WaitingGift } from "@/app/actions";
 import { restoreReset } from "@/app/actions-clock";
 import { storeGive } from "@/app/actions-store";
+import { chooseGift } from "@/app/actions-choices";
 import { spinAtCounter } from "@/app/actions-wheel";
 import { Wheel, type Prize } from "@/components/Wheel";
 import { Pass } from "@/components/Pass";
@@ -113,7 +114,32 @@ function GiftRow({ w, onOpen }: { w: WaitingGift; onOpen: () => void }) {
  * question over the screen — give it now, or not now. `won`: the tampon just
  * given was the last one.
  */
-function GiftPop({ who, w, won, busy, onGive, onLater, prizes = [], onSpun }: { who: string; w: WaitingGift; won: boolean; busy: boolean; onGive: (all: boolean) => void; onLater: () => void; prizes?: Prize[]; onSpun?: (prize: string) => void }) {
+function GiftPop({ who, w, won, busy, onGive, onLater, prizes = [], onSpun, onChoose }: { who: string; w: WaitingGift; won: boolean; busy: boolean; onGive: (all: boolean) => void; onLater: () => void; prizes?: Prize[]; onSpun?: (prize: string) => void; /** a gift the customer chooses (13 Nov 2026): the one picked, then handed over */ onChoose?: (option: string) => void }) {
+  // the customer chooses the gift and did not yet (on their phone): asked here, in front of them — one tap is the
+  // choice and the hand-over (lib/choices: «قهوة · كرواسون · عصير»)
+  const options = (w.gift ?? "").includes(" · ") ? (w.gift ?? "").split(" · ").map((x) => x.trim()).filter(Boolean) : null;
+  if (options && onChoose) {
+    return (
+      <div className="fixed inset-0 z-50 flex animate-fade items-end justify-center bg-ink/45" role="dialog" aria-modal="true" aria-label={`${who} · شنوّة يختار؟`} onClick={onLater}>
+        <div className="safe-b w-full max-w-md rounded-t-[1.75rem] bg-canvas px-[clamp(1rem,5vw,1.5rem)] pb-5 pt-[clamp(1rem,3dvh,1.75rem)] text-center" style={{ animation: "pop-up 380ms cubic-bezier(0.2,0.8,0.2,1) both" }} onClick={(e) => e.stopPropagation()}>
+          <style>{`@keyframes pop-up { from { transform: translateY(100%); } to { transform: none; } }`}</style>
+          <Icon3D name="gift" size={76} className="mx-auto animate-pop" />
+          <h2 className="mt-2 text-balance text-[1.5rem] font-bold leading-tight">{who} ربح كادو</h2>
+          <p className="mt-1 text-[0.9375rem] text-muted">شنوّة يختار؟ انزل على اللي يحب وعطيهولو</p>
+          <div className={`mt-[2.5dvh] grid gap-2 ${options.length > 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+            {options.map((o) => (
+              <Btn key={o} type="button" kind="coral" onClick={() => onChoose(o)} disabled={busy}>
+                {busy ? t.checking : o}
+              </Btn>
+            ))}
+          </div>
+          <Btn type="button" kind="ghost" className="mt-1.5" onClick={onLater} disabled={busy}>
+            {t.popGiftLater}
+          </Btn>
+        </div>
+      </div>
+    );
+  }
   // a wheel shop, the turn not spun yet: the owner spins it here, in front of the customer — then it is the prize
   if (w.spin && prizes.length > 0 && onSpun) {
     return (
@@ -230,6 +256,9 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
   const [ordersDone, setOrdersDone] = useState<string | null>(null);
   // who this customer is, by the shop's forms of identification (to check)
   const [said, setSaid] = useState<Said>([]);
+  // a number with no account yet: the name the owner may write for it (14 Nov 2026) — kept with its number, so a
+  // name typed for one number never goes to the next
+  const [newName, setNewName] = useState<{ for: string; v: string }>({ for: "", v: "" });
   const later = useRef<number | null>(null);
   const ask = (w: WaitingGift | null | undefined, won = false) => {
     if (w && (won || later.current !== w.id)) setPop({ w, won });
@@ -277,7 +306,7 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
       return;
     }
     setStep({ kind: "giving", name, card, waiting: null, fresh });
-    const res = await (fresh ? giveStampNew(digits, item?.id) : giveStamp(digits, item?.id, back)).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
+    const res = await (fresh ? giveStampNew(digits, item?.id, newName.for === digits ? newName.v : null) : giveStamp(digits, item?.id, back)).catch(() => ({ ok: false, error: "network" }) as Awaited<ReturnType<typeof giveStamp>>);
     if (res.ok && res.card) {
       navigator.vibrate?.(60);
       setStep({ kind: "done", name: res.name ?? name, card: res.card, gift: !!res.gift, waiting: res.waiting ?? null, moment: res.moment ?? null, item: item?.name ?? null });
@@ -622,6 +651,22 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
                       )}
                     </span>
                   </div>
+                  {/* a number with no account yet: its name, if the owner wants to write it (the person writes their own on signing up) */}
+                  {step.fresh && (
+                    <label className="mt-2 flex items-center gap-2.5 rounded-[1.125rem] bg-surface px-3.5 shadow-card">
+                      <UserRound className="size-5 shrink-0 text-brand" strokeWidth={2.2} />
+                      <input
+                        value={newName.for === digits ? newName.v : ""}
+                        onChange={(e) => setNewName({ for: digits, v: e.target.value.slice(0, 30) })}
+                        placeholder={t.collectNewName}
+                        aria-label={t.collectNewName}
+                        autoComplete="off"
+                        enterKeyHint="done"
+                        disabled={step.kind === "giving"}
+                        className="h-12 min-w-0 flex-1 bg-transparent text-[1rem] font-semibold outline-none placeholder:font-normal placeholder:text-faint"
+                      />
+                    </label>
+                  )}
                   {step.card && <ResetRow card={step.card} done={restored === step.card.id} onBack={() => backAgain(step.card!.id)} />}
                   {/* known by a form: their answers, to check before the tampon */}
                   {said.map((f, i) => (
@@ -695,6 +740,11 @@ export function Collect({ by, preset = "", shop, items = [], back, prizes = [] }
           onLater={() => {
             later.current = pop.w.id;
             setPop(null);
+          }}
+          // a gift to choose: the one picked here becomes the gift, and it is handed over in the same tap
+          onChoose={(option) => {
+            const w = pop.w;
+            void chooseGift(w.id, option).then((ok) => (ok ? hand({ ...w, gift: option, n: 1 }, false) : setStep({ kind: "error", text: t.errNetwork })));
           }}
           prizes={prizes}
           onSpun={(prize) => {

@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ArrowRight, Check, Gift, History, MessageCircle, Moon, Phone, Smartphone, Stamp, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Bell, Check, Gift, History, MessageCircle, Moon, Phone, Smartphone, Stamp, X } from "lucide-react";
 import { Face, ShopNote, ShopProfile, ShopReading, ShopStage } from "@/components/AdminBoard";
 import { ShopVoice } from "@/components/AdminVoice";
 import type { Voice } from "@/app/admin/actions";
 import { AdminShopMore } from "@/components/AdminShopMore";
 import { PILL, profileShop, readShop, STAGE_LOOK, stageOf, standing, type AccessShop, type BoardShop } from "@/lib/board";
+import { B } from "@/lib/bell";
 import { digits, spaced } from "@/lib/phone";
 import { FAILS, screenName } from "@/lib/screens";
 import { call } from "@/lib/supabase";
@@ -260,6 +261,10 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
                 <a href={`https://wa.me/216${phone}`} target="_blank" rel="noreferrer" className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-[#25D366]/15 px-3.5 text-[0.9375rem] font-bold text-[#128C4B]">
                   <MessageCircle className="size-4" /> واتساب
                 </a>
+                {/* a note in his 🔔, from here (13 Nov 2026) */}
+                <Link href={`/admin/news?to=${owner.id}`} className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-canvas px-3.5 text-[0.9375rem] font-bold text-body ring-1 ring-line">
+                  <Bell className="size-4" /> {B.aWrite}
+                </Link>
               </div>
             )}
           </div>
@@ -307,6 +312,9 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
               <a href={`https://wa.me/216${phone}`} target="_blank" rel="noreferrer" className="press flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366]/15 text-[0.9375rem] font-bold text-[#128C4B]">
                 <MessageCircle className="size-4" /> واتساب
               </a>
+              <Link href={`/admin/news?to=${owner.id}`} className="press col-span-2 flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-canvas text-[0.9375rem] font-bold text-body ring-1 ring-line">
+                <Bell className="size-4" /> {B.aWrite}
+              </Link>
             </div>
           )}
           {/* the founder's own: where he is with the shop, his line about it, and the stages it went through, oldest first */}

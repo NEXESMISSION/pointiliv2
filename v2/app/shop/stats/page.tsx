@@ -27,8 +27,8 @@ const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "
  * where today's three numbers went when they left the home: the home is for
  * the code, this is for looking.
  */
-export default async function ShopStats() {
-  const me = await getMe();
+export default async function ShopStats({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const [me, { from }] = await Promise.all([getMe(), searchParams]);
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
@@ -46,7 +46,7 @@ export default async function ShopStats() {
 
   return (
     <Screen>
-      <Top back="/shop" title={t.statsTitle} hint={t.statsHint} />
+      <Top back={from === "settings" ? "/shop/settings" : "/shop"} title={t.statsTitle} hint={t.statsHint} />
 
       <div className="mt-[2dvh] grid shrink-0 grid-cols-3 gap-2">
         {tiles.map((x) => (
@@ -77,7 +77,7 @@ export default async function ShopStats() {
       </section>
 
       {/* who comes back, who stopped, how long between two visits: its own page (/shop/insights) */}
-      <Link href="/shop/insights" className="press mt-[1.6dvh] flex shrink-0 items-center gap-3 rounded-[1.25rem] bg-[linear-gradient(135deg,#8f75ff,#6c47ff_55%,#4a2ad6)] px-4 py-3 text-white shadow-[0_14px_30px_-16px_rgb(108_71_255/0.9)]">
+      <Link href={from === "settings" ? "/shop/insights?from=settings" : "/shop/insights"} className="press mt-[1.6dvh] flex shrink-0 items-center gap-3 rounded-[1.25rem] bg-[linear-gradient(135deg,#8f75ff,#6c47ff_55%,#4a2ad6)] px-4 py-3 text-white shadow-[0_14px_30px_-16px_rgb(108_71_255/0.9)]">
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/18">
           <Repeat className="size-5" strokeWidth={2.4} />
         </span>

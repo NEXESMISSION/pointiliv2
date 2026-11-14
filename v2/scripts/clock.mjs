@@ -142,8 +142,8 @@ try {
     o = await signIn(owner);
     check("no «جديد» note on the home", !(await o.page.getByRole("dialog", { name: TIP }).waitFor({ timeout: 6000 }).then(() => true, () => false)));
     check("…and it is not written down as seen", !((await admin.from("people").select("seen").eq("id", owner.id).single()).data?.seen ?? []).includes("reset_tip"));
-    await go(o.page, "/shop/settings");
-    check("«المحل» has no clock", !(await text(o.page)).includes("الكارط ترجع للصفر"));
+    await go(o.page, "/shop/options");
+    check("«خيارات الكارط» has no clock", !(await text(o.page)).includes("الكارط ترجع للصفر"));
     await shot(o.page, "0-off-settings");
     await go(o.page, "/shop/clock");
     check("the clock's page leads back to «المحل»", new URL(o.page.url()).pathname === "/shop/settings", o.page.url());
@@ -173,11 +173,11 @@ try {
   }
   const q = await text(n.page);
   check("the 4th question is the card's clock", q.includes("الحريف كان غاب، الكارط ترجع للصفر؟"), q.slice(0, 200));
-  check("…with «لا» chosen to begin with", q.includes("لا: التامبونات يقعدو ديما في الكارط متاعو."));
+  check("…with «لا» chosen to begin with", q.includes("مع «لا» التامبونات يقعدو ديما"));
   await shot(n.page, "1-first-card-clock");
   await n.page.getByRole("radio", { name: "15 يوم" }).or(n.page.getByRole("button", { name: "15 يوم" })).first().click();
   await n.page.waitForTimeout(400);
-  check("picking 15 days says what it does", (await text(n.page)).includes("كان ما خذاش تامبون 15 يوم، الكارط ترجع للصفر."));
+  check("picking 15 days says what it does", (await text(n.page)).includes("كان الحريف ما جاش 15 يوم، الكارط ترجع للصفر."));
   await n.page.getByRole("button", { name: "كمّل", exact: true }).click();
   await n.page.waitForTimeout(700);
   await n.page.getByRole("button", { name: "حلّ الكارط" }).click();
@@ -234,9 +234,13 @@ try {
   await admin.from("shops").update({ reset_since: ago(8 * DAY) }).eq("id", shop.id);
 
   console.log("\n«المحل»");
+  // the clock is one of the card's rules on «خيارات الكارط» (since 13 Nov 2026); «المحل»'s line for them says it is on
+  await go(o.page, "/shop/options");
+  const sy = await text(o.page);
+  check("«خيارات الكارط» says the clock (switch on)", sy.includes("الكارط ترجع للصفر") && sy.includes("كان الحريف غاب 7 أيّام"));
   await go(o.page, "/shop/settings");
   const st = await text(o.page);
-  check("«المحل» says the clock (switch on)", st.includes("الكارط ترجع للصفر") && st.includes("كان الحريف غاب 7 أيّام"));
+  check("«المحل»'s line for the options says the clock is on", st.includes("ترجع للصفر"));
   check("«المحل» leads to «شكون رجع؟»", st.includes("شكون رجع؟"));
   await shot(o.page, "4-settings");
 
@@ -442,8 +446,8 @@ try {
   await o.page.waitForTimeout(1200);
   check("…and the page says «العدّاد مطفي»", (await text(o.page)).includes("العدّاد مطفي"));
   await shot(o.page, "14-clock-off");
-  await go(o.page, "/shop/settings");
-  check("«المحل» says it is off", (await text(o.page)).includes("مطفي: الكارط ما ترجعش للصفر"));
+  await go(o.page, "/shop/options");
+  check("«خيارات الكارط» says it is off", (await text(o.page)).includes("مطفي: الكارط ما ترجعش للصفر"));
 
   console.log("\n«شكون رجع؟»");
   await go(o.page, "/shop/insights");

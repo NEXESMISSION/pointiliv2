@@ -49,8 +49,8 @@ const card = "rounded-[1.375rem] bg-surface shadow-card";
  * A customer is active, cooling or lost against the shop's own rhythm — the median days between two
  * visits — not a number picked for every trade: a café's week is a barber's month.
  */
-export default async function ShopInsights() {
-  const me = await getMe();
+export default async function ShopInsights({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const [me, { from }] = await Promise.all([getMe(), searchParams]);
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
@@ -59,7 +59,7 @@ export default async function ShopInsights() {
   if (!s?.ok) {
     return (
       <Screen>
-        <Top back="/shop/stats" title={t.insTitle} />
+        <Top back={from === "settings" ? "/shop/stats?from=settings" : "/shop/stats"} title={t.insTitle} />
         <p className="mt-8 text-center text-[0.9375rem] text-muted">{t.errNetwork}</p>
       </Screen>
     );
@@ -87,7 +87,7 @@ export default async function ShopInsights() {
 
   return (
     <Screen>
-      <Top back="/shop/stats" title={t.insTitle} hint={t.insSub} />
+      <Top back={from === "settings" ? "/shop/stats?from=settings" : "/shop/stats"} title={t.insTitle} hint={t.insSub} />
 
       {/* how many came back: the number a loyalty card is for */}
       <section className="mt-[2dvh] shrink-0 overflow-hidden rounded-[1.5rem] bg-[linear-gradient(140deg,#8f75ff_0%,#6c47ff_50%,#4a2ad6_100%)] p-4 text-white shadow-[0_18px_40px_-20px_rgb(74_42_214/0.9)]">

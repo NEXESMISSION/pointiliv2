@@ -162,11 +162,12 @@ try {
 
   console.log("\n«المحل», its line");
   await open(page, "/shop/settings");
-  const line = page.getByRole("button", { name: /حطّ Pointili في تليفونك/ });
-  check("the line is there", await line.isVisible());
+  // since 13 Nov 2026 an icon in «المحل»'s header, as on the home (a row less, so the list fits a small phone)
+  const line = page.locator(ICON).first();
+  check("the icon is there", await line.isVisible());
   await line.click();
   await page.waitForTimeout(800);
-  check("…tapped: «لحظة…» on the line", await page.getByText("لحظة… قاعد يتحضّر").isVisible());
+  check("…tapped: «لحظة…» on the icon", (await page.locator('button[aria-label="لحظة… قاعد يتحضّر"]').count()) === 1);
   await offer(page);
   await page.waitForTimeout(500);
   c = await counts(page);
@@ -190,7 +191,7 @@ try {
   check("the home has no install button", (await home.page.locator(ICON).count()) === 0);
   await shot(home.page, "4-home-installed");
   await open(home.page, "/shop/settings");
-  check("«المحل» has no install line", (await home.page.getByRole("button", { name: /حطّ Pointili في تليفونك/ }).count()) === 0);
+  check("«المحل» has no install icon", (await home.page.locator(ICON).count()) === 0);
 
   console.log("\nThe Android app: its short address and its link to the site");
   const al = await page.request.get(`${BASE}/.well-known/assetlinks.json`);
@@ -246,7 +247,7 @@ try {
   check("in the app: no install button on the home", (await inApp.page.locator(ICON).count()) === 0);
   check("…no «open in Chrome» either", (await inApp.page.getByText("ابعثها لروحك في واتساب").count()) === 0);
   await open(inApp.page, "/shop/settings");
-  check("…nor a line in «المحل»", (await inApp.page.getByRole("button", { name: /حطّ Pointili في تليفونك/ }).count()) === 0);
+  check("…nor an icon in «المحل»", (await inApp.page.locator(ICON).count()) === 0);
   const appVisitor = await inApp.page.evaluate(() => localStorage.getItem("pt_v"));
   await inApp.page.waitForTimeout(31000);
   const { data: appVisits } = await admin.from("visits").select("standalone").eq("visitor", appVisitor);

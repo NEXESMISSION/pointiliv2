@@ -35,7 +35,7 @@ const even = (rows: Row[]): Row[] => {
  * «الكارط». On only with two prizes saved; off, a card made on the wheel
  * goes to «الكارط» for a gift of its own.
  */
-export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst = false, gift = null }: { prizes: Prize[]; fell: { name: string; n: number }[]; goal: number | null; first?: boolean; on?: boolean; gift?: string | null }) {
+export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst = false, gift = null, back: backTo }: { prizes: Prize[]; fell: { name: string; n: number }[]; goal: number | null; first?: boolean; on?: boolean; gift?: string | null; /** where «ارجع» leads when the page was opened from somewhere else («خيارات الكارط», «المحل») */ back?: string }) {
   useScreen("wheel");
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>(() => prizes.map(rowOf));
@@ -104,7 +104,7 @@ export function WheelEditor({ prizes, fell, goal, first = false, on: onAtFirst =
   return (
     <>
       <Top
-        back={first ? "/shop/card" : "/shop"}
+        back={backTo ?? (first ? "/shop/card" : "/shop")}
         title={t.wheelOwnerTitle}
         hint={first ? undefined : t.wheelOwnerHint}
         // the same three lines as in the card's question: how it works, wherever the wheel is

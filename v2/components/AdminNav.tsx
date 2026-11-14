@@ -8,6 +8,8 @@ const TABS = [
   { href: "/admin", label: "المحلات" },
   { href: "/admin/subs", label: "الأبونمان" },
   { href: "/admin/stats", label: "الأرقام" },
+  // what the founder writes to the owners, in their 🔔 (13 Nov 2026)
+  { href: "/admin/news", label: "الإشعارات" },
 ];
 
 /** How wide a console page is: a shop's whole page is read on a computer and takes the screen; the rest is a phone's column. */
@@ -23,16 +25,17 @@ export function AdminNav() {
   return (
     <header className="sticky top-0 z-20 border-b border-line/80 bg-surface/95 backdrop-blur">
       <nav className={`mx-auto flex h-14 items-center gap-2 px-4 ${wideAt(path) ? "max-w-[92rem]" : "max-w-[46rem]"}`}>
-        <Link href="/admin" aria-label="Pointili admin" className="flex shrink-0 items-center gap-2" dir="ltr">
+        <Link href="/admin" aria-label="Pointili admin" className="hidden shrink-0 items-center gap-2 min-[400px]:flex" dir="ltr">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand-mark.svg" alt="" width={28} height={20} style={{ width: "1.75rem", height: "1.25rem" }} />
           <span className="hidden text-[1.0625rem] font-bold text-ink sm:inline">Pointili</span>
         </Link>
-        <span className="flex items-center gap-1">
+        {/* four places since «الإشعارات» (13 Nov 2026): on a narrow phone they slide, the bar never pushes the page wider */}
+        <span className="-my-1 flex min-w-0 items-center gap-1 overflow-x-auto py-1 [scrollbar-width:none]">
           {TABS.map((tab) => {
             const on = path === tab.href;
             return (
-              <Link key={tab.href} href={tab.href} aria-current={on ? "page" : undefined} className={`flex h-9 items-center rounded-full px-3.5 text-[0.875rem] font-semibold transition-colors ${on ? "bg-ink text-white" : "text-body hover:bg-canvas"}`}>
+              <Link key={tab.href} href={tab.href} aria-current={on ? "page" : undefined} className={`flex h-9 shrink-0 items-center rounded-full px-2.5 text-[0.8125rem] font-semibold transition-colors sm:px-3.5 sm:text-[0.875rem] ${on ? "bg-ink text-white" : "text-body hover:bg-canvas"}`}>
                 {tab.label}
               </Link>
             );

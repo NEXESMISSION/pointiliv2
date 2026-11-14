@@ -5,6 +5,7 @@ import { Top } from "@/components/Top";
 import { Icon3D, Screen } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import { getHelp } from "@/lib/settings";
+import { nameableCards } from "@/lib/nameable";
 import { call } from "@/lib/supabase";
 import { customersN, t } from "@/lib/t";
 
@@ -15,8 +16,9 @@ export const metadata = { title: "الحرفاء" };
 export default async function ShopCustomers() {
   const me = await getMe();
   if (!me?.shop) redirect("/shop/new");
-  const [res, help] = await Promise.all([call<{ goal: number; items: CustomerRow[] }>("shop_customers"), getHelp()]);
-  const items = res?.items ?? [];
+  const [res, help, nameable] = await Promise.all([call<{ goal: number; items: CustomerRow[] }>("shop_customers"), getHelp(), nameableCards(me.shop.id)]);
+  // a customer with no account yet, given a tampon by number here: the owner may write their name (14 Nov 2026)
+  const items = (res?.items ?? []).map((c) => (nameable.has(c.id) ? { ...c, nameable: true } : c));
   const goal = res?.goal ?? me.shop.goal ?? 10;
 
   return (

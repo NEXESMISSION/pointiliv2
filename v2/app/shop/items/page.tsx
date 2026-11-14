@@ -7,10 +7,10 @@ import { t } from "@/lib/t";
 export const metadata = { title: t.itemsWhatYouSell, robots: { index: false } };
 
 /** What the shop sells: the list the owner writes, and the switch that makes the counter ask. */
-export default async function ShopItems() {
-  const me = await getMe();
+export default async function ShopItems({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const [me, { from }] = await Promise.all([getMe(), searchParams]);
   if (!me) redirect("/login?next=/shop/items");
   if (!me.shop) redirect("/shop/setup");
   const items = (await call<{ id: number; name: string }[]>("my_items")) ?? [];
-  return <Items names={items.map((i) => i.name)} on={!!me.shop.items_on} kind={me.shop.kind} />;
+  return <Items names={items.map((i) => i.name)} on={!!me.shop.items_on} kind={me.shop.kind} back={from === "options" ? "/shop/options" : "/shop/settings"} />;
 }

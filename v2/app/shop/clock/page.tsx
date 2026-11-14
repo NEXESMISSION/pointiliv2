@@ -19,8 +19,8 @@ type Clock = { ok: boolean; days: number | null; paused: boolean; running: boole
  * changed or the clock taken off, what it takes soon and what it took lately (given back in a tap), and
  * what protects every customer. Only while the founder's switch is on: off, there is no clock to show.
  */
-export default async function ShopClock() {
-  const me = await getMe();
+export default async function ShopClock({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const [me, { from }] = await Promise.all([getMe(), searchParams]);
   if (!me) redirect("/shop/new");
   if (!me.shop) redirect("/shop/setup");
   if (!me.shop.goal) redirect("/shop/card");
@@ -30,7 +30,7 @@ export default async function ShopClock() {
   const safe = [t.clockSafe1, t.clockSafe2, t.clockSafe3, t.clockSafe4, t.clockSafe5];
   return (
     <Screen>
-      <Top back="/shop/settings" title={t.clockTitle} />
+      <Top back={from === "options" ? "/shop/options" : "/shop/settings"} title={t.clockTitle} />
       {!c?.ok ? (
         <p className="mt-8 text-center text-[0.9375rem] text-muted">{t.errNetwork}</p>
       ) : !c.days ? (

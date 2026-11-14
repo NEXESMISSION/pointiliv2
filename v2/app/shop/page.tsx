@@ -9,6 +9,7 @@ import { NewTip } from "@/components/NewTip";
 import { ResetTip } from "@/components/ResetTip";
 import { LogoTip } from "@/components/LogoTip";
 import { NewsPopup } from "@/components/NewsPopup";
+import { OwnerBell } from "@/components/OwnerBell";
 import { InstallFab, InstallPopup, OpenOutside } from "@/components/InstallApp";
 import { Mark } from "@/components/Owner";
 import { OfferPopup, PayBanner, RenewBanner, TrialBanner, type Pay } from "@/components/Pay";
@@ -75,7 +76,14 @@ export default async function ShopHome() {
   // an owner is somebody's customer too: their own cards, asked for beside the rest
   // so it costs nothing. Never a card at their own shop — the counter refuses one —
   // so every card here is at another business (the founder, 18 Oct 2026)
-  const [home, help, news, pay, mine] = await Promise.all([call<Home>("shop_home"), getHelp(), call<News | null>("news_next"), call<Pay | null>("my_payment"), call<CardView[]>("wallet")]);
+  const [home, help, news, pay, mine, bell] = await Promise.all([
+    call<Home>("shop_home"),
+    getHelp(),
+    call<News | null>("news_next"),
+    call<Pay | null>("my_payment"),
+    call<CardView[]>("wallet"),
+    call<{ unread: number } | null>("my_bell"),
+  ]);
   const myCards = mine ?? [];
   const seen = me.seen ?? [];
   const paid = !!pay?.paid;
@@ -134,17 +142,22 @@ export default async function ShopHome() {
             {shop.name}
           </Link>
         </span>
-        {/* the owner's own cards, where they are a customer: a door that is only
-            there when something is behind it, and a coral dot when a gift waits */}
-        {myCards.length > 0 && (
-          <Link href="/wallet" aria-label={t.myCards} className="press relative grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card">
-            <Ticket className="size-5 text-brand" strokeWidth={2.2} />
-            {myCards.some((c) => c.ready) && <span className="absolute -end-0.5 -top-0.5 size-3 rounded-full bg-coral ring-2 ring-canvas" aria-hidden />}
-          </Link>
-        )}
-        {/* the app on the phone, in plain sight beside the help (nothing once installed) */}
-        <InstallButton where="home · top" look="icon" />
-        <HelpButton help={help} />
+        {/* the round buttons at the end, closer to each other than to the name (four of them at the most) */}
+        <span className="flex shrink-0 items-center gap-2">
+          {/* the owner's own cards, where they are a customer: a door that is only
+              there when something is behind it, and a coral dot when a gift waits */}
+          {myCards.length > 0 && (
+            <Link href="/wallet" aria-label={t.myCards} className="press relative grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card">
+              <Ticket className="size-5 text-brand" strokeWidth={2.2} />
+              {myCards.some((c) => c.ready) && <span className="absolute -end-0.5 -top-0.5 size-3 rounded-full bg-coral ring-2 ring-canvas" aria-hidden />}
+            </Link>
+          )}
+          {/* the app on the phone, in plain sight beside the help (nothing once installed) */}
+          <InstallButton where="home · top" look="icon" />
+          {/* 🔔 what the founder writes, kept (13 Nov 2026): the count of what is not read on it */}
+          <OwnerBell unread={bell?.unread ?? 0} />
+          <HelpButton help={help} />
+        </span>
       </header>
 
       {shop.paused && <p className="mt-3 rounded-2xl bg-coral-soft px-4 py-2.5 text-[0.8125rem] font-semibold text-coral">{t.pausedBanner}</p>}
