@@ -7,9 +7,11 @@
  *   node render.mjs f2 --workers 6       → the frames filmed by 6 pages at once (default 4)
  *   node render.mjs f2 --mute            → no voice even when voice/<film>/ has some (music, effects)
  *
- * A film (films/*.mjs) is the lines it says, in Derja, and the scenes under them. A line lasts as
- * long as its voice (voice/<film>/<line id>.wav or .mp3, when there is one), else as long as it
- * takes to say it — so a voice recorded later only has to be dropped in: everything re-times.
+ * A film (films/*.mjs) is the lines it says, in Derja, and the scenes under them. Its times come
+ * from its voice: a whole take (voice/<film>/take.wav + take.json, made by take.mjs — every line
+ * and every word where it is really said), else a file per line (voice/<film>/<line id>.wav, made
+ * by voice.mjs), else how long each line takes to say — so a voice recorded later only has to be
+ * dropped in: everything re-times.
  * The scenes are HTML moved by one GSAP timeline, sought frame by frame: a frame is the same
  * every time it is filmed. The sound (music, effects, voice) is made in engine/sound.mjs.
  *
@@ -17,10 +19,11 @@
  */
 import { chromium } from "playwright-core";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { makeSound, voiceLength } from "./engine/sound.mjs";
+import { makeSound } from "./engine/sound.mjs";
+import { whenSaid } from "./engine/timing.mjs";
 import { FONTS, BASE_CSS } from "./engine/base.mjs";
 
 const DIR = import.meta.dirname;
@@ -51,22 +54,9 @@ mkdirSync(CACHE, { recursive: true });
 
 /* ---------- when each line is said ---------- */
 
-// a Derja line said in an ad, brisk: ~0.34 s a word, a breath before the next
-const estimate = (text) => {
-  const words = text.replace(/[*_~«»"]/g, "").split(/\s+/).filter(Boolean).length;
-  return Math.max(0.8, 0.2 + words * 0.34);
-};
 const VOICE = join(DIR, "voice", NAME);
-const timing = [];
-let cursor = film.lead ?? 0.35;
-for (const l of film.lines) {
-  const v = flag("mute") ? null : ["wav", "mp3", "m4a"].map((x) => join(VOICE, `${l.id}.${x}`)).find(existsSync);
-  const len = l.dur ?? (v ? voiceLength(v) : estimate(l.say));
-  cursor += l.before ?? 0;
-  timing.push({ id: l.id, say: l.say, sub: l.sub, start: +cursor.toFixed(3), end: +(cursor + len).toFixed(3), voice: v ?? null });
-  cursor += len + (l.after ?? film.gap ?? 0.16);
-}
-const total = +(cursor + (film.tail ?? 1.2)).toFixed(3);
+const { lines: timing, total, take, stale } = whenSaid(film, VOICE, { mute: flag("mute") });
+if (stale) console.log(`! the voice is not the one the scenes were timed for: node retime.mjs ${id}`);
 
 /* ---------- the page ---------- */
 
@@ -102,7 +92,7 @@ async function openPage() {
 
 const first = await openPage();
 const sfx = await first.evaluate(() => window.__SFX ?? []);
-console.log(`${NAME}: ${timing.length} lines, ${total.toFixed(1)} s, ${sfx.length} sounds${timing.some((l) => l.voice) ? `, voice on ${timing.filter((l) => l.voice).length} lines` : ", no voice yet"}`);
+console.log(`${NAME}: ${timing.length} lines, ${total.toFixed(1)} s, ${sfx.length} sounds${take ? `, the voice of ${take.source} (a whole take)` : timing.some((l) => l.voice) ? `, voice on ${timing.filter((l) => l.voice).length} lines` : ", no voice yet"}`);
 
 const at = async (p, t) => p.evaluate((v) => window.__seek(v), t);
 
@@ -164,7 +154,7 @@ await browser.close();
 /* ---------- the sound, then the film ---------- */
 
 const wav = join(CACHE, "sound.wav");
-await makeSound({ film, timing, total, sfx, out: wav, ff: FF });
+await makeSound({ film, timing, total, sfx, out: wav, ff: FF, take });
 mkdirSync(join(DIR, "out"), { recursive: true });
 const out = join(DIR, "out", `${NAME}.mp4`);
 execFileSync(FF, ["-v", "error", "-y", "-framerate", String(FPS), "-i", join(FRAMES, "f%05d.jpg"), "-i", wav,

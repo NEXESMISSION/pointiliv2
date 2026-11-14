@@ -12,18 +12,18 @@ export default {
   voice: "coral",
   music: { style: "comic" },
   lead: 0.25,
-  tail: 4,
+  tail: 3,
   lines: [
-    { id: "n1", say: "وكان التامبونات *تولّي فلوس*؟" },
+    { id: "n1", say: "زعما التامبونات تنجّم *تولّي فلوس*؟" },
     { id: "n2", say: "مع *الماغازة* في Pointili:" },
-    { id: "n3", say: "الحريف يلمّ تامبونات *كل مرّة يشري*،" },
+    { id: "n3", say: "الحريف يلمّ تامبونات *كل مرّة يشري فيها*،" },
     { id: "n4", say: "ويبدّلهم *بحاجات من الماغازة* متاعك." },
     { id: "n5", say: "عصير *بعشرة* تامبونات، سندويتش *بخمسة وعشرين*.." },
     { id: "n6", say: "انت تحط الحاجات، وانت *تحط السوم*." },
-    { id: "n7", say: "هو يختار، *ويخلّص بالتامبونات*." },
+    { id: "n7", say: "وهو يختار، *ويخلّص بالتامبونات*." },
     { id: "n8", say: "يورّيك الكود في الكاسة، *وتسلّمهالو*." },
     { id: "n9", say: "وكل ما يلمّ أكثر.. *يرجع أكثر*." },
-    { id: "n10", say: "جرّب Pointili بلاش، واكتب «ماغازة» في الكومونتار.", sub: false },
+    { id: "n10", say: "جرّب Pointili، واكتب «ماغازة» في الكومونتار.", sub: false },
   ],
   css: `
 #stage{background:radial-gradient(100% 70% at 50% 15%,#3a1c7a,#170b38 70%)}
@@ -69,19 +69,21 @@ ${[[160, 520], [470, 470], [780, 540], [300, 760], [640, 780]].map(([x, y], i) =
     /* n1 — what if tampons were money? stamps turn into coins */
     const c0 = K.pass({ name: "Snack Amine", color: "#6c47ff", goal: 8, stamps: 5, gift: "سندويتش بلاش", icon: "star", x: 110, y: 820, w: 860, size: 36, z: 22 });
     K.pop(c0, 0.05, { from: 0.8 });
-    K.$$(".coin").forEach((c, i) => { tl.fromTo(c, { autoAlpha: 0, y: 500, scale: 0.4 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(2)" }, 0.6 + i * 0.12); K.sfx("coin", 0.7 + i * 0.12, -4); });
-    K.$$(".coin").forEach((c, i) => tl.to(c, { rotationY: 360, duration: 0.8, repeat: 2, ease: "none" }, 0.9 + i * 0.1));
+    // the tampons turn into coins as «تولّي فلوس» is said
+    const money = at("n1", "تولّي", -0.1);
+    K.$$(".coin").forEach((c, i) => { tl.fromTo(c, { autoAlpha: 0, y: 500, scale: 0.4 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(2)" }, money + i * 0.1); K.sfx("coin", money + 0.1 + i * 0.1, -4); });
+    K.$$(".coin").forEach((c, i) => tl.to(c, { rotationY: 360, duration: 0.8, repeat: 2, ease: "none" }, money + 0.3 + i * 0.1));
     tl.to([c0, ...K.$$(".coin")], { autoAlpha: 0, duration: 0.3 }, at("n2", -0.15));
 
     /* n2 — the store */
     K.pop($("neon"), at("n2", 0), { from: 0.6 });
-    tl.fromTo($("neon"), { autoAlpha: 0.4 }, { autoAlpha: 1, duration: 0.06, repeat: 5, yoyo: true, immediateRender: false }, at("n2", 0.1));
-    K.sfx("buzz", at("n2", 0.1), -8);
-    K.sfx("ding", at("n2", 0.5));
+    tl.fromTo($("neon"), { autoAlpha: 0.4 }, { autoAlpha: 1, duration: 0.06, repeat: 5, yoyo: true, immediateRender: false }, at("n2", 0.09));
+    K.sfx("buzz", at("n2", 0.09), -8);
+    K.sfx("ding", at("n2", 0.48));
 
     /* n3 — he collects tampons every time he buys: the balance climbs */
     K.pop($("bal"), at("n3", -0.05), { from: 0.7 });
-    K.counter(K.$("#bn"), 0, 32, at("n3", 0.1), Math.max(1.2, end("n3") - at("n3") - 0.1), { sound: "coin", every: 0.25 });
+    K.counter(K.$("#bn"), 0, 32, at("n3", 0.13), Math.max(1.2, end("n3") - at("n3") - 0.1), { sound: "coin", every: 0.25 });
     tl.to([$("neon"), $("bal")], { autoAlpha: 0, y: -80, duration: 0.3 }, at("n4", -0.15));
 
     /* n4–n5 — he trades them for things in your store */
@@ -92,10 +94,10 @@ ${[[160, 520], [470, 470], [780, 540], [300, 760], [640, 780]].map(([x, y], i) =
     gsap.set(ph, { autoAlpha: 0 });
     tl.fromTo(ph, { autoAlpha: 0, y: 200 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("n4", -0.05));
     K.sfx("swish", at("n4", 0));
-    K.$$(".it", shop).forEach((it, i) => K.pop(it, at("n4", 0.4 + i * 0.12), { from: 0.7, dur: 0.3 }));
-    tl.to(K.$("#it0"), { scale: 1.08, boxShadow: "0 0 0 5px #6c47ff", duration: 0.25, yoyo: true, repeat: 1 }, at("n5", 0.1));
-    tl.to(K.$("#it1"), { scale: 1.08, boxShadow: "0 0 0 5px #6c47ff", duration: 0.25, yoyo: true, repeat: 1 }, at("n5", 1.3));
-    K.sfx("tick", at("n5", 0.1)); K.sfx("tick", at("n5", 1.3));
+    K.$$(".it", shop).forEach((it, i) => K.pop(it, at("n4", 0.3 + i * 0.09), { from: 0.7, dur: 0.3 }));
+    tl.to(K.$("#it0"), { scale: 1.08, boxShadow: "0 0 0 5px #6c47ff", duration: 0.25, yoyo: true, repeat: 1 }, at("n5", 0.07));
+    tl.to(K.$("#it1"), { scale: 1.08, boxShadow: "0 0 0 5px #6c47ff", duration: 0.25, yoyo: true, repeat: 1 }, at("n5", "سندويتش"));
+    K.sfx("tick", at("n5", 0.07)); K.sfx("tick", at("n5", "سندويتش"));
     tl.to(ph, { autoAlpha: 0, x: -200, duration: 0.3 }, at("n6", -0.2));
 
     /* n6 — you put the things, you set the price */
@@ -104,20 +106,21 @@ ${[[160, 520], [470, 470], [780, 540], [300, 760], [640, 780]].map(([x, y], i) =
       <div class="add"><b style="font-size:26px">زيد حاجة</b><div id="an"></div><div id="ac"></div><div class="btn">سجّل</div></div></div>`);
     gsap.set(ph2, { autoAlpha: 0 });
     tl.fromTo(ph2, { autoAlpha: 0, x: 200 }, { autoAlpha: 1, x: 0, duration: 0.4 }, at("n6", -0.1));
-    const a0 = at("n6", 0.3);
-    K.each((t) => { K.$("#an").textContent = t > a0 ? "🍦 جلاطي".slice(0, Math.max(0, Math.floor((t - a0) / 0.08))) : ""; K.$("#ac").textContent = t > a0 + 0.9 ? "12 تامبون" : ""; });
+    // the thing typed as «تحط الحاجات» is said, its price as «تحط السوم» is
+    const a0 = at("n6", "تحط", 0.05), p0 = at("n6", "السوم", -0.05);
+    K.each((t) => { K.$("#an").textContent = t > a0 ? "🍦 جلاطي".slice(0, Math.max(0, Math.floor((t - a0) / 0.08))) : ""; K.$("#ac").textContent = t > p0 ? "12 تامبون" : ""; });
     for (let k = 0; k < 6; k++) K.sfx("key", a0 + k * 0.08, -5);
-    K.sfx("key", a0 + 0.9, -4);
+    K.sfx("key", p0, -4);
     tl.to(ph2, { autoAlpha: 0, x: -200, duration: 0.3 }, at("n7", -0.2));
 
     /* n7 — he chooses, pays in tampons */
     tl.to(ph, { autoAlpha: 1, x: 0, duration: 0.4 }, at("n7", -0.1));
-    tl.to(K.$("#it0"), { boxShadow: "0 0 0 6px #6c47ff", duration: 0.2 }, at("n7", 0.3));
-    K.tap(400, P.y + 15 + 1082 * 0.55, at("n7", 0.3));
-    K.pop(K.$("#buy"), at("n7", 0.5), { from: 0.8 });
-    K.tap(540, P.y + 15 + 1082 * 0.86, at("n7", 1.1));
-    K.counter(K.$("#pb"), 32, 22, at("n7", 1.2), 0.6);
-    K.sfx("coin", at("n7", 1.2));
+    tl.to(K.$("#it0"), { boxShadow: "0 0 0 6px #6c47ff", duration: 0.2 }, at("n7", 0.28));
+    K.tap(400, P.y + 15 + 1082 * 0.55, at("n7", 0.28));
+    K.pop(K.$("#buy"), at("n7", 0.44), { from: 0.8 });
+    K.tap(540, P.y + 15 + 1082 * 0.86, at("n7", 0.9));
+    K.counter(K.$("#pb"), 32, 22, at("n7", 0.95), 0.6);
+    K.sfx("coin", at("n7", 0.95));
     tl.to(ph, { autoAlpha: 0, duration: 0.3 }, at("n8", -0.2));
 
     /* n8 — the code at the till, you hand it over */
@@ -125,17 +128,17 @@ ${[[160, 520], [470, 470], [780, 540], [300, 760], [640, 780]].map(([x, y], i) =
     ph3.put(`<div class="order"><b>الطلبية متاعك حاضرة!</b><small>ورّي الكود في الكاسة</small><div class="code">482 913</div><div class="give" id="give">✓ سلّمو: عصير 🧃</div></div>`);
     gsap.set(ph3, { autoAlpha: 0 });
     tl.fromTo(ph3, { autoAlpha: 0, y: 160 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("n8", -0.1));
-    K.sfx("ding", at("n8", 0.2));
-    K.pop(K.$("#give"), at("n8", 1.3), { from: 0.7 });
-    K.sfx("win", at("n8", 1.35), -4);
+    K.sfx("ding", at("n8", 0.14));
+    K.pop(K.$("#give"), at("n8", "وتسلّمهالو", -0.05), { from: 0.7 });
+    K.sfx("win", at("n8", "وتسلّمهالو"), -4);
     tl.to(ph3, { autoAlpha: 0, duration: 0.3 }, at("n9", -0.2));
 
     /* n9 — the more he collects, the more he comes back */
     tl.set($("bal"), { y: 0 }, at("n9", -0.2));
     K.pop($("bal"), at("n9", -0.1), { from: 0.7 });
-    K.each((t) => { if (t >= at("n9", -0.1)) K.$("#bn").textContent = String(Math.round(22 + 30 * Math.min(1, Math.max(0, (t - at("n9", 0.2)) / 1.5)))); });
-    K.$$(".coin").forEach((c, i) => { tl.fromTo(c, { autoAlpha: 0, y: -400 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: "bounce.out" }, at("n9", 0.2 + i * 0.12)); K.sfx("coin", at("n9", 0.4 + i * 0.12), -4); });
+    K.each((t) => { if (t >= at("n9", -0.1)) K.$("#bn").textContent = String(Math.round(22 + 30 * Math.min(1, Math.max(0, (t - at("n9", 0.13)) / 1.5)))); });
+    K.$$(".coin").forEach((c, i) => { tl.fromTo(c, { autoAlpha: 0, y: -400 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: "bounce.out" }, at("n9", 0.13 + i * 0.09)); K.sfx("coin", at("n9", 0.27 + i * 0.09), -4); });
 
-    K.endcard(at("n10", -0.1), { tag: "اكتب *«ماغازة»* في الكومونتار", offer: "جرّب Pointili بلاش", keyword: "ماغازة", typeAt: 1.2 });
+    K.endcard(at("n10", -0.1), { tag: "اكتب *«ماغازة»* في الكومونتار", offer: "جرّب Pointili", keyword: "ماغازة" });
   },
 };

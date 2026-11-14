@@ -33,17 +33,17 @@ export default {
   voice: "ash",
   music: { style: "comic" },
   lead: 0.25,
-  tail: 4.2,
+  tail: 3,
   lines: [
     { id: "d1", say: "تحب الحريف يستنّى الكادو *كيما يستنّى الماتش*؟" },
     { id: "d2", say: "خدّم *الروليت*." },
     { id: "d3", say: "يكمّل الكارط.. ياخو *دورة*." },
     { id: "d4", say: "يدوّرها في تليفونو، والكادو يطلع *بالحظ*:" },
-    { id: "d5", say: "مشروب بلاش، ريميز.. ولا *الكادو الكبير*!" },
+    { id: "d5", say: "مشروب بلاش، ريميز.. ولا *كادو كبير*!", hold: 0.95 },
     { id: "d6", say: "انت تختار الكادوات، وقدّاش *حظ كل وحدة*." },
-    { id: "d7", say: "يجي للمحل، يورّيك *الكود*، وتعطيه اللي ربحو." },
+    { id: "d7", say: "يجيك للمحل، يورّيك *الكود*، وتعطيه اللي يربحو." },
     { id: "d8", say: "ويرجع باش يدوّر *مرّة أخرى*." },
-    { id: "d9", say: "جرّب Pointili بلاش، واكتب «روليت» في الكومونتار.", sub: false },
+    { id: "d9", say: "جرّب Pointili، واكتب «روليت» في الكومونتار.", sub: false },
   ],
   assets: () => ({ qr: qrSvg("https://www.pointili.online/?g=wheel") }),
   css: `
@@ -105,18 +105,19 @@ export default {
 
     /* d2 — switch it on */
     K.pop($("sw"), at("d2", -0.1), { from: 0.6 });
-    tl.to($("knob"), { x: 54, duration: 0.25, ease: "power2.out" }, at("d2", 0.4));
-    tl.to($("tg"), { backgroundColor: "#12b76a", duration: 0.25 }, at("d2", 0.4));
-    K.sfx("tick", at("d2", 0.45));
-    K.sfx("ding", at("d2", 0.55), -2);
+    tl.to($("knob"), { x: 54, duration: 0.25, ease: "power2.out" }, at("d2", "الروليت", -0.08));
+    tl.to($("tg"), { backgroundColor: "#12b76a", duration: 0.25 }, at("d2", "الروليت", -0.08));
+    K.sfx("tick", at("d2", "الروليت", -0.05));
+    K.sfx("ding", at("d2", "الروليت", 0.02), -2);
     K.out($("sw"), at("d3", -0.2));
     tl.to($("wrap"), { autoAlpha: 0, scale: 0.8, duration: 0.3 }, at("d3", -0.2));
 
     /* d3 — the card fills: a spin */
     const card = K.pass({ name: "Snack El Bahja", color: "#e5484d", goal: 8, stamps: 6, gift: "دورة في الروليت", icon: "star", x: 110, y: 600, w: 860, size: 38, z: 22 });
     K.pop(card, at("d3", -0.1), { from: 0.7 });
-    card.stamp(7, at("d3", 0.4)); card.stamp(8, at("d3", 0.9));
-    K.burst(540, 780, at("d3", 1.2), { n: 16, r: 260 });
+    // the last two tampons while «يكمّل الكارط» is said; what it earns as «دورة» is
+    card.stamp(7, at("d3", 0.15)); card.stamp(8, at("d3", "الكارط", 0.12));
+    K.burst(540, 780, at("d3", "دورة"), { n: 16, r: 260 });
     K.out(card, at("d4", -0.2));
 
     /* d4 — spun on his phone */
@@ -128,9 +129,10 @@ export default {
     gsap.set(ph, { autoAlpha: 0 });
     tl.fromTo(ph, { autoAlpha: 0, y: 200 }, { autoAlpha: 1, y: 0, duration: 0.5 }, at("d4", -0.1));
     K.sfx("swish", at("d4", -0.1));
-    K.tap(540, 260 + 15 + 1170 * 0.8, at("d4", 1.1));
-    // the spin: six turns and a sixth of one, to the big gift; a tick at every edge it passes
-    const spinAt = at("d4", 1.3), DUR = Math.max(3.2, end("d5") - spinAt - 0.3), R = 360 * 6 + 60;
+    K.tap(540, 260 + 15 + 1170 * 0.8, at("d4", "يدوّرها", 0.2));
+    // the spin: six turns and a sixth of one, to the big gift; a tick at every edge it passes. He
+    // spins as «يدوّرها» is said, and it stops on the big gift as «كادو كبير» is.
+    const spinAt = at("d4", "يدوّرها", 0.38), DUR = Math.max(3.2, at("d5", "كبير", 0.12) - spinAt), R = 360 * 6 + 60;
     tl.fromTo(K.$("#W2"), { rotation: 0, transformOrigin: "50% 50%" }, { rotation: R, duration: DUR, ease: "power4.out" }, spinAt);
     const ease = gsap.parseEase("power4.out");
     for (let edge = 30; edge < R; edge += 60) {
@@ -149,27 +151,31 @@ export default {
 
     /* d6 — the owner chooses the gifts and their chances */
     K.pop($("panel"), at("d6", -0.1), { from: 0.85 });
-    K.$$("#panel .bar i").forEach((b, i) => tl.fromTo(b, { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power3.out" }, at("d6", 0.3 + i * 0.15)));
-    K.sfx("swish", at("d6", 0.3));
-    tl.fromTo(K.$("#panel .total"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, at("d6", 1.2));
-    K.sfx("ding", at("d6", 1.25), -3);
+    // the gifts are there as «تختار الكادوات» is said; each one's chance grows as «وقدّاش حظ» is
+    const luck = at("d6", "وقدّاش", -0.05);
+    K.$$("#panel .bar i").forEach((b, i) => tl.fromTo(b, { scaleX: 0 }, { scaleX: 1, duration: 0.45, ease: "power3.out" }, luck + i * 0.12));
+    K.sfx("swish", luck);
+    tl.fromTo(K.$("#panel .total"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, at("d6", "وحدة", 0.05));
+    K.sfx("ding", at("d6", "وحدة", 0.09), -3);
     K.out($("panel"), at("d7", -0.2));
 
     /* d7 — the code at the counter */
     K.pop($("gift"), at("d7", -0.1), { from: 0.85 });
-    tl.fromTo($("scan"), { y: 0 }, { y: 400, duration: 0.6, yoyo: true, repeat: 1, ease: "sine.inOut" }, at("d7", 0.6));
-    K.sfx("scan", at("d7", 1.8));
-    K.pop($("ok"), at("d7", 1.85), { from: 0.4 });
-    K.sfx("ding", at("d7", 1.9));
+    // the code scanned while «يورّيك الكود» is said; handed over as «وتعطيه» is
+    const shown = at("d7", "يورّيك"), given = at("d7", "وتعطيه");
+    tl.fromTo($("scan"), { y: 0 }, { y: 400, duration: Math.max(0.3, (given - shown) / 2), yoyo: true, repeat: 1, ease: "sine.inOut" }, shown);
+    K.sfx("scan", given - 0.04);
+    K.pop($("ok"), given, { from: 0.4 });
+    K.sfx("ding", given + 0.03);
     K.out($("gift"), at("d8", -0.2));
 
     /* d8 — and he comes back to spin again */
     const again = K.pass({ name: "Snack El Bahja", color: "#e5484d", goal: 8, stamps: 0, gift: "دورة في الروليت", icon: "star", x: 110, y: 600, w: 860, size: 38, z: 22 });
     K.pop(again, at("d8", -0.1), { from: 0.7 });
-    again.stamp(1, at("d8", 0.5));
-    tl.fromTo($("wrap"), { autoAlpha: 0, scale: 0.5, y: -320 }, { autoAlpha: 0.5, scale: 0.55, y: -330, duration: 0.4 }, at("d8", 0.3));
-    tl.to($("W"), { rotation: "+=720", duration: Math.max(1, end("d8") - at("d8")), ease: "power2.inOut" }, at("d8", 0.3));
+    again.stamp(1, at("d8", 0.35));
+    tl.fromTo($("wrap"), { autoAlpha: 0, scale: 0.5, y: -320 }, { autoAlpha: 0.5, scale: 0.55, y: -330, duration: 0.4 }, at("d8", 0.21));
+    tl.to($("W"), { rotation: "+=720", duration: Math.max(1, end("d8") - at("d8")), ease: "power2.inOut" }, at("d8", 0.21));
 
-    K.endcard(at("d9", -0.1), { tag: "اكتب *«روليت»* في الكومونتار", offer: "جرّب Pointili بلاش", keyword: "روليت", typeAt: 1.2 });
+    K.endcard(at("d9", -0.1), { tag: "اكتب *«روليت»* في الكومونتار", offer: "جرّب Pointili", keyword: "روليت" });
   },
 };

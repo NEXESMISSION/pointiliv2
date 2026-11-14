@@ -9,18 +9,18 @@ export default {
   voice: "ash",
   music: { style: "tech" },
   lead: 0.25,
-  tail: 4,
+  tail: 3,
   lines: [
-    { id: "j1", say: "عندك حرفاء يلمّو تامبونات.. *ويغيبو شهر*؟" },
-    { id: "j2", say: "*شعّل العدّاد*." },
+    { id: "j1", say: "عندك حرفاء يلمّو تامبونات.. *ويغيبو كل شهر*؟" },
+    { id: "j2", say: "*خدّم العدّاد*." },
     { id: "j3", say: "انت تختار الأيام: *15 يوم* مثلا." },
     { id: "j4", say: "اللي ما خذاش تامبون في 15 يوم،" },
     { id: "j5", say: "الكارط متاعو *ترجع للصفر*." },
-    { id: "j6", say: "وهو يشوف *العدّاد* في الكارط متاعو:" },
+    { id: "j6", say: "هو يشوف *العدّاد* في الكارط متاعو:" },
     { id: "j7", say: "«ترجع للصفر *بعد 3 أيام*»." },
     { id: "j8", say: "يرجعلك *قبل ما يخسرهم*." },
-    { id: "j9", say: "عطلة؟ رمضان؟ *وقّف العدّاد*، وما حد يخسر حتى تامبون." },
-    { id: "j10", say: "جرّب Pointili بلاش، الرابط في البيو.", sub: false },
+    { id: "j9", say: "عطلة؟ رمضان؟ *وقّف العدّاد*، وحدّ ما يخسر حتى تامبون." },
+    { id: "j10", say: "جرّب Pointili، الرابط في البيو.", sub: false },
   ],
   css: `
 #stage{background:radial-gradient(100% 70% at 50% 20%,#1d2a5a,#0b1030 75%)}
@@ -62,22 +62,25 @@ export default {
     const c1 = K.pass({ name: "Pizza Lina", color: "#e5484d", goal: 8, stamps: 5, gift: "بيتزا صغيرة بلاش", icon: "star", x: 110, y: 800, w: 860, size: 36, z: 22 });
     K.pop(c1, 0.1, { from: 0.8 });
     K.pop($("cal"), 0.3, { from: 0.7 });
-    K.counter(K.$("#dd"), 0, 30, 0.5, Math.max(1.2, end("j1") - 0.6), { sound: "tick", every: 0.1 });
-    tl.to(c1, { filter: "grayscale(.8) brightness(.8)", duration: 0.8 }, end("j1", -0.8));
+    // the days run up to a month while «ويغيبو كل شهر» is said; the card greys as he is gone
+    const away = at("j1", "ويغيبو", -0.15);
+    K.counter(K.$("#dd"), 0, 30, away, Math.max(0.8, at("j1", "شهر", 0.3) - away), { sound: "tick", every: 0.1 });
+    tl.to(c1, { filter: "grayscale(.8) brightness(.8)", duration: 0.8 }, away);
     tl.to([$("cal"), c1], { autoAlpha: 0, y: -60, duration: 0.3 }, at("j2", -0.2));
 
     /* j2 — turn the clock on */
     K.pop($("on"), at("j2", 0), { from: 0.6 });
-    K.tap(540, 690, at("j2", 0.55));
-    K.pop($("run"), at("j2", 0.7), { from: 0.5 });
-    K.sfx("ding", at("j2", 0.75));
+    K.tap(540, 690, at("j2", 0.61));
+    K.pop($("run"), at("j2", 0.74), { from: 0.5 });
+    K.sfx("ding", at("j2", 0.79));
     tl.to([$("on"), $("run")], { autoAlpha: 0, duration: 0.25 }, at("j3", -0.15));
 
     /* j3 — you choose the days: 15 */
-    K.$$("#days span").forEach((s, i) => K.pop(s, at("j3", 0.05 + i * 0.12), { from: 0.7, dur: 0.3 }));
-    tl.to($("d15"), { backgroundColor: "#6c47ff", borderColor: "#9b80ff", duration: 0.2 }, at("j3", 0.9));
-    K.sfx("tap", at("j3", 0.9));
-    K.rise($("ex"), at("j3", 1.1), { y: 20 });
+    // the days as «تختار الأيام» is said; fifteen chosen as «15» is
+    K.$$("#days span").forEach((s, i) => K.pop(s, at("j3", "تختار", -0.1 + i * 0.1), { from: 0.7, dur: 0.3 }));
+    tl.to($("d15"), { backgroundColor: "#6c47ff", borderColor: "#9b80ff", duration: 0.2 }, at("j3", "15", -0.05));
+    K.sfx("tap", at("j3", "15", -0.05));
+    K.rise($("ex"), at("j3", "15", 0.2), { y: 20 });
     tl.to([$("days"), $("ex")], { autoAlpha: 0, duration: 0.25 }, at("j4", -0.15));
 
     /* j4–j5 — fifteen days without a tampon: back to zero */
@@ -88,9 +91,10 @@ export default {
     tl.to([$("ring"), $("cd")], { autoAlpha: 0, duration: 0.25 }, at("j5", -0.1));
     const c2 = K.pass({ name: "Pizza Lina", color: "#e5484d", goal: 8, stamps: 5, gift: "بيتزا صغيرة بلاش", icon: "star", x: 110, y: 640, w: 860, size: 38, z: 22 });
     K.pop(c2, at("j5", -0.05), { from: 0.8 });
-    c2.dots.slice(0, 5).reverse().forEach((d, i) => tl.to(d, { y: 260, rotation: 40, autoAlpha: 0, duration: 0.45, ease: "power2.in" }, at("j5", 0.5 + i * 0.12)));
-    K.sfx("swoosh", at("j5", 0.5));
-    K.sfx("thud", at("j5", 1.1));
+    // the tampons fall off as «ترجع للصفر» is said
+    c2.dots.slice(0, 5).reverse().forEach((d, i) => tl.to(d, { y: 260, rotation: 40, autoAlpha: 0, duration: 0.4, ease: "power2.in" }, at("j5", "ترجع", -0.1 + i * 0.07)));
+    K.sfx("swoosh", at("j5", "ترجع", -0.1));
+    K.sfx("thud", at("j5", "للصفر", 0.1));
     K.out(c2, at("j6", -0.15));
 
     /* j6–j7 — he sees the countdown on his card */
@@ -101,22 +105,24 @@ export default {
     tl.fromTo(ph, { autoAlpha: 0, y: 160 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("j6", -0.05));
     K.sfx("swish", at("j6", 0));
     K.pop(K.$("#cdt"), at("j7", -0.1), { from: 0.5 });
-    tl.fromTo(K.$("#cdt"), { scale: 1 }, { scale: 1.08, duration: 0.35, yoyo: true, repeat: 5, ease: "sine.inOut" }, at("j7", 0.4));
-    for (let k = 0; k < 6; k++) K.sfx("tick", at("j7", 0.3 + k * 0.35), -6);
+    tl.fromTo(K.$("#cdt"), { scale: 1 }, { scale: 1.08, duration: 0.35, yoyo: true, repeat: 5, ease: "sine.inOut" }, at("j7", 0.24));
+    for (let k = 0; k < 6; k++) K.sfx("tick", at("j7", 0.18 + k * 0.25), -6);
 
     /* j8 — he comes back before he loses them */
-    c3.stamp(7, at("j8", 0.3));
-    tl.to(K.$("#cdt"), { backgroundColor: "#e5f8ee", color: "#12b76a", duration: 0.25 }, at("j8", 0.6));
-    K.each((t) => { K.$("#cdt").textContent = t >= at("j8", 0.6) ? "✓ ترجع للصفر بعد 15 يوم" : "⏳ ترجع للصفر بعد 3 أيام"; });
-    K.burst(540, 620, at("j8", 0.5), { n: 14, r: 220 });
+    c3.stamp(7, at("j8", 0.24));
+    tl.to(K.$("#cdt"), { backgroundColor: "#e5f8ee", color: "#12b76a", duration: 0.25 }, at("j8", 0.48));
+    K.each((t) => { K.$("#cdt").textContent = t >= at("j8", 0.48) ? "✓ ترجع للصفر بعد 15 يوم" : "⏳ ترجع للصفر بعد 3 أيام"; });
+    K.burst(540, 620, at("j8", 0.4), { n: 14, r: 220 });
     tl.to([ph, K.$("#cdw")], { autoAlpha: 0, duration: 0.3 }, at("j9", -0.2));
 
     /* j9 — holidays, Ramadan: pause it */
-    K.pop($("pause"), at("j9", 0), { from: 0.7 });
-    K.sfx("tap", at("j9", 0.6));
-    K.pop($("paused"), at("j9", 1.6), { from: 0.5 });
-    K.sfx("ding", at("j9", 1.65), -3);
+    // «عطلة؟ رمضان؟»: each on its word; the switch as «وقّف العدّاد» is said
+    K.pop($("pause"), at("j9", -0.05), { from: 0.7 });
+    K.$$("#pause .icons span").forEach((s, i) => { tl.fromTo(s, { scale: 0 }, { scale: 1, duration: 0.35, ease: "back.out(2.5)" }, [at("j9", 0), at("j9", "رمضان", -0.05)][i]); K.sfx("pop", [at("j9", 0.03), at("j9", "رمضان")][i], -4); });
+    K.sfx("tap", at("j9", "وقّف", 0.2));
+    K.pop($("paused"), at("j9", "العدّاد", 0.2), { from: 0.5 });
+    K.sfx("ding", at("j9", "العدّاد", 0.25), -3);
 
-    K.endcard(at("j10", -0.1), { tag: "العدّاد *انت تشعلو وانت توقفو*", offer: "جرّب Pointili بلاش" });
+    K.endcard(at("j10", -0.1), { tag: "العدّاد *انت تشعلو وانت توقفو*", offer: "جرّب Pointili" });
   },
 };

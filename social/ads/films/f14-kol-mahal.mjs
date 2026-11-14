@@ -11,9 +11,9 @@ const GPT = join(import.meta.dirname, "..", "assets", "gpt");
 const pic = (f) => (existsSync(join(GPT, f)) ? `../../assets/gpt/${f}` : null);
 const TRADES = [
   { id: "m2", file: "f14-barber.jpg", tag: "✂️ الحجّام", name: "Barber 216", color: "#1f3a8a", logo: "✂️", gift: "حجامة بلاش", goal: 10, bg: "#dfe6fb" },
-  { id: "m3", file: "f14-pastry.jpg", tag: "🧁 الحلواني", name: "Pâtisserie Nour", color: "#e8578a", logo: "🧁", gift: "قطعة قاتو بلاش", goal: 8, bg: "#fde3ec" },
-  { id: "m4", file: "f14-perfume.jpg", tag: "🌸 محل العطورات", name: "Dar Rayhana", color: "#9c2b4f", logo: "🌸", gift: "عطر صغير بلاش", goal: 6, bg: "#f7e3ea" },
-  { id: "m5", file: "f14-beauty.jpg", tag: "💅 صالون التجميل", name: "Salon Lina", color: "#b0439e", logo: "💅", gift: "مانيكير بلاش", goal: 8, bg: "#f6e3f3" },
+  { id: "m3", file: "f14-pastry.jpg", tag: "🧁 الحلواني", name: "Pâtisserie Nour", color: "#e8578a", logo: "🧁", gift: "قاتو بلاش", goal: 8, bg: "#fde3ec" },
+  { id: "m4", file: "f14-perfume.jpg", tag: "🌸 البارفيمري", name: "Dar Rayhana", color: "#9c2b4f", logo: "🌸", gift: "بارفان صغير", goal: 6, bg: "#f7e3ea" },
+  { id: "m5", file: "f14-beauty.jpg", tag: "💅 الحجّامة", name: "Salon Lina", color: "#b0439e", logo: "💅", gift: "مانيكير بلاش", goal: 8, bg: "#f6e3f3" },
   { id: "m6", file: "f14-veggies.jpg", tag: "🍊 الخضّار", name: "خضرة الحومة", color: "#2f9e44", logo: "🍊", gift: "كيلو غلّة بلاش", goal: 10, bg: "#e3f6e8" },
   { id: "m7", file: "f14-fish.jpg", tag: "🐟 الحوّات", name: "حوت المرسى", color: "#1c7ed6", logo: "🐟", gift: "تنظيف الحوت بلاش", goal: 8, bg: "#e1effc" },
 ];
@@ -23,18 +23,18 @@ export default {
   voice: "ash",
   music: { style: "warm" },
   lead: 0.25,
-  tail: 4,
+  tail: 3,
   lines: [
-    { id: "m1", say: "تحسب Pointili *كان للقهاوي*؟" },
+    { id: "m1", say: "زعما Pointili *كان للقهاوي*؟" },
     { id: "m2", say: "الحجّام: *الحجامة العاشرة* بلاش." },
-    { id: "m3", say: "الحلواني: *قطعة قاتو* كادو." },
-    { id: "m4", say: "محل العطورات: *عطر صغير* هدية." },
-    { id: "m5", say: "صالون التجميل: *مانيكير* بلاش." },
+    { id: "m3", say: "الحلواني: عندك *قاتو* كادو." },
+    { id: "m4", say: "البارفيمري: عندك كادو *بارفان صغير*." },
+    { id: "m5", say: "الحجّامة: *مانيكير* بلاش." },
     { id: "m6", say: "الخضّار: *كيلو غلّة* بلاش." },
     { id: "m7", say: "الحوّات: *تنظيف الحوت* بلاش." },
     { id: "m8", say: "كل محل عندو حرفاء.. *وكل حريف يحب يتحسب*." },
     { id: "m9", say: "اختار الكادو متاعك، *والباقي علينا*." },
-    { id: "m10", say: "جرّب Pointili بلاش، واكتب نوع محلّك في الكومونتار.", sub: false },
+    { id: "m10", say: "جرّب Pointili، واكتب نوع محلّك في الكومونتار.", sub: false },
   ],
   assets: () => Object.fromEntries([["cafe", pic("f4-w14.jpg")], ...TRADES.map((t) => [t.id, pic(t.file)])].filter(([, v]) => v)),
   css: `
@@ -68,8 +68,8 @@ ${TRADES.map((t) => `<div class="trd" id="tag-${t.id}">${t.tag}</div>`).join("")
     K.subs("pill");
     const TR = [
       { id: "m2", name: "Barber 216", color: "#1f3a8a", logo: "✂️", gift: "حجامة بلاش", goal: 10 },
-      { id: "m3", name: "Pâtisserie Nour", color: "#e8578a", logo: "🧁", gift: "قطعة قاتو بلاش", goal: 8 },
-      { id: "m4", name: "Dar Rayhana", color: "#9c2b4f", logo: "🌸", gift: "عطر صغير بلاش", goal: 6 },
+      { id: "m3", name: "Pâtisserie Nour", color: "#e8578a", logo: "🧁", gift: "قاتو بلاش", goal: 8 },
+      { id: "m4", name: "Dar Rayhana", color: "#9c2b4f", logo: "🌸", gift: "بارفان صغير", goal: 6 },
       { id: "m5", name: "Salon Lina", color: "#b0439e", logo: "💅", gift: "مانيكير بلاش", goal: 8 },
       { id: "m6", name: "خضرة الحومة", color: "#2f9e44", logo: "🍊", gift: "كيلو غلّة بلاش", goal: 10 },
       { id: "m7", name: "حوت المرسى", color: "#1c7ed6", logo: "🐟", gift: "تنظيف الحوت بلاش", goal: 8 },
@@ -94,24 +94,25 @@ ${TRADES.map((t) => `<div class="trd" id="tag-${t.id}">${t.tag}</div>`).join("")
       tl.set(tag, { autoAlpha: 0 }, next);
       const c = K.pass({ name: t.name, color: t.color, goal: t.goal, stamps: t.goal - 2, gift: t.gift, icon: "gift", logo: t.logo, mark: t.logo, x: 130, y: 1000, w: 820, size: 32, z: 30 });
       tl.fromTo(c, { autoAlpha: 0, y: 200 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: "back.out(1.4)" }, at(t.id, 0.25));
-      c.stamp(t.goal - 1, at(t.id, 0.8), { sound: "stamp" });
+      // the tampon lands as the trade's gift is named
+      c.stamp(t.goal - 1, at(t.id, { m2: "الحجامة", m3: "قاتو", m4: "بارفان", m5: "مانيكير", m6: "كيلو", m7: "تنظيف" }[t.id], -0.05), { sound: "stamp" });
       tl.set(c, { autoAlpha: 0 }, next);
     });
 
     /* m8 — every shop has customers: all of them at once */
     K.scene($("grid"), at("m8", -0.05), at("m9", -0.05), { inn: "zoom", dur: 0.35 });
-    K.$$("#grid .cell").forEach((c, i) => K.pop(c, at("m8", 0.05 + i * 0.12), { from: 0.8, dur: 0.3 }));
-    K.sfx("sparkle", at("m8", 0.3));
+    K.$$("#grid .cell").forEach((c, i) => K.pop(c, at("m8", 0.03 + i * 0.09), { from: 0.8, dur: 0.3 }));
+    K.sfx("sparkle", at("m8", 0.2));
 
     /* m9 — choose your gift, the rest is on us */
     const bgGift = K.add(`<div class="sc" style="background:radial-gradient(90% 60% at 50% 20%,#8f74ff,#6c47ff 55%,#4a2ad6)"></div>`);
     K.scene(bgGift, at("m9", -0.1), null, { inn: "fade" });
-    K.pop($("gift"), at("m9", 0.05), { from: 0.85 });
-    const gifts = ["قهوة بلاش", "حجامة بلاش", "قطعة قاتو بلاش", "عطر صغير بلاش"];
-    const g0 = at("m9", 0.3), each = Math.max(0.5, (end("m9") - g0) / gifts.length);
+    K.pop($("gift"), at("m9", 0.04), { from: 0.85 });
+    const gifts = ["قهوة بلاش", "حجامة بلاش", "قاتو بلاش", "بارفان صغير"];
+    const g0 = at("m9", 0.22), each = Math.max(0.5, (end("m9") - g0) / gifts.length);
     K.each((t) => { const k = Math.max(0, Math.min(gifts.length - 1, Math.floor((t - g0) / each))); K.$("#gf").textContent = t < g0 ? "" : gifts[k]; });
     gifts.forEach((_, k) => K.sfx("tick", g0 + k * each, -4));
 
-    K.endcard(at("m10", -0.1), { tag: "اكتب *نوع محلّك* في الكومونتار", offer: "جرّب Pointili بلاش", keyword: "حجّام", ph: "اكتب نوع محلّك…", typeAt: 1.2 });
+    K.endcard(at("m10", -0.1), { tag: "اكتب *نوع محلّك* في الكومونتار", offer: "جرّب Pointili", keyword: "حجّام", ph: "اكتب نوع محلّك…" });
   },
 };

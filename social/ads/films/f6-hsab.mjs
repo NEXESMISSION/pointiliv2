@@ -10,18 +10,18 @@ export default {
   voice: "ash",
   music: { style: "tech" },
   lead: 0.25,
-  tail: 4.2,
+  tail: 3,
   lines: [
     { id: "c1", say: "عندك قهوة يجيوها *200 حريف* في الشهر؟" },
     { id: "c2", say: "كان كل واحد يزيد يرجع *مرّة برك* في الشهر.." },
     { id: "c3", say: "هاذي *200 قهوة* زايدة." },
     { id: "c4", say: "في العام؟ *2400 قهوة*." },
     { id: "c5", say: "من غير إشهار.. ومن غير *ريميز*." },
-    { id: "c6", say: "برك *سبب* يخلّيه يرجع:" },
-    { id: "c7", say: "كارط تامبونات *في تليفونو*." },
+    { id: "c6", say: "*سبب واحد* يخلّيه يرجع:" },
+    { id: "c7", say: "كارط تامبون *في تليفونو*." },
     { id: "c8", say: "كل قهوة، تامبون. والثامنة *بلاش*." },
     { id: "c9", say: "والحساب يكمّل *وحدو*." },
-    { id: "c10", say: "جرّب Pointili بلاش، واكتب «حساب» في الكومونتار.", sub: false },
+    { id: "c10", say: "جرّب Pointili، واكتب «حساب» في الكومونتار.", sub: false },
   ],
   css: `
 #stage{background:#0f0b24}
@@ -64,68 +64,78 @@ export default {
     const dots = K.$$("#dots i");
     dots.forEach((d, i) => tl.fromTo(d, { autoAlpha: 0, scale: 0.2 }, { autoAlpha: 1, scale: 1, duration: 0.25, ease: "back.out(3)" }, 0.1 + (i % 20) * 0.02 + Math.floor(i / 20) * 0.09));
     K.fadeIn($("n200"), 0.3, 0.3);
-    K.counter(K.$("#n200"), 0, 200, 0.3, Math.max(1.2, end("c1") - 0.6), { fmt: (n) => `${Math.round(n)}` });
+    // the count lands on 200 as «200» is said
+    K.counter(K.$("#n200"), 0, 200, 0.3, Math.max(0.8, at("c1", "200", 0.3) - 0.3), { fmt: (n) => `${Math.round(n)}` });
     // keep the label under the number: the counter writes the text, the label sits apart
     const lbl = K.add(`<div class="big" style="top:1220px;font-size:48px;direction:rtl;color:#b9aef5">حريف في الشهر</div>`);
     K.fadeIn(lbl, 0.6, 0.3);
     for (let k = 0; k < 6; k++) K.sfx("tick", 0.3 + k * 0.2, -6);
 
     /* c2 — each comes back once more */
-    K.pop($("plus1"), at("c2", 0.2), { from: 0.5 });
-    K.sfx("pop", at("c2", 0.25));
-    tl.to(dots, { backgroundColor: "#12b76a", duration: 0.2, stagger: { each: 0.006, from: "random" } }, at("c2", 0.6));
-    tl.to(dots, { scale: 1.25, duration: 0.15, yoyo: true, repeat: 1, stagger: { each: 0.006, from: "random" } }, at("c2", 0.6));
-    K.sfx("sparkle", at("c2", 0.7));
+    // «+1» as «يزيد» is said; every one of them turns as «يرجع مرّة» is
+    K.pop($("plus1"), at("c2", "يزيد", -0.08), { from: 0.5 });
+    K.sfx("pop", at("c2", "يزيد", -0.02));
+    tl.to(dots, { backgroundColor: "#12b76a", duration: 0.2, stagger: { each: 0.006, from: "random" } }, at("c2", "يرجع"));
+    tl.to(dots, { scale: 1.25, duration: 0.15, yoyo: true, repeat: 1, stagger: { each: 0.006, from: "random" } }, at("c2", "يرجع"));
+    K.sfx("sparkle", at("c2", "يرجع", 0.08));
 
     /* c3 — 200 more coffees */
     tl.to([$("dots"), $("n200"), lbl, $("plus1")], { autoAlpha: 0, y: -60, duration: 0.3, ease: "power2.in" }, at("c3", -0.15));
     K.pop($("cups200"), at("c3", 0), { from: 0.4 });
-    K.rise($("lbl200"), at("c3", 0.25), { y: 30 });
-    K.sfx("impact", at("c3", 0.05));
+    K.rise($("lbl200"), at("c3", 0.11), { y: 30 });
+    K.sfx("impact", at("c3", 0.02));
 
     /* c4 — × 12: 2400 a year */
     tl.to([$("cups200"), $("lbl200")], { autoAlpha: 0, scale: 0.8, duration: 0.25 }, at("c4", -0.1));
     K.pop($("x12"), at("c4", 0), { from: 0.5 });
     K.sfx("whoosh", at("c4", 0));
-    K.fadeIn($("n2400"), at("c4", 0.15), 0.2);
-    K.counter(K.$("#n2400"), 200, 2400, at("c4", 0.2), Math.max(1, end("c4") - at("c4") - 0.1), { sound: "tick", every: 0.07 });
-    K.rise($("lbl2400"), at("c4", 0.4), { y: 30 });
-    K.$$("#cups i").forEach((c, i) => K.pop(c, at("c4", 0.3 + i * 0.04), { from: 0.3, dur: 0.25 }));
-    K.sfx("win", end("c4", -0.1), -4);
+    // the year's count runs while «2400» is being said, and lands as it ends («قهوة»)
+    const y0 = at("c4", "العام", 0.1), y1 = at("c4", "قهوة", 0.05);
+    K.fadeIn($("n2400"), y0 - 0.04, 0.2);
+    K.counter(K.$("#n2400"), 200, 2400, y0, Math.max(0.8, y1 - y0), { sound: "tick", every: 0.07 });
+    K.rise($("lbl2400"), y0 + 0.2, { y: 30 });
+    K.$$("#cups i").forEach((c, i) => K.pop(c, y0 + 0.1 + i * 0.04, { from: 0.3, dur: 0.25 }));
+    K.sfx("win", y1, -4);
 
     /* c5 — without ads, without discounts */
     tl.to([$("x12"), $("n2400"), $("lbl2400"), $("cups")], { autoAlpha: 0, y: -40, duration: 0.25, ease: "power2.in" }, at("c5", -0.15));
-    K.pop($("no1"), at("c5", 0.05), { from: 0.6 });
-    tl.to($("s1"), { "--k": 1, duration: 0.25 }, at("c5", 0.5));
-    K.sfx("scratch", at("c5", 0.52));
-    K.pop($("no2"), at("c5", 0.8), { from: 0.6 });
-    tl.to($("s2"), { "--k": 1, duration: 0.25 }, end("c5", -0.3));
-    K.sfx("scratch", end("c5", -0.28));
+    K.pop($("no1"), at("c5", 0.02), { from: 0.6 });
+    tl.to($("s1"), { "--k": 1, duration: 0.25 }, at("c5", "إشهار", 0.3));
+    K.sfx("scratch", at("c5", "إشهار", 0.32));
+    K.pop($("no2"), at("c5", "ومن", -0.05), { from: 0.6 });
+    tl.to($("s2"), { "--k": 1, duration: 0.25 }, at("c5", "ريميز", 0.25));
+    K.sfx("scratch", at("c5", "ريميز", 0.27));
     gsap.set([$("s1"), $("s2")], { "--k": 0 });
 
-    /* c6–c7 — a reason: the card in his phone */
+    /* c6–c7 — one reason («سبب واحد»), then what it is: the card in his phone */
     tl.to([$("no1"), $("no2")], { autoAlpha: 0, x: 200, duration: 0.3, ease: "power2.in" }, at("c6", -0.1));
+    const one = K.add(`<div class="big" style="top:800px;font-size:150px;direction:rtl;color:#ffd23f">سبب واحد</div>`);
+    K.pop(one, at("c6", 0), { from: 0.5 });
+    K.sfx("impact", at("c6", 0.03), -4);
+    K.out(one, at("c7", -0.2), { dur: 0.2 });
     const ph = K.phone({ src: S + "v2-cafe-card-7.png", x: 290, y: 330, w: 500, z: 12 });
     gsap.set(ph, { autoAlpha: 0 });
-    tl.fromTo(ph, { autoAlpha: 0, y: 900, rotation: 8 }, { autoAlpha: 1, y: 0, rotation: 0, duration: 0.6, ease: "back.out(1.3)" }, at("c6", 0.2));
-    K.sfx("whoosh", at("c6", 0.2));
+    tl.fromTo(ph, { autoAlpha: 0, y: 900, rotation: 8 }, { autoAlpha: 1, y: 0, rotation: 0, duration: 0.55, ease: "back.out(1.3)" }, at("c7", -0.15));
+    K.sfx("whoosh", at("c7", -0.15));
     tl.to(ph, { autoAlpha: 0, scale: 0.85, duration: 0.3 }, at("c8", -0.2));
 
     /* c8 — every coffee a tampon, the eighth is free */
     const card = K.pass({ name: "قهوة الحومة", color: "#6c47ff", goal: 8, stamps: 4, gift: "قهوة بلاش", icon: "coffee", x: 110, y: 600, w: 860, size: 38, z: 22 });
     K.pop(card, at("c8", -0.1), { from: 0.7 });
-    card.stamp(5, at("c8", 0.3)); card.stamp(6, at("c8", 0.6)); card.stamp(7, at("c8", 0.9)); card.stamp(8, at("c8", 1.4));
-    K.burst(540, 760, at("c8", 1.6), { n: 18, r: 300 });
+    // a coffee, a tampon — and the eighth as «والثامنة» is said, free on «بلاش»
+    card.stamp(5, at("c8", "قهوة", 0.1)); card.stamp(6, at("c8", "تامبون")); card.stamp(7, at("c8", "تامبون", 0.4)); card.stamp(8, at("c8", "والثامنة", 0.15));
+    K.burst(540, 760, at("c8", "بلاش"), { n: 18, r: 300 });
+    K.sfx("win", at("c8", "بلاش"), -5);
 
     /* c9 — and the math keeps going by itself */
     K.out(card, at("c9", -0.15), { dur: 0.25 });
     const n = K.add(`<div class="big" style="top:1100px;font-size:120px;color:#ffd23f">2400</div>`);
-    K.fadeIn(n, at("c9", 0.05), 0.2);
-    K.counter(n, 2400, 2880, at("c9", 0.1), Math.max(1, end("c9") - at("c9")), { sound: "tick", every: 0.1 });
+    K.fadeIn(n, at("c9", 0.04), 0.2);
+    K.counter(n, 2400, 2880, at("c9", 0.08), Math.max(1, end("c9") - at("c9")), { sound: "tick", every: 0.1 });
     tl.to(K.$("#upl"), { strokeDashoffset: 0, duration: Math.max(0.8, end("c9") - at("c9")), ease: "power2.out" }, at("c9", 0));
     K.fadeIn($("up"), at("c9", 0), 0.1);
     gsap.set($("up"), { autoAlpha: 0 });
 
-    K.endcard(at("c10", -0.1), { tag: "اكتب *«حساب»* في الكومونتار", offer: "جرّب Pointili بلاش", keyword: "حساب", typeAt: 1.2 });
+    K.endcard(at("c10", -0.1), { tag: "اكتب *«حساب»* في الكومونتار", offer: "جرّب Pointili", keyword: "حساب" });
   },
 };

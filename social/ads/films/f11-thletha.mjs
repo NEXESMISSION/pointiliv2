@@ -18,18 +18,18 @@ export default {
   voice: "coral",
   music: { style: "lofi" },
   lead: 0.25,
-  tail: 4,
+  tail: 3,
   lines: [
     { id: "i1", say: "في كل محل، فما *ثلاثة أنواع* حرفاء." },
-    { id: "i2", say: "الأوّل: *ديما يجي*. هذا كنزك." },
-    { id: "i3", say: "الثاني: *بدا يبعد*.. جمعة، جمعتين." },
+    { id: "i2", say: "الأوّل: تلقاه *ديما يجي*. هذايا كنز." },
+    { id: "i3", say: "الثاني: *بدا يبعد*.. جمعة ولا جمعتين غايب." },
     { id: "i4", say: "الثالث: *ضاع*. ما عادش جا." },
-    { id: "i5", say: "المشكل؟ *ما تعرفش* شكون شكون." },
-    { id: "i6", say: "Pointili يقسّمهملك *وحدو*: نشطين، يبعدو، ضاعو." },
+    { id: "i5", say: "المشكلة؟ *ما تعرفش* شكون وشكون." },
+    { id: "i6", say: "Pointili يقسّمهملك *وحدو*: نشطين، يبعدو، ولا ضاعو." },
     { id: "i7", say: "اللي يبعدو؟ *كلمة منك* ترجّعهم:" },
     { id: "i8", say: "*تامبون هدية* في الواتساب." },
     { id: "i9", say: "وأوفى الحرفاء؟ *تعرفهم بالاسم*." },
-    { id: "i10", say: "جرّب Pointili بلاش، واكتب «حرفاء» في الكومونتار.", sub: false },
+    { id: "i10", say: "جرّب Pointili، واكتب «حرفاء» في الكومونتار.", sub: false },
   ],
   css: `
 #stage{background:radial-gradient(90% 60% at 50% 30%,#14606b,#0b343b 75%)}
@@ -87,19 +87,20 @@ ${card("t3", 90, "#8f8ba3", "ضاع", "ما جاش من 60 يوم", `<div class=
 
     /* i2–i4 — the regular, the drifting one, the lost one */
     flip(cards[0], at("i2", 0));
-    K.burst(840, 500, at("i2", 0.6), { n: 12, r: 160, colors: ["#ffd23f", "#12b76a", "#fff"] });
+    K.burst(840, 500, at("i2", "كنز", -0.05), { n: 12, r: 160, colors: ["#ffd23f", "#12b76a", "#fff"] });
     flip(cards[1], at("i3", 0));
     flip(cards[2], at("i4", 0));
 
     /* i5 — but you can't tell who is who */
-    cards.forEach((c, i) => tl.to(c, { rotationY: 180, duration: 0.4, ease: "power2.in" }, at("i5", 0.05 + i * 0.06)));
-    tl.to(cards[0], { x: -600, duration: 0.35, ease: "power2.inOut", yoyo: true, repeat: 1 }, at("i5", 0.5));
-    tl.to(cards[2], { x: 600, duration: 0.35, ease: "power2.inOut", yoyo: true, repeat: 1 }, at("i5", 0.5));
-    K.sfx("whoosh", at("i5", 0.5));
-    K.pop($("qmk"), at("i5", 0.8), { from: 0.4 });
-    K.sfx("boing", at("i5", 0.85), -4);
+    cards.forEach((c, i) => tl.to(c, { rotationY: 180, duration: 0.4, ease: "power2.in" }, at("i5", 0.04 + i * 0.05)));
+    // shuffled as «ما تعرفش» is said; the «؟» on «شكون وشكون»
+    tl.to(cards[0], { x: -600, duration: 0.3, ease: "power2.inOut", yoyo: true, repeat: 1 }, at("i5", "ما", -0.05));
+    tl.to(cards[2], { x: 600, duration: 0.3, ease: "power2.inOut", yoyo: true, repeat: 1 }, at("i5", "ما", -0.05));
+    K.sfx("whoosh", at("i5", "ما", -0.05));
+    K.pop($("qmk"), at("i5", "وشكون", -0.1), { from: 0.4 });
+    K.sfx("boing", at("i5", "وشكون", -0.06), -4);
     tl.to(cards, { y: 1400, duration: 0.4, ease: "power2.in", stagger: 0.05 }, at("i6", -0.3));
-    tl.set(cards, { autoAlpha: 0 }, at("i6", 0.25));
+    tl.set(cards, { autoAlpha: 0 }, at("i6", 0.16));
     tl.to($("qmk"), { autoAlpha: 0, scale: 0.6, duration: 0.25 }, at("i6", -0.3));
 
     /* i6 — Pointili sorts them by itself */
@@ -111,11 +112,13 @@ ${card("t3", 90, "#8f8ba3", "ضاع", "ما جاش من 60 يوم", `<div class=
       <div class="row"><i>ه</i><div><b>هشام</b><small>ما جاش من 12 يوم</small></div></div></div>`);
     gsap.set(ph, { autoAlpha: 0 });
     tl.fromTo(ph, { autoAlpha: 0, y: 160 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("i6", -0.1));
-    K.counter(K.$("#s1"), 0, 63, at("i6", 0.5), 1.2);
-    K.counter(K.$("#s2"), 0, 7, at("i6", 0.9), 0.9);
-    K.counter(K.$("#s3"), 0, 2, at("i6", 1.3), 0.6);
-    K.sfx("tick", at("i6", 0.5), -6); K.sfx("tick", at("i6", 0.9), -6); K.sfx("tick", at("i6", 1.3), -6);
-    tl.to(ph, { autoAlpha: 0, x: 200, duration: 0.3, ease: "power2.in" }, at("i7", 0.4));
+    // each group counts up as it is named: «نشطين، يبعدو، ولا ضاعو»
+    const g1 = at("i6", "نشطين", -0.15), g2 = at("i6", "يبعدو", -0.1), g3 = at("i6", "ضاعو", -0.1);
+    K.counter(K.$("#s1"), 0, 63, g1, 0.6);
+    K.counter(K.$("#s2"), 0, 7, g2, 0.4);
+    K.counter(K.$("#s3"), 0, 2, g3, 0.3);
+    K.sfx("tick", g1, -6); K.sfx("tick", g2, -6); K.sfx("tick", g3, -6);
+    tl.to(ph, { autoAlpha: 0, x: 200, duration: 0.3, ease: "power2.in" }, at("i7", "كلمة", -0.3));
 
     /* i7–i8 — a word from you: a gift tampon on WhatsApp */
     const ch = K.chat({ name: "سنية", sub: "واتساب", x: 140, y: 420, w: 800, z: 20, msgs: [
@@ -123,15 +126,16 @@ ${card("t3", 90, "#8f8ba3", "ضاع", "ما جاش من 60 يوم", `<div class=
       { me: true, text: "🎁 تامبون جديد من صالون نور! حلّ الرابط هذا وخوذو في الكارط متاعك:", link: "www.pointili.online/s/n3Wq8e", time: "17:05" },
     ] });
     gsap.set(ch, { autoAlpha: 0 });
-    tl.fromTo(ch, { autoAlpha: 0, y: 120 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("i7", 0.6));
-    ch.msgs.forEach((m, i) => { const t = i ? at("i8", 0.2) : at("i7", 1.0); K.pop(m, t, { from: 0.6 }); K.sfx("msg", t + 0.05); });
+    // «كلمة منك»: the word, then the gift tampon as it is named
+    tl.fromTo(ch, { autoAlpha: 0, y: 120 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("i7", "كلمة", -0.15));
+    ch.msgs.forEach((m, i) => { const t = i ? at("i8", 0.05) : at("i7", "منك", -0.1); K.pop(m, t, { from: 0.6 }); K.sfx("msg", t + 0.05); });
     tl.to(ch, { autoAlpha: 0, y: -80, duration: 0.3 }, at("i9", -0.2));
 
     /* i9 — your best customers, by name */
     K.pop($("champ"), at("i9", -0.1), { from: 0.85 });
-    K.$$("#champ .r").forEach((r, i) => K.rise(r, at("i9", 0.3 + i * 0.2), { y: 30 }));
-    K.sfx("chime", at("i9", 0.4));
+    K.$$("#champ .r").forEach((r, i) => K.rise(r, at("i9", "تعرفهم", -0.2 + i * 0.17), { y: 30 }));
+    K.sfx("chime", at("i9", "تعرفهم"));
 
-    K.endcard(at("i10", -0.1), { tag: "اكتب *«حرفاء»* في الكومونتار", offer: "جرّب Pointili بلاش", keyword: "حرفاء", typeAt: 1.2 });
+    K.endcard(at("i10", -0.1), { tag: "اكتب *«حرفاء»* في الكومونتار", offer: "جرّب Pointili", keyword: "حرفاء" });
   },
 };

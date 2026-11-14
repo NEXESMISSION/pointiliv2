@@ -9,18 +9,18 @@ export default {
   voice: "coral",
   music: { style: "warm" },
   lead: 0.25,
-  tail: 4,
+  tail: 3,
   lines: [
     { id: "e1", say: "تبيع في *الأنستغرام* ولا الفيسبوك؟" },
     { id: "e2", say: "الحريفة تشري مرّة.. *وتغبر*." },
     { id: "e3", say: "مع Pointili، بعد كل كوموند،" },
     { id: "e4", say: "تعمل *رابط فيه تامبون*، وتبعثو في الواتساب." },
-    { id: "e5", say: "تحلّو.. والتامبون يطيح *في الكارط متاعها*." },
+    { id: "e5", say: "هي تحلّو.. والتامبون يطيح *في الكارط متاعها*." },
     { id: "e6", say: "كل رابط يخدم *مرّة وحدة*، وما يوفاش." },
     { id: "e7", say: "وانت تعرف *شكون خذاه*." },
     { id: "e8", say: "وكل ما تحلّ الكارط، تشوف قدّاش *مازالها للكادو*." },
     { id: "e9", say: "ترجعلك انت.. *موش لغيرك*." },
-    { id: "e10", say: "جرّب Pointili بلاش، الرابط في البيو.", sub: false },
+    { id: "e10", say: "جرّب Pointili، الرابط في البيو.", sub: false },
   ],
   css: `
 #stage{background:linear-gradient(170deg,#fde7f0,#efe6ff 55%,#e6ecff)}
@@ -91,8 +91,8 @@ ${[[220, 520], [780, 640], [480, 420]].map(([x, y], i) => `<span class="heart" i
       <span class="m them" id="m1">نحب نكوموندي العطر هذا 😍</span><span class="m me" id="m2">تمّ ✅ يوصلك غدوة إن شاء الله</span>
       <span class="ghost" id="gh">👻 آخر مرّة: من 3 شهور</span></div>`);
     swap(p1, p2, at("e2", -0.1));
-    K.pop($("m1"), at("e2", 0.15), { from: 0.6 }); K.sfx("msg", at("e2", 0.2));
-    K.pop($("m2"), at("e2", 0.6), { from: 0.6 }); K.sfx("msg", at("e2", 0.65));
+    K.pop($("m1"), at("e2", 0.12), { from: 0.6 }); K.sfx("msg", at("e2", 0.16));
+    K.pop($("m2"), at("e2", "تشري", 0.1), { from: 0.6 }); K.sfx("msg", at("e2", "تشري", 0.14));
     K.pop($("gh"), end("e2", -0.4), { from: 0.6 });
     tl.to(K.$(".dm", p2), { filter: "grayscale(1)", duration: 0.4 }, end("e2", -0.3));
     K.sfx("boing", end("e2", -0.35), -6);
@@ -103,9 +103,9 @@ ${[[220, 520], [780, 640], [480, 420]].map(([x, y], i) => `<span class="heart" i
       <div class="btn" id="mk">اعمل رابط جديد</div>
       <div class="lnk" id="lnk"><code>www.pointili.online/s/R7kQ2m</code><div class="acts"><span class="wa" id="wa">واتساب</span><span>كوبي</span></div></div></div>`);
     swap(p2, p3, at("e3", -0.1));
-    K.tap(540, P.y + 15 + 1082 * 0.33, at("e4", 0.15));
-    K.pop($("lnk"), at("e4", 0.35), { from: 0.8 });
-    K.sfx("pop", at("e4", 0.4));
+    K.tap(540, P.y + 15 + 1082 * 0.33, at("e4", 0.11));
+    K.pop($("lnk"), at("e4", 0.25), { from: 0.8 });
+    K.sfx("pop", at("e4", 0.29));
     K.tap(400, P.y + 15 + 1082 * 0.52, end("e4", -0.6));
     const ch = K.chat({ name: "سارة", sub: "واتساب", x: 140, y: 420, w: 800, z: 20, msgs: [{ me: true, text: "🎁 تامبون جديد من Dar Rayhana! حلّ الرابط هذا وخوذو في الكارط متاعك:", link: "www.pointili.online/s/R7kQ2m", time: "18:05" }] });
     gsap.set(ch, { autoAlpha: 0 });
@@ -113,17 +113,19 @@ ${[[220, 520], [780, 640], [480, 420]].map(([x, y], i) => `<span class="heart" i
     K.pop(ch.msgs[0], end("e4", -0.1), { from: 0.6 }); K.sfx("msg", end("e4", -0.05));
 
     /* e5 — she opens it: the tampon lands on her card */
-    K.tap(560, 420 + 330, at("e5", 0.1));
-    tl.to([ch, p3], { autoAlpha: 0, duration: 0.3 }, at("e5", 0.35));
+    K.tap(560, 420 + 330, at("e5", 0.11));
+    tl.to([ch, p3], { autoAlpha: 0, duration: 0.3 }, at("e5", 0.38));
     const card = K.pass({ name: "Dar Rayhana", color: "#c2185b", goal: 6, stamps: 2, gift: "عطر صغير", icon: "heart", x: 110, y: 640, w: 860, size: 38, z: 22 });
-    K.pop(card, at("e5", 0.4), { from: 0.7 });
-    card.stamp(3, at("e5", 0.9));
-    K.burst(540, 820, at("e5", 1.1), { n: 14, r: 240 });
-    K.out(card, at("e6", -0.15));
+    K.pop(card, at("e5", 0.43), { from: 0.7 });
+    // the tampon as «يطيح» is said
+    card.stamp(3, at("e5", "يطيح"));
+    K.burst(540, 820, at("e5", "يطيح", 0.13), { n: 14, r: 240 });
+    K.out(card, at("e6", "رابط", -0.3));
 
     /* e6 — works once, never expires */
-    K.pop($("b1"), at("e6", 0.05), { from: 0.5 }); K.sfx("pop", at("e6", 0.1));
-    K.pop($("b2"), at("e6", 0.8), { from: 0.5 }); K.sfx("pop", at("e6", 0.85));
+    // «يخدم مرّة وحدة» and «ما يوفاش», each as it is said
+    K.pop($("b1"), at("e6", "رابط", -0.1), { from: 0.5 }); K.sfx("pop", at("e6", "رابط", -0.06));
+    K.pop($("b2"), at("e6", "وما", -0.08), { from: 0.5 }); K.sfx("pop", at("e6", "وما", -0.04));
     K.out($("b1"), at("e7", -0.15)); K.out($("b2"), at("e7", -0.15));
 
     /* e7 — and you know who took it */
@@ -131,24 +133,24 @@ ${[[220, 520], [780, 640], [480, 420]].map(([x, y], i) => `<span class="heart" i
     p4.put(`<div class="app"><h3>الروابط اللي بعثتهم</h3><p>1 يستنّى · 3 تخذاو</p><div class="lst">
       ${[["س", "سارة", "تخذا", "ok"], ["م", "مريم", "يستنّى", "wt"], ["ي", "ياسمين", "تخذا", "ok"], ["ن", "نور", "تخذا", "ok"]].map(([a, n, s, c]) => `<div class="r"><i>${a}</i><b>${n}</b><span class="${c}">${s}</span></div>`).join("")}</div></div>`);
     swap(null, p4, at("e7", -0.1));
-    K.$$(".r", p4).forEach((r, i) => K.pop(r, at("e7", 0.3 + i * 0.15), { from: 0.8, dur: 0.3 }));
-    K.sfx("tick", at("e7", 0.35), -4);
+    K.$$(".r", p4).forEach((r, i) => K.pop(r, at("e7", 0.31 + i * 0.14), { from: 0.8, dur: 0.3 }));
+    K.sfx("tick", at("e7", 0.36), -4);
 
     /* e8 — every time she opens the card: how far the gift is */
     tl.to(p4, { autoAlpha: 0, duration: 0.3 }, at("e8", -0.2));
     const c2 = K.pass({ name: "Dar Rayhana", color: "#c2185b", goal: 6, stamps: 4, gift: "عطر صغير", icon: "heart", x: 110, y: 640, w: 860, size: 38, z: 22 });
     K.pop(c2, at("e8", -0.05), { from: 0.7 });
-    tl.fromTo(K.$(".line", c2), { scale: 1 }, { scale: 1.06, duration: 0.3, yoyo: true, repeat: 3, transformOrigin: "50% 50%" }, at("e8", 1.0));
+    tl.fromTo(K.$(".line", c2), { scale: 1 }, { scale: 1.06, duration: 0.3, yoyo: true, repeat: 3, transformOrigin: "50% 50%" }, at("e8", "قدّاش"));
     K.out(c2, at("e9", -0.15));
 
     /* e9 — she comes back to you */
     const p5 = K.phone({ ...P, z: 16 });
     p5.put(`<div class="dm"><div class="top"><i>س</i><b>سارة</b></div><span class="m them" id="m3">نحب نعاود نكوموندي 💜</span><span class="m me" id="m4">بكل فرحة! 🌸</span></div>`);
     swap(null, p5, at("e9", -0.1));
-    K.pop($("m3"), at("e9", 0.2), { from: 0.6 }); K.sfx("msg", at("e9", 0.25));
-    K.pop($("m4"), at("e9", 0.7), { from: 0.6 }); K.sfx("msg", at("e9", 0.75));
-    K.$$(".heart").forEach((h, i) => { K.pop(h, at("e9", 0.4 + i * 0.15), { from: 0.3 }); tl.to(h, { y: -120, autoAlpha: 0, duration: 0.9 }, at("e9", 0.9 + i * 0.15)); });
+    K.pop($("m3"), at("e9", 0.13), { from: 0.6 }); K.sfx("msg", at("e9", 0.16));
+    K.pop($("m4"), at("e9", 0.47), { from: 0.6 }); K.sfx("msg", at("e9", 0.52));
+    K.$$(".heart").forEach((h, i) => { K.pop(h, at("e9", 0.26 + i * 0.11), { from: 0.3 }); tl.to(h, { y: -120, autoAlpha: 0, duration: 0.9 }, at("e9", 0.67 + i * 0.11)); });
 
-    K.endcard(at("e10", -0.1), { tag: "تبيع أونلاين؟ *الرابط في البيو*", offer: "جرّب Pointili بلاش" });
+    K.endcard(at("e10", -0.1), { tag: "تبيع أونلاين؟ *الرابط في البيو*", offer: "جرّب Pointili" });
   },
 };

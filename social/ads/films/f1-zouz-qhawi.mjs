@@ -19,31 +19,31 @@ export default {
   title: "زوز قهاوي",
   music: (T) => ({ style: "warm", breaks: [[T.b5.start - 0.05, T.b6.start + 0.2], [T.b18.start - 0.1, T.b21.start - 0.05]] }),
   lead: 0.3,
-  tail: 4.4,
+  tail: 3,
   lines: [
-    { id: "b1", say: "زوز قهاوي في *نفس الشارع*،", after: 0.1 },
-    { id: "b2", say: "نفس القهوة، *ونفس السوم*.", after: 0.25 },
-    { id: "b3", say: "وحدة *فارغة*..", after: 0.1 },
-    { id: "b4", say: "والأخرى، الحرفاء *يرجعولها* كل يوم.", after: 0.25 },
-    { id: "b5", say: "*علاش؟*", after: 0.35 },
-    { id: "b6", say: "تخيّل حريف شرب قهوة *في الزوز*، في نفس النهار.", after: 0.25 },
-    { id: "b7", say: "القهوة الأولى قالتلو «يعيشك».. *وخلاتو للزهر*.", after: 0.3 },
-    { id: "b8", say: "*أما الثانية؟*", after: 0.15 },
-    { id: "b9", say: "سكاني *الكود* اللي على الكونتوار،", after: 0.1 },
-    { id: "b10", say: "وطاحلو أوّل تامبون، *في تليفونو*.", after: 0.1 },
-    { id: "b11", say: "من غير ما يحمّل *حتى أبليكاسيون*.", after: 0.25 },
-    { id: "b12", say: "كل مرّة يرجع، *تامبون جديد*..", after: 0.1 },
-    { id: "b13", say: "*والقهوة البلاش* تقرب.", after: 0.3 },
-    { id: "b14", say: "وإذا غاب *جمعتين*؟", after: 0.15 },
-    { id: "b15", say: "مولى القهوة يشوفو في *«يبعدو»*،", after: 0.1 },
-    { id: "b16", say: "ويبعثلو *تامبون هدية* في الواتساب.", after: 0.2 },
-    { id: "b17", say: "*ويرجع.*", after: 0.4 },
-    { id: "b18", say: "القهوة هاذي موش *أشطر*.. ولا *أرخص*.", sub: false, after: 0.15 },
-    { id: "b19", say: "هي برك ما خلاتش الزيارة الجاية *للزهر*.", sub: false, after: 0.2 },
-    { id: "b20", say: "*عندها سيستام.*", sub: false, after: 0.25 },
-    { id: "b21", say: "والسيستام هذا اسمو *Pointili*.", sub: false, after: 0.25 },
-    { id: "b22", say: "تحب نفس الحاجة لقهوتك؟", sub: false, after: 0.15 },
-    { id: "b23", say: "جرّب Pointili بلاش، واكتب «Pointili» في الكومونتار.", sub: false },
+    { id: "b1", say: "زوز قهاوي في *نفس الشارع*،" },
+    { id: "b2", say: "نفس القهوة، *ونفس السوم*." },
+    { id: "b3", say: "وحدة *فارغة*.." },
+    { id: "b4", say: "والأخرى، الحرفاء *يرجعولها* كل يوم." },
+    { id: "b5", say: "*علاش؟*", hold: 0.4 },
+    { id: "b6", say: "تخيّل حريف شرب قهوة *في الزوز*، في نفس النهار." },
+    { id: "b7", say: "القهوة اللولى قالتلو «يعيشك».. *وخلاتو للزهر*." },
+    { id: "b8", say: "*أما الثانية؟*" },
+    { id: "b9", say: "سكاني *الكود* اللي على الكونتوار،" },
+    { id: "b10", say: "طاحلو أوّل تامبون، *في تليفونو*." },
+    { id: "b11", say: "من غير ما يتيليشارجي *حتى أبليكاسيون*." },
+    { id: "b12", say: "كل مرّة يرجع، *تامبون جديد*.." },
+    { id: "b13", say: "*والقهوة البلاش* تقرب." },
+    { id: "b14", say: "إذا غاب *جمعتين*؟", hold: 0.5 },
+    { id: "b15", say: "مولى القهوة يشوفو *يبعد*،", hold: 0.4 },
+    { id: "b16", say: "ويبعثلو *تامبون هدية* في الواتساب." },
+    { id: "b17", say: "*ويرجع.*", hold: 0.85 },
+    { id: "b18", say: "القهوة هاذي ماهيش *خير*.. ولا *أرخص*.", sub: false },
+    { id: "b19", say: "هي برك ما خلاتش الزيارة الجاية *للزهر*.", sub: false, hold: 0.35 },
+    { id: "b20", say: "*عندها سيستام.*", sub: false, hold: 0.5 },
+    { id: "b21", say: "والسيستام هذا اسمو *Pointili*.", sub: false },
+    { id: "b22", say: "تحب نفس الحاجة لقهوتك؟", sub: false },
+    { id: "b23", say: "جرّب Pointili، واكتب «Pointili» في الكومونتار.", sub: false },
   ],
   css: `
 #stage{background:#f6f2fb}
@@ -100,7 +100,7 @@ ${ART_CSS}
   <div class="art" style="left:400px;top:470px;width:280px;height:602px">${guy}</div>
   <div class="art" id="cl" style="left:200px;top:760px;width:200px;height:170px">${cup()}</div>
   <div class="art" id="cr" style="left:680px;top:760px;width:200px;height:170px">${cup()}</div>
-  <div class="lbl" id="ll" style="left:180px;top:950px;width:240px">الأولى</div>
+  <div class="lbl" id="ll" style="left:180px;top:950px;width:240px">اللولى</div>
   <div class="lbl" id="lr" style="left:660px;top:950px;width:240px">الثانية</div>
 </div>
 <div class="sc" id="C">
@@ -118,7 +118,8 @@ ${ART_CSS}
   <div class="days" id="days">14 يوم</div>
 </div>
 <div class="sc" id="J">
-  <div class="big" id="j1" style="top:560px;font-size:150px">موش <s id="s1">أشطر</s></div>
+  <div class="big" id="j0" style="top:430px;font-size:84px;color:#8f8ba3">القهوة هاذي</div>
+  <div class="big" id="j1" style="top:560px;font-size:150px">ماهيش <s id="s1">خير</s></div>
   <div class="big" id="j2" style="top:760px;font-size:150px">ولا <s id="s2">أرخص</s></div>
   <div class="big" id="j3" style="top:1000px;font-size:96px">ولا <s id="s3">بالزهر</s></div>
   <div class="big" id="j4" style="top:520px;font-size:200px;color:var(--brand)">سيستام</div>
@@ -137,24 +138,26 @@ ${ART_CSS}
     const ask = K.add(`<div class="ask">علاش يرجعو لوحدة برك؟</div>`);
     K.pop(ask, 0.35, { from: 0.7 });
     K.sfx("pop", 0.4);
-    K.pop($("ca"), at("b2", 0), { from: 0.4 });
-    K.pop($("cb"), at("b2", 0.15), { from: 0.4 });
-    K.pop($("pa"), at("b2", 0.55), { from: 0.5 });
-    K.pop($("pb"), at("b2", 0.7), { from: 0.5 });
-    ["pop", "pop", "tick", "tick"].forEach((s, i) => K.sfx(s, at("b2", [0, 0.15, 0.55, 0.7][i] + 0.05), -3));
+    // the same coffee (the two cups), the same price (as «السوم» is said)
+    const cups = at("b2", 0), price = at("b2", "السوم", -0.08);
+    K.pop($("ca"), cups, { from: 0.4 });
+    K.pop($("cb"), cups + 0.12, { from: 0.4 });
+    K.pop($("pa"), price, { from: 0.5 });
+    K.pop($("pb"), price + 0.12, { from: 0.5 });
+    [["pop", cups], ["pop", cups + 0.12], ["tick", price], ["tick", price + 0.12]].forEach(([s, t]) => K.sfx(s, t + 0.05, -3));
     // one goes dark and empty
     const empty = K.pill("فارغة", { x: 190, y: 330, cls: "ink", z: 41 });
     tl.to(K.$("#fa .win"), { background: "linear-gradient(160deg,#e9e6f2,#d6d2e4)", duration: 0.4 }, at("b3", 0));
     tl.to(K.$$("#fa .win i"), { autoAlpha: 0, duration: 0.3 }, at("b3", 0));
     tl.to($("fa"), { filter: "grayscale(1) brightness(.96)", duration: 0.5 }, at("b3", 0));
-    K.pop(empty, at("b3", 0.1), { from: 0.6 });
-    K.sfx("thud", at("b3", 0.15));
+    K.pop(empty, at("b3", "فارغة", -0.06), { from: 0.6 });
+    K.sfx("thud", at("b3", "فارغة"));
     // the other one: people walk in
     const back = K.pill("يرجعولها", { x: 640, y: 330, cls: "mint", z: 41 });
-    K.pop(back, at("b4", 0.1), { from: 0.6 });
-    K.sfx("ding", at("b4", 0.15));
+    K.pop(back, at("b4", "يرجعولها", -0.06), { from: 0.6 });
+    K.sfx("ding", at("b4", "يرجعولها"));
     ["g1", "g2", "g3"].forEach((g, i) => {
-      const t0 = at("b4", 0.2 + i * 0.35), t1 = t0 + 1.4;
+      const t0 = at("b4", 0.15 + i * 0.26), t1 = t0 + 1.4;
       tl.to($(g), { x: -(290 + i * 90), duration: t1 - t0, ease: "none" }, t0);
       tl.to($(g), { keyframes: Array.from({ length: 6 }, (_, k) => ({ y: k % 2 ? -10 : 0, duration: (t1 - t0) / 6 })), ease: "none" }, t0);
       tl.to($(g), { autoAlpha: 0, scale: 0.8, duration: 0.25 }, t1 - 0.1);
@@ -163,29 +166,33 @@ ${ART_CSS}
     [ask, empty, back].forEach((e) => K.out(e, at("b5", -0.1), { dur: 0.2 }));
     tl.to([$("fa"), $("fb"), $("ca"), $("cb"), $("pa"), $("pb")], { autoAlpha: 0.12, duration: 0.25 }, at("b5", -0.1));
     K.pop($("why"), at("b5", 0), { from: 0.3, dur: 0.45 });
-    K.sfx("boing", at("b5", 0.05));
+    K.sfx("boing", at("b5", 0.04));
 
     /* B — one customer, both cafés, the same day */
     K.scene($("B"), at("b6", -0.05), at("b7", -0.05), { inn: "fade" });
-    K.pop($("cl"), at("b6", 0.5), { from: 0.4 });
-    K.pop($("cr"), at("b6", 0.8), { from: 0.4 });
-    K.rise($("ll"), at("b6", 0.6), { y: 20 });
-    K.rise($("lr"), at("b6", 0.9), { y: 20 });
-    K.sfx("pop", at("b6", 0.55)); K.sfx("pop", at("b6", 0.85));
+    // a coffee in one hand as «قهوة» is said, the other as «في الزوز»
+    const one = at("b6", "قهوة", -0.05), two = at("b6", "الزوز", -0.1);
+    K.pop($("cl"), one, { from: 0.4 });
+    K.pop($("cr"), two, { from: 0.4 });
+    K.rise($("ll"), one + 0.08, { y: 20 });
+    K.rise($("lr"), two + 0.08, { y: 20 });
+    K.sfx("pop", one + 0.04); K.sfx("pop", two + 0.04);
 
     /* C — the first one: «thanks», and luck */
     K.scene($("C"), at("b7", -0.05), at("b8", -0.05), { inn: "fade" });
-    K.pop($("bye"), at("b7", 0.3), { from: 0.5 });
-    K.sfx("pop", at("b7", 0.35));
-    tl.to($("o1"), { rotation: -3, transformOrigin: "50% 100%", duration: 0.35, yoyo: true, repeat: 3, ease: "sine.inOut" }, at("b7", 0.3));
-    K.pop($("dice"), at("b7", 1.4), { from: 0.3 });
-    tl.to($("dice"), { rotation: 720, duration: 1.0, ease: "power3.out" }, at("b7", 1.4));
-    K.sfx("boing", at("b7", 1.45), -4);
+    // «يعيشك» as it is said; the dice as he is left «للزهر»
+    const bye = at("b7", "يعيشك", -0.1), luck = at("b7", "وخلاتو");
+    K.pop($("bye"), bye, { from: 0.5 });
+    K.sfx("pop", bye + 0.04);
+    tl.to($("o1"), { rotation: -3, transformOrigin: "50% 100%", duration: 0.3, yoyo: true, repeat: 3, ease: "sine.inOut" }, bye);
+    K.pop($("dice"), luck, { from: 0.3 });
+    tl.to($("dice"), { rotation: 720, duration: 0.9, ease: "power3.out" }, luck);
+    K.sfx("boing", luck, -4);
 
     /* D — the second one: the code on the counter, the tampon in his phone */
     K.scene($("D"), at("b8", -0.05), at("b12", -0.1), { inn: "fade" });
     K.pop($("o2"), at("b8", 0), { from: 0.85, y: 30 });
-    tl.to($("o2"), { y: -18, duration: 0.2, yoyo: true, repeat: 1, ease: "power2.out" }, at("b8", 0.3));
+    tl.to($("o2"), { y: -18, duration: 0.2, yoyo: true, repeat: 1, ease: "power2.out" }, at("b8", 0.15));
     const qr = K.phone({ src: S + "v2-food-counter.png", x: 560, y: 470, w: 330, z: 12 });
     gsap.set(qr, { autoAlpha: 0, rotation: -4 });
     tl.fromTo(qr, { autoAlpha: 0, y: 120 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("b9", -0.1));
@@ -195,11 +202,11 @@ ${ART_CSS}
     tl.fromTo(his, { autoAlpha: 0, x: 320, rotation: 10 }, { autoAlpha: 1, x: 0, rotation: 0, duration: 0.5, ease: "back.out(1.3)" }, at("b10", -0.15));
     tl.to(qr, { x: -380, autoAlpha: 0.0, duration: 0.4 }, at("b10", -0.15));
     K.sfx("scan", at("b10", -0.05));
-    K.sfx("stamp", at("b10", 0.5));
-    K.burst(670, 760, at("b10", 0.5), { n: 14, r: 220 });
+    K.sfx("stamp", at("b10", "تامبون"));
+    K.burst(670, 760, at("b10", "تامبون"), { n: 14, r: 220 });
     const noApp = K.pill("بلا أبليكاسيون", { x: 110, y: 330, cls: "coral", icon: "nodl", z: 41 });
-    K.pop(noApp, at("b11", 0.05), { from: 0.6 });
-    K.sfx("pop", at("b11", 0.1));
+    K.pop(noApp, at("b11", 0.02), { from: 0.6 });
+    K.sfx("pop", at("b11", 0.04));
     K.out(noApp, at("b12", -0.2));
     tl.to(his, { autoAlpha: 0, scale: 0.9, duration: 0.3 }, at("b12", -0.2));
 
@@ -207,18 +214,18 @@ ${ART_CSS}
     const card = K.pass({ name: "قهوة الياسمين", color: "#6c47ff", goal: 8, stamps: 1, gift: "قهوة بلاش", icon: "coffee", x: 110, y: 560, w: 860, size: 38, z: 22 });
     K.pop(card, at("b12", -0.1), { from: 0.7 });
     K.sfx("swish", at("b12", -0.1));
-    card.stamp(2, at("b12", 0.3)); card.stamp(3, at("b12", 0.6)); card.stamp(4, at("b12", 0.9)); card.stamp(5, at("b12", 1.2));
-    card.stamp(6, at("b13", 0.05)); card.stamp(7, at("b13", 0.45));
+    card.stamp(2, at("b12", 0.17)); card.stamp(3, at("b12", 0.45)); card.stamp(4, at("b12", 0.7)); card.stamp(5, at("b12", 0.97));
+    card.stamp(6, at("b13", 0.04)); card.stamp(7, at("b13", 0.34));
     tl.fromTo(card.dots[7], { scale: 1 }, { scale: 1.22, duration: 0.28, yoyo: true, repeat: 3, ease: "sine.inOut" }, end("b13", -0.3));
     K.sfx("chime", end("b13", -0.2));
     K.out(card, at("b14", -0.2), { dur: 0.3 });
 
     /* F — two weeks without him */
     K.scene($("F"), at("b14", -0.05), at("b15", -0.05), { inn: "fade" });
-    K.$$("#F .g i").forEach((d, i) => { K.pop(d, at("b14", 0.05 + i * 0.05), { from: 0.4, dur: 0.3 }); });
-    K.sfx("tick", at("b14", 0.1), -6); K.sfx("tick", at("b14", 0.4), -6); K.sfx("tick", at("b14", 0.7), -6);
-    K.pop($("days"), at("b14", 0.8), { from: 0.5 });
-    K.sfx("thud", at("b14", 0.85));
+    K.$$("#F .g i").forEach((d, i) => { K.pop(d, at("b14", 0.02 + i * 0.04), { from: 0.4, dur: 0.3 }); });
+    K.sfx("tick", at("b14", 0.05), -6); K.sfx("tick", at("b14", 0.22), -6); K.sfx("tick", at("b14", 0.53), -6);
+    K.pop($("days"), at("b14", "جمعتين", 0.12), { from: 0.5 });
+    K.sfx("thud", at("b14", "جمعتين", 0.16));
 
     /* G — «يبعدو»: he is there, with his number */
     const ins = K.phone({ x: 320, y: 270, w: 440, z: 12 });
@@ -231,9 +238,10 @@ ${ART_CSS}
     gsap.set(ins, { autoAlpha: 0 });
     tl.fromTo(ins, { autoAlpha: 0, y: 120 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("b15", -0.05));
     K.sfx("swish", at("b15", 0));
-    tl.fromTo(K.$("#segc"), { scale: 1 }, { scale: 1.12, duration: 0.22, yoyo: true, repeat: 1 }, at("b15", 0.8));
-    K.sfx("tap", at("b15", 0.85));
-    tl.fromTo(K.$("#rowc"), { scale: 1 }, { scale: 1.05, duration: 0.22, yoyo: true, repeat: 1 }, at("b15", 1.3));
+    // the «يبعدو» tab as «يبعد» is said, then his own row
+    tl.fromTo(K.$("#segc"), { scale: 1 }, { scale: 1.12, duration: 0.22, yoyo: true, repeat: 1 }, at("b15", "يبعد", -0.05));
+    K.sfx("tap", at("b15", "يبعد"));
+    tl.fromTo(K.$("#rowc"), { scale: 1 }, { scale: 1.05, duration: 0.22, yoyo: true, repeat: 1 }, at("b15", "يبعد", 0.45));
     tl.to(ins, { autoAlpha: 0, x: 200, duration: 0.3, ease: "power2.in" }, at("b16", -0.2));
 
     /* H — a gift tampon, on WhatsApp */
@@ -243,7 +251,7 @@ ${ART_CSS}
     ] });
     gsap.set(ch, { autoAlpha: 0 });
     tl.fromTo(ch, { autoAlpha: 0, y: 100 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("b16", -0.1));
-    ch.msgs.forEach((m, i) => { K.pop(m, at("b16", 0.35 + i * 0.7), { from: 0.6 }); K.sfx("msg", at("b16", 0.4 + i * 0.7)); });
+    ch.msgs.forEach((m, i) => { K.pop(m, at("b16", 0.29 + i * 0.54), { from: 0.6 }); K.sfx("msg", at("b16", 0.33 + i * 0.54)); });
     tl.to(ch, { autoAlpha: 0, y: -60, duration: 0.3 }, at("b17", -0.2));
 
     /* I — and he comes back */
@@ -251,31 +259,39 @@ ${ART_CSS}
       <div class="art" id="gb" style="left:20px;top:690px;width:140px;height:301px">${K.$("#g1").innerHTML}</div></div>`);
     gsap.set(K.$("#fb2"), { left: 330, autoAlpha: 1, x: 0, y: 0, filter: "none" });
     K.scene(ret, at("b17", -0.15), at("b18", -0.05), { inn: "fade" });
-    tl.to(K.$("#gb"), { x: 470, duration: 1.0, ease: "none" }, at("b17", 0));
-    tl.to(K.$("#gb"), { keyframes: Array.from({ length: 6 }, (_, k) => ({ y: k % 2 ? -10 : 0, duration: 1.0 / 6 })), ease: "none" }, at("b17", 0));
-    tl.to(K.$("#gb"), { autoAlpha: 0, scale: 0.85, duration: 0.25 }, at("b17", 0.9));
-    K.burst(620, 640, at("b17", 1.0), { n: 18, r: 260 });
-    K.sfx("win", at("b17", 1.0), -3);
+    // he walks back in (the line is one word: the pause after it belongs to the scene)
+    tl.to(K.$("#gb"), { x: 430, duration: 0.7, ease: "none" }, at("b17", -0.1));
+    tl.to(K.$("#gb"), { keyframes: Array.from({ length: 6 }, (_, k) => ({ y: k % 2 ? -10 : 0, duration: 0.7 / 6 })), ease: "none" }, at("b17", -0.1));
+    // at the door: he is back
+    const again = K.pill("رجع", { x: 640, y: 330, cls: "mint", z: 41 });
+    K.pop(again, at("b17", 0.6), { from: 0.5 });
+    K.out(again, at("b18", -0.2), { dur: 0.2 });
+    K.burst(620, 640, at("b17", 0.6), { n: 18, r: 260 });
+    K.sfx("win", at("b17", 0.6), -3);
 
     /* J — not smarter, not cheaper, not luck: a system */
-    K.scene($("J"), at("b18", -0.05), at("b21", -0.05), { inn: "fade" });
+    // (the end card comes on as its name is said: the «system» stays until it covers it)
+    const endAt = at("b21", "Pointili", -0.55);
+    K.scene($("J"), at("b18", -0.05), endAt + 0.4, { inn: "fade" });
     ["s1", "s2", "s3"].forEach((x) => gsap.set($(x), { "--k": 0 }));
-    K.pop($("j1"), at("b18", 0.1), { from: 0.7 });
-    K.pop($("j2"), at("b18", 0.9), { from: 0.7 });
-    tl.to($("s1"), { "--k": 1, duration: 0.25, ease: "power2.out" }, at("b18", 0.6));
-    tl.to($("s2"), { "--k": 1, duration: 0.25, ease: "power2.out" }, at("b18", 1.4));
-    K.sfx("scratch", at("b18", 0.62)); K.sfx("scratch", at("b18", 1.42));
-    K.pop($("j3"), at("b19", 0.3), { from: 0.7 });
-    tl.to($("s3"), { "--k": 1, duration: 0.25, ease: "power2.out" }, at("b19", 1.4));
-    K.sfx("scratch", at("b19", 1.42));
-    tl.to([$("j1"), $("j2"), $("j3")], { autoAlpha: 0, y: -40, duration: 0.25, stagger: 0.05 }, at("b20", -0.15));
-    K.pop($("j4"), at("b20", 0.05), { from: 0.4, dur: 0.55 });
-    K.sfx("impact", at("b20", 0.1));
+    // each word on as it is said, struck as it ends («القهوة هاذي» first, small above them)
+    K.rise($("j0"), at("b18", 0), { y: 24, dur: 0.3 });
+    K.pop($("j1"), at("b18", "ماهيش", -0.08), { from: 0.7 });
+    K.pop($("j2"), at("b18", "ولا", -0.08), { from: 0.7 });
+    tl.to($("s1"), { "--k": 1, duration: 0.25, ease: "power2.out" }, at("b18", "خير", 0.25));
+    tl.to($("s2"), { "--k": 1, duration: 0.25, ease: "power2.out" }, at("b18", "أرخص", 0.3));
+    K.sfx("scratch", at("b18", "خير", 0.27)); K.sfx("scratch", at("b18", "أرخص", 0.32));
+    K.pop($("j3"), at("b19", "ما", -0.05), { from: 0.7 });
+    tl.to($("s3"), { "--k": 1, duration: 0.25, ease: "power2.out" }, at("b19", "للزهر", 0.15));
+    K.sfx("scratch", at("b19", "للزهر", 0.17));
+    tl.to([$("j0"), $("j1"), $("j2"), $("j3")], { autoAlpha: 0, y: -40, duration: 0.25, stagger: 0.04 }, at("b20", -0.2));
+    K.pop($("j4"), at("b20", "سيستام", -0.12), { from: 0.4, dur: 0.5 });
+    K.sfx("impact", at("b20", "سيستام", -0.08));
     const sys = K.pass({ name: "قهوة الياسمين", color: "#6c47ff", goal: 8, stamps: 7, gift: "قهوة بلاش", icon: "coffee", x: 170, y: 880, w: 740, size: 33, z: 22 });
-    K.rise(sys, at("b20", 0.35), { y: 80 });
-    tl.to(sys, { autoAlpha: 0, duration: 0.2 }, at("b21", -0.05));
+    K.rise(sys, at("b20", "سيستام", 0.15), { y: 80 });
+    tl.to(sys, { autoAlpha: 0, duration: 0.2 }, endAt + 0.3);
 
     /* the end: its name, then what to do */
-    K.endcard(at("b21", 0.15), { tag: "تحب نفس الحاجة لقهوتك؟", offer: "جرّب Pointili بلاش", keyword: "Pointili", typeAt: 2.2 });
+    K.endcard(endAt, { tag: "تحب نفس الحاجة لقهوتك؟", offer: "جرّب Pointili", keyword: "Pointili" });
   },
 };

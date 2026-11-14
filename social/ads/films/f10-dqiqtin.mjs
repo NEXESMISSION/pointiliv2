@@ -13,10 +13,10 @@ export default {
   voice: "ash",
   music: { style: "bounce" },
   lead: 0.25,
-  tail: 4,
+  tail: 3,
   lines: [
     { id: "h1", say: "قدّاش تاخو باش تعمل *كارط فيدليتي* لمحلّك؟" },
-    { id: "h2", say: "*دقيقتين*. من التليفون متاعك." },
+    { id: "h2", say: "*دقيقتين*. من التليفون متاعك، أكهو." },
     { id: "h3", say: "اسم المحل.." },
     { id: "h4", say: "شنوّة يربح الحريف؟ *قهوة بلاش*." },
     { id: "h5", say: "قدّاش من تامبون؟ *ثمانية*." },
@@ -24,7 +24,7 @@ export default {
     { id: "h7", say: "وهاو الكود *حاضر*، حطّو على الكونتوار." },
     { id: "h8", say: "والحرفاء يسكانيو، *والكارط تتعمّر*." },
     { id: "h9", say: "لا كرتون، لا مطبعة، *لا أبليكاسيون*." },
-    { id: "h10", say: "جرّب Pointili بلاش، الرابط في البيو.", sub: false },
+    { id: "h10", say: "جرّب Pointili، الرابط في البيو.", sub: false },
   ],
   assets: () => ({ qr: qrSvg("https://www.pointili.online/?k=yasmine") }),
   css: `
@@ -83,7 +83,7 @@ ${[[90, 760, "+1"], [840, 700, "+1"], [905, 1110, "+1"]].map(([x, y, t], i) => `
     K.pop(hook, 0.3, { from: 0.6 });
     K.sfx("pop", 0.35);
     K.out(hook, at("h2", -0.1));
-    const t0 = at("h2", 0.2), t1 = end("h7", -0.2);
+    const t0 = at("h2", 0.11), t1 = end("h7", -0.2);
     K.counter(K.$("#clock"), 0, 112, t0, t1 - t0, { ease: (x) => x, fmt: (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}` });
     K.each((t) => K.$("#ic").style.setProperty("--a", `${Math.max(0, Math.min(t, t1) - t0) * 360}deg`));
     for (let s = t0; s < t1; s += 0.5) K.sfx("tick", s, -10);
@@ -98,32 +98,33 @@ ${[[90, 760, "+1"], [840, 700, "+1"], [905, 1110, "+1"]].map(([x, y, t], i) => `
     const s4 = step(`<div class="stp">4 / 4</div><h3>شنوّة لون الكارط؟</h3><div class="sw">${COLORS.map((c, i) => `<i style="background:${c}" ${i === 0 ? 'id="c0"' : ""}></i>`).join("")}</div><div class="logo"><i id="lg">➕</i><span>اللوغو متاعك</span></div>`);
     const s5 = step(`<div class="ready"><b>الكارط متاعك حاضرة!</b><span>الحريف يسكاني الكود متاعك، وكل مرّة ياخو تامبون</span></div>`);
     gsap.set(ph, { autoAlpha: 0 });
-    tl.fromTo(ph, { autoAlpha: 0, y: 160 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("h2", 0.3));
+    // the phone as «من التليفون متاعك» is said, its first step already on it
+    tl.fromTo(ph, { autoAlpha: 0, y: 160 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("h2", "التليفون", -0.15));
     const show = (el, t, prev) => { if (prev) tl.to(prev, { autoAlpha: 0, x: -80, duration: 0.25 }, t - 0.1); tl.fromTo(el, { autoAlpha: 0, x: 120 }, { autoAlpha: 1, x: 0, duration: 0.35, ease: "power3.out" }, t); K.sfx("swish", t, -2); };
-    show(s1, at("h3", -0.1));
+    show(s1, at("h2", "التليفون", 0.15));
     const name = "قهوة الياسمين";
-    const ty = at("h3", 0.15);
+    const ty = at("h3", 0.16);
     K.each((t) => { K.$("#nm").textContent = name.slice(0, Math.max(0, Math.min(name.length, Math.floor((t - ty) / 0.07) + 1))); });
     [...name].forEach((_, i) => K.sfx("key", ty + i * 0.07, -4));
     show(s2, at("h4", -0.1), s1);
-    tl.to(K.$("#g0"), { backgroundColor: "#6c47ff", color: "#fff", duration: 0.2 }, at("h4", 1.0));
-    K.sfx("tap", at("h4", 1.0));
+    tl.to(K.$("#g0"), { backgroundColor: "#6c47ff", color: "#fff", duration: 0.2 }, at("h4", "قهوة"));
+    K.sfx("tap", at("h4", "قهوة"));
     show(s3, at("h5", -0.1), s2);
-    tl.to(K.$("#n8"), { backgroundColor: "#6c47ff", color: "#fff", duration: 0.2 }, at("h5", 0.9));
-    K.sfx("tap", at("h5", 0.9));
+    tl.to(K.$("#n8"), { backgroundColor: "#6c47ff", color: "#fff", duration: 0.2 }, at("h5", "ثمانية"));
+    K.sfx("tap", at("h5", "ثمانية"));
     show(s4, at("h6", -0.1), s3);
-    tl.to(K.$("#c0"), { boxShadow: "0 0 0 6px #fff, 0 0 0 11px #6c47ff", duration: 0.2 }, at("h6", 0.4));
-    K.sfx("tap", at("h6", 0.4));
-    const lgAt = at("h6", 1.1);
+    tl.to(K.$("#c0"), { boxShadow: "0 0 0 6px #fff, 0 0 0 11px #6c47ff", duration: 0.2 }, at("h6", 0.27));
+    K.sfx("tap", at("h6", 0.27));
+    const lgAt = at("h6", "واللوغو", 0.1);
     K.each((t) => { K.$("#lg").textContent = t >= lgAt ? "☕" : "➕"; });
-    tl.fromTo(K.$("#lg"), { scale: 1.6 }, { scale: 1, duration: 0.35, ease: "back.out(3)" }, at("h6", 1.1));
-    K.sfx("pop", at("h6", 1.1));
+    tl.fromTo(K.$("#lg"), { scale: 1.6 }, { scale: 1, duration: 0.35, ease: "back.out(3)" }, lgAt);
+    K.sfx("pop", lgAt);
 
     /* h7 — the card is ready; the code goes on the counter: the stopwatch stops */
     show(s5, at("h7", -0.1), s4);
     const prev = K.pass({ name: "قهوة الياسمين", color: "#6c47ff", goal: 8, stamps: 0, gift: "قهوة بلاش", icon: "coffee", x: 22, y: 300, w: 440, size: 19, parent: ph.scr, z: 3 });
     gsap.set(prev, { autoAlpha: 0 });
-    tl.to(prev, { autoAlpha: 1, duration: 0.3 }, at("h7", 0.1));
+    tl.to(prev, { autoAlpha: 1, duration: 0.3 }, at("h7", 0.07));
     tl.to(ph, { x: -260, scale: 0.8, autoAlpha: 0, duration: 0.45, ease: "power2.in" }, end("h7", -0.4));
     K.fadeIn($("ctr"), end("h7", -0.4), 0.3);
     K.pop($("tab"), end("h7", -0.3), { from: 0.7 });
@@ -131,16 +132,19 @@ ${[[90, 760, "+1"], [840, 700, "+1"], [905, 1110, "+1"]].map(([x, y, t], i) => `
     K.sfx("win", t1, -2);
 
     /* h8 — customers scan: the card fills */
-    K.$$(".mini").forEach((m, i) => { K.pop(m, at("h8", 0.1 + i * 0.35), { from: 0.4 }); K.sfx("scan", at("h8", 0.2 + i * 0.35), -4); });
+    K.$$(".mini").forEach((m, i) => { K.pop(m, at("h8", 0.12 + i * 0.33), { from: 0.4 }); K.sfx("scan", at("h8", 0.23 + i * 0.33), -4); });
     const card = K.pass({ name: "قهوة الياسمين", color: "#6c47ff", goal: 8, stamps: 0, gift: "قهوة بلاش", icon: "coffee", x: 190, y: 1070, w: 700, size: 28, z: 35 });
     gsap.set(card, { autoAlpha: 0 });
-    tl.fromTo(card, { autoAlpha: 0, y: 120 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("h8", 0.3));
-    card.stamp(1, at("h8", 0.6)); card.stamp(2, at("h8", 0.9)); card.stamp(3, at("h8", 1.2));
+    tl.fromTo(card, { autoAlpha: 0, y: 120 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("h8", 0.35));
+    // the card fills as «والكارط تتعمّر» is said
+    card.stamp(1, at("h8", "والكارط")); card.stamp(2, at("h8", "والكارط", 0.28)); card.stamp(3, at("h8", "تتعمّر"));
     tl.to([$("tab"), $("ctr"), card, ...K.$$(".mini")], { autoAlpha: 0, duration: 0.3 }, at("h9", -0.2));
 
     /* h9 — no paper, no printer, no app */
-    K.$$("#nos span").forEach((s, i) => { K.pop(s, at("h9", 0.05 + i * 0.4), { from: 0.6 }); K.sfx("scratch", at("h9", 0.1 + i * 0.4), -3); });
+    // «لا كرتون، لا مطبعة، لا أبليكاسيون»: each as it is said
+    const nos = [at("h9", 0), at("h9", "مطبعة", -0.12), at("h9", "أبليكاسيون", -0.12)];
+    K.$$("#nos span").forEach((s, i) => { K.pop(s, nos[i], { from: 0.6 }); K.sfx("scratch", nos[i] + 0.01, -3); });
 
-    K.endcard(at("h10", -0.1), { tag: "تبدا في دقيقتين، *الرابط في البيو*", offer: "جرّب Pointili بلاش" });
+    K.endcard(at("h10", -0.1), { tag: "تبدا في دقيقتين، *الرابط في البيو*", offer: "جرّب Pointili" });
   },
 };

@@ -18,22 +18,23 @@ export default {
   title: "الكارط الكرتون",
   music: { style: "comic" },
   lead: 0.25,
-  tail: 4.6,
+  tail: 3,
   lines: [
-    { id: "k1", say: "عندك *قهوة* ولا *حانوت*؟", after: 0.2 },
-    { id: "k2", say: "أكيد فدّيت من الحريف اللي يقلّك: «خويا، *نسيت الكارط* في الدار»..", after: 0.15 },
-    { id: "k3", say: "ولا: «*زيدني تامبون*، راني جيت البارح!»", after: 0.15 },
-    { id: "k4", say: "ولا الكارط اللي *تبلّت*، *تقطّعت*، *وضاعت*..", after: 0.35 },
-    { id: "k5", say: "الحل ساهل مع *Pointili*.", after: 0.25 },
-    { id: "k6", say: "الحريف يسكاني *الكود* اللي على الكونتوار،", after: 0.1 },
-    { id: "k7", say: "والتامبون يطيح *في تليفونو*.", after: 0.2 },
-    { id: "k8", say: "*لا كرتون* يضيع، *لا تامبون* بالكذب:", after: 0.1 },
-    { id: "k9", say: "انت تشوف *كل تامبون* وقتاش طاح.", after: 0.25 },
-    { id: "k10", say: "هكا *ترتاح انت*، والحريف *يرجع*.", after: 0.3 },
+    { id: "k1", say: "عندك *قهوة* ولا *حانوت*؟" },
+    { id: "k2", say: "أكيد فدّيت من الحريف اللي يقلّك: «خويا، *نسيت الكارط* في الدار».." },
+    { id: "k3", say: "ولا: «*زيدني تامبون*، راني جيت البارح!»" },
+    { id: "k4", say: "ولا الكارط اللي *تبلّت*، *تقطّعت*، ولا *ضاعت*.." },
+    { id: "k5", say: "الحل ساهل مع *Pointili*.", hold: 0.4 },
+    { id: "k6", say: "الحريف يسكاني *الكود* اللي على الكونتوار،" },
+    { id: "k7", say: "والتامبون يطيح *في تليفونو*." },
+    { id: "k8", say: "*لا كارط* تضيع، *ولا تامبون* بالكذب:" },
+    { id: "k9", say: "انت تشوف *كل تامبون* وقتاش طاح." },
+    { id: "k10", say: "هكا *ترتاح انت*، والحريف *يرجع*." },
     { id: "k11", say: "شنوّة تستنّى؟ ابعثلنا على الواتساب، ودخّل Pointili لمحلّك اليوم.", sub: false },
   ],
   css: `
 #stage{background:#2d6b5e}
+.sub-small[data-line="k1"]>span{font-size:80px;-webkit-text-stroke-width:13px}
 ${ART_CSS}
 .sc{position:absolute;inset:0;visibility:hidden;opacity:0}
 .wallc{position:absolute;inset:0;background:radial-gradient(110% 70% at 50% 20%,#3f8f7d,#245a4f 70%)}
@@ -108,66 +109,71 @@ ${ART_CSS}
     // «I forgot my card at home»
     tl.fromTo($("cu1"), { x: -300 }, { x: 0, duration: 0.45, ease: "back.out(1.3)" }, at("k2", -0.1));
     K.sfx("swish", at("k2", -0.1));
-    K.pop($("say1"), at("k2", 1.0), { from: 0.5 });
-    K.sfx("pop", at("k2", 1.05));
-    tl.set($("ow"), { autoAlpha: 0 }, at("k2", 1.6));
-    tl.set($("ows"), { autoAlpha: 1 }, at("k2", 1.6));
-    K.pop($("q1"), at("k2", 1.8), { from: 0.3 });
-    K.sfx("boing", at("k2", 1.85), -4);
+    // his words in the bubble as they are said («خويا، نسيت الكارط في الدار»); the owner's face falls on «في الدار»
+    K.pop($("say1"), at("k2", "خويا", -0.1), { from: 0.5 });
+    K.sfx("pop", at("k2", "خويا", -0.07));
+    tl.set($("ow"), { autoAlpha: 0 }, at("k2", "الكارط", 0.15));
+    tl.set($("ows"), { autoAlpha: 1 }, at("k2", "الكارط", 0.15));
+    K.pop($("q1"), at("k2", "الدار", -0.05), { from: 0.3 });
+    K.sfx("boing", at("k2", "الدار"), -4);
     K.out($("say1"), at("k3", -0.1), { dur: 0.15 });
     // «add me a tampon, I came yesterday»
     tl.fromTo($("cu2"), { x: 300 }, { x: 0, duration: 0.45, ease: "back.out(1.3)" }, at("k3", -0.1));
     K.sfx("swish", at("k3", -0.1));
-    K.pop($("say2"), at("k3", 0.35), { from: 0.5 });
-    K.sfx("pop", at("k3", 0.4));
-    K.pop($("q2"), at("k3", 1.0), { from: 0.3 });
-    K.pop($("pw2"), at("k3", 1.2), { from: 0.3 });
-    K.sfx("boing", at("k3", 1.25), -2);
-    K.pop($("q3"), at("k3", 1.5), { from: 0.3 });
-    K.pop($("pw3"), at("k3", 1.7), { from: 0.3 });
-    K.sfx("pop", at("k3", 1.75));
-    ["sw1", "sw2"].forEach((s, i) => tl.fromTo($(s), { autoAlpha: 1, y: 0 }, { y: 160, autoAlpha: 0, duration: 0.7, repeat: 2, ease: "power1.in", immediateRender: false }, at("k3", 0.6 + i * 0.3)));
-    K.shake($("ows"), at("k3", 1.2), { dur: 0.8, amp: 10 });
+    // «زيدني تامبون» in her bubble as it is said; the mess bursts on «راني جيت البارح!»
+    K.pop($("say2"), at("k3", "زيدني", -0.1), { from: 0.5 });
+    K.sfx("pop", at("k3", "زيدني", -0.07));
+    K.pop($("q2"), at("k3", "تامبون", 0.25), { from: 0.3 });
+    K.pop($("pw2"), at("k3", "راني", -0.05), { from: 0.3 });
+    K.sfx("boing", at("k3", "راني"), -2);
+    K.pop($("q3"), at("k3", "جيت", 0.05), { from: 0.3 });
+    K.pop($("pw3"), at("k3", "البارح", 0.05), { from: 0.3 });
+    K.sfx("pop", at("k3", "البارح", 0.08));
+    ["sw1", "sw2"].forEach((s, i) => tl.fromTo($(s), { autoAlpha: 1, y: 0 }, { y: 160, autoAlpha: 0, duration: 0.6, repeat: 2, ease: "power1.in", immediateRender: false }, at("k3", "تامبون", i * 0.29)));
+    K.shake($("ows"), at("k3", "راني"), { dur: 0.8, amp: 10 });
 
     /* B — wet, torn, lost */
     K.scene($("B"), at("k4", -0.05), at("k5", -0.05), { inn: "fade" });
     K.pop($("pc"), at("k4", 0), { from: 0.6 });
-    [0, 1, 2].forEach((i) => tl.fromTo($("dr" + i), { y: -200, autoAlpha: 1 }, { y: 120, autoAlpha: 0, duration: 0.45, ease: "power2.in" }, at("k4", 0.5 + i * 0.12)));
-    K.pop($("pw4"), at("k4", 0.6), { from: 0.4 });
-    K.sfx("swoosh", at("k4", 0.6));
-    tl.to($("pc"), { background: "#d7c39c", filter: "blur(.6px)", duration: 0.3 }, at("k4", 0.7));
-    tl.to($("pc"), { clipPath: "polygon(0 0,52% 0,46% 30%,55% 52%,47% 76%,52% 100%,0 100%)", duration: 0.01 }, at("k4", 1.4));
-    K.pop($("pw5"), at("k4", 1.4), { from: 0.4 });
-    K.sfx("scratch", at("k4", 1.4));
-    tl.to($("pc"), { x: -140, rotation: -14, duration: 0.3 }, at("k4", 1.4));
-    tl.to($("pc"), { x: -700, y: -500, rotation: -80, autoAlpha: 0, duration: 0.6, ease: "power2.in" }, at("k4", 2.1));
-    K.pop($("pw6"), at("k4", 2.2), { from: 0.4 });
-    K.sfx("whoosh", at("k4", 2.1));
+    // each on its word: wet («تبلّت»), torn («تقطّعت»), gone («ضاعت»)
+    const wet = at("k4", "تبلّت", -0.25), torn = at("k4", "تقطّعت"), lost = at("k4", "ضاعت", -0.05);
+    [0, 1, 2].forEach((i) => tl.fromTo($("dr" + i), { y: -200, autoAlpha: 1 }, { y: 120, autoAlpha: 0, duration: 0.4, ease: "power2.in" }, wet + i * 0.08));
+    K.pop($("pw4"), wet + 0.25, { from: 0.4 });
+    K.sfx("swoosh", wet + 0.2);
+    tl.to($("pc"), { background: "#d7c39c", filter: "blur(.6px)", duration: 0.3 }, wet + 0.3);
+    tl.to($("pc"), { clipPath: "polygon(0 0,52% 0,46% 30%,55% 52%,47% 76%,52% 100%,0 100%)", duration: 0.01 }, torn);
+    K.pop($("pw5"), torn, { from: 0.4 });
+    K.sfx("scratch", torn);
+    tl.to($("pc"), { x: -140, rotation: -14, duration: 0.3 }, torn);
+    tl.to($("pc"), { x: -700, y: -500, rotation: -80, autoAlpha: 0, duration: 0.5, ease: "power2.in" }, lost);
+    K.pop($("pw6"), lost + 0.15, { from: 0.4 });
+    K.sfx("whoosh", lost);
 
     /* C — the fix is simple */
     K.scene($("C"), at("k5", -0.05), at("k6", -0.05), { inn: "zoom", dur: 0.4 });
-    K.pop($("bb"), at("k5", 0.2), { from: 0.3, dur: 0.6, ease: "back.out(1.8)" });
-    K.sfx("impact", at("k5", 0.3));
-    K.rise($("wd"), at("k5", 0.5), { y: 40 });
-    K.burst(540, 720, at("k5", 0.5), { n: 18, r: 300, colors: ["#ffd23f", "#fff", "#12b76a"] });
+    K.pop($("bb"), at("k5", 0.12), { from: 0.3, dur: 0.6, ease: "back.out(1.8)" });
+    K.sfx("impact", at("k5", 0.18));
+    K.rise($("wd"), at("k5", "Pointili", -0.1), { y: 40 });
+    K.burst(540, 720, at("k5", "Pointili", -0.05), { n: 18, r: 300, colors: ["#ffd23f", "#fff", "#12b76a"] });
 
     /* D — the code on the counter, the tampon in his phone */
     const calm2 = K.add(`<div class="sc" id="D"><div class="calm"></div></div>`);
-    K.scene(calm2, at("k6", -0.05), at("k11", -0.1), { inn: "fade" });
+    // (it stays until the end card has covered it: the café wall is behind)
+    K.scene(calm2, at("k6", -0.05), at("k11", 0.5), { inn: "fade" });
     const qr = K.phone({ src: S + "v2-food-counter.png", x: 300, y: 300, w: 480, z: 12 });
     gsap.set(qr, { autoAlpha: 0 });
     tl.fromTo(qr, { autoAlpha: 0, y: 160 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("k6", 0));
     K.sfx("swish", at("k6", 0));
-    K.sfx("scan", at("k6", 1.6));
+    K.sfx("scan", at("k6", "الكود"));
     qr.screen(S + "v2-food-stamped.png", at("k7", -0.05), "slide");
-    K.sfx("stamp", at("k7", 0.5));
-    K.burst(540, 600, at("k7", 0.5), { n: 16, r: 260 });
+    K.sfx("stamp", at("k7", "يطيح"));
+    K.burst(540, 600, at("k7", "يطيح"), { n: 16, r: 260 });
     tl.to(qr, { autoAlpha: 0, scale: 0.9, duration: 0.25 }, at("k8", -0.2));
     // no paper to lose, no tampon by fibbing
-    const ch1 = K.add(`<div class="chip" style="left:150px;top:620px"><span class="x">${K.ICON.x}</span><span>كرتون يضيع</span></div>`);
+    const ch1 = K.add(`<div class="chip" style="left:150px;top:620px"><span class="x">${K.ICON.x}</span><span>كارط تضيع</span></div>`);
     const ch2 = K.add(`<div class="chip" style="left:310px;top:800px"><span class="x">${K.ICON.x}</span><span>تامبون بالكذب</span></div>`);
-    K.pop(ch1, at("k8", 0.05), { from: 0.5 }); K.sfx("pop", at("k8", 0.1));
-    K.pop(ch2, at("k8", 0.85), { from: 0.5 }); K.sfx("pop", at("k8", 0.9));
+    K.pop(ch1, at("k8", 0.02), { from: 0.5 }); K.sfx("pop", at("k8", 0.03));
+    K.pop(ch2, at("k8", "ولا", -0.05), { from: 0.5 }); K.sfx("pop", at("k8", "ولا"));
     [ch1, ch2].forEach((c) => K.out(c, at("k9", -0.15)));
     // every tampon on record, for the owner
     const own = K.phone({ src: S + "v2-food-owner-home.png", x: 300, y: 290, w: 480, z: 12 });
@@ -175,21 +181,23 @@ ${ART_CSS}
     tl.fromTo(own, { autoAlpha: 0, y: 160 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("k9", -0.1));
     K.sfx("swish", at("k9", -0.1));
     const hl = K.add(`<i style="position:absolute;left:318px;top:${290 + 15 + 1045 * 0.585}px;width:444px;height:${1045 * 0.27}px;border-radius:26px;box-shadow:0 0 0 6px #ffd23f;z-index:13;visibility:hidden;opacity:0"></i>`);
-    K.pop(hl, at("k9", 0.6), { from: 1.08, dur: 0.3 });
-    K.sfx("ding", at("k9", 0.65));
+    K.pop(hl, at("k9", "كل", -0.05), { from: 1.08, dur: 0.3 });
+    K.sfx("ding", at("k9", "كل"));
     tl.to([own, hl], { autoAlpha: 0, duration: 0.25 }, at("k10", -0.15));
     // the owner breathes, the customer comes back
     const happy = K.add(`<div class="sc" id="E"><div class="art" style="left:150px;top:500px;width:300px;height:645px">${K.$("#ow").innerHTML}</div><div class="art" id="hc" style="left:600px;top:560px;width:280px;height:602px">${K.$("#cu2").innerHTML}</div></div>`);
-    K.scene(happy, at("k10", -0.1), at("k11", -0.1), { inn: "fade" });
-    tl.fromTo(K.$("#hc"), { x: 300 }, { x: 0, duration: 0.5, ease: "back.out(1.3)" }, at("k10", 0.6));
-    K.burst(540, 700, at("k10", 1.1), { n: 18, r: 280 });
-    K.sfx("win", at("k10", 1.1), -3);
+    K.scene(happy, at("k10", -0.1), at("k11", 0.5), { inn: "fade" });
+    // the owner at ease; the customer back in as «والحريف يرجع» is said
+    tl.fromTo(K.$("#hc"), { x: 300 }, { x: 0, duration: 0.5, ease: "back.out(1.3)" }, at("k10", "والحريف", -0.1));
+    K.burst(540, 700, at("k10", "يرجع"), { n: 18, r: 280 });
+    K.sfx("win", at("k10", "يرجع"), -3);
 
     /* the end: message us on WhatsApp */
     const ec = K.endcard(at("k11", -0.1), { tag: "دخّل Pointili *لمحلّك اليوم*", offer: "شنوّة تستنّى؟" });
     const wa = K.add(`<div class="wa" style="top:1390px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>+216 58 415 520</span></div>`);
-    K.pop(wa, at("k11", 1.2), { from: 0.6 });
-    K.sfx("pop", at("k11", 1.25));
-    tl.fromTo(wa, { scale: 1 }, { scale: 1.06, duration: 0.4, yoyo: true, repeat: 5, ease: "sine.inOut" }, at("k11", 2.0));
+    // the number as «ابعثلنا على الواتساب» is said
+    K.pop(wa, at("k11", "ابعثلنا", -0.05), { from: 0.6 });
+    K.sfx("pop", at("k11", "ابعثلنا"));
+    tl.fromTo(wa, { scale: 1 }, { scale: 1.06, duration: 0.4, yoyo: true, repeat: 5, ease: "sine.inOut" }, at("k11", "الواتساب", 0.3));
   },
 };

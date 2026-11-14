@@ -11,7 +11,7 @@ export default {
   voice: "ash",
   music: { style: "noir" },
   lead: 0.3,
-  tail: 4,
+  tail: 3,
   lines: [
     { id: "g1", say: "سؤال يجينا *ديما*:" },
     { id: "g2", say: "وكان الحريف *صوّر الكود*؟" },
@@ -20,10 +20,10 @@ export default {
     { id: "g5", say: "الكود اللي على الكونتوار *يتبدّل وحدو*،" },
     { id: "g6", say: "وكل كود يخدم *مرّة برك*." },
     { id: "g7", say: "والتصويرة اللي خذاها؟ *فات وقتها*." },
-    { id: "g8", say: "وزيد: انت تختار *كل قدّاش* ينجم ياخو تامبون." },
+    { id: "g8", say: "وزيد: انت تختار *قدّاش* ينجم ياخو تامبون." },
     { id: "g9", say: "وكل تامبون *مكتوب*: شكون، ووقتاش." },
     { id: "g10", say: "انت تعطي الكادو.. *وانت مرتاح*." },
-    { id: "g11", say: "جرّب Pointili بلاش، واكتب «كود» في الكومونتار.", sub: false },
+    { id: "g11", say: "جرّب Pointili، واكتب «كود» في الكومونتار.", sub: false },
   ],
   assets: () => ({ q1: qrSvg("https://www.pointili.online/?k=7Hq2"), q2: qrSvg("https://www.pointili.online/?k=Zp91x"), q3: qrSvg("https://www.pointili.online/?k=m4Rt8Lw") }),
   css: `
@@ -81,7 +81,7 @@ export default {
 
     /* g2 — he photographs the code */
     K.scene($("B"), at("g2", -0.05), at("g3", -0.05), { inn: "fade" });
-    tl.fromTo($("vf"), { scale: 1.15, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.4 }, at("g2", 0.1));
+    tl.fromTo($("vf"), { scale: 1.15, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 0.4 }, at("g2", 0.04));
     // the flash only at the shot (a from-state would light it from the first frame)
     tl.set($("flash"), { autoAlpha: 0.95 }, end("g2", -0.4));
     tl.to($("flash"), { autoAlpha: 0, duration: 0.45, ease: "power2.out" }, end("g2", -0.4));
@@ -89,40 +89,41 @@ export default {
 
     /* g3 — and stamps from home */
     K.scene($("C"), at("g3", -0.05), at("g4", -0.05), { inn: "fade" });
-    tl.fromTo($("ph"), { y: 300, rotation: -20, autoAlpha: 0 }, { y: 0, rotation: -6, autoAlpha: 1, duration: 0.6, ease: "back.out(1.4)" }, at("g3", 0.05));
-    K.sfx("swoosh", at("g3", 0.05));
+    tl.fromTo($("ph"), { y: 300, rotation: -20, autoAlpha: 0 }, { y: 0, rotation: -6, autoAlpha: 1, duration: 0.6, ease: "back.out(1.4)" }, at("g3", 0.03));
+    K.sfx("swoosh", at("g3", 0.03));
 
     /* g4 — he can't */
     tl.set($("C"), { autoAlpha: 1 }, at("g4", -0.05));
     K.pop($("xx"), at("g4", 0), { from: 2, dur: 0.3, ease: "power3.out" });
-    K.sfx("impact", at("g4", 0.05));
-    K.shake($("ph"), at("g4", 0.05), { dur: 0.4, amp: 20 });
+    K.sfx("impact", at("g4", 0.04));
+    K.shake($("ph"), at("g4", 0.04), { dur: 0.4, amp: 20 });
     tl.to([$("xx"), $("C")], { autoAlpha: 0, duration: 0.25 }, at("g5", -0.15));
 
     /* g5–g6 — the counter's code changes by itself, works once */
     K.scene($("B"), at("g5", -0.1), at("g7", -0.1), { inn: "fade" });
     tl.set($("vf"), { autoAlpha: 0 }, at("g5", -0.1));
     tl.fromTo($("ring"), { rotation: 0 }, { rotation: 720, duration: Math.max(2, end("g6") - at("g5")), ease: "none" }, at("g5", 0));
-    tl.to($("qa"), { opacity: 0, duration: 0.15 }, at("g5", 0.9)); tl.to($("qb"), { opacity: 1, duration: 0.15 }, at("g5", 0.9));
-    K.sfx("tick", at("g5", 0.92));
-    tl.to($("qb"), { opacity: 0, duration: 0.15 }, at("g6", 0.3)); tl.to($("qc"), { opacity: 1, duration: 0.15 }, at("g6", 0.3));
-    K.sfx("tick", at("g6", 0.32));
-    K.pop($("once"), at("g6", 0.1), { from: 0.5 });
-    K.sfx("pop", at("g6", 0.15));
+    // the code changes as «يتبدّل» is said, and again on «كود»; «يخدم مرّة برك» as it is said
+    tl.to($("qa"), { opacity: 0, duration: 0.15 }, at("g5", "يتبدّل")); tl.to($("qb"), { opacity: 1, duration: 0.15 }, at("g5", "يتبدّل"));
+    K.sfx("tick", at("g5", "يتبدّل", 0.02));
+    tl.to($("qb"), { opacity: 0, duration: 0.15 }, at("g6", "كود")); tl.to($("qc"), { opacity: 1, duration: 0.15 }, at("g6", "كود"));
+    K.sfx("tick", at("g6", "كود", 0.02));
+    K.pop($("once"), at("g6", "يخدم", -0.05), { from: 0.5 });
+    K.sfx("pop", at("g6", "يخدم"));
     K.out($("once"), at("g7", -0.15));
 
     /* g7 — his photo? too late: the app says so */
     const p = K.phone({ src: S + "scan-missed.png", x: 290, y: 400, w: 500, z: 12 });
     gsap.set(p, { autoAlpha: 0 });
     tl.fromTo(p, { autoAlpha: 0, y: 200 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("g7", -0.05));
-    K.sfx("buzz", at("g7", 0.6), -4);
+    K.sfx("buzz", at("g7", "فات"), -4);
     tl.to(p, { autoAlpha: 0, duration: 0.3 }, at("g8", -0.2));
 
     /* g8 — and you choose how often he may get one */
     K.scene($("E"), at("g8", -0.1), at("g9", -0.1), { inn: "fade" });
-    K.$$("#E .chips span").forEach((c, i) => K.pop(c, at("g8", 0.2 + i * 0.2), { from: 0.8, dur: 0.3 }));
-    tl.to(K.$$("#E .chips span")[0], { backgroundColor: "#6c47ff", borderColor: "#9b80ff", boxShadow: "0 0 40px rgba(108,71,255,.6)", duration: 0.2 }, at("g8", 1.3));
-    K.sfx("tap", at("g8", 1.3));
+    K.$$("#E .chips span").forEach((c, i) => K.pop(c, at("g8", 0.09 + i * 0.12), { from: 0.8, dur: 0.3 }));
+    tl.to(K.$$("#E .chips span")[0], { backgroundColor: "#6c47ff", borderColor: "#9b80ff", boxShadow: "0 0 40px rgba(108,71,255,.6)", duration: 0.2 }, at("g8", "قدّاش"));
+    K.sfx("tap", at("g8", "قدّاش"));
 
     /* g9 — every tampon written down: who, and when */
     const p2 = K.phone({ src: S + "owner-activity.png", x: 290, y: 400, w: 500, z: 12 });
@@ -134,9 +135,9 @@ export default {
 
     /* g10 — you give the gift, at ease */
     K.scene($("G"), at("g10", -0.1), null, { inn: "fade" });
-    K.pop(K.$("#G .shield"), at("g10", 0.1), { from: 0.4, dur: 0.6 });
-    K.sfx("chime", at("g10", 0.2));
+    K.pop(K.$("#G .shield"), at("g10", "مرتاح", -0.15), { from: 0.4, dur: 0.6 });
+    K.sfx("chime", at("g10", "مرتاح", -0.1));
 
-    K.endcard(at("g11", -0.1), { tag: "اكتب *«كود»* في الكومونتار", offer: "جرّب Pointili بلاش", keyword: "كود", typeAt: 1.2 });
+    K.endcard(at("g11", -0.1), { tag: "اكتب *«كود»* في الكومونتار", offer: "جرّب Pointili", keyword: "كود" });
   },
 };

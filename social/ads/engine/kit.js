@@ -15,8 +15,18 @@
     if (!l) throw new Error(`no line «${x}»`);
     return l;
   };
-  /** at("a3") → when line a3 starts; at("a3", .4) → .4 s after; numbers pass through */
-  const at = (x, d = 0) => (typeof x === "number" ? x : line(x).start) + d;
+  /** when a word of a line is said: a whole take knows (render.mjs: l.words); without one, by its place in the line */
+  const whenSaid = (l, word) => {
+    const ws = tokens(l.say);
+    const k = ws.findIndex((w) => w.text.includes(word));
+    if (k < 0) throw new Error(`«${word}» is not said in line ${l.id}`);
+    if (l.words && l.words.length === ws.length) return l.words[k].a;
+    const size = (list) => list.reduce((n, w) => n + w.text.length + 1, 0);
+    return l.start + ((l.end - l.start) * size(ws.slice(0, k))) / size(ws);
+  };
+  /** at("a3") → when line a3 starts; at("a3", .4) → .4 s after; at("a3", "الكود") → when that word of
+   *  it is said (at("a3", "الكود", .1): .1 s after); numbers pass through */
+  const at = (x, d = 0, more = 0) => (typeof x === "number" ? x + d : typeof d === "string" ? whenSaid(line(x), d) + more : line(x).start + d);
   const end = (x, d = 0) => (typeof x === "number" ? x : line(x).end) + d;
   const SFX = [];
   /** a sound at a moment: engine/sound.mjs makes it (gain in dB) */
@@ -98,8 +108,11 @@
       if (style === "big") {
         inner.innerHTML = tokens(text).map(wordHtml).join(" ");
         const ws = $$(".w", inner);
+        const said = saidAt(l, text);
         tl.set(el, { autoAlpha: 1 }, l.start);
-        tl.fromTo(ws, { autoAlpha: 0, y: 34, scale: 0.9 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(2)", stagger: Math.min(0.11, ((l.end - l.start) * 0.55) / ws.length) }, l.start);
+        // each word as it is said (a whole take knows when); else one after the other across the line
+        if (said) ws.forEach((w, k) => tl.fromTo(w, { autoAlpha: 0, y: 34, scale: 0.9 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.26, ease: "back.out(2)" }, Math.max(l.start, said[k].a - EARLY)));
+        else tl.fromTo(ws, { autoAlpha: 0, y: 34, scale: 0.9 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(2)", stagger: Math.min(0.11, ((l.end - l.start) * 0.55) / ws.length) }, l.start);
         tl.to(el, { autoAlpha: 0, y: -24, duration: 0.16, ease: "power2.in" }, off - 0.16);
       } else {
         inner.innerHTML = mark(text);
@@ -108,17 +121,23 @@
       }
     });
   }
-  // one word at a time, each for its share of the line
+  // a word is on screen a blink before it is heard: the eye is a little ahead of the ear
+  const EARLY = 0.05;
+  /** when each word of the line is said — only a whole take knows (render.mjs: l.words), and only for the line as it is said */
+  const saidAt = (l, text) => (l.words && l.sub == null && l.words.length === tokens(text).length ? l.words : null);
+  // one word at a time: each while it is said (a whole take), else for its share of the line
   function wordByWord(l, text, off) {
     const ws = tokens(text);
+    const said = saidAt(l, text);
     const span = off - l.start;
     const weight = ws.reduce((a, w) => a + w.text.length + 2.5, 0);
     let t = l.start;
-    ws.forEach((w) => {
-      const d = (span * (w.text.length + 2.5)) / weight;
+    ws.forEach((w, k) => {
+      const from = said ? Math.max(l.start, said[k].a - EARLY) : t;
+      const d = said ? (k < ws.length - 1 ? Math.max(l.start, said[k + 1].a - EARLY) : off) - from : (span * (w.text.length + 2.5)) / weight;
       const el = add(`<div class="sub sub-word"><span class="${w.hl ? "hl" : ""}">${esc(w.text)}</span></div>`);
-      tl.fromTo(el, { autoAlpha: 0, scale: 1.4, rotation: -3 }, { autoAlpha: 1, scale: 1, rotation: 0, duration: 0.18, ease: "back.out(3)" }, t);
-      tl.set(el, { autoAlpha: 0 }, t + d);
+      tl.fromTo(el, { autoAlpha: 0, scale: 1.4, rotation: -3 }, { autoAlpha: 1, scale: 1, rotation: 0, duration: Math.min(0.18, Math.max(0.06, d * 0.6)), ease: "back.out(3)" }, from);
+      tl.set(el, { autoAlpha: 0 }, from + d);
       t += d;
     });
   }
@@ -258,7 +277,16 @@
   }
 
   /* ── the end card: the mark, the name, what to do now ── */
-  function endcard(t, { tag = "كارطات الفيدليتي متاعك، في تليفونك", offer = "", keyword = "", ph = "زيد كومونتار…", url = "pointili.online", typeAt = 0.9 } = {}) {
+  /** when the voice says to write the comment («اكتب…», «يكتب…»), counted from t */
+  const writeCue = (t) => {
+    for (const l of F.lines) {
+      const w = l.end > t && tokens(l.say).find((x) => x.text.includes("كتب"));
+      if (w) return whenSaid(l, w.text) - t;
+    }
+    return null;
+  };
+  /** the end card. With a `keyword`, a comment box types it as the voice says to write it (typeAt: another moment, seconds after t) */
+  function endcard(t, { tag = "كارطات الفيدليتي متاعك، في تليفونك", offer = "", keyword = "", ph = "زيد كومونتار…", url = "pointili.online", typeAt = null } = {}) {
     const el = add(`<div class="end"><div class="logo">${brandMark()}</div><div class="word">Pointili</div><div class="tag">${mark(tag)}</div>
       ${offer ? `<div class="offer">${mark(offer)}</div>` : ""}
       ${keyword ? `<div class="cbox" data-ph="${esc(ph)}"><i class="av"></i><span class="txt"><span class="ph">${esc(ph)}</span></span><span class="send">${ICON.send}</span></div>` : ""}
@@ -272,10 +300,12 @@
     if (offer) pop($(".offer", el), t + 0.8, { from: 0.7 });
     if (keyword) {
       const box = $(".cbox", el);
-      rise(box, t + typeAt - 0.2, { y: 40 });
-      typeIn(box, keyword, t + typeAt + 0.25, Math.min(0.9, keyword.length * 0.09));
-      tl.fromTo($(".send", box), { scale: 1 }, { scale: 1.18, duration: 0.16, yoyo: true, repeat: 1, ease: "power2.out" }, t + typeAt + 1.3);
-      sfx("pop", t + typeAt + 1.32, -2);
+      // never before the card's own words are in
+      const ty = Math.max(0.9, typeAt ?? writeCue(t) ?? 0.9);
+      rise(box, t + ty - 0.2, { y: 40 });
+      typeIn(box, keyword, t + ty + 0.25, Math.min(0.9, keyword.length * 0.09));
+      tl.fromTo($(".send", box), { scale: 1 }, { scale: 1.18, duration: 0.16, yoyo: true, repeat: 1, ease: "power2.out" }, t + ty + 1.3);
+      sfx("pop", t + ty + 1.32, -2);
     }
     rise($(".url", el), t + 1.0, { y: 24 });
     return el;

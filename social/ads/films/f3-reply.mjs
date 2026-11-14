@@ -11,16 +11,16 @@ export default {
   title: "رد على كومونتار",
   music: { style: "tech" },
   lead: 0.25,
-  tail: 3.6,
+  tail: 3,
   lines: [
-    { id: "r1", say: "مولى قهوة يسأل: الحريف لازمو يحمّل أبليكاسيون باش ياخو التامبون؟", sub: false, after: 0.3 },
-    { id: "r2", say: "لا. وهاذي *مبدأ* عندنا.", after: 0.3 },
-    { id: "r3", say: "يسكاني الكود اللي على الكونتوار، بكاميرا تليفونو.", sub: "يسكاني الكود *بالكاميرا*", after: 0.15 },
-    { id: "r4", say: "أوّل مرّة، يعمل كونت بالنومرو متاعو، في عشر ثواني.", sub: "كونت *في عشر ثواني*", after: 0.15 },
-    { id: "r5", say: "والتامبون يطيح طول في الكارط متاعو.", sub: "والتامبون *يطيح طول*", after: 0.2 },
-    { id: "r6", say: "لا أبليكاسيون يحمّلو، لا كارط كرتون تضيع.", sub: "*بلا أبليكاسيون*، بلا كرتون", after: 0.2 },
-    { id: "r7", say: "والكود يتبدّل وحدو، ويخدم مرّة برك: ما يتسرقش.", sub: "الكود *يتبدّل وحدو*", after: 0.25 },
-    { id: "r8", say: "جرّب Pointili بلاش: الرابط في البيو، ولا اكتب «كارط» في الكومونتار.", sub: false },
+    { id: "r1", say: "مولى القهوة يسأل: الحريف لازمو يحمّل أبليكاسيون باش ياخو التامبون؟", sub: false },
+    { id: "r2", say: "لا. وهذا *المبدأ* متاعنا." },
+    { id: "r3", say: "يسكاني الكود اللي على الكونتوار، بكاميرا تليفونو.", sub: "يسكاني الكود *بالكاميرا*" },
+    { id: "r4", say: "أوّل مرّة، يعمل كونت بالنومرو متاعو، في عشر ثواني.", sub: "كونت *في عشر ثواني*" },
+    { id: "r5", say: "والتامبون يطيح طول في الكارط متاعو.", sub: "والتامبون *يطيح طول*" },
+    { id: "r6", say: "لا أبليكاسيون تتيليشارجيها، ولا كارط كرتون تضيعلو.", sub: "*بلا أبليكاسيون*، بلا كرتون" },
+    { id: "r7", say: "والكود يتبدّل وحدو، ويخدم مرّة برك: معناها ما يتسرقش.", sub: "الكود *يتبدّل وحدو*" },
+    { id: "r8", say: "جرّب Pointili: الرابط في البيو، ولا اكتب «كارط» في الكومونتار.", sub: false },
   ],
   css: `
 #stage{background:#2a1d16}
@@ -87,7 +87,7 @@ export default {
     K.sfx("pop", 0.5);
     const no = K.add(`<div class="badge" style="left:120px;top:1180px">${K.ICON.check}<span>لا، ماكش محتاج</span></div>`);
     K.pop(no, at("r2", 0), { from: 0.4 });
-    K.sfx("ding", at("r2", 0.1));
+    K.sfx("ding", at("r2", 0.02));
     [tag, q, no].forEach((e) => K.out(e, at("r3", -0.25), { dur: 0.2 }));
     tl.to(ph, { autoAlpha: 0, duration: 0.2 }, at("r3", -0.15));
 
@@ -95,12 +95,14 @@ export default {
     K.scene($("c2"), at("r3", -0.15), at("r4", 0), { inn: "zoom", dur: 0.35 });
     K.sfx("whoosh", at("r3", -0.15));
     K.drift($("pic"), at("r3"), at("r4"), { from: 1.0, to: 1.05 });
-    tl.fromTo($("scan"), { y: 0, autoAlpha: 1 }, { y: 760, duration: 0.7, ease: "sine.inOut", yoyo: true, repeat: 1 }, at("r3", 0.25));
-    tl.set($("scan"), { autoAlpha: 0 }, at("r3", 1.65));
-    K.pop($("yel"), at("r3", 1.6), { from: 1.15, dur: 0.3 });
-    K.sfx("scan", at("r3", 1.65));
-    K.pop($("chip"), at("r3", 1.8), { from: 0.7 });
-    K.tap(540, 1270, at("r3", 2.3));
+    // the line sweeps the code while it is named; the camera has it as «بكاميرا» is said, and he taps the link
+    const got = at("r3", "بكاميرا");
+    tl.fromTo($("scan"), { y: 0, autoAlpha: 1 }, { y: 760, duration: (got - at("r3", 0.1)) / 2, ease: "sine.inOut", yoyo: true, repeat: 1 }, at("r3", 0.1));
+    tl.set($("scan"), { autoAlpha: 0 }, got);
+    K.pop($("yel"), got - 0.04, { from: 1.15, dur: 0.3 });
+    K.sfx("scan", got);
+    K.pop($("chip"), got + 0.15, { from: 0.7 });
+    K.tap(540, 1270, at("r3", "تليفونو", 0.12));
 
     /* 3 — the first time: an account, with his number */
     const p2 = K.phone({ src: S + "live-join.png", x: 290, y: 330, w: 500, z: 20 });
@@ -112,19 +114,21 @@ export default {
       p2.put(`<span class="field" style="top:48.1%;left:24.5%;right:42%;justify-content:flex-start;direction:ltr">98 765 432</span>`),
       p2.put(`<span class="field" style="top:59.6%;left:30%;right:8.5%;justify-content:flex-start;letter-spacing:5px">••••••••</span>`),
     ];
+    // his name as «يعمل كونت» is said, his number as «بالنومرو» is, a password — and «في عشر ثواني» he is in
+    const typed = [at("r4", "يعمل"), at("r4", "بالنومرو"), at("r4", "متاعو", 0.12)];
     fields.forEach((f, i) => {
       gsap.set(f, { autoAlpha: 0 });
-      tl.to(f, { autoAlpha: 1, duration: 0.05 }, at("r4", 0.35 + i * 0.6));
-      for (let k = 0; k < 3; k++) K.sfx("key", at("r4", 0.35 + i * 0.6 + k * 0.08), -3);
+      tl.to(f, { autoAlpha: 1, duration: 0.05 }, typed[i]);
+      for (let k = 0; k < 3; k++) K.sfx("key", typed[i] + k * 0.05, -3);
     });
-    K.tap(540, 330 + 15 + 1017 * 0.72, at("r4", 2.3));
+    K.tap(540, 330 + 15 + 1017 * 0.72, at("r4", "عشر", 0.1));
     /* 4 — the tampon lands, straight on his card */
     const st = p2.screen(S + "v2-food-stamped.png", at("r5", -0.05), "slide");
     K.sfx("swish", at("r5", -0.05));
-    K.sfx("stamp", at("r5", 0.45));
-    K.burst(540, 560, at("r5", 0.45), { n: 16, r: 260 });
+    K.sfx("stamp", at("r5", "يطيح"));
+    K.burst(540, 560, at("r5", "يطيح"), { n: 16, r: 260 });
     const plus = K.pill("+1 تامبون", { y: 300, cls: "mint", z: 40 });
-    K.pop(plus, at("r5", 0.5), { from: 0.5 });
+    K.pop(plus, at("r5", "يطيح", 0.04), { from: 0.5 });
     K.out(plus, at("r6", -0.2));
 
     /* 5 — no app, no paper */
@@ -133,22 +137,30 @@ export default {
     K.pop(n1, at("r6", 0.1), { from: 0.6 });
     K.sfx("pop", at("r6", 0.12));
     const px = K.add(`<div class="paperx" style="left:640px;top:1410px"></div>`);
-    K.pop(px, at("r6", 0.75), { from: 0.6 });
-    K.sfx("scratch", at("r6", 0.85));
-    tl.to(px, { y: 520, rotation: 28, autoAlpha: 0, duration: 0.7, ease: "power2.in" }, at("r6", 1.4));
+    // the paper card as «ولا كارط كرتون» is said — and gone as «تضيعلو» is
+    K.pop(px, at("r6", "كارط", -0.2), { from: 0.6 });
+    K.sfx("scratch", at("r6", "كرتون", -0.05));
+    tl.to(px, { y: 520, rotation: 28, autoAlpha: 0, duration: 0.6, ease: "power2.in" }, at("r6", "تضيعلو", 0.05));
     K.out(n1, at("r7", -0.2));
 
     /* 6 — the code changes by itself, works once */
     p2.screen(S + "v2-food-counter.png", at("r7", -0.05), "slide");
     K.sfx("swish", at("r7", -0.05));
     const ring = K.add(`<i class="ring" style="left:830px;top:640px"></i>`);
-    K.pop(ring, at("r7", 0.2), { from: 0.5 });
-    tl.to(ring, { rotation: 720, duration: end("r7") - at("r7"), ease: "none" }, at("r7", 0.2));
-    tl.fromTo(K.$$("img", p2.scr).at(-1), { filter: "brightness(1)" }, { filter: "brightness(1.35)", duration: 0.12, yoyo: true, repeat: 1 }, at("r7", 1.2));
-    K.sfx("tick", at("r7", 1.2));
-    tl.to([p2, ring], { autoAlpha: 0, duration: 0.25 }, at("r8", -0.15));
+    K.pop(ring, at("r7", 0.14), { from: 0.5 });
+    tl.to(ring, { rotation: 720, duration: end("r7") - at("r7"), ease: "none" }, at("r7", 0.14));
+    tl.fromTo(K.$$("img", p2.scr).at(-1), { filter: "brightness(1)" }, { filter: "brightness(1.35)", duration: 0.12, yoyo: true, repeat: 1 }, at("r7", "وحدو"));
+    K.sfx("tick", at("r7", "وحدو"));
+    // «ويخدم مرّة برك»: said under the phone too, then what it means
+    const once = K.pill("يخدم مرّة برك", { x: 110, y: 1440, cls: "mint", icon: "check", z: 40 });
+    K.pop(once, at("r7", "ويخدم", -0.05), { from: 0.6 });
+    K.sfx("pop", at("r7", "ويخدم"));
+    const safe = K.pill("ما يتسرقش", { x: 610, y: 1440, cls: "coral", z: 40 });
+    K.pop(safe, at("r7", "ما", -0.05), { from: 0.6 });
+    K.sfx("ding", at("r7", "ما"), -2);
+    tl.to([p2, ring, once, safe], { autoAlpha: 0, duration: 0.25 }, at("r8", -0.15));
 
     /* 7 — try it free: the link in the bio, or a comment */
-    K.endcard(at("r8", -0.1), { tag: "اكتب *«كارط»* في الكومونتار، ولا الرابط في البيو", offer: "جرّب Pointili بلاش", keyword: "كارط", typeAt: 1.1 });
+    K.endcard(at("r8", -0.1), { tag: "اكتب *«كارط»* في الكومونتار، ولا الرابط في البيو", offer: "جرّب Pointili", keyword: "كارط" });
   },
 };

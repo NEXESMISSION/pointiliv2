@@ -1,7 +1,7 @@
 /**
  * A film's sound, all of it made here: the music (written and played in code: no track to
- * license), the effects the timeline asked for (K.sfx), and the voice, line by line, when
- * voice/<film>/ has it. Mixed so the voice leads, the music ducks under it, the effects are
+ * license), the effects the timeline asked for (K.sfx), and the voice — a whole take, or a file
+ * per line — when voice/<film>/ has it. Mixed so the voice leads, the music ducks under it, the effects are
  * felt more than heard — then levelled to -14 LUFS, what Instagram plays back at.
  */
 import { execFileSync } from "node:child_process";
@@ -330,22 +330,24 @@ const LEVEL = { pop: -14, tap: -15, key: -20, stamp: -10, win: -12, ding: -14, c
 
 /* ---------- the mix ---------- */
 
-export async function makeSound({ film, timing, total, sfx, out, ff = FFMPEG }) {
+export async function makeSound({ film, timing, total, sfx, out, ff = FFMPEG, take = null }) {
   // the music may follow the lines: music(T) with T.a5.start, T.a9.end…
   const T = Object.fromEntries(timing.map((l) => [l.id, l]));
   const M = (typeof film.music === "function" ? film.music(T, total) : film.music) ?? { style: "bounce" };
   const voiced = timing.filter((l) => l.voice);
+  // a whole take (take.mjs) is one voice from its start to its end; else a file per line
+  const spoken = !!take || voiced.length > 0;
   const mus = M.style === "none" ? bus(total + 2) : music(M.style, total, M);
   const mix = bus(total + 2);
   // the voice, each line where it starts — and an envelope of it, for the ducking
   const vbus = new Float32Array(mix.L.length);
-  for (const l of voiced) {
+  for (const l of take ? [{ voice: take.file, start: take.at }] : voiced) {
     const v = decode(l.voice);
     const at = Math.round(l.start * SR);
     for (let i = 0; i < v.length && at + i < vbus.length; i++) vbus[at + i] += v[i] * db(film.voiceGain ?? 0);
   }
   const duck = new Float32Array(mix.L.length).fill(1);
-  if (voiced.length) {
+  if (spoken) {
     let envv = 0;
     const a = Math.exp(-1 / (0.02 * SR)), rel = Math.exp(-1 / (0.35 * SR));
     for (let i = 0; i < vbus.length; i++) {
@@ -354,7 +356,7 @@ export async function makeSound({ film, timing, total, sfx, out, ff = FFMPEG }) 
       duck[i] = 1 - Math.min(0.62, envv * 6);
     }
   }
-  const mg = db(M.gain ?? (voiced.length ? -15 : -7));
+  const mg = db(M.gain ?? (spoken ? -15 : -7));
   for (let i = 0; i < mix.L.length; i++) {
     mix.L[i] = mus.L[i] * mg * duck[i] + vbus[i];
     mix.R[i] = mus.R[i] * mg * duck[i] + vbus[i];
@@ -366,7 +368,7 @@ export async function makeSound({ film, timing, total, sfx, out, ff = FFMPEG }) 
     const make1 = SOUNDS[c.name];
     if (!make1) { console.log(`  (no sound «${c.name}»)`); continue; }
     const s = c.name === "key" || c.name === "sparkle" ? make1(r) : (cache[c.name] ??= make1(r));
-    put(mix, s, c.t, db((LEVEL[c.name] ?? -14) + (c.gain ?? 0) + (voiced.length ? 0 : 3)), c.name === "whoosh" || c.name === "swish" ? (r() - 0.5) * 0.6 : 0);
+    put(mix, s, c.t, db((LEVEL[c.name] ?? -14) + (c.gain ?? 0) + (spoken ? 0 : 3)), c.name === "whoosh" || c.name === "swish" ? (r() - 0.5) * 0.6 : 0);
   }
   // to a file, then to Instagram's loudness
   const N = Math.round(total * SR);

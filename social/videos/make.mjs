@@ -5,8 +5,8 @@
  *
  *   node make.mjs   → index.html, one <video>.html each, subs/, sound/, thumbs/
  *
- * The ads are read from their films (../ads/films): the times are worked out exactly as
- * render.mjs works them out (each line as long as its voice), and the effects are the ones the
+ * The ads are read from their films (../ads/films): the times are the ones render.mjs films to
+ * (../ads/engine/timing.mjs: the voice's own, line by line), and the effects are the ones the
  * film's own page asks for, read in Chrome. The silent explainers and the app's clips come from
  * data/silent.json (read off their makers: scripts/explainer-*.mjs, make.py, the .svg).
  */
@@ -49,7 +49,8 @@ const probe = (file) => {
   const [a, b] = (v?.r_frame_rate ?? "0/1").split("/").map(Number);
   return { duration: +(+j.format.duration).toFixed(2), mb: +(j.format.size / 1048576).toFixed(1), w: v?.width, h: v?.height, fps: Math.round(a / (b || 1)), audio: j.streams.some((s) => s.codec_type === "audio") };
 };
-const win = (p) => resolve(p).replace(/\//g, "\\");
+// where a file is, from the repository's root: no computer's own path (a user name) goes into these pages
+const win = (p) => relative(ROOT, resolve(p)).replace(/\//g, "\\") || ".";
 const rel = (p) => relative(HERE, p).replace(/\\/g, "/");
 const docComment = (src) => {
   const m = src.match(/^\/\*\*([\s\S]*?)\*\//);
@@ -75,7 +76,6 @@ const BUILT_LIKE = {
   f14: "a photo tour of the trades (ChatGPT photos), each with its own gift",
   f15: "an arcade store: tampons spent on things from the shop (الماغازة)",
 };
-const CORAL = ["f8", "f11", "f13", "f15"];
 const MUSIC = {
   warm: "a warm story: electric piano, soft swung drums",
   bounce: "bright and bouncy: house-ish piano stabs, a plucked line, four on the floor",
@@ -104,22 +104,12 @@ const browser = await chromium.launch({ executablePath: CHROME, headless: true }
 
 async function readFilm(dir, file) {
   const film = (await import(pathToFileURL(join(dir, "films", file)).href)).default;
-  const { voiceLength } = await import(pathToFileURL(join(dir, "engine", "sound.mjs")).href);
+  const { whenSaid } = await import(pathToFileURL(join(dir, "engine", "timing.mjs")).href);
   const { FONTS, BASE_CSS } = await import(pathToFileURL(join(dir, "engine", "base.mjs")).href);
   const name = file.replace(/\.mjs$/, "");
-  // when each line is said — the same sums as render.mjs
-  const estimate = (text) => Math.max(0.8, 0.2 + text.replace(/[*_~«»"]/g, "").split(/\s+/).filter(Boolean).length * 0.34);
+  // when each line is said — the times render.mjs films to
   const VOICE = join(dir, "voice", name);
-  const timing = [];
-  let cursor = film.lead ?? 0.35;
-  for (const l of film.lines) {
-    const v = ["wav", "mp3", "m4a"].map((x) => join(VOICE, `${l.id}.${x}`)).find(existsSync);
-    const len = l.dur ?? (v ? voiceLength(v) : estimate(l.say));
-    cursor += l.before ?? 0;
-    timing.push({ id: l.id, say: l.say, sub: l.sub, start: +cursor.toFixed(3), end: +(cursor + len).toFixed(3), voice: v ?? null });
-    cursor += len + (l.after ?? film.gap ?? 0.16);
-  }
-  const total = +(cursor + (film.tail ?? 1.2)).toFixed(3);
+  const { lines: timing, total, take } = whenSaid(film, VOICE);
   // the film's own page, as render.mjs makes it, only to read which effects it asks for and when
   const cache = join(dir, ".cache", name);
   mkdirSync(cache, { recursive: true });
@@ -150,16 +140,15 @@ async function readFilm(dir, file) {
   });
   const T = Object.fromEntries(timing.map((l) => [l.id, l]));
   const music = (typeof film.music === "function" ? film.music(T, total) : film.music) ?? { style: "bounce" };
-  return { film, name, timing, total, sfx, subCues, look, music, about: docComment(src), dir, voiceDir: VOICE };
+  return { film, name, timing, total, take, sfx, subCues, look, music, about: docComment(src), dir, voiceDir: VOICE };
 }
 
 function adPage(a, meta) {
-  const { film, name, timing, total, sfx, subCues, look, music, about } = a;
+  const { film, name, timing, total, take, sfx, subCues, look, music, about } = a;
   const id = name.split("-")[0];
-  const voiced = timing.filter((l) => l.voice).length;
-  const take = join(a.voiceDir, "take.txt");
-  const takeMp3 = join(a.voiceDir, "take.mp3");
-  const voiceName = voiced ? (CORAL.includes(id) ? "Coral — a woman's voice" : "Ash — a man's voice") : null;
+  // a whole take says every line; a studio voice has a file per line
+  const voiced = take ? timing.length : timing.filter((l) => l.voice).length;
+  const studio = join(a.voiceDir, "take.txt");
   const said = timing.map((l) => ({ start: l.start, end: l.end, text: plain(l.say) }));
   writeFileSync(join(HERE, "subs", `${name}.srt`), srt(subCues));
   writeFileSync(join(HERE, "subs", `${name}.vtt`), vtt(subCues));
@@ -175,7 +164,9 @@ function adPage(a, meta) {
   const rows = timing.map((l, i) => {
     const cue = subCues.find((c) => c.id === l.id);
     const screen = l.sub === false ? `<span class="muted">no subtitle — the scene carries it</span>` : l.sub ? marked(l.sub) : `<span class="muted">the same words</span>`;
-    const play = l.voice ? `<button class="play" data-src="${esc(rel(l.voice))}" title="Play this line's voice" aria-label="Play line ${i + 1}">▶</button>` : "";
+    // one line alone: its own file, or its stretch of the take (a media fragment: #t=from,to)
+    const voice = take ? `${rel(take.file)}#t=${Math.max(0, l.start - take.at).toFixed(2)},${(l.end - take.at).toFixed(2)}` : l.voice ? rel(l.voice) : null;
+    const play = voice ? `<button class="play" data-src="${esc(voice)}" title="Play this line's voice" aria-label="Play line ${i + 1}">▶</button>` : "";
     return `<tr data-start="${l.start}" data-end="${l.end}"><td class="n">${i + 1}</td><td class="t num">${sec(l.start)}–${sec(l.end)}</td><td class="ar" dir="rtl">${marked(l.say)}</td><td class="ar" dir="rtl">${screen}${cue ? `<small class="num">${sec(cue.start)}–${sec(cue.end)}</small>` : ""}</td><td>${play}</td></tr>`;
   }).join("\n");
   const breaks = (music.breaks ?? []).map(([x, y]) => `${sec(x)}–${sec(y)} s`).join(", ");
@@ -202,13 +193,13 @@ function adPage(a, meta) {
   <h2>Sound</h2>
   ${meta.audio ? `<div class="player"><span>The soundtrack, alone</span><audio controls preload="none" src="sound/${name}.m4a"></audio><a href="sound/${name}.m4a" download>sound/${name}.m4a</a></div>` : ""}
   <dl class="facts">
-    <dt>Voice</dt><dd>${voiceName ? `${voiceName}, from OpenAI's voice studio (openai.fm), in Tunisian Derja. One take for the whole film, cut into its ${voiced} lines.` : "None — the captions carry it, over the music."}
-      ${existsSync(takeMp3) ? `<div class="player"><span>The take, as recorded</span><audio controls preload="none" src="${esc(rel(takeMp3))}"></audio></div>` : ""}</dd>
+    <dt>Voice</dt><dd>${take ? `A person reading the lines in Tunisian Derja, recorded in one go (${esc(take.source)}) and kept whole: the scenes and the subtitles follow the voice, not the other way round.` : voiced ? `OpenAI's voice studio (openai.fm), in Tunisian Derja. One take for the whole film, cut into its ${voiced} lines.` : "None — the captions carry it, over the music."}
+      ${take ? `<div class="player"><span>The voice alone, as the film plays it</span><audio controls preload="none" src="${esc(rel(take.file))}"></audio></div>` : ""}</dd>
     <dt>Music</dt><dd>«${esc(music.style)}» — ${esc(MUSIC[music.style] ?? "")}. Written and played in code (engine/sound.mjs), nothing licensed.${breaks ? ` It stops for a moment at ${breaks}.` : ""} ${voiced ? "It ducks under the voice." : ""}</dd>
     <dt>Effects</dt><dd>${sfx.length} sounds: ${byName.map(([n, c]) => `${esc(n)} ×${c}`).join(", ")}.</dd>
     <dt>Level</dt><dd>Levelled to −14 LUFS (what Instagram plays at), AAC 192 kb/s, 48 kHz stereo.</dd>
   </dl>
-  ${existsSync(take) ? `<details><summary>What the voice studio was given (take.txt)</summary><pre class="block" dir="auto">${esc(readFileSync(take, "utf8").trim())}</pre></details>` : voiced ? `<p class="note">The instructions given to the studio were the same Tunisian-Derja ones as film 1 (tts.mjs), with the ${CORAL.includes(id) ? "Coral" : "Ash"} voice.</p>` : ""}
+  ${!take && existsSync(studio) ? `<details><summary>What the voice studio was given (take.txt)</summary><pre class="block" dir="auto">${esc(readFileSync(studio, "utf8").trim())}</pre></details>` : ""}
   <h3>Every effect, in order</h3>
   <div class="tablewrap"><table class="fx"><thead><tr><th>time (s)</th><th>sound</th></tr></thead><tbody>
     ${runs.map((r) => `<tr data-start="${r.from}"><td class="num">${r.n > 1 ? `${sec(r.from)}–${sec(r.to)}` : sec(r.from)}</td><td>${esc(SFX[r.name] ?? r.name)}${r.n > 1 ? ` <span class="muted">×${r.n}</span>` : ""}</td></tr>`).join("")}
@@ -422,7 +413,7 @@ for (const f of films) {
   const meta = media(mp4, a.name, existsSync(wa) ? [`${win(wa)}  (lighter copy for WhatsApp)`] : null);
   if (Math.abs(meta.duration - a.total) > 0.25) console.log(`  ! ${a.name}: the film is ${meta.duration} s, its lines add up to ${a.total} s`);
   writeFileSync(join(HERE, `${a.name}.html`), adPage(a, meta));
-  entries.push({ group: "ads", slug: a.name, title: plain(a.film.title), meta, lines: a.timing.length, voice: a.timing.some((l) => l.voice) ? (CORAL.includes(a.name.split("-")[0]) ? "Coral" : "Ash") : null, about: BUILT_LIKE[a.name.split("-")[0]] });
+  entries.push({ group: "ads", slug: a.name, title: plain(a.film.title), meta, lines: a.timing.length, voice: a.take ? "a person" : a.timing.some((l) => l.voice) ? "studio" : null, about: BUILT_LIKE[a.name.split("-")[0]] });
   console.log(`✓ ${a.name}: ${a.timing.length} lines, ${a.sfx.length} sounds, ${a.subCues.length} subtitles`);
 }
 

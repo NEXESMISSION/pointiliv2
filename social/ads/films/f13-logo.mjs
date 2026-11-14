@@ -1,32 +1,26 @@
 /**
  * f13 — «اللوغو متاعك» (your logo): a shop has a name, a colour, a logo — why is its card plain
  * white paper? With Pointili the card is in your colour, your logo on every tampon («اللوغو
- * متاعك»), in every customer's phone; a pastry shop, a barber, a perfume shop — each in its own
- * style. Quick cuts on the beat, one big word at a time. Female voice.
+ * متاعك»), in every customer's phone; a barber, a café, a perfume shop — each in its own style, each
+ * card cut in as its trade is said. One big word at a time.
  */
-const SHOPS = [
-  { name: "Pâtisserie Nour", color: "#e8578a", mark: "🧁", gift: "قطعة قاتو بلاش" },
-  { name: "Barber 216", color: "#1f3a8a", mark: "✂️", gift: "حجامة بلاش" },
-  { name: "Dar Rayhana", color: "#9c2b4f", mark: "🌸", gift: "عطر صغير" },
-];
-
 export default {
   title: "اللوغو متاعك",
   voice: "coral",
   music: { style: "bounce" },
   lead: 0.25,
-  tail: 4,
+  tail: 3,
   lines: [
     { id: "l1", say: "محلّك عندو *اسم*." },
-    { id: "l2", say: "عندو *لون*." },
+    { id: "l2", say: "وعندو *لون*." },
     { id: "l3", say: "وعندو *لوغو*." },
     { id: "l4", say: "علاش الكارط متاعو تكون *كرتون أبيض*؟" },
     { id: "l5", say: "مع Pointili، الكارط *بلونك*،" },
     { id: "l6", say: "واللوغو متاعك *على كل تامبون*." },
     { id: "l7", say: "في *تليفون كل حريف*." },
-    { id: "l8", say: "حلواني، حجّام، محل عطورات.. *كل واحد بستيلو*." },
+    { id: "l8", say: "حجّام ولا قهواجي ولا محل متاع بارفان.. *كل واحد بستيلو*." },
     { id: "l9", say: "خلّي محلّك *في جيب الحريف*." },
-    { id: "l10", say: "جرّب Pointili بلاش، الرابط في البيو.", sub: false },
+    { id: "l10", say: "جرّب Pointili، الرابط في البيو.", sub: false },
   ],
   css: `
 #stage{background:#f6f3ee}
@@ -58,12 +52,11 @@ export default {
     const $ = (id) => K.$("#" + id);
     K.subs("word");
     const NAME = "Pâtisserie Nour";
-    // the build runs in the page: the shops again, here
-    const SHOPS = [
-      { name: "Pâtisserie Nour", color: "#e8578a", mark: "🧁", gift: "قطعة قاتو بلاش" },
-      { name: "Barber 216", color: "#1f3a8a", mark: "✂️", gift: "حجامة بلاش" },
-      { name: "Dar Rayhana", color: "#9c2b4f", mark: "🌸", gift: "عطر صغير" },
-    ];
+    // the shop of the film, and the three the voice names: a barber, a café, a perfume shop
+    const NOUR = { name: "Pâtisserie Nour", color: "#e8578a", mark: "🧁", gift: "قطعة قاتو بلاش" };
+    const BARBER = { name: "Barber 216", color: "#1f3a8a", mark: "✂️", gift: "حجامة بلاش", said: "حجّام", back: "#e3e9fb" };
+    const CAFE = { name: "Café El Houma", color: "#7a4a2b", mark: "☕", gift: "قهوة بلاش", said: "قهواجي", back: "#f3e6d8" };
+    const PERFUME = { name: "Dar Rayhana", color: "#9c2b4f", mark: "🌸", gift: "بارفان صغير", said: "محل", back: "#f7e3ea" };
 
     /* l1 — a name, typed */
     K.fadeIn($("sign"), 0.05, 0.1);
@@ -74,60 +67,63 @@ export default {
 
     /* l2 — a colour: it floods in */
     tl.to($("sp"), { scale: 1, duration: 0.55, ease: "power3.inOut" }, at("l2", 0));
-    tl.to($("sign"), { color: "#fff", duration: 0.3 }, at("l2", 0.2));
+    tl.to($("sign"), { color: "#fff", duration: 0.3 }, at("l2", 0.25));
     K.sfx("whoosh", at("l2", 0));
 
     /* l3 — a logo, stamped */
-    K.pop($("logo"), at("l3", 0.05), { from: 2.2, dur: 0.35, ease: "power3.out" });
-    K.sfx("thud", at("l3", 0.1));
+    K.pop($("logo"), at("l3", "لوغو", -0.12), { from: 2.2, dur: 0.35, ease: "power3.out" });
+    K.sfx("thud", at("l3", "لوغو", -0.08));
     tl.to([$("sign"), $("logo")], { autoAlpha: 0, duration: 0.25 }, at("l4", -0.15));
 
     /* l4 — so why a plain paper card? */
     tl.to($("sp"), { scale: 0, duration: 0.4, ease: "power3.inOut" }, at("l4", -0.2));
     K.pop($("paper"), at("l4", 0.05), { from: 0.8 });
-    K.pop($("meh"), at("l4", 0.6), { from: 0.3 });
-    K.shake($("paper"), at("l4", 0.9), { dur: 0.5, amp: 8 });
-    K.sfx("boing", at("l4", 0.8), -6);
+    // «كرتون أبيض؟»: the paper shakes on «كرتون», the face on «أبيض»
+    K.shake($("paper"), at("l4", "كرتون"), { dur: 0.5, amp: 8 });
+    K.pop($("meh"), at("l4", "أبيض", -0.05), { from: 0.3 });
+    K.sfx("boing", at("l4", "أبيض"), -6);
 
     /* l5 — your colour */
     tl.to([$("paper"), $("meh")], { autoAlpha: 0, scale: 0.9, duration: 0.25 }, at("l5", -0.1));
-    const c = K.pass({ ...SHOPS[0], goal: 8, stamps: 0, icon: "gift", logo: "🧁", x: 110, y: 640, w: 860, size: 38, z: 22 });
+    const c = K.pass({ ...NOUR, goal: 8, stamps: 0, icon: "gift", logo: "🧁", x: 110, y: 640, w: 860, size: 38, z: 22 });
     tl.fromTo(c, { autoAlpha: 0, rotationY: 90, transformPerspective: 1400 }, { autoAlpha: 1, rotationY: 0, duration: 0.5, ease: "back.out(1.4)" }, at("l5", 0));
     K.sfx("swish", at("l5", 0));
-    tl.to($("sp"), { scale: 1, backgroundColor: "#fde3ec", duration: 0.5 }, at("l5", 0.1));
+    tl.to($("sp"), { scale: 1, backgroundColor: "#fde3ec", duration: 0.5 }, at("l5", 0.05));
 
     /* l6 — your logo on every tampon */
-    [1, 2, 3, 4, 5].forEach((n, i) => c.stamp(n, at("l6", 0.1 + i * 0.22)));
+    // the logo lands on the tampons from «واللوغو» to «تامبون»
+    const s0 = at("l6", 0.05), s1 = at("l6", "تامبون", 0.1);
+    [1, 2, 3, 4, 5].forEach((n, i) => c.stamp(n, s0 + ((s1 - s0) * i) / 4));
     K.out(c, at("l7", -0.15));
 
     /* l7 — in every customer's phone */
     const ph = K.phone({ x: 330, y: 620, w: 420, z: 12 });
     ph.put(`<div style="position:absolute;inset:0;background:#f4f3f9;padding:120px 22px 0;direction:rtl"><b style="font-size:30px">الكارطات متاعي</b></div>`);
-    SHOPS.forEach((s, i) => K.pass({ ...s, goal: 8, stamps: [5, 3, 6][i], icon: "gift", logo: s.mark, x: 20, y: 190 + i * 250, w: 432, size: 18, parent: ph.scr, z: 4 }));
+    [NOUR, BARBER, CAFE].forEach((s, i) => K.pass({ ...s, goal: 8, stamps: [5, 3, 6][i], icon: "gift", logo: s.mark, x: 20, y: 190 + i * 250, w: 432, size: 18, parent: ph.scr, z: 4 }));
     gsap.set(ph, { autoAlpha: 0 });
     tl.fromTo(ph, { autoAlpha: 0, y: 200 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("l7", -0.05));
     K.sfx("swish", at("l7", 0));
     tl.to(ph, { autoAlpha: 0, duration: 0.25 }, at("l8", -0.15));
 
-    /* l8 — each in its own style: quick cuts */
-    const cuts = SHOPS.map((s, i) => K.pass({ ...s, goal: 8, stamps: [6, 4, 7][i], icon: "gift", logo: s.mark, x: 110, y: 640, w: 860, size: 38, z: 22 }));
-    const span = Math.max(1.8, end("l8") - at("l8"));
-    cuts.forEach((cc, i) => {
-      const t = at("l8", (span * i) / 3);
-      tl.set($("sp"), { backgroundColor: ["#fde3ec", "#e3e9fb", "#f7e3ea"][i] }, t);
-      tl.fromTo(cc, { autoAlpha: 0, scale: 1.25, rotation: (i - 1) * 6 }, { autoAlpha: 1, scale: 1, rotation: 0, duration: 0.25, ease: "power3.out" }, t);
-      tl.set(cc, { autoAlpha: 0 }, t + span / 3);
-      K.sfx("impact", t, -10);
+    /* l8 — each in its own style: a card cut in as its trade is said */
+    const trades = [BARBER, CAFE, PERFUME];
+    const cutAt = trades.map((s, i) => (i ? at("l8", s.said, -0.08) : at("l8", -0.05)));
+    trades.forEach((s, i) => {
+      const cc = K.pass({ ...s, goal: 8, stamps: [6, 4, 7][i], icon: "gift", logo: s.mark, x: 110, y: 640, w: 860, size: 38, z: 22 });
+      tl.set($("sp"), { backgroundColor: s.back }, cutAt[i]);
+      tl.fromTo(cc, { autoAlpha: 0, scale: 1.25, rotation: (i - 1) * 6 }, { autoAlpha: 1, scale: 1, rotation: 0, duration: 0.25, ease: "power3.out" }, cutAt[i]);
+      tl.set(cc, { autoAlpha: 0 }, cutAt[i + 1] ?? at("l9", -0.1));
+      K.sfx("impact", cutAt[i], -10);
     });
 
     /* l9 — your shop in the customer's pocket */
     tl.set($("sp"), { backgroundColor: "#efeaff" }, at("l9", -0.1));
     K.fadeIn($("jeans"), at("l9", -0.1), 0.25);
-    const mini = K.pass({ ...SHOPS[0], goal: 8, stamps: 6, icon: "gift", logo: "🧁", x: 10, y: 60, w: 276, size: 12, parent: K.$("#pph div"), z: 3 });
-    tl.fromTo($("pph"), { y: 300 }, { y: 0, duration: 0.6, ease: "back.out(1.6)" }, at("l9", 0.2));
-    K.sfx("whoosh", at("l9", 0.2));
-    K.burst(540, 600, at("l9", 0.9), { n: 12, r: 200, colors: ["#e8578a", "#ffd23f", "#fff"] });
+    const mini = K.pass({ ...NOUR, goal: 8, stamps: 6, icon: "gift", logo: "🧁", x: 10, y: 60, w: 276, size: 12, parent: K.$("#pph div"), z: 3 });
+    tl.fromTo($("pph"), { y: 300 }, { y: 0, duration: 0.6, ease: "back.out(1.6)" }, at("l9", 0.15));
+    K.sfx("whoosh", at("l9", 0.15));
+    K.burst(540, 600, at("l9", 0.78), { n: 12, r: 200, colors: ["#e8578a", "#ffd23f", "#fff"] });
 
-    K.endcard(at("l10", -0.1), { tag: "الكارط بلونك واللوغو متاعك · *الرابط في البيو*", offer: "جرّب Pointili بلاش" });
+    K.endcard(at("l10", -0.1), { tag: "الكارط بلونك واللوغو متاعك · *الرابط في البيو*", offer: "جرّب Pointili" });
   },
 };
