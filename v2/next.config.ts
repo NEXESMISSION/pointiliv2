@@ -21,7 +21,12 @@ const nextConfig: NextConfig = {
   },
   // the Android app's short address, easy to type or say on the phone: the app itself (public/pointili.apk)
   async redirects() {
-    return [{ source: "/android", destination: "/pointili.apk", permanent: false }];
+    return [
+      { source: "/android", destination: "/pointili.apk", permanent: false },
+      // the install link (app/app) under the words people type when they half-remember it
+      { source: "/install", destination: "/app", permanent: false },
+      { source: "/installer", destination: "/app", permanent: false },
+    ];
   },
   async headers() {
     return [

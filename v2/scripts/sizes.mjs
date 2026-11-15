@@ -243,6 +243,8 @@ const SCREENS = [
   { name: "public-join", path: "/join" },
   { name: "public-login", path: "/login" },
   { name: "public-forgot", path: "/forgot" },
+  // the install as a link (15 Nov 2026): Android's one button, an iPhone's film (it opens by itself), a computer's QR
+  { name: "public-app", path: "/app", wait: 1500 },
   { name: "public-shop-new", path: "/shop/new" },
   { name: "public-scan", path: "/scan", wait: 2500 },
   { name: "public-stamp-reserved", path: async () => `/s/${await newToken()}`, wait: 2500 },

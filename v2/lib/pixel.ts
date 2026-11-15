@@ -25,9 +25,9 @@ const FOUNDER = "pt_founder";
 const ONCE = "pt_px_";
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.pointili.online").replace(/\/$/, "");
 // a customer's screens (the scan, a stamp, a card, a person's code, the wallet, the account, joining),
-// signing in (people who already have an account), a forgotten password and the privacy page:
-// none of them is about the ads
-const AWAY = /^\/(?:s|c|u)\/|^\/(?:scan|wallet|me|join|login|forgot|privacy)(?:\/|$)/;
+// signing in (people who already have an account), a forgotten password, the privacy page, and the
+// install link (/app — sent to owners and their customers alike): none of them is about the ads
+const AWAY = /^\/(?:s|c|u)\/|^\/(?:app|scan|wallet|me|join|login|forgot|privacy)(?:\/|$)/;
 const STANDARD = new Set(["PageView", "ViewContent", "Lead", "CompleteRegistration", "Contact", "Purchase"]);
 
 type Params = Record<string, string | number | boolean>;

@@ -1306,6 +1306,10 @@ export const t = {
   // Pointili on the phone's home screen (Android offers it)
   installApp: "حطّ Pointili في تليفونك",
   installAppHint: "تحلّها من الشاشة كيما أي أبليكاسيون",
+  // the install as a link, pointili.online/app (components/InstallPage): a computer shows the link as a QR
+  // for the phone's camera; on Android, what the browser asks after the tap
+  appLinkScan: "سكاني الكود هذا بكاميرا تليفونك",
+  appLinkThen: "وبعد انزل على",
   // Android's tap before the browser is ready (lib/pwa: tapInstall): it waits, then one more tap, or a word on
   // the browser's menu — Chrome, Brave or another, so the browser is not named
   installWaiting: "لحظة… قاعد يتحضّر",

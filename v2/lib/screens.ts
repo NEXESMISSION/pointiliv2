@@ -40,6 +40,8 @@ export const ROUTES: Record<string, string> = {
   "/guide": "الدليل",
   "/prix": "الأسوام",
   "/privacy": "الخصوصية",
+  // the install, as a link to send (15 Nov 2026)
+  "/app": "رابط التثبيت",
 };
 export const SCREENS: Record<string, string> = {
   welcome: "الصفحة الأولى",
