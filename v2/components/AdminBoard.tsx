@@ -82,6 +82,26 @@ const SORT: Partial<Record<Filter, (a: BoardShop, b: BoardShop) => number>> = {
   over: (a, b) => b.trial_end.localeCompare(a.trial_end),
 };
 
+/**
+ * How far back the board looks (the founder, 15 Nov 2026: «a time frame like last day or last 2 days by
+ * default, so it loads less non-important stuff»): a shop is in when its owner or a customer moved in it
+ * since then, or it opened since then. A search looks through every shop whatever is picked here.
+ */
+type Span = "day" | "two" | "week" | "month" | "all";
+const SPANS: { id: Span; label: string; ms: number }[] = [
+  { id: "day", label: "نهار", ms: DAY },
+  { id: "two", label: "يومين", ms: 2 * DAY },
+  { id: "week", label: "جمعة", ms: 7 * DAY },
+  { id: "month", label: "شهر", ms: 30 * DAY },
+  { id: "all", label: "الكل", ms: Infinity },
+];
+const movedAt = (s: BoardShop) => Date.parse(lastMove(s) ?? s.created_at);
+
+/** The ad a shop came from, by its campaign (the founder, 15 Nov 2026: «which campaign»): «TEST5» for «POINTILI TEST5 | Site | Comptes». */
+const NO_AD = "-";
+const adOf = (s: BoardShop) => s.x?.camp ?? NO_AD;
+const adLabel = (camp: string) => (camp === NO_AD ? "بلا إشهار" : camp.includes("{{") ? "إشهار بلا اسم" : (camp.match(/TEST\s*\d+/i)?.[0].toUpperCase().replace(/\s/g, "") ?? camp));
+
 /** The shop's face: its logo, or the picture of its kind, on its own colour. */
 export function Face({ s }: { s: Pick<BoardShop, "color" | "kind" | "logo"> }) {
   return (
@@ -124,6 +144,12 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
   const [filter, setFilter] = useState<Filter>(() => (openFirst && shops.find((s) => s.id === openFirst)?.paid ? "last" : "unpaid"));
   const [stage, setStage] = useState("all");
   const [q, setQ] = useState("");
+  // the last two days by default; a shop opened from an alert that moved before them opens the board on all of it
+  const [span, setSpan] = useState<Span>(() => {
+    const s = openFirst ? shops.find((x) => x.id === openFirst) : null;
+    return s && serverNow - movedAt(s) > 2 * DAY ? "all" : "two";
+  });
+  const [ad, setAd] = useState("all");
   // the stages picked on this board since it was drawn, and the lines picked while the list was narrowed to
   // a stage: those stay where they are (a note may follow) until the list is chosen again
   const [picked, setPicked] = useState<Record<string, { stage: string; at: string | null }>>({});
@@ -139,23 +165,36 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
   });
   const [open, setOpen] = useState<string | null>(openFirst);
 
+  // the shops in the time picked (a search looks through all of them), then in the ad picked: every count below is of these
+  const inSpan = useMemo(() => {
+    const ms = SPANS.find((x) => x.id === span)!.ms;
+    return q.trim() || ms === Infinity ? all : all.filter((s) => now - movedAt(s) <= ms || held.includes(s.id));
+  }, [all, span, q, now, held]);
+  const ads = useMemo(() => {
+    const n = new Map<string, number>();
+    for (const s of inSpan) n.set(adOf(s), (n.get(adOf(s)) ?? 0) + 1);
+    // the newest ad first, then an ad without a name, the shops that came without one last
+    const rank = (k: string) => (k === NO_AD ? 2 : k.includes("{{") ? 1 : 0);
+    return [...n.entries()].sort(([a], [b]) => rank(a) - rank(b) || adLabel(b).localeCompare(adLabel(a), "en", { numeric: true }));
+  }, [inSpan]);
+  const scoped = useMemo(() => (ad === "all" ? inSpan : inSpan.filter((s) => adOf(s) === ad || held.includes(s.id))), [inSpan, ad, held]);
   // each list counts what it holds at the stage chosen; each stage, what it holds in the list chosen
   const counts = useMemo(() => {
-    const atStage = all.filter((s) => stage === "all" || s.stage === stage || held.includes(s.id));
+    const atStage = scoped.filter((s) => stage === "all" || s.stage === stage || held.includes(s.id));
     return Object.fromEntries(FILTERS.map((f) => [f.id, atStage.filter((s) => f.test(s, now)).length])) as Record<Filter, number>;
-  }, [all, stage, held, now]);
+  }, [scoped, stage, held, now]);
   const stageCounts = useMemo(() => {
     const f = FILTERS.find((x) => x.id === filter)!;
     const n: Record<string, number> = {};
-    for (const s of all) if (f.test(s, now)) n[s.stage] = (n[s.stage] ?? 0) + 1;
+    for (const s of scoped) if (f.test(s, now)) n[s.stage] = (n[s.stage] ?? 0) + 1;
     return n;
-  }, [all, filter, now]);
+  }, [scoped, filter, now]);
   const list = useMemo(() => {
     const f = FILTERS.find((x) => x.id === filter)!;
-    const hits = all.filter((s) => f.test(s, now) && (stage === "all" || s.stage === stage || held.includes(s.id)) && hit(s, q));
+    const hits = scoped.filter((s) => f.test(s, now) && (stage === "all" || s.stage === stage || held.includes(s.id)) && hit(s, q));
     const sort = SORT[filter];
     return sort ? [...hits].sort(sort) : hits;
-  }, [all, filter, stage, held, q, now]);
+  }, [scoped, filter, stage, held, q, now]);
   const pickedOne = (id: string, key: string, at: string | null) => {
     setPicked((p) => ({ ...p, [id]: { stage: key, at } }));
     if (stage !== "all") setHeld((h) => (h.includes(id) ? h : [...h, id]));
@@ -197,9 +236,9 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
         </p>
       </div>
 
-      {/* the search: a name, an owner, a number, a word of a note, a kind */}
-      <div className="mt-3">
-        <label className="flex h-11 min-w-0 items-center gap-2 rounded-[0.875rem] bg-surface px-3 shadow-card ring-1 ring-line/80 focus-within:ring-2 focus-within:ring-brand">
+      {/* the search: a name, an owner, a number, a word of a note, a kind; and beside it, the ad the shops came from */}
+      <div className="mt-3 flex gap-2">
+        <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-[0.875rem] bg-surface px-3 shadow-card ring-1 ring-line/80 focus-within:ring-2 focus-within:ring-brand">
           <Search className="size-[1.125rem] shrink-0 text-faint" />
           <input
             value={q}
@@ -218,6 +257,51 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
             </button>
           )}
         </label>
+        <label className={`relative flex h-11 shrink-0 items-center gap-1 rounded-[0.875rem] px-3 text-[0.8125rem] font-semibold shadow-card ${ad === "all" ? "bg-surface text-body ring-1 ring-line/80" : "bg-brand-soft text-brand ring-2 ring-inset ring-brand"}`}>
+          <Megaphone className="size-3.5 shrink-0" aria-hidden />
+          {ad === "all" ? "إشهار" : adLabel(ad)}
+          <span className="num text-[0.75rem] opacity-60">{ad === "all" ? inSpan.length : (ads.find(([k]) => k === ad)?.[1] ?? 0)}</span>
+          <ChevronDown className="size-3.5 shrink-0 opacity-60" aria-hidden />
+          <select
+            value={ad}
+            onChange={(e) => {
+              setAd(e.target.value);
+              setHeld([]);
+              setLimit(PAGE);
+            }}
+            aria-label="الإشهار"
+            className="absolute inset-0 size-full cursor-pointer text-[16px] opacity-0"
+          >
+            <option value="all">كل الإشهارات ({inSpan.length})</option>
+            {ads.map(([k, n]) => (
+              <option key={k} value={k}>
+                {adLabel(k)} ({n})
+              </option>
+            ))}
+            {ad !== "all" && !ads.some(([k]) => k === ad) && <option value={ad}>{adLabel(ad)} (0)</option>}
+          </select>
+        </label>
+      </div>
+
+      {/* how far back (15 Nov 2026): the two days just past by default; a search looks through every shop */}
+      <div data-list className="-mx-4 mt-2.5 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="tablist" aria-label="الوقت">
+        <Clock className="size-4 shrink-0 text-faint" aria-hidden />
+        {SPANS.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            role="tab"
+            aria-selected={span === x.id}
+            onClick={() => {
+              setSpan(x.id);
+              setHeld([]);
+              setLimit(PAGE);
+            }}
+            className={`flex h-8 shrink-0 items-center rounded-full px-3 text-[0.8125rem] font-semibold transition-colors ${span === x.id ? "bg-brand text-white" : "bg-surface text-body ring-1 ring-line"}`}
+          >
+            {x.label}
+          </button>
+        ))}
       </div>
 
       {/* the board narrowed to one stage, over the lists (the founder, 25 Oct 2026): every stage that has a shop in the list chosen */}
@@ -253,7 +337,16 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
       </div>
 
       <div className="mt-3 space-y-3">
-        {list.length === 0 && <p className="rounded-[1.125rem] bg-surface px-4 py-10 text-center text-[0.9375rem] text-muted ring-1 ring-line/70">ما لقينا حتى محل</p>}
+        {list.length === 0 && (
+          <div className="rounded-[1.125rem] bg-surface px-4 py-10 text-center text-[0.9375rem] text-muted ring-1 ring-line/70">
+            ما لقينا حتى محل
+            {span !== "all" && !q.trim() && (
+              <button type="button" onClick={() => setSpan("all")} className="mt-3 block w-full text-[0.875rem] font-semibold text-brand">
+                شوف الوقت الكل
+              </button>
+            )}
+          </div>
+        )}
         {list.slice(0, limit).map((s) => (
           <ShopLine key={s.id} s={s} now={now} bench={bench.get(s.id)} open={open === s.id} onToggle={() => setOpen(open === s.id ? null : s.id)} onPicked={(key, at) => pickedOne(s.id, key, at)} />
         ))}
