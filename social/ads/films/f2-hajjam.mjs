@@ -3,7 +3,7 @@
  * his paper card was lost on the first day; with Pointili the card is in his phone, the owner sees
  * him drifting away and sends him a gift tampon on WhatsApp. Flat motion graphics, every piece
  * drawn here. Modelled on the structure of a barber-shop reel (hook → loss → card in the phone
- * → bring him back → «send this to a friend who has a salon»), in our words and only what
+ * → bring him back → «جرّب Pointili»), in our words and only what
  * Pointili really does: no notification is promised — the owner writes, by hand, on WhatsApp.
  */
 import { qrSvg } from "../engine/qr.mjs";
@@ -73,8 +73,7 @@ export default {
     { id: "a17", say: "ويرجع يقعد *على الكرسي متاعو*.", hold: 0.45 },
     { id: "a18", say: "الحريف ما يستأذنش *قبل ما يمشي*.." },
     { id: "a19", say: "خلّي الكارط متاعك *في جيبو*." },
-    { id: "a20", say: "ابعث الفيديو هذا *لصاحبك اللي عندو صالون*.." },
-    { id: "a21", say: "وقلّو يكتب *«كارط»* في الكومونتار.", sub: false },
+    { id: "a21", say: "جرّب Pointili.", sub: false },
   ],
   assets: () => ({ qr: qrSvg() }),
   css: `
@@ -161,13 +160,6 @@ export default {
 .jeans .ph{position:absolute;left:200px;top:110px;width:300px;height:420px;border-radius:44px;background:#14121b;padding:12px}
 .jeans .ph>div{width:100%;height:100%;border-radius:34px;background:linear-gradient(165deg,#9b80ff,#6c47ff 55%,#5a37e8);}
 .jeans .ph .pass{transform-origin:0 0}
-.share{position:absolute;display:flex;align-items:center;justify-content:space-between;left:150px;right:150px;top:600px}
-.share .p{width:230px;height:230px;border-radius:50%;display:grid;place-items:center;box-shadow:0 24px 46px -24px rgb(40 20 90/.5)}
-.share .dash{position:absolute;left:230px;right:230px;top:112px;border-top:8px dashed #c9c0ea}
-.share .plane{position:absolute;top:66px;width:96px;height:96px;border-radius:50%;background:var(--brand);display:grid;place-items:center;color:#fff}
-.share .plane svg{width:52px;height:52px}
-.share .badge{position:absolute;right:-6px;bottom:6px;width:84px;height:84px;border-radius:50%;background:var(--coral);display:grid;place-items:center;color:#fff;border:6px solid #f6f2fb}
-.share .badge svg{width:44px;height:44px}
 .plus{position:absolute;font-weight:700;font-size:96px;color:var(--mint);direction:ltr}
 .heart{position:absolute;color:var(--coral)}
 `,
@@ -219,11 +211,6 @@ ${scissors(60, 110, -20)}${scissors(946, 110, 20)}
   <div class="art" id="wk" style="left:450px;top:560px;width:190px;height:409px;z-index:5">${client()}</div>
   <div class="jeans" id="jeans"><div class="pk"></div><div class="ph" id="pph"><div></div></div></div>
 </div>
-
-<div class="sc" id="s13">
-  <div class="share"><span class="p" style="background:#fff"><svg viewBox="0 0 24 24" width="120" height="120" fill="none" stroke="#6c47ff" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg></span>
-  <i class="dash"></i><span class="plane" id="plane"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 21.7a.5.5 0 0 0 .9 0l6.5-19a.5.5 0 0 0-.6-.6l-19 6.5a.5.5 0 0 0 0 .9l7.9 3.2a2 2 0 0 1 1.1 1.1z"/><path d="m21.9 2.1-10.9 10.9"/></svg></span>
-  <span class="p" id="friend" style="background:#fff;position:relative"><svg viewBox="0 0 24 24" width="120" height="120" fill="none" stroke="#ff6b4a" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg><span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg></span></span></div>
 </div>
 `,
   build: (tl, K, at, end) => {
@@ -252,18 +239,18 @@ ${scissors(60, 110, -20)}${scissors(946, 110, 20)}
     /* 3 — no anger, no complaint */
     K.scene($("s3"), at("a3", -0.05), at("a4"), { dur: 0.3 });
     K.pop($("ang"), at("a3", 0), { from: 0.5 });
-    K.pop($("cmp"), at("a3", 0.29), { from: 0.5 });
+    K.pop($("cmp"), at("a3", 0.3), { from: 0.5 });
     K.rise($("l1"), at("a3", 0.12), { y: 20 });
-    K.rise($("l2"), at("a3", 0.42), { y: 20 });
-    tl.fromTo([$("sl1"), $("sl2")], { scaleX: 0 }, { scaleX: 1, duration: 0.25, stagger: 0.35, ease: "power2.out" }, at("a3", 0.46));
-    K.sfx("scratch", at("a3", 0.5)); K.sfx("scratch", at("a3", 0.66));
+    K.rise($("l2"), at("a3", 0.43), { y: 20 });
+    tl.fromTo([$("sl1"), $("sl2")], { scaleX: 0 }, { scaleX: 1, duration: 0.25, stagger: 0.35, ease: "power2.out" }, at("a3", 0.47));
+    K.sfx("scratch", at("a3", 0.51)); K.sfx("scratch", at("a3", 0.68));
 
     /* 4 — he just tried the one next door */
     K.scene($("s4"), at("a4", -0.05), at("a5"), { dur: 0.3 });
     K.rise($("shA"), at("a4", 0), { y: 80 });
-    K.rise($("shB"), at("a4", 0.08), { y: 80 });
-    K.pop($("walk"), at("a4", 0.17), { from: 0.7 });
-    const w0 = at("a4", 0.4), w1 = end("a4", 0.25);
+    K.rise($("shB"), at("a4", 0.09), { y: 80 });
+    K.pop($("walk"), at("a4", 0.19), { from: 0.7 });
+    const w0 = at("a4", 0.43), w1 = end("a4", 0.25);
     tl.to($("walk"), { x: -430, duration: w1 - w0, ease: "none" }, w0);
     tl.to($("walk"), { keyframes: Array.from({ length: 8 }, (_, i) => ({ y: i % 2 ? -14 : 0, duration: (w1 - w0) / 8 })), ease: "none" }, w0);
     tl.to($("walk"), { autoAlpha: 0, scale: 0.85, duration: 0.25 }, w1 - 0.15);
@@ -285,7 +272,7 @@ ${scissors(60, 110, -20)}${scissors(946, 110, 20)}
     /* 6 — the paper card: lost on the very first day (the voice says «في أوّل نهار») */
     K.scene($("s6"), at("a7", -0.05), at("a9"), { dur: 0.3 });
     K.pop($("pc"), at("a7", 0), { from: 0.6 });
-    tl.to($("pc"), { rotation: -6, duration: 0.5, yoyo: true, repeat: 1, ease: "sine.inOut" }, at("a7", 0.26));
+    tl.to($("pc"), { rotation: -6, duration: 0.5, yoyo: true, repeat: 1, ease: "sine.inOut" }, at("a7", 0.27));
     // the day's leaf comes up behind it, and the card slips off the bottom of the frame
     // «ضاعت»: the card drops out of the frame; «في أوّل نهار»: the day's leaf, and nothing where the card was
     tl.to($("pc"), { y: 900, x: -120, rotation: -150, scale: 0.7, duration: 0.5, ease: "power2.in" }, at("a8", -0.05));
@@ -376,24 +363,19 @@ ${scissors(60, 110, -20)}${scissors(946, 110, 20)}
     K.burst(560, 650, at("a17", "الكرسي"), { n: 18, r: 260 });
 
     /* 12 — he will not ask before he goes: keep your card in his pocket */
-    K.scene($("s12"), at("a18", -0.05), at("a20"), { dur: 0.3 });
+    K.scene($("s12"), at("a18", -0.05), at("a21", 0.11), { dur: 0.3 });
     const w2 = $("wk");
     K.scene(w2, at("a18", 0), at("a19", -0.1), { dur: 0.2 });
     tl.set($("jeans"), { autoAlpha: 0 }, at("a18", -0.05));
     tl.to(w2, { x: -420, duration: end("a18") - at("a18"), ease: "none" }, at("a18", 0.14));
     K.sfx("swish", at("a18", 0.14));
     tl.fromTo($("jeans"), { autoAlpha: 0, y: 140 }, { autoAlpha: 1, y: 0, duration: 0.45 }, at("a19", -0.1));
-    tl.fromTo($("pph"), { y: 260 }, { y: 0, duration: 0.6, ease: "back.out(1.6)" }, at("a19", 0.23));
-    K.sfx("whoosh", at("a19", 0.23));
+    tl.fromTo($("pph"), { y: 260 }, { y: 0, duration: 0.6, ease: "back.out(1.6)" }, at("a19", 0.22));
+    K.sfx("whoosh", at("a19", 0.22));
     const mini = K.pass({ name: "صالون أمين", goal: 6, stamps: 5, gift: "حجامة بلاش", icon: "scissors", x: 12, y: 12, w: 276, size: 13, parent: K.$("#pph div"), z: 2 });
     K.burst(540, 560, at("a19", 0.7), { n: 12, r: 200, colors: ["#ffd23f", "#fff", "#9b80ff"] });
 
-    /* 13 — send it to a friend with a salon; the end card */
-    K.scene($("s13"), at("a20", -0.05), at("a21"), { dur: 0.3 });
-    tl.fromTo($("plane"), { left: 230 }, { left: 520, duration: 1.1, ease: "power2.inOut" }, at("a20", 0.2));
-    K.sfx("whoosh", at("a20", 0.2));
-    K.pop($("friend"), at("a20", 1.04), { from: 0.8, dur: 0.4 });
-    K.sfx("pop", at("a20", 1.06));
-    K.endcard(at("a21", -0.15), { tag: "قلّو يكتب *«كارط»* في الكومونتار", offer: "جرّب Pointili", keyword: "كارط" });
+    /* 13 — the end card */
+    K.endcard(at("a21", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

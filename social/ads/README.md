@@ -54,8 +54,8 @@ node scripts.mjs                   # SCRIPTS.md, from the films
 - **Timing** comes from the voice (`engine/timing.mjs`): `voice/<film>/take.wav` is the take as it
   was said, `take.json` when each line and each word is said in it. A scene is placed in a line
   (`at("a3", 0.4)`: 0.4 s into it) or on one of its words (`at("a3", "الكود")`); the subtitles
-  that show a word at a time show each one as it is said; the end card types its keyword when the
-  voice says «اكتب». With no voice, a line lasts as long as it takes to say it.
+  that show a word at a time show each one as it is said; the end card's «جرّب Pointili» pops as the
+  voice says it. With no voice, a line lasts as long as it takes to say it.
 - **Sound** is all made in `engine/sound.mjs`: the music is written and played in code (nothing
   to license), the effects too; the voice leads, the music ducks under it.
 - **Screens** in the phones are real screens of the app (`assets/screens`), never drawings of
@@ -85,8 +85,9 @@ node render.mjs f6 --sheet --step 0.5   # look at it, then: node render.mjs f6
   «ولا كادو كبير» — and the subtitle must show what is heard: the film's line changes, not the
   voice. `relisten.py` hears a stretch again by itself; `which.py` tells two wordings apart
   («تليفونو» or «تليفونك»?).
-- **A phrase said twice is cut** in `voice/<film>/edit.json` (`{ "cut": [[from, to, "why"]] }`,
-  seconds in the recording): f13 and f14 have one.
+- **What is not kept is cut** in `voice/<film>/edit.json`, seconds in the recording: `cut` (a phrase
+  said twice: f13, f14), `stop` (what is said after it goes: the old calls to action) and `tail`
+  (a piece of another recording of the same voice put at the end: the shared «جرّب Pointili.»).
 - **A scene that needs time gets a `hold`** on its line (`{ id, say, hold: 0.4 }`): the pause after
   it is made at least that long — in the quiet, where nothing is heard of it.
 - **The scenes follow.** `voice/<film>/drawn.json` keeps the voice the scenes were timed for;
@@ -102,6 +103,10 @@ When posting: the voices are human. The photos in f4 and f14 are AI-made — Ins
 ## Rules the films keep
 
 - No notification is promised, anywhere: the customer sees his card; the owner writes to him.
+- **One call to action, the same in every film: «جرّب Pointili.»** No «اكتب … في الكومونتار», no
+  WhatsApp number, no «الرابط في البيو» (the user's call, 15 Nov 2026). The voice says it once —
+  the same clip in all fifteen (film 4's, edit.json `tail`) — and the end card shows it:
+  «كارط الفيدليتي متاعك، في تليفون الحريف» · «جرّب Pointili» · pointili.online.
 - A film ends on «جرّب Pointili» — never «بلاش» about Pointili itself (a customer's gift, «قهوة
   بلاش», is another thing). No price is said in a film: prices change (since 7 Nov 2026: 35 د a
   month, 120 for six months, 180 a year) and a film stays up for months.

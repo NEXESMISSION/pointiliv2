@@ -20,7 +20,7 @@ export default {
     { id: "e7", say: "وانت تعرف *شكون خذاه*." },
     { id: "e8", say: "وكل ما تحلّ الكارط، تشوف قدّاش *مازالها للكادو*." },
     { id: "e9", say: "ترجعلك انت.. *موش لغيرك*." },
-    { id: "e10", say: "جرّب Pointili، الرابط في البيو.", sub: false },
+    { id: "e10", say: "جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:linear-gradient(170deg,#fde7f0,#efe6ff 55%,#e6ecff)}
@@ -114,9 +114,9 @@ ${[[220, 520], [780, 640], [480, 420]].map(([x, y], i) => `<span class="heart" i
 
     /* e5 — she opens it: the tampon lands on her card */
     K.tap(560, 420 + 330, at("e5", 0.11));
-    tl.to([ch, p3], { autoAlpha: 0, duration: 0.3 }, at("e5", 0.38));
+    tl.to([ch, p3], { autoAlpha: 0, duration: 0.3 }, at("e5", 0.34));
     const card = K.pass({ name: "Dar Rayhana", color: "#c2185b", goal: 6, stamps: 2, gift: "عطر صغير", icon: "heart", x: 110, y: 640, w: 860, size: 38, z: 22 });
-    K.pop(card, at("e5", 0.43), { from: 0.7 });
+    K.pop(card, at("e5", 0.38), { from: 0.7 });
     // the tampon as «يطيح» is said
     card.stamp(3, at("e5", "يطيح"));
     K.burst(540, 820, at("e5", "يطيح", 0.13), { n: 14, r: 240 });
@@ -151,6 +151,6 @@ ${[[220, 520], [780, 640], [480, 420]].map(([x, y], i) => `<span class="heart" i
     K.pop($("m4"), at("e9", 0.47), { from: 0.6 }); K.sfx("msg", at("e9", 0.52));
     K.$$(".heart").forEach((h, i) => { K.pop(h, at("e9", 0.26 + i * 0.11), { from: 0.3 }); tl.to(h, { y: -120, autoAlpha: 0, duration: 0.9 }, at("e9", 0.67 + i * 0.11)); });
 
-    K.endcard(at("e10", -0.1), { tag: "تبيع أونلاين؟ *الرابط في البيو*", offer: "جرّب Pointili" });
+    K.endcard(at("e10", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

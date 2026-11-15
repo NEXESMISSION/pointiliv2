@@ -277,14 +277,16 @@
   }
 
   /* ── the end card: the mark, the name, what to do now ── */
-  /** when the voice says to write the comment («اكتب…», «يكتب…»), counted from t */
-  const writeCue = (t) => {
+  /** the first time after t that the voice says a word with `part` in it (null: never) */
+  const cue = (t, part) => {
     for (const l of F.lines) {
-      const w = l.end > t && tokens(l.say).find((x) => x.text.includes("كتب"));
-      if (w) return whenSaid(l, w.text) - t;
+      const w = l.end > t && tokens(l.say).find((x) => x.text.includes(part));
+      if (w) return whenSaid(l, w.text);
     }
     return null;
   };
+  /** when the voice says to write the comment («اكتب…», «يكتب…»), counted from t */
+  const writeCue = (t) => { const c = cue(t, "كتب"); return c == null ? null : c - t; };
   /** the end card. With a `keyword`, a comment box types it as the voice says to write it (typeAt: another moment, seconds after t) */
   function endcard(t, { tag = "كارطات الفيدليتي متاعك، في تليفونك", offer = "", keyword = "", ph = "زيد كومونتار…", url = "pointili.online", typeAt = null } = {}) {
     const el = add(`<div class="end"><div class="logo">${brandMark()}</div><div class="word">Pointili</div><div class="tag">${mark(tag)}</div>
@@ -297,7 +299,8 @@
     sfx("impact", t + 0.35);
     rise($(".word", el), t + 0.45, { y: 40 });
     rise($(".tag", el), t + 0.6, { y: 30 });
-    if (offer) pop($(".offer", el), t + 0.8, { from: 0.7 });
+    // the offer as the voice says it («جرّب Pointili»), once the card's own words are in
+    if (offer) { const said = cue(t, "جرّب"); pop($(".offer", el), said == null ? t + 0.8 : Math.max(t + 0.55, said - 0.05), { from: 0.7 }); }
     if (keyword) {
       const box = $(".cbox", el);
       // never before the card's own words are in

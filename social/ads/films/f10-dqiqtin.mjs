@@ -24,7 +24,7 @@ export default {
     { id: "h7", say: "وهاو الكود *حاضر*، حطّو على الكونتوار." },
     { id: "h8", say: "والحرفاء يسكانيو، *والكارط تتعمّر*." },
     { id: "h9", say: "لا كرتون، لا مطبعة، *لا أبليكاسيون*." },
-    { id: "h10", say: "جرّب Pointili، الرابط في البيو.", sub: false },
+    { id: "h10", say: "جرّب Pointili.", sub: false },
   ],
   assets: () => ({ qr: qrSvg("https://www.pointili.online/?k=yasmine") }),
   css: `
@@ -132,10 +132,10 @@ ${[[90, 760, "+1"], [840, 700, "+1"], [905, 1110, "+1"]].map(([x, y, t], i) => `
     K.sfx("win", t1, -2);
 
     /* h8 — customers scan: the card fills */
-    K.$$(".mini").forEach((m, i) => { K.pop(m, at("h8", 0.12 + i * 0.33), { from: 0.4 }); K.sfx("scan", at("h8", 0.23 + i * 0.33), -4); });
+    K.$$(".mini").forEach((m, i) => { K.pop(m, at("h8", 0.12 + i * 0.33), { from: 0.4 }); K.sfx("scan", at("h8", 0.22 + i * 0.33), -4); });
     const card = K.pass({ name: "قهوة الياسمين", color: "#6c47ff", goal: 8, stamps: 0, gift: "قهوة بلاش", icon: "coffee", x: 190, y: 1070, w: 700, size: 28, z: 35 });
     gsap.set(card, { autoAlpha: 0 });
-    tl.fromTo(card, { autoAlpha: 0, y: 120 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("h8", 0.35));
+    tl.fromTo(card, { autoAlpha: 0, y: 120 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("h8", 0.34));
     // the card fills as «والكارط تتعمّر» is said
     card.stamp(1, at("h8", "والكارط")); card.stamp(2, at("h8", "والكارط", 0.28)); card.stamp(3, at("h8", "تتعمّر"));
     tl.to([$("tab"), $("ctr"), card, ...K.$$(".mini")], { autoAlpha: 0, duration: 0.3 }, at("h9", -0.2));
@@ -145,6 +145,6 @@ ${[[90, 760, "+1"], [840, 700, "+1"], [905, 1110, "+1"]].map(([x, y, t], i) => `
     const nos = [at("h9", 0), at("h9", "مطبعة", -0.12), at("h9", "أبليكاسيون", -0.12)];
     K.$$("#nos span").forEach((s, i) => { K.pop(s, nos[i], { from: 0.6 }); K.sfx("scratch", nos[i] + 0.01, -3); });
 
-    K.endcard(at("h10", -0.1), { tag: "تبدا في دقيقتين، *الرابط في البيو*", offer: "جرّب Pointili" });
+    K.endcard(at("h10", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

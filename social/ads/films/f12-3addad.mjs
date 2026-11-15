@@ -20,7 +20,7 @@ export default {
     { id: "j7", say: "«ترجع للصفر *بعد 3 أيام*»." },
     { id: "j8", say: "يرجعلك *قبل ما يخسرهم*." },
     { id: "j9", say: "عطلة؟ رمضان؟ *وقّف العدّاد*، وحدّ ما يخسر حتى تامبون." },
-    { id: "j10", say: "جرّب Pointili، الرابط في البيو.", sub: false },
+    { id: "j10", say: "جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:radial-gradient(100% 70% at 50% 20%,#1d2a5a,#0b1030 75%)}
@@ -123,6 +123,6 @@ export default {
     K.pop($("paused"), at("j9", "العدّاد", 0.2), { from: 0.5 });
     K.sfx("ding", at("j9", "العدّاد", 0.25), -3);
 
-    K.endcard(at("j10", -0.1), { tag: "العدّاد *انت تشعلو وانت توقفو*", offer: "جرّب Pointili" });
+    K.endcard(at("j10", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

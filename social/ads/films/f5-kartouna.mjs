@@ -3,7 +3,7 @@
  * «add me a tampon, I came yesterday», cards wet, torn, lost — then the calm: the code on the
  * counter, the tampon in the customer's phone, every tampon on record for the owner. Comic,
  * drawn, quick. Modelled on the structure of a café-chaos comic reel (the problem in bursts → «the
- * fix is simple» → how → «message us on WhatsApp»), in our words and only what Pointili does.
+ * fix is simple» → how → «شنوّة تستنّى؟ جرّب Pointili»), in our words and only what Pointili does.
  */
 import { person, front, ART_CSS, SKINS } from "../engine/art.mjs";
 
@@ -30,7 +30,7 @@ export default {
     { id: "k8", say: "*لا كارط* تضيع، *ولا تامبون* بالكذب:" },
     { id: "k9", say: "انت تشوف *كل تامبون* وقتاش طاح." },
     { id: "k10", say: "هكا *ترتاح انت*، والحريف *يرجع*." },
-    { id: "k11", say: "شنوّة تستنّى؟ ابعثلنا على الواتساب، ودخّل Pointili لمحلّك اليوم.", sub: false },
+    { id: "k11", say: "شنوّة تستنّى؟ جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:#2d6b5e}
@@ -64,8 +64,6 @@ ${ART_CSS}
 .chip{position:absolute;display:flex;align-items:center;gap:16px;white-space:nowrap;background:#fff;color:var(--ink);font-weight:700;font-size:46px;padding:20px 36px 26px;border-radius:999px;box-shadow:0 18px 36px -16px rgb(0 0 0/.45);z-index:30;visibility:hidden;opacity:0}
 .chip .x{width:52px;height:52px;border-radius:50%;background:var(--coral);display:grid;place-items:center;color:#fff}
 .chip .x svg{width:30px;height:30px}
-.wa{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:18px;white-space:nowrap;background:#25d366;color:#fff;font-weight:700;font-size:56px;padding:22px 44px 28px;border-radius:999px;direction:ltr;box-shadow:0 20px 40px -16px rgb(0 0 0/.45);z-index:90;visibility:hidden;opacity:0}
-.wa svg{width:56px;height:56px}
 `,
   html: () => `
 <div class="wallc"></div>
@@ -192,12 +190,7 @@ ${ART_CSS}
     K.burst(540, 700, at("k10", "يرجع"), { n: 18, r: 280 });
     K.sfx("win", at("k10", "يرجع"), -3);
 
-    /* the end: message us on WhatsApp */
-    const ec = K.endcard(at("k11", -0.1), { tag: "دخّل Pointili *لمحلّك اليوم*", offer: "شنوّة تستنّى؟" });
-    const wa = K.add(`<div class="wa" style="top:1390px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>+216 58 415 520</span></div>`);
-    // the number as «ابعثلنا على الواتساب» is said
-    K.pop(wa, at("k11", "ابعثلنا", -0.05), { from: 0.6 });
-    K.sfx("pop", at("k11", "ابعثلنا"));
-    tl.fromTo(wa, { scale: 1 }, { scale: 1.06, duration: 0.4, yoyo: true, repeat: 5, ease: "sine.inOut" }, at("k11", "الواتساب", 0.3));
+    /* the end card: «شنوّة تستنّى؟ جرّب Pointili.» */
+    K.endcard(at("k11", -0.1), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

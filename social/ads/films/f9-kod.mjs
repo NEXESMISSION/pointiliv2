@@ -23,7 +23,7 @@ export default {
     { id: "g8", say: "وزيد: انت تختار *قدّاش* ينجم ياخو تامبون." },
     { id: "g9", say: "وكل تامبون *مكتوب*: شكون، ووقتاش." },
     { id: "g10", say: "انت تعطي الكادو.. *وانت مرتاح*." },
-    { id: "g11", say: "جرّب Pointili، واكتب «كود» في الكومونتار.", sub: false },
+    { id: "g11", say: "جرّب Pointili.", sub: false },
   ],
   assets: () => ({ q1: qrSvg("https://www.pointili.online/?k=7Hq2"), q2: qrSvg("https://www.pointili.online/?k=Zp91x"), q3: qrSvg("https://www.pointili.online/?k=m4Rt8Lw") }),
   css: `
@@ -138,6 +138,6 @@ export default {
     K.pop(K.$("#G .shield"), at("g10", "مرتاح", -0.15), { from: 0.4, dur: 0.6 });
     K.sfx("chime", at("g10", "مرتاح", -0.1));
 
-    K.endcard(at("g11", -0.1), { tag: "اكتب *«كود»* في الكومونتار", offer: "جرّب Pointili", keyword: "كود" });
+    K.endcard(at("g11", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

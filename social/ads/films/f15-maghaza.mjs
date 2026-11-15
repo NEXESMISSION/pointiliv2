@@ -23,7 +23,7 @@ export default {
     { id: "n7", say: "وهو يختار، *ويخلّص بالتامبونات*." },
     { id: "n8", say: "يورّيك الكود في الكاسة، *وتسلّمهالو*." },
     { id: "n9", say: "وكل ما يلمّ أكثر.. *يرجع أكثر*." },
-    { id: "n10", say: "جرّب Pointili، واكتب «ماغازة» في الكومونتار.", sub: false },
+    { id: "n10", say: "جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:radial-gradient(100% 70% at 50% 15%,#3a1c7a,#170b38 70%)}
@@ -117,10 +117,10 @@ ${[[160, 520], [470, 470], [780, 540], [300, 760], [640, 780]].map(([x, y], i) =
     tl.to(ph, { autoAlpha: 1, x: 0, duration: 0.4 }, at("n7", -0.1));
     tl.to(K.$("#it0"), { boxShadow: "0 0 0 6px #6c47ff", duration: 0.2 }, at("n7", 0.28));
     K.tap(400, P.y + 15 + 1082 * 0.55, at("n7", 0.28));
-    K.pop(K.$("#buy"), at("n7", 0.44), { from: 0.8 });
-    K.tap(540, P.y + 15 + 1082 * 0.86, at("n7", 0.9));
-    K.counter(K.$("#pb"), 32, 22, at("n7", 0.95), 0.6);
-    K.sfx("coin", at("n7", 0.95));
+    K.pop(K.$("#buy"), at("n7", 0.4), { from: 0.8 });
+    K.tap(540, P.y + 15 + 1082 * 0.86, at("n7", 0.77));
+    K.counter(K.$("#pb"), 32, 22, at("n7", 0.84), 0.6);
+    K.sfx("coin", at("n7", 0.84));
     tl.to(ph, { autoAlpha: 0, duration: 0.3 }, at("n8", -0.2));
 
     /* n8 — the code at the till, you hand it over */
@@ -139,6 +139,6 @@ ${[[160, 520], [470, 470], [780, 540], [300, 760], [640, 780]].map(([x, y], i) =
     K.each((t) => { if (t >= at("n9", -0.1)) K.$("#bn").textContent = String(Math.round(22 + 30 * Math.min(1, Math.max(0, (t - at("n9", 0.13)) / 1.5)))); });
     K.$$(".coin").forEach((c, i) => { tl.fromTo(c, { autoAlpha: 0, y: -400 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: "bounce.out" }, at("n9", 0.13 + i * 0.09)); K.sfx("coin", at("n9", 0.27 + i * 0.09), -4); });
 
-    K.endcard(at("n10", -0.1), { tag: "اكتب *«ماغازة»* في الكومونتار", offer: "جرّب Pointili", keyword: "ماغازة" });
+    K.endcard(at("n10", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

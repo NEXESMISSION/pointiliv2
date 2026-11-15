@@ -29,7 +29,7 @@ export default {
     { id: "i7", say: "اللي يبعدو؟ *كلمة منك* ترجّعهم:" },
     { id: "i8", say: "*تامبون هدية* في الواتساب." },
     { id: "i9", say: "وأوفى الحرفاء؟ *تعرفهم بالاسم*." },
-    { id: "i10", say: "جرّب Pointili، واكتب «حرفاء» في الكومونتار.", sub: false },
+    { id: "i10", say: "جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:radial-gradient(90% 60% at 50% 30%,#14606b,#0b343b 75%)}
@@ -136,6 +136,6 @@ ${card("t3", 90, "#8f8ba3", "ضاع", "ما جاش من 60 يوم", `<div class=
     K.$$("#champ .r").forEach((r, i) => K.rise(r, at("i9", "تعرفهم", -0.2 + i * 0.17), { y: 30 }));
     K.sfx("chime", at("i9", "تعرفهم"));
 
-    K.endcard(at("i10", -0.1), { tag: "اكتب *«حرفاء»* في الكومونتار", offer: "جرّب Pointili", keyword: "حرفاء" });
+    K.endcard(at("i10", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

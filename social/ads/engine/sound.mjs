@@ -379,7 +379,7 @@ export async function makeSound({ film, timing, total, sfx, out, ff = FFMPEG, ta
   for (let i = 0; i < N; i++) { pcm.writeFloatLE(Math.tanh(mix.L[i] * g * 1.1) / 1.1, i * 8); pcm.writeFloatLE(Math.tanh(mix.R[i] * g * 1.1) / 1.1, i * 8 + 4); }
   const raw = out.replace(/\.wav$/, ".raw.wav");
   writeFileSync(raw, Buffer.concat([wavHeader(N, 2), pcm]));
-  execFileSync(ff, ["-v", "error", "-y", "-i", raw, "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", String(SR), "-ac", "2", "-c:a", "pcm_s16le", out]);
+  execFileSync(ff, ["-v", "error", "-y", "-i", raw, "-af", "loudnorm=I=-14:TP=-2:LRA=11,alimiter=limit=0.79:attack=1:release=50:level=false", "-ar", String(SR), "-ac", "2", "-c:a", "pcm_s16le", out]);
   return out;
 }
 function wavHeader(frames, ch) {

@@ -43,7 +43,7 @@ export default {
     { id: "d6", say: "انت تختار الكادوات، وقدّاش *حظ كل وحدة*." },
     { id: "d7", say: "يجيك للمحل، يورّيك *الكود*، وتعطيه اللي يربحو." },
     { id: "d8", say: "ويرجع باش يدوّر *مرّة أخرى*." },
-    { id: "d9", say: "جرّب Pointili، واكتب «روليت» في الكومونتار.", sub: false },
+    { id: "d9", say: "جرّب Pointili.", sub: false },
   ],
   assets: () => ({ qr: qrSvg("https://www.pointili.online/?g=wheel") }),
   css: `
@@ -176,6 +176,6 @@ export default {
     tl.fromTo($("wrap"), { autoAlpha: 0, scale: 0.5, y: -320 }, { autoAlpha: 0.5, scale: 0.55, y: -330, duration: 0.4 }, at("d8", 0.21));
     tl.to($("W"), { rotation: "+=720", duration: Math.max(1, end("d8") - at("d8")), ease: "power2.inOut" }, at("d8", 0.21));
 
-    K.endcard(at("d9", -0.1), { tag: "اكتب *«روليت»* في الكومونتار", offer: "جرّب Pointili", keyword: "روليت" });
+    K.endcard(at("d9", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

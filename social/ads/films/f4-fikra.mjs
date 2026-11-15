@@ -43,7 +43,6 @@ export default {
     { id: "w14", say: "وفي عوض حريف يشري *مرّة* ويمشي،" },
     { id: "w15", say: "تبني حرفاء *يرجعولك ديما*." },
     { id: "w16", say: "وكان تحبها في تليفون الحريف، وبلا كرتون: انت جرّب *Pointili*." },
-    { id: "w17", say: "عجبتك الفكرة؟ اكتب «فكرة» في الكومونتار.", sub: false },
   ],
   assets: () => Object.fromEntries(["w1", "w3", "w5", "w9", "w14"].map((k) => [k, photo(k)]).filter(([, v]) => v)),
   css: `
@@ -231,7 +230,7 @@ ${ART_CSS}
     K.sfx("whoosh", at("w16", 0.07));
     tl.to(K.$("span:last-child", bug), { color: "#fff", duration: 0.2 }, at("w16", 0));
 
-    /* the end: comment «فكرة» */
-    K.endcard(at("w17", -0.1), { tag: "عجبتك الفكرة؟ اكتب *«فكرة»* في الكومونتار", offer: "جرّب Pointili", keyword: "فكرة" });
+    /* the end card, as «وبلا كرتون: انت جرّب Pointili» is said */
+    K.endcard(at("w16", "كرتون", 0.15), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

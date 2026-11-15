@@ -43,7 +43,7 @@ export default {
     { id: "b20", say: "*عندها سيستام.*", sub: false, hold: 0.5 },
     { id: "b21", say: "والسيستام هذا اسمو *Pointili*.", sub: false },
     { id: "b22", say: "تحب نفس الحاجة لقهوتك؟", sub: false },
-    { id: "b23", say: "جرّب Pointili، واكتب «Pointili» في الكومونتار.", sub: false },
+    { id: "b23", say: "جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:#f6f2fb}
@@ -206,7 +206,7 @@ ${ART_CSS}
     K.burst(670, 760, at("b10", "تامبون"), { n: 14, r: 220 });
     const noApp = K.pill("بلا أبليكاسيون", { x: 110, y: 330, cls: "coral", icon: "nodl", z: 41 });
     K.pop(noApp, at("b11", 0.02), { from: 0.6 });
-    K.sfx("pop", at("b11", 0.04));
+    K.sfx("pop", at("b11", 0.05));
     K.out(noApp, at("b12", -0.2));
     tl.to(his, { autoAlpha: 0, scale: 0.9, duration: 0.3 }, at("b12", -0.2));
 
@@ -251,7 +251,7 @@ ${ART_CSS}
     ] });
     gsap.set(ch, { autoAlpha: 0 });
     tl.fromTo(ch, { autoAlpha: 0, y: 100 }, { autoAlpha: 1, y: 0, duration: 0.4 }, at("b16", -0.1));
-    ch.msgs.forEach((m, i) => { K.pop(m, at("b16", 0.29 + i * 0.54), { from: 0.6 }); K.sfx("msg", at("b16", 0.33 + i * 0.54)); });
+    ch.msgs.forEach((m, i) => { K.pop(m, at("b16", 0.22 + i * 0.54), { from: 0.6 }); K.sfx("msg", at("b16", 0.26 + i * 0.54)); });
     tl.to(ch, { autoAlpha: 0, y: -60, duration: 0.3 }, at("b17", -0.2));
 
     /* I — and he comes back */
@@ -292,6 +292,6 @@ ${ART_CSS}
     tl.to(sys, { autoAlpha: 0, duration: 0.2 }, endAt + 0.3);
 
     /* the end: its name, then what to do */
-    K.endcard(endAt, { tag: "تحب نفس الحاجة لقهوتك؟", offer: "جرّب Pointili", keyword: "Pointili" });
+    K.endcard(endAt, { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

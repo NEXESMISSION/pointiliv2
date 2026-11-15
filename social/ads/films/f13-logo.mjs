@@ -20,7 +20,7 @@ export default {
     { id: "l7", say: "في *تليفون كل حريف*." },
     { id: "l8", say: "حجّام ولا قهواجي ولا محل متاع بارفان.. *كل واحد بستيلو*." },
     { id: "l9", say: "خلّي محلّك *في جيب الحريف*." },
-    { id: "l10", say: "جرّب Pointili، الرابط في البيو.", sub: false },
+    { id: "l10", say: "جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:#f6f3ee}
@@ -124,6 +124,6 @@ export default {
     K.sfx("whoosh", at("l9", 0.15));
     K.burst(540, 600, at("l9", 0.78), { n: 12, r: 200, colors: ["#e8578a", "#ffd23f", "#fff"] });
 
-    K.endcard(at("l10", -0.1), { tag: "الكارط بلونك واللوغو متاعك · *الرابط في البيو*", offer: "جرّب Pointili" });
+    K.endcard(at("l10", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

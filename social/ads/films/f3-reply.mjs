@@ -20,7 +20,7 @@ export default {
     { id: "r5", say: "والتامبون يطيح طول في الكارط متاعو.", sub: "والتامبون *يطيح طول*" },
     { id: "r6", say: "لا أبليكاسيون تتيليشارجيها، ولا كارط كرتون تضيعلو.", sub: "*بلا أبليكاسيون*، بلا كرتون" },
     { id: "r7", say: "والكود يتبدّل وحدو، ويخدم مرّة برك: معناها ما يتسرقش.", sub: "الكود *يتبدّل وحدو*" },
-    { id: "r8", say: "جرّب Pointili: الرابط في البيو، ولا اكتب «كارط» في الكومونتار.", sub: false },
+    { id: "r8", say: "جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:#2a1d16}
@@ -134,8 +134,8 @@ export default {
     /* 5 — no app, no paper */
     p2.screen(S + "v2-cafe-home.png", at("r6", -0.05), "fade");
     const n1 = K.pill("بلا أبليكاسيون", { x: 120, y: 1440, cls: "coral", icon: "nodl", z: 40 });
-    K.pop(n1, at("r6", 0.1), { from: 0.6 });
-    K.sfx("pop", at("r6", 0.12));
+    K.pop(n1, at("r6", 0.09), { from: 0.6 });
+    K.sfx("pop", at("r6", 0.11));
     const px = K.add(`<div class="paperx" style="left:640px;top:1410px"></div>`);
     // the paper card as «ولا كارط كرتون» is said — and gone as «تضيعلو» is
     K.pop(px, at("r6", "كارط", -0.2), { from: 0.6 });
@@ -161,6 +161,6 @@ export default {
     tl.to([p2, ring, once, safe], { autoAlpha: 0, duration: 0.25 }, at("r8", -0.15));
 
     /* 7 — try it free: the link in the bio, or a comment */
-    K.endcard(at("r8", -0.1), { tag: "اكتب *«كارط»* في الكومونتار، ولا الرابط في البيو", offer: "جرّب Pointili", keyword: "كارط" });
+    K.endcard(at("r8", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

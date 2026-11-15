@@ -1,6 +1,25 @@
 {
  "cut": [
-  [20.05, 22.2, "«كل محل عندو حر…» begun, stopped, then said again whole"],
-  [23.9, 25.8, "«وكل حريف يحب يتحسب» said twice: the second one is kept"]
- ]
+  [
+   20.05,
+   22.2,
+   "«كل محل عندو حر…» begun, stopped, then said again whole"
+  ],
+  [
+   23.9,
+   25.8,
+   "«وكل حريف يحب يتحسب» said twice: the second one is kept"
+  ]
+ ],
+ "stop": 30.43,
+ "stopWhy": "«جرّب Pointili، واكتب نوع محلّك في الكومونتار» left out",
+ "tail": {
+  "file": "4.wav",
+  "at": [
+   32.71,
+   33.72
+  ],
+  "after": 0.35,
+  "why": "every film ends on the same «جرّب Pointili.» — said once, as a sentence that ends, in film 4"
+ }
 }

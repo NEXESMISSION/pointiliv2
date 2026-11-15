@@ -21,7 +21,7 @@ export default {
     { id: "c7", say: "كارط تامبون *في تليفونو*." },
     { id: "c8", say: "كل قهوة، تامبون. والثامنة *بلاش*." },
     { id: "c9", say: "والحساب يكمّل *وحدو*." },
-    { id: "c10", say: "جرّب Pointili، واكتب «حساب» في الكومونتار.", sub: false },
+    { id: "c10", say: "جرّب Pointili.", sub: false },
   ],
   css: `
 #stage{background:#0f0b24}
@@ -82,7 +82,7 @@ export default {
     /* c3 — 200 more coffees */
     tl.to([$("dots"), $("n200"), lbl, $("plus1")], { autoAlpha: 0, y: -60, duration: 0.3, ease: "power2.in" }, at("c3", -0.15));
     K.pop($("cups200"), at("c3", 0), { from: 0.4 });
-    K.rise($("lbl200"), at("c3", 0.11), { y: 30 });
+    K.rise($("lbl200"), at("c3", 0.12), { y: 30 });
     K.sfx("impact", at("c3", 0.02));
 
     /* c4 — × 12: 2400 a year */
@@ -136,6 +136,6 @@ export default {
     K.fadeIn($("up"), at("c9", 0), 0.1);
     gsap.set($("up"), { autoAlpha: 0 });
 
-    K.endcard(at("c10", -0.1), { tag: "اكتب *«حساب»* في الكومونتار", offer: "جرّب Pointili", keyword: "حساب" });
+    K.endcard(at("c10", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };

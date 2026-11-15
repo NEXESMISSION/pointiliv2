@@ -56,7 +56,7 @@ _Built like a two-cafés story reel (Daayem's): an illustrated story, a voice te
 20. عندها سيستام.
 21. والسيستام هذا اسمو Pointili.
 22. تحب نفس الحاجة لقهوتك؟
-23. جرّب Pointili، واكتب «Pointili» في الكومونتار.
+23. جرّب Pointili.
 
 ## f10 — دقيقتين
 
@@ -71,7 +71,7 @@ _Built like a stopwatch speedrun: the card made in under two minutes._ File: `ou
 7. وهاو الكود حاضر، حطّو على الكونتوار.
 8. والحرفاء يسكانيو، والكارط تتعمّر.
 9. لا كرتون، لا مطبعة، لا أبليكاسيون.
-10. جرّب Pointili، الرابط في البيو.
+10. جرّب Pointili.
 
 ## f11 — ثلاثة حرفاء
 
@@ -86,7 +86,7 @@ _Built like trading cards: the regular, the drifting one, the lost one — and �
 7. اللي يبعدو؟ كلمة منك ترجّعهم:
 8. تامبون هدية في الواتساب.
 9. وأوفى الحرفاء؟ تعرفهم بالاسم.
-10. جرّب Pointili، واكتب «حرفاء» في الكومونتار.
+10. جرّب Pointili.
 
 ## f12 — العدّاد
 
@@ -101,7 +101,7 @@ _Built like a countdown: the reset clock the owner turns on (and pauses)._ File:
 7. «ترجع للصفر بعد 3 أيام».
 8. يرجعلك قبل ما يخسرهم.
 9. عطلة؟ رمضان؟ وقّف العدّاد، وحدّ ما يخسر حتى تامبون.
-10. جرّب Pointili، الرابط في البيو.
+10. جرّب Pointili.
 
 ## f13 — اللوغو متاعك
 
@@ -116,7 +116,7 @@ _Built like quick cuts on the beat: your colour and your logo on every tampon._ 
 7. في تليفون كل حريف.
 8. حجّام ولا قهواجي ولا محل متاع بارفان.. كل واحد بستيلو.
 9. خلّي محلّك في جيب الحريف.
-10. جرّب Pointili، الرابط في البيو.
+10. جرّب Pointili.
 
 ## f14 — مش كان القهاوي
 
@@ -131,7 +131,7 @@ _Built like a photo tour of the trades (ChatGPT photos), each with its own gift.
 7. الحوّات: تنظيف الحوت بلاش.
 8. كل محل عندو حرفاء.. وكل حريف يحب يتحسب.
 9. اختار الكادو متاعك، والباقي علينا.
-10. جرّب Pointili، واكتب نوع محلّك في الكومونتار.
+10. جرّب Pointili.
 
 ## f15 — الماغازة
 
@@ -146,7 +146,7 @@ _Built like an arcade store: tampons spent on things from the shop (الماغا
 7. وهو يختار، ويخلّص بالتامبونات.
 8. يورّيك الكود في الكاسة، وتسلّمهالو.
 9. وكل ما يلمّ أكثر.. يرجع أكثر.
-10. جرّب Pointili، واكتب «ماغازة» في الكومونتار.
+10. جرّب Pointili.
 
 ## f2 — الحريف اللي غاب
 
@@ -171,8 +171,7 @@ _Built like a barber-shop reel (QuickStamp's): flat motion graphics, big words, 
 17. ويرجع يقعد على الكرسي متاعو.
 18. الحريف ما يستأذنش قبل ما يمشي..
 19. خلّي الكارط متاعك في جيبو.
-20. ابعث الفيديو هذا لصاحبك اللي عندو صالون..
-21. وقلّو يكتب «كارط» في الكومونتار.
+20. جرّب Pointili.
 
 ## f3 — رد على كومونتار
 
@@ -185,7 +184,7 @@ _Built like a «reply to a comment» reel (menuos's): the question stickered on,
 5. والتامبون يطيح طول في الكارط متاعو.
 6. لا أبليكاسيون تتيليشارجيها، ولا كارط كرتون تضيعلو.
 7. والكود يتبدّل وحدو، ويخدم مرّة برك: معناها ما يتسرقش.
-8. جرّب Pointili: الرابط في البيو، ولا اكتب «كارط» في الكومونتار.
+8. جرّب Pointili.
 
 ## f4 — حركة بسيطة
 
@@ -206,7 +205,6 @@ _Built like an «idea for your business» reel (forsa's): one big word at a time
 13. وفي عوض حريف يشري مرّة ويمشي،
 14. تبني حرفاء يرجعولك ديما.
 15. وكان تحبها في تليفون الحريف، وبلا كرتون: انت جرّب Pointili.
-16. عجبتك الفكرة؟ اكتب «فكرة» في الكومونتار.
 
 ## f5 — الكارط الكرتون
 
@@ -222,7 +220,7 @@ _Built like a café-chaos comic reel (Ayyatli's): the problem in bursts, then «
 8. لا كارط تضيع، ولا تامبون بالكذب:
 9. انت تشوف كل تامبون وقتاش طاح.
 10. هكا ترتاح انت، والحريف يرجع.
-11. شنوّة تستنّى؟ ابعثلنا على الواتساب، ودخّل Pointili لمحلّك اليوم.
+11. شنوّة تستنّى؟ جرّب Pointili.
 
 ## f6 — الحساب
 
@@ -237,7 +235,7 @@ _Built like kinetic numbers on a dark board: 200 customers, one more visit, 2400
 7. كارط تامبون في تليفونو.
 8. كل قهوة، تامبون. والثامنة بلاش.
 9. والحساب يكمّل وحدو.
-10. جرّب Pointili، واكتب «حساب» في الكومونتار.
+10. جرّب Pointili.
 
 ## f7 — الروليت
 
@@ -251,7 +249,7 @@ _Built like a prize wheel under stadium lights: the app's wheel (الروليت)
 6. انت تختار الكادوات، وقدّاش حظ كل وحدة.
 7. يجيك للمحل، يورّيك الكود، وتعطيه اللي يربحو.
 8. ويرجع باش يدوّر مرّة أخرى.
-9. جرّب Pointili، واكتب «روليت» في الكومونتار.
+9. جرّب Pointili.
 
 ## f8 — تبيع أونلاين؟
 
@@ -266,7 +264,7 @@ _Built like a chat story for online sellers: a tampon sent as a link on WhatsApp
 7. وانت تعرف شكون خذاه.
 8. وكل ما تحلّ الكارط، تشوف قدّاش مازالها للكادو.
 9. ترجعلك انت.. موش لغيرك.
-10. جرّب Pointili، الرابط في البيو.
+10. جرّب Pointili.
 
 ## f9 — الكود اللي يتبدّل
 
@@ -282,4 +280,4 @@ _Built like a little noir: the photographed code that no longer works._ File: `o
 8. وزيد: انت تختار قدّاش ينجم ياخو تامبون.
 9. وكل تامبون مكتوب: شكون، ووقتاش.
 10. انت تعطي الكادو.. وانت مرتاح.
-11. جرّب Pointili، واكتب «كود» في الكومونتار.
+11. جرّب Pointili.

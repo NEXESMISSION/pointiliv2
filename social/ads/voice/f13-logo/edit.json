@@ -1,5 +1,20 @@
 {
  "cut": [
-  [10.2, 15.33, "«على كل تامبون، في تليفون كل حريف» is said twice more after the line: the last «في تليفون كل حريف» is the one kept"]
- ]
+  [
+   10.2,
+   15.33,
+   "«على كل تامبون، في تليفون كل حريف» is said twice more after the line: the last «في تليفون كل حريف» is the one kept"
+  ]
+ ],
+ "stop": 24.03,
+ "stopWhy": "«جرّب Pointili، الرابط في البيو» left out",
+ "tail": {
+  "file": "4.wav",
+  "at": [
+   32.71,
+   33.72
+  ],
+  "after": 0.35,
+  "why": "every film ends on the same «جرّب Pointili.» — said once, as a sentence that ends, in film 4"
+ }
 }

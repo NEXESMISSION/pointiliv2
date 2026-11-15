@@ -35,7 +35,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { basename, dirname, isAbsolute, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { match, norm, shown, spoken, spread } from "./engine/words.mjs";
 
@@ -80,29 +80,51 @@ const wav16 = (samples) => {
 
 /* ---------- what is taken out of the recording first: a phrase said twice, a slip ---------- */
 
-// voice/<film>/edit.json — { "cut": [[from, to, "why"], …] }, seconds in the recording as it was
-// given. Each stretch goes (its two ends meet in the quiet, a short fade at each); everything
-// after this reads the recording as if it had been said that way.
+// voice/<film>/edit.json, seconds in the recording as it was given:
+//   "cut":  [[from, to, "why"], …]   each stretch goes (its two ends meet in the quiet, a short fade
+//                                    at each): a phrase said twice, a slip;
+//   "stop": seconds                  what is said after it is left out (a line the film no longer has);
+//   "tail": { "file": "4.wav", "at": [from, to], "after": 0.35, "why": "…" }
+//                                    a piece of another recording of the same voice, put at the end
+//                                    after that much silence (the file: beside the take, or a path).
+// Everything after this reads the recording as if it had been said that way.
 const OUT = join(DIR, "voice", NAME);
 const EDIT = existsSync(join(OUT, "edit.json")) ? JSON.parse(readFileSync(join(OUT, "edit.json"), "utf8")) : {};
 const REMOVED = (EDIT.cut ?? []).map(([a, z, why]) => ({ a, z, why: why ?? "" })).sort((x, y) => x.a - y.a);
+const STOP = Number.isFinite(EDIT.stop) ? EDIT.stop : null;
+const TAIL = EDIT.tail ? { ...EDIT.tail, path: isAbsolute(EDIT.tail.file) ? EDIT.tail.file : join(dirname(source), EDIT.tail.file) } : null;
+if (TAIL && !existsSync(TAIL.path)) throw new Error(`edit.json: no recording «${TAIL.path}» for the tail`);
+const F = Math.round(0.01 * SR);
+const fade = (seg, start, end) => {
+  if (start) for (let i = 0; i < Math.min(F, seg.length); i++) seg[i] *= i / F;
+  if (end) for (let i = 0; i < Math.min(F, seg.length); i++) seg[seg.length - 1 - i] *= i / F;
+  return seg;
+};
 let take = source;
 let audio = decode(source);
+if (STOP != null) audio = fade(audio.slice(0, Math.round(STOP * SR)), false, true);
 if (REMOVED.length) {
-  const F = Math.round(0.01 * SR);
   const keep = [];
   let from = 0;
   for (const c of [...REMOVED, null]) {
     const to = c ? Math.round(c.a * SR) : audio.length;
-    const seg = audio.slice(from, to);
-    if (keep.length) for (let i = 0; i < Math.min(F, seg.length); i++) seg[i] *= i / F;
-    if (c) for (let i = 0; i < Math.min(F, seg.length); i++) seg[seg.length - 1 - i] *= i / F;
-    keep.push(seg);
+    keep.push(fade(audio.slice(from, to), keep.length > 0, !!c));
     if (c) from = Math.round(c.z * SR);
   }
   audio = new Float32Array(keep.reduce((x, p) => x + p.length, 0));
   let w = 0;
   for (const p of keep) { audio.set(p, w); w += p.length; }
+}
+if (TAIL) {
+  const all = decode(TAIL.path);
+  const clip = fade(all.slice(Math.round(TAIL.at[0] * SR), Math.round(TAIL.at[1] * SR)), true, true);
+  const gap = Math.round((TAIL.after ?? 0.35) * SR);
+  const joined = new Float32Array(audio.length + gap + clip.length);
+  joined.set(audio, 0);
+  joined.set(clip, audio.length + gap);
+  audio = joined;
+}
+if (REMOVED.length || STOP != null || TAIL) {
   take = join(CACHE, `${id.split("-")[0]}.edit.wav`);
   writeFileSync(take, wav16(audio));
 }
@@ -148,7 +170,7 @@ for (let k = Math.round(ON * 100); k < Math.round(OFF * 100); ) {
 // the film's lines are whispered to Whisper first: it then writes the words the way the script does.
 // So a take is heard once for each script and each way the recording is cut (the name says which).
 const PROMPT = film.lines.map((l) => spoken(l.say)).join(" ");
-const KEY = createHash("sha1").update(JSON.stringify([PROMPT, REMOVED.map((c) => [c.a, c.z])])).digest("hex").slice(0, 8);
+const KEY = createHash("sha1").update(JSON.stringify([PROMPT, REMOVED.map((c) => [c.a, c.z]), STOP, TAIL && [TAIL.file, TAIL.at, TAIL.after]])).digest("hex").slice(0, 8);
 const HEARD = join(DIR, ".cache", "heard", `${id.split("-")[0]}.${KEY}.json`);
 if (!existsSync(HEARD) || statSync(HEARD).mtimeMs < statSync(source).mtimeMs) {
   mkdirSync(join(DIR, ".cache", "heard"), { recursive: true });
@@ -309,6 +331,8 @@ writeFileSync(
       loudness: -16,
       heard: `${matched}/${n}`,
       removed: REMOVED,
+      ...(STOP != null ? { stop: STOP } : {}),
+      ...(TAIL ? { tail: { file: TAIL.file, at: TAIL.at } } : {}),
       pauses: ops.map((o) => ({ at: r3(moved(o.a)), by: r3(o.add - (o.z - o.a)) })),
       lines: lines.map((l) => ({ id: l.id, start: r3(moved(l.start, true)), end: r3(moved(l.end)), words: l.ws.map((x) => ({ w: x.text, a: r3(moved(x.a, true)), z: r3(moved(x.z)) })) })),
     },
@@ -317,4 +341,4 @@ writeFileSync(
   ),
 );
 const net = ops.reduce((x, o) => x + o.add - (o.z - o.a), 0);
-console.log(`\n${basename(source)} → ${join("voice", NAME, "take.wav")}: ${(outLen / SR).toFixed(1)} s, ${GAIN >= 0 ? "+" : ""}${GAIN.toFixed(1)} dB to −16 LUFS${REMOVED.length ? `, ${REMOVED.length} stretch${REMOVED.length > 1 ? "es" : ""} taken out (${REMOVED.reduce((x, c) => x + c.z - c.a, 0).toFixed(1)} s)` : ""}${ops.length ? `, ${ops.length} pause${ops.length > 1 ? "s" : ""} set (${net >= 0 ? "+" : ""}${net.toFixed(2)} s)` : ""}\nnow: node retime.mjs ${id} (the scenes, to this voice), then node render.mjs ${id}`);
+console.log(`\n${basename(source)} → ${join("voice", NAME, "take.wav")}: ${(outLen / SR).toFixed(1)} s, ${GAIN >= 0 ? "+" : ""}${GAIN.toFixed(1)} dB to −16 LUFS${REMOVED.length ? `, ${REMOVED.length} stretch${REMOVED.length > 1 ? "es" : ""} taken out (${REMOVED.reduce((x, c) => x + c.z - c.a, 0).toFixed(1)} s)` : ""}${STOP != null ? `, stopped at ${STOP} s` : ""}${TAIL ? `, ${TAIL.file} ${TAIL.at[0]}–${TAIL.at[1]} s added at the end` : ""}${ops.length ? `, ${ops.length} pause${ops.length > 1 ? "s" : ""} set (${net >= 0 ? "+" : ""}${net.toFixed(2)} s)` : ""}\nnow: node retime.mjs ${id} (the scenes, to this voice), then node render.mjs ${id}`);

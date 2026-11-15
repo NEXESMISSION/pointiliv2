@@ -34,7 +34,7 @@ export default {
     { id: "m7", say: "الحوّات: *تنظيف الحوت* بلاش." },
     { id: "m8", say: "كل محل عندو حرفاء.. *وكل حريف يحب يتحسب*." },
     { id: "m9", say: "اختار الكادو متاعك، *والباقي علينا*." },
-    { id: "m10", say: "جرّب Pointili، واكتب نوع محلّك في الكومونتار.", sub: false },
+    { id: "m10", say: "جرّب Pointili.", sub: false },
   ],
   assets: () => Object.fromEntries([["cafe", pic("f4-w14.jpg")], ...TRADES.map((t) => [t.id, pic(t.file)])].filter(([, v]) => v)),
   css: `
@@ -113,6 +113,6 @@ ${TRADES.map((t) => `<div class="trd" id="tag-${t.id}">${t.tag}</div>`).join("")
     K.each((t) => { const k = Math.max(0, Math.min(gifts.length - 1, Math.floor((t - g0) / each))); K.$("#gf").textContent = t < g0 ? "" : gifts[k]; });
     gifts.forEach((_, k) => K.sfx("tick", g0 + k * each, -4));
 
-    K.endcard(at("m10", -0.1), { tag: "اكتب *نوع محلّك* في الكومونتار", offer: "جرّب Pointili", keyword: "حجّام", ph: "اكتب نوع محلّك…" });
+    K.endcard(at("m10", -0.5), { tag: "كارط الفيدليتي متاعك، *في تليفون الحريف*", offer: "جرّب Pointili" });
   },
 };
