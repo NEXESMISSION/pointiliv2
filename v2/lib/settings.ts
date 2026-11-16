@@ -7,7 +7,7 @@ import { service } from "@/lib/supabase";
 export type Video = { id: string; label: string; vertical: boolean; url: string };
 /** Where the owners pay: the card page (Dodo Payments), D17, the bank account, the post office. */
 /** where the owners pay; `banks` are the founder's accounts, each its bank and its RIB (no holder's name shown) */
-export type PayDetails = { card: string | null; d17: string | null; name: string | null; bank: string | null; rib: string | null; mandat: string | null; banks: { bank: string | null; rib: string }[] };
+export type PayDetails = { card: string | null; d17: string | null; name: string | null; bank: string | null; rib: string | null; mandat: string | null; banks: { bank: string | null; rib: string; transfer: boolean }[] };
 /** Pointili's own pages (the footer links them; search engines and AI assistants learn they are Pointili's). */
 export type Social = { facebook: string | null; instagram: string | null; tiktok: string | null };
 /** The ads: Facebook's pixel (its number) and the code that tells Facebook the domain is Pointili's. */
@@ -119,9 +119,11 @@ export async function getSettings(fresh = false): Promise<Settings> {
       bank: raw.pay_bank?.trim() || null,
       rib: raw.pay_rib?.trim() || null,
       mandat: raw.pay_mandat?.trim() || null,
+      // the first bank takes deposits only, the second transfers and deposits (the founder, 16 Nov 2026:
+      // «in the virement keep the BTE only, for the versement keep both») — the console says it by each bank
       banks: [
-        { bank: raw.pay_bank?.trim() || null, rib: raw.pay_rib?.trim() || "" },
-        { bank: raw.pay_bank2?.trim() || null, rib: raw.pay_rib2?.trim() || "" },
+        { bank: raw.pay_bank?.trim() || null, rib: raw.pay_rib?.trim() || "", transfer: false },
+        { bank: raw.pay_bank2?.trim() || null, rib: raw.pay_rib2?.trim() || "", transfer: true },
       ].filter((b) => b.rib),
     },
     social: { facebook: socialUrl(raw.facebook_url, "facebook.com"), instagram: socialUrl(raw.instagram_url, "instagram.com"), tiktok: socialUrl(raw.tiktok_url, "tiktok.com") },

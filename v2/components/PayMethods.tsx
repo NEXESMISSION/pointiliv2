@@ -27,7 +27,7 @@ const WAYS = [
  * hand. A tap is only counted in the visits — it is not a payment waiting for
  * an answer (the founder, 18 Oct 2026: there is no request to manage).
  */
-export function PayMethods({ support, shop, plan, gift = false, details, phone }: { support: string | null; shop: string; plan: Plan; gift?: boolean; details?: { d17: string | null; banks: { bank: string | null; rib: string }[] }; phone?: string | null }) {
+export function PayMethods({ support, shop, plan, gift = false, details, phone }: { support: string | null; shop: string; plan: Plan; gift?: boolean; details?: { d17: string | null; banks: { bank: string | null; rib: string; transfer?: boolean }[] }; phone?: string | null }) {
   const [way, setWay] = useState<string | null>(null);
   const said = (how: string) => signal("pay", how);
   const amount = plan.price;
@@ -83,7 +83,8 @@ export function PayMethods({ support, shop, plan, gift = false, details, phone }
           )}
           {(way === "Virement" || way === "Versement") && !!details?.banks.length && (
             <div className="mt-2 divide-y divide-line rounded-[1rem] bg-canvas">
-              {details.banks.map((b) => (
+              {/* a transfer: the bank that takes them only (never none: with no such bank set, all of them); a deposit: every bank */}
+              {(way === "Virement" && details.banks.some((b) => b.transfer) ? details.banks.filter((b) => b.transfer) : details.banks).map((b) => (
                 <Detail key={b.rib} label={t.payRib} value={b.rib} sub={b.bank} />
               ))}
             </div>
