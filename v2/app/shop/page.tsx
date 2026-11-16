@@ -1,6 +1,6 @@
 import Link from "@/components/Link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, Link2, QrCode, ScanLine, Smartphone, Store, Ticket, Users } from "lucide-react";
+import { ChevronLeft, Link2, QrCode, ScanLine, Smartphone, Store, Users } from "lucide-react";
 import { HelpButton } from "@/components/Help";
 import { InstallButton } from "@/components/InstallButton";
 import { FirstGift } from "@/components/FirstGift";
@@ -24,7 +24,6 @@ import type { News } from "@/lib/news";
 import { getHelp } from "@/lib/settings";
 import { call, service } from "@/lib/supabase";
 import { fill, t } from "@/lib/t";
-import type { CardView } from "@/lib/types";
 
 export const metadata = { title: "المحل" };
 
@@ -73,15 +72,11 @@ export default async function ShopHome() {
   if (me.shop.wheel_on && !((await call<{ prizes: unknown[] }>("my_wheel"))?.prizes?.length ?? 0)) redirect("/shop/card");
   if (me.shop.store_on && !((await call<{ items: unknown[] }>("my_store"))?.items?.length ?? 0)) redirect("/shop/store?start=1");
   const shop = me.shop;
-  // an owner is somebody's customer too: their own cards, asked for beside the rest
-  // so it costs nothing. Never a card at their own shop — the counter refuses one —
-  // so every card here is at another business (the founder, 18 Oct 2026)
-  const [home, help, news, pay, mine, bell, asApp] = await Promise.all([
+  const [home, help, news, pay, bell, asApp] = await Promise.all([
     call<Home>("shop_home"),
     getHelp(),
     call<News | null>("news_next"),
     call<Pay | null>("my_payment"),
-    call<CardView[]>("wallet"),
     call<{ unread: number } | null>("my_bell"),
     // Pointili already opened as the app, on any phone of theirs: no more asking to install it
     service().from("visits").select("id").eq("user_id", me.id).eq("standalone", true).limit(1),
@@ -89,7 +84,6 @@ export default async function ShopHome() {
   // a read that failed says nothing: no ask this visit (the ask is once, never spent on someone who has the app)
   if (asApp.error) console.error("[home] app visits", asApp.error.message);
   const hasApp = !!asApp.error || asApp.data.length > 0;
-  const myCards = mine ?? [];
   const seen = me.seen ?? [];
   const paid = !!pay?.paid;
   const offer = !!pay?.offer;
@@ -153,14 +147,8 @@ export default async function ShopHome() {
         </span>
         {/* the round buttons at the end, closer to each other than to the name (four of them at the most) */}
         <span className="flex shrink-0 items-center gap-2">
-          {/* the owner's own cards, where they are a customer: a door that is only
-              there when something is behind it, and a coral dot when a gift waits */}
-          {myCards.length > 0 && (
-            <Link href="/wallet" aria-label={t.myCards} className="press relative grid size-11 shrink-0 place-items-center rounded-full bg-surface shadow-card">
-              <Ticket className="size-5 text-brand" strokeWidth={2.2} />
-              {myCards.some((c) => c.ready) && <span className="absolute -end-0.5 -top-0.5 size-3 rounded-full bg-coral ring-2 ring-canvas" aria-hidden />}
-            </Link>
-          )}
+          {/* the owner's own cards (where they are a customer) live in «المحل» only, with their coral dot (the founder,
+              16 Nov 2026: «hide this from the main page, keep it in the settings, put the install button instead») */}
           {/* the app on the phone, in plain sight beside the help (nothing once installed) */}
           <InstallButton where="home · top" look="icon" />
           {/* 🔔 what the founder writes, kept (13 Nov 2026): the count of what is not read on it */}

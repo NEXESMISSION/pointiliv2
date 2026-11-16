@@ -9,6 +9,7 @@ import { InstallButton } from "@/components/InstallButton";
 import { LogoutButton } from "@/components/LogoutButton";
 import { OwnerBell } from "@/components/OwnerBell";
 import type { Pay } from "@/components/Pay";
+import type { CardView } from "@/lib/types";
 import { ShopMark } from "@/components/ShopMark";
 import { Top } from "@/components/Top";
 import { Mark } from "@/components/Owner";
@@ -60,12 +61,15 @@ export default async function ShopSettings() {
   if (!me.shop.goal) redirect("/shop/card");
   const shop = me.shop;
   // «تحميل البيانات»: only for a shop the founder allowed it, from the console (off for every shop)
-  const [pay, help, exportState, bell] = await Promise.all([
+  // the owner's own cards at other shops: a coral dot on «كارطاتي» when a gift waits there (it left the home, 16 Nov 2026)
+  const [pay, help, exportState, bell, mine] = await Promise.all([
     call<Pay | null>("my_payment"),
     getHelp(),
     call<{ on: boolean; open?: boolean; last?: string | null; next?: string | null }>("my_export_state"),
     call<{ unread: number } | null>("my_bell"),
+    call<CardView[]>("wallet"),
   ]);
+  const giftWaits = (mine ?? []).some((c) => c.ready);
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const daysLeft = pay?.trial_until ? Math.max(0, Math.ceil((Date.parse(pay.trial_until) - Date.now()) / 86_400_000)) : 0;
   const plan = pay?.paid && pay.paid_until
@@ -143,12 +147,13 @@ export default async function ShopSettings() {
             stays one screen on a small phone, with the clock on and the app not installed yet) */}
         <div className="grid grid-cols-2 gap-2">
           {[
-            { href: "/me", icon: UserRound, label: t.account },
-            { href: "/wallet", icon: WalletCards, label: t.myCards },
+            { href: "/me", icon: UserRound, label: t.account, dot: false },
+            { href: "/wallet", icon: WalletCards, label: t.myCards, dot: giftWaits },
           ].map((x) => (
-            <Link key={x.href} href={x.href} className="press flex min-w-0 items-center justify-center gap-2 rounded-[1.125rem] bg-surface px-2 py-[clamp(0.6rem,1.6dvh,0.875rem)] shadow-card">
+            <Link key={x.href} href={x.href} className="press relative flex min-w-0 items-center justify-center gap-2 rounded-[1.125rem] bg-surface px-2 py-[clamp(0.6rem,1.6dvh,0.875rem)] shadow-card">
               <x.icon className="size-5 shrink-0 text-brand" strokeWidth={2.2} />
               <span className="min-w-0 truncate text-[0.9375rem] font-bold">{x.label}</span>
+              {x.dot && <span className="absolute end-2 top-2 size-3 rounded-full bg-coral ring-2 ring-surface" aria-hidden />}
             </Link>
           ))}
         </div>
