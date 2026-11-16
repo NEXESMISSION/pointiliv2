@@ -27,6 +27,8 @@ import { robot, unrobot } from "./robots.mjs";
 
 config({ path: ".env.local", quiet: true });
 const BASE = process.env.BASE || "http://localhost:3200";
+// this computer's own database (localbase): no Storage, so no voice notes
+const LOCALBASE = /127\.0\.0\.1|localhost/.test(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
 const OUT = process.env.OUT || "shots/console";
 mkdirSync(OUT, { recursive: true });
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -200,28 +202,37 @@ try {
     await page.locator("article[data-shop]").first().waitFor({ timeout: 60000 });
 
     const line = (sel = "") => page.locator(`article[data-shop='${mine}'] ${sel}`.trim());
+    // the lists' own row: «الكل» is also a time span since 15 Nov 2026 (the row above it)
+    const lists = page.getByRole("tablist", { name: "الليستة" });
+    const spans = page.getByRole("tablist", { name: "الوقت" });
     // the board, and how fast it comes (a second time: the first one compiles the page in dev)
     const speed = await timed(page, "/admin", page.locator("article[data-shop]").first());
     console.log(`  · the board drawn in ${speed.ms} ms (${speed.kb} kB)`);
     await look(page, `${at}-01-board`);
 
     // the board opens on «آخر من دخل · ما خلّصوش»: whoever moved last on top, and not one paid shop
-    const unpaid = page.getByRole("tab", { name: /^آخر من دخل · ما خلّصوش/ });
+    if ((await spans.getByRole("tab", { name: "يومين" }).getAttribute("aria-selected")) !== "true") bad("the board does not look two days back by default");
+    else ok("the board looks two days back by default");
+    const unpaid = lists.getByRole("tab", { name: /^آخر من دخل · ما خلّصوش/ });
     if ((await unpaid.getAttribute("aria-selected")) !== "true") bad("the board does not open on «آخر من دخل · ما خلّصوش»");
     const moved = await page.locator("article[data-shop]").evaluateAll((els) => els.slice(0, 12).map((e) => e.getAttribute("data-moved") ?? ""));
     if (moved.some((m, i) => i > 0 && m > moved[i - 1])) bad(`«آخر من دخل · ما خلّصوش» is not in order: ${moved.join(" ")}`);
     else if (await page.locator("article[data-shop]", { hasText: "خالص حتى" }).count()) bad("a paid shop under «ما خلّصوش»");
     else ok("«آخر من دخل · ما خلّصوش» first: whoever moved last on top, no paid shop");
     // «آخر من دخل» itself: the same order, the paid ones too
-    await page.getByRole("tab", { name: "آخر من دخل", exact: true }).click();
+    await lists.getByRole("tab", { name: "آخر من دخل", exact: true }).click();
     await page.waitForTimeout(150);
     const movedAll = await page.locator("article[data-shop]").evaluateAll((els) => els.slice(0, 12).map((e) => e.getAttribute("data-moved") ?? ""));
     if (movedAll.some((m, i) => i > 0 && m > movedAll[i - 1])) bad(`«آخر من دخل» is not in order: ${movedAll.join(" ")}`);
     else ok("«آخر من دخل»: the same order, every shop");
 
+    // from here the whole demo world, whenever its shops last moved
+    await spans.getByRole("tab", { name: "الكل" }).click();
+    await page.waitForTimeout(150);
+
     // the filters: each one shows its own count of lines (the whole list grows as it scrolls, 24 at a time)
     for (const name of ["آخر من دخل · ما خلّصوش", "جداد", "يخدمو", "التجربة وفات", "خالصين", "الكل"]) {
-      const tab = page.getByRole("tab", { name: new RegExp(`^${name}`) });
+      const tab = lists.getByRole("tab", { name: new RegExp(`^${name}`) });
       await tab.click();
       await page.waitForTimeout(150);
       const said = Number((await tab.locator(".num").textContent()) ?? "-1");
@@ -229,6 +240,37 @@ try {
       if (shown !== Math.min(said, 24) && !(said === 0 && shown === 0)) bad(`filter «${name}»: says ${said}, shows ${shown}`);
     }
     ok("the filters: each shows what it counts");
+
+    // the kind of shop (16 Nov 2026), on the list «الكل»: each kind shows what it counts, then all of them again
+    const kindSel = page.getByLabel("نوع المحل");
+    const kindOpts = await kindSel.locator("option").evaluateAll((os) => os.map((o) => ({ v: o.value, t: o.textContent ?? "" })));
+    for (const o of kindOpts.filter((x) => x.v !== "all").slice(0, 4)) {
+      await kindSel.selectOption(o.v);
+      await page.waitForTimeout(150);
+      const said = Number(/\((\d+)\)\s*$/.exec(o.t)?.[1] ?? -1);
+      const shown = await page.locator("article[data-shop]").count();
+      if (shown !== Math.min(said, 24)) bad(`kind «${o.t}»: says ${said}, shows ${shown}`);
+    }
+    await kindSel.selectOption("all");
+    await page.waitForTimeout(150);
+    ok(`the kind of shop: ${kindOpts.length - 1} kind(s), each shows what it counts`);
+
+    // what to act on (16 Nov 2026): each signal shows what it counts, and lets go when tapped again
+    const signals = page.getByRole("toolbar", { name: "الفلترات" }).locator("button[aria-pressed]");
+    const nSignals = await signals.count();
+    for (let i = 0; i < nSignals; i++) {
+      const chip = signals.nth(i);
+      const label = (await chip.innerText()).replace(/\s*\d+\s*$/, "").trim();
+      const said = Number((await chip.locator(".num").textContent()) ?? "-1");
+      await chip.click();
+      await page.waitForTimeout(150);
+      const shown = await page.locator("article[data-shop]").count();
+      if (shown !== Math.min(said, 24)) bad(`signal «${label}»: says ${said}, shows ${shown}`);
+      await chip.click();
+      await page.waitForTimeout(150);
+      if ((await chip.getAttribute("aria-pressed")) !== "false") bad(`signal «${label}» did not let go`);
+    }
+    ok(`what to act on: ${nSignals} signal(s) with shops, each shows what it counts and lets go`);
 
     // the search: this run's shop by its name, and nothing else of the demo world
     await page.getByRole("searchbox", { name: "لوّج" }).fill(SHOPS[0][0]);
@@ -276,7 +318,7 @@ try {
     await line("[data-stage='called']").waitFor({ timeout: 20000 });
     await page.waitForTimeout(600);
     if (!(await line().count())) bad("a line picked away vanished at once");
-    await page.getByRole("tab", { name: /^الكل/ }).click();
+    await lists.getByRole("tab", { name: /^الكل/ }).click();
     await page.waitForTimeout(300);
     if (await line().count()) bad("a line picked away is still under its old stage");
     await narrowTo("كلّمتو");
@@ -290,25 +332,29 @@ try {
     for (const label of ["حرفاء", "تامبونات", "رجعو", "كادوات"]) if (!(await line().getByText(label, { exact: true }).count())) bad(`the line has no «${label}»`);
     if (!(await line("[role=img]").count())) bad("the line has no 14 days");
     else ok("the line itself: four numbers and its 14 days");
-    // a voice note on the line: recorded (three seconds of the pretend mic), kept, played back, taken back
-    await line().getByRole("button", { name: "فوكال", exact: true }).click();
-    await line().getByRole("button", { name: "سجّل" }).waitFor({ timeout: 10000 });
-    await page.waitForTimeout(3200);
-    await line().getByRole("button", { name: "سجّل" }).click();
-    const voices = line().getByRole("button", { name: /^1 فوكال$/ });
-    await voices.waitFor({ timeout: 20000 });
-    if ((await voices.getAttribute("aria-expanded")) !== "true") await voices.click();
-    const voiceHeard = page.waitForResponse((r) => /\/api\/admin\/voice\/[0-9a-f-]{36}$/.test(r.url()) && r.request().method() === "GET", { timeout: 20000 });
-    await line().getByRole("button", { name: "اسمع" }).click();
-    const voiceBack = await voiceHeard;
-    const type = voiceBack.headers()["content-type"] ?? "";
-    if (voiceBack.status() !== 200 || !type.startsWith("audio/")) bad(`the voice note did not come back as a sound: ${voiceBack.status()} ${type}`);
-    await line().getByText(/0:0[2-4]/).first().waitFor({ timeout: 5000 }).catch(() => bad("the voice note's length is not about three seconds"));
-    await look(page, `${at}-01c-voice`);
-    await line().getByRole("button", { name: "امسح الفوكال" }).click();
-    await line().getByRole("button", { name: "امسح الفوكال" }).click();
-    await voices.waitFor({ state: "detached", timeout: 20000 });
-    ok(`a voice note: recorded, kept, played back (${type.split(";")[0]}), taken back`);
+    // a voice note on the line: recorded (three seconds of the pretend mic), kept, played back, taken back —
+    // not on localbase, which serves no Storage (the notes live in a private bucket)
+    if (LOCALBASE) console.log("  · the voice note left out: localbase serves no Storage");
+    else {
+      await line().getByRole("button", { name: "فوكال", exact: true }).click();
+      await line().getByRole("button", { name: "سجّل" }).waitFor({ timeout: 10000 });
+      await page.waitForTimeout(3200);
+      await line().getByRole("button", { name: "سجّل" }).click();
+      const voices = line().getByRole("button", { name: /^1 فوكال$/ });
+      await voices.waitFor({ timeout: 20000 });
+      if ((await voices.getAttribute("aria-expanded")) !== "true") await voices.click();
+      const voiceHeard = page.waitForResponse((r) => /\/api\/admin\/voice\/[0-9a-f-]{36}$/.test(r.url()) && r.request().method() === "GET", { timeout: 20000 });
+      await line().getByRole("button", { name: "اسمع" }).click();
+      const voiceBack = await voiceHeard;
+      const type = voiceBack.headers()["content-type"] ?? "";
+      if (voiceBack.status() !== 200 || !type.startsWith("audio/")) bad(`the voice note did not come back as a sound: ${voiceBack.status()} ${type}`);
+      await line().getByText(/0:0[2-4]/).first().waitFor({ timeout: 5000 }).catch(() => bad("the voice note's length is not about three seconds"));
+      await look(page, `${at}-01c-voice`);
+      await line().getByRole("button", { name: "امسح الفوكال" }).click();
+      await line().getByRole("button", { name: "امسح الفوكال" }).click();
+      await voices.waitFor({ state: "detached", timeout: 20000 });
+      ok(`a voice note: recorded, kept, played back (${type.split(";")[0]}), taken back`);
+    }
     // and what they say about the shop: what is going on, why, and what to do now
     const read = (await line("[data-reading]").textContent().catch(() => "")) ?? "";
     if (!read.includes("←")) bad(`the line has no reading: «${read}»`);

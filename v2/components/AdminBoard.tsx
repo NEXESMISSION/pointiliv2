@@ -10,11 +10,13 @@ import {
   ChartLine,
   Check,
   ChevronDown,
+  CircleDashed,
   CircleQuestionMark,
   Clock,
   CreditCard,
   Flame,
   Gift,
+  Hourglass,
   List,
   Megaphone,
   MessageCircle,
@@ -22,11 +24,14 @@ import {
   Pause,
   Phone,
   QrCode,
+  RefreshCw,
   Search,
   Smartphone,
+  Store,
   TrendingDown,
   TrendingUp,
   Trophy,
+  UserX,
   Users,
   Wallet,
   X,
@@ -57,7 +62,7 @@ import {
   type ReadMark,
   type ReadTone,
 } from "@/lib/board";
-import { agoSaid, counted, daysN, hoursN, stampsN } from "@/lib/t";
+import { agoSaid, counted, daysN, hoursN, stampsN, t } from "@/lib/t";
 
 const DAY = 86_400_000;
 const PAGE = 24;
@@ -96,6 +101,27 @@ const SPANS: { id: Span; label: string; ms: number }[] = [
   { id: "all", label: "الكل", ms: Infinity },
 ];
 const movedAt = (s: BoardShop) => Date.parse(lastMove(s) ?? s.created_at);
+
+/**
+ * What to act on now, one at a time (the founder, 16 Nov 2026: «more filters, useful stuff»): who is
+ * about to pay (opened the pay page, or tapped to call or WhatsApp about it), whose trial ends within a
+ * day or whose paid access within a week, who is stuck before the card or before the first real
+ * customer, who is on right now, who put Pointili on the phone. Each says how many it holds in the
+ * list as it stands; one with none does not show.
+ */
+type Signal = "pay_page" | "asked" | "trial_soon" | "renew" | "no_card" | "no_customer" | "online" | "app";
+const left = (iso: string | null, now: number) => (iso ? Date.parse(iso) - now : NaN);
+const SIGNALS: { id: Signal; label: string; icon: LucideIcon | null; test: (s: BoardShop, now: number) => boolean }[] = [
+  { id: "pay_page", label: "حلّ الخلاص", icon: Wallet, test: (s) => !s.paid && !!s.pay_seen },
+  { id: "asked", label: "طلب يخلّص", icon: Phone, test: (s) => !s.paid && !!s.wa_at },
+  { id: "trial_soon", label: "التجربة قريب توفى", icon: Hourglass, test: (s, now) => !s.paid && s.started && !s.shut && left(s.trial_end, now) > 0 && left(s.trial_end, now) <= DAY },
+  { id: "renew", label: "الأبونمان قريب يوفى", icon: RefreshCw, test: (s, now) => s.paid && left(s.paid_until, now) > 0 && left(s.paid_until, now) <= 7 * DAY },
+  { id: "no_card", label: "بلا كارط", icon: CircleDashed, test: (s) => !s.card },
+  { id: "no_customer", label: "بلا حرفاء", icon: UserX, test: (s) => s.card && s.real === 0 },
+  { id: "online", label: "متّصل توّا", icon: null, test: (s) => s.online },
+  { id: "app", label: "حطّ الأبليكاسيون", icon: Smartphone, test: (s) => s.app },
+];
+const kindName = (k: string) => (t.kinds as Record<string, string>)[k] ?? k;
 
 /** The ad a shop came from, by its campaign (the founder, 15 Nov 2026: «which campaign»): «TEST5» for «POINTILI TEST5 | Site | Comptes». */
 const NO_AD = "-";
@@ -150,6 +176,8 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
     return s && serverNow - movedAt(s) > 2 * DAY ? "all" : "two";
   });
   const [ad, setAd] = useState("all");
+  const [kind, setKind] = useState("all");
+  const [signal, setSignal] = useState<Signal | null>(null);
   // the stages picked on this board since it was drawn, and the lines picked while the list was narrowed to
   // a stage: those stay where they are (a note may follow) until the list is chosen again
   const [picked, setPicked] = useState<Record<string, { stage: string; at: string | null }>>({});
@@ -177,24 +205,42 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
     const rank = (k: string) => (k === NO_AD ? 2 : k.includes("{{") ? 1 : 0);
     return [...n.entries()].sort(([a], [b]) => rank(a) - rank(b) || adLabel(b).localeCompare(adLabel(a), "en", { numeric: true }));
   }, [inSpan]);
-  const scoped = useMemo(() => (ad === "all" ? inSpan : inSpan.filter((s) => adOf(s) === ad || held.includes(s.id))), [inSpan, ad, held]);
+  const inAd = useMemo(() => (ad === "all" ? inSpan : inSpan.filter((s) => adOf(s) === ad || held.includes(s.id))), [inSpan, ad, held]);
+  // the kinds of shop in the ad picked, the most first
+  const kinds = useMemo(() => {
+    const n = new Map<string, number>();
+    for (const s of inAd) n.set(s.kind, (n.get(s.kind) ?? 0) + 1);
+    return [...n.entries()].sort(([a, x], [b, y]) => y - x || kindName(a).localeCompare(kindName(b), "ar"));
+  }, [inAd]);
+  const scoped = useMemo(() => (kind === "all" ? inAd : inAd.filter((s) => s.kind === kind || held.includes(s.id))), [inAd, kind, held]);
+  // the signal picked (none: every shop passes); a line picked while it was on stays, as with a stage
+  const sig = useMemo(() => {
+    const x = SIGNALS.find((y) => y.id === signal);
+    return (s: BoardShop) => !x || x.test(s, now) || held.includes(s.id);
+  }, [signal, now, held]);
   // each list counts what it holds at the stage chosen; each stage, what it holds in the list chosen
   const counts = useMemo(() => {
-    const atStage = scoped.filter((s) => stage === "all" || s.stage === stage || held.includes(s.id));
+    const atStage = scoped.filter((s) => (stage === "all" || s.stage === stage || held.includes(s.id)) && sig(s));
     return Object.fromEntries(FILTERS.map((f) => [f.id, atStage.filter((s) => f.test(s, now)).length])) as Record<Filter, number>;
-  }, [scoped, stage, held, now]);
+  }, [scoped, stage, held, now, sig]);
   const stageCounts = useMemo(() => {
     const f = FILTERS.find((x) => x.id === filter)!;
     const n: Record<string, number> = {};
-    for (const s of scoped) if (f.test(s, now)) n[s.stage] = (n[s.stage] ?? 0) + 1;
+    for (const s of scoped) if (f.test(s, now) && sig(s)) n[s.stage] = (n[s.stage] ?? 0) + 1;
     return n;
-  }, [scoped, filter, now]);
+  }, [scoped, filter, now, sig]);
+  // each signal, what it holds in the list and the stage chosen
+  const signalCounts = useMemo(() => {
+    const f = FILTERS.find((x) => x.id === filter)!;
+    const here = scoped.filter((s) => f.test(s, now) && (stage === "all" || s.stage === stage || held.includes(s.id)));
+    return Object.fromEntries(SIGNALS.map((x) => [x.id, here.filter((s) => x.test(s, now)).length])) as Record<Signal, number>;
+  }, [scoped, filter, stage, held, now]);
   const list = useMemo(() => {
     const f = FILTERS.find((x) => x.id === filter)!;
-    const hits = scoped.filter((s) => f.test(s, now) && (stage === "all" || s.stage === stage || held.includes(s.id)) && hit(s, q));
+    const hits = scoped.filter((s) => f.test(s, now) && (stage === "all" || s.stage === stage || held.includes(s.id)) && sig(s) && hit(s, q));
     const sort = SORT[filter];
     return sort ? [...hits].sort(sort) : hits;
-  }, [scoped, filter, stage, held, q, now]);
+  }, [scoped, filter, stage, held, q, now, sig]);
   const pickedOne = (id: string, key: string, at: string | null) => {
     setPicked((p) => ({ ...p, [id]: { stage: key, at } }));
     if (stage !== "all") setHeld((h) => (h.includes(id) ? h : [...h, id]));
@@ -304,6 +350,57 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
         ))}
       </div>
 
+      {/* the kind of shop, and what to act on now (16 Nov 2026): one at a time, each with how many it holds */}
+      <div data-list className="-mx-4 mt-2 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="toolbar" aria-label="الفلترات">
+        <label className={`relative flex h-8 shrink-0 items-center gap-1 rounded-full px-3 text-[0.8125rem] font-semibold transition-colors ${kind === "all" ? "bg-surface text-body ring-1 ring-line" : "bg-brand-soft text-brand ring-2 ring-inset ring-brand"}`}>
+          <Store className="size-3.5 shrink-0" aria-hidden />
+          {kind === "all" ? "النوع" : kindName(kind)}
+          <span className="num text-[0.75rem] opacity-60">{kind === "all" ? inAd.length : (kinds.find(([k]) => k === kind)?.[1] ?? 0)}</span>
+          <ChevronDown className="size-3.5 shrink-0 opacity-60" aria-hidden />
+          <select
+            value={kind}
+            onChange={(e) => {
+              setKind(e.target.value);
+              setHeld([]);
+              setLimit(PAGE);
+            }}
+            aria-label="نوع المحل"
+            className="absolute inset-0 size-full cursor-pointer text-[16px] opacity-0"
+          >
+            <option value="all">كل الأنواع ({inAd.length})</option>
+            {kinds.map(([k, n]) => (
+              <option key={k} value={k}>
+                {kindName(k)} ({n})
+              </option>
+            ))}
+            {kind !== "all" && !kinds.some(([k]) => k === kind) && <option value={kind}>{kindName(kind)} (0)</option>}
+          </select>
+        </label>
+        {SIGNALS.map((x) => {
+          const on = signal === x.id;
+          const n = signalCounts[x.id];
+          if (!n && !on) return null;
+          const Icon = x.icon;
+          return (
+            <button
+              key={x.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => {
+                setSignal(on ? null : x.id);
+                setHeld([]);
+                setLimit(PAGE);
+              }}
+              className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[0.8125rem] font-semibold transition-colors ${on ? "bg-ink text-white" : "bg-surface text-body ring-1 ring-line"}`}
+            >
+              {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden /> : <span className="size-2 shrink-0 rounded-full bg-mint" aria-hidden />}
+              {x.label}
+              <span className={`num text-[0.75rem] ${on ? "text-white/70" : "text-faint"}`}>{n}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* the board narrowed to one stage, over the lists (the founder, 25 Oct 2026): every stage that has a shop in the list chosen */}
       <StageChips
         value={stage}
@@ -340,6 +437,18 @@ export function AdminBoard({ shops, now: serverNow, open: openFirst = null }: { 
         {list.length === 0 && (
           <div className="rounded-[1.125rem] bg-surface px-4 py-10 text-center text-[0.9375rem] text-muted ring-1 ring-line/70">
             ما لقينا حتى محل
+            {(signal || kind !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSignal(null);
+                  setKind("all");
+                }}
+                className="mt-3 block w-full text-[0.875rem] font-semibold text-brand"
+              >
+                نحّي الفلترات
+              </button>
+            )}
             {span !== "all" && !q.trim() && (
               <button type="button" onClick={() => setSpan("all")} className="mt-3 block w-full text-[0.875rem] font-semibold text-brand">
                 شوف الوقت الكل
