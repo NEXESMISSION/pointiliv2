@@ -99,7 +99,7 @@ const shot = async (page, name) => {
   await page.waitForTimeout(350);
   await page.screenshot({ path: `${OUT}/${name}.png` });
 };
-const fits = (page) => page.evaluate(() => ({ wide: document.documentElement.scrollWidth <= innerWidth + 1, tall: document.documentElement.scrollHeight <= innerHeight + 1 }));
+const fits = (page) => page.evaluate(() => { const m = document.querySelector("main"); return { wide: document.documentElement.scrollWidth <= innerWidth + 1, tall: document.documentElement.scrollHeight <= innerHeight + 1 && (!m || m.scrollHeight <= m.clientHeight + 1) }; });
 const go = async (page, path) => {
   await page.goto(`${BASE}${path}`, { waitUntil: "load", timeout: 90000 });
   await page.locator("main, h1").first().waitFor({ timeout: 30000 });
@@ -111,7 +111,9 @@ const wa = async (page) => decodeURIComponent((await page.locator('a[href^="http
 try {
   console.log("\n① A shop in its trial's first 3 days");
   const s = await signIn(fresh);
-  await go(s.page, "/shop");
+  // signing in lands on the home: the popup is waited for on that first visit — it writes itself seen as it opens,
+  // so a second visit (an extra goto) finds it gone, and the check went red or green with the timing (16 Nov 2026)
+  await s.page.waitForURL(/\/shop$/, { timeout: 30000 }).catch(() => go(s.page, "/shop"));
   const popup = s.page.getByRole("dialog", { name: "شهرين بلاش" });
   check("the offer's popup: «شهرين بلاش»", await popup.waitFor({ timeout: 15000 }).then(() => true, () => false));
   const said = await popup.innerText().catch(() => "");
@@ -133,15 +135,25 @@ try {
   check("…what a month comes to with the gift: 15 on six months (120/8), 13 on the year (180/14)", (await tiles.nth(1).innerText()).includes("15 د في الشهر") && (await tiles.nth(2).innerText()).includes("13 د في الشهر"));
   check("…the offer's clock beside «على 6 شهور وعلى العام»", page1.includes("على 6 شهور وعلى العام") && /\d\d:\d\d:\d\d/.test(page1));
   await shot(s.page, "2-pay-offer");
+  check("…no way to pay on the first step, «كمّل · 180 د» under the lengths", (await s.page.getByRole("radio", { name: "D17" }).count()) === 0 && (await s.page.getByRole("button", { name: /كمّل · 180 د/ }).count()) === 1);
+  const next = () => s.page.getByRole("button", { name: /^كمّل/ }).click();
+  const back = () => s.page.getByRole("button", { name: /بدّل/ }).click();
+  await next();
+  await s.page.waitForTimeout(400);
+  check("the second step: «كيفاش تخلّص؟», what was chosen on top («عام +شهرين بلاش · 180 د»)", (await text(s.page)).includes("كيفاش تخلّص؟") && /عام \+شهرين بلاش · 180 د/.test(await s.page.getByRole("button", { name: /بدّل/ }).innerText()));
   await s.page.getByRole("radio", { name: "D17" }).click();
   await s.page.waitForTimeout(400);
   check("the year chosen, D17: «ابعث 180 د»", (await text(s.page)).includes("ابعث 180 د على D17"));
   check("…the WhatsApp to the founder says the plan: «عام + شهرين بلاش، 180 د»", (await wa(s.page)).includes("(عام + شهرين بلاش، 180 د) بـ D17"), await wa(s.page));
   await shot(s.page, "3-pay-year-d17");
+  await back();
   await tiles.nth(0).click();
+  await next();
   await s.page.waitForTimeout(400);
   check("the month chosen: «ابعث 35 د», and the message «شهر، 35 د» (no gift)", (await text(s.page)).includes("ابعث 35 د على D17") && (await wa(s.page)).includes("(شهر، 35 د)"), await wa(s.page));
+  await back();
   await tiles.nth(1).click();
+  await next();
   await s.page.waitForTimeout(400);
   check("six months chosen: «ابعث 120 د», «6 شهور + شهرين بلاش، 120 د»", (await text(s.page)).includes("ابعث 120 د على D17") && (await wa(s.page)).includes("(6 شهور + شهرين بلاش، 120 د)"), await wa(s.page));
   const f1 = await fits(s.page);
@@ -152,6 +164,12 @@ try {
     const f = await fits(s.page);
     check(`…at ${w}×${h}: nothing sideways, nothing below`, f.wide && f.tall, f);
     await shot(s.page, `4-pay-${w}x${h}`);
+    await next();
+    await s.page.getByRole("radio", { name: "Versement" }).click();
+    await s.page.waitForTimeout(400);
+    const f2 = await fits(s.page);
+    check(`…its second step, a deposit (both banks), at ${w}×${h}: nothing below`, f2.wide && f2.tall, f2);
+    await shot(s.page, `4-pay-${w}x${h}-versement`);
   }
   await s.page.setViewportSize({ width: 390, height: 844 });
   await s.ctx.close();

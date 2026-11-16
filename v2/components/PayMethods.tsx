@@ -1,120 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, MessageCircle, Phone } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { BankMark, CashMark, D17Mark, PostMark } from "@/components/PayLogos";
-import type { Plan } from "@/lib/plans";
 import { signal } from "@/lib/track";
-import { fill, monthsSaid, t } from "@/lib/t";
+import { t } from "@/lib/t";
 
-// the D17 mark carries its own name, so it is not written twice under it
-const WAYS = [
+/**
+ * The ways to pay and how each is shown, for the pay page's steps (components/PaySteps): D17, a transfer, a deposit
+ * at the bank, a money order. The D17 mark carries its own name, so it is not written twice beside it.
+ */
+export const WAYS = [
   { key: "D17", title: "", mark: <D17Mark /> },
   { key: "Virement", title: "Virement", mark: <BankMark /> },
   { key: "Versement", title: "Versement", mark: <CashMark /> },
   { key: "Mandat", title: "Mandat", mark: <PostMark /> },
 ];
-
-/**
- * Paying, as three steps an owner follows (the founder, 17 Oct 2026: «help
- * them take an action»): ① how — D17, a transfer, a deposit at the bank, a
- * money order; none chosen at first — ② what to send, where: the amount and
- * the D17 number or the account, each with its copy button — ③ the receipt
- * on WhatsApp, already written with the shop, the plan and the way, and the
- * subscription is turned on the same day. Steps 2 and 3 wait, faded, until a way is chosen;
- * a call is always there for a question. The WhatsApp message or the call is
- * the whole of it: the founder hears it from them, and turns the year on by
- * hand. A tap is only counted in the visits — it is not a payment waiting for
- * an answer (the founder, 18 Oct 2026: there is no request to manage).
- */
-export function PayMethods({ support, shop, plan, gift = false, details, phone }: { support: string | null; shop: string; plan: Plan; gift?: boolean; details?: { d17: string | null; banks: { bank: string | null; rib: string; transfer?: boolean }[] }; phone?: string | null }) {
-  const [way, setWay] = useState<string | null>(null);
-  const said = (how: string) => signal("pay", how);
-  const amount = plan.price;
-  // the founder reads the plan in the message: «عام + شهرين بلاش، 180 د»
-  const which = fill(gift ? t.planSaidGift : t.planSaid, { plan: monthsSaid(plan.months), amount });
-  const receipt = support && way ? `https://wa.me/${support}?text=${encodeURIComponent(fill(t.payReceiptMsg, { shop, plan: which, way, from: phone ? fill(t.waFrom, { who: spaced(phone) }) : "" }))}` : null;
-  const how =
-    way === "D17" ? fill(t.payD17How, { amount }) : way === "Virement" ? fill(t.payRibHow, { amount }) : way === "Versement" ? fill(t.payVersementHow, { amount }) : way === "Mandat" ? fill(t.payMandatHow, { amount }) : fill(t.paySendWhat, { amount });
-  return (
-    <>
-      <ol className="mt-[2dvh] space-y-[1.8dvh] rounded-[1.375rem] bg-surface p-4 shadow-card">
-        <Step n={1} on done={!!way}>
-          <p className="text-[0.9375rem] font-bold">{t.payWays}</p>
-          <ul className="mt-2 grid grid-cols-4 gap-1.5" role="radiogroup" aria-label={t.payWays}>
-            {WAYS.map((w) => {
-              const on = way === w.key;
-              return (
-                <li key={w.key} className="min-w-0">
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    aria-label={w.key}
-                    onClick={() => {
-                      setWay(w.key);
-                      signal("pay", `way · ${w.key}`);
-                    }}
-                    className={`press flex h-[3.75rem] w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-[1rem] bg-canvas px-1 transition-shadow duration-200 ${on ? "shadow-[inset_0_0_0_2.5px_var(--color-brand)]" : ""}`}
-                  >
-                    {w.title ? (
-                      <>
-                        <span className="[&>svg]:size-7">{w.mark}</span>
-                        <span className={`w-full truncate text-center text-[0.6875rem] font-bold ${on ? "text-brand" : ""}`} dir="ltr">
-                          {w.title}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="[&>svg]:size-9">{w.mark}</span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </Step>
-        <Step n={2} on={!!way}>
-          <p className="text-[0.9375rem] font-bold">{how}</p>
-          {/* where the money goes, when the founder wrote it in the console: the D17 number, the account */}
-          {way === "D17" && details?.d17 && (
-            <div className="mt-2 rounded-[1rem] bg-canvas">
-              <Detail label="D17" value={details.d17} />
-            </div>
-          )}
-          {(way === "Virement" || way === "Versement") && !!details?.banks.length && (
-            <div className="mt-2 divide-y divide-line rounded-[1rem] bg-canvas">
-              {/* a transfer: the bank that takes them only (never none: with no such bank set, all of them); a deposit: every bank */}
-              {(way === "Virement" && details.banks.some((b) => b.transfer) ? details.banks.filter((b) => b.transfer) : details.banks).map((b) => (
-                <Detail key={b.rib} label={t.payRib} value={b.rib} sub={b.bank} />
-              ))}
-            </div>
-          )}
-        </Step>
-        <Step n={3} on={!!way}>
-          <p className="text-[0.9375rem] font-bold">{t.payReceipt}</p>
-          <p className="text-[0.8125rem] text-muted">{t.payReceiptSub}</p>
-        </Step>
-      </ol>
-
-      {support && (
-        <div className="mt-[2dvh] space-y-2">
-          {receipt ? (
-            <a href={receipt} target="_blank" rel="noreferrer" onClick={() => said(`receipt · ${way} · ${plan.months}${gift ? "+2" : ""}`)} className="press flex h-14 animate-pop items-center justify-center gap-2 rounded-[1.25rem] bg-[linear-gradient(150deg,#3ee07f,#25d366_50%,#1aa851)] text-[1.0625rem] font-bold text-white shadow-[0_14px_30px_-12px_rgb(37_211_102/0.6)]">
-              <MessageCircle className="size-5" /> {t.payReceiptGo}
-            </a>
-          ) : (
-            <span className="flex h-14 items-center justify-center rounded-[1.25rem] bg-ink/[0.06] text-[1rem] font-bold text-muted" aria-disabled>
-              {t.payChoose}
-            </span>
-          )}
-          <a href={`tel:+${support}`} onClick={() => said("call")} className="press flex h-12 items-center justify-center gap-2 rounded-[1.125rem] bg-surface text-[0.9375rem] font-bold text-brand shadow-card">
-            <Phone className="size-4" /> {t.payAskCall}
-          </a>
-        </div>
-      )}
-    </>
-  );
-}
 
 /** «58 415 521», the account's number as the founder reads it back (any +216 left off). */
 export const spaced = (phone: string) => {
@@ -122,18 +23,17 @@ export const spaced = (phone: string) => {
   return /^\d{8}$/.test(d) ? `${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5)}` : phone;
 };
 
-/** One of the three steps: its number (a tick once done), faded until its turn. */
-function Step({ n, on, done, children }: { n: number; on: boolean; done?: boolean; children: React.ReactNode }) {
-  return (
-    <li className={`flex items-start gap-3 transition-opacity duration-300 ${on ? "" : "opacity-40"}`}>
-      <span className={`num grid size-7 shrink-0 place-items-center rounded-full text-[0.8125rem] font-bold text-white ${done ? "bg-mint" : "bg-brand"}`}>{done ? <Check className="size-4" strokeWidth={3} /> : n}</span>
-      <div className="min-w-0 flex-1">{children}</div>
-    </li>
-  );
-}
+/**
+ * A RIB as a bank prints it — bank, branch, account, key: «24 031 1680052511101 32» — however it was typed in the
+ * console (16 Nov 2026: the BTE one was typed in other groups). Anything that is not 20 digits stays as typed.
+ */
+export const ribSaid = (rib: string) => {
+  const d = rib.replace(/\D/g, "");
+  return /^\d{20}$/.test(d) ? `${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5, 18)} ${d.slice(18)}` : rib;
+};
 
-/** One way's detail — the D17 number, the RIB — and a copy button beside it. */
-function Detail({ label, value, sub }: { label: string; value: string; sub?: string | null }) {
+/** One way's detail — the D17 number, the RIB — and a copy button beside it (the copy has no spaces). */
+export function Detail({ label, value, sub }: { label: string; value: string; sub?: string | null }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     void navigator.clipboard?.writeText(value.replace(/\s+/g, "")).then(() => {
@@ -142,17 +42,20 @@ function Detail({ label, value, sub }: { label: string; value: string; sub?: str
       setTimeout(() => setCopied(false), 1600);
     }).catch(() => {});
   };
+  const shown = label === t.payRib ? ribSaid(value) : value;
   return (
     <div className="flex items-center gap-3 px-3.5 py-2.5">
-      <span className="w-12 shrink-0 text-[0.8125rem] font-bold text-muted" dir="ltr">{label}</span>
       <span className="min-w-0 flex-1">
-        <bdi dir="ltr" className="num block truncate text-[0.9375rem] font-bold">{value}</bdi>
-        {/* a bank's name in Latin letters loses its end, never its start */}
-        {sub && (
-          <bdi dir="auto" className="block truncate text-[0.75rem] text-muted">
-            {sub}
-          </bdi>
-        )}
+        {/* the number whole, never cut (a RIB is 23 characters: a smaller size, and it wraps rather than hide its end on
+            the narrowest phone); what it is — «RIB», the bank — under it, and that line may lose its end */}
+        <bdi dir="ltr" className={`num block font-bold [overflow-wrap:anywhere] ${shown.length > 14 ? "text-[0.8125rem]" : "text-[0.9375rem]"}`}>
+          {shown}
+        </bdi>
+        {/* in Latin letters, the whole line left to right: a long bank name loses its end, never its start */}
+        <span dir="ltr" className="block truncate text-end text-[0.75rem] text-muted">
+          <b className="font-bold">{label}</b>
+          {sub && <> · {sub}</>}
+        </span>
       </span>
       <button type="button" onClick={copy} className="press flex h-9 shrink-0 items-center gap-1 rounded-full bg-brand-soft px-3 text-[0.8125rem] font-bold text-brand">
         {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? t.payCopied : t.payCopy}

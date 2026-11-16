@@ -980,7 +980,6 @@ export const t = {
   payHow: "كلّمنا ولا ابعثلنا على واتساب، ونكمّلو الخلاص مع بعضنا في دقيقة",
   // paying in three steps (17 Oct 2026)
   payPageTitle: "خدّم الأبونمان متاعك",
-  paySendWhat: "ابعث {amount} د",
   payReceipt: "ابعثلنا صورة الوصل على واتساب",
   payReceiptSub: "نخدّمولك الأبونمان في نفس النهار",
   payReceiptGo: "ابعث الوصل على واتساب",
@@ -989,6 +988,10 @@ export const t = {
   // the account the message is about, whatever WhatsApp number it comes from
   waFrom: "\nالكونت: {who}",
   payAskCall: "عندك سؤال؟ كلّمنا",
+  // the pay page in two steps (16 Nov 2026): the length, then how
+  payNext: "كمّل",
+  payChange: "بدّل",
+  payHowTitle: "كيفاش تخلّص؟",
   payCard: "كارط بنكية",
   payCardSub: "Visa · Mastercard، في صفحة مضمونة",
   payD17: "D17",
