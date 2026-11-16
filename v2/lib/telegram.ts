@@ -231,38 +231,18 @@ function sinceShop(iso: string): string {
 }
 
 /**
- * Pointili put on a phone (the founder, 16 Nov 2026: «when people add the PWA I really want to know»): the
- * first time they open it as the app — the only sign an iPhone ever gives — or the moment Android's Chrome says
- * it is installed, whichever comes first; once per person (claimApp). An owner: the shop, and how long after it
- * opened. A customer: the shops whose cards they hold. Robots, testers and the founder never ring, nor a customer
- * whose every card is at a test shop — and a read that failed rings for nobody.
+ * Pointili put on an owner's phone (the founder, 16 Nov 2026: «when people add the PWA I really want to know»): the
+ * first time they open it as the app — the only sign an iPhone ever gives — or the moment Android's Chrome says it
+ * is installed, whichever comes first; once per owner (claimApp): the shop, and how long after it opened. A
+ * customer's phone rings nothing — the same evening, four new customers of one shop rang four times in half an hour
+ * («each time he enters, it's wrong»): the morning's digest says them instead, a line a shop (api/cron/digest).
+ * Robots, testers and the founder never ring, and a read that failed rings for nobody.
  */
 export async function alertApp(user: string, way: AppWay, opened: boolean): Promise<void> {
-  const db = service();
   const how = `${WAY[way]} · ${opened ? "حلّها من الأيقونة" : "تحطّت (مازال ما حلّهاش)"}`;
-  const own = await db.from("shops").select("id").eq("owner_id", user).maybeSingle();
-  if (own.error) return;
-  if (own.data) {
-    const f = await shopFacts({ shop: own.data.id });
-    if (!f || !(await claimApp(user))) return;
-    await tg([`📲 <b>مولى المحل حطّ Pointili في تليفونو</b>`, shopLine(f), `${how} · ${sinceShop(f.shop.created_at)}`].join("\n"), shopButtons(f));
-    return;
-  }
-  const [person, robot, cards] = await Promise.all([
-    db.from("people").select("name, is_admin, is_tester").eq("id", user).maybeSingle(),
-    db.rpc("is_robot", { p_id: user }),
-    db.from("cards").select("shop_id").eq("user_id", user).order("created_at", { ascending: false }).limit(3),
-  ]);
-  if (person.error || robot.error || cards.error || !person.data) return;
-  const p = person.data;
-  if (robot.data === true || p.is_admin || p.is_tester) return;
-  const shops = (await Promise.all(cards.data.map((c) => shopFacts({ shop: c.shop_id })))).filter((f): f is ShopFacts => !!f);
-  // every card at a robot's or a tester's shop: a test
-  if (cards.data.length && !shops.length) return;
-  if (!(await claimApp(user))) return;
-  const who = [`<b>${esc(p.name || "حريف")}</b>`, shops.length ? `عندو كارط في ${shops.map((f) => esc(f.shop.name)).join("، ")}` : ""].filter(Boolean).join(" · ");
-  const first = shops[0];
-  // cut by letters, not by UTF-16 units: an emoji or an accent is never split
-  const label = Array.from(`🧾 ${first?.shop.name ?? ""}`).slice(0, 40).join("");
-  await tg([`📲 <b>حريف حطّ Pointili في تليفونو</b>`, who, how].join("\n"), first ? [[{ text: label, url: `${SITE}/admin/shop/${first.shop.id}` }]] : []);
+  const own = await service().from("shops").select("id").eq("owner_id", user).maybeSingle();
+  if (own.error || !own.data) return;
+  const f = await shopFacts({ shop: own.data.id });
+  if (!f || !(await claimApp(user))) return;
+  await tg([`📲 <b>مولى المحل حطّ Pointili في تليفونو</b>`, shopLine(f), `${how} · ${sinceShop(f.shop.created_at)}`].join("\n"), shopButtons(f));
 }

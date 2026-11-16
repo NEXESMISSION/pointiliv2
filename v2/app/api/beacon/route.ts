@@ -129,13 +129,15 @@ export async function POST(request: NextRequest) {
     body.here && ["here", "idle", "away"].includes(String(body.here.state))
       ? { state: String(body.here.state), path: typeof body.here.path === "string" && body.here.path.startsWith("/") ? body.here.path.slice(0, 300) : "" }
       : null;
-  // Pointili put on a phone: the founder's Telegram rings once per person (lib/telegram: alertApp) — their
-  // first visit opened as the app, or Android's Chrome saying it just installed, whichever comes first.
+  // Pointili put on an owner's phone: the founder's Telegram rings once per owner (lib/telegram: alertApp) — their
+  // first visit opened as the app, or Android's Chrome saying it just installed, whichever comes first. A
+  // customer's phone rings nothing: the morning's digest says them, a line a shop (16 Nov 2026: four of one
+  // shop's new customers rang the founder in half an hour, «each time he enters, it's wrong»).
   // Asked before this batch is written (once written, it is no longer the first), and the person marked asked
   // before the answer comes: the same person's next batch, a moment later, asks nothing
   const installed = (body.signals ?? []).some((g) => (g as { name?: unknown })?.name === "pwa_installed");
   let ring: (() => Promise<void>) | null = null;
-  if (me && !visit.is_bot && !me.admin && !me.tester && (visit.standalone || installed) && !knownInApp.has(me.id)) {
+  if (me?.shop && !visit.is_bot && !me.admin && !me.tester && (visit.standalone || installed) && !knownInApp.has(me.id)) {
     const user = me.id;
     if (knownInApp.size > 5000) knownInApp.clear();
     knownInApp.add(user);

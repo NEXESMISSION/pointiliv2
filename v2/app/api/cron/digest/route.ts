@@ -112,6 +112,42 @@ export async function GET(request: NextRequest) {
     const end = endOf.get(s.id) ?? new Date(Date.parse(s.created_at) + s.trial_days * DAY).toISOString();
     return tunisDay(new Date(end)) === today;
   });
+  // the customers who put Pointili on their phone yesterday — their first visit ever opened as the app — by the shop
+  // of their latest card, one line a shop. Said here, not rung one by one (16 Nov 2026: four new customers of one
+  // shop rang the founder four times in half an hour; an owner's own install still rings at once, lib/telegram)
+  const from = Date.parse(`${yesterday}T00:00:00+01:00`);
+  const appVisits = await every<{ user_id: string }>("app visits", (a, b) =>
+    db
+      .from("visits")
+      .select("user_id")
+      .eq("standalone", true)
+      .eq("is_bot", false)
+      .not("user_id", "is", null)
+      .gte("started_at", new Date(from).toISOString())
+      .lt("started_at", new Date(from + DAY).toISOString())
+      .order("id")
+      .range(a, b),
+  );
+  const owners = new Set(all.map((s) => s.owner_id));
+  const landed = [...new Set(appVisits.map((v) => v.user_id))].filter((u) => !out.has(u) && !owners.has(u));
+  const appShops = new Map<string, number>();
+  for (const ids of by200(landed)) {
+    // the app before yesterday: not new
+    const { data: before, error: e1 } = await db.from("visits").select("user_id").eq("standalone", true).in("user_id", ids).lt("started_at", new Date(from).toISOString());
+    if (e1) throw new Error(`[digest] app before: ${e1.message}`);
+    const old = new Set((before ?? []).map((v) => v.user_id));
+    const { data: theirs, error: e2 } = await db.from("cards").select("user_id, shop_id, created_at").in("user_id", ids).order("created_at", { ascending: false });
+    if (e2) throw new Error(`[digest] app cards: ${e2.message}`);
+    const shopOf = new Map<string, string>();
+    for (const c of theirs ?? []) if (!shopOf.has(c.user_id)) shopOf.set(c.user_id, c.shop_id);
+    for (const u of ids) {
+      const s = byId.get(shopOf.get(u) ?? "");
+      // a real shop's customer, new to the app (a card only at a robot's or a tester's shop: a test)
+      if (!old.has(u) && s) appShops.set(s.name, (appShops.get(s.name) ?? 0) + 1);
+    }
+  }
+  const appNew = [...appShops.values()].reduce((a, b) => a + b, 0);
+
   // yesterday's night sign-ups that never gave a tampon: the morning calls
   const stamped = new Set(real.map((m) => m.shop_id));
   const nightSilent = born.filter((s) => {
@@ -126,6 +162,8 @@ export async function GET(request: NextRequest) {
     list(born.map((s) => esc(s.name))),
     `🎟 تامبونات لحرفاء حقيقيين: <b>${realYesterday.length}</b> في ${shopsYesterday.length} محلّات`,
     list(shopsYesterday.map(esc), 6),
+    appNew ? `📲 حرفاء حطّو Pointili في تليفونهم: <b>${appNew}</b>` : "",
+    appNew ? list([...appShops.entries()].sort((a, b) => b[1] - a[1]).map(([name, n]) => `${esc(name)} (${n})`), 6) : "",
     "",
     `📞 <b>عيّطلهم اليوم</b>`,
     endsToday.length ? `⏳ التجربة توفى اليوم (ويخدمو بيها):\n${list(endsToday.map((s) => esc(s.name)))}` : "",

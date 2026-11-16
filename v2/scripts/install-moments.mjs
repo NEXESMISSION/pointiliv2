@@ -10,10 +10,11 @@
  *     and in the browser he went on in (the way out of Instagram carries it: /me?install=1&early=1)
  *   - the floating button only over a list (on the empty home it would cover «شوف كيفاش تخدم»)
  *   - never once the app was opened on a phone of his
- *   - Telegram: the first visit opened as the app, or Chrome's word that it installed, rings once per person
- *     (the mark «app_told» on the person, taken atomically right before the message goes) — an owner with
- *     the shop, a customer with the shops of their cards; never twice, never a robot, never someone already
- *     using the app before the alert existed; an install made signed out rings at the first open signed in.
+ *   - Telegram: the first visit opened as the app, or Chrome's word that it installed, rings once per OWNER
+ *     (the mark «app_told» on the person, taken atomically right before the message goes) with the shop;
+ *     never twice, never a robot, never someone already using the app before the alert existed; an install
+ *     made signed out rings at the first open signed in. A customer never rings (16 Nov 2026: four of one
+ *     shop's new customers rang in half an hour): the morning's digest says them, a line a shop.
  *     The local server has no bot: it prints «[telegram · not sent]» in its own output instead
  *
  * Throwaway accounts (robots — two made real for a moment for the Telegram half, a robot never rings), deleted
@@ -335,14 +336,17 @@ try {
     }
   }
 
-  console.log("\nTelegram: once per person, the first time the app lands");
+  console.log("\nTelegram: once per owner, the first time the app lands — a customer said in the morning's digest");
   {
     const real = await person("نادية");
     const realShop = await shopFor(real, "Salon Nadia");
     const fan = await person("ريم");
     const before = await person("هالة");
+    // owners too (16 Nov 2026: only an owner's phone rings), for the signed-out install and the two batches at once
     const late = await person("منير");
+    await shopFor(late, "Snack Mounir");
     const twice = await person("كريم");
+    await shopFor(twice, "Café Karim");
     await admin.from("cards").insert({ shop_id: realShop, user_id: fan.id, goal: 6, gift: "بروشينغ بلاش", stamps: 2 });
     // signed in (the cookies), then the beacon as a phone would send it — from a host that is not the local one
     const cookiesOf = async (who) => {
@@ -384,12 +388,19 @@ try {
       await settle();
       check("…the same visit again, and another visit as the app: no second ring", (await told(real)) === 1, await told(real));
 
+      // a customer: never rung (four of one shop's new customers rang in half an hour, 16 Nov 2026), said in the morning
       await beacon(jars.fan, UA.android, { signals: ["pwa_installed"] });
       await settle();
-      check("a customer's install, said by Chrome in a tab, rings (🤖 Android · Chrome)", (await told(fan)) === 1, await told(fan));
+      check("a customer's install, said by Chrome in a tab: no ring", (await told(fan)) === 0, await told(fan));
       await beacon(jars.fan, UA.android, { standalone: true });
       await settle();
-      check("…then opening it: no second ring", (await told(fan)) === 1, await told(fan));
+      check("…nor opening it", (await told(fan)) === 0, await told(fan));
+      // …the morning's digest says it: her first visit as the app yesterday, under her card's shop
+      const yday = randomUUID();
+      visits.push(yday);
+      await admin.from("visits").insert({ id: yday, visitor: `moments-${yday.slice(0, 8)}`, user_id: fan.id, standalone: true, is_bot: false, started_at: new Date(Date.now() - 86_400_000).toISOString() });
+      const morning = await fetch(`${BASE}/api/cron/digest?preview=1`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` } }).then((r) => r.json()).catch(() => ({}));
+      check("the morning's digest: «📲 حرفاء حطّو Pointili في تليفونهم», «Salon Nadia (1)»", /📲 حرفاء حطّو Pointili في تليفونهم/.test(morning.text ?? "") && (morning.text ?? "").includes("Salon Nadia (1)"), (morning.text ?? "").split("\n").filter((l) => /📲|Salon Nadia/.test(l)));
 
       await beacon(jars.robot, UA.android, { standalone: true });
       await settle();
@@ -404,7 +415,7 @@ try {
       await beacon(null, UA.android, { visit: sitting, visitor: `moments${late.id.slice(0, 8)}`, signals: ["pwa_installed"] });
       await beacon(jars.late, UA.android, { visit: sitting, visitor: `moments${late.id.slice(0, 8)}` });
       await settle();
-      check("an install made signed out rings nothing yet (nobody to name)", (await told(late)) === 0);
+      check("an owner's install made signed out rings nothing yet (nobody to name)", (await told(late)) === 0);
       await beacon(jars.late, UA.android, { standalone: true });
       await settle();
       check("…its first open signed in rings, once", (await told(late)) === 1, await told(late));
@@ -412,11 +423,11 @@ try {
       // two batches of a first open at the same moment (the page hidden and closed together)
       await Promise.all([beacon(jars.twice, UA.iphone, { standalone: true }), beacon(jars.twice, UA.iphone, { standalone: true })]);
       await settle();
-      check("two first batches at the same moment: one ring", (await told(twice)) === 1, await told(twice));
+      check("an owner's two first batches at the same moment: one ring", (await told(twice)) === 1, await told(twice));
     } finally {
       for (const p of realOnes) await robot(admin, p.digits);
     }
-    console.log("  → the dev server's output says «[telegram · not sent]» for each ring: the owner, the customer, the late one, the twice one");
+    console.log("  → the dev server's output says «[telegram · not sent]» for each ring: the three owners, never the customer");
   }
 } catch (e) {
   failed.push(`crashed: ${e.message}`);
