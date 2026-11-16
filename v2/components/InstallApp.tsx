@@ -7,7 +7,7 @@ import { Sheet, SheetGo } from "@/components/Client";
 import { FabHint } from "@/components/FabHint";
 import { InstallGuide, Mixed, preloadGuide, useAppStartsSignedIn } from "@/components/InstallGuide";
 import { Icon3D } from "@/components/ui";
-import { seenBefore, shown } from "@/lib/once";
+import { seenBefore, seenHere, shown, type Note } from "@/lib/once";
 import { fabAway, installApp, isIphone, outsideHref, putFabAway, tapInstall, useCanInstall, useInApp, useInstalled, useInstallStage, useInstallWay, useOwnInstall, type InstallWay } from "@/lib/pwa";
 import { signal } from "@/lib/track";
 import { fill, t } from "@/lib/t";
@@ -109,7 +109,7 @@ export function InstallApp({ where, look = "pill", className = "" }: { where: st
  */
 export function OpenOutside({ where, path = "/me?install=1", look = "row", className = "" }: { where: string; path?: string; look?: "row" | "line"; className?: string }) {
   const inApp = useInApp();
-  const [stuck, setStuck] = useState(false);
+  const { go, send, stuck, browser } = useWayOut(where, path);
   const counted = useRef(false);
   useEffect(() => {
     if (!inApp || counted.current) return;
@@ -118,24 +118,7 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
   }, [inApp, where]);
   if (!inApp) return null;
 
-  const iphone = isIphone();
-  const label = fill(t.openOutside, { browser: iphone ? "Safari" : "Chrome" });
-  // the other browser opens signed in: a one-time sign-in rides along (never in the WhatsApp link below, which stays in a chat)
-  const go = async () => {
-    signal("pwa_out_tap", where);
-    const to = await handoffPath(path).catch(() => path);
-    window.location.href = outsideHref(to);
-    if (iphone) setTimeout(() => document.visibilityState === "visible" && setStuck(true), 1500);
-  };
-
-  // The other way out, and the one more people take: WhatsApp is an app, so
-  // opening it leaves Facebook's browser by itself — and it leaves the address
-  // behind in a chat, which is what «open in Chrome» never does. Someone who
-  // closes Facebook an hour later has lost nothing.
-  const send = () => {
-    signal("pwa_out_wa", where);
-    window.location.href = `https://wa.me/?text=${encodeURIComponent(`${t.waShareText}\nhttps://${location.host}${path}`)}`;
-  };
+  const label = fill(t.openOutside, { browser });
 
   if (look === "line") {
     return (
@@ -179,51 +162,169 @@ export function OpenOutside({ where, path = "/me?install=1", look = "row", class
 }
 
 /**
- * The install sheet, once per person: «حطّ Pointili في تليفونك» where
- * Android's Chrome offers it — and on an iPhone, where nothing can be
- * offered, the guide to the three taps instead. Never in Facebook's browser,
- * never once installed. Written down the moment it opens, unless `force`d:
- * the owner just came out of Facebook's browser to install (/me?install=1).
- * The page decides `show` from the person's list; on Android the sheet waits
- * for Chrome's offer, which comes a moment after the page. Shown, the yes,
- * the no and the install are all counted, with where.
+ * The two ways out of Facebook's or Instagram's browser, for OpenOutside and the install sheet there. `go`:
+ * the phone's own browser (Safari on an iPhone, else Chrome) opens `path` signed in — a one-time sign-in
+ * rides along; on an iPhone the jump needs iOS 17, so a page still here a moment later says the way by hand
+ * (`stuck`). `send`: the address to oneself on WhatsApp — an app, so opening it leaves Facebook's browser by
+ * itself, and the address stays behind in a chat, which «open in Chrome» never does (the one more people
+ * take: someone who closes Facebook an hour later has lost nothing). Both counted, with where.
  */
-export function InstallPopup({ where, who, show, force = false }: { where: string; who: string; show: boolean; force?: boolean }) {
-  const can = useCanInstall();
-  const way = useInstallWay();
-  const ios = way === "ios" || way === "ios-chrome";
-  const [open, setOpen] = useState(false);
-  const done = useRef(false);
-  useEffect(() => {
-    if (!(can || ios) || done.current || !(show || force)) return;
-    if (!force && seenBefore("install", who)) return;
-    const id = setTimeout(() => {
-      done.current = true;
-      shown("install", who);
-      signal(can ? "pwa_shown" : "pwa_ios_shown", `popup · ${where}`);
-      setOpen(true);
-    }, force ? 400 : 1200);
-    return () => clearTimeout(id);
-  }, [can, ios, show, force, who, where]);
+function useWayOut(where: string, path: string) {
+  const [stuck, setStuck] = useState(false);
+  const iphone = isIphone();
+  const go = async () => {
+    signal("pwa_out_tap", where);
+    // never in the WhatsApp link below, which stays in a chat
+    const to = await handoffPath(path).catch(() => path);
+    window.location.href = outsideHref(to);
+    if (iphone) setTimeout(() => document.visibilityState === "visible" && setStuck(true), 1500);
+  };
+  const send = () => {
+    signal("pwa_out_wa", where);
+    window.location.href = `https://wa.me/?text=${encodeURIComponent(`${t.waShareText}\nhttps://${location.host}${path}`)}`;
+  };
+  const ua = typeof navigator === "undefined" ? "" : navigator.userAgent;
+  const app = /Instagram/i.test(ua) ? "Instagram" : /FBAN|FBAV|FB_IAB/i.test(ua) ? "Facebook" : t.thisBrowser;
+  return { go, send, stuck, browser: iphone ? "Safari" : "Chrome", app };
+}
 
-  if (!open) return null;
-  // an iPhone: no dialog to open, so the sheet is the guide itself
-  if (!can) return way ? <GuideFor way={way} where={`popup · ${where}`} onClose={() => setOpen(false)} /> : null;
-
+/**
+ * The install sheet inside Facebook's or Instagram's browser, where nothing installs (and where 39 of the
+ * 41 owners of the November campaign signed up): one ask, to open Pointili in the phone's own browser
+ * signed in, on /me?install=1 where the install comes up by itself — or to send it to oneself on WhatsApp.
+ * `early`: asked before any customer, so the second ask is due after the first one — in the browser the owner
+ * goes on in, not in this one (&early=1 rides along). Stuck on an old iPhone, the way is WhatsApp: Instagram's
+ * own «Open in browser» would open this page signed out.
+ */
+function OutsideSheet({ where, early, onClose }: { where: string; early: boolean; onClose: () => void }) {
+  const { go, send, stuck, browser, app } = useWayOut(where, early ? "/me?install=1&early=1" : "/me?install=1");
   const later = () => {
     signal("pwa_later", where);
-    setOpen(false);
-  };
-  const yes = () => {
-    setOpen(false);
-    void installApp(`popup · ${where}`);
+    onClose();
   };
   return (
     <Sheet
       label={t.installApp}
       icon={<Icon3D name="phone" size={64} className="mx-auto animate-float" />}
       title={t.installApp}
-      under={t.installPopupBody}
+      under={stuck ? t.installOutsideStuck : fill(t.installOutsideBody, { app, browser })}
+      onClose={later}
+      action={
+        <>
+          <SheetGo onClick={() => void go()}>
+            <ExternalLink className="size-5" /> {fill(t.openOutside, { browser })}
+          </SheetGo>
+          <button type="button" onClick={send} className="press mt-2 flex h-11 w-full items-center justify-center gap-1.5 rounded-[1.25rem] bg-brand-soft text-[0.9375rem] font-bold text-brand">
+            <Send className="size-[1.125rem]" /> {t.waSendSelf}
+          </button>
+        </>
+      }
+      dismiss={t.installPopupLater}
+    />
+  );
+}
+
+/**
+ * The second ask, after the first customer: only when the first came before any customer («early»), so an owner
+ * whose first customer came before he was ever asked is not asked twice in a row — and once («done»). Kept in
+ * the browser, keyed by the shop: the way out of Instagram carries «early» to the browser the owner goes on in
+ * (/me?install=1&early=1), where it is written unless that browser already asked again.
+ */
+const AGAIN = (shop: string) => `pl-install-again:${shop}`;
+function againDue(shop: string): boolean {
+  try {
+    return localStorage.getItem(AGAIN(shop)) === "early";
+  } catch {
+    return false; // no storage: asked once is enough
+  }
+}
+function markAsk(shop: string, state: "early" | "done") {
+  try {
+    if (state === "early" && localStorage.getItem(AGAIN(shop)) === "done") return;
+    localStorage.setItem(AGAIN(shop), state);
+  } catch {
+    /* private mode */
+  }
+}
+
+/**
+ * The install sheet, once per person: «حطّ Pointili في تليفونك» where
+ * Android's Chrome offers it — and on an iPhone, where nothing can be
+ * offered, the guide to the three taps instead. Never once installed.
+ * Written down the moment it opens, unless `force`d:
+ * the owner just came out of Facebook's browser to install (/me?install=1).
+ * The page decides `show` from the person's list; on Android the sheet waits
+ * for Chrome's offer, which comes a moment after the page. Shown, the yes,
+ * the no and the install are all counted, with where.
+ *
+ * In Facebook's or Instagram's browser it is the way out instead (OutsideSheet). `orAfter`: shown too once
+ * that note has been seen on this phone — a home the back button brings back carries the list as it was
+ * before the code was shown. `earlyFor`: this first ask comes before the shop's first customer, so a second
+ * one is due after it (`again`, once, see againDue; `who` is then the shop). `under`: the words under the
+ * title, the page's own reason.
+ */
+export function InstallPopup({
+  where,
+  who,
+  show,
+  force = false,
+  orAfter,
+  earlyFor,
+  again = false,
+  under,
+}: {
+  where: string;
+  who: string;
+  show: boolean;
+  force?: boolean;
+  orAfter?: Note;
+  earlyFor?: string;
+  again?: boolean;
+  under?: string;
+}) {
+  const can = useCanInstall();
+  const way = useInstallWay();
+  const inApp = useInApp();
+  const ios = way === "ios" || way === "ios-chrome";
+  const [open, setOpen] = useState(false);
+  const done = useRef(false);
+  const at = `popup · ${where}${again ? " · again" : ""}`;
+  useEffect(() => {
+    if (!(can || ios || inApp) || done.current) return;
+    if (!(show || force || (!!orAfter && seenHere(orAfter, who)))) return;
+    if (!force && (again ? !againDue(who) : seenBefore("install", who))) return;
+    const id = setTimeout(() => {
+      done.current = true;
+      if (again) markAsk(who, "done");
+      else {
+        shown("install", who);
+        if (earlyFor) markAsk(earlyFor, "early");
+      }
+      signal(inApp ? "pwa_out_shown" : can ? "pwa_shown" : "pwa_ios_shown", at);
+      setOpen(true);
+    }, force ? 400 : 1200);
+    return () => clearTimeout(id);
+  }, [can, ios, inApp, show, force, orAfter, earlyFor, again, who, at]);
+
+  if (!open) return null;
+  if (inApp) return <OutsideSheet where={at} early={!!earlyFor} onClose={() => setOpen(false)} />;
+  // an iPhone: no dialog to open, so the sheet is the guide itself
+  if (!can) return way ? <GuideFor way={way} where={at} onClose={() => setOpen(false)} /> : null;
+
+  const later = () => {
+    signal("pwa_later", at);
+    setOpen(false);
+  };
+  const yes = () => {
+    setOpen(false);
+    void installApp(at);
+  };
+  return (
+    <Sheet
+      label={t.installApp}
+      icon={<Icon3D name="phone" size={64} className="mx-auto animate-float" />}
+      title={t.installApp}
+      under={under ?? t.installPopupBody}
       onClose={later}
       action={
         <SheetGo onClick={yes}>

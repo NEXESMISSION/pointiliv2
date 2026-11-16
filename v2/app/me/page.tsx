@@ -14,10 +14,11 @@ import { kindIcon, t } from "@/lib/t";
 export const metadata = { title: "الكونت" };
 
 /** The account: the name, the number, a new password — and the other side of Pointili, one tap away. */
-export default async function Account({ searchParams }: { searchParams: Promise<{ install?: string }> }) {
-  const [me, { install }] = await Promise.all([getMe(), searchParams]);
-  // come out of Facebook's browser to install (/me?install=1): the address survives the login
-  if (!me) redirect(install === "1" ? "/login?next=%2Fme%3Finstall%3D1" : "/login?next=/me");
+export default async function Account({ searchParams }: { searchParams: Promise<{ install?: string; early?: string }> }) {
+  const [me, { install, early }] = await Promise.all([getMe(), searchParams]);
+  // come out of Facebook's browser to install (/me?install=1, &early=1 when asked before the shop's first
+  // customer): the address survives the login
+  if (!me) redirect(install === "1" ? `/login?next=${encodeURIComponent(`/me?install=1${early === "1" ? "&early=1" : ""}`)}` : "/login?next=/me");
   // a customer may open a shop; an owner (or the founder) also collects stamps elsewhere;
   // the founder's own shop, if any, is one tap away from the console
   const links = [
@@ -57,7 +58,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
       {/* never both: Facebook's browser offers no install */}
       <OpenOutside where="account" className="mt-[2dvh]" />
       {/* out of Facebook's browser to install: Chrome's offer asked at once */}
-      <InstallPopup where="account" who={me.id} show={install === "1"} force={install === "1"} />
+      <InstallPopup where="account" who={me.id} show={install === "1"} force={install === "1"} earlyFor={install === "1" && early === "1" ? me.shop?.id : undefined} />
       {/* out: this phone's push word taken back first (components/LogoutButton.tsx) */}
       <LogoutButton />
       </Middle>

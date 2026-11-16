@@ -29,7 +29,9 @@ mkdirSync(OUT, { recursive: true });
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 for (const ip of ["local", "::1", "127.0.0.1"]) await admin.rpc("forget_tries", { p_key: `login-ip:${ip}` });
 const PASS = "reset-first-e2e-2026";
-const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "fix_tip", "first_scan", "first_gift", "mission", "links_tip", "reset_tip", "new_insights"];
+// every note but the code's own («coach»): a new owner making the first card has not seen the code yet, and
+// once he has, /shop/start (where the card leads) sends him home instead
+const NOTES = ["card_hello", "logo_tip", "offer", "push", "install", "fix_tip", "first_scan", "first_gift", "mission", "links_tip", "reset_tip", "new_insights"];
 const made = [];
 const phones = [];
 let passed = 0;

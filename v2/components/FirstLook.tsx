@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { HowStory } from "@/components/HowClip";
 import { useScreen } from "@/components/Tracker";
+import { seenBefore } from "@/lib/once";
 import { pixelOnce } from "@/lib/pixel";
 import { t } from "@/lib/t";
 import { signal } from "@/lib/track";
@@ -15,9 +16,14 @@ import { signal } from "@/lib/track";
  * (?tip=1). Out before the end only by «تخطّى». The drawn demo of four beats
  * and the night's screen were the founder's «too many steps» (17 Oct 2026).
  */
-export function FirstLook() {
+export function FirstLook({ shop }: { shop: string }) {
   const router = useRouter();
   useScreen("start");
+  // back here from the code (the phone's back button brings this page back as it was): home instead. A fresh
+  // load is the server's to decide (app/shop/start), so only a page this phone already woke up on bounces
+  useEffect(() => {
+    if (seenBefore("coach", shop)) router.replace("/shop");
+  }, [router, shop]);
   // the card is made: for Facebook's pixel, the owner is in for real
   useEffect(() => pixelOnce("CardCreated"), []);
   useEffect(() => router.prefetch("/shop/qr?tip=1"), [router]);

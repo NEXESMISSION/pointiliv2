@@ -22,7 +22,7 @@ import { Icon3D } from "@/components/ui";
 import { getMe } from "@/lib/session";
 import type { News } from "@/lib/news";
 import { getHelp } from "@/lib/settings";
-import { call } from "@/lib/supabase";
+import { call, service } from "@/lib/supabase";
 import { fill, t } from "@/lib/t";
 import type { CardView } from "@/lib/types";
 
@@ -76,22 +76,31 @@ export default async function ShopHome() {
   // an owner is somebody's customer too: their own cards, asked for beside the rest
   // so it costs nothing. Never a card at their own shop — the counter refuses one —
   // so every card here is at another business (the founder, 18 Oct 2026)
-  const [home, help, news, pay, mine, bell] = await Promise.all([
+  const [home, help, news, pay, mine, bell, asApp] = await Promise.all([
     call<Home>("shop_home"),
     getHelp(),
     call<News | null>("news_next"),
     call<Pay | null>("my_payment"),
     call<CardView[]>("wallet"),
     call<{ unread: number } | null>("my_bell"),
+    // Pointili already opened as the app, on any phone of theirs: no more asking to install it
+    service().from("visits").select("id").eq("user_id", me.id).eq("standalone", true).limit(1),
   ]);
+  // a read that failed says nothing: no ask this visit (the ask is once, never spent on someone who has the app)
+  if (asApp.error) console.error("[home] app visits", asApp.error.message);
+  const hasApp = !!asApp.error || asApp.data.length > 0;
   const myCards = mine ?? [];
   const seen = me.seen ?? [];
   const paid = !!pay?.paid;
   const offer = !!pay?.offer;
   // one note a visit. (The bravo that once greeted a brand-new card here is gone — the founder, 23 Oct 2026:
   // the card's own steps end on the clips and the code, and that is enough.)
-  // before the first customer the home has one job (the code): the logo and the install wait for a customer
+  // before the first customer the home has one job (the code): the logo waits for a customer
   const served = (home?.served ?? 0) > 0;
+  // the app on the phone does not (the founder, 16 Nov 2026): asked the first time the owner is back from his
+  // code — most sign up at night, inside Instagram, with nobody to scan it before the morning, and waiting for
+  // a customer meant never being asked — then once more after the first customer. Never once it is on a phone
+  const appTime = !hasApp && (served || seen.includes("coach"));
   // the shop's first gift won and waiting: how to hand it over comes before any other note
   const firstGift = !seen.includes("first_gift") ? (home?.waiting?.[0] ?? null) : null;
   const logoTip = !firstGift && served && !seen.includes("logo_tip");
@@ -172,8 +181,10 @@ export default async function ShopHome() {
       <h2 className="mt-[2dvh] shrink-0 px-0.5 text-[1rem] font-bold">{t.giveTitle}</h2>
       {/* the code is the main way (purple, filled); the number is the other one (white, its icon purple) */}
       <div className="mt-2 grid shrink-0 grid-cols-2 gap-2">
+        {/* the code's one note (why it is his, why it changes) until he has seen it: an owner who left during
+            the clips never got it — and the install is asked when he is back from it */}
         <Link
-          href="/shop/qr"
+          href={seen.includes("coach") ? "/shop/qr" : "/shop/qr?tip=1"}
           className="press relative flex min-h-[clamp(6.25rem,15dvh,8.5rem)] flex-col justify-between overflow-hidden rounded-[1.5rem] bg-[linear-gradient(150deg,#8f75ff,#6c47ff_50%,#4a2ad6)] p-3.5 text-white shadow-[0_8px_18px_-12px_rgb(74_42_214/0.7)]"
         >
           <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_80%_at_0%_0%,rgb(255_255_255/0.22),transparent_55%)]" aria-hidden />
@@ -320,9 +331,26 @@ export default async function ShopHome() {
       <LinksTip who={me.id} show={linksTip} />
       <NewTip who={me.id} show={newTip} />
       <ResetTip who={me.id} show={resetTip} />
-      <InstallPopup where="home" who={shop.id} show={served && !firstGift && !logoTip && !offerNote && !grant && !news && !linksTip && !newTip && !resetTip && !seen.includes("install")} />
-      {/* and offered all along, floating over «آخر حركة» clear of «شوف الكل», once a customer came */}
-      {served && <InstallFab where="home" lift="4rem" />}
+      {/* (inside Instagram's or Facebook's browser, the way out to Chrome or Safari first). `orAfter`: a home the
+          back button brings back from the code was drawn before the code was seen */}
+      {(() => {
+        const quiet = !hasApp && !firstGift && !logoTip && !offerNote && !grant && !news && !linksTip && !newTip && !resetTip;
+        const first = quiet && !seen.includes("install");
+        return (
+          <InstallPopup
+            where="home"
+            who={shop.id}
+            show={first ? appTime : quiet && served}
+            again={!first}
+            earlyFor={served ? undefined : shop.id}
+            orAfter={first ? "coach" : undefined}
+            under={served ? t.installWhyAgain : t.installWhyCode}
+          />
+        );
+      })()}
+      {/* and offered all along, floating over «آخر حركة» clear of «شوف الكل» — so only once there is a list to
+          float over: on the empty box it would sit on «شوف كيفاش تخدم» (the header's button is there meanwhile) */}
+      {appTime && lately && <InstallFab where="home" lift="4rem" />}
     </main>
   );
 }

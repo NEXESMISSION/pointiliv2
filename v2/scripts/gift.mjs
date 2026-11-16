@@ -23,8 +23,9 @@ const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const admin = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 for (const ip of ["local", "::1", "127.0.0.1"]) await admin.rpc("forget_tries", { p_key: `login-ip:${ip}` });
 // every one-time note already seen, the first gift's among them: its sheet opens a second after the
-// owner's home and used to race this run (two «سكاني» on the page, or one, depending on the day)
-const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "first_scan", "first_gift", "mission"];
+// owner's home and used to race this run (two «سكاني» on the page, or one, depending on the day) — and the
+// home's notes since 5 Nov (the links, what is new, the card's clock): the links' sheet covered «سكاني»
+const NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "first_scan", "first_gift", "mission", "links_tip", "new_insights", "reset_tip", "fix_tip"];
 const password = randomBytes(9).toString("base64url");
 const made = [], phones = [];
 mkdirSync("shots/gift", { recursive: true });

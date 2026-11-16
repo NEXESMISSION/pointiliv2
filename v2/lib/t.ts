@@ -1340,6 +1340,15 @@ export const t = {
   installPopupBody: "تحلّها من الشاشة كيما أي أبليكاسيون، بلا ما تفتّش عليها",
   installPopupYes: "حطّها",
   installPopupLater: "موش توّا",
+  // the owner's home asks it the first time he is back from his code (most sign up at night, nobody to scan
+  // it before the morning), and once more after the first customer: each with its reason
+  installWhyCode: "كي يجي أوّل حريف، تحلّ Pointili بلمسة من الشاشة وتورّيه الكود",
+  installWhyAgain: "كل حريف يجي، تحلّ Pointili بلمسة من الشاشة، بلا ما تفتّش عليه",
+  // …and inside Facebook's or Instagram's browser, where nothing installs: the way out first
+  installOutsideBody: "من {app} ما تنجمش تحطّها. حلّها في {browser}، تلقى روحك داخل، وحطّها من غادي.",
+  // an old iPhone where the jump to Safari does nothing: WhatsApp, the button right under it
+  installOutsideStuck: "ما تحلّتش؟ ابعثها لروحك في واتساب وحلّها من غادي",
+  thisBrowser: "المتصفّح هذا",
   // an iPhone has no install prompt: a guide, three steps in its browser, drawn as the phone shows them
   iosGuideTitle: "حطّ Pointili في تليفونك",
   iosStep1: "اضغط على زرّ المشاركة",

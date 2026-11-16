@@ -282,7 +282,8 @@ try {
   const html = await (await fetch(`${BASE}/app`)).text();
   const meta = (p) => html.match(new RegExp(`<meta property="${p}" content="([^"]*)"`))?.[1];
   check("a chat's preview: the page's own title", meta("og:title") === T.install, meta("og:title"));
-  check("…the site's picture", /\/og\.jpg$/.test(meta("og:image") ?? ""), meta("og:image"));
+  // the share picture's name carries its version since the new prices (og-v2.jpg): a chat caches by address
+  check("…the site's picture", /\/og(-v\d+)?\.jpg$/.test(meta("og:image") ?? ""), meta("og:image"));
   check("…and this address", /\/app$/.test(meta("og:url") ?? ""), meta("og:url"));
 } finally {
   await browser.close();

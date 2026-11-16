@@ -23,7 +23,11 @@ export const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replac
 export async function tg(text: string, buttons: Button[][] = []): Promise<boolean> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chat = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chat) return false;
+  if (!token || !chat) {
+    // the local server has no bot: what would have gone is printed instead, to be read
+    if (process.env.NODE_ENV === "development") console.info(`[telegram · not sent]\n${text}`);
+    return false;
+  }
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
@@ -53,12 +57,14 @@ export type ShopFacts = { shop: Shop; owner: Owner };
 export async function shopFacts(by: { shop?: string; owner?: string }): Promise<ShopFacts | null> {
   const db = service();
   const q = db.from("shops").select("id, name, kind, created_at, owner_id, trial_days, paid_until");
-  const { data: shop } = by.shop ? await q.eq("id", by.shop).maybeSingle() : await q.eq("owner_id", by.owner ?? "").maybeSingle();
-  if (!shop) return null;
-  const [{ data: owner }, { data: robot }] = await Promise.all([
+  const { data: shop, error } = by.shop ? await q.eq("id", by.shop).maybeSingle() : await q.eq("owner_id", by.owner ?? "").maybeSingle();
+  if (error || !shop) return null;
+  const [{ data: owner, error: ownerError }, { data: robot, error: robotError }] = await Promise.all([
     db.from("people").select("name, phone, is_admin, is_tester").eq("id", shop.owner_id).maybeSingle(),
     db.rpc("is_robot", { p_id: shop.owner_id }),
   ]);
+  // a read that failed says nothing: a robot's or a tester's shop must never ring for want of an answer
+  if (ownerError || robotError) return null;
   if (robot === true || owner?.is_admin || owner?.is_tester) return null;
   return { shop: shop as Shop, owner: { name: owner?.name ?? "", phone: owner?.phone ?? null } };
 }
@@ -170,4 +176,93 @@ export async function alertCall(owner: string, whatsapp = false): Promise<void> 
     ? ["💬 <b>التجربة وفات: فتح واتساب باش يبعثلك</b>", shopLine(f), "الميساج يوصلك على واتساب بالكونت متاعو، وتخدّملو الأبونمان كي يخلّص."]
     : ["📞 <b>نزل على «كلّمنا»</b>", shopLine(f), "يستنّى في تليفونك توّا."];
   await tg(lines.join("\n"), shopButtons(f));
+}
+
+/** How Pointili went onto the phone: its own Android app (the user agent says PointiliApp), Android's Chrome, an iPhone, a computer. */
+export type AppWay = "apk" | "android" | "iphone" | "computer";
+export function appWay(ua: string): AppWay {
+  if (/PointiliApp\//.test(ua)) return "apk";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "iphone";
+  if (/Android/i.test(ua)) return "android";
+  return "computer";
+}
+const WAY: Record<AppWay, string> = { apk: "🤖 Android · التطبيق (APK)", android: "🤖 Android · Chrome", iphone: "🍏 iPhone", computer: "💻 كمبيوتر" };
+
+/**
+ * Not yet seen in the app: no visit of theirs opened as the app. Asked before the beacon writes its batch, and
+ * only for a batch that is the app's or an install's — so the people who were already using the app before this
+ * alert existed never ring for it. «unknown» when the read failed: no ring this time, asked again next batch.
+ */
+export async function newToApp(user: string): Promise<"yes" | "no" | "unknown"> {
+  const { data, error } = await service().from("visits").select("id").eq("user_id", user).eq("standalone", true).limit(1);
+  if (error) return "unknown";
+  return data.length ? "no" : "yes";
+}
+
+/** The mark on the person that the founder was told Pointili is on their phone (alertApp) — not a note, never shown. */
+export const APP_TOLD = "app_told";
+
+/**
+ * The «once» of once per person, kept on the person and taken atomically: APP_TOLD added to people.seen only if
+ * the list is still the one just read (a note seen in between: read again). True for exactly one caller, whatever
+ * the server instance, the batch or the order — the install said in a tab, then the first open, ring once; two
+ * batches at the same moment, once. A failed read or write: false, never a ring for nothing.
+ */
+async function claimApp(user: string): Promise<boolean> {
+  const db = service();
+  for (let i = 0; i < 3; i++) {
+    const { data, error } = await db.from("people").select("seen").eq("id", user).maybeSingle();
+    if (error || !data) return false;
+    const seen: string[] = data.seen ?? [];
+    if (seen.includes(APP_TOLD)) return false;
+    const was = `{${seen.map((k) => `"${k.replace(/["\\]/g, "\\$&")}"`).join(",")}}`;
+    const won = await db.from("people").update({ seen: [...seen, APP_TOLD] }).eq("id", user).filter("seen", "eq", was).select("id");
+    if (won.error) return false;
+    if (won.data.length) return true;
+  }
+  return false;
+}
+
+/** «3 ساعة بعد ما حلّ المحل» */
+function sinceShop(iso: string): string {
+  const h = (Date.now() - Date.parse(iso)) / 3600_000;
+  if (h < 1) return "في الساعة الأولى متاع المحل";
+  return h < 48 ? `${Math.round(h)} ساعة بعد ما حلّ المحل` : `${Math.round(h / 24)} يوم بعد ما حلّ المحل`;
+}
+
+/**
+ * Pointili put on a phone (the founder, 16 Nov 2026: «when people add the PWA I really want to know»): the
+ * first time they open it as the app — the only sign an iPhone ever gives — or the moment Android's Chrome says
+ * it is installed, whichever comes first; once per person (claimApp). An owner: the shop, and how long after it
+ * opened. A customer: the shops whose cards they hold. Robots, testers and the founder never ring, nor a customer
+ * whose every card is at a test shop — and a read that failed rings for nobody.
+ */
+export async function alertApp(user: string, way: AppWay, opened: boolean): Promise<void> {
+  const db = service();
+  const how = `${WAY[way]} · ${opened ? "حلّها من الأيقونة" : "تحطّت (مازال ما حلّهاش)"}`;
+  const own = await db.from("shops").select("id").eq("owner_id", user).maybeSingle();
+  if (own.error) return;
+  if (own.data) {
+    const f = await shopFacts({ shop: own.data.id });
+    if (!f || !(await claimApp(user))) return;
+    await tg([`📲 <b>مولى المحل حطّ Pointili في تليفونو</b>`, shopLine(f), `${how} · ${sinceShop(f.shop.created_at)}`].join("\n"), shopButtons(f));
+    return;
+  }
+  const [person, robot, cards] = await Promise.all([
+    db.from("people").select("name, is_admin, is_tester").eq("id", user).maybeSingle(),
+    db.rpc("is_robot", { p_id: user }),
+    db.from("cards").select("shop_id").eq("user_id", user).order("created_at", { ascending: false }).limit(3),
+  ]);
+  if (person.error || robot.error || cards.error || !person.data) return;
+  const p = person.data;
+  if (robot.data === true || p.is_admin || p.is_tester) return;
+  const shops = (await Promise.all(cards.data.map((c) => shopFacts({ shop: c.shop_id })))).filter((f): f is ShopFacts => !!f);
+  // every card at a robot's or a tester's shop: a test
+  if (cards.data.length && !shops.length) return;
+  if (!(await claimApp(user))) return;
+  const who = [`<b>${esc(p.name || "حريف")}</b>`, shops.length ? `عندو كارط في ${shops.map((f) => esc(f.shop.name)).join("، ")}` : ""].filter(Boolean).join(" · ");
+  const first = shops[0];
+  // cut by letters, not by UTF-16 units: an emoji or an accent is never split
+  const label = Array.from(`🧾 ${first?.shop.name ?? ""}`).slice(0, 40).join("");
+  await tg([`📲 <b>حريف حطّ Pointili في تليفونو</b>`, who, how].join("\n"), first ? [[{ text: label, url: `${SITE}/admin/shop/${first.shop.id}` }]] : []);
 }

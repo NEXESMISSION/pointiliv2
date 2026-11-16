@@ -1,10 +1,16 @@
 import { after, NextResponse, type NextRequest } from "next/server";
 import { getMe, sessionId } from "@/lib/session";
 import { service } from "@/lib/supabase";
-import { alertCall } from "@/lib/telegram";
+import { alertApp, alertCall, appWay, newToApp } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f-]{36}$/i;
+/**
+ * The people this server has already asked about (lib/telegram: newToApp): their next batches, every half-minute
+ * while the app is open, ask the database nothing more. Kept while the instance lives; the «once» itself is kept
+ * on the person (alertApp), so another instance asking again never rings twice.
+ */
+const knownInApp = new Set<string>();
 
 /** The phone, its system and browser — Facebook's and Instagram's own browsers named, since the ads open in them. */
 function client(ua: string) {
@@ -123,11 +129,33 @@ export async function POST(request: NextRequest) {
     body.here && ["here", "idle", "away"].includes(String(body.here.state))
       ? { state: String(body.here.state), path: typeof body.here.path === "string" && body.here.path.startsWith("/") ? body.here.path.slice(0, 300) : "" }
       : null;
+  // Pointili put on a phone: the founder's Telegram rings once per person (lib/telegram: alertApp) — their
+  // first visit opened as the app, or Android's Chrome saying it just installed, whichever comes first.
+  // Asked before this batch is written (once written, it is no longer the first), and the person marked asked
+  // before the answer comes: the same person's next batch, a moment later, asks nothing
+  const installed = (body.signals ?? []).some((g) => (g as { name?: unknown })?.name === "pwa_installed");
+  let ring: (() => Promise<void>) | null = null;
+  if (me && !visit.is_bot && !me.admin && !me.tester && (visit.standalone || installed) && !knownInApp.has(me.id)) {
+    const user = me.id;
+    if (knownInApp.size > 5000) knownInApp.clear();
+    knownInApp.add(user);
+    const fresh = await newToApp(user);
+    // no answer: asked again with the next batch
+    if (fresh === "unknown") knownInApp.delete(user);
+    if (fresh === "yes") {
+      const way = appWay(ua);
+      const opened = visit.standalone;
+      ring = () => alertApp(user, way, opened);
+    }
+  }
   const { error } = await service().rpc("track", { p: { visit, views: body.views ?? [], taps: body.taps ?? [], signals: body.signals ?? [], here } });
   if (error) {
     console.error("[track]", error.message);
+    // the batch is lost, and the first visit as the app with it: the next batch is the first again
+    if (ring && me) knownInApp.delete(me.id);
     return new NextResponse(null, { status: 400 });
   }
+  if (ring) after(ring);
   // an owner tapped «كلّمنا» on the trial's line, or its WhatsApp once the trial is over: the founder's Telegram rings
   // (not a robot's, not on the local server)
   const tap = (body.signals ?? []).find((g) => (g as { name?: unknown })?.name === "trial_call") as { detail?: unknown } | undefined;

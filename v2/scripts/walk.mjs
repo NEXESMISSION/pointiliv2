@@ -182,8 +182,9 @@ try {
   await never(o, "the note on the code (reload)", o.getByRole("dialog", { name: "هذا هو الكود متاعك" }));
   console.log("  · the slides, then the shop's own code and its one note ✓");
   await o.goto(BASE + "/shop", { waitUntil: "load" });
-  // before the first customer the home has one job: no logo tip, no install, no offer over it — and its first steps
-  await never(o, "a note before the first customer", o.getByRole("dialog"), 1500);
+  // before the first customer: no logo tip, no offer over it. On a phone the install is asked right here, back
+  // from the code (scripts/install-moments.mjs); this computer has no way to install, so no sheet at all
+  await never(o, "a note before the first customer (no install way on a computer)", o.getByRole("dialog"), 1500);
   // waiting for the first customer, the whole card is the way to the code
   // the home's one thing: a tampon, two ways — the code shown, or the customer's number
   await o.getByRole("link", { name: /بالنومرو/ }).waitFor({ timeout: 15000 });

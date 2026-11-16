@@ -57,7 +57,9 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",").map((s) => s.trim())
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const anonDb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
 const PASS = "sizes-check-2026";
-const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "first_scan", "first_gift", "mission"];
+// every one-time note, the home's of 5 Nov among them (the links, what is new, the card's clock): without them
+// the links' sheet lay over every home screen measured, and over the floating button
+const ALL_NOTES = ["card_hello", "coach", "logo_tip", "offer", "push", "install", "first_scan", "first_gift", "mission", "links_tip", "new_insights", "reset_tip", "fix_tip"];
 const made = [];
 const ago = (ms) => new Date(Date.now() - ms).toISOString();
 const HOUR = 3600_000;
@@ -525,7 +527,17 @@ const SCREENS = [
   { name: "first-card-look", as: "fresh", path: "/shop/card", act: async (p) => {
     for (let n = 0; n < 3; n++) await press(p, "كمّل");
   } },
-  { name: "start", as: "owner", path: "/shop/start", wait: 900 },
+  // the clips (step 3), before the code is seen: once it is, /shop/start sends the owner home (16 Nov 2026) —
+  // «تخطّى» waited for, so a page sent home never passes for this one
+  {
+    name: "start",
+    as: "owner",
+    before: () => notes(owner, ALL_NOTES.filter((n) => n !== "coach")),
+    path: "/shop/start",
+    act: async (p) => void (await p.getByRole("button", { name: "تخطّى" }).waitFor({ timeout: 15000 })),
+    wait: 900,
+    after: () => notes(owner, ALL_NOTES),
+  },
   { name: "setup", as: "noShop", path: "/shop/setup" },
 
   { name: "console", as: "boss", path: "/admin", read: true },
@@ -560,24 +572,38 @@ const SCREENS = [
   { name: "choices", as: "owner", path: "/shop/choices" },
   { name: "inbox", as: "owner", path: "/shop/inbox" },
   // the floating «حطّ Pointili في تليفونك» and the filmed guide it opens: only a phone's browser shows them,
-  // so only under a phone's UA (UA="… Android …" or "… iPhone …"); the guide measured a few seconds in
+  // so only under a phone's UA (UA="… Android …" or "… iPhone …"); the guide measured a few seconds in — on
+  // an iPhone only: since 6 Nov 2026 Android's tap is Chrome's own dialog, never the guide
   ...(/Android|iPhone/.test(process.env.UA ?? "")
     ? [
         { name: "install-fab-wallet", as: "customer", path: "/", act: (p) => fab(p) },
-        { name: "install-guide-wallet", as: "customer", path: "/", act: (p) => guide(p), wait: 4200 },
         { name: "install-fab-home", as: "owner", path: "/shop", act: (p) => fab(p) },
-        { name: "install-guide-home", as: "owner", path: "/shop", act: (p) => guide(p), wait: 4200 },
+        ...(/iPhone/.test(process.env.UA ?? "")
+          ? [
+              { name: "install-guide-wallet", as: "customer", path: "/", act: (p) => guide(p), wait: 4200 },
+              { name: "install-guide-home", as: "owner", path: "/shop", act: (p) => guide(p), wait: 4200 },
+            ]
+          : []),
       ]
     : []),
 ].filter((s) => !ONLY || ONLY.some((w) => s.name.startsWith(w)));
-/** the floating button, risen (a moment after the page, then its own rise) */
+/** the floating button, risen (a moment after the page, then its own rise) — by its words: the owner's header has a
+ *  round button of the same name, with no words */
+const floating = (page) => page.locator("button", { hasText: "حطّ Pointili في تليفونك" });
 async function fab(page) {
-  await page.getByRole("button", { name: "حطّ Pointili في تليفونك" }).waitFor({ timeout: 15000 });
+  await floating(page).waitFor({ timeout: 15000 });
+  // its «جديد!» note (components/FabHint) pops over the page once on a phone, 1.1 s after the button, and goes at a
+  // tap: tapped away as an owner would, so the screen measured is the settled one, never a race with the note
+  const hint = page.locator("button", { hasText: "✨" });
+  if (await hint.waitFor({ timeout: 2500 }).then(() => true, () => false)) {
+    await hint.click();
+    await hint.waitFor({ state: "detached", timeout: 3000 }).catch(() => {});
+  }
   await page.waitForTimeout(800);
 }
 async function guide(page) {
   await fab(page);
-  await page.getByRole("button", { name: "حطّ Pointili في تليفونك" }).click();
+  await floating(page).click();
   await page.getByRole("dialog").waitFor({ timeout: 15000 });
 }
 function SCREENS_AS() {
