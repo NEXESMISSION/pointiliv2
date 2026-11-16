@@ -35,7 +35,7 @@ Le prix vient **après** la valeur (8e) : montré trop tôt, « 120 د.ت » arr
 | « الطوابع ما تضيعش » quand internet coupe : promesse vague qui laisse croire que ça marche hors ligne. | « يلزمها إنترنت. كي تقصّ، الكود يرجع وحدو. » |
 | « أوّل مرّة: حساب بنومرو التليفون » : oublie le mot de passe. | « نومرو التليفون وكلمة سر ». |
 | Libellé du bouton cadeau écrit de mémoire. | Vérifié dans l'app : 1er appui « استعمل الكادو », puis « ورّي الكود متاعي » tant que la demande attend. |
-| Calcul de rentabilité « الشهر يتخلّص في جمعة » : confond chiffre d'affaires et bénéfice. | Comparaison impossible à contester : « 10 د.ت في الشهر = 5 قهاوي ». |
+| Calcul de rentabilité « الشهر يتخلّص في جمعة » : confond chiffre d'affaires et bénéfice. | Comparaison impossible à contester : « 15 د.ت في الشهر على العام = 10 قهاوي ». |
 
 ### Langue
 | Défaut | Correction |
@@ -180,9 +180,9 @@ Légende : `hook` `photo` `screen` `text` `cta` · entre crochets : photo ou éc
 
 ### C6 · قدّاش تكلّف؟ — 8 slides
 1. `hook` [P8] **قدّاش تكلّف Pointili؟**
-3. `text` **بعدها: 120 د.ت للعام** — ولا 80 د.ت لـ 6 شهور
-4. `text` **يعني 10 د.ت في الشهر** — = 5 قهاوي ☕
-5. `text` **يكفي 5 حرفاء يرجعو مرّة زايدة في الشهر** — باش تغطّي الاشتراك
+3. `text` **بعدها: 180 د.ت للعام** — ولا 120 د.ت لـ 6 شهور، ولا 35 د.ت في الشهر
+4. `text` **على العام، يعني 15 د.ت في الشهر** — = 10 قهاوي ☕
+5. `text` **يكفي 10 حرفاء يرجعو مرّة زايدة في الشهر** — باش تغطّي الاشتراك
 6. `text` ✓ **كل شي داخل** — حرفاء بلا حدود · طوابع بلا حدود · الأرقام · كود الكونتوار
 7. `text` **تخلّص بالتحويل، D17 ولا كاش**
 8. `cta` **اختار العرض متاعك**

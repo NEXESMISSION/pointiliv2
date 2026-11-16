@@ -63,7 +63,7 @@ El ma3loumet elli n7ebbou, bel tartib elli yjiw bih wa7adhom, **mouch lkol fi me
 - el cadeau ma yet3tach ken mol el local yconfirmi code el client fel comptoir.
 - clients bla limite, tampons bla limite.
 - ken tbaddel el 3adad wala el cadeau ba3d, elli 9a3din ylemmou ma yekhsrou chay.
-- 120 dt fel 3am (ya3ni 10 dt fel chhar) wala 80 dt l 6 chhour. Kol chay dekhel. Cash, D17 wala virement.
+- 180 dt fel 3am (ya3ni 15 dt fel chhar), 120 dt l 6 chhour, wala 35 dt fel chhar. Kol chay dekhel. Cash, D17 wala virement.
 - kol local 3andou compte w QR mte3ou.
 - l'installation ya3melha Saif fel local, fi nos se3a.
 - yelzemha internet. Kif yarja3, el code yarja3 wa7dou.
@@ -135,15 +135,15 @@ El démo fel comptoir, mouch fel DM: el client yscan-i b téléphonou w ychouf e
 **Objectif:** nrakkbou w nekhdhou el flous nhar el démo.
 
 - 9bal el visite, ken famma wa9t: `ken t7eb nrakkebha nhar el démo, 7adher: el cadeau elli t7eb ta3tih, logo ken 3andek, w téléphone 9dim lel comptoir`
-- el prix, marra wa7da: `120 dt fel 3am wala 80 dt l 6 chhour, cash wala D17 nhar l'installation`
-- fel comptoir, kif y9oul ey: na9tar7ou el 6 chhour b 80, el commitment el awel sghir, w el 3am yji fel renouvellement. Ken houwa y7eb el 3am direct, mrigel.
+- el prix, marra wa7da: `180 dt fel 3am, 120 dt l 6 chhour wala 35 dt fel chhar, cash wala D17 nhar l'installation`
+- fel comptoir, kif y9oul ey: na9tar7ou el 6 chhour b 120, el commitment el awel sghir, w el 3am yji fel renouvellement. Ken houwa y7eb el 3am direct, mrigel.
 - fel local: compte, carte b 3 sou2elet, QR fel comptoir 7ell, poster, awel tampons m3a clients 7a9i9iyin, w el jomla lel serveur «scanni w khoudh tampon».
 
 Khallas w el QR 7ell → STATE 6.
 
 ### STATE 5b · Installation à distance (ken barra el zone, wala y7ebha tawa)
 L'ad twa3ed «tba3thlna esm el local w el zone w el numro, w 7na njahzoulek el compte». Ya3ni famma nes bech yestannew compte, mouch visite. El tari9 mawjoud, ama b tartib:
-1. el flous 9bal: `ab3athli 80 dt b D17 wala virement 3la [numro/RIB], w kif yosol nrakkeblek el compte el youm`. 7atta compte ma yet7all 9bal el flous.
+1. el flous 9bal: `ab3athli 120 dt b D17 wala virement 3la [numro/RIB], w kif yosol nrakkeblek el compte el youm`. 7atta compte ma yet7all 9bal el flous.
 2. el mot de passe b téléphone, mouch b message: `n3aytlek 5 d9aye9 bech n7ottou el mot de passe m3ak`.
 3. nab3thou: el login, poster el comptoir (pdf), w video d9i9a kifech t7ell el QR fel téléphone mta3 el comptoir.
 4. nhar 3 w nhar 7 kima STATE 6, b WhatsApp.
@@ -171,10 +171,10 @@ Hedha y7ell ken Saif y9arrer ya3melha à distance. Ken le, el jaweb ybqa «tawa 
 
 Kol wa7da réponse w nsaktou. El next step yji fi message ekher ken yelzem.
 
-- **prix** → `120 dt fel 3am, ya3ni 10 dt fel chhar. wala 80 dt l 6 chhour. cash wala D17`
+- **prix** → `180 dt fel 3am, ya3ni 15 dt fel chhar. wala 120 dt l 6 chhour, wala 35 dt fel chhar. cash wala D17`
 - **chnowa dekhel?** → `carte tampons lel clients bla limite, el QR fel comptoir, compte mta3 el local, w l'installation na3melha ana`
 - **el client lezmou ysobb application?** → `le, 7atta application. camera téléphonou, numro w mot de passe marra wa7da, w yabda`
-- **ghali** → `10 dt fel chhar barka. ken carte wa7da tjiblek client yarja3 marra zeyda fel chhar, 9riba tkoun khlasetha. enti a3raf`
+- **ghali** → `15 dt fel chhar barka ki tkhalles el 3am. ken carte wa7da tjiblek client yarja3 marra zeyda fel chhar, 9riba tkoun khlasetha. enti a3raf`
 - **ma 3andich tablette** → `ay téléphone 9dim m3a chargeur yekhdem. ken ma 3andekch, nchouflek 7all`
 - **ynajem 7ad yghech?** → `el code yetbaddel ba3d kol scan, w kol code yekhdem marra wa7da barka. w el cadeau enti elli tconfirmih`
 - **w ken ye9ta3 l'internet?** → `ey yelzemha internet. kif yarja3, el code yarja3 wa7dou`
@@ -186,10 +186,10 @@ Kol wa7da réponse w nsaktou. El next step yji fi message ekher ken yelzem.
 - **kifech nkhalles?** → `cash nhar l'installation, wala D17 wala virement`
 - **3andi cartes carton** → `el carton yekhdem 7atta yensaha fel dar. hedhi fi téléphonou dima m3ah, w enti tchouf chkoun yarja3`
 - **3andi barcha clients** → `bahi mrigel. ken nhar t7eb tchouf chkoun fihom yarja3 kol nhar, ana hné`
-- **3andi zouz locaux** → `kol local QR w compte mte3ou, 120 lel wa7ed. nrakkebhom fi nafs el nhar`
+- **3andi zouz locaux** → `kol local QR w compte mte3ou, 180 lel wa7ed fel 3am. nrakkebhom fi nafs el nhar`
 - **arnaque / n'importe quoi** → `haha le. nji nwarrik fel comptoir mte3ek w enti t9arrer, ma tkhalles chay 9bal ma tchouf`
 - **ab3athli plus d'infos** → `el 7keya sahla: el client yscan-i el QR fel comptoir, yekhou tampon, w kif ykammel yekhou cadeau. el site pointili.online fih el explication, w ken t7eb nji nwarrik fel local`
-- **bel français formel** → français 9sir w insen: `bonjour, oui c'est une carte tampons dans le téléphone du client, sans application. 120 dt par an. je passe vous montrer au comptoir si vous voulez, vous êtes où?`
+- **bel français formel** → français 9sir w insen: `bonjour, oui c'est une carte tampons dans le téléphone du client, sans application. 180 dt par an, ou 35 dt par mois. je passe vous montrer au comptoir si vous voulez, vous êtes où?`
 - **3aytli / 3andkom numéro?** → `[numro]. 9oli wa9tech n3aytlek, el sbe7 wala el 3chiya`. Mkalma t9arreb akther men 10 messages.
 - **chkoun entouma? société?** → `startup tounsia, ana Saif elli 3amelha. ma famech société kbira wraha: ana elli nji nrakkeb, w ana elli njeweb`
 - **3andkom locaux ykhdmou biha?** (wa9t elli ma famech 7atta wa7ed) → `bdina tawa, enti men el lwela. w 3la hedha nrakkebha b yeddi w nab9a m3ak`. Kif ykounou clients 7a9i9iyin, nbaddlou el jaweb b esm local w tasswira. 3omrna ma n9oulou 3adad mouch s7i7.

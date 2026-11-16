@@ -238,6 +238,16 @@
   .plan .price span { font-size: 40px; font-weight: 700; color: var(--ink); }
   .plan .period { margin-top: 10px; font-size: 34px; color: var(--muted); }
   .plan .month { margin-top: 30px; padding-top: 26px; border-top: 2px solid #eee; font-size: 36px; font-weight: 700; color: var(--violet); unicode-bidi: plaintext; }
+  /* three plans (a month, six months, a year — 7 Nov 2026): the same cards, a size smaller to sit side by side */
+  .plans:has(> .plan:nth-child(3)) { left: 44px; right: 44px; gap: 18px; }
+  .plans:has(> .plan:nth-child(3)) .plan { padding: 46px 14px 34px; border-radius: 38px; }
+  .plans:has(> .plan:nth-child(3)) .plan .tag { font-size: 26px; padding: 9px 20px; }
+  .plans:has(> .plan:nth-child(3)) .plan .pname { font-size: 36px; }
+  .plans:has(> .plan:nth-child(3)) .plan .price { gap: 8px; }
+  .plans:has(> .plan:nth-child(3)) .plan .price b { font-size: 92px; }
+  .plans:has(> .plan:nth-child(3)) .plan .price span { font-size: 32px; }
+  .plans:has(> .plan:nth-child(3)) .plan .period { font-size: 29px; }
+  .plans:has(> .plan:nth-child(3)) .plan .month { margin-top: 24px; padding-top: 22px; font-size: 29px; }
   .plans-slide .note { position: absolute; top: 1010px; left: 72px; right: 72px; text-align: center; font-size: 36px; color: var(--body); font-weight: 500; }
 
   /* ── equal: a price next to everyday things ─────────────────────────── */

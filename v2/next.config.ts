@@ -26,6 +26,9 @@ const nextConfig: NextConfig = {
       // the install link (app/app) under the words people type when they half-remember it
       { source: "/install", destination: "/app", permanent: false },
       { source: "/installer", destination: "/app", permanent: false },
+      // the share picture said «120 د في العام» until 16 Nov 2026: it took a new name with the new price
+      // (chats keep a picture by its address), and the old address shows the new one
+      { source: "/og.jpg", destination: "/og-v2.jpg", permanent: false },
     ];
   },
   async headers() {
@@ -44,7 +47,7 @@ const nextConfig: NextConfig = {
       { source: "/clips/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       // the 3D icons, the front door's pictures, the news' pictures, the mark and the app's icons: a month in the
       // phone, then asked again quietly (they were asked again on every page). A picture changed takes a new name.
-      ...["/3d/:path*", "/tn/:path*", "/news/:path*", "/brand-mark.svg", "/icon-:size(192|512).png", "/icon-maskable-:size(192|512).png", "/og.jpg"].map((source) => ({
+      ...["/3d/:path*", "/tn/:path*", "/news/:path*", "/brand-mark.svg", "/icon-:size(192|512).png", "/icon-maskable-:size(192|512).png", "/og-v2.jpg"].map((source) => ({
         source,
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=604800" }],
       })),
