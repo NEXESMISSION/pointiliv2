@@ -40,6 +40,7 @@ import {
 import { adminShopNote, adminShopStage } from "@/app/admin/actions";
 import { ShopVoice } from "@/components/AdminVoice";
 import { AdminShopMore } from "@/components/AdminShopMore";
+import { HelpMsg } from "@/components/HelpMsg";
 import { ShopMark } from "@/components/ShopMark";
 import { digits, spaced } from "@/lib/phone";
 import {
@@ -575,6 +576,8 @@ function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; n
           أكثر <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
       </div>
+      {/* the founder's help message, written in WhatsApp in one tap (18 Nov 2026) */}
+      {phone && <HelpMsg phone={phone} className="press mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366] text-[0.875rem] font-bold text-white" />}
 
       {open && <AdminShopMore shop={s} now={now} />}
     </article>

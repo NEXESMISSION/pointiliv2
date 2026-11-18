@@ -1458,6 +1458,11 @@ export const t = {
   aResetHint: "ما تبانش مرّة أخرى. ابعثهالو توّا، ويبدّلها من الكونت متاعو.",
   aResetSend: "ابعثها على الواتساب",
   aResetMsg: "سلام {name}، كلمة السر الجديدة متاعك في Pointili: {password}",
+
+  // the founder's console: his help message to an owner, on WhatsApp in one tap (components/HelpMsg)
+  aHelpBtn: "ميساج المعاونة",
+  aHelpMsg:
+    "{hi} 👋 m3ak l'équipe Pointili, el système de fidélité.\n7abbina nchoufou m3ak: ken 3ordhetek mochkla, ken 3andek sou2el, wala ken fama 7aja ma kech fehemha, 9olli bark bech na3ref kifech najjem n3awnek.\nW ken t7eb, nkallmek w nfahhmek kol chay.",
 };
 
 /** "مازالولك {n}" + { n: 3 } → "مازالولك 3" */
