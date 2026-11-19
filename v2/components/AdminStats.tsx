@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import type { Day, Split, Stats } from "@/lib/stats";
 import { t } from "@/lib/t";
 
@@ -99,6 +101,10 @@ export function AdminStats({ periods, days, money, apps }: { periods: Period[]; 
           <p className="mt-2 text-[0.8125rem] text-body">
             هالشهر: دخل <b className="num text-ink">{dt(money.month)}</b> {t.payCurrency}، خرج <b className="num text-ink">{dt(money.outMonth)}</b> {t.payCurrency}
           </p>
+          {/* the whole books, the fixed costs and their filters: their own page (19 Nov 2026) */}
+          <Link href="/admin/money" className="mt-2 inline-flex items-center gap-1 text-[0.8125rem] font-bold text-brand">
+            كل الفلوس <ChevronLeft className="size-4" />
+          </Link>
         </section>
 
         {s.splits.map((x) => (

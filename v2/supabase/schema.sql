@@ -178,6 +178,23 @@ create table if not exists public.books (
 );
 create index if not exists books_day_idx on public.books (on_day desc, id desc);
 
+-- the founder's fixed costs (19 Nov 2026: «stuff I pay monthly, the fixed costs, with a countdown, so I keep
+-- things neat and tracked»): what, how much (dinars; or dollars, turned into dinars when paid), every how many
+-- months, and the next day it is due. Paid, it writes a line in the books (books.fixed_id) and moves on a
+-- period. Read and written by the founder alone (the admin_fixed* functions)
+create table if not exists public.fixed_costs (
+  id          bigint generated always as identity primary key,
+  what        text not null check (char_length(what) between 2 and 80),
+  kind        text not null default 'tools' check (kind in ('ads', 'tools', 'print', 'move', 'people', 'other')),
+  amount      numeric(10,3) not null check (amount > 0 and amount <= 1000000),
+  usd         numeric(10,2) check (usd is null or (usd > 0 and usd <= 100000)),
+  every       int not null default 1 check (every between 1 and 12),
+  next_on     date not null,
+  robot       boolean not null default false,
+  created_at  timestamptz not null default now()
+);
+alter table public.books add column if not exists fixed_id bigint references public.fixed_costs (id) on delete set null;
+
 -- a customer's phone that said «إيه، فكّروني»: where a word reaches it (the
 -- browser's own address and keys). One line a phone; a person may have a few
 create table if not exists public.push_subs (
@@ -599,7 +616,7 @@ update public.moments m set gift = c.gift from public.cards c where c.id = m.car
 do $$
 declare t text;
 begin
-  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log', 'books', 'crm', 'crm_log', 'push_subs'] loop
+  foreach t in array array['people', 'shops', 'cards', 'codes', 'moments', 'tries', 'settings', 'visits', 'views', 'taps', 'signals', 'news', 'news_views', 'payments', 'robots', 'plan_log', 'books', 'fixed_costs', 'crm', 'crm_log', 'push_subs'] loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
   end loop;
@@ -2703,6 +2720,79 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
+-- the fixed costs (public.fixed_costs), each with the day it was last paid and how many times — a script's
+-- admin sees its own only, the founder his
+create or replace function public.admin_fixed() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return coalesce((
+    select jsonb_agg(jsonb_build_object('id', f.id, 'what', f.what, 'kind', f.kind, 'amount', f.amount, 'usd', f.usd, 'every', f.every,
+                                        'next_on', f.next_on, 'last_on', p.last_on, 'paid', coalesce(p.n, 0)) order by f.next_on, f.id)
+    from public.fixed_costs f
+    left join lateral (select max(b.on_day) as last_on, count(*) as n from public.books b where b.fixed_id = f.id) p on true
+    where f.robot = public.sees_robots()), '[]'::jsonb);
+end $$;
+
+-- a fixed cost written or changed (p_id null: a new one). Dinars always; dollars too when it is priced in them
+create or replace function public.admin_fixed_save(p_id bigint, p_what text, p_kind text, p_amount numeric, p_usd numeric, p_every int, p_next date) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_what text := trim(regexp_replace(coalesce(p_what, ''), '\s+', ' ', 'g'));
+  v_today date := (now() at time zone 'Africa/Tunis')::date;
+  v_id bigint;
+begin
+  perform public.require_admin();
+  if char_length(v_what) not between 2 and 80 then return public.err('invalid'); end if;
+  if p_kind is null or p_kind not in ('ads', 'tools', 'print', 'move', 'people', 'other') then return public.err('invalid'); end if;
+  if p_amount is null or round(p_amount, 3) <= 0 or p_amount > 1000000 then return public.err('invalid'); end if;
+  if p_usd is not null and (round(p_usd, 2) <= 0 or p_usd > 100000) then return public.err('invalid'); end if;
+  if p_every is null or p_every not between 1 and 12 then return public.err('invalid'); end if;
+  if p_next is null or p_next < v_today - 366 or p_next > v_today + 800 then return public.err('invalid'); end if;
+  if p_id is null then
+    insert into public.fixed_costs (what, kind, amount, usd, every, next_on, robot)
+    values (v_what, p_kind, round(p_amount, 3), round(p_usd, 2), p_every, p_next, public.sees_robots())
+    returning id into v_id;
+  else
+    update public.fixed_costs set what = v_what, kind = p_kind, amount = round(p_amount, 3), usd = round(p_usd, 2), every = p_every, next_on = p_next
+    where id = p_id and robot = public.sees_robots()
+    returning id into v_id;
+    if v_id is null then return public.err('not_found'); end if;
+  end if;
+  return jsonb_build_object('ok', true, 'id', v_id);
+end $$;
+
+-- a fixed cost given up: its lines in the books stay, they only lose the link
+create or replace function public.admin_fixed_drop(p_id bigint) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  delete from public.fixed_costs where id = p_id and robot = public.sees_robots();
+  if not found then return public.err('not_found'); end if;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- a fixed cost paid: a line in the books (what was paid, that day, its kind) and the next due day a period on
+create or replace function public.admin_fixed_pay(p_id bigint, p_amount numeric, p_on date default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_today date := (now() at time zone 'Africa/Tunis')::date;
+  v_on date := coalesce(p_on, (now() at time zone 'Africa/Tunis')::date);
+  v_f public.fixed_costs;
+  v_book bigint;
+begin
+  perform public.require_admin();
+  select * into v_f from public.fixed_costs where id = p_id and robot = public.sees_robots() for update;
+  if v_f.id is null then return public.err('not_found'); end if;
+  if p_amount is null or round(p_amount, 3) <= 0 or p_amount > 1000000 then return public.err('invalid'); end if;
+  if v_on > v_today or v_on < v_today - 366 then return public.err('invalid'); end if;
+  insert into public.books (side, on_day, amount, what, kind, robot, fixed_id)
+  values ('out', v_on, round(p_amount, 3), v_f.what, v_f.kind, v_f.robot, v_f.id)
+  returning id into v_book;
+  update public.fixed_costs set next_on = (next_on + make_interval(months => every))::date where id = v_f.id;
+  return jsonb_build_object('ok', true, 'book', v_book, 'next_on', (select next_on from public.fixed_costs where id = v_f.id));
+end $$;
+
 -- the founder's books. What came in: every time a shop's access was turned
 -- on or stopped, with what came in for it — the real shops only (a script's
 -- admin sees everything) — and the lines he wrote himself. What went out: the
@@ -2741,7 +2831,7 @@ begin
       'out_year', coalesce((select sum(amount) from mine where side = 'out' and on_day >= v_year_d), 0),
       'out_all', coalesce((select sum(amount) from mine where side = 'out'), 0),
       'lines', coalesce((
-        select jsonb_agg(jsonb_build_object('id', b.id, 'side', b.side, 'on', b.on_day, 'amount', b.amount, 'what', b.what, 'kind', b.kind) order by b.on_day desc, b.id desc)
+        select jsonb_agg(jsonb_build_object('id', b.id, 'side', b.side, 'on', b.on_day, 'amount', b.amount, 'what', b.what, 'kind', b.kind, 'fixed', b.fixed_id) order by b.on_day desc, b.id desc)
         from mine b), '[]'::jsonb),
       'extra_months', coalesce((select sum(months) from lines where amount = 0), 0),
       'paying', (select count(*) from real_shops where paid_until > now()),
@@ -5025,7 +5115,8 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.link_new(text, bigint), public.my_links(), public.link_cancel(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(uuid), public.admin_board_shop(uuid), public.admin_study(uuid),
-  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_help_sent(uuid), public.admin_remind_sent(uuid), public.admin_apps(), public.admin_set_paused(uuid, boolean),
+  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_help_sent(uuid), public.admin_remind_sent(uuid), public.admin_apps(),
+  public.admin_fixed(), public.admin_fixed_save(bigint, text, text, numeric, numeric, int, date), public.admin_fixed_drop(bigint), public.admin_fixed_pay(bigint, numeric, date), public.admin_set_paused(uuid, boolean),
   public.admin_voice_add(uuid, uuid, int, int, text), public.admin_voices(uuid), public.admin_voice(uuid), public.admin_voice_drop(uuid),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),

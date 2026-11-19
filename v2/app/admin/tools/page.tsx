@@ -1,24 +1,20 @@
 import type { ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, ChevronLeft } from "lucide-react";
 import { AdminClock } from "@/components/AdminClock";
 import { AdminSettingsForm } from "@/components/AdminSettingsForm";
-import { AdminBookAdd, AdminBookDelete, AdminFind, AdminRobots, AdminTester } from "@/components/AdminTools";
+import { AdminFind, AdminRobots, AdminTester } from "@/components/AdminTools";
 import { LogoutButton } from "@/components/LogoutButton";
 import { getSettings } from "@/lib/settings";
 import { call } from "@/lib/supabase";
 import { testerState } from "@/lib/tester";
-import { monthsSaid, t } from "@/lib/t";
+import { t } from "@/lib/t";
 
 export const metadata = { title: "الأدوات" };
 
-/** a line the founder wrote himself, either side */
-type Hand = { id: number; side: "in" | "out"; on: string; amount: number; what: string; kind: string };
-/** a shop's access turned on, with what came in */
-type Sub = { id: number; at: string; kind: string; months: number | null; amount: number | null; shop: { name: string } };
-type Ledger = { today: string; month: number; all: number; out_month: number; out_all: number; lines: Hand[]; rows: Sub[] };
+/** this month, in and out (the whole books are on /admin/money) */
+type Ledger = { month: number; out_month: number };
 
-const TZ = "Africa/Tunis";
-const day = (iso: string) => new Intl.DateTimeFormat("ar-TN-u-nu-latn", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(iso.length === 10 ? `${iso}T12:00:00` : iso));
 // 1 440, not 1440; 47,35 when there are millimes
 const dt = (n: number) => new Intl.NumberFormat("fr-TN", { maximumFractionDigits: 3 }).format(Math.round(n * 1000) / 1000);
 
@@ -38,22 +34,6 @@ function Part({ title, hint, open = false, children }: { title: string; hint?: R
   );
 }
 
-/** A stretch of time: what is left once what went out is taken off, and both under it. */
-function Period({ title, inn, out }: { title: string; inn: number; out: number }) {
-  const left = inn - out;
-  return (
-    <div className="rounded-[0.875rem] bg-canvas/70 p-3">
-      <p className="text-[0.75rem] font-semibold text-muted">{title}</p>
-      <p className={`mt-1 text-[1.5rem] font-bold leading-none ${left > 0 ? "text-mint" : left < 0 ? "text-coral" : "text-ink"}`}>
-        <bdi dir="ltr" className="num">{`${left > 0 ? "+" : left < 0 ? "−" : ""}${dt(Math.abs(left))}`}</bdi> <span className="text-[0.875rem] font-semibold text-muted">{t.payCurrency}</span>
-      </p>
-      <p className="mt-1.5 text-[0.75rem] text-muted">
-        دخل {dt(inn)} · خرج {dt(out)}
-      </p>
-    </div>
-  );
-}
-
 /**
  * Everything the founder does that is not about one shop, each closed until
  * he needs it: a new password for someone who forgot theirs, the money (and
@@ -62,14 +42,7 @@ function Period({ title, inn, out }: { title: string; inn: number; out: number }
  */
 export default async function AdminTools({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const [{ q }, settings, b, tester, robots] = await Promise.all([searchParams, getSettings(true), call<Ledger>("admin_ledger"), testerState(), call<{ accounts: number }>("admin_robots")]);
-  const books = b ?? { today: new Date().toISOString().slice(0, 10), month: 0, all: 0, out_month: 0, out_all: 0, lines: [], rows: [] };
-  // the subscriptions paid and the lines by hand, in one order, the last ones
-  const lines = [
-    ...books.rows.filter((r) => r.amount).map((r) => ({ key: `s${r.id}`, at: r.at, side: "in" as const, what: `${r.shop.name} · ${r.months ? monthsSaid(r.months) : t.aBookKinds.sub}`, amount: r.amount ?? 0, hand: null as number | null })),
-    ...books.lines.map((l) => ({ key: `h${l.id}`, at: l.on, side: l.side, what: `${l.what} · ${t.aBookKinds[l.kind] ?? ""}`, amount: Number(l.amount), hand: l.id })),
-  ]
-    .sort((x, y) => y.at.localeCompare(x.at))
-    .slice(0, 12);
+  const books = b ?? { month: 0, out_month: 0 };
   const phone = tester.phone.length === 8 ? `${tester.phone.slice(0, 2)} ${tester.phone.slice(2, 5)} ${tester.phone.slice(5)}` : "—";
 
   return (
@@ -80,28 +53,14 @@ export default async function AdminTools({ searchParams }: { searchParams: Promi
         <AdminFind initial={String(q ?? "").replace(/\D/g, "").slice(0, 11)} />
       </Part>
 
-      <Part title="الفلوس" hint={`هالشهر: دخل ${dt(books.month)} · خرج ${dt(books.out_month)} ${t.payCurrency}`}>
-        <div className="grid grid-cols-2 gap-2">
-          <Period title="هالشهر" inn={books.month} out={books.out_month} />
-          <Period title="من الأوّل" inn={books.all} out={books.out_all} />
-        </div>
-        <AdminBookAdd today={books.today} />
-        {lines.length > 0 && (
-          <ul className="divide-y divide-line/70">
-            {lines.map((l) => (
-              <li key={l.key} className="flex items-center gap-2 py-2 text-[0.8438rem]">
-                <bdi dir="ltr" className={`num w-[4.75rem] shrink-0 text-start font-bold ${l.side === "in" ? "text-mint" : "text-coral"}`}>
-                  {`${l.side === "in" ? "+" : "−"}${dt(l.amount)}`}
-                </bdi>
-                {/* the line itself cut short: a long name ends in «…» inside its own box, never past the screen */}
-                <bdi className="min-w-0 flex-1 truncate text-ink">{l.what}</bdi>
-                <span className="shrink-0 text-[0.75rem] text-muted">{day(l.at)}</span>
-                {l.hand !== null && <AdminBookDelete id={l.hand} />}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Part>
+      {/* the money has its own page since 19 Nov 2026 (/admin/money): the books, the fixed costs, the filters */}
+      <Link href="/admin/money" className="press flex items-center gap-3 rounded-[1.125rem] bg-surface px-4 py-3.5 shadow-card ring-1 ring-line/70">
+        <span className="min-w-0 flex-1">
+          <b className="block text-[1rem] text-ink">الفلوس</b>
+          <span className="block truncate text-[0.75rem] text-muted">{`هالشهر: دخل ${dt(books.month)} · خرج ${dt(books.out_month)} ${t.payCurrency}`}</span>
+        </span>
+        <ChevronLeft className="size-5 shrink-0 text-muted" />
+      </Link>
 
       {/* the card's clock, for every shop at once: off until the founder turns it on (components/AdminClock) */}
       <Part title="الكارط ترجع للصفر" hint={settings.raw.clock_on === "1" ? "يخدم للمحلات الكل" : "مطفي للكل"}>

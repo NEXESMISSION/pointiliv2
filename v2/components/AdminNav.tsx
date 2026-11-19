@@ -8,6 +8,8 @@ const TABS = [
   { href: "/admin", label: "المحلات" },
   { href: "/admin/subs", label: "الأبونمان" },
   { href: "/admin/stats", label: "الأرقام" },
+  // the money on its own page, with the fixed costs and their countdown (19 Nov 2026)
+  { href: "/admin/money", label: "الفلوس" },
   // what the founder writes to the owners, in their 🔔 (13 Nov 2026)
   { href: "/admin/news", label: "الإشعارات" },
 ];

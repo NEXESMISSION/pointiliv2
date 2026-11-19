@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { STAGE_KEYS } from "@/lib/board";
 import { call } from "@/lib/supabase";
 
@@ -87,4 +88,39 @@ export async function adminFind(q: string): Promise<Found[]> {
   if (text.length < 2) return [];
   const list = await call<Found[]>("admin_people", { p_q: text, p_tests: false });
   return (list ?? []).slice(0, 12);
+}
+
+/** A fixed cost written (no id) or changed (lib/money: the founder's bills that come back). */
+export async function adminFixedSave(f: { id?: number | null; what: string; kind: string; amount: number; usd?: number | null; every: number; next: string }): Promise<boolean> {
+  const amount = Number(f.amount);
+  const usd = f.usd == null ? null : Number(f.usd);
+  if (!Number.isFinite(amount) || amount <= 0 || (usd !== null && (!Number.isFinite(usd) || usd <= 0)) || !/^\d{4}-\d{2}-\d{2}$/.test(String(f.next ?? ""))) return false;
+  const res = await call<{ ok: boolean }>("admin_fixed_save", {
+    p_id: f.id && Number.isInteger(f.id) ? f.id : null,
+    p_what: String(f.what ?? "").trim().slice(0, 80),
+    p_kind: String(f.kind ?? "tools"),
+    p_amount: Math.round(amount * 1000) / 1000,
+    p_usd: usd === null ? null : Math.round(usd * 100) / 100,
+    p_every: Math.max(1, Math.min(12, Math.round(Number(f.every) || 1))),
+    p_next: f.next,
+  });
+  revalidatePath("/admin/money");
+  return !!res?.ok;
+}
+
+/** A fixed cost given up (its lines in the books stay). */
+export async function adminFixedDrop(id: number): Promise<boolean> {
+  if (!Number.isInteger(id) || id <= 0) return false;
+  const res = await call<{ ok: boolean }>("admin_fixed_drop", { p_id: id });
+  revalidatePath("/admin/money");
+  return !!res?.ok;
+}
+
+/** A fixed cost paid: its line in the books, and its next day a period on. The next day, or null. */
+export async function adminFixedPay(id: number, amount: number, on: string | null): Promise<string | null> {
+  const sum = Number(amount);
+  if (!Number.isInteger(id) || id <= 0 || !Number.isFinite(sum) || sum <= 0 || sum > 1_000_000) return null;
+  const res = await call<{ ok: boolean; next_on?: string }>("admin_fixed_pay", { p_id: id, p_amount: Math.round(sum * 1000) / 1000, p_on: on && /^\d{4}-\d{2}-\d{2}$/.test(on) ? on : null });
+  revalidatePath("/admin/money");
+  return res?.ok ? (res.next_on ?? null) : null;
 }

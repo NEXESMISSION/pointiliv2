@@ -690,6 +690,7 @@ export async function adminBookAdd(side: "in" | "out", what: string, amount: num
     p_kind: kinds.includes(kind) ? kind : "other",
   });
   revalidatePath("/admin/tools");
+  revalidatePath("/admin/money");
   return { ok: !!res?.ok };
 }
 
@@ -698,6 +699,7 @@ export async function adminBookDelete(id: number): Promise<boolean> {
   if (!Number.isInteger(id) || id <= 0) return false;
   const res = await call<{ ok: boolean }>("admin_book_delete", { p_id: id });
   revalidatePath("/admin/tools");
+  revalidatePath("/admin/money");
   return !!res?.ok;
 }
 
