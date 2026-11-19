@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getMe } from "@/lib/session";
+import { getMe, tokenFresh } from "@/lib/session";
 import { service } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
   const path = typeof body.path === "string" && body.path.startsWith("/") ? body.path.slice(0, 300) : "";
   if (!UUID.test(visit) || !STATES.has(state)) return new NextResponse(null, { status: 400 });
 
-  const me = await getMe().catch(() => null);
+  // never a session refresh here (lib/session: tokenFresh): the beat is fire-and-forget
+  const me = (await tokenFresh()) ? await getMe().catch(() => null) : null;
   if (me?.admin) return new NextResponse(null, { status: 204 });
   const { error } = await service().rpc("here", { p_visit: visit, p_state: state, p_path: path, p_user: me?.id ?? null });
   if (error) {

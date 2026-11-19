@@ -1,5 +1,5 @@
 import { after, NextResponse, type NextRequest } from "next/server";
-import { getMe, sessionId } from "@/lib/session";
+import { getMe, sessionId, tokenFresh } from "@/lib/session";
 import { service } from "@/lib/supabase";
 import { alertApp, alertCall, appWay, newToApp } from "@/lib/telegram";
 
@@ -94,7 +94,8 @@ export async function POST(request: NextRequest) {
   const ua = request.headers.get("user-agent") ?? "";
   const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").replace(/:\d+$/, "");
   const who = client(ua);
-  const me = await getMe().catch(() => null);
+  // never a session refresh here (lib/session: tokenFresh): a beacon sent as the page closes can lose its answer
+  const me = (await tokenFresh()) ? await getMe().catch(() => null) : null;
   // which of the person's phones this is (only once the token has passed, through getMe)
   const session = me ? await sessionId() : null;
   const city = request.headers.get("x-vercel-ip-city");

@@ -36,6 +36,31 @@ export async function sessionId(): Promise<string | null> {
   }
 }
 
+/**
+ * The access token in this request's cookie has more than two minutes left: reading the person (getMe) then
+ * never refreshes the session. The routes proxy.ts lets through untouched — the traffic beacon, the presence
+ * beat — ask this first (19 Nov 2026, the founder: «make sure they never lose the login in the PWA»): a
+ * refresh made there, in a beacon sent as the app goes to the background, can be lost on its way back, and a
+ * refresh token spent and lost is a sign-out a minute later. Such a beat simply goes unsigned: the visit keeps
+ * the person it already has, and the next page or action refreshes the session through the proxy.
+ */
+export async function tokenFresh(): Promise<boolean> {
+  const parts = (await cookies())
+    .getAll()
+    .filter((c) => c.name.startsWith("sb-") && c.name.includes("auth-token") && !c.name.includes("code-verifier") && c.value)
+    .sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }));
+  if (!parts.length) return false;
+  try {
+    const raw = parts.map((c) => c.value).join("");
+    const json = raw.startsWith("base64-") ? Buffer.from(raw.slice(7), "base64").toString("utf8") : decodeURIComponent(raw);
+    const token = JSON.parse(json)?.access_token as string;
+    const exp = Number(JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8"))?.exp);
+    return Number.isFinite(exp) && exp - Math.floor(Date.now() / 1000) > 120;
+  } catch {
+    return false;
+  }
+}
+
 /** Where a signed-in person belongs: the founder at the console, an owner at home (or finishing the setup), a customer at the wallet. */
 export function homeOf(me: Me): string {
   if (me.admin) return "/admin";
