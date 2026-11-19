@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { ChevronLeft, Lock, QrCode, ScanLine } from "lucide-react";
 import { Back } from "@/components/Back";
 import { Go } from "@/components/Go";
-import { InstallFab, InstallPopup } from "@/components/InstallApp";
+import { CustomerAsk, InstallFab } from "@/components/InstallApp";
 import { Live } from "@/components/Live";
 import { MyCode } from "@/components/MyCode";
 import { ShopMark } from "@/components/ShopMark";
@@ -50,7 +50,6 @@ export function Cards({
   code,
   svg,
   cards,
-  seen,
   passwordSet,
   back,
 }: {
@@ -75,8 +74,8 @@ export function Cards({
       <Mark screen="wallet" />
       {/* the tampon lands here by itself: nobody pulls the page down */}
       <Live me={me} />
-      {/* Pointili on the home screen, asked once where Android's Chrome offers it (a customer's own home only) */}
-      {!back && <InstallPopup where="wallet" who={me} show={!seen.includes("install")} />}
+      {/* Pointili on the home screen, asked again on later visits until it is there (a customer's own home only) */}
+      {!back && <CustomerAsk where="wallet" />}
 
       <header className="flex shrink-0 items-center justify-between pt-2">
         {back ? (

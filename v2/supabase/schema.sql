@@ -2424,6 +2424,64 @@ begin
   return jsonb_build_object('ok', true, 'at', v_at);
 end $$;
 
+-- the customers' app, for the console's numbers (19 Nov 2026, the founder: «I want to track the installs of the
+-- clients' PWA»). A customer: a card at a shop not their own, owning no shop, no admin, tester or robot. Has the
+-- app: opened Pointili as the installed app at least once (visits.standalone) — the day of that first opening
+-- is the install's day. By phone (each one's last), the last 14 days, the asks of the last 30 days and what came
+-- of them (asked → tapped → said yes → opened as the app), where the asks were (the place, whatever button), and
+-- the shops whose customers have it most.
+create or replace function public.admin_apps() returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  perform public.require_admin();
+  return (
+    with cu as (
+      select distinct c.user_id from public.cards c join public.shops s on s.id = c.shop_id
+      where c.user_id <> s.owner_id
+        and not exists (select 1 from public.shops o where o.owner_id = c.user_id)
+        and not exists (select 1 from public.people p where p.id = c.user_id and (p.is_admin or p.is_tester))
+        and not public.is_robot(c.user_id)),
+    v as (select v.id, v.user_id, v.os, v.standalone, v.started_at from public.visits v join cu on cu.user_id = v.user_id where not v.is_bot),
+    los as (select distinct on (user_id) user_id, os from v order by user_id, started_at desc),
+    fa as (select user_id, min(started_at) as at from v where standalone group by user_id),
+    sg as (select v.user_id, g.name, g.at,
+                  regexp_replace(regexp_replace(coalesce(g.detail, '—'), '^((ios|ios-chrome|android|fab|popup|ask) · )+', ''), '( · (again|local|visits|[0-9]+))+$', '') as place
+           from public.signals g join v on v.id = g.visit_id
+           where g.name like 'pwa%' and g.at > now() - interval '30 days'),
+    days as (select d::date as d from generate_series((now() at time zone 'Africa/Tunis')::date - 13, (now() at time zone 'Africa/Tunis')::date, interval '1 day') d)
+    select jsonb_build_object(
+      'customers', (select count(*) from cu),
+      'seen', (select count(*) from los),
+      'app', (select count(*) from fa),
+      'app_7d', (select count(*) from fa where at > now() - interval '7 days'),
+      'os', (select coalesce(jsonb_agg(jsonb_build_object('os', o.os, 'people', o.n, 'app', o.app) order by o.n desc), '[]'::jsonb)
+             from (select coalesce(l.os, '?') as os, count(*) as n, count(fa.user_id) as app from los l left join fa on fa.user_id = l.user_id group by 1) o),
+      'days', (select jsonb_agg(jsonb_build_object(
+                 'day', d.d,
+                 'installs', (select count(*) from fa where (fa.at at time zone 'Africa/Tunis')::date = d.d),
+                 'asked', (select count(distinct sg.user_id) from sg where sg.name in ('pwa_shown', 'pwa_ios_shown', 'pwa_fab_shown', 'pwa_out_shown') and (sg.at at time zone 'Africa/Tunis')::date = d.d))
+               order by d.d) from days d),
+      'funnel', jsonb_build_object(
+        'asked', (select count(distinct user_id) from sg where name in ('pwa_shown', 'pwa_ios_shown', 'pwa_fab_shown', 'pwa_out_shown')),
+        'tapped', (select count(distinct user_id) from sg where name in ('pwa_click', 'pwa_fab_tap', 'pwa_ios_open', 'pwa_guide_open', 'pwa_wait', 'pwa_out_tap')),
+        'yes', (select count(distinct user_id) from sg where name in ('pwa_accepted', 'pwa_installed', 'pwa_ios_done', 'pwa_guide_done')),
+        'opened', (select count(*) from fa where at > now() - interval '30 days')),
+      'places', (select coalesce(jsonb_agg(jsonb_build_object('place', w.place, 'asked', w.asked, 'yes', w.yes) order by w.asked desc), '[]'::jsonb)
+                 from (select place,
+                              count(distinct user_id) filter (where name in ('pwa_shown', 'pwa_ios_shown', 'pwa_fab_shown', 'pwa_out_shown')) as asked,
+                              count(distinct user_id) filter (where name in ('pwa_accepted', 'pwa_installed', 'pwa_ios_done', 'pwa_guide_done')) as yes
+                       from sg group by place
+                       having count(*) filter (where name in ('pwa_shown', 'pwa_ios_shown', 'pwa_fab_shown', 'pwa_out_shown')) > 0
+                       order by 2 desc limit 10) w),
+      'shops', (select coalesce(jsonb_agg(jsonb_build_object('name', x.name, 'customers', x.n, 'app', x.app) order by x.app desc, x.n desc), '[]'::jsonb)
+                from (select s.name, count(distinct c.user_id) as n, count(distinct fa.user_id) as app
+                      from public.cards c join cu on cu.user_id = c.user_id join public.shops s on s.id = c.shop_id
+                      left join fa on fa.user_id = c.user_id
+                      group by s.id, s.name having count(distinct fa.user_id) > 0
+                      order by 3 desc, 2 desc limit 10) x)
+    ));
+end $$;
+
 -- ═══ paying for the year ═══════════════════════════════════════════════════
 -- the shop's subscription: paid until when, its prices (old_price: the year at
 -- 120, kept by the shops that paid before 7 Nov 2026), the offer's end (the
@@ -4952,7 +5010,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.link_new(text, bigint), public.my_links(), public.link_cancel(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(uuid), public.admin_board_shop(uuid), public.admin_study(uuid),
-  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_help_sent(uuid), public.admin_set_paused(uuid, boolean),
+  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_help_sent(uuid), public.admin_apps(), public.admin_set_paused(uuid, boolean),
   public.admin_voice_add(uuid, uuid, int, int, text), public.admin_voices(uuid), public.admin_voice(uuid), public.admin_voice_drop(uuid),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),

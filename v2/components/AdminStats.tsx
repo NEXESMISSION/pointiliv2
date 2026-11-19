@@ -6,6 +6,18 @@ import { t } from "@/lib/t";
 
 type Period = { id: string; label: string; stats: Stats };
 type Money = { all: number; out: number; month: number; outMonth: number };
+/** the customers' app (admin_apps): who has it, by phone, day by day, the asks of 30 days and what came of them */
+export type Apps = {
+  customers: number;
+  seen: number;
+  app: number;
+  app_7d: number;
+  os: { os: string; people: number; app: number }[];
+  days: { day: string; installs: number; asked: number }[];
+  funnel: { asked: number; tapped: number; yes: number; opened: number };
+  places: { place: string; asked: number; yes: number }[];
+  shops: { name: string; customers: number; app: number }[];
+};
 
 const dt = (n: number) => new Intl.NumberFormat("fr-TN", { maximumFractionDigits: 0 }).format(Math.round(n));
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
@@ -21,7 +33,7 @@ const CARD = "rounded-[1.125rem] bg-surface p-4 shadow-card ring-1 ring-line/70"
  * they came from, what they sell, when they signed up, whether they were
  * called — each with how many use it and how many paid.
  */
-export function AdminStats({ periods, days, money }: { periods: Period[]; days: Day[]; money: Money }) {
+export function AdminStats({ periods, days, money, apps }: { periods: Period[]; days: Day[]; money: Money; apps?: Apps | null }) {
   const [id, setId] = useState("month");
   const s = (periods.find((p) => p.id === id) ?? periods[0]).stats;
   const net = money.all - money.out;
@@ -65,6 +77,7 @@ export function AdminStats({ periods, days, money }: { periods: Period[]; days: 
         <Road stats={s} />
         <Columns title="محلات جديدة كل نهار" days={days} value={(d) => d.opened} tone="bg-brand" />
         <Columns title="تامبونات كل نهار" days={days} value={(d) => d.stamps} tone="bg-mint" />
+        {apps && <AppsCard apps={apps} />}
 
         <section className={CARD}>
           <h2 className="text-[1rem] font-bold text-ink">الفلوس</h2>
@@ -135,7 +148,7 @@ function Road({ stats }: { stats: Stats }) {
 }
 
 /** Fourteen days as columns, today at the end (time runs left to right, as on the board); a tap reads one day. */
-function Columns({ title, days, value, tone }: { title: string; days: Day[]; value: (d: Day) => number; tone: string }) {
+function Columns<D extends { day: string }>({ title, days, value, tone, more }: { title: string; days: D[]; value: (d: D) => number; tone: string; more?: (d: D) => string }) {
   const [at, setAt] = useState(days.length - 1);
   const max = Math.max(1, ...days.map(value));
   const total = days.reduce((a, d) => a + value(d), 0);
@@ -150,6 +163,7 @@ function Columns({ title, days, value, tone }: { title: string; days: Day[]; val
       </div>
       <p className="mt-0.5 text-[0.8125rem] text-body">
         {at === days.length - 1 ? "اليوم" : said(day.day)}: <b className="num text-ink">{dt(value(day))}</b>
+        {more && <span className="text-muted"> · {more(day)}</span>}
       </p>
       <div dir="ltr" className="mt-2 flex h-24 items-end gap-[3px]">
         {days.map((d, i) => {
@@ -198,5 +212,115 @@ function SplitCard({ split }: { split: Split }) {
         </div>
       ))}
     </section>
+  );
+}
+
+/** Where an ask was, said the console's way (admin_apps: the place, whatever button asked there). */
+const PLACE: Record<string, string> = {
+  stamp: "بعد التامبون",
+  card: "صفحة الكارط",
+  wallet: "الكارطات متاعو",
+  site: "الموقع (أندرويد)",
+  home: "دار المحل",
+  account: "الكونت",
+  welcome: "الصفحة الأولى",
+};
+
+/**
+ * The customers' app (the founder, 19 Nov 2026: «I want to track the installs of the clients' PWA»): how
+ * many have it (opened Pointili as the installed app at least once) and how many came this week; by phone;
+ * day by day, the installs, with how many were asked that day; the asks of the last 30 days and what came
+ * of them; where they were asked; and the shops whose customers have it most.
+ */
+function AppsCard({ apps }: { apps: Apps }) {
+  const f = apps.funnel;
+  const steps = [
+    { n: f.asked, label: "شافو السؤال" },
+    { n: f.tapped, label: "نقرو عليه" },
+    { n: f.yes, label: "قالو إيه" },
+    { n: f.opened, label: "حلّوها كأبليكاسيون" },
+  ];
+  const phones = apps.os.filter((o) => o.os === "Android" || o.os === "iOS");
+  const topPlace = Math.max(1, ...apps.places.map((p) => p.asked));
+  return (
+    <>
+      <section className={CARD}>
+        <h2 className="text-[1rem] font-bold text-ink">التطبيق عند الكليان</h2>
+        <p className="mt-1 text-[0.8125rem] text-body">
+          <b className="num text-[1.25rem] text-brand">{dt(apps.app)}</b> كليان عندهم التطبيق، من <b className="num text-ink">{dt(apps.seen)}</b> ({pct(apps.app, apps.seen)}%)
+          {apps.app_7d > 0 && (
+            <span className="text-mint">
+              {" "}
+              · <b className="num">+{dt(apps.app_7d)}</b> هالجمعة
+            </span>
+          )}
+        </p>
+        <div className="mt-2.5 space-y-2">
+          {phones.map((o) => (
+            <div key={o.os}>
+              <p className="flex items-baseline justify-between gap-2 text-[0.8125rem]">
+                <span className="font-semibold text-ink">{o.os === "iOS" ? "آيفون" : "أندرويد"}</span>
+                <span className="text-muted">
+                  <b className="num text-ink">{dt(o.app)}</b> من <span className="num">{dt(o.people)}</span> · <span className="num">{pct(o.app, o.people)}%</span>
+                </span>
+              </p>
+              <span className="mt-1 block h-2 overflow-hidden rounded-full bg-canvas">
+                <span className="block h-full rounded-full bg-brand" style={{ width: `${Math.max(2, pct(o.app, o.people))}%` }} />
+              </span>
+            </div>
+          ))}
+        </div>
+        <h3 className="mt-3.5 text-[0.8125rem] font-bold text-muted">آخر 30 يوم</h3>
+        <div className="mt-1.5 grid grid-cols-4 gap-1.5 text-center">
+          {steps.map((x, i) => (
+            <div key={x.label} className="rounded-[0.875rem] bg-canvas/70 px-1 py-2">
+              <b className={`num block text-[1.0625rem] leading-tight ${i === steps.length - 1 ? "text-mint" : "text-ink"}`}>{dt(x.n)}</b>
+              <span className="block text-[0.6875rem] font-semibold leading-tight text-muted">{x.label}</span>
+              {i > 0 && <span className="num block text-[0.6875rem] text-faint">{pct(x.n, f.asked)}%</span>}
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-[0.75rem] leading-relaxed text-faint">«عندهم التطبيق»: حلّو Pointili مرّة على الأقل من الأيقونة في الشاشة. نهار التثبيت هو نهار أوّل مرّة حلّوه هكّا.</p>
+      </section>
+
+      <Columns title="حطّو التطبيق كل نهار" days={apps.days} value={(d) => d.installs} tone="bg-brand" more={(d) => `${dt(d.asked)} شافو السؤال`} />
+
+      {apps.places.length > 0 && (
+        <section className={CARD}>
+          <h2 className="text-[1rem] font-bold text-ink">وين تسألو (30 يوم)</h2>
+          <div className="mt-2 grid grid-cols-[1fr_3rem_3rem] gap-x-2 border-b border-line pb-1.5 text-[0.6875rem] font-semibold text-faint">
+            <span />
+            <span className="text-center">شافوه</span>
+            <span className="text-center">قالو إيه</span>
+          </div>
+          {apps.places.map((p) => (
+            <div key={p.place} className="grid grid-cols-[1fr_3rem_3rem] items-center gap-x-2 border-b border-line/60 py-2 last:border-0">
+              <span className="min-w-0">
+                <bdi className="block truncate text-[0.875rem] font-semibold text-ink">{PLACE[p.place] ?? p.place}</bdi>
+                <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-canvas">
+                  <span className="block h-full rounded-full bg-brand/50" style={{ width: `${Math.max(3, pct(p.asked, topPlace))}%` }} />
+                </span>
+              </span>
+              <b className="num text-center text-[0.875rem] text-ink">{dt(p.asked)}</b>
+              <b className={`num text-center text-[0.875rem] ${p.yes ? "text-mint" : "text-faint"}`}>{dt(p.yes)}</b>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {apps.shops.length > 0 && (
+        <section className={CARD}>
+          <h2 className="text-[1rem] font-bold text-ink">المحلات اللي كليانهم عندهم التطبيق</h2>
+          {apps.shops.map((s) => (
+            <div key={s.name} className="flex items-center justify-between gap-2 border-b border-line/60 py-2 last:border-0">
+              <bdi className="min-w-0 truncate text-[0.875rem] font-semibold text-ink">{s.name}</bdi>
+              <span className="shrink-0 text-[0.8125rem] text-muted">
+                <b className="num text-brand">{dt(s.app)}</b> من <span className="num">{dt(s.customers)}</span>
+              </span>
+            </div>
+          ))}
+        </section>
+      )}
+    </>
   );
 }

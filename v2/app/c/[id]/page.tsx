@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { Check, Gift, Hourglass, QrCode, ScanLine } from "lucide-react";
 import { CardStore } from "@/components/CardStore";
 import { ChooseGift } from "@/components/ChooseGift";
+import { CustomerAsk } from "@/components/InstallApp";
 import { CardWheel, WheelPeek } from "@/components/CardWheel";
 import type { Prize } from "@/components/Wheel";
 import { Live } from "@/components/Live";
@@ -67,6 +68,8 @@ export default async function CardPage({ params, searchParams }: { params: Promi
       <Top back={cardsHome(me)} />
       {/* the tampon lands on the card while it is open on the counter: no refresh (19 Oct 2026) */}
       <Live me={me.id} />
+      {/* the app on the phone (19 Nov 2026): asked here too, on its own days — not over a gift to show or a turn to spin */}
+      <CustomerAsk where="card" skip={ready || !!turn || show === "1"} delay={1800} />
       <div className="mx-auto mt-2 w-full max-w-[min(100%,52dvh)] shrink-0 animate-rise">
         <Pass shop={card.shop} stamps={card.stamps} waiting={card.waiting_n} won={giftsSaid(card.won_list)} />
       </div>

@@ -1,4 +1,4 @@
-import { AdminStats } from "@/components/AdminStats";
+import { AdminStats, type Apps } from "@/components/AdminStats";
 import type { BoardShop } from "@/lib/board";
 import { daysOf, statsOf } from "@/lib/stats";
 import { call } from "@/lib/supabase";
@@ -14,7 +14,7 @@ type Ledger = { all: number; out_all: number; month: number; out_month: number }
  * lines — and the founder's money in and out (admin_ledger).
  */
 export default async function Stats() {
-  const [shops, books] = await Promise.all([call<BoardShop[]>("admin_board"), call<Ledger>("admin_ledger")]);
+  const [shops, books, apps] = await Promise.all([call<BoardShop[]>("admin_board"), call<Ledger>("admin_ledger"), call<Apps>("admin_apps")]);
   // eslint-disable-next-line react-hooks/purity -- a server page: the clock is read once per request
   const now = Date.now();
   const all = shops ?? [];
@@ -24,5 +24,5 @@ export default async function Stats() {
     { id: "all", label: "من الأول", stats: statsOf(all, null) },
   ];
   const money = { all: Number(books?.all ?? 0), out: Number(books?.out_all ?? 0), month: Number(books?.month ?? 0), outMonth: Number(books?.out_month ?? 0) };
-  return <AdminStats periods={periods} days={daysOf(all, now)} money={money} />;
+  return <AdminStats periods={periods} days={daysOf(all, now)} money={money} apps={apps} />;
 }

@@ -1346,6 +1346,8 @@ export const t = {
   // the install sheet, once, where Android's Chrome offers it
   installPopupBody: "تحلّها من الشاشة كيما أي أبليكاسيون، بلا ما تفتّش عليها",
   installPopupYes: "حطّها",
+  // the customer's own reason, asked after a tampon, on the card and on the wallet (components/InstallApp: CustomerAsk)
+  installWhyCustomer: "الكارطات متاعك الكل في تليفونك: تحلّهم بلمسة من الشاشة، بلا ما تفتّش عليهم",
   installPopupLater: "موش توّا",
   // the owner's home asks it the first time he is back from his code (most sign up at night, nobody to scan
   // it before the morning), and once more after the first customer: each with its reason

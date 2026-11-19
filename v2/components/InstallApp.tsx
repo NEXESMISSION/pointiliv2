@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, ExternalLink, LoaderCircle, Send, X } from "lucide-react";
 import { handoffPath } from "@/app/actions";
+import { appOnAccount } from "@/app/actions-pwa";
 import { Sheet, SheetGo } from "@/components/Client";
 import { FabHint } from "@/components/FabHint";
 import { InstallGuide, Mixed, preloadGuide, useAppStartsSignedIn } from "@/components/InstallGuide";
@@ -329,6 +330,124 @@ export function InstallPopup({
       action={
         <SheetGo onClick={yes}>
           <Download className="size-5" /> {t.installPopupYes}
+        </SheetGo>
+      }
+      dismiss={t.installPopupLater}
+    />
+  );
+}
+
+/*
+ * The customers' ask, again and again (19 Nov 2026, the founder: «make sure all the owners' clients face the
+ * install … I want maximum people to add the PWA»). Of 700 customers seen, 400 had never been asked: they only
+ * ever see a scan's answer (/s) and their card (/c), and the ask lived on the wallet alone, once per person.
+ * Now it comes after the tampon lands, on the card and on the wallet, and on this phone again on a later
+ * visit, further apart each time (1, 2, 4, then every 7 days) until the app is on it. Kept in the browser:
+ * the install is this phone's, not the account's.
+ */
+const ASK = "pl-ask";
+const ASK_HAS = "pl-ask-has";
+const ASK_GAPS = [1, 2, 4, 7];
+const DAY_MS = 86_400_000;
+/** The number this ask would be on this phone, or null when it is not due yet (or the app is known to be here). */
+function askDue(): number | null {
+  try {
+    if (Number(localStorage.getItem(ASK_HAS) ?? 0) > Date.now()) return null;
+    const last = JSON.parse(localStorage.getItem(ASK) ?? "null") as { at: number; n: number } | null;
+    if (!last) return 1;
+    const gap = ASK_GAPS[Math.min(Math.max(last.n, 1), ASK_GAPS.length) - 1]! * DAY_MS;
+    return Date.now() - last.at >= gap ? last.n + 1 : null;
+  } catch {
+    return 1; // no storage: asked on this page, the way it was before
+  }
+}
+function noteAsk(n: number) {
+  try {
+    localStorage.setItem(ASK, JSON.stringify({ at: Date.now(), n }));
+  } catch {
+    /* private mode */
+  }
+}
+/** The account has the app on this kind of phone: no ask, and no question to the server, for a month. */
+function noteHas() {
+  try {
+    localStorage.setItem(ASK_HAS, String(Date.now() + 30 * DAY_MS));
+  } catch {
+    /* private mode */
+  }
+}
+
+/**
+ * The ask itself, a moment after the page (`delay`): on an iPhone the filmed guide (the only way there), on
+ * Android a sheet whose «حطّها» opens Chrome's own dialog — at once, or the moment Chrome offers it («لحظة…»
+ * on the button meanwhile, «جاهز» for one more tap when it came late) — and in Facebook's browser the way out.
+ * Never on a computer, in the app, or once this phone has it: Chrome's word (useInstalled), or this account's
+ * visits opened as the app on this kind of phone (actions-pwa: appOnAccount — an iPhone's app keeps its own
+ * storage). `skip`: not on this screen (a gift to show at the counter). Shown, yes, later: all counted, with
+ * where and the how-many-th ask it was.
+ */
+export function CustomerAsk({ where, skip = false, delay = 1500 }: { where: string; skip?: boolean; delay?: number }) {
+  const way = useInstallWay();
+  const can = useCanInstall();
+  const inApp = useInApp();
+  const installed = useInstalled();
+  const stage = useInstallStage();
+  const [open, setOpen] = useState(false);
+  const [tapped, setTapped] = useState(false);
+  const started = useRef(false);
+  const at = `ask · ${where}`;
+  useEffect(() => {
+    if (skip || installed || started.current || !(way || inApp)) return;
+    started.current = true;
+    const n = askDue();
+    if (n === null) return;
+    let gone = false;
+    const wait = new Promise((done) => setTimeout(done, delay));
+    // inside Facebook's browser the account is shut in there: nothing to ask the server
+    const has = inApp ? Promise.resolve(false) : appOnAccount(isIphone() ? "iOS" : "Android").catch(() => true);
+    void Promise.all([has, wait]).then(([yes]) => {
+      if (gone) return;
+      if (yes) return noteHas();
+      noteAsk(n);
+      signal(inApp ? "pwa_out_shown" : way === "android" ? "pwa_shown" : "pwa_ios_shown", `${at} · ${n}`);
+      setOpen(true);
+    });
+    return () => {
+      gone = true;
+    };
+  }, [skip, installed, way, inApp, delay, at]);
+
+  // a tap that waited for Chrome and got nothing (or found the app already here): the foot's note says so
+  const over = tapped && !can && stage !== "waiting" && stage !== "ready";
+  if (!open || installed || over) return null;
+  const close = () => setOpen(false);
+  if (inApp) return <OutsideSheet where={at} early={false} onClose={close} />;
+  if (way === "ios" || way === "ios-chrome") return <GuideFor way={way} where={at} onClose={close} />;
+
+  const waiting = stage === "waiting";
+  const yes = () => {
+    if (can) {
+      close();
+      void installApp(at);
+      return;
+    }
+    // Chrome has not offered yet: the sheet stays, «لحظة…», then its dialog (or «جاهز» for one more tap)
+    setTapped(true);
+    void tapInstall(at);
+  };
+  return (
+    <Sheet
+      label={t.installApp}
+      icon={<Icon3D name="phone" size={64} className="mx-auto animate-float" />}
+      title={t.installApp}
+      under={t.installWhyCustomer}
+      onClose={() => {
+        signal("pwa_later", at);
+        close();
+      }}
+      action={
+        <SheetGo onClick={yes}>
+          {waiting ? <LoaderCircle className="size-5 animate-spin" /> : <Download className="size-5" />} {waiting ? t.installWaiting : stage === "ready" ? t.installReady : t.installPopupYes}
         </SheetGo>
       }
       dismiss={t.installPopupLater}

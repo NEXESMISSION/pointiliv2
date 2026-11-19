@@ -1,5 +1,6 @@
 "use server";
 
+import { getMe } from "@/lib/session";
 import { service } from "@/lib/supabase";
 
 const VISITOR = /^[A-Za-z0-9_-]{8,64}$/;
@@ -19,5 +20,19 @@ const VISITOR = /^[A-Za-z0-9_-]{8,64}$/;
 export async function appOnThisPhone(visitor: string): Promise<boolean> {
   if (!VISITOR.test(String(visitor ?? ""))) return false;
   const { count, error } = await service().from("visits").select("id", { count: "exact", head: true }).eq("visitor", visitor).eq("standalone", true);
+  return !error && (count ?? 0) > 0;
+}
+
+/**
+ * This account already opened Pointili as the installed app on this kind of phone ("iOS" or "Android"): the
+ * customers' ask then never comes (components/InstallApp: CustomerAsk). On an iPhone the app keeps its own
+ * storage, apart from Safari's, and a scanned code always opens in Safari: only the account's own visits can
+ * tell Safari that the app is already there. Signed out, or anything wrong: no.
+ */
+export async function appOnAccount(os: string): Promise<boolean> {
+  if (os !== "iOS" && os !== "Android") return false;
+  const me = await getMe().catch(() => null);
+  if (!me) return false;
+  const { count, error } = await service().from("visits").select("id", { count: "exact", head: true }).eq("user_id", me.id).eq("standalone", true).eq("os", os);
   return !error && (count ?? 0) > 0;
 }

@@ -6,6 +6,7 @@ import Link from "@/components/Link";
 import { quickJoin, scan } from "@/app/actions";
 import { spin } from "@/app/actions-wheel";
 import { Sheet, SheetGo } from "@/components/Client";
+import { CustomerAsk } from "@/components/InstallApp";
 import { Wheel } from "@/components/Wheel";
 import { PasswordField } from "@/components/PasswordField";
 import { PhoneField } from "@/components/PhoneField";
@@ -207,6 +208,9 @@ function Stamped({ res }: { res: Extract<ScanResult, { kind: "stamped" }> }) {
           </div>
         </Sheet>
       )}
+
+      {/* the app on the phone, asked once the tampon has landed and been read (not over a gift to show) */}
+      <CustomerAsk where="stamp" skip={gift} delay={IMPACT_MS + 2200} />
 
       <div className="mt-[3dvh] w-full animate-rise space-y-1.5 [@media(max-height:660px)]:mt-[2dvh]" style={after(500)}>
         <LinkBtn href={`/c/${card.id}`} kind={gift ? "soft" : "main"}>
