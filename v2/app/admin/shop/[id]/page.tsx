@@ -263,7 +263,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
                   <MessageCircle className="size-4" /> واتساب
                 </a>
                 {/* the founder's help message, written in WhatsApp in one tap (18 Nov 2026) */}
-                <HelpMsg phone={phone} className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-[#25D366] px-3.5 text-[0.9375rem] font-bold text-white" />
+                <HelpMsg shop={shop.id} phone={phone} at={line?.help_at} now={now} className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] px-3.5 text-[0.9375rem] font-bold" />
                 {/* a note in his 🔔, from here (13 Nov 2026) */}
                 <Link href={`/admin/news?to=${owner.id}`} className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-canvas px-3.5 text-[0.9375rem] font-bold text-body ring-1 ring-line">
                   <Bell className="size-4" /> {B.aWrite}
@@ -315,7 +315,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
               <a href={`https://wa.me/216${phone}`} target="_blank" rel="noreferrer" className="press flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366]/15 text-[0.9375rem] font-bold text-[#128C4B]">
                 <MessageCircle className="size-4" /> واتساب
               </a>
-              <HelpMsg phone={phone} className="press col-span-2 flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366] text-[0.9375rem] font-bold text-white" />
+              <HelpMsg shop={shop.id} phone={phone} at={line?.help_at} now={now} className="press col-span-2 flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] text-[0.9375rem] font-bold" />
               <Link href={`/admin/news?to=${owner.id}`} className="press col-span-2 flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-canvas text-[0.9375rem] font-bold text-body ring-1 ring-line">
                 <Bell className="size-4" /> {B.aWrite}
               </Link>

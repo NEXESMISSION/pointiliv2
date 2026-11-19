@@ -55,6 +55,13 @@ export async function adminSetJoin(shopId: string, on: boolean): Promise<{ ok: b
   return (await call<{ ok: boolean; error?: string }>("admin_set_join", { p_id: shopId, p_on: !!on })) ?? { ok: false, error: "network" };
 }
 
+/** The founder tapped his help message for a shop (components/HelpMsg): kept, so its button says so on any phone. When, or null. */
+export async function adminHelpSent(shopId: string): Promise<string | null> {
+  if (!UUID.test(shopId)) return null;
+  const res = await call<{ ok: boolean; at?: string }>("admin_help_sent", { p_shop: shopId });
+  return res?.ok && res.at ? res.at : null;
+}
+
 /** The founder's follow-up of a shop, picked next to his note (lib/board STAGES): kept with when it was picked. */
 export async function adminShopStage(shopId: string, stage: string): Promise<boolean> {
   if (!UUID.test(shopId) || !STAGE_KEYS.includes(stage)) return false;

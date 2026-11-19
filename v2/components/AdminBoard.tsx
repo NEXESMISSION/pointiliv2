@@ -577,7 +577,7 @@ function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; n
         </button>
       </div>
       {/* the founder's help message, written in WhatsApp in one tap (18 Nov 2026) */}
-      {phone && <HelpMsg phone={phone} className="press mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366] text-[0.875rem] font-bold text-white" />}
+      {phone && <HelpMsg shop={s.id} phone={phone} at={s.help_at} now={now} className="press mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-[0.75rem] text-[0.875rem] font-bold" />}
 
       {open && <AdminShopMore shop={s} now={now} />}
     </article>

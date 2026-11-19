@@ -2411,6 +2411,19 @@ begin
   return jsonb_build_object('ok', found);
 end $$;
 
+-- the founder's help message, tapped (components/HelpMsg, 19 Nov 2026: «a way to know if I sent the help
+-- message: when I click on it, it gets counted as sent»): a WhatsApp line in the log, marked «help». The board
+-- and the shop's page say when (admin_board.help_at), on any phone. The stage stays the founder's own.
+create or replace function public.admin_help_sent(p_shop uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_at timestamptz;
+begin
+  perform public.require_admin();
+  if not exists (select 1 from public.shops where id = p_shop) then return public.err('no_shop'); end if;
+  insert into public.crm_log (shop_id, kind, outcome, text) values (p_shop, 'whatsapp', 'sent', 'help') returning at into v_at;
+  return jsonb_build_object('ok', true, 'at', v_at);
+end $$;
+
 -- ═══ paying for the year ═══════════════════════════════════════════════════
 -- the shop's subscription: paid until when, its prices (old_price: the year at
 -- 120, kept by the shops that paid before 7 Nov 2026), the offer's end (the
@@ -4311,6 +4324,8 @@ begin
       'ms', coalesce(ow.ms, 0), 'pay_seen', ow.pay_seen, 'wa_at', og.wa_at, 'app', coalesce(og.app, false),
       'push', exists (select 1 from public.push_subs ps where ps.user_id = s.owner_id),
       'note', coalesce(cn.note, ''), 'stage', coalesce(cn.stage, 'new'), 'stage_at', cn.stage_at,
+      -- the founder's help message, last tapped (admin_help_sent)
+      'help_at', (select max(g.at) from public.crm_log g where g.shop_id = s.id and g.kind = 'whatsapp' and g.text = 'help'),
       'voices', (select count(*) from public.crm_voice v where v.shop_id = s.id),
       -- what the board's analysis reads (lib/board profileShop): the customers' side, the owner's, the counter's
       'x', jsonb_build_object(
@@ -4937,7 +4952,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.link_new(text, bigint), public.my_links(), public.link_cancel(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(uuid), public.admin_board_shop(uuid), public.admin_study(uuid),
-  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_set_paused(uuid, boolean),
+  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_help_sent(uuid), public.admin_set_paused(uuid, boolean),
   public.admin_voice_add(uuid, uuid, int, int, text), public.admin_voices(uuid), public.admin_voice(uuid), public.admin_voice_drop(uuid),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),
