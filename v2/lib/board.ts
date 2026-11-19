@@ -61,6 +61,8 @@ export type BoardShop = {
   stage_at: string | null;
   /** when the founder last tapped his help message for it (components/HelpMsg), on any phone */
   help_at?: string | null;
+  /** and his reminder of the trial's end (components/HelpMsg: RemindMsg) */
+  remind_at?: string | null;
   /** how many voice notes he left on it (components/AdminVoice: the notes themselves are read when opened) */
   voices: number;
   /** what the analysis reads besides the line's numbers (profileShop) */

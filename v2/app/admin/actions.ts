@@ -62,6 +62,13 @@ export async function adminHelpSent(shopId: string): Promise<string | null> {
   return res?.ok && res.at ? res.at : null;
 }
 
+/** The founder tapped his reminder of the trial's end for a shop (components/HelpMsg: RemindMsg): kept the same way. When, or null. */
+export async function adminRemindSent(shopId: string): Promise<string | null> {
+  if (!UUID.test(shopId)) return null;
+  const res = await call<{ ok: boolean; at?: string }>("admin_remind_sent", { p_shop: shopId });
+  return res?.ok && res.at ? res.at : null;
+}
+
 /** The founder's follow-up of a shop, picked next to his note (lib/board STAGES): kept with when it was picked. */
 export async function adminShopStage(shopId: string, stage: string): Promise<boolean> {
   if (!UUID.test(shopId) || !STAGE_KEYS.includes(stage)) return false;

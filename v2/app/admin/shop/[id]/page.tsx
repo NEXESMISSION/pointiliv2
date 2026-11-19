@@ -6,7 +6,7 @@ import { Face, ShopNote, ShopProfile, ShopReading, ShopStage } from "@/component
 import { ShopVoice } from "@/components/AdminVoice";
 import type { Voice } from "@/app/admin/actions";
 import { AdminShopMore } from "@/components/AdminShopMore";
-import { HelpMsg } from "@/components/HelpMsg";
+import { HelpMsg, RemindMsg } from "@/components/HelpMsg";
 import { PILL, profileShop, readShop, STAGE_LOOK, stageOf, standing, type AccessShop, type BoardShop } from "@/lib/board";
 import { B } from "@/lib/bell";
 import { digits, spaced } from "@/lib/phone";
@@ -175,6 +175,8 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
   const ago = (iso: string) => agoSaid(now - Date.parse(iso));
   const d = digits(owner.phone ?? "");
   const phone = /^\d{8}$/.test(d) ? d : null;
+  // the reminder of the trial's end: a trial whose clock runs (or ran out), nothing paid
+  const remind = !shop.paid && shop.started && !!shop.trial_end;
   const pill = standing({ ...shop, card: shop.goal !== null }, now);
   // the board's own line read the same way; a shop the board does not show (a test's) from this page's numbers
   const reading = line
@@ -264,6 +266,8 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
                 </a>
                 {/* the founder's help message, written in WhatsApp in one tap (18 Nov 2026) */}
                 <HelpMsg shop={shop.id} phone={phone} at={line?.help_at} now={now} className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] px-3.5 text-[0.9375rem] font-bold" />
+                {/* his reminder of the trial's end, once its clock runs and nothing is paid (19 Nov 2026) */}
+                {remind && <RemindMsg shop={shop.id} phone={phone} name={owner.name} end={shop.trial_end} at={line?.remind_at} now={now} className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] px-3.5 text-[0.9375rem] font-bold" />}
                 {/* a note in his 🔔, from here (13 Nov 2026) */}
                 <Link href={`/admin/news?to=${owner.id}`} className="press flex h-10 items-center gap-1.5 rounded-[0.75rem] bg-canvas px-3.5 text-[0.9375rem] font-bold text-body ring-1 ring-line">
                   <Bell className="size-4" /> {B.aWrite}
@@ -315,7 +319,8 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
               <a href={`https://wa.me/216${phone}`} target="_blank" rel="noreferrer" className="press flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366]/15 text-[0.9375rem] font-bold text-[#128C4B]">
                 <MessageCircle className="size-4" /> واتساب
               </a>
-              <HelpMsg shop={shop.id} phone={phone} at={line?.help_at} now={now} className="press col-span-2 flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] text-[0.9375rem] font-bold" />
+              <HelpMsg shop={shop.id} phone={phone} at={line?.help_at} now={now} short={remind} className={`press ${remind ? "" : "col-span-2"} flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-[0.75rem] px-2 text-[0.9375rem] font-bold`} />
+              {remind && <RemindMsg shop={shop.id} phone={phone} name={owner.name} end={shop.trial_end} at={line?.remind_at} now={now} short className="press flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-[0.75rem] px-2 text-[0.9375rem] font-bold" />}
               <Link href={`/admin/news?to=${owner.id}`} className="press col-span-2 flex h-11 items-center justify-center gap-1.5 rounded-[0.75rem] bg-canvas text-[0.9375rem] font-bold text-body ring-1 ring-line">
                 <Bell className="size-4" /> {B.aWrite}
               </Link>

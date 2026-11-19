@@ -40,7 +40,7 @@ import {
 import { adminShopNote, adminShopStage } from "@/app/admin/actions";
 import { ShopVoice } from "@/components/AdminVoice";
 import { AdminShopMore } from "@/components/AdminShopMore";
-import { HelpMsg } from "@/components/HelpMsg";
+import { HelpMsg, RemindMsg } from "@/components/HelpMsg";
 import { ShopMark } from "@/components/ShopMark";
 import { digits, spaced } from "@/lib/phone";
 import {
@@ -64,6 +64,9 @@ import {
   type ReadTone,
 } from "@/lib/board";
 import { agoSaid, counted, daysN, hoursN, stampsN, t } from "@/lib/t";
+
+/** the founder's WhatsApp messages under a shop's line: the look the button's colour goes with */
+const WA_BTN = "press flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-[0.75rem] px-2 text-[0.875rem] font-bold";
 
 const DAY = 86_400_000;
 const PAGE = 24;
@@ -472,6 +475,8 @@ function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; n
   const st = standing(s, now);
   const d = digits(s.owner.phone ?? "");
   const phone = /^\d{8}$/.test(d) ? d : null;
+  // the reminder of the trial's end: a trial whose clock runs (or ran out), nothing paid
+  const remind = !s.paid && s.started && !!s.trial_end;
   const ago = (iso: string) => agoSaid(now - Date.parse(iso));
   return (
     <article id={`shop-${s.id}`} data-shop={s.id} data-moved={lastMove(s) ?? ""} className="below-bar rounded-[1.125rem] bg-surface p-3.5 shadow-card ring-1 ring-line/70">
@@ -576,8 +581,14 @@ function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; n
           أكثر <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
       </div>
-      {/* the founder's help message, written in WhatsApp in one tap (18 Nov 2026) */}
-      {phone && <HelpMsg shop={s.id} phone={phone} at={s.help_at} now={now} className="press mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-[0.75rem] text-[0.875rem] font-bold" />}
+      {/* the founder's help message, written in WhatsApp in one tap (18 Nov 2026), and beside it, once the trial's
+          clock runs and nothing is paid, his reminder of its end (19 Nov 2026) */}
+      {phone && (
+        <div className={`mt-2 grid gap-2 ${remind ? "grid-cols-2" : ""}`}>
+          <HelpMsg shop={s.id} phone={phone} at={s.help_at} now={now} short={remind} className={WA_BTN} />
+          {remind && <RemindMsg shop={s.id} phone={phone} name={s.owner.name} end={s.trial_end} at={s.remind_at} now={now} short className={WA_BTN} />}
+        </div>
+      )}
 
       {open && <AdminShopMore shop={s} now={now} />}
     </article>

@@ -1472,6 +1472,13 @@ export const t = {
   aHelpBtn: "ميساج المعاونة",
   // once tapped, on any phone: «بعثتلو ميساج المعاونة · من 3 سوايع»
   aHelpSent: "بعثتلو ميساج المعاونة · {ago}",
+  aHelpShort: "المعاونة",
+  // the founder's reminder of the trial's end (19 Nov 2026), in his own words, without the 👋 a wa.me link breaks
+  aRemindBtn: "ميساج التذكير",
+  aRemindSent: "بعثتلو التذكير · {ago}",
+  aRemindShort: "التذكير",
+  aRemindMsg:
+    "{hi}{name}\nPériode d’essai mte3ek m3a Pointili {ends}.\nBech tkammel ta3ti tampons lel clients, lezem tjadded el abonnement. El tampons elli lemou les clients l taw yab9aw kif ma houma",
   aHelpMsg:
     "{hi} m3ak l'équipe Pointili, el système de fidélité.\n7abbina nchoufou m3ak: ken 3ordhetek mochkla, ken 3andek sou2el, wala ken fama 7aja ma kech fehemha, 9olli bark bech na3ref kifech najjem n3awnek.\nW ken t7eb, nkallmek w nfahhmek kol chay.",
 };

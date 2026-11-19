@@ -2424,6 +2424,19 @@ begin
   return jsonb_build_object('ok', true, 'at', v_at);
 end $$;
 
+-- the founder's reminder, tapped (components/HelpMsg: RemindMsg, 19 Nov 2026: «make this a message, not for
+-- help but for the reminder»): the trial's end said to the owner in his words — a WhatsApp line in the log,
+-- marked «reminder»; the board and the shop's page say when (admin_board.remind_at). The stage stays his own.
+create or replace function public.admin_remind_sent(p_shop uuid) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare v_at timestamptz;
+begin
+  perform public.require_admin();
+  if not exists (select 1 from public.shops where id = p_shop) then return public.err('no_shop'); end if;
+  insert into public.crm_log (shop_id, kind, outcome, text) values (p_shop, 'whatsapp', 'sent', 'reminder') returning at into v_at;
+  return jsonb_build_object('ok', true, 'at', v_at);
+end $$;
+
 -- the customers' app, for the console's numbers (19 Nov 2026, the founder: «I want to track the installs of the
 -- clients' PWA»). A customer: a card at a shop not their own, owning no shop, no admin, tester or robot. Has the
 -- app: opened Pointili as the installed app at least once (visits.standalone) — the day of that first opening
@@ -4384,6 +4397,8 @@ begin
       'note', coalesce(cn.note, ''), 'stage', coalesce(cn.stage, 'new'), 'stage_at', cn.stage_at,
       -- the founder's help message, last tapped (admin_help_sent)
       'help_at', (select max(g.at) from public.crm_log g where g.shop_id = s.id and g.kind = 'whatsapp' and g.text = 'help'),
+      -- and his reminder of the trial's end, last tapped (admin_remind_sent)
+      'remind_at', (select max(g.at) from public.crm_log g where g.shop_id = s.id and g.kind = 'whatsapp' and g.text = 'reminder'),
       'voices', (select count(*) from public.crm_voice v where v.shop_id = s.id),
       -- what the board's analysis reads (lib/board profileShop): the customers' side, the owner's, the counter's
       'x', jsonb_build_object(
@@ -5010,7 +5025,7 @@ grant execute on function public.me(), public.set_stamp_logo(boolean), public.se
   public.stamp(text, text), public.wallet(), public.card(uuid),
   public.link_new(text, bigint), public.my_links(), public.link_cancel(uuid),
   public.admin_overview(), public.admin_shops(text, boolean), public.admin_shop(uuid), public.admin_board(uuid), public.admin_board_shop(uuid), public.admin_study(uuid),
-  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_help_sent(uuid), public.admin_apps(), public.admin_set_paused(uuid, boolean),
+  public.admin_crm(text, boolean), public.admin_crm_of(uuid), public.admin_crm_set(uuid, text, date, boolean, text), public.admin_crm_log(uuid, text, text, text), public.admin_crm_unlog(bigint), public.admin_help_sent(uuid), public.admin_remind_sent(uuid), public.admin_apps(), public.admin_set_paused(uuid, boolean),
   public.admin_voice_add(uuid, uuid, int, int, text), public.admin_voices(uuid), public.admin_voice(uuid), public.admin_voice_drop(uuid),
   public.admin_delete_shop(uuid), public.admin_people(text, boolean), public.admin_person(uuid),
   public.admin_set_tester(uuid, boolean), public.admin_robots(), public.admin_sweep_robots(),
