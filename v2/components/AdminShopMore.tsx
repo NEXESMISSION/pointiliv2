@@ -2,17 +2,18 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { BarChart3, Copy, FlaskConical, Gift, KeyRound, MessageCircle, Stamp } from "lucide-react";
+import { BarChart3, FlaskConical, Gift, KeyRound, MessageCircle, Stamp } from "lucide-react";
 import { adminPause, adminResetPassword, adminSetTester } from "@/app/actions";
 import { adminSetItems, adminSetStore } from "@/app/actions-store";
 import { adminSetWheel } from "@/app/actions-wheel";
 import { adminExportState, adminSetExport } from "@/app/actions-export";
 import { adminBoardShop, adminSetJoin, type BoardMore } from "@/app/admin/actions";
 import { AdminAccess } from "@/components/AdminAccess";
+import { CopyMsg } from "@/components/CopyMsg";
 import type { AccessShop } from "@/lib/board";
 import { Switch } from "@/components/Owner";
 import { digits } from "@/lib/phone";
-import { agoSaid, fill, stampsN, t } from "@/lib/t";
+import { agoSaid, resetMsg, stampsN, t } from "@/lib/t";
 
 const NOT_DONE = "ما تعدّاتش، عاود.";
 const quiet = "press flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-surface px-3.5 text-[0.875rem] font-semibold text-body ring-1 ring-line disabled:opacity-60";
@@ -219,7 +220,8 @@ function Account({ shop, more }: { shop: AccessShop; more: BoardMore }) {
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const d = digits(shop.owner.phone ?? "");
-  const wa = password && /^\d{8}$/.test(d) ? `https://wa.me/216${d}?text=${encodeURIComponent(fill(t.aResetMsg, { name: shop.owner.name ?? "", password }))}` : null;
+  const msg = password ? resetMsg(shop.owner.name, password) : "";
+  const wa = password && /^\d{8}$/.test(d) ? `https://wa.me/216${d}?text=${encodeURIComponent(msg)}` : null;
 
   return (
     <section className="space-y-2">
@@ -230,15 +232,14 @@ function Account({ shop, more }: { shop: AccessShop; more: BoardMore }) {
             {password}
           </p>
           <p className="mt-0.5 text-[0.75rem] text-muted">{t.aResetHint}</p>
-          <div className="mt-2.5 grid grid-cols-[1fr_auto] gap-2">
+          {/* WhatsApp sends it; «انسخ الميساج» copies the same whole message, greeting and password, to paste anywhere */}
+          <div className="mt-2.5 grid gap-2">
             {wa && (
               <a href={wa} target="_blank" rel="noreferrer" className="press flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366] text-[0.875rem] font-bold text-white">
                 <MessageCircle className="size-4" /> {t.aResetSend}
               </a>
             )}
-            <button type="button" onClick={() => void navigator.clipboard?.writeText(password)} className="grid size-10 place-items-center rounded-[0.75rem] bg-brand-soft text-brand" aria-label="انسخ">
-              <Copy className="size-4" />
-            </button>
+            <CopyMsg text={msg} className="press flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-brand-soft text-[0.875rem] font-bold text-brand" />
           </div>
         </div>
       ) : (

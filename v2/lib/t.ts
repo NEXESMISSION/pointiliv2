@@ -1462,6 +1462,8 @@ export const t = {
   aResetHint: "ما تبانش مرّة أخرى. ابعثهالو توّا، ويبدّلها من الكونت متاعو.",
   aResetSend: "ابعثها على الواتساب",
   aResetMsg: "سلام {name}، كلمة السر الجديدة متاعك في Pointili: {password}",
+  aCopyMsg: "انسخ الميساج",
+  aCopied: "تنسخ",
 
   // the founder's console: his help message to an owner, on WhatsApp in one tap (components/HelpMsg)
   aHelpBtn: "ميساج المعاونة",
@@ -1472,6 +1474,11 @@ export const t = {
 /** "مازالولك {n}" + { n: 3 } → "مازالولك 3" */
 export function fill(template: string, vars: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => (k in vars ? String(vars[k]) : `{${k}}`));
+}
+
+/** The new password, said in one message: the one sent on WhatsApp and the one copied (no stray space when there is no name). */
+export function resetMsg(name: string | null | undefined, password: string): string {
+  return fill(t.aResetMsg, { name: name?.trim() ?? "", password }).replace(/\s+،/, "،");
 }
 
 /** The 3D picture of a kind of shop. */

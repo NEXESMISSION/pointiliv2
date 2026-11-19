@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Check, Copy, KeyRound, MessageCircle, Plus, Search, Store, Trash2, UserPlus, X } from "lucide-react";
+import { Check, KeyRound, MessageCircle, Plus, Search, Store, Trash2, UserPlus, X } from "lucide-react";
 import { adminBookAdd, adminBookDelete, adminResetPassword, adminSweepRobots, adminTester } from "@/app/actions";
 import { adminFind, type Found } from "@/app/admin/actions";
+import { CopyMsg } from "@/components/CopyMsg";
 import { digits, spaced } from "@/lib/phone";
-import { fill, t } from "@/lib/t";
+import { fill, resetMsg, t } from "@/lib/t";
 
 const NOT_DONE = "ما تعدّاتش، عاود.";
 const field = "h-11 w-full rounded-[0.75rem] bg-surface px-3 text-[16px] text-ink outline-none ring-1 ring-line placeholder:text-faint focus:ring-2 focus:ring-brand";
@@ -45,7 +46,8 @@ export function AdminFind({ initial = "" }: { initial?: string }) {
 
   if (reset) {
     const d = digits(reset.who.phone ?? "");
-    const wa = /^\d{8}$/.test(d) ? `https://wa.me/216${d}?text=${encodeURIComponent(fill(t.aResetMsg, { name: reset.who.name || "", password: reset.password }))}` : null;
+    const msg = resetMsg(reset.who.name, reset.password);
+    const wa = /^\d{8}$/.test(d) ? `https://wa.me/216${d}?text=${encodeURIComponent(msg)}` : null;
     return (
       <div className="rounded-[0.875rem] bg-canvas/70 p-4 text-center">
         <p className="text-[0.8125rem] font-semibold text-muted">
@@ -55,17 +57,14 @@ export function AdminFind({ initial = "" }: { initial?: string }) {
           {reset.password}
         </p>
         <p className="mt-0.5 text-[0.75rem] text-muted">{t.aResetHint}</p>
-        <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">
-          {wa ? (
-            <a href={wa} target="_blank" rel="noreferrer" className="press flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366] text-[0.875rem] font-bold text-white">
+        {/* WhatsApp sends it; «انسخ الميساج» copies the same whole message, greeting and password, to paste anywhere */}
+        <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+          {wa && (
+            <a href={wa} target="_blank" rel="noreferrer" className="press col-span-2 flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-[#25D366] text-[0.875rem] font-bold text-white">
               <MessageCircle className="size-4" /> {t.aResetSend}
             </a>
-          ) : (
-            <span />
           )}
-          <button type="button" onClick={() => void navigator.clipboard?.writeText(reset.password)} className="grid size-10 place-items-center rounded-[0.75rem] bg-brand-soft text-brand" aria-label="انسخ">
-            <Copy className="size-4" />
-          </button>
+          <CopyMsg text={msg} className="press flex h-10 items-center justify-center gap-1.5 rounded-[0.75rem] bg-brand-soft text-[0.875rem] font-bold text-brand" />
           <button type="button" onClick={() => setReset(null)} className="grid size-10 place-items-center rounded-[0.75rem] bg-surface text-muted ring-1 ring-line" aria-label="سكّر">
             <X className="size-4" />
           </button>
