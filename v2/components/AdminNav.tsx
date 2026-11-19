@@ -23,7 +23,7 @@ export const wideAt = (path: string) => path.startsWith("/admin/shop/");
 export function AdminNav() {
   const path = usePathname();
   return (
-    <header className="sticky top-0 z-20 border-b border-line/80 bg-surface/95 backdrop-blur">
+    <header className="safe-bar sticky top-0 z-20 border-b border-line/80 bg-surface/95 backdrop-blur">
       <nav className={`mx-auto flex h-14 items-center gap-2 px-4 ${wideAt(path) ? "max-w-[92rem]" : "max-w-[46rem]"}`}>
         <Link href="/admin" aria-label="Pointili admin" className="hidden shrink-0 items-center gap-2 min-[400px]:flex" dir="ltr">
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -474,7 +474,7 @@ function ShopLine({ s, now, bench, open, onToggle, onPicked }: { s: BoardShop; n
   const phone = /^\d{8}$/.test(d) ? d : null;
   const ago = (iso: string) => agoSaid(now - Date.parse(iso));
   return (
-    <article id={`shop-${s.id}`} data-shop={s.id} data-moved={lastMove(s) ?? ""} className="scroll-mt-20 rounded-[1.125rem] bg-surface p-3.5 shadow-card ring-1 ring-line/70">
+    <article id={`shop-${s.id}`} data-shop={s.id} data-moved={lastMove(s) ?? ""} className="below-bar rounded-[1.125rem] bg-surface p-3.5 shadow-card ring-1 ring-line/70">
       <div className="flex items-start gap-3">
         <Link href={`/admin/shop/${s.id}`} aria-label={`${s.name}: كل التفاصيل`} className="shrink-0">
           <Face s={s} />

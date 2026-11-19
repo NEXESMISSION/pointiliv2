@@ -133,6 +133,23 @@
   .safe-t {
     padding-top: max(1rem, env(safe-area-inset-top));
   }
+  /* the console's top bar (19 Nov 2026, the founder: «I don't see it in the installed app, it's covered»):
+     clear of the phone's status bar where the app draws under it, and a little more room in the installed
+     app; a shop scrolled to from the board lands under the bar, not behind it */
+  .safe-bar {
+    padding-top: env(safe-area-inset-top);
+  }
+  .below-bar {
+    scroll-margin-top: calc(5rem + env(safe-area-inset-top));
+  }
+  @media (display-mode: standalone) {
+    .safe-bar {
+      padding-top: calc(env(safe-area-inset-top) + 0.5rem);
+    }
+    .below-bar {
+      scroll-margin-top: calc(5.5rem + env(safe-area-inset-top));
+    }
+  }
   /* a list that scrolls inside its box: a thin bar on a computer, none in the way */
   [data-list] {
     scrollbar-width: thin;
