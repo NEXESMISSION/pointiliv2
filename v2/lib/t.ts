@@ -1461,12 +1461,15 @@ export const t = {
   aResetDone: "كلمة السر الجديدة",
   aResetHint: "ما تبانش مرّة أخرى. ابعثهالو توّا، ويبدّلها من الكونت متاعو.",
   aResetSend: "ابعثها على الواتساب",
-  aResetMsg: "سلام {name}، كلمة السر الجديدة متاعك في Pointili: {password}",
+  // the founder's own words (19 Nov 2026): «simple as this», no greeting, no name
+  aResetMsg: "كلمة السر الجديدة متاعك {password}",
   aCopyMsg: "انسخ الميساج",
   aCopied: "تنسخ",
 
   // the founder's console: his help message to an owner, on WhatsApp in one tap (components/HelpMsg)
   aHelpBtn: "ميساج المعاونة",
+  // once tapped, on any phone: «بعثتلو ميساج المعاونة · من 3 سوايع»
+  aHelpSent: "بعثتلو ميساج المعاونة · {ago}",
   aHelpMsg:
     "{hi} m3ak l'équipe Pointili, el système de fidélité.\n7abbina nchoufou m3ak: ken 3ordhetek mochkla, ken 3andek sou2el, wala ken fama 7aja ma kech fehemha, 9olli bark bech na3ref kifech najjem n3awnek.\nW ken t7eb, nkallmek w nfahhmek kol chay.",
 };
@@ -1476,9 +1479,9 @@ export function fill(template: string, vars: Record<string, string | number>): s
   return template.replace(/\{(\w+)\}/g, (_, k: string) => (k in vars ? String(vars[k]) : `{${k}}`));
 }
 
-/** The new password, said in one message: the one sent on WhatsApp and the one copied (no stray space when there is no name). */
-export function resetMsg(name: string | null | undefined, password: string): string {
-  return fill(t.aResetMsg, { name: name?.trim() ?? "", password }).replace(/\s+،/, "،");
+/** The new password, said in one message: the one sent on WhatsApp and the one copied. */
+export function resetMsg(password: string): string {
+  return fill(t.aResetMsg, { password });
 }
 
 /** The 3D picture of a kind of shop. */

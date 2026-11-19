@@ -220,7 +220,7 @@ function Account({ shop, more }: { shop: AccessShop; more: BoardMore }) {
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const d = digits(shop.owner.phone ?? "");
-  const msg = password ? resetMsg(shop.owner.name, password) : "";
+  const msg = password ? resetMsg(password) : "";
   const wa = password && /^\d{8}$/.test(d) ? `https://wa.me/216${d}?text=${encodeURIComponent(msg)}` : null;
 
   return (

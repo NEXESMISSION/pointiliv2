@@ -46,7 +46,7 @@ export function AdminFind({ initial = "" }: { initial?: string }) {
 
   if (reset) {
     const d = digits(reset.who.phone ?? "");
-    const msg = resetMsg(reset.who.name, reset.password);
+    const msg = resetMsg(reset.password);
     const wa = /^\d{8}$/.test(d) ? `https://wa.me/216${d}?text=${encodeURIComponent(msg)}` : null;
     return (
       <div className="rounded-[0.875rem] bg-canvas/70 p-4 text-center">
