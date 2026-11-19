@@ -58,6 +58,10 @@ export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; p
   const way = payWayOf(wayTyped) ?? method;
   const [show, setShow] = useState(true);
   const [made, setMade] = useState<PlanShot | null>(null);
+  // days of trial typed by hand, beside +3 and +7 (19 Nov 2026: «I want to type the number of trial days I add»);
+  // admin_trial takes 1 to 60
+  const [trialTyped, setTrialTyped] = useState("");
+  const trialOk = /^\d{1,2}$/.test(trialTyped) && Number(trialTyped) >= 1 && Number(trialTyped) <= 60;
   const sum = other ? Number(other) : amount;
   // something to turn on, and what came in said (a sum, or «with no money»)
   const canGo = months >= 1 && sum !== null;
@@ -223,16 +227,47 @@ export function AdminAccess({ shop, plan = null, reload }: { shop: AccessShop; p
       )}
 
       {mode === "trial" && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <span className="text-[0.8125rem] font-semibold text-muted">زيدو في التجربة:</span>
-          {[3, 7].map((n) => (
-            <button key={n} type="button" disabled={pending} onClick={() => start(async () => done((await adminTrial(shop.id, n)).ok))} className="press h-9 rounded-full bg-brand px-3.5 text-[0.8438rem] font-bold text-white disabled:opacity-60">
-              +{daysN(n)}
+        <div className="mt-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[0.8125rem] font-semibold text-muted">زيدو في التجربة:</span>
+            {[3, 7].map((n) => (
+              <button key={n} type="button" disabled={pending} onClick={() => start(async () => done((await adminTrial(shop.id, n)).ok))} className="press h-9 rounded-full bg-brand px-3.5 text-[0.8438rem] font-bold text-white disabled:opacity-60">
+                +{daysN(n)}
+              </button>
+            ))}
+            {/* any other number of days, typed */}
+            <input
+              value={trialTyped}
+              onChange={(e) => setTrialTyped(e.target.value.replace(/\D/g, "").slice(0, 2))}
+              inputMode="numeric"
+              placeholder={t.aTrialTyped}
+              aria-label={t.aTrialTyped}
+              aria-invalid={!!trialTyped && !trialOk}
+              className={`${typedBox(!!trialTyped, !!trialTyped && !trialOk)} w-[10.5rem]`}
+            />
+            <button
+              type="button"
+              disabled={pending || !trialOk}
+              onClick={() =>
+                start(async () => {
+                  const ok = (await adminTrial(shop.id, Number(trialTyped))).ok;
+                  if (ok) setTrialTyped("");
+                  await done(ok);
+                })
+              }
+              className="press h-9 rounded-full bg-brand px-3.5 text-[0.8438rem] font-bold text-white disabled:opacity-60"
+            >
+              {trialOk ? `+${daysN(Number(trialTyped))}` : t.aTrialAdd}
             </button>
-          ))}
-          <button type="button" onClick={() => setMode(null)} className="h-9 px-2 text-[0.8438rem] font-semibold text-muted">
-            {t.back}
-          </button>
+            <button type="button" onClick={() => setMode(null)} className="h-9 px-2 text-[0.8438rem] font-semibold text-muted">
+              {t.back}
+            </button>
+          </div>
+          {!!trialTyped && !trialOk ? (
+            <p className="mt-1 text-[0.75rem] font-semibold text-coral">{t.aTrialRange}</p>
+          ) : (
+            <p className="mt-1 text-[0.75rem] text-muted">{t.aTrialHow}</p>
+          )}
         </div>
       )}
 

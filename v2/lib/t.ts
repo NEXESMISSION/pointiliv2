@@ -1034,6 +1034,10 @@ export const t = {
   // typed by hand (8 Nov 2026): any number of months, any way it came
   aPlanMonthsTyped: "ولا اكتب عدد الشهور",
   aPlanMonthsRange: "من 1 لـ 120",
+  aTrialTyped: "ولا اكتب عدد الأيّام",
+  aTrialRange: "من 1 لـ 60",
+  aTrialHow: "تتزاد على آخر التجربة، ولا من توّا كي تكون وفات.",
+  aTrialAdd: "زيد",
   aPlanHowTyped: "ولا اكتب كيفاش",
   aPlanAmountNeed: "اكتب المبلغ اللي خلّصو، ولا اختار «زيادة، بلا فلوس».",
   aPlanFromEnd: "يتزادو على الأبونمان اللي يوفى {date}",
